@@ -1,5 +1,11 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from 'node:fs';
+import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import {
+  assertDeployableBuild,
+  recordBuildConfiguration,
+} from '../deploy/build-configuration';
 
 /** A file of the workspace, read as the deploy reads it. */
 function workspaceJson<T>(path: string): T {
@@ -34,17 +40,66 @@ const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
 
 describe('the Firebase deploy', () => {
   // a development or e2e build offers the sign-in and talks to the local
-  // emulators (environment.ts): only a production build may go live
-  it('deploys only a production build', () => {
-    const { targets } = workspaceJson<ProjectJson>(
-      'apps/korbjaeger/project.json'
-    );
+  // emulators (environment.ts): only a production build may go live. Nx hands
+  // `deploy -c development` on to the build, so the deploy checks what it got
+  describe('only a production build', () => {
+    const CHECK =
+      'tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger';
+    let dist: string;
 
-    expect(targets['deploy'].dependsOn).toEqual(['build']);
-    // without configurations of its own, its build runs the default one
-    expect(targets['deploy'].configurations).toBeUndefined();
-    expect(targets['build'].defaultConfiguration).toBe('production');
-    expect(targets['build-app'].defaultConfiguration).toBe('production');
+    beforeEach(() => {
+      dist = mkdtempSync(join(tmpdir(), 'korbjaeger-dist-'));
+    });
+
+    afterEach(() => rmSync(dist, { recursive: true, force: true }));
+
+    it('is built by default, and checked before anything is deployed', () => {
+      const { targets } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      );
+
+      expect(targets['deploy'].dependsOn).toEqual(['build']);
+      expect(targets['deploy'].options.commands?.[0]).toBe(CHECK);
+      expect(targets['build'].defaultConfiguration).toBe('production');
+      expect(targets['build-app'].defaultConfiguration).toBe('production');
+    });
+
+    it('is what every build records, under the name of its configuration', () => {
+      const { build } = workspaceJson<ProjectJson>(
+        'apps/korbjaeger/project.json'
+      ).targets;
+
+      expect(build.options.commands?.at(-1)).toBe(
+        'tsx ./apps/korbjaeger/deploy/build-configuration.ts record dist/apps/korbjaeger $KORB_BUILD_CONFIGURATION'
+      );
+      for (const [name, configuration] of Object.entries(
+        build.configurations ?? {}
+      )) {
+        expect(configuration).toEqual({
+          env: { KORB_BUILD_CONFIGURATION: name },
+        });
+      }
+    });
+
+    it('goes live', () => {
+      recordBuildConfiguration(dist, 'production');
+
+      expect(() => assertDeployableBuild(dist)).not.toThrow();
+    });
+
+    it.each(['development', 'e2e'])('refuses a %s build', (configuration) => {
+      recordBuildConfiguration(dist, configuration);
+
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        `Refusing to deploy a "${configuration}" build of Korbjäger`
+      );
+    });
+
+    it('refuses a build that recorded nothing', () => {
+      expect(() => assertDeployableBuild(dist)).toThrow(
+        'Refusing to deploy a "unknown" build of Korbjäger'
+      );
+    });
   });
 
   it('deploys the root config, not the file Nitro generates in the app', () => {
@@ -74,7 +129,7 @@ describe('the Firebase deploy', () => {
 
     expect(region).toBeDefined();
     expect(parallel).toBe(false);
-    expect(commands).toEqual([
+    expect(commands?.slice(1)).toEqual([
       `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
       'nx run korbjaeger:firebase deploy',
     ]);
