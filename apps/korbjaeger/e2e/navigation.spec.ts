@@ -3,6 +3,8 @@ import { expect, test } from './fixtures/pages.fixture';
 /** In the fixtures, MTV Wasbüttel's Spiele; it beat MTV Gifhorn 78:47. */
 const MTV_WASBUETTEL = 313036;
 const TEAM = 'MTV Wasbüttel';
+/** How the Spiel names the Team, which the Spiel page's breadcrumb shows. */
+const TEAM_AS_SPIEL_NAMES_IT = 'MTV Wasbüttel -RST-';
 const GAST = 'MTV Gifhorn';
 
 test.describe('Title bar', () => {
@@ -27,10 +29,14 @@ test.describe('Title bar', () => {
     await expect(titleBar.levels).toHaveText(['Korbjäger', TEAM]);
     await teamPage.spielGegen(GAST).click();
     await expect(page).toHaveURL(/\/spiel\/2861436$/);
-    await expect(titleBar.levels).toHaveText(['Korbjäger', TEAM, 'Spiel']);
+    await expect(titleBar.levels).toHaveText([
+      'Korbjäger',
+      TEAM_AS_SPIEL_NAMES_IT,
+      'Spiel',
+    ]);
     await expect(titleBar.current).toHaveText('Spiel');
 
-    await titleBar.level(TEAM).click();
+    await titleBar.level(TEAM_AS_SPIEL_NAMES_IT).click();
     await expect(page).toHaveURL(new RegExp(`/team/${MTV_WASBUETTEL}$`));
     await titleBar.level('Korbjäger').click();
     await expect(page).toHaveURL(/\/$/);
@@ -66,7 +72,9 @@ test.describe('Title bar', () => {
     await titleBar.back.click();
 
     await expect(page).toHaveURL(/\/$/);
-    await expect(titleBar.back).toBeDisabled();
+    // up is a new entry, so back returns to the Team
+    await titleBar.back.click();
+    await expect(teamPage.heading).toHaveText(TEAM);
   });
 
   test('has neither back nor forward on the overview opened directly', async ({
