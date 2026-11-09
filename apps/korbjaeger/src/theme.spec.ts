@@ -1,7 +1,6 @@
 // @vitest-environment node
-import { readdirSync, readFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { readFileSync } from 'node:fs';
+import { appQuellen, INLINE_TEMPLATE, treffer } from './testing/app-quellen';
 
 /**
  * The look is set once, in `styles.scss` (#2918): the components take their
@@ -10,7 +9,6 @@ import { fileURLToPath } from 'node:url';
  * dark mode reach every screen.
  */
 
-const APP = fileURLToPath(new URL('./app', import.meta.url));
 const GLOBALE_STILE = readFileSync(
   new URL('./styles.scss', import.meta.url),
   'utf8'
@@ -18,7 +16,6 @@ const GLOBALE_STILE = readFileSync(
 
 /** A component's inline styles: one template literal, or an array of them. */
 const INLINE_STILE = /\bstyles:\s*(`[\s\S]*?`|\[[\s\S]*?\])/g;
-const INLINE_TEMPLATE = /\btemplate:\s*`([\s\S]*?)`/g;
 /** A style set in a template: `style="…"` or a `[style…]` binding. */
 const STIL_IM_TEMPLATE = /\[?style(?:\.[\w-]+)*\]?\s*=\s*"([^"]*)"/g;
 
@@ -33,10 +30,6 @@ const FARBE = new RegExp(
 );
 
 const KORB_TOKEN = /var\(\s*(--korb-[\w-]+)/g;
-
-function treffer(text: string, muster: RegExp): string[] {
-  return [...text.matchAll(muster)].map((treffer) => treffer[1]);
-}
 
 /** Styles a template sets on its elements. */
 function stileImTemplate(template: string): string[] {
@@ -60,25 +53,13 @@ function stileIn(pfad: string, inhalt: string): string[] {
   ];
 }
 
-function quelldateien(ordner: string): string[] {
-  return readdirSync(ordner, { withFileTypes: true }).flatMap((eintrag) => {
-    const pfad = join(ordner, eintrag.name);
-    if (eintrag.isDirectory()) {
-      return quelldateien(pfad);
-    }
-    const istQuelle =
-      /\.(ts|scss|html)$/.test(eintrag.name) &&
-      !eintrag.name.endsWith('.spec.ts');
-    return istQuelle ? [pfad] : [];
-  });
-}
-
 /** Every component style of the app, with the file it is in, read once. */
-const APP_STILE = quelldateien(APP).flatMap((pfad) =>
-  stileIn(pfad, readFileSync(pfad, 'utf8')).map((stil) => ({
-    datei: relative(APP, pfad),
-    stil: stil.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''),
-  }))
+const APP_STILE = appQuellen(['ts', 'scss', 'html']).flatMap(
+  ({ datei, inhalt }) =>
+    stileIn(datei, inhalt).map((stil) => ({
+      datei,
+      stil: stil.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, ''),
+    }))
 );
 
 function farbenIn(stil: string): string[] {
@@ -99,14 +80,9 @@ describe('the look', () => {
   });
 
   it('defines in styles.scss every app token a component uses', () => {
-    const definiert = new Set(
-      [...GLOBALE_STILE.matchAll(/(--korb-[\w-]+)\s*:/g)].map(
-        (treffer) => treffer[1]
-      )
-    );
+    const definiert = new Set(treffer(GLOBALE_STILE, /(--korb-[\w-]+)\s*:/g));
     const fehlend = APP_STILE.flatMap(({ datei, stil }) =>
-      [...stil.matchAll(KORB_TOKEN)]
-        .map((treffer) => treffer[1])
+      treffer(stil, KORB_TOKEN)
         .filter((token) => !definiert.has(token))
         .map((token) => `${datei}: ${token}`)
     );
@@ -128,7 +104,7 @@ describe('the look', () => {
     it.each([
       'white-space: nowrap;',
       'color: var(--mat-sys-primary);',
-      'background: var(--korb-sieg-container);',
+      'border-width: var(--korb-linie-breite);',
       'grid-template-columns: 1fr auto;',
     ])('lets %s pass', (stil) => {
       expect(farbenIn(stil)).toEqual([]);

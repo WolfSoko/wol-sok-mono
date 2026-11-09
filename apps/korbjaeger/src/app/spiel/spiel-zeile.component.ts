@@ -94,22 +94,23 @@ import type { SpielZeile } from './spiel-zeile';
     }
     .ergebnis {
       font: var(--mat-sys-title-large);
+      font-weight: var(--mat-sys-title-large-weight);
       font-variant-numeric: tabular-nums;
     }
     .ausgang-marke {
       padding: 0.125rem 0.5rem;
-      border-radius: var(--korb-marke-rundung);
+      border-radius: var(--mat-sys-corner-extra-small);
       font: var(--mat-sys-label-large);
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
     .sieg {
-      background: var(--korb-sieg-container);
-      color: var(--korb-sieg-on-container);
+      background: var(--mat-sys-primary);
+      color: var(--mat-sys-on-primary);
     }
     .niederlage {
-      background: var(--korb-niederlage-container);
-      color: var(--korb-niederlage-on-container);
+      background: var(--mat-sys-surface-container-highest);
+      color: var(--mat-sys-on-surface);
     }
     .markierung {
       --mat-chip-elevated-container-color: var(--mat-sys-error-container);

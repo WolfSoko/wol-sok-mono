@@ -94,9 +94,14 @@ export function seiteVon(spiel: Spiel, team: TeamId): SpielSeite | undefined {
   return istTeam(spiel.gast, team) ? 'gast' : undefined;
 }
 
+/** The side opposite `seite`. */
+export function andereSeite(seite: SpielSeite): SpielSeite {
+  return seite === 'heim' ? 'gast' : 'heim';
+}
+
 /** Who plays against `seite`. */
 export function gegnerVon(spiel: Spiel, seite: SpielSeite): SpielPartei {
-  return seite === 'heim' ? spiel.gast : spiel.heim;
+  return spiel[andereSeite(seite)];
 }
 
 /** The final points of `spiel`, once there are any (a forfeit may have). */
@@ -145,8 +150,7 @@ export function ausgangVon(
   if (!ergebnis || ergebnis.heim === ergebnis.gast) {
     return undefined;
   }
-  const gegenseite = seite === 'heim' ? 'gast' : 'heim';
-  return ergebnis[seite] > ergebnis[gegenseite] ? 'sieg' : 'niederlage';
+  return ergebnis[seite] > ergebnis[andereSeite(seite)] ? 'sieg' : 'niederlage';
 }
 
 /** Whether `spiel` is decided: played with a result, or forfeited. */
