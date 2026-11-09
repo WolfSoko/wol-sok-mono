@@ -31,8 +31,8 @@ export interface AppQuelle {
 
 /**
  * The files below `src/app/` and the app's own libs (`EIGENE_LIB_ORDNER`)
- * whose names end in one of `endungen` (`ts`, `html`, `scss`), specs and
- * emulator tests left out, read.
+ * whose names end in one of `endungen` (`ts`, `html`, `scss`), specs, emulator
+ * tests and test setups left out, read.
  */
 export function appQuellen(endungen: readonly string[]): AppQuelle[] {
   const endung = new RegExp(`\\.(${endungen.join('|')})$`);
@@ -46,7 +46,10 @@ export function appQuellen(endungen: readonly string[]): AppQuelle[] {
 
 function quellenIn(ordner: string, basis: string, endung: RegExp): AppQuelle[] {
   return dateienIn(ordner)
-    .filter((pfad) => endung.test(pfad) && !/\.(spec|emulator)\.ts$/.test(pfad))
+    .filter(
+      (pfad) =>
+        endung.test(pfad) && !/(\.(spec|emulator)|test-setup)\.ts$/.test(pfad)
+    )
     .map((pfad) => ({
       datei: relative(basis, pfad),
       inhalt: readFileSync(pfad, 'utf8'),
