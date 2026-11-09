@@ -153,6 +153,110 @@ describe('FirestoreAuswahl', () => {
     });
   });
 
+  describe('offline on one device while another changes the document', () => {
+    const OTTO = { art: 'benannt', personId: 4712 } as const;
+
+    /** Device A, which goes offline, and device B, online throughout. */
+    async function zweiGeraete(uid: string) {
+      const firestore = alsGeraet(regelProjekt, uid);
+      let online = true;
+      const a = await oeffnen(uid, { istOnline: () => online }, firestore);
+      const b = await oeffnen(uid);
+      return {
+        a,
+        b,
+        offline: async () => {
+          await disableNetwork(firestore);
+          online = false;
+        },
+        wiederOnline: async () => {
+          await enableNetwork(firestore);
+          online = true;
+          await waitForPendingWrites(firestore).catch(() => undefined);
+          await zuhoeren();
+        },
+      };
+    }
+
+    it('keeps the Team each of them follows', async () => {
+      const uid = 'offline-zwei-teams';
+      const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
+      await a.folgen(313036);
+      await offline();
+
+      await a.folgen(201500);
+      await b.folgen(201765);
+      await wiederOnline();
+
+      expect(await gespeichert(regelProjekt, uid)).toEqual({
+        version: 1,
+        teams: [313036, 201765, 201500],
+        kinder: [],
+      });
+      expect(a.teams()).toEqual([313036, 201765, 201500]);
+    });
+
+    it('keeps the Kind each of them marks, and a Spitzname changed offline', async () => {
+      const uid = 'offline-zwei-kinder';
+      const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
+      await a.markieren(MIMI, 'Mimi');
+      await offline();
+
+      await a.spitznameSetzen(MIMI.personId, 'Mi');
+      await b.markieren(OTTO);
+      await wiederOnline();
+
+      expect(await gespeichert(regelProjekt, uid)).toEqual({
+        version: 1,
+        teams: [],
+        kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mi' }],
+      });
+    });
+
+    it('keeps what the other adds when one removes offline', async () => {
+      const uid = 'offline-entfernen';
+      const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
+      await a.folgen(313036);
+      await a.markieren(MIMI);
+      await offline();
+
+      await a.entfolgen(313036);
+      await a.entmarkieren(MIMI.personId);
+      await b.folgen(201765);
+      await b.markieren(OTTO);
+      await wiederOnline();
+
+      expect(await gespeichert(regelProjekt, uid)).toEqual({
+        version: 1,
+        teams: [201765],
+        kinder: [{ personId: 4712 }],
+      });
+    });
+
+    it('refuses, rather than cuts, a Team the other filled the last place for', async () => {
+      const uid = 'offline-voll';
+      const vorher = Array.from({ length: 49 }, (_, i) => 300000 + i);
+      await vorhanden(regelProjekt, uid, {
+        version: 1,
+        teams: vorher,
+        kinder: [],
+      });
+      const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
+      await offline();
+
+      await a.folgen(201500);
+      await b.folgen(201765);
+      await wiederOnline();
+
+      expect(await gespeichert(regelProjekt, uid)).toEqual({
+        version: 1,
+        teams: [...vorher, 201765],
+        kinder: [],
+      });
+      expect(a.teams()).toEqual([...vorher, 201765]);
+    });
+  });
+
   it('keeps the changes two devices make at the same time', async () => {
     const uid = 'zwei-geraete';
     const erstes = await oeffnen(uid);

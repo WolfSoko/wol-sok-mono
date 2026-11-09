@@ -1,13 +1,15 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
+  arrayRemove,
+  arrayUnion,
   doc,
   type DocumentReference,
   type Firestore,
   onSnapshot,
   runTransaction,
-  setDoc,
   type Unsubscribe,
+  writeBatch,
 } from 'firebase/firestore';
 import type { Auswahl } from './auswahl';
 import {
@@ -65,11 +67,15 @@ export interface FirestoreAuswahlOptionen {
  * - Changes run one after another. Online each runs in a transaction on
  *   the server's document, which Firestore runs again where another device
  *   changed it meanwhile, so no change is lost; it shows at once and is
- *   taken back where it fails. Offline each runs on the document as the
- *   device holds it (its own changes not yet sent included), shows at once
- *   and is sent once online; where the device never knew the document, it
- *   is refused (`AuswahlOfflineUnbekanntError`), as it could overwrite the
- *   account's.
+ *   taken back where it fails. Offline each is checked on the document as
+ *   the device holds it (its own changes not yet sent included), shows at
+ *   once and is sent once online as what it adds to and takes from each
+ *   list (`arrayUnion`, `arrayRemove`), so the server merges it with what
+ *   other devices changed meanwhile; a Spitzname changed takes the old Kind
+ *   out and adds the new one at the end. Where the merge goes over a cap,
+ *   the rules refuse the write and the device's cache drops it. Where the
+ *   device never knew the document, a change is refused
+ *   (`AuswahlOfflineUnbekanntError`), as it could overwrite the account's.
  * - A change writes only the list it changes (with the version; both, one
  *   of them empty, into a new document): fields it does not know stay, and
  *   the rules check one list a write.
@@ -267,9 +273,12 @@ export class FirestoreAuswahl implements Auswahl {
     if (schritt === undefined) {
       return;
     }
-    const geschrieben = setDoc(this.dokument, schritt.teile, { merge: true });
+    const stapel = writeBatch(this.firestore);
+    for (const teile of feldAenderungen(gelesen, schritt.nachher)) {
+      stapel.set(this.dokument, teile, { merge: true });
+    }
     // sent once online; a refusal then rolls the cache back
-    geschrieben.catch(() => undefined);
+    stapel.commit().catch(() => undefined);
     this.ausgefuehrt.set(nachDemSchritt(gelesen, schritt));
   }
 
@@ -335,4 +344,79 @@ function nachDemSchritt(
       ...schritt.teile,
     },
   };
+}
+
+/**
+ * The writes that take `gelesen` to `nachher` as transforms the server
+ * applies to the document as it then is: first what leaves each list, then
+ * what joins it (a field takes one transform a write). The Kinder leaving
+ * are every stored entry not wanted as it is, duplicates of a person the
+ * reader skipped included.
+ */
+function feldAenderungen(
+  gelesen: GelesenesDokument,
+  nachher: AuswahlInhalt
+): readonly Readonly<Record<string, unknown>>[] {
+  const vorher = inhaltAus(gelesen);
+  const gespeicherteKinder = listeAus(
+    gelesen.art === 'aktuell' ? gelesen.roh['kinder'] : undefined
+  );
+  const neu = gelesen.art !== 'aktuell';
+  const raus = {
+    teams: vorher.teams.filter((team) => !nachher.teams.includes(team)),
+    kinder: gespeicherteKinder.filter(
+      (eintrag) => !nachher.kinder.some((kind) => istEintragVon(eintrag, kind))
+    ),
+  };
+  const rein = {
+    teams: nachher.teams.filter((team) => !vorher.teams.includes(team)),
+    kinder: nachher.kinder.filter(
+      (kind) =>
+        !gespeicherteKinder.some((eintrag) => istEintragVon(eintrag, kind))
+    ),
+  };
+  return [
+    transformiert(raus, arrayRemove, false),
+    // a new document gets both lists, as one without its Teams has none
+    transformiert(rein, arrayUnion, neu),
+  ].filter((teile) => teile !== undefined);
+}
+
+/** One write of `listen` through `transform`, or none where it changes none. */
+function transformiert(
+  listen: {
+    readonly teams: readonly unknown[];
+    readonly kinder: readonly unknown[];
+  },
+  transform: typeof arrayUnion,
+  jedeListe: boolean
+): Readonly<Record<string, unknown>> | undefined {
+  const teile = Object.fromEntries(
+    Object.entries(listen)
+      .filter(([, eintraege]) => jedeListe || eintraege.length > 0)
+      .map(([liste, eintraege]) => [liste, transform(...eintraege)])
+  );
+  return Object.keys(teile).length === 0
+    ? undefined
+    : { version: AUSWAHL_VERSION, ...teile };
+}
+
+function listeAus(gespeichert: unknown): readonly unknown[] {
+  return Array.isArray(gespeichert) ? gespeichert : [];
+}
+
+/**
+ * Whether the stored `eintrag` is `kind` as Firestore compares them: the
+ * same fields with the same values.
+ */
+function istEintragVon(eintrag: unknown, kind: Kind): boolean {
+  if (typeof eintrag !== 'object' || eintrag === null) {
+    return false;
+  }
+  const felder = eintrag as Readonly<Record<string, unknown>>;
+  return (
+    Object.keys(felder).length === Object.keys(kind).length &&
+    felder['personId'] === kind.personId &&
+    felder['spitzname'] === kind.spitzname
+  );
 }
