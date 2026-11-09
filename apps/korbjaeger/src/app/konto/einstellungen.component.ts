@@ -96,6 +96,11 @@ type Schritt = keyof typeof FEHLER;
             @if (uebrigText(); as text) {
               <p class="hinweis" data-qa="nicht-uebernommen">{{ text }}</p>
             }
+            @if (geraetBehalten()) {
+              <p class="hinweis" data-qa="geraet-behalten">
+                {{ GERAET_BEHALTEN }}
+              </p>
+            }
             @if (fehler(); as text) {
               <p class="fehler" role="alert">{{ text }}</p>
             }
@@ -107,11 +112,16 @@ type Schritt = keyof typeof FEHLER;
                   matButton="filled"
                   type="button"
                   data-qa="anmelden"
-                  [disabled]="beschaeftigt()"
+                  [disabled]="beschaeftigt() || !bereit()"
                   (click)="anmelden()"
                 >
                   Mit Google anmelden
                 </button>
+                @if (!bereit()) {
+                  <p class="hinweis" data-qa="anmeldung-vorbereiten">
+                    Anmeldung wird vorbereitet …
+                  </p>
+                }
               }
               @case ('angemeldet') {
                 <button
@@ -162,6 +172,12 @@ export class EinstellungenComponent {
   protected readonly beschaeftigt = signal(false);
   /** What of the device's choices did not fit into the account at sign-in. */
   protected readonly uebrigText = signal<string | undefined>(undefined);
+  /** Choices made during sign-in stayed on the device for the next start. */
+  protected readonly geraetBehalten = signal(false);
+  /** Firebase is loaded, so a click opens Google's popup at once. */
+  protected readonly bereit = this.sitzung.bereit;
+  protected readonly GERAET_BEHALTEN =
+    'Einige Änderungen kamen während der Anmeldung dazu. Sie bleiben auf diesem Gerät und kommen beim nächsten Öffnen der App in dein Konto.';
 
   public constructor() {
     // a failure shows when signing in, not before
@@ -177,9 +193,12 @@ export class EinstellungenComponent {
 
   protected anmelden(): Promise<void> {
     this.uebrigText.set(undefined);
-    return this.ausfuehren('anmelden', async () =>
-      this.uebrigText.set(nichtUebernommenText(await this.sitzung.anmelden()))
-    );
+    this.geraetBehalten.set(false);
+    return this.ausfuehren('anmelden', async () => {
+      const { uebrig, geraetBehalten } = await this.sitzung.anmelden();
+      this.uebrigText.set(nichtUebernommenText(uebrig));
+      this.geraetBehalten.set(geraetBehalten);
+    });
   }
 
   protected abmelden(): Promise<void> {

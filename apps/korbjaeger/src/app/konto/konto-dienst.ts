@@ -24,6 +24,8 @@ export interface KontoAuswahl extends Auswahl {
 export interface KontoDienst {
   /** The Elternteil Auth restored from the device, or `null`. */
   angemeldet(): Promise<Benutzer | null>;
+  /** The Elternteil Auth holds now, in this tab; `null` for none. */
+  jetzt(): Benutzer | null;
   /**
    * Calls `rueckruf` with the Elternteil whenever Auth's changes, also by
    * another tab of the app; returns how to stop.

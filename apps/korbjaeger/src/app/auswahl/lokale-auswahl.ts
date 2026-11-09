@@ -120,6 +120,16 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   /**
+   * Reads the stored selection now, not waiting for another tab's `storage`
+   * event, with the changes still `offen`: what a sign-in takes over.
+   */
+  public neuGelesen(): AuswahlInhalt {
+    this.anzeigen(this.lesen());
+    const { teams, kinder } = this.inhalt();
+    return { teams, kinder };
+  }
+
+  /**
    * Takes the selection off the device: once an account holds it (signed
    * in), or once the Elternteil signed out of it. Changes still `offen` go
    * with it; a newer version's selection stays, as this version never

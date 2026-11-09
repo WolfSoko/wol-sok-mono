@@ -1,6 +1,9 @@
 import { computed, signal, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from '../auswahl/auswahl';
+import { gleicheKinder } from '../auswahl/auswahl-aenderungen';
+import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
+import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
@@ -27,6 +30,17 @@ export type KontoStand =
   | { readonly art: 'laedt' }
   | { readonly art: 'angemeldet'; readonly name: string | null }
   | { readonly art: 'nicht-erreichbar' };
+
+/** What a sign-in ends with. */
+export interface AnmeldeErgebnis {
+  /** How many of the device's Teams and Kinder did not fit under the caps. */
+  readonly uebrig: NichtUebernommen;
+  /**
+   * Whether the device's choices stay on it: they kept changing while they
+   * were taken over, so the next start takes them over again.
+   */
+  readonly geraetBehalten: boolean;
+}
 
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
@@ -59,8 +73,14 @@ export class KontoSitzung {
   public readonly stand: Signal<KontoStand>;
   /** The screens' `Auswahl`: whichever holds Meine Teams and Kinder now. */
   public readonly auswahl: Auswahl;
+  /**
+   * Whether Firebase is loaded, so a click opens Google's popup at once:
+   * the settings offer the sign-in only then.
+   */
+  public readonly bereit: Signal<boolean>;
 
   private readonly zustand = signal<KontoStand>({ art: 'aus' });
+  private readonly geladen = signal(false);
   private readonly aktuell = signal<Auswahl | undefined>(undefined);
   private dienst?: KontoDienst;
   private dienstLaden?: Promise<KontoDienst>;
@@ -88,6 +108,7 @@ export class KontoSitzung {
       globalThis.navigator?.onLine ?? true
   ) {
     this.stand = this.zustand.asReadonly();
+    this.bereit = this.geladen.asReadonly();
     this.auswahl = new AktuelleAuswahl(
       this.aktuell,
       computed(() => this.zustand().art === 'nicht-erreichbar')
@@ -127,13 +148,13 @@ export class KontoSitzung {
    * not be taken over, it signs out again and rejects with that failure,
    * the device's choices kept.
    */
-  public anmelden(): Promise<NichtUebernommen> {
+  public anmelden(): Promise<AnmeldeErgebnis> {
     return this.einzeln('anmelden', async () => {
       const dienst = this.dienst ?? (await this.dienstHolen());
       const benutzer = await dienst.mitGoogleAnmelden();
-      let uebrig: NichtUebernommen;
+      let ergebnis: AnmeldeErgebnis;
       try {
-        uebrig = await this.uebernehmen(dienst, benutzer);
+        ergebnis = await this.uebernehmen(dienst, benutzer);
       } catch (fehler) {
         // the failure to report is the takeover's, whatever signing out
         // does; nothing the takeover read of the account stays
@@ -141,10 +162,9 @@ export class KontoSitzung {
         await dienst.zwischenspeicherLeeren();
         throw fehler;
       }
-      this.lokal.leeren();
       this.merker.setzen();
       await this.oeffnen(dienst, benutzer);
-      return uebrig;
+      return ergebnis;
     });
   }
 
@@ -203,6 +223,8 @@ export class KontoSitzung {
     }
     const lauf = tun().finally(() => {
       this.schritt = undefined;
+      // Auth's news while it ran was ignored: catch up with it now
+      this.abgleichen();
     });
     this.schritt = { art, lauf };
     return lauf;
@@ -210,24 +232,34 @@ export class KontoSitzung {
 
   /**
    * Takes the device's choices into the account, again where they changed
-   * meanwhile, so nothing chosen during the sign-in is lost.
+   * meanwhile (here or, read from the storage itself, in another tab), and
+   * then off the device; where they still changed during the last try, they
+   * stay on it (`geraetBehalten`), for the next start to take over.
    */
   private async uebernehmen(
     dienst: KontoDienst,
     benutzer: Benutzer
-  ): Promise<NichtUebernommen> {
+  ): Promise<AnmeldeErgebnis> {
     let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
     for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
-      const geraet = { teams: this.lokal.teams(), kinder: this.lokal.kinder() };
+      const geraet = this.lokal.neuGelesen();
       uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
-      if (
-        this.lokal.teams() === geraet.teams &&
-        this.lokal.kinder() === geraet.kinder
-      ) {
-        return uebrig;
+      if (gleicherInhalt(geraet, this.lokal.neuGelesen())) {
+        this.lokal.leeren();
+        return { uebrig, geraetBehalten: false };
       }
     }
-    return uebrig;
+    return { uebrig, geraetBehalten: true };
+  }
+
+  /**
+   * Once a step of this tab ended: where Auth's Elternteil is no longer the
+   * one shown (another tab signed out or in meanwhile), follows it.
+   */
+  private abgleichen(): void {
+    if (this.dienst !== undefined) {
+      this.authGeaendert(this.dienst.jetzt());
+    }
   }
 
   private async wiederOeffnen(): Promise<void> {
@@ -244,6 +276,10 @@ export class KontoSitzung {
         return;
       }
       await this.oeffnen(dienst, benutzer);
+      if (!istLeer(this.lokal.neuGelesen())) {
+        // a sign-in kept them, as they changed while it took them over
+        await this.uebernehmen(dienst, benutzer);
+      }
     } catch {
       // the account's choices stay unshown rather than the device's
       this.zustand.set({ art: 'nicht-erreichbar' });
@@ -257,6 +293,7 @@ export class KontoSitzung {
     this.dienstLaden ??= this.laden().then(
       (dienst) => {
         this.dienst = dienst;
+        this.geladen.set(true);
         dienst.beobachten((benutzer) => this.authGeaendert(benutzer));
         return dienst;
       },
@@ -306,7 +343,11 @@ export class KontoSitzung {
     dienst: KontoDienst,
     benutzer: Benutzer
   ): Promise<void> {
+    // nothing of the account before shows while the next one opens
     this.konto?.auswahl.beenden();
+    this.konto = undefined;
+    this.aktuell.set(undefined);
+    this.zustand.set({ art: 'laedt' });
     const auswahl = await dienst.auswahl(benutzer.uid, (fehler) =>
       this.lesenFehlgeschlagen(fehler)
     );
@@ -349,6 +390,14 @@ export class KontoSitzung {
     this.aktuell.set(this.lokal);
     this.zustand.set({ art });
   }
+}
+
+function gleicherInhalt(a: AuswahlInhalt, b: AuswahlInhalt): boolean {
+  return gleicheFolge(a.teams, b.teams) && gleicheKinder(a.kinder, b.kinder);
+}
+
+function istLeer(inhalt: AuswahlInhalt): boolean {
+  return inhalt.teams.length === 0 && inhalt.kinder.length === 0;
 }
 
 /** The `Auswahl` that holds the choices now; nothing while none does yet. */

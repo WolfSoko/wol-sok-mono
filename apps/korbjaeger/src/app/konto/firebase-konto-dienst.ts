@@ -109,6 +109,10 @@ class FirebaseKontoDienst implements KontoDienst {
     return benutzerAus(this.auth.currentUser);
   }
 
+  public jetzt(): Benutzer | null {
+    return benutzerAus(this.auth.currentUser);
+  }
+
   public beobachten(rueckruf: (benutzer: Benutzer | null) => void): () => void {
     return onAuthStateChanged(this.auth, (user) => rueckruf(benutzerAus(user)));
   }

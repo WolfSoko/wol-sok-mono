@@ -22,16 +22,20 @@ async function oeffnen(
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
     online?: () => boolean;
+    lokal?: LokaleAuswahl;
+    /** Holds Firebase's chunk back until it resolves. */
+    ladenWartetAuf?: Promise<void>;
   } = {}
 ): Promise<Seite> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
   let ladevorgaenge = 0;
   const sitzung = new KontoSitzung(
-    new LokaleAuswahl(undefined),
+    optionen.lokal ?? new LokaleAuswahl(undefined),
     optionen.ohneAnmeldung
       ? undefined
       : async () => {
           ladevorgaenge++;
+          await optionen.ladenWartetAuf;
           return dienst;
         },
     new MerkerImSpec(),
@@ -145,6 +149,42 @@ describe('EinstellungenComponent', () => {
 
     expect(fehler()).toBe(
       'Dein Browser hat das Fenster von Google blockiert. Erlaube Pop-ups für diese Seite und versuche es noch einmal.'
+    );
+  });
+
+  it('keeps the sign-in disabled, saying it is getting ready, until Firebase is loaded', async () => {
+    let geladen = (): void => undefined;
+    const ladenWartetAuf = new Promise<void>((weiter) => (geladen = weiter));
+    const { knopf, stabil, element } = await oeffnen({ ladenWartetAuf });
+
+    expect(knopf('anmelden')?.disabled).toBe(true);
+    expect(
+      element.querySelector('[data-qa="anmeldung-vorbereiten"]')
+    ).not.toBeNull();
+
+    geladen();
+    await stabil();
+
+    expect(knopf('anmelden')?.disabled).toBe(false);
+    expect(
+      element.querySelector('[data-qa="anmeldung-vorbereiten"]')
+    ).toBeNull();
+  });
+
+  it('says when choices made during sign-in stay on the device for the next start', async () => {
+    const dienst = new FakeKontoDienst();
+    const lokal = new LokaleAuswahl(undefined);
+    let team = 201500;
+    dienst.beiJederUebernahme = () => lokal.folgen(team++);
+    const { knopf, stabil, element } = await oeffnen({ dienst, lokal });
+
+    knopf('anmelden')?.click();
+    await stabil();
+
+    expect(
+      element.querySelector('[data-qa="geraet-behalten"]')?.textContent?.trim()
+    ).toBe(
+      'Einige Änderungen kamen während der Anmeldung dazu. Sie bleiben auf diesem Gerät und kommen beim nächsten Öffnen der App in dein Konto.'
     );
   });
 

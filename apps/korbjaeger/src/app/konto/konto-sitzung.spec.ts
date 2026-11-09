@@ -25,10 +25,11 @@ async function aufbauen(
     angemeldetGewesen?: boolean;
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
+    lokal?: LokaleAuswahl;
   } = {}
 ): Promise<Aufbau> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
-  const lokal = new LokaleAuswahl(undefined);
+  const lokal = optionen.lokal ?? new LokaleAuswahl(undefined);
   const merker = new MerkerImSpec(optionen.angemeldetGewesen);
   let ladevorgaenge = 0;
   const laden = async () => {
@@ -127,6 +128,15 @@ describe('KontoSitzung', () => {
   });
 
   describe('getting ready', () => {
+    it('is ready for the click once Firebase is loaded', async () => {
+      const { sitzung } = await aufbauen();
+      expect(sitzung.bereit()).toBe(false);
+
+      await sitzung.vorbereiten();
+
+      expect(sitzung.bereit()).toBe(true);
+    });
+
     it('loads Firebase once, ahead of the click', async () => {
       const { sitzung, geladen } = await aufbauen();
 
@@ -165,7 +175,10 @@ describe('KontoSitzung', () => {
       dienst.uebrig = { teams: 2, kinder: 1 };
       const { sitzung } = await aufbauen({ dienst });
 
-      expect(await sitzung.anmelden()).toEqual({ teams: 2, kinder: 1 });
+      expect(await sitzung.anmelden()).toEqual({
+        uebrig: { teams: 2, kinder: 1 },
+        geraetBehalten: false,
+      });
     });
 
     it("shows the account's choices once signed in", async () => {
@@ -222,6 +235,61 @@ describe('KontoSitzung', () => {
       ]);
       expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
       expect(lokal.teams()).toEqual([]);
+    });
+
+    it("keeps the device's choices where they changed during every takeover", async () => {
+      const { sitzung, dienst, lokal } = await aufbauen();
+      let team = 900000;
+      dienst.beiJederUebernahme = () => lokal.folgen(team++);
+
+      const ergebnis = await sitzung.anmelden();
+
+      expect(ergebnis.geraetBehalten).toBe(true);
+      expect(lokal.teams()?.length).toBeGreaterThan(0);
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+    });
+
+    it('takes over what another tab stored meanwhile, before its storage event', async () => {
+      const speicher = new Map<string, string>();
+      const geraet = {
+        getItem: (key: string) => speicher.get(key) ?? null,
+        setItem: (key: string, value: string) => void speicher.set(key, value),
+        removeItem: (key: string) => void speicher.delete(key),
+      };
+      const lokal = new LokaleAuswahl(geraet);
+      const dienst = new FakeKontoDienst();
+      const { sitzung } = await aufbauen({ dienst, lokal });
+      await lokal.folgen(313036);
+      dienst.waehrendUebernahme = async () => {
+        // another tab, its storage event not here yet
+        speicher.set(
+          'korbjaeger-auswahl',
+          JSON.stringify({ version: 1, teams: [313036, 201500], kinder: [] })
+        );
+      };
+
+      const ergebnis = await sitzung.anmelden();
+
+      expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
+      expect(ergebnis.geraetBehalten).toBe(false);
+      expect(lokal.teams()).toEqual([]);
+    });
+
+    it('takes the kept choices over at the next start', async () => {
+      const dienst = new FakeKontoDienst();
+      dienst.wiederhergestellt = MIMI_ELTERN;
+      const lokal = new LokaleAuswahl(undefined);
+      await lokal.folgen(201500);
+
+      const { sitzung } = await aufbauen({
+        angemeldetGewesen: true,
+        dienst,
+        lokal,
+      });
+
+      expect(dienst.uebernommen?.teams).toEqual([201500]);
+      expect(lokal.teams()).toEqual([]);
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
     });
 
     it('runs one sign-in at a time: a second click joins the first', async () => {
@@ -360,6 +428,41 @@ describe('KontoSitzung', () => {
       await abwarten();
 
       expect(dienst.aufrufe).toEqual(['beenden', 'auswahl uid-2']);
+      expect(sitzung.stand()).toEqual({
+        art: 'angemeldet',
+        name: 'Familie Beispiel',
+      });
+    });
+
+    it('follows a sign-out another tab made while its own popup was open', async () => {
+      const { sitzung, dienst } = await angemeldet();
+      dienst.abgebrochen = true;
+      dienst.waehrendPopup = () => {
+        dienst.wiederhergestellt = null;
+        dienst.authMeldet(null);
+      };
+
+      await expect(sitzung.loeschen()).rejects.toBeInstanceOf(
+        AnmeldungAbgebrochen
+      );
+      await abwarten();
+
+      expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
+      expect(sitzung.auswahl.teams()).toEqual([]);
+    });
+
+    it("shows nothing of the old account while the new one's opens", async () => {
+      const { sitzung, dienst } = await angemeldet();
+      const { promise, resolve } = Promise.withResolvers<void>();
+      dienst.auswahlBereit = promise;
+
+      dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
+      await abwarten();
+
+      expect(sitzung.auswahl.teams()).toBeUndefined();
+      expect(sitzung.stand()).toEqual({ art: 'laedt' });
+      resolve();
+      await abwarten();
       expect(sitzung.stand()).toEqual({
         art: 'angemeldet',
         name: 'Familie Beispiel',

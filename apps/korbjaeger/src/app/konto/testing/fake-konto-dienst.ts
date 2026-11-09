@@ -34,6 +34,12 @@ export class FakeKontoDienst implements KontoDienst {
   public nichtGesendet = false;
   /** Runs while the takeover runs, as an Elternteil changing the device meanwhile. */
   public waehrendUebernahme?: () => Promise<void>;
+  /** Runs during every takeover, not just the next. */
+  public beiJederUebernahme?: () => Promise<void>;
+  /** Runs while a popup is open, as another tab acting meanwhile. */
+  public waehrendPopup?: () => void;
+  /** Holds `auswahl` back until it resolves. */
+  public auswahlBereit?: Promise<void>;
   public uebernommen?: AuswahlInhalt;
   /** What the account's selection told of its failure (`auswahl`'s `beiFehler`). */
   public lesefehler?: (fehler: unknown) => void;
@@ -47,11 +53,16 @@ export class FakeKontoDienst implements KontoDienst {
 
   /** Auth's Elternteil changes, as when another tab signs in or out. */
   public authMeldet(benutzer: Benutzer | null): void {
+    this.wiederhergestellt = benutzer;
     this.zuhoerer.forEach((rueckruf) => rueckruf(benutzer));
   }
 
   public async angemeldet(): Promise<Benutzer | null> {
     this.aufrufe.push('angemeldet');
+    return this.wiederhergestellt;
+  }
+
+  public jetzt(): Benutzer | null {
     return this.wiederhergestellt;
   }
 
@@ -63,6 +74,7 @@ export class FakeKontoDienst implements KontoDienst {
   public async mitGoogleAnmelden(): Promise<Benutzer> {
     this.aufrufe.push('mitGoogleAnmelden');
     this.popupPruefen();
+    this.wiederhergestellt = MIMI_ELTERN;
     return MIMI_ELTERN;
   }
 
@@ -76,10 +88,12 @@ export class FakeKontoDienst implements KontoDienst {
     if (this.abmeldenScheitert) {
       throw new Error('Auth unreachable');
     }
+    this.wiederhergestellt = null;
   }
 
   public async benutzerLoeschen(): Promise<void> {
     this.aufrufe.push('benutzerLoeschen');
+    this.wiederhergestellt = null;
   }
 
   public async auswahl(
@@ -87,6 +101,7 @@ export class FakeKontoDienst implements KontoDienst {
     beiFehler: (fehler: unknown) => void
   ): Promise<KontoAuswahl> {
     this.aufrufe.push(`auswahl ${uid}`);
+    await this.auswahlBereit;
     this.lesefehler = beiFehler;
     return this.kontoAuswahl;
   }
@@ -102,6 +117,7 @@ export class FakeKontoDienst implements KontoDienst {
     const waehrend = this.waehrendUebernahme;
     this.waehrendUebernahme = undefined;
     await waehrend?.();
+    await this.beiJederUebernahme?.();
     this.uebernommen = geraet;
     return this.uebrig;
   }
@@ -123,6 +139,7 @@ export class FakeKontoDienst implements KontoDienst {
   }
 
   private popupPruefen(): void {
+    this.waehrendPopup?.();
     if (this.abgebrochen) {
       throw new AnmeldungAbgebrochen();
     }
@@ -147,6 +164,7 @@ export class MerkerImSpec implements AnmeldeMerker {
   public loeschen(): void {
     this.angemeldet = false;
   }
+
   public beobachten(rueckruf: () => void): () => void {
     this.zuhoerer.push(rueckruf);
     return () => undefined;

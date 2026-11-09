@@ -45,6 +45,27 @@ auswahlVertrag('local', () => {
 });
 
 describe('LokaleAuswahl', () => {
+  describe('neuGelesen', () => {
+    it('reads what another tab stored, before its storage event came', () => {
+      const geraet = new SpeicherImSpec();
+      const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+      geraet.setzeLeise(
+        AUSWAHL_SCHLUESSEL,
+        JSON.stringify({ version: 1, teams: [201500], kinder: [] })
+      );
+
+      expect(auswahl.neuGelesen()).toEqual({ teams: [201500], kinder: [] });
+      expect(auswahl.teams()).toEqual([201500]);
+    });
+
+    it('keeps the changes no write could store yet', async () => {
+      const auswahl = new LokaleAuswahl(undefined);
+      await auswahl.folgen(313036);
+
+      expect(auswahl.neuGelesen().teams).toEqual([313036]);
+    });
+  });
+
   describe('leeren', () => {
     it('takes Meine Teams and the Kinder off the device', async () => {
       const geraet = new SpeicherImSpec();
