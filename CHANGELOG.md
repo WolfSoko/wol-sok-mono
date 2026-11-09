@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.156.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.155.0...v74.156.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** mark unconfirmed results as vorläufig ([#2934](https://github.com/WolfSoko/wol-sok-mono/issues/2934)) ([4ca027f](https://github.com/WolfSoko/wol-sok-mono/commit/4ca027f7392ae14ec56cda6c978f4f7d37494eff)), closes [#2923](https://github.com/WolfSoko/wol-sok-mono/issues/2923)
+
 ## [74.155.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.154.0...v74.155.0) (2026-11-09)
 
 ### Features
