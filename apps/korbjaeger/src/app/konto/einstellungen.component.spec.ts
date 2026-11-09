@@ -188,6 +188,20 @@ describe('EinstellungenComponent', () => {
     expect(knopf('anmelden')).not.toBeNull();
   });
 
+  it('keeps the account where its changes have not been sent, and says so', async () => {
+    const dienst = new FakeKontoDienst();
+    const seite = await angemeldet(dienst);
+    dienst.nichtGesendet = true;
+
+    seite.knopf('abmelden')?.click();
+    await seite.stabil();
+
+    expect(seite.fehler()).toBe(
+      'Noch sind nicht alle Änderungen bei deinem Konto angekommen. Melde dich ab, sobald du wieder online bist.'
+    );
+    expect(seite.knopf('abmelden')).not.toBeNull();
+  });
+
   it('deletes the account once confirmed: Google asked first, then its document', async () => {
     const { knopf, stabil, dienst } = await angemeldet();
 
@@ -201,6 +215,7 @@ describe('EinstellungenComponent', () => {
       'auswahlLoeschen uid-1',
       'benutzerLoeschen',
     ]);
+    expect(document.querySelector('korb-konto-loeschen-dialog')).toBeNull();
     expect(knopf('anmelden')).not.toBeNull();
   });
 
@@ -213,6 +228,7 @@ describe('EinstellungenComponent', () => {
     await stabil();
 
     expect(dienst.aufrufe).toEqual([]);
+    expect(document.querySelector('korb-konto-loeschen-dialog')).toBeNull();
     expect(knopf('abmelden')).not.toBeNull();
   });
 

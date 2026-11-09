@@ -21,13 +21,32 @@ interface FirebaseConfig {
 interface ProjectJson {
   targets: Record<
     string,
-    { options: { command?: string; commands?: string[]; parallel?: boolean } }
+    {
+      options: { command?: string; commands?: string[]; parallel?: boolean };
+      dependsOn?: unknown[];
+      configurations?: Record<string, unknown>;
+      defaultConfiguration?: string;
+    }
   >;
 }
 
 const config = workspaceJson<FirebaseConfig>('firebase.korbjaeger.json');
 
 describe('the Firebase deploy', () => {
+  // a development or e2e build offers the sign-in and talks to the local
+  // emulators (environment.ts): only a production build may go live
+  it('deploys only a production build', () => {
+    const { targets } = workspaceJson<ProjectJson>(
+      'apps/korbjaeger/project.json'
+    );
+
+    expect(targets['deploy'].dependsOn).toEqual(['build']);
+    // without configurations of its own, its build runs the default one
+    expect(targets['deploy'].configurations).toBeUndefined();
+    expect(targets['build'].defaultConfiguration).toBe('production');
+    expect(targets['build-app'].defaultConfiguration).toBe('production');
+  });
+
   it('deploys the root config, not the file Nitro generates in the app', () => {
     // apps/korbjaeger/firebase.json is Nitro's, with a placeholder site
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');

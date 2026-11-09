@@ -15,6 +15,7 @@ import { KONTO_SITZUNG } from './konto';
 import { nichtUebernommenText } from './nicht-uebernommen-text';
 import {
   AnmeldungAbgebrochen,
+  NichtAllesGesendet,
   OhneInternet,
   PopupBlockiert,
 } from './konto-dienst';
@@ -35,6 +36,9 @@ const POPUP_BLOCKIERT =
 
 const LOESCHEN_OHNE_INTERNET =
   'Ohne Internet lässt sich das Konto nicht löschen. Bitte versuche es mit Internet noch einmal.';
+
+const NICHT_ALLES_GESENDET =
+  'Noch sind nicht alle Änderungen bei deinem Konto angekommen. Melde dich ab, sobald du wieder online bist.';
 
 const LOESCHEN_ABGEBROCHEN =
   'Das Konto ist nicht gelöscht: Die Bestätigung bei Google wurde abgebrochen.';
@@ -220,6 +224,9 @@ function fehlerText(schritt: Schritt, fehler: unknown): string | undefined {
   }
   if (fehler instanceof OhneInternet) {
     return LOESCHEN_OHNE_INTERNET;
+  }
+  if (fehler instanceof NichtAllesGesendet) {
+    return NICHT_ALLES_GESENDET;
   }
   return fehler instanceof AuswahlZuNeuError
     ? auswahlFehlerText(fehler)

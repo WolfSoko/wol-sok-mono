@@ -5,6 +5,7 @@ import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
 import type { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import {
+  NichtAllesGesendet,
   OhneInternet,
   type Benutzer,
   type KontoAuswahl,
@@ -40,6 +41,12 @@ export interface AnmeldeMerker {
 const NICHT_ERLAUBT = 'permission-denied';
 
 /**
+ * How often a sign-in takes the device's choices over again where they
+ * changed while it did (the Elternteil, another tab).
+ */
+const UEBERNAHMEN_HOECHSTENS = 3;
+
+/**
  * The account of an Elternteil and the `Auswahl` that goes with it: the
  * device's (`LokaleAuswahl`) signed out, the account's (`KontoAuswahl`)
  * signed in. Firebase is loaded (`laden`) only to sign in (`vorbereiten`,
@@ -61,8 +68,12 @@ export class KontoSitzung {
     readonly benutzer: Benutzer;
     readonly auswahl: KontoAuswahl;
   };
-  /** Set while this tab signs in, out or deletes: Auth's news is its own then. */
-  private eigenerSchritt = false;
+  /**
+   * The sign-in, sign-out or deletion running in this tab: one at a time,
+   * a second call of the same joins it. Auth's news is this tab's own
+   * while one runs.
+   */
+  private schritt?: { readonly art: string; readonly lauf: Promise<unknown> };
 
   /**
    * @param laden loads Firebase; `undefined` where this build offers no
@@ -116,47 +127,44 @@ export class KontoSitzung {
    * not be taken over, it signs out again and rejects with that failure,
    * the device's choices kept.
    */
-  public async anmelden(): Promise<NichtUebernommen> {
-    this.eigenerSchritt = true;
-    try {
+  public anmelden(): Promise<NichtUebernommen> {
+    return this.einzeln('anmelden', async () => {
       const dienst = this.dienst ?? (await this.dienstHolen());
       const benutzer = await dienst.mitGoogleAnmelden();
       let uebrig: NichtUebernommen;
       try {
-        uebrig = await dienst.geraetUebernehmen(benutzer.uid, {
-          teams: this.lokal.teams(),
-          kinder: this.lokal.kinder(),
-        });
+        uebrig = await this.uebernehmen(dienst, benutzer);
       } catch (fehler) {
-        // the failure to report is the takeover's, whatever signing out does
+        // the failure to report is the takeover's, whatever signing out
+        // does; nothing the takeover read of the account stays
         await dienst.abmelden().catch(() => undefined);
+        await dienst.zwischenspeicherLeeren();
         throw fehler;
       }
       this.lokal.leeren();
       this.merker.setzen();
       await this.oeffnen(dienst, benutzer);
       return uebrig;
-    } finally {
-      this.eigenerSchritt = false;
-    }
+    });
   }
 
   /**
    * Signs out: the account's choices leave the device, the device's start
    * empty. Where Auth does not sign out, nothing changes.
    */
-  public async abmelden(): Promise<void> {
-    const { dienst, konto } = this;
-    if (dienst === undefined || konto === undefined) {
-      return;
-    }
-    this.eigenerSchritt = true;
-    try {
+  public abmelden(): Promise<void> {
+    return this.einzeln('abmelden', async () => {
+      const { dienst, konto } = this;
+      if (dienst === undefined || konto === undefined) {
+        return;
+      }
+      // signing out clears the device's copy: a change not yet sent would go
+      if (!(await dienst.allesGesendet())) {
+        throw new NichtAllesGesendet();
+      }
       await dienst.abmelden();
       await this.vomGeraetNehmen(dienst);
-    } finally {
-      this.eigenerSchritt = false;
-    }
+    });
   }
 
   /**
@@ -166,23 +174,60 @@ export class KontoSitzung {
    * offline with `OhneInternet`), then the account itself. Call it in the
    * click: the popup opens at once.
    */
-  public async loeschen(): Promise<void> {
-    const { dienst, konto } = this;
-    if (dienst === undefined || konto === undefined) {
-      return;
-    }
-    if (!this.istOnline()) {
-      throw new OhneInternet();
-    }
-    this.eigenerSchritt = true;
-    try {
+  public loeschen(): Promise<void> {
+    return this.einzeln('loeschen', async () => {
+      const { dienst, konto } = this;
+      if (dienst === undefined || konto === undefined) {
+        return;
+      }
+      if (!this.istOnline()) {
+        throw new OhneInternet();
+      }
       await dienst.erneutAnmelden();
       await dienst.auswahlLoeschen(konto.benutzer.uid);
       await dienst.benutzerLoeschen();
       await this.vomGeraetNehmen(dienst);
-    } finally {
-      this.eigenerSchritt = false;
+    });
+  }
+
+  /**
+   * Runs `tun` as this tab's one step: a call while the same step runs
+   * joins it, one while another runs is refused. `tun` starts at once, in
+   * the click, as its popup must.
+   */
+  private einzeln<T>(art: string, tun: () => Promise<T>): Promise<T> {
+    if (this.schritt !== undefined) {
+      return this.schritt.art === art
+        ? (this.schritt.lauf as Promise<T>)
+        : Promise.reject(new Error(`${this.schritt.art} läuft noch.`));
     }
+    const lauf = tun().finally(() => {
+      this.schritt = undefined;
+    });
+    this.schritt = { art, lauf };
+    return lauf;
+  }
+
+  /**
+   * Takes the device's choices into the account, again where they changed
+   * meanwhile, so nothing chosen during the sign-in is lost.
+   */
+  private async uebernehmen(
+    dienst: KontoDienst,
+    benutzer: Benutzer
+  ): Promise<NichtUebernommen> {
+    let uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
+    for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
+      const geraet = { teams: this.lokal.teams(), kinder: this.lokal.kinder() };
+      uebrig = await dienst.geraetUebernehmen(benutzer.uid, geraet);
+      if (
+        this.lokal.teams() === geraet.teams &&
+        this.lokal.kinder() === geraet.kinder
+      ) {
+        return uebrig;
+      }
+    }
+    return uebrig;
   }
 
   private async wiederOeffnen(): Promise<void> {
@@ -192,6 +237,8 @@ export class KontoSitzung {
       const dienst = await this.dienstHolen();
       const benutzer = await dienst.angemeldet();
       if (benutzer === null) {
+        // the marker goes last: a start that fails before clears again
+        await dienst.zwischenspeicherLeeren();
         this.merker.loeschen();
         this.aufDemGeraet('abgemeldet');
         return;
@@ -224,7 +271,7 @@ export class KontoSitzung {
 
   /** Auth's Elternteil changed: in another tab, or as the account went. */
   private authGeaendert(benutzer: Benutzer | null): void {
-    if (this.eigenerSchritt || this.dienst === undefined) {
+    if (this.schritt !== undefined || this.dienst === undefined) {
       return;
     }
     if (benutzer === null && this.konto !== undefined) {
@@ -241,7 +288,7 @@ export class KontoSitzung {
 
   /** Another tab set or cleared the `merker` (before Firebase is loaded here). */
   private async merkerGeaendert(): Promise<void> {
-    if (this.eigenerSchritt) {
+    if (this.schritt !== undefined) {
       return;
     }
     if (this.merker.gesetzt() && this.konto === undefined) {

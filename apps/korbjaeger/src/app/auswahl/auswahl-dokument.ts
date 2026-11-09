@@ -53,10 +53,11 @@ export type GelesenesDokument =
 const KEINS: GelesenesDokument = { art: 'keins' };
 
 /**
- * Tells what `gelesen`, a stored document, is. A document without a valid
- * list of Teams is none. Of its Kinder it keeps each entry it can read;
- * where the field is no list (missing, as before Kinder joined, or
- * malformed) it has none, the Teams kept all the same.
+ * Tells what `gelesen`, a stored document, is. Without Teams (a document
+ * holding only Kinder) it has none; with Teams that are no list of ids it
+ * is none. Of its Kinder it keeps each entry it can read; where the field
+ * is no list (missing, as before Kinder joined, or malformed) it has none,
+ * the Teams kept all the same.
  */
 export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (
@@ -71,12 +72,15 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (typeof version === 'number' && version > AUSWAHL_VERSION) {
     return { art: 'neuer' };
   }
-  if (version !== AUSWAHL_VERSION || !sindTeamIds(teams)) {
+  if (
+    version !== AUSWAHL_VERSION ||
+    (teams !== undefined && !sindTeamIds(teams))
+  ) {
     return KEINS;
   }
   return {
     art: 'aktuell',
-    teams: [...new Set(teams)],
+    teams: teams === undefined ? [] : [...new Set(teams)],
     kinder: Array.isArray(kinder)
       ? jedesKindEinmal(kinder.filter(istKind))
       : [],

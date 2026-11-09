@@ -14,6 +14,7 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import { AUSWAHL_GRENZEN } from './app/auswahl/auswahl-dokument';
+import { SPITZNAME_CODEPUNKTE, SPITZNAME_LAENGE } from './app/auswahl/kind';
 import {
   alsGeraet,
   APP_REGELN,
@@ -72,7 +73,10 @@ const kinderOhneNamen = (anzahl: number) =>
 
 /** Kinder, each with a Spitzname as long as the rules take. */
 const volleKinder = (anzahl: number) =>
-  zahlen(anzahl).map((personId) => ({ personId, spitzname: 'x'.repeat(120) }));
+  zahlen(anzahl).map((personId) => ({
+    personId,
+    spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE),
+  }));
 
 /** Documents the rules refuse, whether created or changed into. */
 const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
@@ -115,8 +119,13 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
     { version: 1, kinder: [{ personId: 4711, spitzname: 7 }] },
   ],
   [
-    'a Spitzname longer than 120',
-    { version: 1, kinder: [{ personId: 4711, spitzname: 'x'.repeat(121) }] },
+    'a Spitzname longer than the app keeps',
+    {
+      version: 1,
+      kinder: [
+        { personId: 4711, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
+      ],
+    },
   ],
   [
     'a name of the DBB beside a Kind',
@@ -183,6 +192,19 @@ describe('the Auswahl document', () => {
 
     // 50 Teams and 20 Kinder are more than one request may check (1000
     // expressions): the app writes one list at a time, as here
+    it('takes every Spitzname the app keeps, 30 of the longest emoji too', async () => {
+      const familie = '👨🏽‍👩🏽‍👧🏽‍👦🏽';
+
+      await assertSucceeds(
+        speichern({
+          version: 1,
+          kinder: [
+            { personId: 4711, spitzname: familie.repeat(SPITZNAME_LAENGE) },
+          ],
+        })
+      );
+    });
+
     it('takes both lists full, one list per write', async () => {
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 

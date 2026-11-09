@@ -88,12 +88,13 @@ service cloud.firestore {
   }
 
   // A Kind is its person id and, optionally, the Spitzname the app keeps to
-  // 30 characters (an emoji as one), here at most 120 characters; a regular
+  // 30 characters (an emoji as one), here at most 330 code points
+  // (SPITZNAME_CODEPUNKTE in kind.ts: 30 of the longest emoji); a regular
   // expression, as it costs fewer expressions than a type and a size check,
   // and fails on anything but text.
   function istKind(kind) {
     return kind.keys().hasOnly(["personId", "spitzname"])
       && kind.personId is int && kind.personId > 0
-      && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,120}"));
+      && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,330}"));
   }
 }

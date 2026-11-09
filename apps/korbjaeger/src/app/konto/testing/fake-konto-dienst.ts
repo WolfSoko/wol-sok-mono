@@ -30,6 +30,10 @@ export class FakeKontoDienst implements KontoDienst {
   public abmeldenScheitert = false;
   public loeschenOhneServer = false;
   public uebrig: NichtUebernommen = { teams: 0, kinder: 0 };
+  /** Changes on the device not yet sent to the account (offline). */
+  public nichtGesendet = false;
+  /** Runs while the takeover runs, as an Elternteil changing the device meanwhile. */
+  public waehrendUebernahme?: () => Promise<void>;
   public uebernommen?: AuswahlInhalt;
   /** What the account's selection told of its failure (`auswahl`'s `beiFehler`). */
   public lesefehler?: (fehler: unknown) => void;
@@ -95,6 +99,9 @@ export class FakeKontoDienst implements KontoDienst {
     if (this.uebernahmeScheitert) {
       throw new Error('offline');
     }
+    const waehrend = this.waehrendUebernahme;
+    this.waehrendUebernahme = undefined;
+    await waehrend?.();
     this.uebernommen = geraet;
     return this.uebrig;
   }
@@ -104,6 +111,11 @@ export class FakeKontoDienst implements KontoDienst {
     if (this.loeschenOhneServer) {
       throw new OhneInternet();
     }
+  }
+
+  public async allesGesendet(): Promise<boolean> {
+    this.aufrufe.push('allesGesendet');
+    return !this.nichtGesendet;
   }
 
   public async zwischenspeicherLeeren(): Promise<void> {

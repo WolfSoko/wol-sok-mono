@@ -187,6 +187,21 @@ export function auswahlVertrag(
       });
     });
 
+    it('reads Kinder stored without Teams, and keeps them when following', async () => {
+      await speicher.schreibeRoh({ version: 1, kinder: [{ personId: 4711 }] });
+      const auswahl = await speicher.oeffnen();
+
+      expect(auswahl.teams()).toEqual([]);
+      expect(auswahl.kinder()).toEqual([{ personId: 4711 }]);
+
+      await auswahl.folgen(MTV_WASBUETTEL);
+      expect(await speicher.liesRoh()).toEqual({
+        version: 1,
+        teams: [MTV_WASBUETTEL],
+        kinder: [{ personId: 4711 }],
+      });
+    });
+
     it('reads Meine Teams stored before Kinder joined, with no Kind', async () => {
       await speicher.schreibeRoh({ version: 1, teams: [MTV_GIFHORN] });
 

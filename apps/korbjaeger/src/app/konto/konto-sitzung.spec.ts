@@ -1,5 +1,9 @@
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { AnmeldungAbgebrochen, OhneInternet } from './konto-dienst';
+import {
+  AnmeldungAbgebrochen,
+  NichtAllesGesendet,
+  OhneInternet,
+} from './konto-dienst';
 import { KontoSitzung } from './konto-sitzung';
 import {
   FakeKontoDienst,
@@ -97,11 +101,14 @@ describe('KontoSitzung', () => {
       expect(dienst.aufrufe).toEqual(['angemeldet', 'auswahl uid-1']);
     });
 
-    it('goes back to the device where Auth holds the Elternteil no longer', async () => {
-      const { sitzung, merker } = await aufbauen({ angemeldetGewesen: true });
+    it('goes back to the device where Auth holds the Elternteil no longer, its cache cleared first', async () => {
+      const { sitzung, merker, dienst } = await aufbauen({
+        angemeldetGewesen: true,
+      });
 
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
       expect(merker.gesetzt()).toBe(false);
+      expect(dienst.aufrufe).toEqual(['angemeldet', 'zwischenspeicherLeeren']);
     });
 
     it("says it cannot read, and shows no device's choices, while the account cannot be opened", async () => {
@@ -193,10 +200,38 @@ describe('KontoSitzung', () => {
         'mitGoogleAnmelden',
         'geraetUebernehmen uid-1',
         'abmelden',
+        'zwischenspeicherLeeren',
       ]);
       expect(lokal.teams()).toEqual([313036]);
       expect(merker.gesetzt()).toBe(false);
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
+    });
+
+    it('takes over what changed on the device while it took over', async () => {
+      const { sitzung, dienst, lokal } = await aufbauen();
+      await lokal.folgen(313036);
+      dienst.waehrendUebernahme = () => lokal.folgen(201500);
+
+      await sitzung.anmelden();
+
+      expect(dienst.aufrufe).toEqual([
+        'mitGoogleAnmelden',
+        'geraetUebernehmen uid-1',
+        'geraetUebernehmen uid-1',
+        'auswahl uid-1',
+      ]);
+      expect(dienst.uebernommen?.teams).toEqual([313036, 201500]);
+      expect(lokal.teams()).toEqual([]);
+    });
+
+    it('runs one sign-in at a time: a second click joins the first', async () => {
+      const { sitzung, dienst } = await aufbauen();
+
+      await Promise.all([sitzung.anmelden(), sitzung.anmelden()]);
+
+      expect(
+        dienst.aufrufe.filter((aufruf) => aufruf === 'mitGoogleAnmelden')
+      ).toHaveLength(1);
     });
 
     it("reports the takeover's failure even where signing out again fails too", async () => {
@@ -215,6 +250,7 @@ describe('KontoSitzung', () => {
       await sitzung.abmelden();
 
       expect(dienst.aufrufe).toEqual([
+        'allesGesendet',
         'abmelden',
         'beenden',
         'zwischenspeicherLeeren',
@@ -225,13 +261,26 @@ describe('KontoSitzung', () => {
       expect(merker.gesetzt()).toBe(false);
     });
 
+    it('refuses while changes have not reached the account, nothing changed', async () => {
+      const { sitzung, dienst, merker } = await angemeldet();
+      dienst.nichtGesendet = true;
+
+      await expect(sitzung.abmelden()).rejects.toBeInstanceOf(
+        NichtAllesGesendet
+      );
+
+      expect(dienst.aufrufe).toEqual(['allesGesendet']);
+      expect(sitzung.stand()).toEqual(ANGEMELDET);
+      expect(merker.gesetzt()).toBe(true);
+    });
+
     it('stays signed in, the account open, where Auth does not sign out', async () => {
       const { sitzung, dienst, merker } = await angemeldet();
       dienst.abmeldenScheitert = true;
 
       await expect(sitzung.abmelden()).rejects.toThrow('Auth unreachable');
 
-      expect(dienst.aufrufe).toEqual(['abmelden']);
+      expect(dienst.aufrufe).toEqual(['allesGesendet', 'abmelden']);
       expect(sitzung.stand()).toEqual(ANGEMELDET);
       expect(sitzung.auswahl.teams()).toBe(dienst.kontoAuswahl.teams());
       expect(merker.gesetzt()).toBe(true);
@@ -302,6 +351,19 @@ describe('KontoSitzung', () => {
       expect(sitzung.auswahl.teams()).toEqual([]);
       expect(merker.gesetzt()).toBe(false);
       expect(dienst.aufrufe).toEqual(['beenden', 'zwischenspeicherLeeren']);
+    });
+
+    it('switches to the account another tab signed in to instead', async () => {
+      const { sitzung, dienst } = await angemeldet();
+
+      dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
+      await abwarten();
+
+      expect(dienst.aufrufe).toEqual(['beenden', 'auswahl uid-2']);
+      expect(sitzung.stand()).toEqual({
+        art: 'angemeldet',
+        name: 'Familie Beispiel',
+      });
     });
 
     it('follows a sign-in in another tab, once Firebase is loaded here', async () => {

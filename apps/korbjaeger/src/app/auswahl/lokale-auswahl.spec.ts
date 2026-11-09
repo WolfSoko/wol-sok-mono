@@ -60,6 +60,35 @@ describe('LokaleAuswahl', () => {
       expect(new LokaleAuswahl(geraet).teams()).toEqual([]);
     });
 
+    it('stores an empty selection where the storage cannot remove one', async () => {
+      const geraet = new SpeicherImSpec();
+      const ohneEntfernen = {
+        getItem: (key: string) => geraet.getItem(key),
+        setItem: (key: string, value: string) => geraet.setItem(key, value),
+      };
+      const auswahl = new LokaleAuswahl(ohneEntfernen);
+      await auswahl.folgen(313036);
+
+      auswahl.leeren();
+
+      expect(new LokaleAuswahl(ohneEntfernen).teams()).toEqual([]);
+      await auswahl.folgen(201500);
+      expect(new LokaleAuswahl(ohneEntfernen).teams()).toEqual([201500]);
+    });
+
+    it("leaves a newer version's selection alone", () => {
+      const geraet = new SpeicherImSpec();
+      const neuer = JSON.stringify({ version: 2, teams: [313036] });
+      geraet.setzeLeise(AUSWAHL_SCHLUESSEL, neuer);
+
+      new LokaleAuswahl({
+        getItem: (key) => geraet.getItem(key),
+        setItem: (key, value) => geraet.setItem(key, value),
+      }).leeren();
+
+      expect(geraet.getItem(AUSWAHL_SCHLUESSEL)).toBe(neuer);
+    });
+
     it('drops the changes no write could store yet', async () => {
       const auswahl = new LokaleAuswahl(undefined);
       await auswahl.folgen(313036);

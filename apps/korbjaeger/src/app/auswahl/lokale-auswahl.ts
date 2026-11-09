@@ -121,14 +121,23 @@ export class LokaleAuswahl implements Auswahl {
 
   /**
    * Takes the selection off the device: once an account holds it (signed
-   * in), or once the Elternteil signed out of it. Changes still `offen`
-   * go with it.
+   * in), or once the Elternteil signed out of it. Changes still `offen` go
+   * with it; a newer version's selection stays, as this version never
+   * changes one. Where the storage removes nothing, an empty selection is
+   * stored in its place.
    */
   public leeren(): void {
     this.offen = [];
     this.inhalt.set(LEERE_AUSWAHL);
+    if (this.lesen().art === 'neuer') {
+      return;
+    }
     try {
-      this.speicher?.removeItem?.(AUSWAHL_SCHLUESSEL);
+      if (this.speicher?.removeItem) {
+        this.speicher.removeItem(AUSWAHL_SCHLUESSEL);
+      } else {
+        this.schreiben(auswahlDokumentMit(LEERE_AUSWAHL));
+      }
     } catch {
       // blocked: nothing was stored lastingly either
     }

@@ -60,6 +60,11 @@ export interface KontoDienst {
    */
   auswahlLoeschen(uid: string): Promise<void>;
   /**
+   * Whether every change made on the device reached the account: waits a
+   * few seconds for Firestore to send them, false where it could not.
+   */
+  allesGesendet(): Promise<boolean>;
+  /**
    * Stops Firestore and clears its copy of the account's data on the
    * device. Never rejects: where another tab still holds that copy, it is
    * cleared when the app opens next.
@@ -80,6 +85,14 @@ export class PopupBlockiert extends Error {
   public constructor() {
     super('Popup blockiert');
     this.name = 'PopupBlockiert';
+  }
+}
+
+/** Signing out would discard changes not yet sent to the account. */
+export class NichtAllesGesendet extends Error {
+  public constructor() {
+    super('Nicht alles gesendet');
+    this.name = 'NichtAllesGesendet';
   }
 }
 

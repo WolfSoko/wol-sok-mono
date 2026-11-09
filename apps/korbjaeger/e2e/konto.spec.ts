@@ -1,3 +1,4 @@
+import { hatAuswahl, uidVon } from './fixtures/emulatoren';
 import { EinstellungenPage } from './pos/einstellungen.page';
 import { StartPage } from './pos/start.page';
 import { TeamPage } from './pos/team.page';
@@ -70,6 +71,7 @@ test.describe('the account', () => {
 
   test('deletes the account and its choices', async ({
     page,
+    request,
     startPage,
     teamPage,
     einstellungenPage,
@@ -81,10 +83,16 @@ test.describe('the account', () => {
     const konto = neuesKonto('Beispiel');
     await einstellungenPage.anmeldenAls(konto, { neu: true });
     await expect(einstellungenPage.kontoName).toBeVisible();
+    const uid = await uidVon(request, konto.email);
+    expect(uid).toBeDefined();
+    expect(await hatAuswahl(request, uid as string)).toBe(true);
 
     await einstellungenPage.loeschen(konto);
 
     await expect(einstellungenPage.anmelden).toBeVisible();
+    // gone in the emulators too: the account and its document
+    expect(await uidVon(request, konto.email)).toBeUndefined();
+    expect(await hatAuswahl(request, uid as string)).toBe(false);
     await startPage.goto();
     await expect(startPage.leer).toBeVisible();
     await page.reload();

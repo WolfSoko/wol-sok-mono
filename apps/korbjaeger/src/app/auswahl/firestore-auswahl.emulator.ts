@@ -15,6 +15,7 @@ import {
   ohneRegeln,
   vorhanden,
 } from '../../testing/firestore-emulator';
+import { AuswahlOfflineUnbekanntError } from './auswahl-fehler';
 import { auswahlDokumentVon, FirestoreAuswahl } from './firestore-auswahl';
 import { auswahlVertrag } from './testing/auswahl-vertrag';
 
@@ -149,6 +150,63 @@ describe('FirestoreAuswahl', () => {
       version: 1,
       teams: [313036, 201500],
       kinder: [{ personId: 4711 }],
+    });
+  });
+
+  it('keeps the changes two devices make at the same time', async () => {
+    const uid = 'zwei-geraete';
+    const erstes = await oeffnen(uid);
+    const zweites = await oeffnen(uid);
+
+    await Promise.all([
+      erstes.folgen(313036),
+      zweites.folgen(201500),
+      erstes.markieren(MIMI),
+      zweites.folgen(201765),
+    ]);
+
+    const gespeicherteTeams = (
+      (await gespeichert(regelProjekt, uid)) as { teams: number[] }
+    ).teams;
+    expect([...gespeicherteTeams].sort((a, b) => a - b)).toEqual([
+      201500, 201765, 313036,
+    ]);
+  });
+
+  it('shows a change at once, before the server confirms it', async () => {
+    const uid = 'sofort';
+    const auswahl = await oeffnen(uid);
+    await auswahl.folgen(313036);
+
+    const gefolgt = auswahl.folgen(201500);
+
+    expect(auswahl.teams()).toEqual([313036, 201500]);
+    await gefolgt;
+  });
+
+  it('refuses a change offline where the device never knew the document', async () => {
+    const uid = 'nie-gelesen';
+    await vorhanden(regelProjekt, uid, {
+      version: 1,
+      teams: [313036],
+      kinder: [],
+    });
+    const firestore = alsGeraet(regelProjekt, uid);
+    await disableNetwork(firestore);
+    const auswahl = new FirestoreAuswahl(firestore, uid, {
+      istOnline: () => false,
+    });
+    offen.push(auswahl);
+    await auswahl.geladen();
+
+    await expect(auswahl.folgen(201500)).rejects.toBeInstanceOf(
+      AuswahlOfflineUnbekanntError
+    );
+    await enableNetwork(firestore);
+    expect(await gespeichert(regelProjekt, uid)).toEqual({
+      version: 1,
+      teams: [313036],
+      kinder: [],
     });
   });
 

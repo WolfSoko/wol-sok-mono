@@ -4,8 +4,8 @@ import {
   doc,
   type DocumentReference,
   type Firestore,
-  getDoc,
   onSnapshot,
+  runTransaction,
   setDoc,
   type Unsubscribe,
 } from 'firebase/firestore';
@@ -25,21 +25,18 @@ import {
 import {
   AUSWAHL_VERSION,
   auswahlDokumentLesen,
+  type AuswahlInhalt,
   type GelesenesDokument,
 } from './auswahl-dokument';
-import { AuswahlZuNeuError } from './auswahl-fehler';
+import {
+  AuswahlOfflineUnbekanntError,
+  AuswahlZuNeuError,
+} from './auswahl-fehler';
 import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
 /** The collection of the signed-in Elternteile's `AuswahlDokument`s, one per uid. */
 export const AUSWAHL_SAMMLUNG = 'auswahl';
-
-/**
- * How long a change waits for Firestore to confirm it, and a read before a
- * change for the server, before going on with what the device holds: a
- * network that seems up but answers nothing would hold them for good.
- */
-export const BESTAETIGUNG_WARTEN_MS = 3000;
 
 /** The document of the Elternteil `uid` in `firestore`. */
 export function auswahlDokumentVon(
@@ -51,8 +48,6 @@ export function auswahlDokumentVon(
 
 /** What `FirestoreAuswahl` takes beside its document. */
 export interface FirestoreAuswahlOptionen {
-  /** Waits `ms` (a timer); replaced in specs. */
-  readonly warten?: (ms: number) => Promise<void>;
   /** Whether the device has a network (`navigator.onLine`). */
   readonly istOnline?: () => boolean;
   /** Hears of the listener's failure, a refusal of the rules among them. */
@@ -67,16 +62,17 @@ export interface FirestoreAuswahlOptionen {
  *   changes too, until `beenden`); `teams` and `kinder` are `undefined`
  *   until the first answer (`geladen`). Where the listener fails, they stay
  *   so, `nichtLesbar` is set and `beiFehler` hears of it.
- * - Changes run one after another, each on the document as it is then:
- *   read from the server online, so it keeps what another device changed;
- *   offline (or once the server took `BESTAETIGUNG_WARTEN_MS`) as the
- *   device holds it, its own changes not yet sent included. Each writes
- *   only the list it changes (with the version; both, one of them empty,
- *   into a new document): fields it does not know stay, and the rules
- *   check one list a write.
- * - A change shows at once; it resolves once Firestore confirmed it, or
- *   offline at once and after `BESTAETIGUNG_WARTEN_MS` at most, and is
- *   sent once online.
+ * - Changes run one after another. Online each runs in a transaction on
+ *   the server's document, which Firestore runs again where another device
+ *   changed it meanwhile, so no change is lost; it shows at once and is
+ *   taken back where it fails. Offline each runs on the document as the
+ *   device holds it (its own changes not yet sent included), shows at once
+ *   and is sent once online; where the device never knew the document, it
+ *   is refused (`AuswahlOfflineUnbekanntError`), as it could overwrite the
+ *   account's.
+ * - A change writes only the list it changes (with the version; both, one
+ *   of them empty, into a new document): fields it does not know stay, and
+ *   the rules check one list a write.
  * - A document that is none counts as empty; a newer version's is left
  *   alone, every change rejected with `AuswahlZuNeuError`; a change over a
  *   list's cap is refused with `AuswahlVollError`.
@@ -86,22 +82,38 @@ export class FirestoreAuswahl implements Auswahl {
   public readonly kinder: Signal<readonly Kind[] | undefined>;
   public readonly nichtLesbar: Signal<boolean>;
 
-  private readonly gelesen = signal<GelesenesDokument | undefined>(undefined);
+  /** What the listener told last. */
+  private readonly vomListener = signal<GelesenesDokument | undefined>(
+    undefined
+  );
+  /** The changes run, until the listener tells of them. */
+  private readonly ausgefuehrt = signal<GelesenesDokument | undefined>(
+    undefined
+  );
+  /** The changes waiting to run too, shown ahead of them. */
+  private readonly vorschau = signal<GelesenesDokument | undefined>(undefined);
+  /** What the changes run so far make of the document, the device's best word. */
+  private readonly stand = computed(
+    () => this.ausgefuehrt() ?? this.vomListener()
+  );
+  private readonly gelesen = computed(() => this.vorschau() ?? this.stand());
   private readonly fehlgeschlagen = signal(false);
+  /** Whether the device knows the document: from the server, or as cached. */
+  private bekannt = false;
+  /** How many changes run now: the listener's word replaces a preview only without. */
+  private laufend = 0;
   private readonly dokument: DocumentReference;
   private readonly abbestellen: Unsubscribe;
   private readonly erstesLesen: Promise<void>;
-  private readonly warten: (ms: number) => Promise<void>;
   private readonly istOnline: () => boolean;
   /** The change running now: the next waits for it. */
   private letzteAenderung: Promise<unknown> = Promise.resolve();
 
   public constructor(
-    firestore: Firestore,
+    private readonly firestore: Firestore,
     uid: string,
     optionen: FirestoreAuswahlOptionen = {}
   ) {
-    this.warten = optionen.warten ?? pause;
     this.istOnline =
       optionen.istOnline ?? (() => globalThis.navigator?.onLine ?? true);
     this.dokument = auswahlDokumentVon(firestore, uid);
@@ -121,7 +133,11 @@ export class FirestoreAuswahl implements Auswahl {
     this.abbestellen = onSnapshot(
       this.dokument,
       (stand) => {
-        this.gelesen.set(auswahlDokumentLesen(stand.data()));
+        this.bekannt ||= stand.exists() || !stand.metadata.fromCache;
+        this.vomListener.set(auswahlDokumentLesen(stand.data()));
+        if (this.laufend === 0) {
+          this.ausgefuehrt.set(undefined);
+        }
         resolve();
       },
       (fehler) => {
@@ -170,65 +186,153 @@ export class FirestoreAuswahl implements Auswahl {
     this.abbestellen();
   }
 
-  /** Runs `aenderung` once the change before it is done. */
+  /** Shows `aenderung` at once, and runs it once the change before it is done. */
   private aendern(aenderung: AuswahlAenderung): Promise<void> {
-    const lauf = this.letzteAenderung.then(() => this.ausfuehren(aenderung));
+    this.laufend++;
+    const angezeigt = this.gelesen();
+    if (angezeigt?.art === 'aktuell' && this.bekannt) {
+      this.vorschauen(angezeigt, aenderung);
+    }
+    const lauf = this.letzteAenderung
+      .then(() => this.ausfuehren(aenderung))
+      .finally(() => {
+        if (--this.laufend === 0) {
+          this.vorschau.set(undefined);
+        }
+      });
     this.letzteAenderung = lauf.catch(() => undefined);
     return lauf;
   }
 
   /**
    * Applies `aenderung` to the document as it is now and writes the list it
-   * changed, if any.
+   * changed, if any: online in a transaction (Firestore runs it again on
+   * a conflict, so a change elsewhere is never lost), offline on what the
+   * device holds.
    */
-  private async ausfuehren(aenderung: AuswahlAenderung): Promise<void> {
-    const gelesen = await this.aktuell();
-    if (gelesen.art === 'neuer') {
-      this.gelesen.set(gelesen);
-      throw new AuswahlZuNeuError();
-    }
-    const vorher = inhaltAus(gelesen);
-    const nachher = aenderung(vorher);
-    if (nachher === vorher) {
-      return;
-    }
-    grenzenPruefen(vorher, nachher);
-    // a new document gets both lists, as a document without its Teams is none
-    const teile = {
-      version: AUSWAHL_VERSION,
-      ...(gelesen.art === 'aktuell' ? geaendert(vorher, nachher) : nachher),
-    };
-    const geschrieben = setDoc(this.dokument, teile, { merge: true });
-    // a refusal after the wait rolls the cache back; nobody awaits it then
-    geschrieben.catch(() => undefined);
-    this.gelesen.set({
-      art: 'aktuell',
-      ...nachher,
-      roh: { ...(gelesen.art === 'aktuell' ? gelesen.roh : {}), ...teile },
-    });
-    if (this.istOnline()) {
-      await Promise.race([geschrieben, this.warten(BESTAETIGUNG_WARTEN_MS)]);
+  private ausfuehren(aenderung: AuswahlAenderung): Promise<void> {
+    return this.istOnline()
+      ? this.imTransaktion(aenderung)
+      : this.aufDemGeraet(aenderung);
+  }
+
+  private async imTransaktion(aenderung: AuswahlAenderung): Promise<void> {
+    try {
+      const geschrieben = await runTransaction(
+        this.firestore,
+        async (transaktion) => {
+          const gelesen = auswahlDokumentLesen(
+            (await transaktion.get(this.dokument)).data()
+          );
+          const schritt = schrittFuer(gelesen, aenderung);
+          if (schritt !== undefined) {
+            transaktion.set(this.dokument, schritt.teile, { merge: true });
+          }
+          return schritt === undefined ? undefined : { gelesen, schritt };
+        }
+      );
+      if (geschrieben) {
+        this.ausgefuehrt.set(
+          nachDemSchritt(geschrieben.gelesen, geschrieben.schritt)
+        );
+      }
+    } catch (fehler) {
+      // the preview is taken back; a newer version's document shows nothing
+      this.vorschau.set(undefined);
+      if (fehler instanceof AuswahlZuNeuError) {
+        this.ausgefuehrt.set({ art: 'neuer' });
+      }
+      throw fehler;
     }
   }
 
   /**
-   * The document as it is now: the server's online, else what the device
-   * holds (the listener's, this device's changes included).
+   * Offline: on the document as the device holds it (its own changes not
+   * yet sent included), sent once online. Refused where the device never
+   * knew the document, as a write then could overwrite the account's.
    */
-  private async aktuell(): Promise<GelesenesDokument> {
-    if (this.istOnline()) {
-      const stand = await Promise.race([
-        getDoc(this.dokument).catch(() => undefined),
-        this.warten(BESTAETIGUNG_WARTEN_MS).then(() => undefined),
-      ]);
-      if (stand !== undefined) {
-        return auswahlDokumentLesen(stand.data());
-      }
+  private async aufDemGeraet(aenderung: AuswahlAenderung): Promise<void> {
+    const gelesen = this.stand();
+    if (gelesen === undefined || !this.bekannt) {
+      this.vorschau.set(undefined);
+      throw new AuswahlOfflineUnbekanntError();
     }
-    return this.gelesen() ?? { art: 'keins' };
+    let schritt: Schritt | undefined;
+    try {
+      schritt = schrittFuer(gelesen, aenderung);
+    } catch (fehler) {
+      this.vorschau.set(undefined);
+      throw fehler;
+    }
+    if (schritt === undefined) {
+      return;
+    }
+    const geschrieben = setDoc(this.dokument, schritt.teile, { merge: true });
+    // sent once online; a refusal then rolls the cache back
+    geschrieben.catch(() => undefined);
+    this.ausgefuehrt.set(nachDemSchritt(gelesen, schritt));
+  }
+
+  /** Shows what `aenderung` makes of `angezeigt`, where it is within the caps. */
+  private vorschauen(
+    angezeigt: GelesenesDokument,
+    aenderung: AuswahlAenderung
+  ): void {
+    try {
+      const schritt = schrittFuer(angezeigt, aenderung);
+      if (schritt !== undefined) {
+        this.vorschau.set(nachDemSchritt(angezeigt, schritt));
+      }
+    } catch {
+      // the transaction refuses it again, with the same error
+    }
   }
 }
 
-function pause(ms: number): Promise<void> {
-  return new Promise((weiter) => setTimeout(weiter, ms));
+/** What a change writes, and what the selection holds once it did. */
+interface Schritt {
+  readonly teile: Readonly<Record<string, unknown>>;
+  readonly nachher: AuswahlInhalt;
+}
+
+/**
+ * What `aenderung` writes to `gelesen`: only the list it changes (with the
+ * version; both, one of them empty, into a new document); nothing where it
+ * changes nothing. Throws where `gelesen` is a newer version's or the
+ * change goes over a cap.
+ */
+function schrittFuer(
+  gelesen: GelesenesDokument,
+  aenderung: AuswahlAenderung
+): Schritt | undefined {
+  if (gelesen.art === 'neuer') {
+    throw new AuswahlZuNeuError();
+  }
+  const vorher = inhaltAus(gelesen);
+  const nachher = aenderung(vorher);
+  if (nachher === vorher) {
+    return undefined;
+  }
+  grenzenPruefen(vorher, nachher);
+  // a new document gets both lists, as one without its Teams has none
+  const teile = {
+    version: AUSWAHL_VERSION,
+    ...(gelesen.art === 'aktuell' ? geaendert(vorher, nachher) : nachher),
+  };
+  return { teile, nachher };
+}
+
+/** `gelesen` once `schritt` is written. */
+function nachDemSchritt(
+  gelesen: GelesenesDokument,
+  schritt: Schritt
+): GelesenesDokument {
+  return {
+    art: 'aktuell',
+    ...schritt.nachher,
+    roh: {
+      ...(gelesen.art === 'aktuell' ? gelesen.roh : {}),
+      ...schritt.teile,
+    },
+  };
 }

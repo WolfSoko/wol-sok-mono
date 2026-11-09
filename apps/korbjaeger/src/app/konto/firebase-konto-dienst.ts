@@ -23,6 +23,7 @@ import {
   persistentLocalCache,
   persistentMultipleTabManager,
   terminate,
+  waitForPendingWrites,
 } from 'firebase/firestore';
 import type { Environment } from '../../environments/environment.type';
 import type { AuswahlInhalt } from '../auswahl/auswahl-dokument';
@@ -62,6 +63,9 @@ export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
 
 /** How long deleting the account's document waits for the server. */
 const LOESCHEN_WARTEN_MS = 10_000;
+
+/** How long signing out waits for the device's changes to be sent. */
+const SENDEN_WARTEN_MS = 5000;
 
 /** The `KontoDienst` on Firebase, for `environment` (its project or emulators). */
 export function firebaseKontoDienst(environment: Environment): KontoDienst {
@@ -151,6 +155,19 @@ class FirebaseKontoDienst implements KontoDienst {
       setTimeout(() => abbrechen(new OhneInternet()), LOESCHEN_WARTEN_MS)
     );
     await Promise.race([geloescht, zuSpaet]);
+  }
+
+  public async allesGesendet(): Promise<boolean> {
+    if (this.firestore === undefined) {
+      return true;
+    }
+    const firestore = await this.firestore;
+    return Promise.race([
+      waitForPendingWrites(firestore).then(() => true),
+      new Promise<boolean>((weiter) =>
+        setTimeout(() => weiter(false), SENDEN_WARTEN_MS)
+      ),
+    ]);
   }
 
   public async zwischenspeicherLeeren(): Promise<void> {
