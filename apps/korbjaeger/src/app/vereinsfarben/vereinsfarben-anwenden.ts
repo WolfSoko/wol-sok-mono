@@ -5,10 +5,15 @@ import {
   ElementRef,
   inject,
   input,
+  linkedSignal,
   type Signal,
 } from '@angular/core';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import {
+  vereinsfarbenVon,
+  type VereinsfarbenWahl,
+} from '../auswahl/vereinsfarben-wahl';
 import type { FarbschemaTokens } from './farbschema';
 import { gleicheFarben, type Vereinsfarben } from './vereinsfarben';
 
@@ -32,8 +37,13 @@ export function vereinsfarbenTokens(
     tokens = import('./farbschema').then(({ farbschemaTokens }) =>
       farbschemaTokens(farben)
     );
-    // a failed load is tried again next time
-    tokens.catch(() => zwischenspeicher.delete(schluessel));
+    // a failed load is tried again next time, unless a newer one took its place
+    const diese = tokens;
+    tokens.catch(() => {
+      if (zwischenspeicher.get(schluessel) === diese) {
+        zwischenspeicher.delete(schluessel);
+      }
+    });
     if (zwischenspeicher.size >= ZWISCHENSPEICHER_GROESSE) {
       const aeltester = zwischenspeicher.keys().next().value;
       if (aeltester !== undefined) {
@@ -77,7 +87,11 @@ function farbenAnwenden(
         }
       },
       // without the chunk (offline before it was cached), the app's own apply
-      () => undefined
+      () => {
+        if (gilt) {
+          entfernen();
+        }
+      }
     );
   });
 
@@ -98,18 +112,25 @@ const gleicheOderKeine = (
  * Gives the element being created (a component's host, a directive's) the
  * colours an Elternteil picked for the Verein `verein()`
  * (`Auswahl.vereinsfarben`); without any, or without a Verein, the app's
- * own apply. Call it in an injection context.
+ * own apply. While the colours are not read (at start, and while a sign-in
+ * or sign-out switches stores), the last ones stay, so the page does not
+ * flash the app's own. Call it in an injection context.
  */
 export function vereinsfarbenAnwenden(
   verein: () => VereinId | undefined
 ): void {
   const auswahl = inject(AUSWAHL);
+  const liste = linkedSignal<
+    readonly VereinsfarbenWahl[] | undefined,
+    readonly VereinsfarbenWahl[] | undefined
+  >({
+    source: auswahl.vereinsfarben,
+    computation: (gelesen, vorher) => gelesen ?? vorher?.value,
+  });
   const farben = computed(
     () => {
       const id = verein();
-      return id === undefined
-        ? undefined
-        : auswahl.vereinsfarben()?.find(({ vereinId }) => vereinId === id);
+      return id === undefined ? undefined : vereinsfarbenVon(liste(), id);
     },
     { equal: gleicheOderKeine }
   );

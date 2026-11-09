@@ -24,6 +24,7 @@ import {
   parseDbbId,
   saisonBeendet,
   type TeamSaison,
+  type Verein,
   type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
@@ -38,7 +39,6 @@ import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
-import { VereinsfarbenBlattComponent } from '../vereinsfarben/vereinsfarben-blatt.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
@@ -174,11 +174,19 @@ export class TeamComponent {
   private readonly blatt = inject(MatBottomSheet);
 
   public constructor() {
-    vereinsfarbenAnwenden(() => this.vereinId());
+    // this Team's Verein only: `vereinId` keeps the last one while the next loads
+    vereinsfarbenAnwenden(() =>
+      this.saison.hasValue() ? this.saison.value().verein.id : undefined
+    );
   }
 
-  /** Opens the bottom sheet "Vereinsfarben" for the Team's Verein. */
-  protected farbenWaehlen(verein: { id: VereinId; name: string }): void {
+  /**
+   * Opens the bottom sheet "Vereinsfarben" for the Team's Verein, its code
+   * loaded on the first tap, not with the page.
+   */
+  protected async farbenWaehlen(verein: Verein): Promise<void> {
+    const { VereinsfarbenBlattComponent } =
+      await import('../vereinsfarben/vereinsfarben-blatt.component');
     this.blatt.open(VereinsfarbenBlattComponent, {
       data: { vereinId: verein.id, vereinName: verein.name },
       ariaLabel: `Vereinsfarben von ${verein.name}`,

@@ -13,8 +13,8 @@ const OHNE_WAHL = '#000000';
 
 /**
  * Picks one colour: one of the presets (`VORGABEN`, each named for screen
- * readers), an own one from the browser's colour picker, or, with
- * `mitKeiner`, none.
+ * readers), an own one from the browser's colour picker (taken once the
+ * picker closes, not on every step of a drag), or, with `mitKeiner`, none.
  */
 @Component({
   selector: 'korb-farbwahl',
@@ -44,7 +44,7 @@ const OHNE_WAHL = '#000000';
         <input
           type="color"
           [value]="farbe() ?? ohneWahl"
-          (input)="farbe.set(eingabe($event))"
+          (change)="farbe.set(eingabe($event))"
         />
         Eigene Farbe
       </label>

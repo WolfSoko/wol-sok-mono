@@ -75,6 +75,17 @@ describe('VereinsfarbenDirective', () => {
     expect(teil('verein').style.length).toBe(0);
   });
 
+  it('keeps the colours while they are read again, so the page does not flash', async () => {
+    const { farben, stabil, teil } = await oeffnen();
+    const vorher = teil('verein').style.getPropertyValue(PRIMAER);
+
+    // a sign-in switches stores: nothing read for a moment
+    farben.set(undefined);
+    await stabil();
+
+    expect(teil('verein').style.getPropertyValue(PRIMAER)).toBe(vorher);
+  });
+
   it('follows another Verein, and a change of the colours', async () => {
     const { fixture, farben, stabil, teil } = await oeffnen();
 

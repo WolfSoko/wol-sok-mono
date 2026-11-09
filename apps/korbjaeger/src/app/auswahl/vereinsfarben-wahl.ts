@@ -6,6 +6,14 @@ export interface VereinsfarbenWahl extends Vereinsfarben {
   readonly vereinId: VereinId;
 }
 
+/** The colours `liste` holds for `verein`; `undefined` for none. */
+export function vereinsfarbenVon(
+  liste: readonly VereinsfarbenWahl[] | undefined,
+  verein: VereinId
+): VereinsfarbenWahl | undefined {
+  return liste?.find(({ vereinId }) => vereinId === verein);
+}
+
 /** The order the `Auswahl` keeps its Vereinsfarben in: by the Verein's id. */
 export function nachVerein(
   liste: readonly VereinsfarbenWahl[]

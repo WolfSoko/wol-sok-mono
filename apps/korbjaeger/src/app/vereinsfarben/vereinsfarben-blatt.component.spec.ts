@@ -132,7 +132,7 @@ describe('VereinsfarbenBlattComponent', () => {
     );
 
     eigene!.value = '#123456';
-    eigene!.dispatchEvent(new Event('input'));
+    eigene!.dispatchEvent(new Event('change'));
     await fixture.whenStable();
     await klicken('Übernehmen');
 
@@ -165,6 +165,23 @@ describe('VereinsfarbenBlattComponent', () => {
       'Vereinen Farben gegeben'
     );
     expect(schliessen).not.toHaveBeenCalled();
+  });
+
+  it('writes once for a double tap, its buttons waiting for the change', async () => {
+    let fertig!: () => void;
+    const { waehlen, knopf, fixture, gesetzt } = await oeffnen(
+      [],
+      () => new Promise<void>((resolve) => (fertig = resolve))
+    );
+    await waehlen('hauptfarbe', 'Rot');
+
+    knopf('Übernehmen')?.click();
+    knopf('Übernehmen')?.click();
+    await fixture.whenStable();
+
+    expect(gesetzt).toHaveBeenCalledTimes(1);
+    expect(knopf('Übernehmen')?.disabled).toBe(true);
+    fertig();
   });
 
   it('closes without a change on "Abbrechen"', async () => {

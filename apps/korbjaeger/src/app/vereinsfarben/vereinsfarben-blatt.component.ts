@@ -13,6 +13,7 @@ import {
 } from '@angular/material/bottom-sheet';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { vereinsfarbenVon } from '../auswahl/vereinsfarben-wahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { FarbwahlComponent } from './farbwahl.component';
 import { FarbschemaDirective } from './vereinsfarben-anwenden';
@@ -65,13 +66,18 @@ export interface VereinsfarbenBlattDaten {
       <button
         matButton="filled"
         type="button"
-        [disabled]="vorschau() === undefined"
+        [disabled]="vorschau() === undefined || laeuft()"
         (click)="uebernehmen()"
       >
         Übernehmen
       </button>
       @if (gesetzt()) {
-        <button matButton="outlined" type="button" (click)="zuruecksetzen()">
+        <button
+          matButton="outlined"
+          type="button"
+          [disabled]="laeuft()"
+          (click)="zuruecksetzen()"
+        >
           Zurücksetzen
         </button>
       }
@@ -145,9 +151,7 @@ export class VereinsfarbenBlattComponent {
 
   /** The colours the Verein has now; `undefined` for none. */
   protected readonly gesetzt = computed(() =>
-    this.auswahl
-      .vereinsfarben()
-      ?.find(({ vereinId }) => vereinId === this.daten.vereinId)
+    vereinsfarbenVon(this.auswahl.vereinsfarben(), this.daten.vereinId)
   );
 
   protected readonly primaer = signal(untracked(this.gesetzt)?.primaer);
@@ -163,25 +167,33 @@ export class VereinsfarbenBlattComponent {
   });
 
   protected readonly aenderung = auswahlAenderung();
+  /** Whether a change runs: the buttons wait for it, so a double tap writes once. */
+  protected readonly laeuft = signal(false);
 
-  protected async uebernehmen(): Promise<void> {
+  protected uebernehmen(): Promise<void> {
     const farben = this.vorschau();
-    if (
-      farben !== undefined &&
-      (await this.aenderung.ausfuehren(() =>
-        this.auswahl.vereinsfarbenSetzen(this.daten.vereinId, farben)
-      ))
-    ) {
-      this.schliessen();
-    }
+    return farben === undefined
+      ? Promise.resolve()
+      : this.aendern(() =>
+          this.auswahl.vereinsfarbenSetzen(this.daten.vereinId, farben)
+        );
   }
 
-  protected async zuruecksetzen(): Promise<void> {
-    if (
-      await this.aenderung.ausfuehren(() =>
-        this.auswahl.vereinsfarbenZuruecksetzen(this.daten.vereinId)
-      )
-    ) {
+  protected zuruecksetzen(): Promise<void> {
+    return this.aendern(() =>
+      this.auswahl.vereinsfarbenZuruecksetzen(this.daten.vereinId)
+    );
+  }
+
+  /** Runs `aenderung` once at a time; closes once it succeeded. */
+  private async aendern(aenderung: () => Promise<void>): Promise<void> {
+    if (this.laeuft()) {
+      return;
+    }
+    this.laeuft.set(true);
+    const erledigt = await this.aenderung.ausfuehren(aenderung);
+    this.laeuft.set(false);
+    if (erledigt) {
       this.schliessen();
     }
   }

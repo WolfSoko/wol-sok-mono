@@ -92,7 +92,7 @@ const FARBEN = [
   '#33ffdd', // fell to 4.47:1 at Material's standard contrast
 ];
 
-/** Every sixth step of each channel: 216 colours across the whole space. */
+/** Six values per channel, 51 apart: 216 colours across the whole space. */
 const STREUUNG = [0, 51, 102, 153, 204, 255].flatMap((r) =>
   [0, 51, 102, 153, 204, 255].flatMap((g) =>
     [0, 51, 102, 153, 204, 255].map(
