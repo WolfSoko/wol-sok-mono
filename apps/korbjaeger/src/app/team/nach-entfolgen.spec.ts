@@ -88,6 +88,7 @@ describe('NachEntfolgen', () => {
     const aktion = document.querySelector<HTMLButtonElement>(
       'mat-snack-bar-container button'
     );
+    expect(aktion).not.toBeNull();
 
     // the same tick: no effect has run yet
     quelle.set({ art: 'geraet' });
