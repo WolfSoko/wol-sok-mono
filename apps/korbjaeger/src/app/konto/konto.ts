@@ -1,13 +1,18 @@
-import { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from './zwischenspeicher-merker';
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import { environment } from '../../environments/environment';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { geraeteSpeicher, SPEICHER_FREIGEBEN } from '../geraete-speicher';
+import {
+  ANGEMELDET_SCHLUESSEL,
+  flagGesetzt,
+  flagSetzen,
+  geraeteSpeicher,
+  SPEICHER_FREIGEBEN,
+  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
+} from '../geraete-speicher';
 import type { KontoDienst } from './konto-dienst';
 import { KontoSitzung, type AnmeldeMerker } from './konto-sitzung';
 
-/** The key that tells, on the device, that an Elternteil is signed in. */
-export const ANGEMELDET_SCHLUESSEL = 'korbjaeger-angemeldet';
+export { ANGEMELDET_SCHLUESSEL } from '../geraete-speicher';
 
 /**
  * Loads Firebase for the account: its own chunk, fetched only to sign in
@@ -27,27 +32,13 @@ export function geraeteMerker(
   speicher: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | undefined,
   fenster?: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>
 ): AnmeldeMerker {
-  const versuchen = (tun: () => void) => {
-    try {
-      tun();
-    } catch {
-      // blocked: the sign-in lasts for this visit, as Auth's session may
-    }
-  };
-  const gelesen = (schluessel: string): boolean => {
-    try {
-      return speicher?.getItem(schluessel) === '1';
-    } catch {
-      return false;
-    }
-  };
   return {
-    gesetzt: () => gelesen(ANGEMELDET_SCHLUESSEL),
-    aufraeumenOffen: () => gelesen(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL),
-    setzen: () =>
-      versuchen(() => speicher?.setItem(ANGEMELDET_SCHLUESSEL, '1')),
-    loeschen: () =>
-      versuchen(() => speicher?.removeItem(ANGEMELDET_SCHLUESSEL)),
+    // blocked: the sign-in lasts for this visit, as Auth's session may
+    gesetzt: () => flagGesetzt(speicher, ANGEMELDET_SCHLUESSEL),
+    aufraeumenOffen: () =>
+      flagGesetzt(speicher, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL),
+    setzen: () => flagSetzen(speicher, ANGEMELDET_SCHLUESSEL, true),
+    loeschen: () => flagSetzen(speicher, ANGEMELDET_SCHLUESSEL, false),
     beobachten: (rueckruf) => {
       const beiAenderung = (event: Event) => {
         if (

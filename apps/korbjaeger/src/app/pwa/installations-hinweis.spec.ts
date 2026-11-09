@@ -1,7 +1,6 @@
 import { ApplicationInitStatus } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import {
-  INSTALLATION_ABGELEHNT_SCHLUESSEL,
   INSTALLATIONS_UMGEBUNG,
   InstallationsHinweis,
   installationsAngebot,
@@ -10,6 +9,8 @@ import {
   type InstallationsNavigator,
   type InstallationsUmgebung,
 } from './installations-hinweis';
+import { INSTALLATION_ABGELEHNT_SCHLUESSEL } from '../geraete-speicher';
+import { GESPERRTER_SPEICHER, mapSpeicher } from '../../testing/speicher';
 
 const CHROME_ANDROID =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36';
@@ -33,35 +34,6 @@ const ANDERE_IOS_BROWSER = {
   Instagram:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1 Instagram 334.0.4.32.98 (iPhone14,5; iOS 17_5; de_DE; de; scale=3.00; 1170x2532; 610979035)',
 } as const;
-
-/** A Storage on a Map, as `localStorage` behaves. */
-function speicher(): Storage {
-  const werte = new Map<string, string>();
-  return {
-    get length() {
-      return werte.size;
-    },
-    clear: () => werte.clear(),
-    getItem: (key) => werte.get(key) ?? null,
-    key: (index) => [...werte.keys()][index] ?? null,
-    removeItem: (key) => werte.delete(key),
-    setItem: (key, value) => werte.set(key, value),
-  };
-}
-
-/** A Storage the browser blocks: every access throws. */
-const GESPERRT: Storage = {
-  length: 0,
-  clear: () => undefined,
-  getItem: () => {
-    throw new DOMException('blocked', 'SecurityError');
-  },
-  key: () => null,
-  removeItem: () => undefined,
-  setItem: () => {
-    throw new DOMException('blocked', 'SecurityError');
-  },
-};
 
 interface Browser {
   readonly userAgent?: string;
@@ -295,7 +267,7 @@ describe('InstallationsHinweis', () => {
     });
 
     it('is left alone once the hint was dismissed', () => {
-      const geraet = speicher();
+      const geraet = mapSpeicher();
       geraet.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
       const { hinweis, aufforderungsEreignis } = starten({ speicher: geraet });
       hinweis.anzeigen();
@@ -325,7 +297,7 @@ describe('InstallationsHinweis', () => {
 
   describe('dismissed', () => {
     it('hides the hint and remembers it on the device', () => {
-      const geraet = speicher();
+      const geraet = mapSpeicher();
       const { hinweis, auffordern } = starten({ speicher: geraet });
       auffordern();
 
@@ -336,7 +308,7 @@ describe('InstallationsHinweis', () => {
     });
 
     it('stays hidden at the next start', () => {
-      const geraet = speicher();
+      const geraet = mapSpeicher();
       geraet.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
       const { hinweis, auffordern } = starten({
         userAgent: SAFARI_IPHONE,
@@ -349,7 +321,9 @@ describe('InstallationsHinweis', () => {
     });
 
     it('hides the hint for the visit where the device keeps nothing', () => {
-      const { hinweis, auffordern } = starten({ speicher: GESPERRT });
+      const { hinweis, auffordern } = starten({
+        speicher: GESPERRTER_SPEICHER,
+      });
       auffordern();
       expect(hinweis.angebot()).toBe('installieren');
 

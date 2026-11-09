@@ -10,11 +10,12 @@ import {
   type EnvironmentProviders,
   type Signal,
 } from '@angular/core';
-import { geraeteSpeicher } from '../geraete-speicher';
-
-/** Where a dismissal of the install hint is kept, for good. */
-export const INSTALLATION_ABGELEHNT_SCHLUESSEL =
-  'korbjaeger-installation-abgelehnt';
+import {
+  flagGesetzt,
+  flagSetzen,
+  geraeteSpeicher,
+  INSTALLATION_ABGELEHNT_SCHLUESSEL,
+} from '../geraete-speicher';
 
 /**
  * What the install hint offers: nothing, the browser's own install
@@ -35,11 +36,19 @@ export interface InstallationsLage {
   readonly iosSafari: boolean;
 }
 
+/** Whether a hint may offer anything at all: not installed, not dismissed. */
+export function darfAnbieten({
+  installiert,
+  abgelehnt,
+}: Pick<InstallationsLage, 'installiert' | 'abgelehnt'>): boolean {
+  return !installiert && !abgelehnt;
+}
+
 /** Which install hint, if any, fits `lage`. */
 export function installationsAngebot(
   lage: InstallationsLage
 ): InstallationsAngebot {
-  if (lage.installiert || lage.abgelehnt) {
+  if (!darfAnbieten(lage)) {
     return 'keins';
   }
   if (lage.aufforderung) {
@@ -166,12 +175,8 @@ export class InstallationsHinweis {
    */
   public anzeigen(): () => void {
     this.seitenMitHinweis++;
-    let verlassen = false;
     return () => {
-      if (!verlassen) {
-        verlassen = true;
-        this.seitenMitHinweis--;
-      }
+      this.seitenMitHinweis--;
     };
   }
 
@@ -196,31 +201,30 @@ export class InstallationsHinweis {
   /** Hides the hint, for good where the device keeps it. */
   public ablehnen(): void {
     this.abgelehnt.set(true);
-    try {
-      this.umgebung
-        ?.speicher()
-        ?.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
-    } catch {
-      // storage full or blocked: hidden for this visit only
-    }
+    // storage full or blocked: hidden for this visit only
+    flagSetzen(
+      this.umgebung?.speicher(),
+      INSTALLATION_ABGELEHNT_SCHLUESSEL,
+      true
+    );
   }
 
   /** Whether the hint would offer the browser's dialog on a page now. */
   private uebernimmtAufforderung(): boolean {
     return (
-      this.seitenMitHinweis > 0 && !this.abgelehnt() && !this.installiert()
+      this.seitenMitHinweis > 0 &&
+      darfAnbieten({
+        installiert: this.installiert(),
+        abgelehnt: this.abgelehnt(),
+      })
     );
   }
 
   private liesAbgelehnt(): boolean {
-    try {
-      const speicher = this.umgebung?.speicher();
-      return (
-        (speicher?.getItem(INSTALLATION_ABGELEHNT_SCHLUESSEL) ?? null) !== null
-      );
-    } catch {
-      return false;
-    }
+    return flagGesetzt(
+      this.umgebung?.speicher(),
+      INSTALLATION_ABGELEHNT_SCHLUESSEL
+    );
   }
 
   private laeuftInstalliert(): boolean {
