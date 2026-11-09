@@ -194,6 +194,7 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
       vereinsfarben: { 4242: '#c8102e,TSV Muster' },
     },
   ],
+  ['an empty colour', { version: 2, vereinsfarben: { 4242: '' } }],
   [
     'three colours',
     { version: 2, vereinsfarben: { 4242: '#c8102e,#1d4ed8,#007a3d' } },

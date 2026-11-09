@@ -6,6 +6,9 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
+import { MatBottomSheet } from '@angular/material/bottom-sheet';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -34,6 +37,8 @@ import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { VereinsfarbenBlattComponent } from '../vereinsfarben/vereinsfarben-blatt.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
@@ -41,11 +46,14 @@ import { TeamTabelleComponent } from './team-tabelle.component';
  * Tabelle of each of those Ligen, the current one first, and the
  * Verein's other Teams; with a control to follow the Team and each of
  * those. Once the Team's Saison looks over (`saisonBeendet`), a hint asks
- * whether it is and offers the Verein's Teams first.
+ * whether it is and offers the Verein's Teams first. The page wears the
+ * colours an Elternteil gave the Verein ("Vereinsfarben", a bottom sheet).
  */
 @Component({
   selector: 'korb-team',
   imports: [
+    MatButtonModule,
+    MatIconModule,
     MatListModule,
     MatProgressBarModule,
     NaechstesSpielComponent,
@@ -162,4 +170,18 @@ export class TeamComponent {
     }
     return fehlerText(this.saison.error(), KEIN_TEAM);
   });
+
+  private readonly blatt = inject(MatBottomSheet);
+
+  public constructor() {
+    vereinsfarbenAnwenden(() => this.vereinId());
+  }
+
+  /** Opens the bottom sheet "Vereinsfarben" for the Team's Verein. */
+  protected farbenWaehlen(verein: { id: VereinId; name: string }): void {
+    this.blatt.open(VereinsfarbenBlattComponent, {
+      data: { vereinId: verein.id, vereinName: verein.name },
+      ariaLabel: `Vereinsfarben von ${verein.name}`,
+    });
+  }
 }

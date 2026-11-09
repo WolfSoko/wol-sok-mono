@@ -6,6 +6,7 @@ import {
   type Farbschema,
   type Systemfarbe,
 } from './farbschema';
+import { VORGABEN } from './vorgaben';
 import { KeineFarbeError } from './vereinsfarben';
 
 /** WCAG 2.x contrast of two `#rrggbb` colours. */
@@ -80,27 +81,26 @@ const UI_PAARE: readonly (readonly [Systemfarbe, Systemfarbe])[] = FLAECHEN.map(
 );
 
 /**
- * The 12 presets of the bottom sheet (#2918) and colours that are hard to
- * keep readable: very light, very dark, saturated.
+ * The presets of the bottom sheet (#2918) and colours that are hard to keep
+ * readable: very light, very dark, saturated.
  */
 const FARBEN = [
-  '#c8102e', // Rot
-  '#1d4ed8', // Königsblau
-  '#0b1f4b', // Marine
-  '#007a3d', // Grün
-  '#ffd700', // Gelb
-  '#000000', // Schwarz
-  '#ffffff', // Weiß
-  '#f57c00', // Orange
-  '#6a1b9a', // Lila
-  '#7a003c', // Weinrot
-  '#4fc3f7', // Himmelblau
-  '#808080', // Grau
+  ...VORGABEN.map(({ farbe }) => farbe),
   '#00ff00',
   '#ff00ff',
   '#fffde7',
   '#33ffdd', // fell to 4.47:1 at Material's standard contrast
 ];
+
+/** Every sixth step of each channel: 216 colours across the whole space. */
+const STREUUNG = [0, 51, 102, 153, 204, 255].flatMap((r) =>
+  [0, 51, 102, 153, 204, 255].flatMap((g) =>
+    [0, 51, 102, 153, 204, 255].map(
+      (b) =>
+        `#${[r, g, b].map((kanal) => kanal.toString(16).padStart(2, '0')).join('')}`
+    )
+  )
+);
 
 function paarePruefen(
   schema: Farbschema,
@@ -120,6 +120,29 @@ function paarePruefen(
 }
 
 describe('farbschema', () => {
+  it.each([false, true])(
+    'keeps every text readable for a spread of 216 colours, first and second (dark: %s)',
+    (dunkel) => {
+      const fehler = STREUUNG.flatMap((farbe) =>
+        [
+          ...paarePruefen(
+            farbschema({ primaer: farbe }, dunkel),
+            TEXT_PAARE,
+            4.5
+          ),
+          ...paarePruefen(farbschema({ primaer: farbe }, dunkel), UI_PAARE, 3),
+          ...paarePruefen(
+            farbschema({ primaer: '#c8102e', zweite: farbe }, dunkel),
+            TEXT_PAARE,
+            4.5
+          ),
+        ].map((paar) => `${farbe}: ${paar}`)
+      );
+
+      expect(fehler).toEqual([]);
+    }
+  );
+
   describe.each(FARBEN)('for %s', (primaer) => {
     it.each([false, true])(
       'keeps every text readable on its ground (dark: %s)',

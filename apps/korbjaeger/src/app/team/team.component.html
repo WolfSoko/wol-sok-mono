@@ -7,6 +7,16 @@
 @if (saison.hasValue()) {
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  <button
+    matButton
+    type="button"
+    class="farben"
+    data-qa="vereinsfarben"
+    (click)="farbenWaehlen(saison.value().verein)"
+  >
+    <mat-icon aria-hidden="true">palette</mat-icon>
+    Vereinsfarben
+  </button>
   <korb-stand data-qa="team-stand" [stand]="kopfStand()" />
 }
 @if (folgbar(); as teamId) {
