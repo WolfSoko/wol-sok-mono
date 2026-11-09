@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.160.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.1...v74.160.2) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** show BBL, ProA and ProB results as final, since the DBB never confirms them ([#2979](https://github.com/WolfSoko/wol-sok-mono/issues/2979)) ([b23fd71](https://github.com/WolfSoko/wol-sok-mono/commit/b23fd7181916ad7c30ae98102736ba810eaf479d)), closes [#2953](https://github.com/WolfSoko/wol-sok-mono/issues/2953), references [#2953](https://github.com/WolfSoko/wol-sok-mono/issues/2953)
+
 ## [74.160.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.0...v74.160.1) (2026-11-09)
 
 ### Bug Fixes
