@@ -1,22 +1,18 @@
 {
   "name": "tools",
   "$schema": "../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "tools",
   "projectType": "application",
   "tags": ["tools"],
   "targets": {
     "typecheck-tools": {
-      "executor": "nx:run-commands",
+      "command": "tsc -p tools/tsconfig.tools.json --noEmit",
       "cache": true,
       "inputs": [
         "{workspaceRoot}/tools/**/*.ts",
         "{workspaceRoot}/tools/tsconfig.tools.json",
-        "^production",
-        "{workspaceRoot}/tsconfig.base.json"
-      ],
-      "options": {
-        "command": "tsc -p tools/tsconfig.tools.json --noEmit"
-      }
+        "{workspaceRoot}/tsconfig.base.json",
+        { "fileset": "{projectRoot}/**/*.{ts,json}", "dependencies": true }
+      ]
     }
   }
 }

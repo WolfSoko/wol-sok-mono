@@ -1,8 +1,6 @@
 {
   "name": "tools-vite",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "tools/vite",
   "projectType": "library",
-  "tags": ["tools"],
-  "targets": {}
+  "tags": ["tools"]
 }

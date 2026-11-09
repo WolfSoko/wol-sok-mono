@@ -1,8 +1,6 @@
 {
   "name": "tools-federation",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "tools/federation",
   "projectType": "library",
-  "tags": ["tools"],
-  "targets": {}
+  "tags": ["tools"]
 }
