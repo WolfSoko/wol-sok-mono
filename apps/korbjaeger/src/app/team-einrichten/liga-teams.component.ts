@@ -54,7 +54,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
       } @else {
         <mat-action-list class="umbrechende-liste">
           @for (team of teams.value(); track team.id) {
-            @let gefolgt = meineTeams()?.includes(team.id);
+            @let gefolgt = gefolgteTeams().has(team.id);
             <div class="zeile">
               <button
                 mat-list-item
@@ -73,7 +73,11 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
                 }
               </button>
               @if (gefolgt) {
-                <korb-team-folgen [teamId]="team.id" [teamName]="team.name" />
+                <korb-team-folgen
+                  [teamId]="team.id"
+                  [teamName]="team.name"
+                  [gefolgt]="gefolgt"
+                />
               }
             </div>
           }
@@ -110,6 +114,10 @@ export class LigaTeamsComponent {
   private readonly router = inject(Router);
 
   protected readonly meineTeams = this.auswahl.teams;
+  /** Meine Teams as a set, for each row to ask once. */
+  protected readonly gefolgteTeams = computed(
+    () => new Set(this.meineTeams() ?? [])
+  );
   protected readonly teams = ligaTeamsResource(() => this.ligaId());
   protected readonly aenderung = auswahlAenderung();
   /** Whether a tap is following a Team and opening it: no second one. */

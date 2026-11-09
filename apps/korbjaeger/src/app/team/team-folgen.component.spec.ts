@@ -209,6 +209,22 @@ describe('TeamFolgenComponent', () => {
       );
     });
   });
+  it('takes whether the Team is followed from the screen, where it knows', async () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: AUSWAHL, useValue: new LokaleAuswahl(undefined) }],
+    });
+    const fixture = TestBed.createComponent(TeamFolgenComponent);
+    fixture.componentRef.setInput('teamId', MTV_WASBUETTEL);
+    fixture.componentRef.setInput('gefolgt', true);
+    await fixture.whenStable();
+
+    expect(
+      (fixture.nativeElement as HTMLElement).querySelector(
+        '[data-qa="team-folgen"]'
+      )?.textContent
+    ).toContain('Nicht mehr folgen');
+  });
+
   it('says so when the choice could not be stored', async () => {
     const auswahl: Auswahl = fakeAuswahl({
       teams: signal([]),

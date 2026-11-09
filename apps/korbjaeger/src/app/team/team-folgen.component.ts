@@ -73,11 +73,17 @@ export class TeamFolgenComponent {
    */
   public readonly teamName = input<string>();
 
+  /**
+   * Whether the Team is followed, where the screen knows it already (the
+   * wizard's followed rows); else read from Meine Teams.
+   */
+  public readonly gefolgt = input<boolean>();
+
   private readonly auswahl = inject(AUSWAHL);
 
   /** Whether the Team is in Meine Teams; `undefined` until they are read. */
-  protected readonly folgt = computed(() =>
-    this.auswahl.teams()?.includes(this.teamId())
+  protected readonly folgt = computed(
+    () => this.gefolgt() ?? this.auswahl.teams()?.includes(this.teamId())
   );
 
   protected readonly label = computed(() =>
