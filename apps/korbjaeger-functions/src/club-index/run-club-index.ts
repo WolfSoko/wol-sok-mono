@@ -4,15 +4,27 @@ import {
   KEIN_LIGA_FILTER,
   type AssociationClubs,
   type BasketballData,
+  type VerbandId,
 } from '@wolsok/feat-shared-basketball-data';
 import { associationToCrawl } from './association-to-crawl';
 
+/** What the index holds: its lists, and crawls that left none yet. */
+export interface ClubIndexState {
+  /** Every list the index holds, skipping any it cannot read. */
+  readonly lists: readonly AssociationClubs[];
+  /** When a crawl of an Association last started, in milliseconds. */
+  readonly attempts: ReadonlyMap<VerbandId, number>;
+}
+
 /** Where the index keeps one list per Association. */
 export interface ClubIndexStore {
-  /** Every list the index holds, skipping any it cannot read. */
-  all(): Promise<readonly AssociationClubs[]>;
-  /** Replaces the list of `list.association`. */
+  read(): Promise<ClubIndexState>;
+  /** Notes that a crawl of `association` starts `at`, keeping its list. */
+  markAttempt(association: VerbandId, at: number): Promise<void>;
+  /** Replaces the list of `list.association`, and its attempt. */
   save(list: AssociationClubs): Promise<void>;
+  /** Deletes the list of an Association the DBB no longer offers. */
+  remove(association: VerbandId): Promise<void>;
 }
 
 /** What a run needs. */
@@ -24,22 +36,31 @@ export interface ClubIndexRun {
   readonly pause: () => Promise<void>;
   /** How old a list may grow before a run crawls its Association again. */
   readonly maxAgeMs: number;
+  /** How long after a crawl that left no list it is tried again. */
+  readonly retryAfterMs: number;
+  /** How long into a crawl Clubs' names are still read (`timeForNames`). */
+  readonly namesForMs: number;
 }
 
 /** What a run did, for the log: no Club named. */
-export type ClubIndexResult =
-  | { readonly crawled: false }
-  | {
-      readonly crawled: true;
-      readonly association: number;
-      readonly clubs: number;
-    };
+export interface ClubIndexResult {
+  /** Lists of Associations the DBB no longer offers, deleted. */
+  readonly removed: number;
+  readonly crawled?: {
+    readonly association: VerbandId;
+    readonly clubs: number;
+    /** Clubs a Team's name stands in for, read again next time. */
+    readonly namedByTeam: number;
+  };
+}
 
 /**
- * One run of the club index (#2988): crawls the Association the index is
- * missing or holds the oldest list of (`associationToCrawl`) and replaces
- * its list. Names known from any list are not read again. A failed crawl
- * rejects before anything is written, so the old list stays.
+ * One run of the club index (#2988): deletes the lists of Associations the
+ * DBB no longer offers, then crawls the Association due first
+ * (`associationToCrawl`) and replaces its list. It notes the crawl's start
+ * first, so a crawl that fails or runs out of time holds up no other
+ * Association; a failed crawl writes no list, so the old one stays. Clubs'
+ * own names known from any list are not read again.
  */
 export async function runClubIndex(
   run: ClubIndexRun
@@ -48,24 +69,61 @@ export async function runClubIndex(
   const associations = angeboten(search.facetten.verbaende).map(
     ({ id, name }) => ({ id, name })
   );
-  const stored = await run.store.all();
+  const state = await run.store.read();
+  const removed = await removeUnoffered(run.store, state, associations);
+  const start = run.now();
   const association = associationToCrawl(
     associations,
-    stored,
-    run.now(),
-    run.maxAgeMs
+    state.lists,
+    state.attempts,
+    { now: start, maxAgeMs: run.maxAgeMs, retryAfterMs: run.retryAfterMs }
   );
   if (association === undefined) {
-    return { crawled: false };
+    return { removed };
   }
+  await run.store.markAttempt(association.id, start);
   const knownNames = new Map(
-    stored.flatMap(({ clubs }) => clubs.map(({ id, name }) => [id, name]))
+    state.lists.flatMap(({ clubs }) =>
+      clubs
+        .filter(({ nameFromTeam }) => nameFromTeam !== true)
+        .map(({ id, name }) => [id, name] as const)
+    )
   );
   await run.pause();
   const clubs = await crawlClubs(run.data, association.id, {
     knownNames,
     pause: run.pause,
+    timeForNames: () => run.now() - start < run.namesForMs,
   });
   await run.store.save({ association, clubs, updatedAt: run.now() });
-  return { crawled: true, association: association.id, clubs: clubs.length };
+  return {
+    removed,
+    crawled: {
+      association: association.id,
+      clubs: clubs.length,
+      namedByTeam: clubs.filter(({ nameFromTeam }) => nameFromTeam).length,
+    },
+  };
+}
+
+/**
+ * Deletes the lists of Associations missing from `offered`, unless the DBB
+ * offered none at all (then it is the DBB that is off, not the lists).
+ */
+async function removeUnoffered(
+  store: ClubIndexStore,
+  state: ClubIndexState,
+  offered: readonly { readonly id: VerbandId }[]
+): Promise<number> {
+  if (offered.length === 0) {
+    return 0;
+  }
+  const ids = new Set(offered.map(({ id }) => id));
+  const gone = state.lists.filter(
+    ({ association }) => !ids.has(association.id)
+  );
+  for (const { association } of gone) {
+    await store.remove(association.id);
+  }
+  return gone.length;
 }

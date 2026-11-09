@@ -112,22 +112,33 @@ eight reads:
   `wam/liga/list`), each Liga's Spielplan (`competition/spielplan`) for its
   Teams' `clubId`, and the name of each Verein it does not know yet
   (`club/.../actualmatches`). It picks the Verband whose list is missing or
-  at least a week old, so each is refreshed weekly. It calls the DBB as the
-  proxy does (its own User-Agent naming the app, no cookies, a timeout),
-  one request at a time, a second apart: about 2,600 requests a week, the
-  largest Verband in about 8 minutes, each answer already in the DBB's
-  Varnish. A failed crawl writes nothing.
+  at least a week old, so each is refreshed weekly; it notes when a crawl
+  starts, so a Verband whose crawl fails or runs out of time waits a day
+  and holds up no other. It calls the DBB as the proxy does (its own
+  User-Agent naming the app, no cookies, a timeout), one request at a
+  time, a second apart: about 2,600 requests a week once the names are
+  known. The first fill reads one name per Verein too (Bayern: about 900
+  requests); after 20 minutes of a run a Team's name stands in for a
+  Verein's and is read again next week, inside the run's 30 minutes. A
+  Liga the DBB does not know or answers in another shape is skipped; any
+  other failure writes nothing. Lists of a Verband the DBB no longer
+  offers are deleted.
 - It stores `clubIndex/{verbandId}` in Firestore: the Verband and its
   Vereine' ids and names only, no persons, no Teams. No rule opens it to
   clients.
+- The Nitro function (`europe-central2`) reads it across regions, against
+  the rule that a function reading Firestore runs in its region: the CDN
+  keeps the answer a day, so that is about one read a day per CDN node,
+  and a function of its own behind a Hosting rewrite would have to ship a
+  release before its rewrite.
 - `GET /api/clubs` (the app's Nitro server) serves every Verband's list
   merged into one, `Cache-Control: public, max-age=3600, s-maxage=86400`;
   any query is 404, so the CDN keeps one answer. The device searches the
   list itself; the typed text never leaves it.
 
-**Consequences.** A new Verein shows up within about a week; a renamed one
-keeps its old name until it drops out of every Liga for a crawl (names are
-read once). The DBB sees a steady, small background load besides the
+**Consequences.** A new Verein shows up within about a week. A Verein's name is
+read once: a renamed Verein keeps its old name in the index for as long as
+any list holds it. The DBB sees a steady, small background load besides the
 visitors' reads; the permission request (#2963) names it. Should the DBB
 offer a club search, it replaces the index behind the same route.
 `CLUB_INDEX_ON` in the functions' `src/config.ts` takes the crawl out of a

@@ -19,10 +19,37 @@ describe('the club index in Firestore', () => {
     await store.save({ ...BAYERN, clubs: [], updatedAt: BAYERN.updatedAt + 1 });
     await store.save({ ...BAYERN, association: { id: 3, name: 'Berlin' } });
 
-    expect(await store.all()).toEqual([
+    expect((await store.read()).lists).toEqual([
       { ...BAYERN, clubs: [], updatedAt: BAYERN.updatedAt + 1 },
       { ...BAYERN, association: { id: 3, name: 'Berlin' } },
     ]);
+  });
+
+  it('notes an attempt beside the list, and drops it with the next save', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.save(BAYERN);
+
+    await store.markAttempt(2, 42);
+    await store.markAttempt(6, 43);
+
+    const marked = await store.read();
+    expect(marked.lists).toEqual([BAYERN]);
+    expect([...marked.attempts]).toEqual([
+      [2, 42],
+      [6, 43],
+    ]);
+
+    await store.save(BAYERN);
+    expect([...(await store.read()).attempts]).toEqual([[6, 43]]);
+  });
+
+  it('deletes a list', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.save(BAYERN);
+
+    await store.remove(2);
+
+    expect((await store.read()).lists).toEqual([]);
   });
 
   it('skips a list it cannot read', async () => {
@@ -31,7 +58,9 @@ describe('the club index in Firestore', () => {
       .doc('9')
       .set({ version: 99 });
 
-    expect(await firestoreClubIndex(project().admin).all()).toEqual([]);
+    expect((await firestoreClubIndex(project().admin).read()).lists).toEqual(
+      []
+    );
   });
 
   it('stays closed to devices under the app’s rules', async () => {
