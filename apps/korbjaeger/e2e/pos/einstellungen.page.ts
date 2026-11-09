@@ -33,8 +33,27 @@ export class EinstellungenPage {
     konto: EmulatorKonto,
     { neu }: { neu: boolean }
   ): Promise<void> {
+    await this.imPopup(() => this.anmelden.click(), konto, { neu });
+  }
+
+  /** Deletes the account, confirming in the dialog and at Google as `konto`. */
+  public async loeschen(konto: EmulatorKonto): Promise<void> {
+    await this.kontoLoeschen.click();
+    await this.imPopup(
+      () => this.page.getByTestId('konto-loeschen-bestaetigen').click(),
+      konto,
+      { neu: false }
+    );
+  }
+
+  /** Clicks with `klicken` and answers the Auth emulator's popup as `konto`. */
+  private async imPopup(
+    klicken: () => Promise<void>,
+    konto: EmulatorKonto,
+    { neu }: { neu: boolean }
+  ): Promise<void> {
     const popupKommt = this.page.context().waitForEvent('page');
-    await this.anmelden.click();
+    await klicken();
     const popup = await popupKommt;
     // the emulator's page takes clicks only once its script is in
     await popup.waitForLoadState('networkidle');
@@ -48,11 +67,5 @@ export class EinstellungenPage {
     } else {
       await popup.getByText(konto.email).click();
     }
-  }
-
-  /** Deletes the account, confirming in the dialog. */
-  public async loeschen(): Promise<void> {
-    await this.kontoLoeschen.click();
-    await this.page.getByTestId('konto-loeschen-bestaetigen').click();
   }
 }

@@ -1,47 +1,73 @@
-import type { AuswahlInhalt } from './auswahl-dokument';
+import { AUSWAHL_GRENZEN, type AuswahlInhalt } from './auswahl-dokument';
 import type { Kind } from './kind';
+
+/** How many of the device's Teams and Kinder did not fit into the account. */
+export interface NichtUebernommen {
+  readonly teams: number;
+  readonly kinder: number;
+}
+
+/** What `zusammenfuehren` gives: the account's choices, and what was left out. */
+export interface Zusammenfuehrung {
+  readonly inhalt: AuswahlInhalt;
+  readonly uebrig: NichtUebernommen;
+}
 
 /**
  * What an account holds once the device's choices joined it at sign-in:
  * the account's Teams, then the device's others; the account's Kinder,
- * a missing Spitzname filled from the device's, then the device's others.
- * Each list, and `konto` itself, comes back as it was where the device
- * adds nothing, so a second sign-in with the same choices changes nothing
- * (idempotent).
+ * a missing Spitzname filled from the device's, then the device's others;
+ * the device's only up to the caps (`AUSWAHL_GRENZEN`), in their order,
+ * the ones left out counted in `uebrig`. Each list, and `konto` itself,
+ * comes back as it was where the device adds nothing, so a second sign-in
+ * with the same choices changes nothing (idempotent).
  */
 export function zusammenfuehren(
   konto: AuswahlInhalt,
   geraet: AuswahlInhalt
-): AuswahlInhalt {
-  const teams = [
-    ...konto.teams,
-    ...geraet.teams.filter((team) => !konto.teams.includes(team)),
-  ];
+): Zusammenfuehrung {
+  const neueTeams = geraet.teams.filter((team) => !konto.teams.includes(team));
+  const teamsPlatz = platz(konto.teams.length, AUSWAHL_GRENZEN.teams);
+  const teams =
+    neueTeams.length === 0 || teamsPlatz === 0
+      ? konto.teams
+      : [...konto.teams, ...neueTeams.slice(0, teamsPlatz)];
   const kinder = kinderZusammen(konto.kinder, geraet.kinder);
-  if (teams.length === konto.teams.length && kinder === konto.kinder) {
-    return konto;
-  }
-  return {
-    teams: teams.length === konto.teams.length ? konto.teams : teams,
-    kinder,
+  const uebrig = {
+    teams: Math.max(0, neueTeams.length - teamsPlatz),
+    kinder: kinder.uebrig,
   };
+  if (teams === konto.teams && kinder.liste === konto.kinder) {
+    return { inhalt: konto, uebrig };
+  }
+  return { inhalt: { teams, kinder: kinder.liste }, uebrig };
 }
 
 function kinderZusammen(
   konto: readonly Kind[],
   geraet: readonly Kind[]
-): readonly Kind[] {
+): { readonly liste: readonly Kind[]; readonly uebrig: number } {
   const ausGeraet = new Map(geraet.map((kind) => [kind.personId, kind]));
-  let geaendert = false;
-  const ergaenzt = konto.map((kind) => {
+  let ergaenzt = false;
+  const mitSpitznamen = konto.map((kind) => {
     const spitzname = ausGeraet.get(kind.personId)?.spitzname;
     if (kind.spitzname !== undefined || spitzname === undefined) {
       return kind;
     }
-    geaendert = true;
+    ergaenzt = true;
     return { personId: kind.personId, spitzname };
   });
   const imKonto = new Set(konto.map((kind) => kind.personId));
   const neue = geraet.filter((kind) => !imKonto.has(kind.personId));
-  return geaendert || neue.length > 0 ? [...ergaenzt, ...neue] : konto;
+  const kinderPlatz = platz(konto.length, AUSWAHL_GRENZEN.kinder);
+  const dazu = neue.slice(0, kinderPlatz);
+  const uebrig = neue.length - dazu.length;
+  return ergaenzt || dazu.length > 0
+    ? { liste: [...mitSpitznamen, ...dazu], uebrig }
+    : { liste: konto, uebrig };
+}
+
+/** How many more fit beside `belegt` under `grenze`. */
+function platz(belegt: number, grenze: number): number {
+  return Math.max(0, grenze - belegt);
 }

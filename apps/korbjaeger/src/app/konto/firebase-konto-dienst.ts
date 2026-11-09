@@ -8,6 +8,7 @@ import {
   GoogleAuthProvider,
   indexedDBLocalPersistence,
   initializeAuth,
+  onAuthStateChanged,
   reauthenticateWithPopup,
   signInWithPopup,
   signOut,
@@ -30,9 +31,12 @@ import {
   FirestoreAuswahl,
 } from '../auswahl/firestore-auswahl';
 import { geraetUebernehmen } from '../auswahl/geraet-uebernehmen';
+import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+import { geraeteSpeicher } from '../geraete-speicher';
 import {
   AnmeldungAbgebrochen,
-  ErneuteAnmeldungNoetig,
+  OhneInternet,
+  PopupBlockiert,
   type Benutzer,
   type KontoAuswahl,
   type KontoDienst,
@@ -48,6 +52,16 @@ const ABGEBROCHEN = new Set([
 /** The Firebase app's name: the app's own, apart from any default one. */
 const APP_NAME = 'korbjaeger';
 
+/**
+ * Set where signing out could not clear Firestore's copy on the device
+ * (another tab held it): the next start clears it before reading.
+ */
+export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
+  'korbjaeger-zwischenspeicher-leeren';
+
+/** How long deleting the account's document waits for the server. */
+const LOESCHEN_WARTEN_MS = 10_000;
+
 /** The `KontoDienst` on Firebase, for `environment` (its project or emulators). */
 export function firebaseKontoDienst(environment: Environment): KontoDienst {
   return new FirebaseKontoDienst(environment);
@@ -57,12 +71,14 @@ export function firebaseKontoDienst(environment: Environment): KontoDienst {
  * Firebase Auth (Google's popup, the session kept on the device) and
  * Firestore with its cache on the device, so the account's choices show
  * offline too. Firestore is started anew after each sign-out, whose
- * `terminate` ends it.
+ * `terminate` ends it. Auth's popup machinery is set up when this is built
+ * (on Safari and mobile Firebase does so at once), so a click opens the
+ * popup without waiting.
  */
 class FirebaseKontoDienst implements KontoDienst {
   private readonly app: FirebaseApp;
   private readonly auth: Auth;
-  private firestore?: Firestore;
+  private firestore?: Promise<Firestore>;
 
   public constructor(private readonly environment: Environment) {
     const { emulatoren } = environment;
@@ -88,6 +104,10 @@ class FirebaseKontoDienst implements KontoDienst {
     return benutzerAus(this.auth.currentUser);
   }
 
+  public beobachten(rueckruf: (benutzer: Benutzer | null) => void): () => void {
+    return onAuthStateChanged(this.auth, (user) => rueckruf(benutzerAus(user)));
+  }
+
   public async mitGoogleAnmelden(): Promise<Benutzer> {
     const { user } = await mitPopup(() =>
       signInWithPopup(this.auth, new GoogleAuthProvider())
@@ -106,43 +126,69 @@ class FirebaseKontoDienst implements KontoDienst {
     return signOut(this.auth);
   }
 
-  public async benutzerLoeschen(): Promise<void> {
-    try {
-      await deleteUser(this.angemeldeterBenutzer());
-    } catch (fehler) {
-      if (codeVon(fehler) === 'auth/requires-recent-login') {
-        throw new ErneuteAnmeldungNoetig();
-      }
-      throw fehler;
-    }
+  public benutzerLoeschen(): Promise<void> {
+    return deleteUser(this.angemeldeterBenutzer());
   }
 
-  public auswahl(uid: string): KontoAuswahl {
-    return new FirestoreAuswahl(this.db(), uid);
+  public async auswahl(
+    uid: string,
+    beiFehler: (fehler: unknown) => void
+  ): Promise<KontoAuswahl> {
+    return new FirestoreAuswahl(await this.db(), uid, { beiFehler });
   }
 
-  public geraetUebernehmen(uid: string, geraet: AuswahlInhalt): Promise<void> {
-    return geraetUebernehmen(this.db(), uid, geraet);
+  public async geraetUebernehmen(
+    uid: string,
+    geraet: AuswahlInhalt
+  ): Promise<NichtUebernommen> {
+    return geraetUebernehmen(await this.db(), uid, geraet);
   }
 
-  public auswahlLoeschen(uid: string): Promise<void> {
-    return deleteDoc(auswahlDokumentVon(this.db(), uid));
+  public async auswahlLoeschen(uid: string): Promise<void> {
+    const geloescht = deleteDoc(auswahlDokumentVon(await this.db(), uid));
+    const zuSpaet = new Promise<never>((_, abbrechen) =>
+      setTimeout(() => abbrechen(new OhneInternet()), LOESCHEN_WARTEN_MS)
+    );
+    await Promise.race([geloescht, zuSpaet]);
   }
 
   public async zwischenspeicherLeeren(): Promise<void> {
     // a Firestore that never started still clears what an earlier visit kept
-    const firestore = this.db();
+    const firestore = await this.db();
     this.firestore = undefined;
     await terminate(firestore);
-    await clearIndexedDbPersistence(firestore);
+    await this.speicherLeeren(firestore);
   }
 
-  private db(): Firestore {
+  private db(): Promise<Firestore> {
     this.firestore ??= this.firestoreStarten();
     return this.firestore;
   }
 
-  private firestoreStarten(): Firestore {
+  /** Starts Firestore, first clearing what a sign-out could not. */
+  private async firestoreStarten(): Promise<Firestore> {
+    if (leerenAusstehend()) {
+      const alt = this.neuesFirestore();
+      await this.speicherLeeren(alt);
+      await terminate(alt);
+    }
+    return this.neuesFirestore();
+  }
+
+  /**
+   * Clears Firestore's copy on the device; where another tab holds it,
+   * leaves that for the next start (`ZWISCHENSPEICHER_LEEREN_SCHLUESSEL`).
+   */
+  private async speicherLeeren(firestore: Firestore): Promise<void> {
+    try {
+      await clearIndexedDbPersistence(firestore);
+      leerenAusstehendSetzen(false);
+    } catch {
+      leerenAusstehendSetzen(true);
+    }
+  }
+
+  private neuesFirestore(): Firestore {
     const firestore = initializeFirestore(this.app, {
       localCache: persistentLocalCache({
         tabManager: persistentMultipleTabManager(),
@@ -168,14 +214,43 @@ class FirebaseKontoDienst implements KontoDienst {
   }
 }
 
-/** Runs a popup of Auth; a closed one rejects with `AnmeldungAbgebrochen`. */
+/**
+ * Runs a popup of Auth: a closed one rejects with `AnmeldungAbgebrochen`,
+ * one the browser refused with `PopupBlockiert`.
+ */
 async function mitPopup<T>(popup: () => Promise<T>): Promise<T> {
   try {
     return await popup();
   } catch (fehler) {
-    throw ABGEBROCHEN.has(codeVon(fehler) ?? '')
-      ? new AnmeldungAbgebrochen()
-      : fehler;
+    const code = codeVon(fehler) ?? '';
+    if (ABGEBROCHEN.has(code)) {
+      throw new AnmeldungAbgebrochen();
+    }
+    throw code === 'auth/popup-blocked' ? new PopupBlockiert() : fehler;
+  }
+}
+
+/** Whether a sign-out left Firestore's copy on the device to clear. */
+function leerenAusstehend(): boolean {
+  try {
+    return (
+      geraeteSpeicher()?.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL) === '1'
+    );
+  } catch {
+    return false;
+  }
+}
+
+function leerenAusstehendSetzen(offen: boolean): void {
+  try {
+    const speicher = geraeteSpeicher();
+    if (offen) {
+      speicher?.setItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, '1');
+    } else {
+      speicher?.removeItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
+    }
+  } catch {
+    // blocked: the next sign-out tries again
   }
 }
 

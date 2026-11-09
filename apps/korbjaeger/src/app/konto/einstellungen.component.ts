@@ -5,16 +5,24 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
+import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { firstValueFrom } from 'rxjs';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 import { KONTO_SITZUNG } from './konto';
-import { AnmeldungAbgebrochen } from './konto-dienst';
-import { KontoLoeschenDialogComponent } from './konto-loeschen-dialog.component';
+import {
+  AnmeldungAbgebrochen,
+  OhneInternet,
+  PopupBlockiert,
+} from './konto-dienst';
+import {
+  KontoLoeschenDialogComponent,
+  type KontoLoeschenFrage,
+} from './konto-loeschen-dialog.component';
 
 /** What the settings say when a step of the account failed. */
 const FEHLER = {
@@ -23,12 +31,23 @@ const FEHLER = {
   loeschen: 'Das Konto ist noch nicht gelöscht. Bitte noch einmal versuchen.',
 } as const;
 
+const POPUP_BLOCKIERT =
+  'Dein Browser hat das Fenster von Google blockiert. Erlaube Pop-ups für diese Seite und versuche es noch einmal.';
+
+const LOESCHEN_OHNE_INTERNET =
+  'Ohne Internet lässt sich das Konto nicht löschen. Bitte versuche es mit Internet noch einmal.';
+
+const LOESCHEN_ABGEBROCHEN =
+  'Das Konto ist nicht gelöscht: Die Bestätigung bei Google wurde abgebrochen.';
+
 type Schritt = keyof typeof FEHLER;
 
 /**
  * The settings: the Google account, which keeps Meine Teams and Kinder the
  * same on every device signed in with it. Signing in, out and deleting go
- * through `KONTO_SITZUNG`; a popup closed by the Elternteil shows nothing.
+ * through `KONTO_SITZUNG`, which loads Firebase as the page opens, so a
+ * click opens Google's popup at once; a popup closed while signing in
+ * shows nothing.
  */
 @Component({
   selector: 'korb-einstellungen',
@@ -70,6 +89,9 @@ type Schritt = keyof typeof FEHLER;
                   laden.
                 </p>
               }
+            }
+            @if (uebrigText(); as text) {
+              <p class="hinweis" data-qa="nicht-uebernommen">{{ text }}</p>
             }
             @if (fehler(); as text) {
               <p class="fehler" role="alert">{{ text }}</p>
@@ -122,6 +144,9 @@ type Schritt = keyof typeof FEHLER;
     .fehler {
       color: var(--mat-sys-error);
     }
+    .hinweis {
+      color: var(--mat-sys-on-surface-variant);
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -132,6 +157,13 @@ export class EinstellungenComponent {
   protected readonly stand = this.sitzung.stand;
   protected readonly fehler = signal<string | undefined>(undefined);
   protected readonly beschaeftigt = signal(false);
+  /** What of the device's choices did not fit into the account at sign-in. */
+  protected readonly uebrigText = signal<string | undefined>(undefined);
+
+  public constructor() {
+    // a failure shows when signing in, not before
+    this.sitzung.vorbereiten().catch(() => undefined);
+  }
 
   protected readonly angemeldetAls = computed(() => {
     const stand = this.stand();
@@ -141,24 +173,26 @@ export class EinstellungenComponent {
   });
 
   protected anmelden(): Promise<void> {
-    return this.ausfuehren('anmelden', () => this.sitzung.anmelden());
+    this.uebrigText.set(undefined);
+    return this.ausfuehren('anmelden', async () =>
+      this.uebrigText.set(nichtUebernommenText(await this.sitzung.anmelden()))
+    );
   }
 
   protected abmelden(): Promise<void> {
     return this.ausfuehren('abmelden', () => this.sitzung.abmelden());
   }
 
-  protected async loeschen(): Promise<void> {
-    const bestaetigt = await firstValueFrom(
-      this.dialog
-        .open<KontoLoeschenDialogComponent, void, boolean>(
-          KontoLoeschenDialogComponent
-        )
-        .afterClosed()
+  protected loeschen(): void {
+    this.dialog.open<KontoLoeschenDialogComponent, KontoLoeschenFrage>(
+      KontoLoeschenDialogComponent,
+      {
+        data: {
+          loeschen: () =>
+            void this.ausfuehren('loeschen', () => this.sitzung.loeschen()),
+        },
+      }
     );
-    if (bestaetigt === true) {
-      await this.ausfuehren('loeschen', () => this.sitzung.loeschen());
-    }
   }
 
   private async ausfuehren(
@@ -179,10 +213,32 @@ export class EinstellungenComponent {
 
 /** What to say of `fehler` in `schritt`; nothing for a popup closed while signing in. */
 function fehlerText(schritt: Schritt, fehler: unknown): string | undefined {
-  if (fehler instanceof AnmeldungAbgebrochen && schritt === 'anmelden') {
-    return undefined;
+  if (fehler instanceof AnmeldungAbgebrochen) {
+    return schritt === 'loeschen' ? LOESCHEN_ABGEBROCHEN : undefined;
+  }
+  if (fehler instanceof PopupBlockiert) {
+    return POPUP_BLOCKIERT;
+  }
+  if (fehler instanceof OhneInternet) {
+    return LOESCHEN_OHNE_INTERNET;
   }
   return fehler instanceof AuswahlZuNeuError
     ? auswahlFehlerText(fehler)
     : FEHLER[schritt];
+}
+
+/** What the settings say of the device's choices that did not fit; none where all did. */
+export function nichtUebernommenText({
+  teams,
+  kinder,
+}: NichtUebernommen): string | undefined {
+  const teile = [
+    teams === 1 ? '1 Team' : teams > 1 ? `${teams} Teams` : undefined,
+    kinder === 1 ? '1 Kind' : kinder > 1 ? `${kinder} Kinder` : undefined,
+  ].filter((teil) => teil !== undefined);
+  if (teile.length === 0) {
+    return undefined;
+  }
+  const passten = teams + kinder === 1 ? 'passte' : 'passten';
+  return `${teile.join(' und ')} dieses Geräts ${passten} nicht mehr in dein Konto: Es hält höchstens ${AUSWAHL_GRENZEN.teams} Teams und ${AUSWAHL_GRENZEN.kinder} Kinder.`;
 }

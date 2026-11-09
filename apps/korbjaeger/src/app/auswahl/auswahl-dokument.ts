@@ -10,6 +10,12 @@ import { kindMit, type Kind } from './kind';
  */
 export const AUSWAHL_VERSION = 1;
 
+/**
+ * How many Teams and Kinder an `Auswahl` holds at most: the Firestore rules
+ * (`firestore.rules`) refuse more, and their spec checks these numbers.
+ */
+export const AUSWAHL_GRENZEN = { teams: 50, kinder: 20 } as const;
+
 /** What an adapter stores of an `Auswahl`: ids only, never names from the DBB. */
 export interface AuswahlDokument {
   readonly version: typeof AUSWAHL_VERSION;

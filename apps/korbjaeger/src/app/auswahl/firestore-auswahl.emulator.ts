@@ -1,18 +1,20 @@
-import {
-  initializeTestEnvironment,
-  type RulesTestContext,
-  type RulesTestEnvironment,
-} from '@firebase/rules-unit-testing';
+import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import {
   deleteDoc,
+  disableNetwork,
+  enableNetwork,
   type Firestore,
-  getDoc,
-  setDoc,
-  setLogLevel,
   waitForPendingWrites,
 } from 'firebase/firestore';
-import { readFileSync } from 'node:fs';
-import { FIRESTORE_EMULATOR } from '../../testing/firestore-emulator';
+import {
+  alsGeraet,
+  APP_REGELN,
+  emulatorProjekt,
+  gespeichert,
+  OFFENE_REGELN,
+  ohneRegeln,
+  vorhanden,
+} from '../../testing/firestore-emulator';
 import { auswahlDokumentVon, FirestoreAuswahl } from './firestore-auswahl';
 import { auswahlVertrag } from './testing/auswahl-vertrag';
 
@@ -20,63 +22,30 @@ import { auswahlVertrag } from './testing/auswahl-vertrag';
  * `FirestoreAuswahl` on the emulator: the shared contract of every
  * `Auswahl` adapter, on rules that let everything through (the contract
  * stores documents the rules would refuse, as a later version or a fault
- * might), and the adapter's own writes against the app's rules.
+ * might), and the adapter's own behaviour under the app's rules.
  */
 
 /** How long the open adapters get to hear of the last write. */
 const ZUHOEREN_MS = 300;
 
-let vertragsUmgebung: RulesTestEnvironment;
-let regelUmgebung: RulesTestEnvironment;
+let vertragsProjekt: RulesTestEnvironment;
+let regelProjekt: RulesTestEnvironment;
 let naechsteUid = 0;
 
 beforeAll(async () => {
-  setLogLevel('silent');
-  vertragsUmgebung = await initializeTestEnvironment({
-    projectId: 'demo-korbjaeger-vertrag',
-    firestore: {
-      ...FIRESTORE_EMULATOR,
-      rules: `rules_version = '2';
-        service cloud.firestore {
-          match /{document=**} { allow read, write: if true; }
-        }`,
-    },
-  });
-  regelUmgebung = await initializeTestEnvironment({
-    projectId: 'demo-korbjaeger-auswahl',
-    firestore: {
-      ...FIRESTORE_EMULATOR,
-      rules: readFileSync(
-        new URL('../../../firestore.rules', import.meta.url),
-        'utf8'
-      ),
-    },
-  });
+  vertragsProjekt = await emulatorProjekt(
+    'demo-korbjaeger-vertrag',
+    OFFENE_REGELN
+  );
+  regelProjekt = await emulatorProjekt('demo-korbjaeger-auswahl', APP_REGELN);
 });
 
 afterAll(async () => {
-  await vertragsUmgebung.cleanup();
-  await regelUmgebung.cleanup();
+  await vertragsProjekt.cleanup();
+  await regelProjekt.cleanup();
 });
 
-/** A device signed in as `uid`: a Firestore instance of its own. */
-function geraet(umgebung: RulesTestEnvironment, uid: string): Firestore {
-  return umgebung.authenticatedContext(uid).firestore() as unknown as Firestore;
-}
-
-/** Does `tun` with the document of `uid`, past the rules. */
-function ohneRegeln<T>(
-  umgebung: RulesTestEnvironment,
-  uid: string,
-  tun: (firestore: Firestore) => Promise<T>
-): Promise<T> {
-  let ergebnis!: T;
-  return umgebung
-    .withSecurityRulesDisabled(async (context: RulesTestContext) => {
-      ergebnis = await tun(context.firestore() as unknown as Firestore);
-    })
-    .then(() => ergebnis);
-}
+const zuhoeren = () => new Promise((weiter) => setTimeout(weiter, ZUHOEREN_MS));
 
 auswahlVertrag('Firestore', () => {
   // a fresh account per test: its document is the store
@@ -86,38 +55,43 @@ auswahlVertrag('Firestore', () => {
   afterEach(() => offen.forEach((auswahl) => auswahl.beenden()));
   return {
     oeffnen: async () => {
-      const firestore = geraet(vertragsUmgebung, uid);
+      const firestore = alsGeraet(vertragsProjekt, uid);
       geraete.push(firestore);
       const auswahl = new FirestoreAuswahl(firestore, uid);
       offen.push(auswahl);
       await auswahl.geladen();
       return auswahl;
     },
-    schreibeRoh: (dokument) =>
-      ohneRegeln(vertragsUmgebung, uid, (firestore) =>
-        setDoc(auswahlDokumentVon(firestore, uid), dokument as object)
-      ),
-    liesRoh: () =>
-      ohneRegeln(vertragsUmgebung, uid, async (firestore) => {
-        const stand = await getDoc(auswahlDokumentVon(firestore, uid));
-        return stand.exists() ? stand.data() : null;
-      }),
+    schreibeRoh: (dokument) => vorhanden(vertragsProjekt, uid, dokument),
+    liesRoh: () => gespeichert(vertragsProjekt, uid),
     bisStabil: async () => {
       await Promise.all(
         geraete.map((firestore) => waitForPendingWrites(firestore))
       );
-      await new Promise((weiter) => setTimeout(weiter, ZUHOEREN_MS));
+      await zuhoeren();
     },
   };
 });
 
 describe('FirestoreAuswahl', () => {
   const MIMI = { art: 'benannt', personId: 4711 } as const;
+  const offen: FirestoreAuswahl[] = [];
+  afterEach(() => offen.splice(0).forEach((auswahl) => auswahl.beenden()));
+
+  async function oeffnen(
+    uid: string,
+    optionen: ConstructorParameters<typeof FirestoreAuswahl>[2] = {},
+    firestore = alsGeraet(regelProjekt, uid)
+  ): Promise<FirestoreAuswahl> {
+    const auswahl = new FirestoreAuswahl(firestore, uid, optionen);
+    offen.push(auswahl);
+    await auswahl.geladen();
+    return auswahl;
+  }
 
   it("writes what the app's rules take, list by list", async () => {
     const uid = 'regeln-schreiben';
-    const auswahl = new FirestoreAuswahl(geraet(regelUmgebung, uid), uid);
-    await auswahl.geladen();
+    const auswahl = await oeffnen(uid);
 
     await auswahl.folgen(313036);
     await auswahl.markieren(MIMI, 'Mimi');
@@ -126,38 +100,85 @@ describe('FirestoreAuswahl', () => {
     await auswahl.entfolgen(313036);
     await auswahl.entmarkieren(MIMI.personId);
 
-    expect(
-      await ohneRegeln(regelUmgebung, uid, async (firestore) =>
-        (await getDoc(auswahlDokumentVon(firestore, uid))).data()
-      )
-    ).toEqual({ version: 1, teams: [201500], kinder: [] });
-    auswahl.beenden();
+    expect(await gespeichert(regelProjekt, uid)).toEqual({
+      version: 1,
+      teams: [201500],
+      kinder: [],
+    });
   });
 
-  it('reads nothing of another account', async () => {
+  it('keeps both of two changes made at once', async () => {
+    const uid = 'zugleich';
+    const auswahl = await oeffnen(uid);
+
+    await Promise.all([
+      auswahl.folgen(313036),
+      auswahl.folgen(201500),
+      auswahl.markieren(MIMI),
+    ]);
+
+    expect(auswahl.teams()).toEqual([313036, 201500]);
+    expect(await gespeichert(regelProjekt, uid)).toEqual({
+      version: 1,
+      teams: [313036, 201500],
+      kinder: [{ personId: 4711 }],
+    });
+  });
+
+  it('changes offline at once, each change on the one before, and sends them once online', async () => {
+    const uid = 'offline';
+    const firestore = alsGeraet(regelProjekt, uid);
+    let online = true;
+    const auswahl = await oeffnen(uid, { istOnline: () => online }, firestore);
+    await auswahl.folgen(313036);
+    await disableNetwork(firestore);
+    online = false;
+
+    await auswahl.folgen(201500);
+    await auswahl.markieren(MIMI);
+    expect(auswahl.teams()).toEqual([313036, 201500]);
+    expect(await gespeichert(regelProjekt, uid)).toEqual({
+      version: 1,
+      teams: [313036],
+      kinder: [],
+    });
+
+    await enableNetwork(firestore);
+    await waitForPendingWrites(firestore);
+    expect(await gespeichert(regelProjekt, uid)).toEqual({
+      version: 1,
+      teams: [313036, 201500],
+      kinder: [{ personId: 4711 }],
+    });
+  });
+
+  it("can't be read, and says so, where the rules refuse it", async () => {
+    let gehoert: unknown;
     const auswahl = new FirestoreAuswahl(
-      geraet(regelUmgebung, 'regeln-fremd'),
-      'regeln-andere'
+      alsGeraet(regelProjekt, 'regeln-fremd'),
+      'regeln-andere',
+      { beiFehler: (fehler) => (gehoert = fehler) }
     );
+    offen.push(auswahl);
 
     await expect(auswahl.geladen()).rejects.toMatchObject({
       code: 'permission-denied',
     });
-    auswahl.beenden();
+    expect(auswahl.nichtLesbar()).toBe(true);
+    expect(auswahl.teams()).toBeUndefined();
+    expect(gehoert).toMatchObject({ code: 'permission-denied' });
   });
 
   it('shows the selection gone once the document is deleted', async () => {
     const uid = 'regeln-geloescht';
-    const auswahl = new FirestoreAuswahl(geraet(regelUmgebung, uid), uid);
-    await auswahl.geladen();
+    const auswahl = await oeffnen(uid);
     await auswahl.folgen(313036);
 
-    await ohneRegeln(regelUmgebung, uid, (firestore) =>
+    await ohneRegeln(regelProjekt, (firestore) =>
       deleteDoc(auswahlDokumentVon(firestore, uid))
     );
-    await new Promise((weiter) => setTimeout(weiter, ZUHOEREN_MS));
+    await zuhoeren();
 
     expect(auswahl.teams()).toEqual([]);
-    auswahl.beenden();
   });
 });

@@ -29,7 +29,7 @@
     {
       "name": "konto",
       "installMode": "lazy",
-      "updateMode": "lazy",
+      "updateMode": "prefetch",
       "resources": {
         "files": ["/assets/firebase-konto-dienst-*.js"]
       }

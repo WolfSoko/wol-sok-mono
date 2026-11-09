@@ -18,9 +18,13 @@ function kontoDienstLaden(): Promise<KontoDienst> {
   );
 }
 
-/** Remembers the sign-in in the device's storage, where it may. */
+/**
+ * Remembers the sign-in in the device's storage, where it may; hears of
+ * other tabs' through `fenster`'s `storage` event.
+ */
 export function geraeteMerker(
-  speicher: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | undefined
+  speicher: Pick<Storage, 'getItem' | 'setItem' | 'removeItem'> | undefined,
+  fenster?: Pick<EventTarget, 'addEventListener' | 'removeEventListener'>
 ): AnmeldeMerker {
   const versuchen = (tun: () => void) => {
     try {
@@ -41,6 +45,18 @@ export function geraeteMerker(
       versuchen(() => speicher?.setItem(ANGEMELDET_SCHLUESSEL, '1')),
     loeschen: () =>
       versuchen(() => speicher?.removeItem(ANGEMELDET_SCHLUESSEL)),
+    beobachten: (rueckruf) => {
+      const beiAenderung = (event: Event) => {
+        if (
+          event instanceof StorageEvent &&
+          (event.key === null || event.key === ANGEMELDET_SCHLUESSEL)
+        ) {
+          rueckruf();
+        }
+      };
+      fenster?.addEventListener('storage', beiAenderung);
+      return () => fenster?.removeEventListener('storage', beiAenderung);
+    },
   };
 }
 
@@ -49,16 +65,17 @@ export const KONTO_SITZUNG = new InjectionToken<KontoSitzung>('KontoSitzung', {
   providedIn: 'root',
   factory: () => {
     const speicher = geraeteSpeicher();
+    const fenster = inject(DOCUMENT).defaultView ?? undefined;
     const lokal = new LokaleAuswahl(
       speicher,
-      inject(DOCUMENT).defaultView ?? undefined,
+      fenster,
       inject(SPEICHER_FREIGEBEN)
     );
     inject(DestroyRef).onDestroy(() => lokal.beenden());
     const sitzung = new KontoSitzung(
       lokal,
       environment.anmeldung ? kontoDienstLaden : undefined,
-      geraeteMerker(speicher)
+      geraeteMerker(speicher, fenster)
     );
     void sitzung.starten();
     return sitzung;

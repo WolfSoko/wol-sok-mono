@@ -1,7 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { EinstellungenComponent } from './einstellungen.component';
+import {
+  EinstellungenComponent,
+  nichtUebernommenText,
+} from './einstellungen.component';
+import { PopupBlockiert } from './konto-dienst';
 import { KONTO_SITZUNG } from './konto';
 import { KontoSitzung } from './konto-sitzung';
 import { FakeKontoDienst, MerkerImSpec } from './testing/fake-konto-dienst';
@@ -9,19 +13,31 @@ import { FakeKontoDienst, MerkerImSpec } from './testing/fake-konto-dienst';
 interface Seite {
   readonly element: HTMLElement;
   readonly dienst: FakeKontoDienst;
+  readonly geladen: () => number;
   readonly stabil: () => Promise<void>;
   readonly knopf: (qa: string) => HTMLButtonElement | null;
   readonly fehler: () => string | undefined;
 }
 
 async function oeffnen(
-  optionen: { ohneAnmeldung?: boolean; dienst?: FakeKontoDienst } = {}
+  optionen: {
+    ohneAnmeldung?: boolean;
+    dienst?: FakeKontoDienst;
+    online?: () => boolean;
+  } = {}
 ): Promise<Seite> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
+  let ladevorgaenge = 0;
   const sitzung = new KontoSitzung(
     new LokaleAuswahl(undefined),
-    optionen.ohneAnmeldung ? undefined : async () => dienst,
-    new MerkerImSpec()
+    optionen.ohneAnmeldung
+      ? undefined
+      : async () => {
+          ladevorgaenge++;
+          return dienst;
+        },
+    new MerkerImSpec(),
+    optionen.online
   );
   await sitzung.starten();
   TestBed.configureTestingModule({
@@ -41,6 +57,7 @@ async function oeffnen(
   return {
     element,
     dienst,
+    geladen: () => ladevorgaenge,
     stabil,
     knopf: (qa) =>
       element.querySelector<HTMLButtonElement>(`[data-qa="${qa}"]`),
@@ -49,8 +66,11 @@ async function oeffnen(
   };
 }
 
-async function angemeldet(dienst?: FakeKontoDienst): Promise<Seite> {
-  const seite = await oeffnen({ dienst });
+async function angemeldet(
+  dienst?: FakeKontoDienst,
+  online?: () => boolean
+): Promise<Seite> {
+  const seite = await oeffnen({ dienst, online });
   seite.knopf('anmelden')?.click();
   await seite.stabil();
   seite.dienst.aufrufe.length = 0;
@@ -84,6 +104,13 @@ describe('EinstellungenComponent', () => {
     expect(knopf('anmelden')).toBeNull();
   });
 
+  it('loads Firebase as it opens, so the click opens the popup at once', async () => {
+    const { geladen, dienst } = await oeffnen();
+
+    expect(geladen()).toBe(1);
+    expect(dienst.aufrufe).toEqual([]);
+  });
+
   it('signs in with Google and names the account', async () => {
     const { element, knopf, stabil, dienst } = await oeffnen();
 
@@ -110,6 +137,36 @@ describe('EinstellungenComponent', () => {
     expect(knopf('anmelden')).not.toBeNull();
   });
 
+  it('says so where the browser blocked the popup', async () => {
+    const dienst = new FakeKontoDienst();
+    dienst.popupFehler = new PopupBlockiert();
+    const { knopf, stabil, fehler } = await oeffnen({ dienst });
+
+    knopf('anmelden')?.click();
+    await stabil();
+
+    expect(fehler()).toBe(
+      'Dein Browser hat das Fenster von Google blockiert. Erlaube Pop-ups für diese Seite und versuche es noch einmal.'
+    );
+  });
+
+  it("tells which of the device's choices did not fit into the account", async () => {
+    const dienst = new FakeKontoDienst();
+    dienst.uebrig = { teams: 2, kinder: 1 };
+    const { knopf, stabil, element } = await oeffnen({ dienst });
+
+    knopf('anmelden')?.click();
+    await stabil();
+
+    expect(
+      element
+        .querySelector('[data-qa="nicht-uebernommen"]')
+        ?.textContent?.trim()
+    ).toBe(
+      '2 Teams und 1 Kind dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
+    );
+  });
+
   it('says so when the sign-in did not work', async () => {
     const dienst = new FakeKontoDienst();
     dienst.uebernahmeScheitert = true;
@@ -133,7 +190,7 @@ describe('EinstellungenComponent', () => {
     expect(knopf('anmelden')).not.toBeNull();
   });
 
-  it('deletes the account once confirmed, its document first', async () => {
+  it('deletes the account once confirmed: Google asked first, then its document', async () => {
     const { knopf, stabil, dienst } = await angemeldet();
 
     knopf('konto-loeschen')?.click();
@@ -141,7 +198,8 @@ describe('EinstellungenComponent', () => {
     imDialog('konto-loeschen-bestaetigen');
     await stabil();
 
-    expect(dienst.aufrufe.slice(0, 2)).toEqual([
+    expect(dienst.aufrufe.slice(0, 3)).toEqual([
+      'erneutAnmelden',
       'auswahlLoeschen uid-1',
       'benutzerLoeschen',
     ]);
@@ -160,20 +218,59 @@ describe('EinstellungenComponent', () => {
     expect(knopf('abmelden')).not.toBeNull();
   });
 
-  it('says so where the account could not be deleted', async () => {
-    const dienst = new FakeKontoDienst();
-    const seite = await angemeldet(dienst);
-    dienst.frischAnmelden = true;
-    dienst.abgebrochen = true;
+  it.each([
+    [
+      'Google was cancelled',
+      (dienst: FakeKontoDienst) => (dienst.abgebrochen = true),
+      'Das Konto ist nicht gelöscht: Die Bestätigung bei Google wurde abgebrochen.',
+    ],
+    [
+      'the server did not confirm it',
+      (dienst: FakeKontoDienst) => (dienst.loeschenOhneServer = true),
+      'Ohne Internet lässt sich das Konto nicht löschen. Bitte versuche es mit Internet noch einmal.',
+    ],
+  ])(
+    'says why the account is not deleted where %s',
+    async (_, stoeren, text) => {
+      const dienst = new FakeKontoDienst();
+      const seite = await angemeldet(dienst);
+      stoeren(dienst);
+
+      seite.knopf('konto-loeschen')?.click();
+      await seite.stabil();
+      imDialog('konto-loeschen-bestaetigen');
+      await seite.stabil();
+
+      expect(seite.fehler()).toBe(text);
+      expect(seite.knopf('abmelden')).not.toBeNull();
+    }
+  );
+
+  it('deletes nothing offline, and says so', async () => {
+    let online = true;
+    const seite = await angemeldet(undefined, () => online);
+    online = false;
 
     seite.knopf('konto-loeschen')?.click();
     await seite.stabil();
     imDialog('konto-loeschen-bestaetigen');
     await seite.stabil();
 
+    expect(seite.dienst.aufrufe).toEqual([]);
     expect(seite.fehler()).toBe(
-      'Das Konto ist noch nicht gelöscht. Bitte noch einmal versuchen.'
+      'Ohne Internet lässt sich das Konto nicht löschen. Bitte versuche es mit Internet noch einmal.'
     );
-    expect(seite.knopf('abmelden')).not.toBeNull();
+  });
+});
+
+describe('nichtUebernommenText', () => {
+  it('says nothing where all fitted', () => {
+    expect(nichtUebernommenText({ teams: 0, kinder: 0 })).toBeUndefined();
+  });
+
+  it('names one Team in the singular', () => {
+    expect(nichtUebernommenText({ teams: 1, kinder: 0 })).toBe(
+      '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams und 20 Kinder.'
+    );
   });
 });

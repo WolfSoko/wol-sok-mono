@@ -7,6 +7,7 @@ import {
   folgenAenderung,
   geaendert,
   gleicheKinder,
+  grenzenPruefen,
   inhaltAus,
   markierenAenderung,
   spitznameAenderung,
@@ -46,6 +47,8 @@ export type Fenster = Pick<
  *   does not know are kept on a write.
  * - A document of a newer version is left alone: no Team is followed, no
  *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
+ * - A change over a list's cap (`AUSWAHL_GRENZEN`) rejects with
+ *   `AuswahlVollError`, nothing stored.
  * - Where the storage is full, it has `platzSchaffen` free it (of the
  *   cached DBB answers) and tries once more. A change it still could not
  *   store (private mode, full, no storage) is kept as `offen`: applied on
@@ -55,6 +58,8 @@ export type Fenster = Pick<
 export class LokaleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[]>;
   public readonly kinder: Signal<readonly Kind[]>;
+  /** The device's storage is always read, at worst as empty. */
+  public readonly nichtLesbar: Signal<boolean> = signal(false).asReadonly();
 
   private readonly inhalt = signal<AuswahlInhalt>(LEERE_AUSWAHL);
 
@@ -148,6 +153,7 @@ export class LokaleAuswahl implements Auswahl {
     const gespeichert = inhaltAus(gelesen);
     const vorher = this.mitOffenen(gespeichert);
     const nachher = aenderung(vorher);
+    grenzenPruefen(vorher, nachher);
     this.inhalt.set(nachher);
     if (nachher === vorher && this.offen.length === 0) {
       return;

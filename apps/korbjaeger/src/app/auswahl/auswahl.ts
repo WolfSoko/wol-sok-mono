@@ -25,6 +25,12 @@ export interface Auswahl {
    */
   readonly teams: Signal<readonly TeamId[] | undefined>;
   /**
+   * Whether the selection cannot be read (the account's, its listener
+   * failed): `teams` and `kinder` then stay `undefined`, and screens say so
+   * rather than wait.
+   */
+  readonly nichtLesbar: Signal<boolean>;
+  /**
    * Adds `team` to the end of Meine Teams, unless it is in them already.
    * Only once `teams` is read.
    */

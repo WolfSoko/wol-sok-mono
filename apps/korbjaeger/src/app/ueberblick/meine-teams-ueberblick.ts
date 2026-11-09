@@ -82,6 +82,8 @@ export class MeineTeamsUeberblick {
   private readonly auswahl = inject(AUSWAHL);
   private readonly teams = this.auswahl.teams;
   private readonly kinder = this.auswahl.kinder;
+  /** Whether Meine Teams and the Kinder cannot be read: no overview then. */
+  public readonly nichtLesbar = this.auswahl.nichtLesbar;
   /** The marked Kinder's persons: a new Spitzname starts no search. */
   private readonly kinderPersonen = computed<readonly PersonId[]>(
     () => (this.kinder() ?? []).map(({ personId }) => personId),

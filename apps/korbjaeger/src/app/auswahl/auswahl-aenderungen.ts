@@ -1,9 +1,11 @@
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
+  AUSWAHL_GRENZEN,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
   type GelesenesDokument,
 } from './auswahl-dokument';
+import { AuswahlVollError } from './auswahl-fehler';
 import { gleicheFolge } from '../gleiche-folge';
 import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
 
@@ -72,6 +74,25 @@ export function entmarkierenAenderung(person: PersonId): AuswahlAenderung {
           kinder: inhalt.kinder.filter((kind) => kind.personId !== person),
         }
       : inhalt;
+}
+
+/**
+ * Refuses `nachher` where a change made a list longer than its cap
+ * (`AUSWAHL_GRENZEN`), with `AuswahlVollError`. A list already over it (as
+ * read) may still shrink.
+ */
+export function grenzenPruefen(
+  vorher: AuswahlInhalt,
+  nachher: AuswahlInhalt
+): void {
+  for (const liste of ['teams', 'kinder'] as const) {
+    if (
+      nachher[liste].length > vorher[liste].length &&
+      nachher[liste].length > AUSWAHL_GRENZEN[liste]
+    ) {
+      throw new AuswahlVollError(liste);
+    }
+  }
 }
 
 /** What `gelesen` holds; nothing for no document or a newer version's. */

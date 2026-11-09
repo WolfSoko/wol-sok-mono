@@ -1,7 +1,8 @@
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { MarkierbarerSpieler } from '../kind';
 import type { Auswahl } from '../auswahl';
-import { AuswahlZuNeuError } from '../auswahl-fehler';
+import { AUSWAHL_GRENZEN } from '../auswahl-dokument';
+import { AuswahlVollError, AuswahlZuNeuError } from '../auswahl-fehler';
 
 /**
  * Where one adapter of `Auswahl` keeps its data, for `auswahlVertrag`: the
@@ -440,6 +441,52 @@ export function auswahlVertrag(
         ).rejects.toBeInstanceOf(AuswahlZuNeuError);
 
         expect(await speicher.liesRoh()).toEqual(neuer);
+      });
+    });
+
+    describe('caps', () => {
+      const ids = (anzahl: number) =>
+        Array.from({ length: anzahl }, (_, i) => 1000 + i);
+
+      it('refuses to follow one Team more than its cap, and stores nothing', async () => {
+        const voll = ids(AUSWAHL_GRENZEN.teams);
+        await speicher.schreibeRoh({ version: 1, teams: voll, kinder: [] });
+        const auswahl = await speicher.oeffnen();
+
+        await expect(auswahl.folgen(MTV_WASBUETTEL)).rejects.toEqual(
+          new AuswahlVollError('teams')
+        );
+
+        expect(auswahl.teams()).toEqual(voll);
+        expect(await speicher.liesRoh()).toEqual({
+          version: 1,
+          teams: voll,
+          kinder: [],
+        });
+      });
+
+      it('refuses to mark one Kind more than its cap', async () => {
+        const voll = ids(AUSWAHL_GRENZEN.kinder).map((personId) => ({
+          personId,
+        }));
+        await speicher.schreibeRoh({ version: 1, teams: [], kinder: voll });
+        const auswahl = await speicher.oeffnen();
+
+        await expect(auswahl.markieren(LUMI)).rejects.toEqual(
+          new AuswahlVollError('kinder')
+        );
+
+        expect(auswahl.kinder()).toEqual(voll);
+      });
+
+      it('still unfollows where the stored Teams are over their cap', async () => {
+        const zuViele = ids(AUSWAHL_GRENZEN.teams + 1);
+        await speicher.schreibeRoh({ version: 1, teams: zuViele, kinder: [] });
+        const auswahl = await speicher.oeffnen();
+
+        await auswahl.entfolgen(zuViele[0]);
+
+        expect(auswahl.teams()).toEqual(zuViele.slice(1));
       });
     });
 

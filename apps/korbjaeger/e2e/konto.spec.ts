@@ -78,10 +78,11 @@ test.describe('the account', () => {
     await teamPage.folgen.click();
     await expect(teamPage.folgen).toHaveAttribute('aria-pressed', 'true');
     await einstellungenPage.goto();
-    await einstellungenPage.anmeldenAls(neuesKonto('Beispiel'), { neu: true });
+    const konto = neuesKonto('Beispiel');
+    await einstellungenPage.anmeldenAls(konto, { neu: true });
     await expect(einstellungenPage.kontoName).toBeVisible();
 
-    await einstellungenPage.loeschen();
+    await einstellungenPage.loeschen(konto);
 
     await expect(einstellungenPage.anmelden).toBeVisible();
     await startPage.goto();

@@ -1,8 +1,6 @@
 import {
   assertFails,
   assertSucceeds,
-  initializeTestEnvironment,
-  type RulesTestContext,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import {
@@ -13,18 +11,25 @@ import {
   getDoc,
   getDocs,
   setDoc,
-  setLogLevel,
   updateDoc,
 } from 'firebase/firestore';
-import { readFileSync } from 'node:fs';
-import { FIRESTORE_EMULATOR } from './testing/firestore-emulator';
+import { AUSWAHL_GRENZEN } from './app/auswahl/auswahl-dokument';
+import {
+  alsGeraet,
+  APP_REGELN,
+  emulatorProjekt,
+  vorhanden as vorhandenIn,
+} from './testing/firestore-emulator';
 
 /**
  * The app's Firestore rules (`../firestore.rules`) on the emulator: one
  * `auswahl/{uid}` per signed-in Elternteil, only theirs, with only the
- * fields the `Auswahl` stores (ADR 0019) and capped lists.
+ * fields the `Auswahl` stores (ADR 0019) and lists capped as the app caps
+ * them (`AUSWAHL_GRENZEN`).
  */
 let env: RulesTestEnvironment;
+
+const { teams: TEAMS_HOECHSTENS, kinder: KINDER_HOECHSTENS } = AUSWAHL_GRENZEN;
 
 const ELTERNTEIL = 'elternteil-a';
 const ANDERES = 'elternteil-b';
@@ -36,26 +41,14 @@ const GUELTIG = {
 };
 
 beforeAll(async () => {
-  // every refused write would log its denial; the refusals are expected
-  setLogLevel('silent');
-  env = await initializeTestEnvironment({
-    projectId: 'demo-korbjaeger-rules',
-    firestore: {
-      ...FIRESTORE_EMULATOR,
-      rules: readFileSync(
-        new URL('../firestore.rules', import.meta.url),
-        'utf8'
-      ),
-    },
-  });
+  env = await emulatorProjekt('demo-korbjaeger-rules', APP_REGELN);
 });
 
 afterAll(() => env.cleanup());
 
 beforeEach(() => env.clearFirestore());
 
-const db = (uid: string): Firestore =>
-  env.authenticatedContext(uid).firestore() as unknown as Firestore;
+const db = (uid: string): Firestore => alsGeraet(env, uid);
 
 const ohneKonto = (): Firestore =>
   env.unauthenticatedContext().firestore() as unknown as Firestore;
@@ -64,11 +57,8 @@ const auswahlVon = (firestore: Firestore, uid: string) =>
   doc(firestore, 'auswahl', uid);
 
 /** Writes past the rules, as an earlier write did. */
-function vorhanden(uid: string, data: object = GUELTIG): Promise<void> {
-  return env.withSecurityRulesDisabled((context: RulesTestContext) =>
-    setDoc(auswahlVon(context.firestore() as unknown as Firestore, uid), data)
-  );
-}
+const vorhanden = (uid: string, data: object = GUELTIG) =>
+  vorhandenIn(env, uid, data);
 
 /** Whether the owner may store `data` as their Auswahl. */
 const speichern = (data: object) =>
@@ -90,12 +80,21 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   ['a document without a version', { teams: [] }],
   ['a document of another version', { ...GUELTIG, version: 2 }],
   ['a version that is no number', { ...GUELTIG, version: '1' }],
-  ['more than 50 Teams', { version: 1, teams: zahlen(51) }],
+  [
+    'more Teams than the cap',
+    { version: 1, teams: zahlen(TEAMS_HOECHSTENS + 1) },
+  ],
   ['Teams that are no list', { version: 1, teams: 313036 }],
   ['a Team that is no number', { version: 1, teams: [313036, 'Mimi'] }],
   ['a Team that is no whole number', { version: 1, teams: [1.5] }],
-  ['an invalid Team at the end', { version: 1, teams: [...zahlen(49), 'x'] }],
-  ['more than 20 Kinder', { version: 1, kinder: kinderOhneNamen(21) }],
+  [
+    'an invalid Team at the end',
+    { version: 1, teams: [...zahlen(TEAMS_HOECHSTENS - 1), 'x'] },
+  ],
+  [
+    'more Kinder than the cap',
+    { version: 1, kinder: kinderOhneNamen(KINDER_HOECHSTENS + 1) },
+  ],
   ['Kinder that are no list', { version: 1, kinder: { personId: 1 } }],
   ['a Kind that is no map', { version: 1, kinder: [4711] }],
   [
@@ -125,7 +124,10 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   ],
   [
     'an invalid Kind at the end',
-    { version: 1, kinder: [...kinderOhneNamen(19), { personId: -4 }] },
+    {
+      version: 1,
+      kinder: [...kinderOhneNamen(KINDER_HOECHSTENS - 1), { personId: -4 }],
+    },
   ],
 ];
 
@@ -184,10 +186,18 @@ describe('the Auswahl document', () => {
     it('takes both lists full, one list per write', async () => {
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
-      await assertSucceeds(setDoc(eigene, { version: 1, teams: zahlen(50) }));
-      await assertSucceeds(updateDoc(eigene, { kinder: volleKinder(20) }));
-      await assertSucceeds(updateDoc(eigene, { teams: zahlen(49) }));
-      await assertSucceeds(updateDoc(eigene, { kinder: volleKinder(19) }));
+      await assertSucceeds(
+        setDoc(eigene, { version: 1, teams: zahlen(TEAMS_HOECHSTENS) })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS) })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { teams: zahlen(TEAMS_HOECHSTENS - 1) })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS - 1) })
+      );
     });
 
     it.each(UNGUELTIG)('refuses to create %s', async (_, data) => {

@@ -15,6 +15,20 @@ describe('geraeteMerker', () => {
     expect(merker.gesetzt()).toBe(false);
   });
 
+  it("hears of another tab's sign-in or sign-out, and of nothing else", () => {
+    const fenster = new EventTarget();
+    let gehoert = 0;
+    geraeteMerker(localStorage, fenster).beobachten(() => gehoert++);
+
+    fenster.dispatchEvent(
+      new StorageEvent('storage', { key: ANGEMELDET_SCHLUESSEL })
+    );
+    fenster.dispatchEvent(new StorageEvent('storage', { key: 'anderes' }));
+    fenster.dispatchEvent(new StorageEvent('storage', { key: null }));
+
+    expect(gehoert).toBe(2);
+  });
+
   it('knows of no sign-in where the storage is blocked', () => {
     const blockiert = {
       getItem: () => {
