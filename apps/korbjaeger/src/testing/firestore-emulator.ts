@@ -4,10 +4,8 @@ import {
 } from '@firebase/rules-unit-testing';
 import { type Firestore, getDoc, setDoc } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
-import {
-  type FirestoreEmulator,
-  rulesTestEnvironment,
-} from '@wolsok/shared-firebase-emulator';
+import { type FirestoreEmulator } from '@wolsok/shared-firebase-emulator';
+import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';
 import { auswahlDokumentVon } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**

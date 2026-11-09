@@ -1,8 +1,9 @@
 import { type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import {
   emulatorEnv,
-  rulesTestEnvironment,
+  firestoreEmulatorFromEnv,
 } from '@wolsok/shared-firebase-emulator';
+import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { type Firestore, getFirestore } from 'firebase-admin/firestore';
 import { readFileSync } from 'node:fs';
@@ -29,7 +30,6 @@ export interface EmulatorProject {
  */
 export function useEmulatorProject(): () => EmulatorProject {
   const projectId = emulatorEnv('GCLOUD_PROJECT');
-  const [host, port] = emulatorEnv('FIRESTORE_EMULATOR_HOST').split(':');
   if (getApps().length === 0) {
     initializeApp({ projectId });
   }
@@ -40,7 +40,7 @@ export function useEmulatorProject(): () => EmulatorProject {
       admin: getFirestore(),
       devices: await rulesTestEnvironment(
         projectId,
-        { host, port: Number(port) },
+        firestoreEmulatorFromEnv(),
         APP_RULES
       ),
     };

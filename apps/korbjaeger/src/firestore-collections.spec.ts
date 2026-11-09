@@ -13,9 +13,9 @@ const RULES = readFileSync(
 
 describe('the collections the Firestore rules name', () => {
   it('are the account lib’s choices, the only collection a client may open', () => {
-    const matched = [...RULES.matchAll(/^\s*match \/(\w+)\/\{uid\}/gm)].map(
-      ([, collection]) => collection
-    );
+    const matched = [
+      ...RULES.matchAll(/^\s*match \/(\w+)\/\{[\w=*]+\}\s*\{/gm),
+    ].map(([, collection]) => collection);
 
     expect(matched).toEqual([CHOICES_COLLECTION]);
   });

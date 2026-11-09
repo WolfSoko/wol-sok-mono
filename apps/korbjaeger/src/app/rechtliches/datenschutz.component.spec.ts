@@ -117,6 +117,10 @@ describe('DatenschutzComponent', () => {
     expect(loeschen).toContain(
       `spätestens ${germanDays(TTL_DELETION_DAYS, { further: true })} später`
     );
+    // the published wording for today's values, pinned
+    expect(loeschen).toContain(
+      'versucht er es bis zu 7 Tage lang erneut. Damit dieses Gerät danach nichts mehr speichern kann, behält er nur die Kennung deines Kontos noch einen Tag lang, ohne deine Auswahl; danach löscht die Datenbank sie von selbst, spätestens einen weiteren Tag später.'
+    );
     expect(loeschen).toContain(REGIONS.firestore.id);
     expect(loeschen).not.toContain('E-Mail');
   });

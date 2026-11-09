@@ -97,6 +97,9 @@
       "@wolsok/shared-firebase-emulator": [
         "./libs/shared/firebase-emulator/src/index.ts"
       ],
+      "@wolsok/shared-firebase-emulator/rules": [
+        "./libs/shared/firebase-emulator/src/rules.ts"
+      ],
       "@wolsok/shared-legal": ["./libs/shared/legal/src/index.ts"],
       "@wolsok/shared-theme": ["./libs/shared/theme/src/index.ts"],
       "@wolsok/shared-analytics/testing": [

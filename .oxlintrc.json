@@ -206,6 +206,31 @@
       }
     },
     {
+      "files": ["libs/features/korbjaeger-account/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@angular/*",
+                  "@ngrx/*",
+                  "rxjs",
+                  "rxjs/*",
+                  "firebase",
+                  "firebase/*",
+                  "firebase-admin",
+                  "firebase-admin/*"
+                ],
+                "message": "The account lib (feat-shared-korbjaeger-account) is bundled into korbjaeger-functions: plain constants, no Angular, NgRx, RxJS or Firebase imports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": ["libs/features/basketball-data/src/**/*.ts"],
       "rules": {
         "no-restricted-imports": [

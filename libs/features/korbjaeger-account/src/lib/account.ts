@@ -45,8 +45,8 @@ export const TOMBSTONE_DURATION_MS = TOMBSTONE_DAYS * DAY_MS;
 export const DELETION_RETRY_DAYS = 7;
 
 /**
- * How many days after its `expireAt` Firestore's TTL deletes a tombstone at
- * the latest: Google's figure ("typically within 24 hours"), not a setting
- * of ours.
+ * How many days after its `expireAt` Firestore's TTL deletes a tombstone:
+ * Google's figure ("typically within 24 hours"), not a setting of ours and
+ * no guarantee; the privacy policy names it as the upper bound.
  */
 export const TTL_DELETION_DAYS = 1;

@@ -208,10 +208,10 @@
     liegt) das Dokument noch einmal, für den Fall, dass ein anderes Gerät, auf
     dem dein Konto zur selben Zeit geöffnet war, deine Auswahl inzwischen wieder
     gespeichert hat. Schlägt das fehl, versucht er es bis zu
-    {{ loeschen.wiederholung }} lang erneut. Damit dieses Gerät danach nichts
-    mehr speichern kann, behält er nur die Kennung deines Kontos noch
-    {{ loeschen.grabstein }} lang, ohne deine Auswahl; danach löscht die
-    Datenbank sie von selbst, spätestens {{ loeschen.ttl }} später. Seine
+    {{ deletion.retry }} lang erneut. Damit dieses Gerät danach nichts mehr
+    speichern kann, behält er nur die Kennung deines Kontos noch
+    {{ deletion.tombstone }} lang, ohne deine Auswahl; danach löscht die
+    Datenbank sie von selbst, spätestens {{ deletion.ttl }} später. Seine
     Protokolle nennen dein Konto nicht. Kannst du dein Konto nicht selbst
     löschen, schreib mir an die Adresse in Abschnitt 1, dann lösche ich es. Was
     nur auf deinem Gerät liegt, löschst du wie in Abschnitt 4 beschrieben.

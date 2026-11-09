@@ -1,5 +1,9 @@
 {
   "name": "@wolsok/shared-firebase-emulator",
   "version": "0.0.1",
-  "private": true
+  "private": true,
+  "peerDependencies": {
+    "@firebase/rules-unit-testing": "6.0.0",
+    "firebase": "12.19.0"
+  }
 }

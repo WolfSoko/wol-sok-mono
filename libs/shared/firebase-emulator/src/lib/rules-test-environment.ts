@@ -3,12 +3,7 @@ import {
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
 import { setLogLevel } from 'firebase/firestore';
-
-/** Where a spec's Firestore emulator listens. */
-export interface FirestoreEmulator {
-  readonly host: string;
-  readonly port: number;
-}
+import { type FirestoreEmulator } from './emulator-env';
 
 /**
  * A project on the Firestore emulator under `rules`, for devices'

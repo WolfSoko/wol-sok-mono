@@ -55,9 +55,9 @@ export class DatenschutzComponent {
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
   /** How long section 6 says the server retries and keeps a tombstone. */
-  protected readonly loeschen = {
-    wiederholung: germanDays(DELETION_RETRY_DAYS),
-    grabstein: germanDays(TOMBSTONE_DAYS),
+  protected readonly deletion = {
+    retry: germanDays(DELETION_RETRY_DAYS),
+    tombstone: germanDays(TOMBSTONE_DAYS),
     ttl: germanDays(TTL_DELETION_DAYS, { further: true }),
   } as const;
 }
