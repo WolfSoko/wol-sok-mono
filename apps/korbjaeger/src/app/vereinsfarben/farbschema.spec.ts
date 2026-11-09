@@ -7,7 +7,7 @@ import {
   type Systemfarbe,
 } from './farbschema';
 import { VORGABEN } from './vorgaben';
-import { KeineFarbeError } from './vereinsfarben';
+import { KeineFarbeError } from '@wolsok/feat-korbjaeger-auswahl';
 
 /** WCAG 2.x contrast of two `#rrggbb` colours. */
 function kontrast(a: string, b: string): number {

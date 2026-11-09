@@ -1,5 +1,5 @@
 import { signal } from '@angular/core';
-import type { Auswahl } from '../auswahl';
+import type { Auswahl } from '../lib/auswahl';
 
 /**
  * An `Auswahl` for a spec that needs one to behave in a way no adapter

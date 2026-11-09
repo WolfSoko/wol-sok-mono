@@ -1,5 +1,5 @@
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
-import { istFarbe, type Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import { istFarbe, type Vereinsfarben } from './vereinsfarben';
 
 /** A Verein's colours, as the `Auswahl` holds them: by the Verein's DBB id. */
 export interface VereinsfarbenWahl extends Vereinsfarben {

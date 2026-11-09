@@ -2,8 +2,8 @@ import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
   type AuswahlListe,
-} from '../auswahl/auswahl-dokument';
-import type { NichtUebernommen } from '../auswahl/zusammenfuehren';
+  type NichtUebernommen,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** How the text names `anzahl` entries of a list, and whether that is singular. */
 const WIE_GENANNT: Readonly<

@@ -4,9 +4,9 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { LokaleAuswahl, type Auswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import { FokusNachEntfolgenDirective } from './fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from './nach-entfolgen';
 

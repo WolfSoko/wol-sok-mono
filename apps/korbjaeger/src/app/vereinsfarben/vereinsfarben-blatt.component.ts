@@ -13,11 +13,14 @@ import {
 } from '@angular/material/bottom-sheet';
 import type { VereinId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { vereinsfarbenVon } from '../auswahl/vereinsfarben-wahl';
+import {
+  vereinsfarbenVon,
+  vereinsfarbenAus,
+  type Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { FarbwahlComponent } from './farbwahl.component';
 import { FarbschemaDirective } from './vereinsfarben-anwenden';
-import { vereinsfarbenAus, type Vereinsfarben } from './vereinsfarben';
 
 /** What the bottom sheet is opened for: a Verein, with its name to show. */
 export interface VereinsfarbenBlattDaten {

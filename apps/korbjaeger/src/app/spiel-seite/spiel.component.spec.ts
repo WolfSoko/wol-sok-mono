@@ -10,11 +10,14 @@ import {
   type Spielbericht,
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
-import type { Kind } from '../auswahl/kind';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import {
+  type Auswahl,
+  AuswahlZuNeuError,
+  type Kind,
+  LokaleAuswahl,
+} from '@wolsok/feat-korbjaeger-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,

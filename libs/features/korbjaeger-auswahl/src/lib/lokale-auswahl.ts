@@ -4,7 +4,7 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { Vereinsfarben } from './vereinsfarben';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import type { Auswahl } from './auswahl';
 import {
@@ -33,9 +33,9 @@ import {
   type GelesenesDokument,
   type TeamPlatz,
 } from './auswahl-dokument';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
-import { istSpeicherVoll } from '../geraete-speicher';
+import { istSpeicherVoll } from './speicher-voll';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
 /** The key of the `AuswahlDokument` in the device's storage. */

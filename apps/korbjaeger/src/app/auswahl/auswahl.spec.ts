@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AUSWAHL } from './auswahl';
-import { AUSWAHL_SCHLUESSEL } from './lokale-auswahl';
+import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 
 describe('AUSWAHL', () => {
   afterEach(() => localStorage.clear());

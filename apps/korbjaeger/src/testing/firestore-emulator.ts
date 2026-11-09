@@ -10,7 +10,7 @@ import {
   setLogLevel,
 } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
-import { auswahlDokumentVon } from '../app/auswahl/firestore-auswahl';
+import { auswahlDokumentVon } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * Where the specs' Firestore emulator runs (`test-emulator`): as

@@ -9,7 +9,8 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL, type TeamPlatz } from '../auswahl/auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import type { TeamPlatz } from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { NachEntfolgen } from './nach-entfolgen';
 

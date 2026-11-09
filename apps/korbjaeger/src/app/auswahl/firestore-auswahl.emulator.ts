@@ -15,10 +15,14 @@ import {
   ohneRegeln,
   vorhanden,
 } from '../../testing/firestore-emulator';
-import { inhaltAus } from './auswahl-aenderungen';
-import { auswahlDokumentLesen, type AuswahlInhalt } from './auswahl-dokument';
-import { auswahlDokumentVon, FirestoreAuswahl } from './firestore-auswahl';
-import { auswahlVertrag } from './testing/auswahl-vertrag';
+import {
+  inhaltAus,
+  auswahlDokumentLesen,
+  type AuswahlInhalt,
+  auswahlDokumentVon,
+  FirestoreAuswahl,
+} from '@wolsok/feat-korbjaeger-auswahl';
+import { auswahlVertrag } from '@wolsok/feat-korbjaeger-auswahl/testing';
 
 /**
  * `FirestoreAuswahl` on the emulator: the shared contract of every

@@ -7,7 +7,7 @@ import {
   type SaisonSpiel,
   type Spiel,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Kind } from '../auswahl/kind';
+import type { Kind } from '@wolsok/feat-korbjaeger-auswahl';
 import { aeltesterStand, type Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';

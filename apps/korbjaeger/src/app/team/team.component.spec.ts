@@ -17,7 +17,7 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';

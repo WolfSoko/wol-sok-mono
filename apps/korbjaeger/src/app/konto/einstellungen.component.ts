@@ -10,7 +10,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DarstellungWahlComponent } from '../darstellung/darstellung-wahl.component';
-import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
+import { AuswahlZuNeuError } from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 import { KONTO_SITZUNG } from './konto';
 import { nichtUebernommenText } from './nicht-uebernommen-text';

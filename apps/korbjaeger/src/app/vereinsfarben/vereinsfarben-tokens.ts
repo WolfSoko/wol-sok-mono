@@ -1,5 +1,5 @@
 import type { FarbschemaTokens } from './farbschema';
-import type { Vereinsfarben } from './vereinsfarben';
+import type { Vereinsfarben } from '@wolsok/feat-korbjaeger-auswahl';
 
 let farbschemaModul: Promise<typeof import('./farbschema')> | undefined;
 

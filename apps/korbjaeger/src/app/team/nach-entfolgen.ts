@@ -1,7 +1,8 @@
 import { effect, inject, Injectable, Injector } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL, type TeamPlatz } from '../auswahl/auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import type { TeamPlatz } from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 
 /** How long the offer to undo stays, long enough to read and tap it. */

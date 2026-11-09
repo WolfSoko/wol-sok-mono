@@ -1,5 +1,5 @@
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
-import { istSpeicherVoll } from '../geraete-speicher';
+import { istSpeicherVoll } from '@wolsok/feat-korbjaeger-auswahl';
 
 /** The last good answer of the proxy at one path, and when it came. */
 export interface LetzteAntwort {

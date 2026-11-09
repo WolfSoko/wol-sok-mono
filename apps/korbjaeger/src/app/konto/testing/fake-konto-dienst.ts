@@ -3,9 +3,9 @@ import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
   LEERE_AUSWAHL,
   type AuswahlInhalt,
-} from '../../auswahl/auswahl-dokument';
-import { fakeAuswahl } from '../../auswahl/testing/fake-auswahl';
-import type { NichtUebernommen } from '../../auswahl/zusammenfuehren';
+  type NichtUebernommen,
+} from '@wolsok/feat-korbjaeger-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,

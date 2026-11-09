@@ -65,6 +65,12 @@
       "@wolsok/feat-shared-bacteria-engine/testing": [
         "./libs/features/bacteria-engine/src/testing.ts"
       ],
+      "@wolsok/feat-korbjaeger-auswahl": [
+        "./libs/features/korbjaeger-auswahl/src/index.ts"
+      ],
+      "@wolsok/feat-korbjaeger-auswahl/testing": [
+        "./libs/features/korbjaeger-auswahl/src/testing.ts"
+      ],
       "@wolsok/feat-shared-basketball-data": [
         "./libs/features/basketball-data/src/index.ts"
       ],

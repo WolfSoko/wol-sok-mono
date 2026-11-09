@@ -4,7 +4,7 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Vereinsfarben } from '../vereinsfarben/vereinsfarben';
+import type { Vereinsfarben } from './vereinsfarben';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 import {
   deleteField,
@@ -46,7 +46,7 @@ import {
   type TeamPlatz,
 } from './auswahl-dokument';
 import { AuswahlZuNeuError } from './auswahl-fehler';
-import { gleicheFolge } from '../gleiche-folge';
+import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
 /** The collection of the signed-in Elternteile's `AuswahlDokument`s, one per uid. */

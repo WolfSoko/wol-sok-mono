@@ -1,4 +1,4 @@
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
