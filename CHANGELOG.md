@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.153.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.152.0...v74.153.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** colour scheme from a Verein's colours ([#2924](https://github.com/WolfSoko/wol-sok-mono/issues/2924)) ([327e893](https://github.com/WolfSoko/wol-sok-mono/commit/327e893d390f3364d09765e6286b2ce110cedace)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb) [#33ffdd](https://github.com/WolfSoko/wol-sok-mono/issues/33ffdd)
+
+### Chore
+
+* **release:** publish ([a36d1bb](https://github.com/WolfSoko/wol-sok-mono/commit/a36d1bbd49ae061f9956cf32ddf1bba5df92708e))
+
 ## [74.152.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.151.0...v74.152.0) (2026-11-09)
 
 ### Features
