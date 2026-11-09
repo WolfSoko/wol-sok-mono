@@ -17,4 +17,11 @@ export interface Liga {
   readonly bezirk?: string;
   /** Absent where the DBB leaves it out, as in the Liga search. */
   readonly saison?: Saison;
+  /**
+   * Set where the DBB keeps no Spielberichte for the Liga: no Kader, no
+   * quarters, only results (the BBL, ProA and ProB keep theirs in their own
+   * systems, some youth Ligen enter none). Absent where it does or does not
+   * say, as in the Liga search.
+   */
+  readonly ohneSpielberichte?: true;
 }
