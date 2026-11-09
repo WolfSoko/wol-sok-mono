@@ -23,7 +23,25 @@
         ]
       },
       {
-        "regex": "^/(?:(?:[^/.a][^/.]*|a(?:[^/.p][^/.]*)?|ap(?:[^/.i][^/.]*)?|api[^/.]+)(?:/[^/.]*)*)?$",
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/!(api|*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/!(api|*.*)/**/!(*.*)",
         "headers": [
           {
             "key": "Cache-Control",

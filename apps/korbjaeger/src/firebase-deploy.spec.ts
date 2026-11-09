@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-// what Firebase Hosting's emulator matches header rules with (RE2 for `regex`)
-import { configMatcher, re2Available } from 'superstatic/lib/utils/patterns';
+// what Firebase Hosting's emulator matches header rules with
+import { configMatcher } from 'superstatic/lib/utils/patterns';
 import {
   assertDeployableBuild,
   buildKonfigurationMerken,
@@ -223,9 +223,9 @@ describe('the Firebase deploy', () => {
    * paths without a file extension fall back to the shell, so a chunk that
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
    * on every load (every path it answers, unknown ones too), so a reload
-   * picks up the new release. One RE2 `regex` rule names them: segments
-   * without a dot, the first not `api` (RE2 has no lookahead, so "not api"
-   * is spelled out: `a`, `ap`, or longer than `api`, or another start).
+   * picks up the new release. Three globs name them, in the extglob the
+   * rewrite uses: `/`, a first segment that is neither `api` nor a file,
+   * and below it any path whose last segment is no file.
    */
   /** A path of each page file Analog routes (`src/app/pages`), ids as `1`. */
   function pagePaths(): string[] {
@@ -266,16 +266,12 @@ describe('the Firebase deploy', () => {
     '/safety-worker.js',
   ];
 
-  it('matches header rules on RE2, as Hosting does', () => {
-    // without its native module superstatic falls back to JS RegExp
-    expect(re2Available()).toBe(true);
-  });
-
   it.each([
     ...pagePaths(),
     '/team/1',
     '/gibtsnicht',
     '/team/1/gibtsnicht',
+    '/x/y.z/w',
     '/apix',
     '/a',
     '/index.html',
