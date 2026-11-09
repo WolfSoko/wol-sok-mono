@@ -63,6 +63,14 @@ function quelldateien(ordner: string): string[] {
 
 const APP = fileURLToPath(new URL('./app', import.meta.url));
 
+/** Every template of the app, with the file it is in, read once. */
+const APP_TEMPLATES = quelldateien(APP).flatMap((pfad) =>
+  templatesIn(pfad, readFileSync(pfad, 'utf8')).map((template) => ({
+    datei: relative(APP, pfad),
+    template,
+  }))
+);
+
 describe('German texts', () => {
   it('finds English words in a template', () => {
     expect(englischeWoerter('<button matButton>Retry</button>')).toEqual([
@@ -89,20 +97,12 @@ describe('German texts', () => {
   });
 
   it('finds templates to check', () => {
-    const templates = quelldateien(APP).flatMap((pfad) =>
-      templatesIn(pfad, readFileSync(pfad, 'utf8'))
-    );
-
-    expect(templates.length).toBeGreaterThan(30);
+    expect(APP_TEMPLATES.length).toBeGreaterThan(30);
   });
 
   it('keeps English out of every template of the app', () => {
-    const funde = quelldateien(APP).flatMap((pfad) =>
-      templatesIn(pfad, readFileSync(pfad, 'utf8')).flatMap((template) =>
-        englischeWoerter(template).map(
-          (wort) => `${relative(APP, pfad)}: ${wort}`
-        )
-      )
+    const funde = APP_TEMPLATES.flatMap(({ datei, template }) =>
+      englischeWoerter(template).map((wort) => `${datei}: ${wort}`)
     );
 
     expect(funde).toEqual([]);
