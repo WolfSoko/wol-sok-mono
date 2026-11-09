@@ -1,13 +1,57 @@
-import { InjectionToken } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
+
+/** How long the offer to undo stays, long enough to read and tap it. */
+const RUECKGAENGIG_MS = 8000;
+
+/** An element focus may go to: for one Team, or (`undefined`) the screen. */
+export interface FokusZiel {
+  readonly element: HTMLElement;
+  team(): TeamId | undefined;
+}
 
 /**
- * Provided by a screen whose follow controls go with their Team (an
- * overview card, a followed row of the wizard): `TeamFolgenComponent`
- * calls it once it unfollowed `team`, so the screen moves focus to what
- * stays, and offers to undo the unfollowing. Screens whose control stays
- * (the Team page, a Verein's Teams) provide none.
+ * Provided by a screen whose follow controls disappear with the Team they
+ * unfollow (an overview card, a followed row of the wizard); screens whose
+ * control stays (the Team page, a Verein's Teams) provide none. Once a
+ * control unfollowed a Team (`entfolgt`), focus moves to what stays: the
+ * element marked `korbFokusNachEntfolgen` for that Team, else the one for
+ * the screen; and a snackbar, which outlives the control, offers
+ * "Rückgängig" to follow the Team again, saying why where that fails.
  */
-export const NACH_ENTFOLGEN = new InjectionToken<(team: TeamId) => void>(
-  'NACH_ENTFOLGEN'
-);
+@Injectable()
+export class NachEntfolgen {
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly auswahl = inject(AUSWAHL);
+  private readonly ziele = new Set<FokusZiel>();
+
+  /** Adds `ziel` until the returned function is called. */
+  public zielSetzen(ziel: FokusZiel): () => void {
+    this.ziele.add(ziel);
+    return () => this.ziele.delete(ziel);
+  }
+
+  /** A control unfollowed `team`, called `name`, and goes with it. */
+  public entfolgt(team: TeamId, name: string): void {
+    const ziele = [...this.ziele];
+    const ziel =
+      ziele.find((kandidat) => kandidat.team() === team) ??
+      ziele.find((kandidat) => kandidat.team() === undefined);
+    ziel?.element.focus();
+    this.snackBar
+      .open(`${name} steht nicht mehr in Meine Teams.`, 'Rückgängig', {
+        duration: RUECKGAENGIG_MS,
+      })
+      .onAction()
+      .subscribe(() => {
+        this.auswahl.folgen(team).catch((grund: unknown) => {
+          this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
+            duration: RUECKGAENGIG_MS,
+          });
+        });
+      });
+  }
+}

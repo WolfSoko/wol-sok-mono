@@ -2,22 +2,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  ElementRef,
   inject,
   input,
   signal,
-  viewChildren,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
-import type { LigaId, Team, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type { LigaId, Team } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { ligaTeamsResource } from '../basketball-data/liga-teams-resource';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { fehlerText, KEINE_LIGA } from '../fehler/fehler-text';
-import { NACH_ENTFOLGEN } from '../team/nach-entfolgen';
+import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
+import { NachEntfolgen } from '../team/nach-entfolgen';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 
 /**
@@ -28,11 +27,12 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
  * tap and has "Nicht mehr folgen" beside its row (`korb-team-folgen`,
  * outside the row's button, since a button holds no other), which goes
  * once tapped: focus moves to the Team's row, and the snackbar offers to
- * undo it (`NACH_ENTFOLGEN`).
+ * undo it (`NachEntfolgen`).
  */
 @Component({
   selector: 'korb-liga-teams',
   imports: [
+    FokusNachEntfolgenDirective,
     MatIconModule,
     MatListModule,
     MatProgressBarModule,
@@ -57,11 +57,10 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
             @let gefolgt = meineTeams()?.includes(team.id);
             <div class="zeile">
               <button
-                #zeile
                 mat-list-item
                 type="button"
                 data-qa="team"
-                [attr.data-team-id]="team.id"
+                [korbFokusNachEntfolgen]="team.id"
                 [disabled]="meineTeams() === undefined || folgtGerade()"
                 (click)="folgenUndOeffnen(team)"
               >
@@ -85,15 +84,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
       <p class="fehler" role="alert">{{ text }}</p>
     }
   `,
-  providers: [
-    {
-      provide: NACH_ENTFOLGEN,
-      useFactory: () => {
-        const liste = inject(LigaTeamsComponent);
-        return (team: TeamId) => liste.zeileFokussieren(team);
-      },
-    },
-  ],
+  providers: [NachEntfolgen],
   styles: `
     .zeile {
       display: flex;
@@ -119,7 +110,6 @@ export class LigaTeamsComponent {
   private readonly router = inject(Router);
 
   protected readonly meineTeams = this.auswahl.teams;
-  private readonly zeilen = viewChildren('zeile', { read: ElementRef });
   protected readonly teams = ligaTeamsResource(() => this.ligaId());
   protected readonly aenderung = auswahlAenderung();
   /** Whether a tap is following a Team and opening it: no second one. */
@@ -127,14 +117,6 @@ export class LigaTeamsComponent {
   protected readonly fehler = computed(() =>
     fehlerText(this.teams.error(), KEINE_LIGA)
   );
-
-  /** Focus to `team`'s row, where its "Nicht mehr folgen" went. */
-  public zeileFokussieren(team: TeamId): void {
-    const zeile = this.zeilen()
-      .map((element) => element.nativeElement as HTMLElement)
-      .find((element) => element.dataset['teamId'] === String(team));
-    zeile?.focus();
-  }
 
   protected async folgenUndOeffnen(team: Team): Promise<void> {
     if (this.folgtGerade()) {

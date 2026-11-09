@@ -5,7 +5,7 @@ import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { NACH_ENTFOLGEN } from './nach-entfolgen';
+import { NachEntfolgen } from './nach-entfolgen';
 import { TeamFolgenComponent } from './team-folgen.component';
 import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
@@ -20,20 +20,18 @@ interface Gerendert {
 
 interface Optionen {
   readonly teamName?: string;
-  /** The screen's `NACH_ENTFOLGEN`: the control goes with the Team. */
-  readonly nachEntfolgen?: (team: TeamId) => void;
+  /** The screen provides `NachEntfolgen`: the control disappears with the Team. */
+  readonly verschwindet?: boolean;
 }
 
 async function render(
   auswahl: Auswahl,
-  { teamName, nachEntfolgen }: Optionen = {}
+  { teamName, verschwindet }: Optionen = {}
 ): Promise<Gerendert> {
   TestBed.configureTestingModule({
     providers: [
       { provide: AUSWAHL, useValue: auswahl },
-      ...(nachEntfolgen === undefined
-        ? []
-        : [{ provide: NACH_ENTFOLGEN, useValue: nachEntfolgen }]),
+      ...(verschwindet ? [NachEntfolgen] : []),
     ],
   });
   const fixture = TestBed.createComponent(TeamFolgenComponent);
@@ -136,13 +134,13 @@ describe('TeamFolgenComponent', () => {
     expect(snackbar()).toBeUndefined();
   });
 
-  describe('where the control goes with the Team (NACH_ENTFOLGEN)', () => {
+  describe('where the control disappears with the Team (NachEntfolgen)', () => {
     it('offers to undo the unfollowing, and follows the Team again', async () => {
       const auswahl = new LokaleAuswahl(undefined);
       await auswahl.folgen(MTV_WASBUETTEL);
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        nachEntfolgen: () => undefined,
+        verschwindet: true,
       });
 
       await klicken();
@@ -166,7 +164,7 @@ describe('TeamFolgenComponent', () => {
       });
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        nachEntfolgen: () => undefined,
+        verschwindet: true,
       });
       await klicken();
 
@@ -180,15 +178,15 @@ describe('TeamFolgenComponent', () => {
     it('hands the screen the Team unfollowed, to move focus', async () => {
       const auswahl = new LokaleAuswahl(undefined);
       await auswahl.folgen(MTV_WASBUETTEL);
-      const nachEntfolgen = vi.fn<(team: TeamId) => void>();
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        nachEntfolgen,
+        verschwindet: true,
       });
+      const entfolgt = vi.spyOn(TestBed.inject(NachEntfolgen), 'entfolgt');
 
       await klicken();
 
-      expect(nachEntfolgen).toHaveBeenCalledWith(MTV_WASBUETTEL);
+      expect(entfolgt).toHaveBeenCalledWith(MTV_WASBUETTEL, 'MTV Wasbüttel');
     });
 
     it('offers no undo where the unfollowing failed', async () => {
@@ -196,16 +194,16 @@ describe('TeamFolgenComponent', () => {
         teams: signal([MTV_WASBUETTEL]),
         entfolgen: () => Promise.reject(new Error('offline')),
       });
-      const nachEntfolgen = vi.fn<(team: TeamId) => void>();
       const { seite, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
-        nachEntfolgen,
+        verschwindet: true,
       });
+      const entfolgt = vi.spyOn(TestBed.inject(NachEntfolgen), 'entfolgt');
 
       await klicken();
 
       expect(snackbar()).toBeUndefined();
-      expect(nachEntfolgen).not.toHaveBeenCalled();
+      expect(entfolgt).not.toHaveBeenCalled();
       expect(seite.querySelector('[role="alert"]')?.textContent).toContain(
         'Das ließ sich nicht speichern.'
       );
