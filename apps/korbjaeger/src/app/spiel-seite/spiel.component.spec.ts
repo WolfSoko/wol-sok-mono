@@ -565,6 +565,36 @@ describe('SpielComponent', () => {
       );
     });
 
+    it('shows a result the DBB never confirms (BBL, ProA, ProB) as final', async () => {
+      const seite = await render(
+        fakeData(
+          async () => ({
+            ...GESPIELT,
+            spiel: {
+              ...GESPIELT.spiel,
+              status: {
+                art: 'gespielt',
+                ergebnis: { heim: 78, gast: 47 },
+                bestaetigt: false,
+              },
+            },
+            liga: {
+              ...GESPIELT.liga,
+              name: '1. Bundesliga (easyCredit BBL)',
+              verband: { id: 100, name: 'Bundesligen' },
+              ohneSpielberichte: true,
+              resultsNeverConfirmed: true,
+            },
+          }),
+          async () => undefined
+        )
+      );
+
+      expect(text(teil(seite, 'spiel-ergebnis'))).toBe('78:47');
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
+      expect(teil(seite, 'spiel-status')).toBeNull();
+    });
+
     it.each([
       ['a planned Spiel', { art: 'geplant' }],
       [

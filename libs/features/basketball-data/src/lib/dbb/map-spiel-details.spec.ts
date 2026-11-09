@@ -6,6 +6,12 @@ import kampflos from './fixtures/matchinfo-2930414.json';
 import ohneViertel from './fixtures/matchinfo-2861436.json';
 import { mapSpielDetails } from './map-spiel-details';
 
+/** The recorded `envelope` with `fields` changed in its `ligaData`. */
+function withLigaData(envelope: unknown, fields: object): unknown {
+  const data = readEnvelope(envelope) as { ligaData: object };
+  return { ...data, ligaData: { ...data.ligaData, ...fields } };
+}
+
 describe('mapSpielDetails', () => {
   describe('of a played Spiel', () => {
     const details = mapSpielDetails(readEnvelope(gespielt));
@@ -143,12 +149,31 @@ describe('mapSpielDetails', () => {
     expect(mapSpielDetails(withoutHalle).halle).toBeUndefined();
   });
 
-  describe('whether the DBB keeps the Liga’s Spielberichte', () => {
-    function withStatisticType(value: unknown): unknown {
-      const data = readEnvelope(geplant) as { ligaData: object };
-      return { ...data, ligaData: { ...data.ligaData, statisticType: value } };
-    }
+  describe('whether the DBB ever confirms the Liga’s results', () => {
+    const BBL = { verbandId: 100, statisticType: 0, geschlecht: 'männlich' };
 
+    it('marks a men’s Liga of the Bundesligen without Spielberichte (BBL, ProA, ProB)', () => {
+      expect(
+        mapSpielDetails(withLigaData(abgesagt, BBL)).liga.resultsNeverConfirmed
+      ).toBe(true);
+    });
+
+    it.each([
+      ['statisticType 0 of a Landesverband', { ...BBL, verbandId: 2 }],
+      [
+        'a women’s Liga of the Bundesligen (DBBL-Pokal Top4)',
+        { ...BBL, geschlecht: 'weiblich' },
+      ],
+      ['statisticType 1 of the Bundesligen', { ...BBL, statisticType: 1 }],
+      ['a null statisticType', { ...BBL, statisticType: null }],
+    ])('leaves it out for %s', (_case, fields) => {
+      expect(
+        mapSpielDetails(withLigaData(abgesagt, fields)).liga
+      ).not.toHaveProperty('resultsNeverConfirmed');
+    });
+  });
+
+  describe('whether the DBB keeps the Liga’s Spielberichte', () => {
     it('marks a Liga of statisticType 0 as one without Spielberichte', () => {
       expect(
         mapSpielDetails(readEnvelope(abgesagt)).liga.ohneSpielberichte
@@ -166,9 +191,9 @@ describe('mapSpielDetails', () => {
       ['1', 1],
       ['null', null],
     ])('leaves it out for statisticType %s', (_name, value) => {
-      expect(mapSpielDetails(withStatisticType(value)).liga).not.toHaveProperty(
-        'ohneSpielberichte'
-      );
+      expect(
+        mapSpielDetails(withLigaData(geplant, { statisticType: value })).liga
+      ).not.toHaveProperty('ohneSpielberichte');
     });
 
     it('leaves it out where the Liga has no statisticType', () => {

@@ -8,6 +8,15 @@ import { ownValue } from './own-value';
 /** The DBB's `statisticType` of a Liga it keeps no Spielberichte for. */
 const NO_STATISTICS = 0;
 
+/**
+ * The DBB's Verband „Bundesligen". Within it, a men's Liga without
+ * Spielberichte is one of the professional leagues (BBL, ProA, ProB,
+ * BBL-Pokal), whose results the DBB never confirms (#2953: 0 of 262
+ * confirmed). Its women's and youth Ligen and such Ligen of other Verbände
+ * confirm theirs.
+ */
+const BUNDESLIGEN_VERBAND = 100;
+
 const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
   männlich: 'männlich',
   weiblich: 'weiblich',
@@ -18,24 +27,35 @@ const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
 export function mapLiga(ligaData: DbbObject): Liga {
   const bezirk = ligaData.optionalString('bezirkName');
   const saison = mapSaison(ligaData);
+  const verbandId = ligaData.number('verbandId');
+  const geschlecht = mapGeschlecht(ligaData, 'geschlecht');
+  const ohneSpielberichte = keepsNoSpielberichte(ligaData);
   return {
     id: ligaData.number('ligaId'),
     name: ligaData.string('liganame').trim(),
-    verband: {
-      id: ligaData.number('verbandId'),
-      name: ligaData.string('verbandName'),
-    },
+    verband: { id: verbandId, name: ligaData.string('verbandName') },
     altersklasse: ligaData.string('akName'),
-    geschlecht: mapGeschlecht(ligaData, 'geschlecht'),
+    geschlecht,
     spielklasse: ligaData.string('skName'),
     ...optionalField('bezirk', bezirk),
     ...optionalField('saison', saison),
-    ...(keepsNoSpielberichte(ligaData) ? { ohneSpielberichte: true } : {}),
+    ...(ohneSpielberichte ? { ohneSpielberichte: true } : {}),
+    ...(ohneSpielberichte && isMensProfessionalLeague(verbandId, geschlecht)
+      ? { resultsNeverConfirmed: true }
+      : {}),
   };
 }
 
 function keepsNoSpielberichte(ligaData: DbbObject): boolean {
   return ligaData.optionalNumber('statisticType') === NO_STATISTICS;
+}
+
+/** Whether a Liga without Spielberichte is a men's professional league. */
+function isMensProfessionalLeague(
+  verbandId: number,
+  geschlecht: Geschlecht
+): boolean {
+  return verbandId === BUNDESLIGEN_VERBAND && geschlecht === 'männlich';
 }
 
 function mapSaison(ligaData: DbbObject): Saison | undefined {

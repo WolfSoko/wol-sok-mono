@@ -30,7 +30,7 @@ export interface SpielZeile {
   readonly ergebnis?: string;
   /** How it ended for the Team, once decided (as its score shows it, confirmed or not). */
   readonly ausgang?: SpielAusgang;
-  /** Whether score and `ausgang` await the Verband's confirmation. */
+  /** Whether score and `ausgang` may still change (`ergebnisVorlaeufig`). */
   readonly vorlaeufig: boolean;
   readonly markierung?: SpielSonderfall;
 }
@@ -44,18 +44,19 @@ export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
 export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
   const seite = seiteVon(spiel, saison.team.id);
   const ergebnis = ergebnisVon(spiel);
+  const liga = ligaVon(saison, spiel.ligaId);
   return {
     id: spiel.id,
     datum: spielTag(spiel.datum),
     uhrzeit: spiel.uhrzeit,
-    liga: ligaVon(saison, spiel.ligaId)?.name ?? '',
+    liga: liga?.name ?? '',
     ort: seite && ORT[seite],
     gegner: seite
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && ergebnisText(ergebnis),
     ausgang: seite && ausgangVon(spiel, seite),
-    vorlaeufig: ergebnisVorlaeufig(spiel),
+    vorlaeufig: ergebnisVorlaeufig(spiel, liga),
     markierung: sonderfallVon(spiel),
   };
 }

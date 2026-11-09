@@ -24,4 +24,11 @@ export interface Liga {
    * say, as in the Liga search.
    */
   readonly ohneSpielberichte?: true;
+  /**
+   * Set where the DBB never confirms a result of the Liga: the BBL, ProA,
+   * ProB and BBL-Pokal take theirs from the leagues' own systems, so the
+   * score shown is the official one. Absent where the DBB confirms them or
+   * does not say, as in the Liga search.
+   */
+  readonly resultsNeverConfirmed?: true;
 }
