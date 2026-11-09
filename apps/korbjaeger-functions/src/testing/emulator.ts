@@ -1,10 +1,10 @@
+import { type RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import {
-  initializeTestEnvironment,
-  type RulesTestEnvironment,
-} from '@firebase/rules-unit-testing';
+  emulatorEnv,
+  rulesTestEnvironment,
+} from '@wolsok/shared-firebase-emulator';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { type Firestore, getFirestore } from 'firebase-admin/firestore';
-import { setLogLevel } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -13,15 +13,6 @@ const APP_RULES = readFileSync(
   join(__dirname, '../../../korbjaeger/firestore.rules'),
   'utf8'
 );
-
-/** A variable `firebase emulators:exec` sets: missing outside test-emulator. */
-function emulatorEnv(name: string): string {
-  const value = process.env[name];
-  if (value === undefined) {
-    throw new Error(`${name} is not set: run test-emulator`);
-  }
-  return value;
-}
 
 export interface EmulatorProject {
   /** Firestore as the functions see it: admin, past the rules. */
@@ -45,14 +36,13 @@ export function useEmulatorProject(): () => EmulatorProject {
   let project: EmulatorProject | undefined;
 
   beforeAll(async () => {
-    // the denials the specs expect are not logged
-    setLogLevel('silent');
     project = {
       admin: getFirestore(),
-      devices: await initializeTestEnvironment({
+      devices: await rulesTestEnvironment(
         projectId,
-        firestore: { host, port: Number(port), rules: APP_RULES },
-      }),
+        { host, port: Number(port) },
+        APP_RULES
+      ),
     };
   });
 
