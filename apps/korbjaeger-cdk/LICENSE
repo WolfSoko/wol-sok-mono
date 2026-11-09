@@ -12,10 +12,10 @@ to any of these.
 
 Third-party code inside the Software keeps its own licence and notices.
 
-Versions of the Software up to and including 74.159.0 (Git tag v74.159.0) were
-published under the MIT License; whoever received such a version keeps the
-rights the MIT License grants for it. Every later version is covered by this
-licence only.
+Versions of the Software released before this file was added to the
+repository were published under the MIT License; whoever received such a
+version keeps the rights the MIT License grants for it. Every later version is
+covered by this licence only.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED. IN NO EVENT SHALL THE COPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM,
@@ -43,8 +43,8 @@ Rechte.
 
 Code Dritter in der Software behält seine eigene Lizenz und seine Hinweise.
 
-Versionen der Software bis einschließlich 74.159.0 (Git-Tag v74.159.0) wurden
-unter der MIT-Lizenz veröffentlicht; wer eine solche Version erhalten hat,
+Versionen der Software, die vor dem Hinzufügen dieser Datei zum Repository
+veröffentlicht wurden, stehen unter der MIT-Lizenz; wer eine solche Version erhalten hat,
 behält die Rechte, die ihm die MIT-Lizenz für sie gewährt. Jede spätere Version
 steht allein unter dieser Lizenz.
 

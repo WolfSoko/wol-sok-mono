@@ -3,7 +3,7 @@ Scope
 The MIT License below covers this repository except the following
 directories, each of which holds its own proprietary LICENSE (all rights
 reserved, use only with the owner's written permission) for every version
-after 74.159.0:
+released after that LICENSE was added; earlier versions stay under MIT:
 
 - apps/rollapolla-analog
 - apps/korbjaeger
