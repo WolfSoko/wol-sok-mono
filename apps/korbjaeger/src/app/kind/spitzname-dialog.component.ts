@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import {
   MAT_DIALOG_DATA,
@@ -7,7 +13,7 @@ import {
 } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-import { SPITZNAME_LAENGE } from '../auswahl/kind';
+import { SPITZNAME_LAENGE, spitznameZeichen } from '../auswahl/kind';
 
 /** What the dialog asks about: whom, and whether to mark or rename. */
 export interface SpitznameFrage {
@@ -36,8 +42,10 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
 
 /**
  * Asks for the optional Spitzname of a Kind, when marking it or later.
- * Opened with a `SpitznameFrage`; closes with a `SpitznameAntwort`, or
- * with none where cancelled.
+ * Counts its characters as the `Auswahl` does (`spitznameZeichen`, an
+ * emoji as one) and takes none over `SPITZNAME_LAENGE`. Opened with a
+ * `SpitznameFrage`; closes with a `SpitznameAntwort`, or with none where
+ * cancelled.
  */
 @Component({
   selector: 'korb-spitzname-dialog',
@@ -49,7 +57,7 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
   ],
   template: `
     <h2 mat-dialog-title>{{ titel }}</h2>
-    <form (submit)="$event.preventDefault(); bestaetigen(eingabe.value)">
+    <form (submit)="$event.preventDefault(); bestaetigen()">
       <mat-dialog-content>
         <p>{{ frage.name }}</p>
         <mat-form-field>
@@ -59,21 +67,36 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
             #eingabe
             name="spitzname"
             autocomplete="off"
-            [attr.maxlength]="laenge"
-            [value]="frage.spitzname ?? ''"
+            [value]="eingegeben()"
+            (input)="eingegeben.set(eingabe.value)"
+            [attr.aria-invalid]="zuLang()"
           />
-          <mat-hint>So heißt dein Kind im Überblick.</mat-hint>
+          @if (zuLang()) {
+            <mat-hint class="zu-lang" data-qa="spitzname-zu-lang"
+              >Höchstens {{ laenge }} Zeichen</mat-hint
+            >
+          } @else {
+            <mat-hint>So heißt dein Kind im Überblick.</mat-hint>
+          }
+          <mat-hint align="end" data-qa="spitzname-zaehler"
+            >{{ zeichen() }}/{{ laenge }}</mat-hint
+          >
         </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button matButton type="button" mat-dialog-close>Abbrechen</button>
-        <button matButton="filled" type="submit">{{ bestaetigenText }}</button>
+        <button matButton="filled" type="submit" [disabled]="zuLang()">
+          {{ bestaetigenText }}
+        </button>
       </mat-dialog-actions>
     </form>
   `,
   styles: `
     mat-form-field {
       width: 100%;
+    }
+    .zu-lang {
+      color: var(--mat-sys-error);
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -83,13 +106,20 @@ export class SpitznameDialogComponent {
   protected readonly laenge = SPITZNAME_LAENGE;
   protected readonly titel = TITEL[this.frage.aktion];
   protected readonly bestaetigenText = BESTAETIGEN[this.frage.aktion];
+  protected readonly eingegeben = signal(this.frage.spitzname ?? '');
+  protected readonly zeichen = computed(() =>
+    spitznameZeichen(this.eingegeben())
+  );
+  protected readonly zuLang = computed(() => this.zeichen() > SPITZNAME_LAENGE);
 
   private readonly dialog =
     inject<MatDialogRef<SpitznameDialogComponent, SpitznameAntwort>>(
       MatDialogRef
     );
 
-  protected bestaetigen(spitzname: string): void {
-    this.dialog.close({ spitzname });
+  protected bestaetigen(): void {
+    if (!this.zuLang()) {
+      this.dialog.close({ spitzname: this.eingegeben() });
+    }
   }
 }

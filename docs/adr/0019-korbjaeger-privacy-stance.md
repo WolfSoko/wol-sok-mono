@@ -31,9 +31,9 @@ DBB responses to test against, and those name real children.
 - The app never searches Spielberichte for a person: a marked Kind is
   highlighted where their person id appears in a followed Team's Kader,
   nowhere else. To group the overview by Kind, it looks only into the
-  followed Teams' own Kader of their last five played Spiele, newest first,
-  and stops once each Kind was found; the first name it shows there is read
-  fresh and never stored.
+  followed Teams' own Kader of their last five played Spiele: the newest
+  first, the rest only where a Kind is still missing; the first name it
+  shows there is read fresh and never stored.
 - The app is `noindex` everywhere (meta tag and `X-Robots-Tag` header) and
   has no sitemap. `robots.txt` deliberately allows crawling: a URL it blocks
   is never fetched, so its `noindex` would never be read and a linked URL

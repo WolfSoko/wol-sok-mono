@@ -8,6 +8,7 @@ import {
   type AuswahlInhalt,
   type GelesenesDokument,
 } from './auswahl-dokument';
+import { gleicheFolge } from '../gleiche-folge';
 import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
@@ -63,9 +64,9 @@ export class LokaleAuswahl implements Auswahl {
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.inhalt.set(inhaltAus(this.lesen()));
-    this.teams = computed(() => this.inhalt().teams, { equal: gleicheTeams });
+    this.teams = computed(() => this.inhalt().teams, { equal: gleicheFolge });
     this.kinder = computed(() => this.inhalt().kinder, {
-      equal: gleicheKinder,
+      equal: (a, b) => gleicheFolge(a, b, gleichesKind),
     });
     fenster?.addEventListener('storage', this.beiAenderung);
   }
@@ -151,7 +152,12 @@ export class LokaleAuswahl implements Auswahl {
     const nachher = aenderung(vorher);
     this.inhalt.set(nachher);
     if (nachher !== vorher) {
-      this.schreiben(auswahlDokumentMit(nachher, roh));
+      this.schreiben(
+        auswahlDokumentMit(
+          gelesen.art === 'aktuell' ? geaendert(vorher, nachher) : nachher,
+          roh
+        )
+      );
     }
   }
 
@@ -195,16 +201,20 @@ function istMarkiert(inhalt: AuswahlInhalt, person: PersonId): boolean {
   return inhalt.kinder.some((kind) => kind.personId === person);
 }
 
-function gleicheTeams(a: readonly TeamId[], b: readonly TeamId[]): boolean {
-  return a.length === b.length && a.every((team, i) => team === b[i]);
+/**
+ * The parts of `nachher` a change made anew, so a write leaves the others
+ * as stored (Kinder this version could not read among them).
+ */
+function geaendert(
+  vorher: AuswahlInhalt,
+  nachher: AuswahlInhalt
+): Partial<AuswahlInhalt> {
+  return {
+    ...(nachher.teams !== vorher.teams && { teams: nachher.teams }),
+    ...(nachher.kinder !== vorher.kinder && { kinder: nachher.kinder }),
+  };
 }
 
-function gleicheKinder(a: readonly Kind[], b: readonly Kind[]): boolean {
-  return (
-    a.length === b.length &&
-    a.every(
-      (kind, i) =>
-        kind.personId === b[i].personId && kind.spitzname === b[i].spitzname
-    )
-  );
+function gleichesKind(a: Kind, b: Kind): boolean {
+  return a.personId === b.personId && a.spitzname === b.spitzname;
 }

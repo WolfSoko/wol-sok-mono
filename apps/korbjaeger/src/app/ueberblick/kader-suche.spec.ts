@@ -98,7 +98,7 @@ describe('kaderSuchen', () => {
     expect(quelle.spielbericht).toHaveBeenCalledTimes(1);
   });
 
-  it('reads on, newest first, until each Kind was found', async () => {
+  it('reads the rest at once where the last Spiel left a Kind missing, newest first', async () => {
     const quelle = data({
       3: bericht(3, [LUMI]),
       1: bericht(1, [MORVO]),
@@ -114,8 +114,51 @@ describe('kaderSuchen', () => {
       [3, { [LUMI.personId]: 'Lumi' }],
       [2, undefined],
       [1, { [MORVO.personId]: 'Morvo' }],
+      [0, undefined],
     ]);
-    expect(quelle.spielbericht).toHaveBeenCalledTimes(3);
+    expect(quelle.spielbericht).toHaveBeenCalledTimes(4);
+  });
+
+  it('reads the rest side by side, not one after the other', async () => {
+    const quelle = data({});
+    let laufend = 0;
+    let hoechstens = 0;
+    quelle.spielbericht.mockImplementation(async () => {
+      laufend++;
+      hoechstens = Math.max(hoechstens, laufend);
+      await new Promise((resolve) => setTimeout(resolve));
+      laufend--;
+      return undefined;
+    });
+
+    await kaderSuchen(quelle, {
+      team: WASBUETTEL.id,
+      spiele: [spiel(5), spiel(4), spiel(3), spiel(2), spiel(1)],
+      kinder: [LUMI.personId],
+    });
+
+    expect(hoechstens).toBe(4);
+  });
+
+  it('passes over a Spielbericht the DBB does not know, as one not there yet', async () => {
+    const quelle = data({
+      3: new BasketballDataError('not-found', 'no boxscore'),
+      2: new BasketballDataError('not-found', 'no boxscore'),
+      1: bericht(1, [LUMI]),
+    });
+
+    const funde = await kaderSuchen(quelle, {
+      team: WASBUETTEL.id,
+      spiele: [spiel(3), spiel(2), spiel(1)],
+      kinder: [LUMI.personId],
+    });
+
+    expect(gelesen(funde)).toEqual([
+      [3, undefined],
+      [2, undefined],
+      [1, { [LUMI.personId]: 'Lumi' }],
+    ]);
+    expect(funde.unvollstaendig).toBe(false);
   });
 
   it('reads every Spiel given where a Kind is in none, and no more', async () => {
@@ -163,7 +206,7 @@ describe('kaderSuchen', () => {
     expect(quelle.spielbericht).not.toHaveBeenCalled();
   });
 
-  it('stops at a read that failed and says the search is incomplete', async () => {
+  it('keeps what the other reads found where one failed, and says the search is incomplete', async () => {
     const quelle = data({
       3: bericht(3, []),
       2: new BasketballDataError('offline', 'no network'),
@@ -176,8 +219,28 @@ describe('kaderSuchen', () => {
       kinder: [LUMI.personId],
     });
 
-    expect(gelesen(funde)).toEqual([[3, {}]]);
+    expect(gelesen(funde)).toEqual([
+      [3, {}],
+      [1, { [LUMI.personId]: 'Lumi' }],
+    ]);
     expect(funde.unvollstaendig).toBe(true);
+  });
+
+  it('reads no further where the last Spiel failed', async () => {
+    const quelle = data({
+      2: new BasketballDataError('unavailable', 'DBB down'),
+      1: bericht(1, [LUMI]),
+    });
+
+    const funde = await kaderSuchen(quelle, {
+      team: WASBUETTEL.id,
+      spiele: [spiel(2), spiel(1)],
+      kinder: [LUMI.personId],
+    });
+
+    expect(funde.spiele.size).toBe(0);
+    expect(funde.unvollstaendig).toBe(true);
+    expect(quelle.spielbericht).toHaveBeenCalledTimes(1);
   });
 
   it('gives up a search that was cancelled', async () => {
@@ -218,5 +281,14 @@ describe('gleicherAuftrag', () => {
     ['none', undefined],
   ])('tells an order for %s apart', (_fall, anderer) => {
     expect(gleicherAuftrag(auftrag, anderer)).toBe(false);
+  });
+
+  it('searches no more for a Kind unmarked: the others were looked for', () => {
+    const beide = { ...auftrag, kinder: [LUMI.personId, MORVO.personId] };
+
+    expect(gleicherAuftrag(beide, auftrag)).toBe(true);
+    expect(
+      gleicherAuftrag(beide, { ...auftrag, kinder: [MORVO.personId] })
+    ).toBe(true);
   });
 });

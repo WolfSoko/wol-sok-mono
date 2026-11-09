@@ -1,4 +1,9 @@
-import { kindMit, SPITZNAME_LAENGE, spitznameAus } from './kind';
+import {
+  kindMit,
+  SPITZNAME_LAENGE,
+  spitznameAus,
+  spitznameZeichen,
+} from './kind';
 
 describe('spitznameAus', () => {
   it('trims the Spitzname', () => {
@@ -23,5 +28,12 @@ describe('kindMit', () => {
       personId: 4711,
       spitzname: 'Mimi',
     });
+  });
+});
+
+describe('spitznameZeichen', () => {
+  it('counts the trimmed characters, an emoji as one', () => {
+    expect(spitznameZeichen(' 🏀👨‍👧 Lu ')).toBe(5);
+    expect(spitznameZeichen('   ')).toBe(0);
   });
 });

@@ -48,8 +48,9 @@ const KEINS: GelesenesDokument = { art: 'keins' };
 
 /**
  * Tells what `gelesen`, a stored document, is. A document without a valid
- * list of Teams is none; one whose Kinder cannot be read (missing, as
- * before Kinder joined, or malformed) keeps its Teams and has no Kinder.
+ * list of Teams is none. Of its Kinder it keeps each entry it can read;
+ * where the field is no list (missing, as before Kinder joined, or
+ * malformed) it has none, the Teams kept all the same.
  */
 export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (
@@ -70,28 +71,34 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   return {
     art: 'aktuell',
     teams: [...new Set(teams)],
-    kinder: sindKinder(kinder) ? jedesKindEinmal(kinder) : [],
+    kinder: Array.isArray(kinder)
+      ? jedesKindEinmal(kinder.filter(istKind))
+      : [],
     roh,
   };
 }
 
 /**
- * The document to store for `inhalt`: `roh`, the fields read before, with
- * this version, the Teams and the Kinder, so fields a later version added
- * stay.
+ * The document to store: `roh`, the fields read before, with this version
+ * and the parts of `aenderung` given. A part left out stays as read, so a
+ * change to the Teams never rewrites Kinder this version could not read,
+ * and fields a later version added stay too.
  */
 export function auswahlDokumentMit(
-  inhalt: AuswahlInhalt,
+  aenderung: Partial<AuswahlInhalt>,
   roh: RohesDokument = {}
 ): RohesDokument {
-  const dokument: AuswahlDokument = {
+  const { teams, kinder } = aenderung;
+  return {
+    ...roh,
     version: AUSWAHL_VERSION,
-    teams: inhalt.teams,
-    kinder: inhalt.kinder.map(({ personId, spitzname }) =>
-      kindMit(personId, spitzname)
-    ),
+    ...(teams && { teams }),
+    ...(kinder && {
+      kinder: kinder.map(({ personId, spitzname }) =>
+        kindMit(personId, spitzname)
+      ),
+    }),
   };
-  return { ...roh, ...dokument };
 }
 
 function sindTeamIds(teams: unknown): teams is readonly TeamId[] {
@@ -99,10 +106,6 @@ function sindTeamIds(teams: unknown): teams is readonly TeamId[] {
     Array.isArray(teams) &&
     teams.every((team) => typeof team === 'number' && isDbbId(team))
   );
-}
-
-function sindKinder(kinder: unknown): kinder is readonly Kind[] {
-  return Array.isArray(kinder) && kinder.every(istKind);
 }
 
 function istKind(kind: unknown): kind is Kind {

@@ -1,10 +1,12 @@
 import { inject, Injector } from '@angular/core';
 import {
+  isBasketballDataError,
   kaderDesTeams,
   kinderImKader,
   type PersonId,
   type Spiel,
   type SpielId,
+  type Spielbericht,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
@@ -13,6 +15,7 @@ import {
 } from '../basketball-data/basketball-data-resource';
 import type { KorbjaegerData } from '../basketball-data/basketball-data.provider';
 import type { KorbReadOptions } from '../basketball-data/lesung';
+import { gleicheFolge } from '../gleiche-folge';
 
 /**
  * How many of a Team's last played Spiele the overview looks into for the
@@ -47,55 +50,89 @@ export interface KaderFunde {
   readonly unvollstaendig: boolean;
 }
 
+/** One Spiel's read: the Kinder its Kader named, or that it failed. */
+type Lesen =
+  | { readonly gelesen: true; readonly kinder: KinderImKader | undefined }
+  | { readonly gelesen: false };
+
 /**
- * Looks for `auftrag.kinder` in the Team's own Kader of its Spiele, newest
- * first, and stops once each was found, so mostly the last Spiel is read
- * alone. Never anywhere else (ADR 0019): only a followed Team's Kader.
+ * Looks for `auftrag.kinder` in the Team's own Kader of its Spiele, never
+ * anywhere else (ADR 0019). Reads the newest Spiel first, which mostly
+ * names every Kind already; where one is still missing, it reads the rest
+ * side by side, so a Kind in no Kader costs one round trip more, not one
+ * per Spiel. A Spielbericht the DBB does not know counts as none yet; a
+ * read that fails otherwise (offline, the DBB down) leaves the search
+ * `unvollstaendig`, and where the newest failed nothing more is read.
  */
 export async function kaderSuchen(
   data: Pick<KorbjaegerData, 'spielbericht'>,
   auftrag: KaderSucheAuftrag,
   options?: KorbReadOptions
 ): Promise<KaderFunde> {
-  const spiele = new Map<SpielId, KinderImKader | undefined>();
-  const offen = new Set(auftrag.kinder);
-  for (const spiel of auftrag.spiele) {
-    if (offen.size === 0) {
-      break;
-    }
-    let gefunden: KinderImKader | undefined;
-    try {
-      gefunden = await kinderIn(data, auftrag, spiel, options);
-    } catch (fehler) {
-      if (options?.signal?.aborted) {
-        throw fehler;
-      }
-      return { spiele, unvollstaendig: true };
-    }
-    spiele.set(spiel.id, gefunden);
-    gefunden?.forEach((_vorname, person) => offen.delete(person));
+  const [neuestes, ...rest] = auftrag.spiele;
+  if (neuestes === undefined || auftrag.kinder.length === 0) {
+    return { spiele: new Map(), unvollstaendig: false };
   }
-  return { spiele, unvollstaendig: false };
+  const lesen = (spiel: Spiel): Promise<Lesen> =>
+    kinderIn(data, auftrag, spiel, options);
+  const erstes = await lesen(neuestes);
+  const weitere =
+    erstes.gelesen && !alleGefunden(erstes.kinder, auftrag.kinder)
+      ? await Promise.all(rest.map(lesen))
+      : rest.map(() => undefined);
+  const spiele = new Map<SpielId, KinderImKader | undefined>();
+  let unvollstaendig = false;
+  [erstes, ...weitere].forEach((ergebnis, i) => {
+    if (ergebnis?.gelesen) {
+      spiele.set(auftrag.spiele[i].id, ergebnis.kinder);
+    } else if (ergebnis) {
+      unvollstaendig = true;
+    }
+  });
+  return { spiele, unvollstaendig };
 }
 
-/** The Kinder in the Team's Kader of `spiel`; none without a Spielbericht. */
+function alleGefunden(
+  gefunden: KinderImKader | undefined,
+  kinder: readonly PersonId[]
+): boolean {
+  return kinder.every((person) => gefunden?.has(person));
+}
+
+/**
+ * The Kinder in the Team's Kader of `spiel`, none where it has no
+ * Spielbericht (yet, or the DBB knows none); a failed read as such, unless
+ * the search was cancelled, which ends it.
+ */
 async function kinderIn(
   data: Pick<KorbjaegerData, 'spielbericht'>,
   auftrag: KaderSucheAuftrag,
   spiel: Spiel,
   options: KorbReadOptions | undefined
-): Promise<KinderImKader | undefined> {
-  const bericht = await data.spielbericht(spiel.id, options);
-  const kader = bericht && kaderDesTeams(bericht, spiel, auftrag.team);
-  if (kader === undefined) {
-    return undefined;
+): Promise<Lesen> {
+  let bericht: Spielbericht | undefined;
+  try {
+    bericht = await data.spielbericht(spiel.id, options);
+  } catch (fehler) {
+    if (options?.signal?.aborted) {
+      throw fehler;
+    }
+    return isBasketballDataError(fehler, 'not-found')
+      ? { gelesen: true, kinder: undefined }
+      : { gelesen: false };
   }
-  return new Map(
-    kinderImKader(kader, auftrag.kinder).map((spieler) => [
-      spieler.personId,
-      spieler.vorname,
-    ])
-  );
+  const kader = bericht && kaderDesTeams(bericht, spiel, auftrag.team);
+  return {
+    gelesen: true,
+    kinder:
+      kader &&
+      new Map(
+        kinderImKader(kader, auftrag.kinder).map((spieler) => [
+          spieler.personId,
+          spieler.vorname,
+        ])
+      ),
+  };
 }
 
 /**
@@ -114,7 +151,12 @@ export function kaderSucheResource(
   );
 }
 
-/** Whether two orders look for the same, so the search need not rerun. */
+/**
+ * Whether the search for `b` need not run again after the one for `a`:
+ * the same Team and Spiele, and Kinder `a` looked for already. A Kind
+ * unmarked thus starts no search; the finds of the others stay as they
+ * are, those of the Kind unmarked unused.
+ */
 export function gleicherAuftrag(
   a: KaderSucheAuftrag | undefined,
   b: KaderSucheAuftrag | undefined
@@ -124,14 +166,11 @@ export function gleicherAuftrag(
   }
   return (
     a.team === b.team &&
-    gleicheListe(
+    gleicheFolge(
       a.spiele.map(({ id }) => id),
       b.spiele.map(({ id }) => id)
     ) &&
-    gleicheListe(a.kinder, b.kinder)
+    b.kinder.length > 0 &&
+    b.kinder.every((person) => a.kinder.includes(person))
   );
-}
-
-function gleicheListe(a: readonly number[], b: readonly number[]): boolean {
-  return a.length === b.length && a.every((wert, i) => wert === b[i]);
 }

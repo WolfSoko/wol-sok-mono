@@ -5,6 +5,7 @@ import {
   inject,
   Injectable,
   Injector,
+  linkedSignal,
   signal,
   untracked,
   type Signal,
@@ -12,6 +13,7 @@ import {
 import {
   naechstesSpiel,
   saisonBeendet,
+  teamUeberblick,
   zuletztGespielt,
   type PersonId,
   type SpielDetails,
@@ -26,6 +28,7 @@ import { aeltesterStand } from '../basketball-data/stand';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
+import { gleicheFolge } from '../gleiche-folge';
 import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
@@ -53,6 +56,8 @@ interface TeamLesungen {
   readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
   /** None while no Kind is marked. */
   readonly kaderSuche: DatenResource<KaderFunde | undefined>;
+  /** What the last search that ended found, kept while it runs again. */
+  readonly funde: Signal<KaderFunde | undefined>;
   /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
   readonly saisonEndeVerein: Signal<VereinId | undefined>;
 }
@@ -73,7 +78,7 @@ export class MeineTeamsUeberblick {
   /** The marked Kinder's persons: a new Spitzname starts no search. */
   private readonly kinderPersonen = computed<readonly PersonId[]>(
     () => (this.kinder() ?? []).map(({ personId }) => personId),
-    { equal: gleichePersonen }
+    { equal: gleicheFolge }
   );
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
@@ -146,7 +151,8 @@ export class MeineTeamsUeberblick {
 
   /**
    * `teamId` with its card and reads; `mitKindern` where a Kind is marked,
-   * so its Kader is searched.
+   * so its Kader is searched. A Team whose Saison failed ends its search
+   * there, unable to tell (`unvollstaendig`).
    */
   private imUeberblick(
     teamId: TeamId,
@@ -154,20 +160,22 @@ export class MeineTeamsUeberblick {
     mitKindern: boolean
   ): TeamImUeberblick {
     const saison = lesung?.saison;
-    if (!lesung || !saison?.hasValue()) {
+    if (saison?.status() === 'error') {
       return {
-        karte:
-          saison?.status() === 'error'
-            ? fehlerKarte(teamId, saison.error())
-            : { art: 'laedt', teamId },
-        ...(mitKindern && { funde: 'laeuft' as const }),
+        karte: fehlerKarte(teamId, saison.error()),
+        ...(mitKindern && { funde: NICHT_LESBAR }),
+        sucht: false,
       };
+    }
+    if (!lesung || !saison?.hasValue()) {
+      return { karte: { art: 'laedt', teamId }, sucht: mitKindern };
     }
     const verein = lesung.saisonEndeVerein();
     const vereinsTeams =
       verein === undefined ? undefined : this.vereinsLesungen().get(verein);
     const halle = hallenStand(lesung.naechsteDetails);
-    const karte = geladeneKarte(saison.value(), this.heute(), {
+    const ueberblick = teamUeberblick(saison.value(), this.heute());
+    const karte = geladeneKarte(saison.value(), ueberblick, {
       // the oldest of what the card shows
       stand: aeltesterStand(
         saison.stand(),
@@ -178,12 +186,14 @@ export class MeineTeamsUeberblick {
       saisonBeendet: verein !== undefined,
       vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
     });
+    const funde = mitKindern ? lesung.funde() : undefined;
     return {
       karte,
-      saison: saison.value(),
+      saison: { saison: saison.value(), ueberblick },
       halle,
       stand: aeltesterStand(saison.stand(), lesung.naechsteDetails.stand()),
-      ...(mitKindern && { funde: funde(lesung.kaderSuche) }),
+      ...(funde && { funde }),
+      sucht: mitKindern && sucht(lesung.kaderSuche),
     };
   }
 
@@ -223,7 +233,12 @@ export class MeineTeamsUeberblick {
       { equal: gleicherAuftrag }
     );
     const kaderSuche = kaderSucheResource(() => auftrag(), this.injector);
-    return { saison, naechsteDetails, kaderSuche, saisonEndeVerein };
+    // a new order clears the resource's value: the last finds stay shown
+    const funde = linkedSignal<KaderFunde | undefined, KaderFunde | undefined>({
+      source: () => beendeteSuche(kaderSuche),
+      computation: (neu, vorher) => neu ?? vorher?.value,
+    });
+    return { saison, naechsteDetails, kaderSuche, funde, saisonEndeVerein };
   }
 }
 
@@ -261,24 +276,23 @@ function beenden(lesung: TeamLesungen): void {
   lesung.kaderSuche.destroy();
 }
 
+/** A search that could read nothing: its Team's Saison failed. */
+const NICHT_LESBAR: KaderFunde = { spiele: new Map(), unvollstaendig: true };
+
 /**
- * What the search of a Team's Kader found; `laeuft` until it is done. A
- * search that failed as a whole counts as one stopped before any read.
+ * What a search of a Team's Kader found once it ended; none while it
+ * runs. A search that failed as a whole counts as one that read nothing.
  */
-function funde(
+function beendeteSuche(
   suche: DatenResource<KaderFunde | undefined>
-): KaderFunde | 'laeuft' {
+): KaderFunde | undefined {
   if (suche.hasValue()) {
     return suche.value();
   }
-  return suche.status() === 'error'
-    ? { spiele: new Map(), unvollstaendig: true }
-    : 'laeuft';
+  return suche.status() === 'error' ? NICHT_LESBAR : undefined;
 }
 
-function gleichePersonen(
-  a: readonly PersonId[],
-  b: readonly PersonId[]
-): boolean {
-  return a.length === b.length && a.every((person, i) => person === b[i]);
+/** Whether a search of a Team's Kader still runs, or has yet to start. */
+function sucht(suche: DatenResource<KaderFunde | undefined>): boolean {
+  return suche.isLoading() || beendeteSuche(suche) === undefined;
 }

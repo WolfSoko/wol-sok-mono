@@ -26,16 +26,29 @@ export const SPITZNAME_LAENGE = 30;
 /** Tells the characters of a text as a reader sees them, an emoji as one. */
 const ZEICHEN = new Intl.Segmenter('de', { granularity: 'grapheme' });
 
+/** The characters of `text` as a reader sees them, an emoji as one. */
+function zeichenVon(text: string): readonly string[] {
+  return Array.from(ZEICHEN.segment(text), ({ segment }) => segment);
+}
+
+/**
+ * How many characters of `eingabe` count towards `SPITZNAME_LAENGE`: the
+ * trimmed text's, an emoji as one, as `spitznameAus` counts them.
+ */
+export function spitznameZeichen(eingabe: string): number {
+  return zeichenVon(eingabe.trim()).length;
+}
+
 /**
  * The Spitzname to keep of `eingabe`: trimmed and cut to
- * `SPITZNAME_LAENGE` characters; none where nothing is left.
+ * `SPITZNAME_LAENGE` characters (`spitznameZeichen`); none where nothing
+ * is left.
  */
 export function spitznameAus(eingabe: string | undefined): string | undefined {
-  const zeichen = Array.from(
-    ZEICHEN.segment(eingabe?.trim() ?? ''),
-    ({ segment }) => segment
-  );
-  const spitzname = zeichen.slice(0, SPITZNAME_LAENGE).join('').trim();
+  const spitzname = zeichenVon(eingabe?.trim() ?? '')
+    .slice(0, SPITZNAME_LAENGE)
+    .join('')
+    .trim();
   return spitzname === '' ? undefined : spitzname;
 }
 

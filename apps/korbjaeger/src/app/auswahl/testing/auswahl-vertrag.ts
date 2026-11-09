@@ -216,6 +216,48 @@ export function auswahlVertrag(
       }
     );
 
+    it('keeps the readable Kinder where one entry is malformed', async () => {
+      await speicher.schreibeRoh({
+        version: 1,
+        teams: [MTV_GIFHORN],
+        kinder: [
+          { personId: LUMI.personId },
+          { personId: 'kaputt' },
+          { personId: MORVO.personId, spitzname: 'Mo' },
+        ],
+      });
+
+      const auswahl = await speicher.oeffnen();
+
+      expect(auswahl.kinder()).toEqual([
+        { personId: LUMI.personId },
+        { personId: MORVO.personId, spitzname: 'Mo' },
+      ]);
+    });
+
+    it.each([
+      ['a malformed entry', [{ personId: 4711 }, { personId: 'kaputt' }]],
+      ['no list', 'kaputt'],
+    ])(
+      'leaves Kinder with %s as stored when Meine Teams change',
+      async (_fall, kinder) => {
+        await speicher.schreibeRoh({
+          version: 1,
+          teams: [MTV_GIFHORN],
+          kinder,
+        });
+
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+
+        expect(await speicher.liesRoh()).toEqual({
+          version: 1,
+          teams: [MTV_GIFHORN, MTV_WASBUETTEL],
+          kinder,
+        });
+      }
+    );
+
     it('stores only the person id and the Spitzname of a Kind', async () => {
       const auswahl = await speicher.oeffnen();
       const spieler = {

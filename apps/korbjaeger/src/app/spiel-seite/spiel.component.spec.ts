@@ -770,6 +770,7 @@ describe('SpielComponent', () => {
         throw new Error('no dialog open');
       }
       eingabe.value = spitzname;
+      eingabe.dispatchEvent(new Event('input'));
       eingabe.form?.requestSubmit();
       await stabil();
     }

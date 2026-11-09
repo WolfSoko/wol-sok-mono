@@ -24,6 +24,7 @@ import {
 import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
+import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
 import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
@@ -1245,6 +1246,89 @@ describe('UeberblickComponent', () => {
       expect(lumi.querySelector('mat-progress-bar')).not.toBeNull();
       expect(teil(lumi, 'kind-fehlt')).toBeNull();
       expect(teamNamen(seite)).toEqual([]);
+    });
+
+    it("ends the search of a Team whose Saison can't be read, the Kind's card saying why", async () => {
+      const gespielt = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [
+          saison(WASBUETTEL, gespielt),
+          {
+            teamId: OESINGEN.id,
+            fehler: new BasketballDataError('offline', ''),
+          },
+        ],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [gespielt.id]: [MORVO] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id, OESINGEN.id], [[LUMI, 'Lu']])
+      );
+
+      const [lumi] = kinderAbschnitte(seite);
+      expect(lumi.querySelector('mat-progress-bar')).toBeNull();
+      expect(text(teil(lumi, 'kind-fehlt'))).toBe(
+        'Die Spielberichte deiner Teams lassen sich gerade nicht lesen.'
+      );
+      expect(eintraege(seite)).toHaveLength(2);
+    });
+
+    describe('a change to the Kinder', () => {
+      const GESPIELT_SPIEL = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+
+      async function mitLumiGefunden() {
+        const data = fakeData(
+          [saison(WASBUETTEL, GESPIELT_SPIEL)],
+          inDerSporthalle,
+          OHNE_TEAMS,
+          berichte({ [GESPIELT_SPIEL.id]: [LUMI, MORVO] })
+        );
+        const gerendert = await render(
+          data,
+          await mitKindern([WASBUETTEL.id], [[LUMI, 'Lu']])
+        );
+        return { data, ...gerendert };
+      }
+
+      function zeigtLumi(seite: HTMLElement): void {
+        const [lumi] = kinderAbschnitte(seite);
+        expect(text(teil(lumi, 'kind-name'))).toBe('Lu');
+        expect(text(teil(lumi, 'kind-teams'))).toBe('MTV Wasbüttel');
+        expect(text(teil(lumi, 'kader'))).toContain('Im Kader');
+      }
+
+      it('keeps what was found while a Kind marked anew is looked for', async () => {
+        const { data, seite, auswahl, stabil } = await mitLumiGefunden();
+        data.spielbericht.mockImplementation(() => NIE_BERICHT);
+
+        await auswahl.markieren(MORVO);
+        await stabil();
+
+        zeigtLumi(seite);
+        expect(kindNamen(seite)).toEqual(['Lu', MEIN_KIND]);
+        expect(teamNamen(seite)).toEqual([]);
+      });
+
+      it('reads nothing again when a Kind is unmarked', async () => {
+        const { data, seite, auswahl, stabil } = await mitLumiGefunden();
+        await auswahl.markieren(MORVO);
+        await stabil();
+        const gelesen = data.spielbericht.mock.calls.length;
+
+        await auswahl.entmarkieren(MORVO.personId);
+        await stabil();
+
+        expect(data.spielbericht).toHaveBeenCalledTimes(gelesen);
+        zeigtLumi(seite);
+        expect(kinderAbschnitte(seite)).toHaveLength(1);
+      });
     });
 
     it('reads no Spielbericht while no Kind is marked', async () => {
