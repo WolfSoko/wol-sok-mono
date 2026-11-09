@@ -76,4 +76,24 @@ describe('NachEntfolgen', () => {
     expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
     expect(folgen).not.toHaveBeenCalled();
   });
+
+  it('follows nobody where "Rückgängig" comes after the switch, before the snackbar went', async () => {
+    const quelle = signal<object>({ art: 'konto' });
+    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const { nachEntfolgen, leisten } = await render(
+      fakeAuswahl({ quelle, folgen })
+    );
+    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel');
+    // queried by hand: a harness would wait for the page, running the effect
+    const aktion = document.querySelector<HTMLButtonElement>(
+      'mat-snack-bar-container button'
+    );
+
+    // the same tick: no effect has run yet
+    quelle.set({ art: 'geraet' });
+    aktion?.click();
+
+    expect(folgen).not.toHaveBeenCalled();
+    expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
+  });
 });

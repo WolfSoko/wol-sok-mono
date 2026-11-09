@@ -68,6 +68,11 @@ export class NachEntfolgen {
     );
     leiste.afterDismissed().subscribe(() => wache.destroy());
     leiste.onAction().subscribe(() => {
+      // the effect runs later: a tap right after a switch must not follow
+      // in the other store
+      if (this.auswahl.quelle() !== quelle) {
+        return;
+      }
       this.auswahl.folgen(team).catch((grund: unknown) => {
         this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
           duration: RUECKGAENGIG_MS,
