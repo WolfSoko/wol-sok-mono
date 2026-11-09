@@ -31,8 +31,7 @@ import { AuswahlZuNeuError } from './auswahl-fehler';
 export const AUSWAHL_SCHLUESSEL = 'korbjaeger-auswahl';
 
 /** The part of the device's storage (`localStorage`) the adapter uses. */
-export type GeraeteSpeicher = Pick<Storage, 'getItem' | 'setItem'> &
-  Partial<Pick<Storage, 'removeItem'>>;
+export type GeraeteSpeicher = Pick<Storage, 'getItem' | 'setItem'>;
 
 /** Where the browser tells of changes other tabs made (`window`). */
 export type Fenster = Pick<
@@ -135,41 +134,14 @@ export class LokaleAuswahl implements Auswahl {
 
   /**
    * Takes `uebernommen` off the device, once an account holds it, and
-   * resolves with what stays: what joined since it was read (here or in
-   * another tab) is left, read and written in one go, as every change is.
-   * Only a sign-in's takeover calls it; where nothing stays, the selection
-   * goes from the storage altogether (`leeren`).
+   * returns what stays: what joined since it was read (here or in another
+   * tab) is left. One read and write, as every change is, which leaves an
+   * empty document where nothing stays: it shrinks what is stored, so a
+   * full storage takes it. Only a sign-in's takeover calls it.
    */
   public abgeben(uebernommen: AuswahlInhalt): AuswahlInhalt {
     this.aendernJetzt(abgebenAenderung(uebernommen));
-    const rest = this.neuGelesen();
-    if (rest.teams.length === 0 && rest.kinder.length === 0) {
-      this.leeren();
-    }
-    return rest;
-  }
-
-  /**
-   * Takes the selection off the device. Changes still `offen` go
-   * with it; a newer version's selection stays, as this version never
-   * changes one. Where the storage removes nothing, an empty selection is
-   * stored in its place.
-   */
-  public leeren(): void {
-    this.offen = [];
-    this.inhalt.set(LEERE_AUSWAHL);
-    if (this.lesen().art === 'neuer') {
-      return;
-    }
-    try {
-      if (this.speicher?.removeItem) {
-        this.speicher.removeItem(AUSWAHL_SCHLUESSEL);
-      } else {
-        this.schreiben(auswahlDokumentMit({ art: 'keins' }, {}));
-      }
-    } catch {
-      // blocked: nothing was stored lastingly either
-    }
+    return this.neuGelesen();
   }
 
   /** Stops listening to other tabs. */

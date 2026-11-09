@@ -1,11 +1,8 @@
 import { AUSWAHL_GRENZEN, type AuswahlInhalt } from './auswahl-dokument';
 import type { Kind } from './kind';
 
-/** How many of the device's Teams and Kinder did not fit into the account. */
-export interface NichtUebernommen {
-  readonly teams: number;
-  readonly kinder: number;
-}
+/** The device's Teams and Kinder that did not fit into the account. */
+export type NichtUebernommen = AuswahlInhalt;
 
 /** What `zusammenfuehren` gives: the account's choices, and what was left out. */
 export interface Zusammenfuehrung {
@@ -18,7 +15,7 @@ export interface Zusammenfuehrung {
  * the account's Teams, then the device's others; the account's Kinder,
  * a missing Spitzname filled from the device's, then the device's others;
  * the device's only up to the caps (`AUSWAHL_GRENZEN`), in their order,
- * the ones left out counted in `uebrig`. Each list, and `konto` itself,
+ * the ones left out in `uebrig`. Each list, and `konto` itself,
  * comes back as it was where the device adds nothing, so a second sign-in
  * with the same choices changes nothing (idempotent).
  */
@@ -34,7 +31,7 @@ export function zusammenfuehren(
       : [...konto.teams, ...neueTeams.slice(0, teamsPlatz)];
   const kinder = kinderZusammen(konto.kinder, geraet.kinder);
   const uebrig = {
-    teams: Math.max(0, neueTeams.length - teamsPlatz),
+    teams: neueTeams.slice(teamsPlatz),
     kinder: kinder.uebrig,
   };
   if (teams === konto.teams && kinder.liste === konto.kinder) {
@@ -46,7 +43,7 @@ export function zusammenfuehren(
 function kinderZusammen(
   konto: readonly Kind[],
   geraet: readonly Kind[]
-): { readonly liste: readonly Kind[]; readonly uebrig: number } {
+): { readonly liste: readonly Kind[]; readonly uebrig: readonly Kind[] } {
   const ausGeraet = new Map(geraet.map((kind) => [kind.personId, kind]));
   let ergaenzt = false;
   const mitSpitznamen = konto.map((kind) => {
@@ -61,7 +58,7 @@ function kinderZusammen(
   const neue = geraet.filter((kind) => !imKonto.has(kind.personId));
   const kinderPlatz = platz(konto.length, AUSWAHL_GRENZEN.kinder);
   const dazu = neue.slice(0, kinderPlatz);
-  const uebrig = neue.length - dazu.length;
+  const uebrig = neue.slice(kinderPlatz);
   return ergaenzt || dazu.length > 0
     ? { liste: [...mitSpitznamen, ...dazu], uebrig }
     : { liste: konto, uebrig };

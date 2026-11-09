@@ -94,8 +94,10 @@ export interface FirestoreAuswahlOptionen {
  * - It shows what the document holds, as Firestore tells it (other devices'
  *   changes too, until `beenden`), with this device's changes on top until
  *   the server took or refused them; `teams` and `kinder` are `undefined`
- *   until the first answer (`geladen`). Where the listener fails, they stay
- *   so, `nichtLesbar` is set and `beiFehler` hears of it.
+ *   until the first answer (`geladen`). Where the listener fails, they are
+ *   `undefined` again (what was read may be stale), `nichtLesbar` is set,
+ *   `beiFehler` hears of it and every change is refused, as after
+ *   `beenden`.
  * - A change writes only the entries it changes, by id (`auswahlFelder`),
  *   merged by the server into the document as it is then: online or
  *   offline (sent once online) alike, so no device's change overwrites
@@ -135,6 +137,9 @@ export class FirestoreAuswahl implements Auswahl {
     return { ...aktuell, teams, kinder };
   });
   private readonly fehlgeschlagen = signal(false);
+  /** Why it shows nothing more: its listener failed, or it was ended. */
+  private ende?: unknown;
+  private readonly ersteLesungAbbrechen: (grund: unknown) => void;
   private readonly dokument: DocumentReference;
   private readonly abbestellen: Unsubscribe;
   private readonly erstesLesen: Promise<void>;
@@ -160,6 +165,7 @@ export class FirestoreAuswahl implements Auswahl {
     this.nichtLesbar = this.fehlgeschlagen.asReadonly();
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.erstesLesen = promise;
+    this.ersteLesungAbbrechen = reject;
     this.abbestellen = onSnapshot(
       this.dokument,
       (stand) => {
@@ -167,6 +173,9 @@ export class FirestoreAuswahl implements Auswahl {
         resolve();
       },
       (fehler) => {
+        // what it read before may be stale now: it shows nothing
+        this.ende = fehler;
+        this.vomListener.set(undefined);
         this.fehlgeschlagen.set(true);
         reject(fehler);
         optionen.beiFehler?.(fehler);
@@ -207,8 +216,13 @@ export class FirestoreAuswahl implements Auswahl {
     return this.aendern(entmarkierenAenderung(person));
   }
 
-  /** Stops listening to the document. */
+  /**
+   * Stops listening to the document; a change still waiting for the first
+   * read, and every change after, is refused.
+   */
   public beenden(): void {
+    this.ende ??= new Error('Auswahl: beendet');
+    this.ersteLesungAbbrechen(this.ende);
     this.abbestellen();
   }
 
@@ -217,6 +231,9 @@ export class FirestoreAuswahl implements Auswahl {
    * entries it changes; shown at once, until the server answered.
    */
   private aendern(aenderung: AuswahlAenderung): Promise<void> {
+    if (this.ende !== undefined) {
+      return Promise.reject(this.ende);
+    }
     if (this.vomListener() === undefined) {
       return this.erstesLesen.then(() => this.aendern(aenderung));
     }

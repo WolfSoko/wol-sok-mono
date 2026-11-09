@@ -13,7 +13,7 @@ describe('zusammenfuehren', () => {
 
     expect(zusammenfuehren(LEER, geraet)).toEqual({
       inhalt: geraet,
-      uebrig: { teams: 0, kinder: 0 },
+      uebrig: { teams: [], kinder: [] },
     });
   });
 
@@ -95,6 +95,9 @@ describe('zusammenfuehren', () => {
     expect(inhalt.kinder).toHaveLength(AUSWAHL_GRENZEN.kinder);
     // a Spitzname for a Kind the account holds still joins
     expect(inhalt.kinder[0]).toEqual({ personId: 1, spitzname: 'Mimi' });
-    expect(uebrig).toEqual({ teams: 2, kinder: 1 });
+    expect(uebrig).toEqual({
+      teams: [9003, 9004],
+      kinder: [{ personId: 9001 }],
+    });
   });
 });

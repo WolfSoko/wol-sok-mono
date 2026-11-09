@@ -9,10 +9,16 @@ import { kindMit, type Kind } from './kind';
  * The version of `AuswahlDokument` this app writes. Bumped only for a
  * change an older app would misread; a new field is none (Kinder joined
  * version 1 as a field of their own), since every write keeps the fields
- * it does not know. Version 1 kept its lists as arrays at first; the
- * device's storage may still hold them so, and the reader takes both.
+ * it does not know. Version 2 keys both lists by id: an app of version 1,
+ * still open in a tab, takes it for a newer one and leaves it alone rather
+ * than overwrite its maps with lists. The reader still takes version 1's
+ * lists (the device's storage holds them), and a map stays a list until a
+ * change touches it.
  */
-export const AUSWAHL_VERSION = 1;
+export const AUSWAHL_VERSION = 2;
+
+/** The first version, of lists, which this version still reads. */
+const ERSTE_VERSION = 1;
 
 /**
  * How many Teams and Kinder an `Auswahl` holds at most: the Firestore rules
@@ -87,7 +93,12 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
     return { art: 'neuer' };
   }
   const gelesenTeams = teams === undefined ? [] : teamsLesen(teams);
-  if (version !== AUSWAHL_VERSION || gelesenTeams === undefined) {
+  if (
+    typeof version !== 'number' ||
+    version < ERSTE_VERSION ||
+    !Number.isInteger(version) ||
+    gelesenTeams === undefined
+  ) {
     return KEINS;
   }
   const gelesenKinder = kinderLesen(kinder);

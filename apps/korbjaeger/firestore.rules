@@ -18,19 +18,22 @@ service cloud.firestore {
     match /auswahl/{uid} {
       allow get, delete: if istBesitzer(uid);
       allow create: if istBesitzer(uid)
-        && istVersion1(request.resource.data)
+        && istVersion2(request.resource.data)
         && (!("teams" in request.resource.data)
           || sindTeams(request.resource.data.teams))
         && (!("kinder" in request.resource.data)
           || sindKinder(request.resource.data.kinder));
-      // an update is checked in the lists it changes only
+      // an update is checked in the maps it changes only; one that only
+      // loses entries is taken as it is, so a map over its cap shrinks
       allow update: if istBesitzer(uid)
-        && istVersion1(request.resource.data)
+        && istVersion2(request.resource.data)
         && (!("teams" in request.resource.data)
           || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["teams"])
+          || nurWeniger(request.resource.data.teams, resource.data.teams)
           || sindTeams(request.resource.data.teams))
         && (!("kinder" in request.resource.data)
           || !request.resource.data.diff(resource.data).affectedKeys().hasAny(["kinder"])
+          || nurWeniger(request.resource.data.kinder, resource.data.kinder)
           || sindKinder(request.resource.data.kinder));
     }
   }
@@ -39,20 +42,33 @@ service cloud.firestore {
     return request.auth != null && request.auth.uid == uid;
   }
 
-  // Version 1 of the app's AuswahlDokument (auswahl-dokument.ts), with no
-  // other fields; a newer version changes these rules in the same release.
-  // The lists are checked in the rules above, not through a function of
-  // the document: every read through one more argument counts again.
-  function istVersion1(daten) {
+  // Version 2 of the app's AuswahlDokument (auswahl-dokument.ts: both
+  // lists as maps keyed by id; version 1's lists never reached Firestore),
+  // with no other fields; a newer version changes these rules in the same
+  // release. The maps are checked in the rules above, not through a
+  // function of the document: every read through one more argument counts
+  // again.
+  function istVersion2(daten) {
     return daten.keys().hasOnly(["version", "teams", "kinder"])
-      && daten.version is int && daten.version == 1;
+      && daten.version is int && daten.version == 2;
+  }
+
+  // Whether the map `neu` only lost entries of the same map in `alt`.
+  function nurWeniger(neu, alt) {
+    return neu is map && alt.size() > 0 && neu.size() < alt.size()
+      && alt.keys().hasAll(neu.keys())
+      && neu.diff(alt).changedKeys().size() == 0;
   }
 
   // The rules know no loop: each value of a map is checked by its index, up
   // to the map's cap, `n` its size; the keys all at once, joined, as DBB
-  // ids (`ids`), which costs one expression instead of one per entry.
+  // ids, which costs a few expressions instead of some per entry: as many
+  // parts as keys, so no key holds a comma, each of at most 15 digits, so
+  // within JavaScript's safe integers (DBB ids have 6 or 7).
   function sindIds(karte) {
-    return karte.keys().join(",").matches("([1-9][0-9]{0,15}(,[1-9][0-9]{0,15})*)?");
+    return karte.size() == 0
+      || (karte.keys().join(",").matches("[1-9][0-9]{0,14}(,[1-9][0-9]{0,14})*")
+        && karte.keys().join(",").split(",").size() == karte.size());
   }
 
   // Meine Teams: each Team's DBB id, since when it is followed.

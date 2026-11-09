@@ -78,58 +78,51 @@ describe('LokaleAuswahl', () => {
     });
   });
 
-  describe('leeren', () => {
-    it('takes Meine Teams and the Kinder off the device', async () => {
+  describe('abgeben', () => {
+    const MIMI = { art: 'benannt', personId: 4711 } as const;
+
+    it('takes off what an account took over, leaving what joined meanwhile', async () => {
       const geraet = new SpeicherImSpec();
       const auswahl = new LokaleAuswahl(geraet);
       await auswahl.folgen(313036);
-      await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      await auswahl.markieren(MIMI, 'Mimi');
+      const uebernommen = auswahl.neuGelesen();
+      await new LokaleAuswahl(geraet).folgen(201500);
 
-      auswahl.leeren();
-
-      expect(auswahl.teams()).toEqual([]);
-      expect(auswahl.kinder()).toEqual([]);
-      expect(geraet.getItem(AUSWAHL_SCHLUESSEL)).toBeNull();
-      expect(new LokaleAuswahl(geraet).teams()).toEqual([]);
+      expect(auswahl.abgeben(uebernommen)).toEqual({
+        teams: [201500],
+        kinder: [],
+      });
+      expect(gespeichert(geraet)).toEqual({ teams: [201500], kinder: [] });
     });
 
-    it('stores an empty selection where the storage cannot remove one', async () => {
+    it('keeps a Kind whose Spitzname changed since it was taken over', async () => {
       const geraet = new SpeicherImSpec();
-      const ohneEntfernen = {
-        getItem: (key: string) => geraet.getItem(key),
-        setItem: (key: string, value: string) => geraet.setItem(key, value),
-      };
-      const auswahl = new LokaleAuswahl(ohneEntfernen);
-      await auswahl.folgen(313036);
+      const auswahl = new LokaleAuswahl(geraet);
+      await auswahl.markieren(MIMI, 'Mimi');
+      const uebernommen = auswahl.neuGelesen();
+      await auswahl.spitznameSetzen(MIMI.personId, 'Mi');
 
-      auswahl.leeren();
-
-      expect(new LokaleAuswahl(ohneEntfernen).teams()).toEqual([]);
-      await auswahl.folgen(201500);
-      expect(new LokaleAuswahl(ohneEntfernen).teams()).toEqual([201500]);
+      expect(auswahl.abgeben(uebernommen).kinder).toEqual([
+        { personId: 4711, spitzname: 'Mi' },
+      ]);
     });
 
-    it("leaves a newer version's selection alone", () => {
+    it('takes all off in the one write, leaving an empty document', async () => {
       const geraet = new SpeicherImSpec();
-      const neuer = JSON.stringify({ version: 2, teams: [313036] });
-      geraet.setzeLeise(AUSWAHL_SCHLUESSEL, neuer);
-
-      new LokaleAuswahl({
-        getItem: (key) => geraet.getItem(key),
-        setItem: (key, value) => geraet.setItem(key, value),
-      }).leeren();
-
-      expect(geraet.getItem(AUSWAHL_SCHLUESSEL)).toBe(neuer);
-    });
-
-    it('drops the changes no write could store yet', async () => {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LokaleAuswahl(geraet);
       await auswahl.folgen(313036);
+      const schreibvorgaenge = geraet.schreibvorgaenge;
 
-      auswahl.leeren();
-      await auswahl.folgen(201500);
-
-      expect(auswahl.teams()).toEqual([201500]);
+      expect(auswahl.abgeben(auswahl.neuGelesen())).toEqual({
+        teams: [],
+        kinder: [],
+      });
+      expect(geraet.schreibvorgaenge).toBe(schreibvorgaenge + 1);
+      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
+        version: 2,
+        teams: {},
+      });
     });
   });
 
@@ -139,12 +132,12 @@ describe('LokaleAuswahl', () => {
     await new LokaleAuswahl(geraet).folgen(313036);
 
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-      version: 1,
+      version: 2,
       teams: { 313036: expect.any(Number) },
     });
   });
 
-  it('takes the lists version 1 stored at first into maps once they change, in their order', async () => {
+  it('takes the lists of version 1 into the maps of version 2 once they change, in their order', async () => {
     const geraet = new SpeicherImSpec();
     geraet.setzeLeise(
       AUSWAHL_SCHLUESSEL,
@@ -160,7 +153,7 @@ describe('LokaleAuswahl', () => {
     await auswahl.spitznameSetzen(4711, 'Mi');
 
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-      version: 1,
+      version: 2,
       teams: { 313036: 1, 201500: 2, 201765: expect.any(Number) },
       kinder: { 4712: { seit: 1 }, 4711: { seit: 2, spitzname: 'Mi' } },
     });

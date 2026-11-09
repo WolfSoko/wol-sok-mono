@@ -1,4 +1,8 @@
-import { type Firestore, runTransaction } from 'firebase/firestore';
+import {
+  type DocumentReference,
+  type Firestore,
+  runTransaction,
+} from 'firebase/firestore';
 import { inhaltAus } from './auswahl-aenderungen';
 import {
   auswahlDokumentLesen,
@@ -11,18 +15,12 @@ import { auswahlDokumentVon, firestoreFelder } from './firestore-auswahl';
 import { type NichtUebernommen, zusammenfuehren } from './zusammenfuehren';
 
 /**
- * The maps of an `AuswahlDokument`, each taken over in a transaction of its
- * own, as the rules check one full map a write.
- */
-const LISTEN = ['teams', 'kinder'] as const;
-
-/**
  * Takes `geraet`, the choices made on the device, into the account `uid`
  * at sign-in, as `zusammenfuehren` joins them: on every sign-in, since a
  * second one with the same choices changes nothing. Written as every
  * change is (`auswahlFelder`): only the entries the device adds, by id. One
  * transaction a map; a map the device adds nothing to is not written. Only what fits under the caps joins; resolves
- * with how many of the device's Teams and Kinder did not. Rejects with
+ * with the device's Teams and Kinder that did not. Rejects with
  * `AuswahlZuNeuError` where a newer version of the app stored the
  * account's selection, which it leaves alone.
  */
@@ -32,27 +30,41 @@ export async function geraetUebernehmen(
   geraet: AuswahlInhalt
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
-  const uebrig = { teams: 0, kinder: 0 };
-  for (const liste of LISTEN) {
-    uebrig[liste] = await runTransaction(firestore, async (transaktion) => {
-      const gelesen = auswahlDokumentLesen(
-        (await transaktion.get(dokument)).data()
-      );
-      if (gelesen.art === 'neuer') {
-        throw new AuswahlZuNeuError();
-      }
-      const konto = inhaltAus(gelesen);
-      const zusammenfuehrung = zusammenfuehren(konto, geraet);
-      const felder = auswahlFelder(
-        konto,
-        { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
-        naechsterSeit(gelesen)
-      );
-      if (felder[liste] !== undefined) {
-        transaktion.set(dokument, firestoreFelder(felder), { merge: true });
-      }
-      return zusammenfuehrung.uebrig[liste];
-    });
-  }
-  return uebrig;
+  // one map a transaction; each tells what of its map did not fit
+  const [{ teams }, { kinder }] = [
+    await listeUebernehmen(firestore, dokument, geraet, 'teams'),
+    await listeUebernehmen(firestore, dokument, geraet, 'kinder'),
+  ];
+  return { teams, kinder };
+}
+
+/**
+ * Takes the map `liste` of `geraet` into the account, in a transaction of
+ * its own, as the rules check one full map a write.
+ */
+function listeUebernehmen(
+  firestore: Firestore,
+  dokument: DocumentReference,
+  geraet: AuswahlInhalt,
+  liste: 'teams' | 'kinder'
+): Promise<NichtUebernommen> {
+  return runTransaction(firestore, async (transaktion) => {
+    const gelesen = auswahlDokumentLesen(
+      (await transaktion.get(dokument)).data()
+    );
+    if (gelesen.art === 'neuer') {
+      throw new AuswahlZuNeuError();
+    }
+    const konto = inhaltAus(gelesen);
+    const zusammenfuehrung = zusammenfuehren(konto, geraet);
+    const felder = auswahlFelder(
+      konto,
+      { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
+      naechsterSeit(gelesen)
+    );
+    if (felder[liste] !== undefined) {
+      transaktion.set(dokument, firestoreFelder(felder), { merge: true });
+    }
+    return zusammenfuehrung.uebrig;
+  });
 }

@@ -74,7 +74,7 @@ describe('geraetUebernehmen', () => {
   it("joins overlapping choices, the account's first", async () => {
     const uid = konto();
     await vorhanden(uid, {
-      version: 1,
+      version: 2,
       teams: teamsRoh(313036),
       kinder: { 4711: { seit: 1 } },
     });
@@ -93,7 +93,7 @@ describe('geraetUebernehmen', () => {
   it('leaves an account already set up with these choices as it is', async () => {
     const uid = konto();
     const eingerichtet = {
-      version: 1,
+      version: 2,
       teams: teamsRoh(313036, 201500),
       kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
     };
@@ -122,7 +122,7 @@ describe('geraetUebernehmen', () => {
 
   it("leaves a newer version's selection alone", async () => {
     const uid = konto();
-    const neuer = { version: 2, teams: {} };
+    const neuer = { version: 3, teams: {} };
     await vorhanden(uid, neuer);
 
     await expect(
@@ -131,31 +131,31 @@ describe('geraetUebernehmen', () => {
     expect(await gespeichert(uid)).toEqual(neuer);
   });
 
-  it('takes only what fits under the caps and counts the rest', async () => {
+  it('takes only what fits under the caps and tells the rest', async () => {
     const uid = konto();
     const teams = Array.from(
       { length: AUSWAHL_GRENZEN.teams - 1 },
       (_, i) => i + 1
     );
-    await vorhanden(uid, { version: 1, teams: teamsRoh(...teams) });
+    await vorhanden(uid, { version: 2, teams: teamsRoh(...teams) });
 
     const uebrig = await geraetUebernehmen(db(uid), uid, {
       teams: [9001, 9002, 9003],
       kinder: [{ personId: 4711 }],
     });
 
-    expect(uebrig).toEqual({ teams: 2, kinder: 0 });
+    expect(uebrig).toEqual({ teams: [9002, 9003], kinder: [] });
     expect(await gelesen(uid)).toEqual({
       teams: [...teams, 9001],
       kinder: [{ personId: 4711 }],
     });
   });
 
-  it('counts nothing left out where all fits', async () => {
+  it('leaves nothing out where all fits', async () => {
     const uid = konto();
 
     expect(
       await geraetUebernehmen(db(uid), uid, { teams: [313036], kinder: [] })
-    ).toEqual({ teams: 0, kinder: 0 });
+    ).toEqual({ teams: [], kinder: [] });
   });
 });
