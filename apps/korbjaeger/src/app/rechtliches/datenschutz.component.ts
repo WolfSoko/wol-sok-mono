@@ -16,6 +16,7 @@ import {
   MAX_ALTER_TAGE,
 } from '../basketball-data/letzte-antworten';
 import { DbbLinkComponent } from './dbb-link.component';
+import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
 /**
@@ -48,4 +49,5 @@ export class DatenschutzComponent {
     tage: MAX_ALTER_TAGE,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
+  protected readonly alteSchluessel = LEGACY_DEVICE_KEYS;
 }

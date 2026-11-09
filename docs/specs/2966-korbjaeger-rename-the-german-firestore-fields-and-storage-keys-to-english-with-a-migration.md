@@ -27,22 +27,22 @@ writes them under the new ones and removes the old.
 
 ## Names
 
-| Old | New |
-| --- | --- |
-| collection `auswahl/{uid}` | `selections/{uid}` |
-| field `kinder` | `children` |
-| field `vereinsfarben` | `clubColors` |
-| entry field `seit` (Teams' values, Kinder) | `since` |
-| entry field `spitzname` | `nickname` |
-| `version: 2` | `version: 3` |
-| collection `geloeschteKonten/{uid}` | `deletedAccounts/{uid}` |
-| key `korbjaeger-auswahl` | `korbjaeger-selection` |
-| key `korbjaeger-angemeldet` | `korbjaeger-signed-in` |
-| key `korbjaeger-zwischenspeicher-leeren` | `korbjaeger-clear-cache` |
-| key `korbjaeger-installation-abgelehnt` | `korbjaeger-install-dismissed` |
-| key `korbjaeger-darstellung` | `korbjaeger-theme` |
-| key prefix `korbjaeger-antwort:` | `korbjaeger-answer:` |
-| key `korbjaeger-antworten` | `korbjaeger-answers` |
+| Old                                        | New                            |
+| ------------------------------------------ | ------------------------------ |
+| collection `auswahl/{uid}`                 | `selections/{uid}`             |
+| field `kinder`                             | `children`                     |
+| field `vereinsfarben`                      | `clubColors`                   |
+| entry field `seit` (Teams' values, Kinder) | `since`                        |
+| entry field `spitzname`                    | `nickname`                     |
+| `version: 2`                               | `version: 3`                   |
+| collection `geloeschteKonten/{uid}`        | `deletedAccounts/{uid}`        |
+| key `korbjaeger-auswahl`                   | `korbjaeger-selection`         |
+| key `korbjaeger-angemeldet`                | `korbjaeger-signed-in`         |
+| key `korbjaeger-zwischenspeicher-leeren`   | `korbjaeger-clear-cache`       |
+| key `korbjaeger-installation-abgelehnt`    | `korbjaeger-install-dismissed` |
+| key `korbjaeger-darstellung`               | `korbjaeger-theme`             |
+| key prefix `korbjaeger-antwort:`           | `korbjaeger-answer:`           |
+| key `korbjaeger-antworten`                 | `korbjaeger-answers`           |
 
 `teams` and `version` stay. The rules' functions get English names too
 (`isOwner`, `isVersion3`, `areTeams`, …): the file is rewritten anyway.
@@ -97,12 +97,23 @@ writes them under the new ones and removes the old.
   full or blocked) leaves the old key for the next start. The pre-paint
   script in `index.html` reads `korbjaeger-theme`, else the old key, so the
   first start after the release does not flash the other look.
-- **Legacy names in one place.** The old keys and collection names live in
-  one constant per project (`LEGACY_DEVICE_KEYS` in the app, the legacy
-  collection names beside the new ones in the lib and the functions'
-  config). `geraete-schluessel.spec.ts` accepts a `korbjaeger-…` key in the
-  code that is either listed in `GERAETE_SCHLUESSEL` or in
-  `LEGACY_DEVICE_KEYS`.
+- **Collection names in one place** (approval condition, as
+  [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) proposes):
+  the new lib `feat-korbjaeger-collections` (`libs/features/korbjaeger-collections`,
+  tag `feat-shared` (constants only, as a `feature` lib may not import
+  another), proprietary like the app) holds `SELECTIONS_COLLECTION`,
+  `DELETED_ACCOUNTS_COLLECTION` and both legacy names; it imports nothing,
+  so `korbjaeger-functions` bundles it without Angular or the web SDK, and a
+  change to the Auswahl lib does not redeploy the functions. The app, the
+  Auswahl lib, the functions and the emulator specs import it; the rules and
+  indexes, which cannot, are checked by the emulator specs and
+  `firebase-deploy.spec.ts`. The rest of #2945 (regions, durations, emulator
+  helpers) stays with #2945.
+- **Legacy keys in one place.** The old device keys live in
+  `LEGACY_DEVICE_KEYS` (`src/app/legacy-device-keys.ts`), the old selection
+  key beside the new one in the Auswahl lib. `geraete-schluessel.spec.ts`
+  accepts a `korbjaeger-…` key in the code that is either listed in
+  `GERAETE_SCHLUESSEL` or in `LEGACY_DEVICE_KEYS`.
 - **Privacy policy.** It renders the new keys from the constants as today;
   section 4 says that keys of an earlier version are renamed at the first
   start and removed, section 5 that a document of an earlier version is
@@ -142,10 +153,8 @@ writes them under the new ones and removes the old.
 
 ## Open questions
 
-1. The English names in the table, especially `selections` (plural, as
-   collections are) and `clubColors`. Recommendation: as listed.
-2. Removing the transitional code (legacy reader, legacy rules and TTL,
-   `LEGACY_DEVICE_KEYS`) and the dormant `auswahl/{uid}` documents of
-   accounts never opened again: a follow-up issue, after a grace period
-   (proposal: a server-side migration of the rest after 90 days, then the
-   removal). Recommendation: follow-up, not this PR.
+None. Settled at approval: the names as listed; the collection names in a
+shared lib as #2945 proposes; a follow-up issue removes the legacy tombstone
+check and its TTL right after one day, and the rest of the transitional code
+and the dormant `auswahl/{uid}` documents (moved server-side first) after 90
+days.
