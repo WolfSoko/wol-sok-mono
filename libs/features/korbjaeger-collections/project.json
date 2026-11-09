@@ -1,0 +1,8 @@
+{
+  "name": "feat-korbjaeger-collections",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/korbjaeger-collections/src",
+  "projectType": "library",
+  "tags": ["feat-shared"],
+  "targets": {}
+}

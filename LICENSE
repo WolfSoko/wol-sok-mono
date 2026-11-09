@@ -11,6 +11,7 @@ released after that LICENSE was added; earlier versions stay under MIT:
 - apps/korbjaeger-cdk
 - libs/features/basketball-data
 - libs/features/korbjaeger-auswahl
+- libs/features/korbjaeger-collections
 - tools/korbjaeger
 
 The root files firebase.rollapolla-analog.json (RollaPolla) and
