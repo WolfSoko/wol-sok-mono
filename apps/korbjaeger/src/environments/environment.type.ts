@@ -14,8 +14,7 @@ export type Environment = {
   firebase: FirebaseOptions;
   /**
    * Whether the app offers the Google sign-in (#2873): its settings, the
-   * account's sync. Off in production until the privacy policy covers it
-   * (#2874).
+   * account's sync. On in every mode; `/privacy` (#2874) covers it.
    */
   anmeldung: boolean;
   /** Set where the build talks to the local emulators instead (`korbjaeger:emulatoren`). */
