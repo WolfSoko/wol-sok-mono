@@ -28,6 +28,18 @@ function players(bacteriaCount: number, x = 10) {
   ].map((player) => ({ ...player, bacteriaCount }));
 }
 
+describe('toColonyStats', () => {
+  it('colours a colony with its alpha from 0 to 1, as CSS reads it', () => {
+    const [opaque, translucent] = players(50);
+    const [first, second] = toColonyStats([
+      opaque,
+      { ...translucent, color: [0, 0, 255, 51] },
+    ]);
+    expect(first.css).toBe('rgba(255,100,20,1)');
+    expect(second.css).toBe('rgba(0,0,255,0.2)');
+  });
+});
+
 describe('sameColonyStats', () => {
   it('ignores what the scoreboard does not show - a moving crosshair', () => {
     expect(
