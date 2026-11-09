@@ -28,7 +28,27 @@
         <ng-container matColumnDef="name">
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let zeile" [class.anonym]="zeile.anonym">
-            {{ zeile.name }}
+            <span class="spieler">
+              <span class="name">
+                @if (zeile.kind) {
+                  <mat-icon class="stern" aria-hidden="true">star</mat-icon>
+                  <span class="cdk-visually-hidden">Mein Kind:</span>
+                }
+                {{ zeile.name }}
+                @if (zeile.kind?.spitzname; as spitzname) {
+                  <span class="spitzname" data-qa="kader-spitzname"
+                    >„{{ spitzname }}“</span
+                  >
+                }
+              </span>
+              @if (zeile.spieler; as spieler) {
+                <korb-kind-markierung
+                  [spieler]="spieler"
+                  [name]="zeile.name"
+                  [kind]="zeile.kind"
+                />
+              }
+            </span>
           </td>
         </ng-container>
         <ng-container matColumnDef="punkte">
@@ -85,6 +105,8 @@
           mat-row
           *matRowDef="let zeile; columns: spalten()"
           data-qa="kader-zeile"
+          [class.kind]="zeile.kind !== undefined"
+          [attr.data-kind]="zeile.kind ? '' : null"
         ></tr>
       </table>
     </div>

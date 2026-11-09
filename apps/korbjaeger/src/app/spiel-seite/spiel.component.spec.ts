@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
@@ -9,6 +10,11 @@ import {
   type Spielbericht,
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
+import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
+import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
+import type { Kind } from '../auswahl/kind';
+import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -132,20 +138,39 @@ async function render(
   data: ReturnType<typeof fakeData>,
   spielId = '2861436'
 ): Promise<HTMLElement> {
+  return (await renderMit(data, new LokaleAuswahl(undefined), spielId)).seite;
+}
+
+/** Renders the page of `spielId` on `data` with `auswahl`. */
+async function renderMit(
+  data: ReturnType<typeof fakeData>,
+  auswahl: Auswahl,
+  spielId = '2861436'
+): Promise<{
+  readonly seite: HTMLElement;
+  /** Waits for the reads that settle, the dialogs and the page. */
+  readonly stabil: () => Promise<void>;
+}> {
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
       { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: AUSWAHL, useValue: auswahl },
+      // the dialogs close at once, without waiting for an animation
+      { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
     ],
   });
   const fixture = TestBed.createComponent(SpielComponent);
   fixture.componentRef.setInput('spielId', spielId);
   // not whenStable: it waits for every read, and some never settle here
-  fixture.detectChanges();
-  await new Promise((resolve) => setTimeout(resolve));
-  fixture.detectChanges();
-  return fixture.nativeElement as HTMLElement;
+  const stabil = async (): Promise<void> => {
+    fixture.detectChanges();
+    await new Promise((resolve) => setTimeout(resolve));
+    fixture.detectChanges();
+  };
+  await stabil();
+  return { seite: fixture.nativeElement as HTMLElement, stabil };
 }
 
 function text(element: Element | null | undefined): string | undefined {
@@ -652,6 +677,329 @@ describe('SpielComponent', () => {
         'Heim',
         'Gast',
       ]);
+    });
+  });
+
+  describe('marking a Kind', () => {
+    const WASBUETTEL = 313036;
+    const GIFHORN = 201500;
+    /** Ilvio, a named player of the home Kader. */
+    const ILVIO = 91692638;
+    /** Delon, a named player of the away Kader. */
+    const DELON = 92256481;
+
+    async function mitAuswahl(
+      teams: readonly number[],
+      kinder: readonly Kind[] = [],
+      spielbericht: Spielbericht = bericht(MIT_WERTEN, OHNE_WERTE)
+    ): Promise<{
+      readonly seite: HTMLElement;
+      readonly auswahl: LokaleAuswahl;
+      readonly stabil: () => Promise<void>;
+    }> {
+      const auswahl = new LokaleAuswahl(undefined);
+      for (const team of teams) {
+        await auswahl.folgen(team);
+      }
+      for (const { personId, spitzname } of kinder) {
+        await auswahl.markieren({ art: 'benannt', personId }, spitzname);
+      }
+      const gerendert = await renderMit(
+        fakeData(
+          async () => GESPIELT,
+          async () => spielbericht
+        ),
+        auswahl
+      );
+      return { ...gerendert, auswahl };
+    }
+
+    afterEach(() => {
+      // a dialog left open lives outside the page
+      document.querySelector('.cdk-overlay-container')?.replaceChildren();
+    });
+
+    function kaderVon(seite: HTMLElement, team: string): HTMLElement {
+      const gefunden = alle(seite, 'kader').find(
+        (kader) => text(kader.querySelector('h3')) === team
+      );
+      if (gefunden === undefined) {
+        throw new Error(`no Kader of ${team}`);
+      }
+      return gefunden;
+    }
+
+    function zeileVon(kader: HTMLElement, name: string): HTMLElement {
+      const zeile = alle(kader, 'kader-zeile').find((tr) =>
+        text(tr.querySelector('.name'))?.includes(name)
+      );
+      if (zeile === undefined) {
+        throw new Error(`no line of ${name}`);
+      }
+      return zeile;
+    }
+
+    function markierKnoepfe(kader: HTMLElement): HTMLButtonElement[] {
+      return [
+        ...kader.querySelectorAll<HTMLButtonElement>(
+          'button[aria-label="Als mein Kind markieren"]'
+        ),
+      ];
+    }
+
+    function dialog(): HTMLElement | null {
+      return document.querySelector<HTMLElement>('korb-spitzname-dialog');
+    }
+
+    function knopf(
+      wo: ParentNode | null,
+      beschriftung: string
+    ): HTMLButtonElement {
+      const gefunden = [
+        ...(wo ?? document).querySelectorAll<HTMLButtonElement>('button'),
+      ].find((button) => text(button)?.includes(beschriftung));
+      if (gefunden === undefined) {
+        throw new Error(`no button ${beschriftung}`);
+      }
+      return gefunden;
+    }
+
+    async function spitznameEingeben(
+      spitzname: string,
+      stabil: () => Promise<void>
+    ): Promise<void> {
+      const eingabe = dialog()?.querySelector('input');
+      if (!eingabe) {
+        throw new Error('no dialog open');
+      }
+      eingabe.value = spitzname;
+      eingabe.dispatchEvent(new Event('input'));
+      eingabe.form?.requestSubmit();
+      await stabil();
+    }
+
+    it("offers to mark each named player of a followed Team's Kader, no Anonymer Spieler", async () => {
+      const { seite } = await mitAuswahl([WASBUETTEL]);
+
+      const heim = kaderVon(seite, 'MTV Wasbüttel');
+      expect(markierKnoepfe(heim)).toHaveLength(1);
+      expect(
+        zeileVon(heim, 'Anonymer Spieler').querySelector('button')
+      ).toBeNull();
+    });
+
+    it('offers no mark while no Team of the Spiel is followed', async () => {
+      const { seite } = await mitAuswahl([]);
+
+      expect(markierKnoepfe(seite)).toEqual([]);
+    });
+
+    it("offers no mark in the opponent's Kader", async () => {
+      const { seite } = await mitAuswahl([WASBUETTEL]);
+
+      expect(markierKnoepfe(kaderVon(seite, 'MTV Gifhorn'))).toEqual([]);
+    });
+
+    it('offers marks in both Kader where both Teams are followed', async () => {
+      const { seite } = await mitAuswahl([GIFHORN, WASBUETTEL]);
+
+      expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toHaveLength(1);
+      expect(markierKnoepfe(kaderVon(seite, 'MTV Gifhorn'))).toHaveLength(1);
+    });
+
+    it('marks a player as the Kind with a Spitzname, and highlights them with a star', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      expect(text(dialog())).toContain('Ilvio Mistelgrund');
+      await spitznameEingeben('  Ilvi ', stabil);
+
+      expect(auswahl.kinder()).toEqual([
+        { personId: ILVIO, spitzname: 'Ilvi' },
+      ]);
+      const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
+      expect(zeile.hasAttribute('data-kind')).toBe(true);
+      expect(zeile.querySelector('mat-icon.stern')).not.toBeNull();
+      expect(text(teil(zeile, 'kader-spitzname'))).toBe('„Ilvi“');
+      expect(text(zeile.querySelector('.name'))).toContain('Mein Kind:');
+      expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toEqual([]);
+    });
+
+    it('marks a Kind without a Spitzname', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      await spitznameEingeben('', stabil);
+
+      expect(auswahl.kinder()).toEqual([{ personId: ILVIO }]);
+      const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
+      expect(teil(zeile, 'kader-spitzname')).toBeNull();
+    });
+
+    it('marks nobody where the dialog is cancelled', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      knopf(dialog(), 'Abbrechen').click();
+      await stabil();
+
+      expect(auswahl.kinder()).toEqual([]);
+    });
+
+    it("highlights a marked Kind only in a followed Team's Kader", async () => {
+      const { seite } = await mitAuswahl(
+        [WASBUETTEL],
+        [{ personId: DELON, spitzname: 'Del' }]
+      );
+
+      // Delon plays for the opponent here: not one of Meine Teams
+      const gast = kaderVon(seite, 'MTV Gifhorn');
+      expect(zeileVon(gast, 'Delon').hasAttribute('data-kind')).toBe(false);
+      expect(teil(gast, 'kader-spitzname')).toBeNull();
+    });
+
+    it('highlights the same Kind in the Kader of each followed Team it plays for', async () => {
+      const { seite } = await mitAuswahl(
+        [GIFHORN, WASBUETTEL],
+        [{ personId: DELON }, { personId: ILVIO }]
+      );
+
+      expect(
+        zeileVon(kaderVon(seite, 'MTV Gifhorn'), 'Delon').hasAttribute(
+          'data-kind'
+        )
+      ).toBe(true);
+      expect(
+        zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio').hasAttribute(
+          'data-kind'
+        )
+      ).toBe(true);
+    });
+
+    it("changes a marked Kind's Spitzname from its menu", async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl(
+        [WASBUETTEL],
+        [{ personId: ILVIO, spitzname: 'Ilvi' }]
+      );
+
+      const menue = zeileVon(
+        kaderVon(seite, 'MTV Wasbüttel'),
+        'Ilvio'
+      ).querySelector<HTMLButtonElement>('[data-qa="kind-menue"]');
+      expect(menue?.getAttribute('aria-label')).toBe(
+        'Mein Kind Ilvio Mistelgrund: Markierung ändern'
+      );
+      menue?.click();
+      await stabil();
+      knopf(
+        document.querySelector('.mat-mdc-menu-panel'),
+        'Spitzname ändern'
+      ).click();
+      await stabil();
+      expect(dialog()?.querySelector('input')?.value).toBe('Ilvi');
+      await spitznameEingeben('Ilvo', stabil);
+
+      expect(auswahl.kinder()).toEqual([
+        { personId: ILVIO, spitzname: 'Ilvo' },
+      ]);
+      expect(
+        text(teil(kaderVon(seite, 'MTV Wasbüttel'), 'kader-spitzname'))
+      ).toBe('„Ilvo“');
+    });
+
+    it('unmarks a Kind from its menu', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl(
+        [WASBUETTEL],
+        [{ personId: ILVIO }]
+      );
+
+      zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio')
+        .querySelector<HTMLButtonElement>('[data-qa="kind-menue"]')
+        ?.click();
+      await stabil();
+      knopf(
+        document.querySelector('.mat-mdc-menu-panel'),
+        'Markierung entfernen'
+      ).click();
+      await stabil();
+
+      expect(auswahl.kinder()).toEqual([]);
+      expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toHaveLength(1);
+    });
+
+    it('says so where the mark could not be stored', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+      vi.spyOn(auswahl, 'markieren').mockRejectedValue(new Error('voll'));
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      await spitznameEingeben('Ilvi', stabil);
+
+      expect(text(teil(seite, 'kind-fehler'))).toBe(
+        'Das ließ sich nicht speichern. Bitte noch einmal versuchen.'
+      );
+    });
+
+    it('keeps the reload hint where a newer version stored the selection, the controls gone', async () => {
+      const teams = signal<readonly number[]>([WASBUETTEL]);
+      const { seite, stabil } = await renderMit(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(MIT_WERTEN, OHNE_WERTE)
+        ),
+        fakeAuswahl({
+          teams,
+          markieren: async () => {
+            // as LokaleAuswahl does: it shows nothing of a newer version
+            teams.set([]);
+            throw new AuswahlZuNeuError();
+          },
+        })
+      );
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      await spitznameEingeben('Ilvi', stabil);
+
+      expect(markierKnoepfe(seite)).toEqual([]);
+      expect(teil(seite, 'kind-fehler')?.getAttribute('role')).toBe('alert');
+      expect(text(teil(seite, 'kind-fehler'))).toContain(
+        'Bitte die App neu laden.'
+      );
+    });
+
+    it('closes the Spitzname dialog where the Team was unfollowed meanwhile, and marks nobody', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+      const markieren = vi.spyOn(auswahl, 'markieren');
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      expect(dialog()).not.toBeNull();
+
+      // another tab unfollows the Team: its Kader offers no mark any more
+      await auswahl.entfolgen(WASBUETTEL);
+      await stabil();
+
+      expect(dialog()).toBeNull();
+      expect(markieren).not.toHaveBeenCalled();
+      expect(auswahl.kinder()).toEqual([]);
+    });
+
+    it('highlights a Kind in both Kader where both Teams are followed and it is in each', async () => {
+      const ilvio = MIT_WERTEN.eintraege[0];
+      const { seite } = await mitAuswahl(
+        [WASBUETTEL, GIFHORN],
+        [{ personId: ILVIO, spitzname: 'Ilvi' }],
+        bericht(MIT_WERTEN, { ...OHNE_WERTE, eintraege: [ilvio] })
+      );
+
+      for (const team of ['MTV Wasbüttel', 'MTV Gifhorn']) {
+        const zeile = zeileVon(kaderVon(seite, team), 'Ilvio');
+        expect(zeile.hasAttribute('data-kind')).toBe(true);
+        expect(text(teil(zeile, 'kader-spitzname'))).toBe('„Ilvi“');
+      }
     });
   });
 

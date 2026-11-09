@@ -76,6 +76,9 @@
 }
 @if (spielbericht(); as teil) {
   <h2>Kader</h2>
+  @if (kindFehler(); as text) {
+    <p class="fehler" role="alert" data-qa="kind-fehler">{{ text }}</p>
+  }
   @switch (teil.art) {
     @case ("laedt") {
       <mat-progress-bar
@@ -95,6 +98,7 @@
           [titel]="kader.titel"
           [kader]="kader.kader"
           [seite]="kader.seite"
+          [gefolgt]="kader.gefolgt"
         />
       }
     }

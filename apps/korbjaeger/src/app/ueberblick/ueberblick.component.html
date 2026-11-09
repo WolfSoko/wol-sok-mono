@@ -1,6 +1,6 @@
 <h2>Meine Teams</h2>
-@if (karten(); as karten) {
-  @if (karten.length === 0) {
+@if (ansicht(); as ansicht) {
+  @if (ansicht.kinder.length === 0 && ansicht.teams.length === 0) {
     <div class="leer" data-qa="ueberblick-leer">
       <p>
         Du folgst noch keinem Team. Such das Team deines Kindes Schritt für
@@ -10,8 +10,32 @@
       <a mat-flat-button routerLink="/team-einrichten">Team einrichten</a>
     </div>
   }
+  @switch (ansicht.hinweis) {
+    @case ("nach-erstem-spiel") {
+      <p class="hinweis" data-qa="ueberblick-hinweis">
+        Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in
+        einem Spielbericht steht: Öffne dann das Spiel und markiere es im Kader.
+      </p>
+    }
+    @case ("spiel-oeffnen") {
+      <p class="hinweis" data-qa="ueberblick-hinweis">
+        Öffne ein gespieltes Spiel, um dein Kind im Kader zu markieren, sobald
+        sein Spielbericht da ist.
+      </p>
+    }
+  }
+  @if (ansicht.kinder.length > 0) {
+    <ul class="ueberblick" data-qa="ueberblick-kinder">
+      @for (kind of ansicht.kinder; track kind.personId) {
+        <li><korb-ueberblick-kind [abschnitt]="kind" /></li>
+      }
+    </ul>
+    @if (ansicht.teams.length > 0) {
+      <h3 data-qa="ueberblick-weitere">Weitere Teams</h3>
+    }
+  }
   <ul class="ueberblick">
-    @for (karte of karten; track karte.teamId) {
+    @for (karte of ansicht.teams; track karte.teamId) {
       <li><korb-ueberblick-team [karte]="karte" /></li>
     }
   </ul>

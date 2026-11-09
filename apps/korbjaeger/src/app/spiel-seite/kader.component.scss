@@ -25,3 +25,35 @@
   font-style: italic;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.spieler {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.25rem;
+}
+
+// a marked Kind stands out by its star and Spitzname, the tint only adds
+.kind {
+  background: var(--mat-sys-secondary-container);
+
+  .mat-mdc-cell {
+    color: var(--mat-sys-on-secondary-container);
+    font-weight: 600;
+  }
+}
+
+.stern {
+  color: var(--mat-sys-primary);
+}
+
+.spitzname {
+  font-weight: 400;
+}

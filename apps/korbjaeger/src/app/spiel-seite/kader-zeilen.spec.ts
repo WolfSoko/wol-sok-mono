@@ -53,3 +53,43 @@ describe('kaderZeilen', () => {
     expect(kaderZeilen(kader)[0].werte).toBeUndefined();
   });
 });
+
+describe('kaderZeilen of a followed Team', () => {
+  const kader: Kader = {
+    spielerwerteErfasst: false,
+    eintraege: [
+      { art: 'benannt', personId: 7, vorname: 'Orvin', nachname: 'Nesselbach' },
+      { art: 'benannt', personId: 8, vorname: 'Lumi', nachname: 'Ahornwiese' },
+      { art: 'anonym' },
+    ],
+  };
+
+  it('offers to mark each named player, never an Anonymer Spieler', () => {
+    const zeilen = kaderZeilen(kader, []);
+
+    expect(zeilen.map((zeile) => zeile.spieler)).toEqual([
+      { art: 'benannt', personId: 7 },
+      { art: 'benannt', personId: 8 },
+      undefined,
+    ]);
+  });
+
+  it('gives a marked Kind its mark, with its Spitzname', () => {
+    const zeilen = kaderZeilen(kader, [
+      { personId: 8, spitzname: 'Lu' },
+      { personId: 99 },
+    ]);
+
+    expect(zeilen.map((zeile) => zeile.kind)).toEqual([
+      undefined,
+      { personId: 8, spitzname: 'Lu' },
+      undefined,
+    ]);
+  });
+
+  it("offers no mark in a Team's Kader nobody follows", () => {
+    const zeilen = kaderZeilen(kader);
+
+    expect(zeilen.every((zeile) => !zeile.spieler && !zeile.kind)).toBe(true);
+  });
+});

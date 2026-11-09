@@ -5,21 +5,23 @@ import {
   InjectionToken,
   type Signal,
 } from '@angular/core';
-import type { TeamId } from '@wolsok/feat-shared-basketball-data';
+import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import { geraeteSpeicher, SPEICHER_FREIGEBEN } from '../geraete-speicher';
+import type { Kind, MarkierbarerSpieler } from './kind';
 import { LokaleAuswahl } from './lokale-auswahl';
 
 /**
- * What an Elternteil follows: Meine Teams (Kinder join with #2872). Kept
+ * What an Elternteil follows: Meine Teams and the Kinder they marked. Kept
  * on the device by `LokaleAuswahl`; a Firestore adapter for signed-in
  * Elternteile follows with #2873. Every adapter passes the shared
  * contract, `auswahlVertrag` (`testing/auswahl-vertrag.ts`).
  *
- * Errors: a change shows in `teams` once its promise resolves. Where an
+ * Errors: a change shows in `teams` or `kinder` once its promise resolves. Where an
  * adapter cannot store it lastingly (the device's storage full or
  * blocked), the change still holds for this visit and the promise
  * resolves. Where a newer version of the app stored the selection, the
- * adapter leaves it untouched: `teams` is empty and every change rejects
+ * adapter leaves it untouched: `teams` and `kinder` are empty and every
+ * change rejects
  * with `AuswahlZuNeuError` (`auswahl-fehler.ts`).
  */
 export interface Auswahl {
@@ -36,6 +38,28 @@ export interface Auswahl {
   folgen(team: TeamId): Promise<void>;
   /** Takes `team` out of Meine Teams, if it is in them. */
   entfolgen(team: TeamId): Promise<void>;
+  /**
+   * The marked Kinder, in the order they were marked, each person once;
+   * `undefined` until the adapter has read them. A Spitzname is trimmed
+   * and at most `SPITZNAME_LAENGE` characters (`spitznameAus`).
+   */
+  readonly kinder: Signal<readonly Kind[] | undefined>;
+  /**
+   * Marks `spieler`, a named player, as a Kind with `spitzname`, at the end
+   * of the Kinder; a Kind marked already stays as it is. Only once
+   * `kinder` is read.
+   */
+  markieren(spieler: MarkierbarerSpieler, spitzname?: string): Promise<void>;
+  /**
+   * Gives the Kind `person` the Spitzname `spitzname`, or none; ignored for
+   * a person not marked.
+   */
+  spitznameSetzen(
+    person: PersonId,
+    spitzname: string | undefined
+  ): Promise<void>;
+  /** Unmarks the Kind `person`, if it is marked. */
+  entmarkieren(person: PersonId): Promise<void>;
 }
 
 /** The screens' `Auswahl`: on the device, for now. */

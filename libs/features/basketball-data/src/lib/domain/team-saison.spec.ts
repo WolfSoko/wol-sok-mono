@@ -6,6 +6,7 @@ import {
   ligenAktuellZuerst,
   naechstesSpiel,
   saisonBeendet,
+  zuletztGespielt,
   type TeamSaison,
 } from './team-saison';
 
@@ -343,5 +344,71 @@ describe('ligaVon', () => {
 
     expect(ligaVon(zweiLigen, VORRUNDE.id)).toBe(VORRUNDE);
     expect(ligaVon(zweiLigen, HAUPTRUNDE.id)).toBeUndefined();
+  });
+});
+
+describe('zuletztGespielt', () => {
+  const GESPIELT: Spiel['status'] = {
+    art: 'gespielt',
+    ergebnis: { heim: 78, gast: 47 },
+    bestaetigt: false,
+  };
+  const HEUTE = '2026-11-08';
+
+  it("lists the Spiele played up to today, today's too, newest first", () => {
+    const gespielt = zuletztGespielt(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-10-03', GESPIELT),
+        spiel(2, VORRUNDE.id, '2026-10-17', GESPIELT),
+        spiel(3, VORRUNDE.id, '2026-11-08', GESPIELT),
+        spiel(4, VORRUNDE.id, '2026-11-21')
+      ),
+      HEUTE,
+      5
+    );
+
+    expect(gespielt.map(({ id }) => id)).toEqual([3, 2, 1]);
+  });
+
+  it('passes over Spiele cancelled, forfeited or without a result', () => {
+    const gespielt = zuletztGespielt(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-10-03', GESPIELT),
+        spiel(2, VORRUNDE.id, '2026-10-10', { art: 'abgesagt' }),
+        spiel(3, VORRUNDE.id, '2026-10-17', {
+          art: 'kampflos',
+          verzichtet: ['gast'],
+        }),
+        spiel(4, VORRUNDE.id, '2026-10-24')
+      ),
+      HEUTE,
+      5
+    );
+
+    expect(gespielt.map(({ id }) => id)).toEqual([1]);
+  });
+
+  it('passes over a result the DBB lists ahead of its day', () => {
+    const gespielt = zuletztGespielt(
+      saison(spiel(1, VORRUNDE.id, '2026-11-21', GESPIELT)),
+      HEUTE,
+      5
+    );
+
+    expect(gespielt).toEqual([]);
+  });
+
+  it('lists at most as many as asked, the newest', () => {
+    const gespielt = zuletztGespielt(
+      saison(
+        spiel(1, VORRUNDE.id, '2026-10-03', GESPIELT),
+        spiel(2, VORRUNDE.id, '2026-10-10', GESPIELT),
+        spiel(3, VORRUNDE.id, '2026-10-17', GESPIELT)
+      ),
+      HEUTE,
+      2
+    );
+
+    expect(gespielt.map(({ id }) => id)).toEqual([3, 2]);
   });
 });

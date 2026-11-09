@@ -1,8 +1,8 @@
-import {
-  teamUeberblick,
-  type Spiel,
-  type TeamId,
-  type TeamSaison,
+import type {
+  Spiel,
+  TeamId,
+  TeamSaison,
+  TeamUeberblick,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import type { Stand } from '../basketball-data/stand';
@@ -37,13 +37,15 @@ export type TeamKarte =
       readonly letztes?: SpielZeile;
     } & KartenZusatz);
 
-/** The card of a Team whose Saison was read, on `heute`, with `zusatz`. */
+/**
+ * The card of a Team whose Saison was read, from its overview
+ * (`teamUeberblick`), with `zusatz`.
+ */
 export function geladeneKarte(
   saison: TeamSaison,
-  heute: string,
+  { naechstes, ausfaelle, letztes }: TeamUeberblick,
   zusatz: KartenZusatz
 ): TeamKarte {
-  const { naechstes, ausfaelle, letztes } = teamUeberblick(saison, heute);
   return {
     art: 'geladen',
     teamId: saison.team.id,

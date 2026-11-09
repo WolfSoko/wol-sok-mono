@@ -57,6 +57,26 @@ export function naechstesSpielIndex(saison: TeamSaison, heute: string): number {
   );
 }
 
+/**
+ * The Spiele of `saison` played up to `heute` (today's included), newest
+ * first, at most `hoechstens`: those with a Spielbericht to look into.
+ * Cancelled and forfeited Spiele have none; a result the DBB lists ahead of
+ * its day is passed over, as `teamUeberblick` does. Relies on the date
+ * order of `saison.spiele`.
+ *
+ * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
+ */
+export function zuletztGespielt(
+  saison: TeamSaison,
+  heute: string,
+  hoechstens: number
+): readonly Spiel[] {
+  return saison.spiele
+    .filter(({ datum, status }) => datum <= heute && status.art === 'gespielt')
+    .reverse()
+    .slice(0, hoechstens);
+}
+
 /** How many days after its last Spiel a Team's Saison counts as over. */
 const SAISON_ENDE_NACH_TAGEN = 14;
 

@@ -78,6 +78,7 @@ export type {
   SpielStatus,
   Spielstand,
 } from './lib/domain/spiel';
+export { kaderDesTeams, kinderImKader } from './lib/domain/kinder-im-kader';
 export {
   feldkoerbe,
   istBenannt,
@@ -98,6 +99,7 @@ export {
   ligenAktuellZuerst,
   naechstesSpiel,
   saisonBeendet,
+  zuletztGespielt,
 } from './lib/domain/team-saison';
 export type {
   TeamSaison,
@@ -105,9 +107,15 @@ export type {
   VereinsTeams,
 } from './lib/domain/team-saison';
 export {
+  gemeinsamerUeberblick,
   nachNaechstemSpiel,
   teamUeberblick,
 } from './lib/domain/team-ueberblick';
-export type { TeamUeberblick } from './lib/domain/team-ueberblick';
+export type {
+  GemeinsamerUeberblick,
+  SaisonMitUeberblick,
+  SaisonSpiel,
+  TeamUeberblick,
+} from './lib/domain/team-ueberblick';
 export type { Verband } from './lib/domain/verband';
 export type { Verein } from './lib/domain/verein';

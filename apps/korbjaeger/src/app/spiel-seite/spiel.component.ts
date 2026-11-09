@@ -2,16 +2,19 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   input,
 } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
+import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { spielberichtResource } from '../basketball-data/spielbericht-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 import { HalleComponent } from '../halle/halle.component';
+import { KIND_AENDERUNG, provideKindAenderung } from '../kind/kind-aenderung';
 import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
@@ -19,7 +22,8 @@ import { StandComponent } from '../stand/stand.component';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
- * Kader of the Spielbericht. The Spiel and its Spielbericht are read,
+ * Kader of the Spielbericht, where a followed Team's Kader lets the
+ * Elternteil mark their Kind. The Spiel and its Spielbericht are read,
  * load and fail on their own.
  */
 @Component({
@@ -32,6 +36,7 @@ import { StandComponent } from '../stand/stand.component';
     RouterLink,
     StandComponent,
   ],
+  providers: [provideKindAenderung()],
   templateUrl: './spiel.component.html',
   styleUrl: './spiel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,6 +46,11 @@ export class SpielComponent {
   public readonly spielId = input.required<string>();
 
   private readonly spiel = computed(() => parseDbbId(this.spielId()));
+
+  private readonly gefolgt = inject(AUSWAHL).teams;
+
+  /** What the page says when marking a Kind failed. */
+  protected readonly kindFehler = inject(KIND_AENDERUNG).fehler;
 
   protected readonly details = spielDetailsResource(() => this.spiel());
 
@@ -66,6 +76,6 @@ export class SpielComponent {
   protected readonly spielbericht = computed(() =>
     this.spiel() === undefined
       ? undefined
-      : spielberichtTeil(this.bericht, this.details)
+      : spielberichtTeil(this.bericht, this.details, this.gefolgt())
   );
 }

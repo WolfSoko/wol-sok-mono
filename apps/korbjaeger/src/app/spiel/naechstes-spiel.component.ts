@@ -19,7 +19,7 @@ import type { SpielZeile } from './spiel-zeile';
   imports: [SpielHalleComponent, SpielLinkComponent],
   template: `
     <korb-spiel-link
-      titel="Nächstes Spiel"
+      [titel]="titel()"
       [zeile]="zeile()"
       [mitLiga]="mitLiga()"
     />
@@ -41,4 +41,6 @@ export class NaechstesSpielComponent {
   public readonly halle = input<HallenStand>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
+  /** The heading above it, e.g. naming the Team that plays it. */
+  public readonly titel = input('Nächstes Spiel');
 }

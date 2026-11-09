@@ -45,7 +45,7 @@ auswahlVertrag('local', () => {
 });
 
 describe('LokaleAuswahl', () => {
-  it('stores a versioned document, which Kinder can join later', async () => {
+  it('stores a versioned document, with Meine Teams and the Kinder', async () => {
     const geraet = new SpeicherImSpec();
 
     await new LokaleAuswahl(geraet).folgen(313036);
@@ -53,7 +53,32 @@ describe('LokaleAuswahl', () => {
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
       version: 1,
       teams: [313036],
+      kinder: [],
     });
+  });
+
+  it('writes nothing to mark a Kind marked already', async () => {
+    const geraet = new SpeicherImSpec();
+    const auswahl = new LokaleAuswahl(geraet);
+    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    const vorher = geraet.schreibvorgaenge;
+
+    await auswahl.markieren({ art: 'benannt', personId: 4711 });
+    await auswahl.spitznameSetzen(4711, ' Mimi ');
+    await auswahl.entmarkieren(4799);
+
+    expect(geraet.schreibvorgaenge).toBe(vorher);
+  });
+
+  it('keeps its Kinder as they are where another tab stored the same', async () => {
+    const geraet = new SpeicherImSpec();
+    const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    const vorher = auswahl.kinder();
+
+    await auswahl.folgen(313036);
+
+    expect(auswahl.kinder()).toBe(vorher);
   });
 
   it('starts empty from storage that holds no JSON', () => {
@@ -108,6 +133,7 @@ describe('LokaleAuswahl', () => {
       expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')).toEqual({
         version: 1,
         teams: [313036],
+        kinder: [],
       });
     });
 
@@ -218,6 +244,83 @@ describe('LokaleAuswahl', () => {
     await auswahl.folgen(201500);
 
     expect(auswahl.teams()).toEqual([313036, 201500]);
+  });
+
+  describe('a change that could not be stored', () => {
+    /** Storage that takes no write while `voll`, as a full one. */
+    function zeitweiseVoll(): {
+      geraet: SpeicherImSpec;
+      voll: { an: boolean };
+    } {
+      const geraet = new SpeicherImSpec();
+      const voll = { an: false };
+      const schreiben = geraet.setItem.bind(geraet);
+      vi.spyOn(geraet, 'setItem').mockImplementation((key, value) => {
+        if (voll.an) {
+          throw new DOMException('full', 'QuotaExceededError');
+        }
+        schreiben(key, value);
+      });
+      return { geraet, voll };
+    }
+
+    const LUMI = { art: 'benannt', personId: 4711 } as const;
+
+    it('is kept for the next change, and stored with it once there is room', async () => {
+      const { geraet, voll } = zeitweiseVoll();
+      const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+      await auswahl.folgen(313036);
+      voll.an = true;
+
+      await auswahl.markieren(LUMI, 'Lu');
+      voll.an = false;
+      await auswahl.folgen(201500);
+
+      expect(auswahl.kinder()).toEqual([{ personId: 4711, spitzname: 'Lu' }]);
+      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
+        version: 1,
+        teams: [313036, 201500],
+        kinder: [{ personId: 4711, spitzname: 'Lu' }],
+      });
+    });
+
+    it('is dropped once another tab stored a newer version, which shows nothing', async () => {
+      const { geraet, voll } = zeitweiseVoll();
+      const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
+      voll.an = true;
+      await auswahl.markieren(LUMI);
+      voll.an = false;
+
+      geraet.setItem(
+        AUSWAHL_SCHLUESSEL,
+        JSON.stringify({ version: 99, teams: [201500] })
+      );
+
+      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.teams()).toEqual([]);
+    });
+
+    it("keeps what another tab stored meanwhile, with this tab's change", async () => {
+      const { geraet, voll } = zeitweiseVoll();
+      const tabA = new LokaleAuswahl(geraet, geraet.fenster);
+      const tabB = new LokaleAuswahl(geraet);
+      voll.an = true;
+      await tabA.markieren(LUMI);
+      voll.an = false;
+
+      await tabB.folgen(201500);
+
+      // tab A still shows its own change beside tab B's
+      expect(tabA.teams()).toEqual([201500]);
+      expect(tabA.kinder()).toEqual([{ personId: 4711 }]);
+
+      await tabA.folgen(313036);
+      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
+        version: 1,
+        teams: [201500, 313036],
+        kinder: [{ personId: 4711 }],
+      });
+    });
   });
 
   it('follows for this visit where the device has no storage', async () => {

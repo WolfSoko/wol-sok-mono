@@ -5,6 +5,7 @@ import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
 import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
 import { TeamFolgenComponent } from './team-folgen.component';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 
 const MTV_WASBUETTEL: TeamId = 313036;
 
@@ -87,11 +88,10 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('says so when the choice could not be stored', async () => {
-    const auswahl: Auswahl = {
+    const auswahl: Auswahl = fakeAuswahl({
       teams: signal([]),
       folgen: () => Promise.reject(new Error('offline')),
-      entfolgen: () => Promise.resolve(),
-    };
+    });
     const { knopf, seite, klicken } = await render(auswahl);
 
     await klicken();
@@ -103,11 +103,10 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('asks to reload where a newer version of the app stored Meine Teams', async () => {
-    const auswahl: Auswahl = {
+    const auswahl: Auswahl = fakeAuswahl({
       teams: signal([]),
       folgen: () => Promise.reject(new AuswahlZuNeuError()),
-      entfolgen: () => Promise.resolve(),
-    };
+    });
     const { seite, klicken } = await render(auswahl);
 
     await klicken();
@@ -119,11 +118,9 @@ describe('TeamFolgenComponent', () => {
 
   it('offers nothing to press before Meine Teams are read', async () => {
     const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
-    const { knopf, seite, klicken } = await render({
-      teams: signal(undefined),
-      folgen,
-      entfolgen: () => Promise.resolve(),
-    });
+    const { knopf, seite, klicken } = await render(
+      fakeAuswahl({ teams: signal(undefined), folgen })
+    );
 
     await klicken();
 
