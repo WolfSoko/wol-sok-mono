@@ -2,6 +2,7 @@
 import { readFileSync } from 'node:fs';
 import {
   CHOICES_COLLECTION,
+  CLUB_INDEX_COLLECTION,
   DELETED_ACCOUNTS_COLLECTION,
   LEGACY_CHOICES_COLLECTION,
   LEGACY_DELETED_ACCOUNTS_COLLECTION,
@@ -21,6 +22,10 @@ describe('the collections the Firestore rules name', () => {
     ].map(([, collection]) => collection);
 
     expect(matched).toEqual([LEGACY_CHOICES_COLLECTION, CHOICES_COLLECTION]);
+  });
+
+  it('leave the club index to the server', () => {
+    expect(RULES).not.toContain(CLUB_INDEX_COLLECTION);
   });
 
   it.each([DELETED_ACCOUNTS_COLLECTION, LEGACY_DELETED_ACCOUNTS_COLLECTION])(

@@ -24,6 +24,7 @@ import {
   LEGACY_DELETED_ACCOUNTS_COLLECTION,
   LEGACY_CHOICES_COLLECTION,
   CHOICES_COLLECTION,
+  CLUB_INDEX_COLLECTION,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
   alsGeraet,
@@ -288,6 +289,18 @@ describe('the Auswahl document', () => {
       await assertFails(
         getDocs(collection(db(ELTERNTEIL), CHOICES_COLLECTION))
       );
+    });
+
+    it('keeps the club index closed: only the functions write and the server reads it', async () => {
+      await ohneRegeln(env, (admin) =>
+        setDoc(doc(admin, CLUB_INDEX_COLLECTION, '7'), { version: 1 })
+      );
+
+      for (const client of [db(ELTERNTEIL), ohneKonto()]) {
+        await assertFails(getDoc(doc(client, CLUB_INDEX_COLLECTION, '7')));
+        await assertFails(getDocs(collection(client, CLUB_INDEX_COLLECTION)));
+        await assertFails(setDoc(doc(client, CLUB_INDEX_COLLECTION, '8'), {}));
+      }
     });
 
     it('keeps every other collection closed', async () => {
