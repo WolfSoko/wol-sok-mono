@@ -147,7 +147,8 @@ export class InstallationsHinweis {
 
   /**
    * Opens the browser's install dialog. It opens once per event, so the
-   * hint goes until the browser offers it again.
+   * hint goes until the browser offers it again, also where the browser
+   * refuses it (an event used up): never rejects.
    */
   public async installieren(): Promise<void> {
     const aufforderung = this.aufforderung();
@@ -155,7 +156,11 @@ export class InstallationsHinweis {
       return;
     }
     this.aufforderung.set(undefined);
-    await aufforderung.prompt();
+    try {
+      await aufforderung.prompt();
+    } catch {
+      // the event is spent; the browser offers a new one where it can
+    }
   }
 
   /** Hides the hint, for good where the device keeps it. */

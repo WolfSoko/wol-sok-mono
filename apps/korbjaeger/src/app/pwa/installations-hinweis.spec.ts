@@ -204,6 +204,20 @@ describe('InstallationsHinweis', () => {
     expect(hinweis.angebot()).toBe('keins');
   });
 
+  it('settles where the browser refuses its dialog, the hint gone until it offers it again', async () => {
+    const { hinweis, auffordern } = starten();
+    const prompt = auffordern();
+    prompt.mockRejectedValue(
+      new DOMException('prompt() can only be called once', 'InvalidStateError')
+    );
+
+    await expect(hinweis.installieren()).resolves.toBeUndefined();
+
+    expect(hinweis.angebot()).toBe('keins');
+    auffordern();
+    expect(hinweis.angebot()).toBe('installieren');
+  });
+
   it('hides the hint once the app was installed', () => {
     const { hinweis, auffordern, installieren } = starten();
     auffordern();
