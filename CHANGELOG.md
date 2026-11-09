@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.150.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.0...v74.150.1) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** unfollow everywhere, German-text guard, install hint, small fixes ([#2919](https://github.com/WolfSoko/wol-sok-mono/issues/2919)) ([e9946b1](https://github.com/WolfSoko/wol-sok-mono/commit/e9946b1c7cfe613b78a9086eb07a864ed8a79510))
+
+### Chore
+
+* **release:** publish ([171fabc](https://github.com/WolfSoko/wol-sok-mono/commit/171fabc74e83e60431df889b5e965f23233ee1c1))
+
 ## [74.150.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.149.0...v74.150.0) (2026-11-09)
 
 ### Features
