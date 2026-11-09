@@ -2,7 +2,11 @@
 
 Spec: [docs/specs/2928-korbjaeger-auswahl-table-driven-lists-instead-of-per-list-code.md](../specs/2928-korbjaeger-auswahl-table-driven-lists-instead-of-per-list-code.md)
 
-All files under `apps/korbjaeger/src/app/`. Each task ends with
+Built only after [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917)
+is merged (manager's decision, 2026-11-09): the files named below are
+today's paths under `apps/korbjaeger/src/app/` and move into the lib with
+#2917; each task works on them there, and its test target is the lib's
+beside `korbjaeger`'s. Each task ends with
 `npx nx test korbjaeger` green, lint and format, and one commit.
 
 1. **Spec and plan.** `docs/specs/2928-…`, `docs/plans/2928-…`. Commit:

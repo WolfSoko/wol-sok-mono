@@ -37,9 +37,12 @@ The places that loop over the table afterwards
   screens call `folgen`, `markieren`, `vereinsfarbenSetzen`, which say what
   they do). The change functions in `auswahl-aenderungen.ts` that only one
   list has (`folgenAenderung`, `spitznameAenderung`, …) stay per list.
-- **No move into a lib** ([#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917)):
-  done first here, so #2917 moves a smaller module of the same files. The
-  new files sit in `auswahl/` where #2917 will find them.
+- **No move into a lib here.** The manager decided (2026-11-09) that
+  [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917) goes first:
+  this refactor is built only after #2917 is merged, on the lib's paths.
+  The paths in this spec name today's files in `apps/korbjaeger/src/app/`;
+  read them as their place in the new lib, and the new files go next to
+  the moved ones there.
 - No change to `nicht-uebernommen-text.ts` (it already loops over
   `AUSWAHL_LISTEN` and its wording per list is UI text).
 
