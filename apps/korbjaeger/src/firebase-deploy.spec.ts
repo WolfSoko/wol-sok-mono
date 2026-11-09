@@ -215,11 +215,17 @@ describe('the Firebase deploy', () => {
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
    * on every load, so a reload picks up the new release.
    */
-  /** The Hosting path of each page file Analog routes (`src/app/pages`). */
+  /**
+   * The Hosting path of each page file Analog routes (`src/app/pages`),
+   * but the catch-all (`[...nicht-gefunden]`): no header rule can name
+   * every unknown path without the proxy's `/api/**` too, so an unknown
+   * path gets the shell with Hosting's default caching.
+   */
   function pagePaths(): string[] {
     const pages = new URL('./app/pages/', import.meta.url);
     return readdirSync(pages, { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.page.ts'))
+      .filter((file) => !file.includes('[...'))
       .map((file) =>
         file
           .replace(/\.page\.ts$/, '')
