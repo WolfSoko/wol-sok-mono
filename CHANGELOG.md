@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.149.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.148.0...v74.149.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 6 — mark a Kind in a Kader ([#2910](https://github.com/WolfSoko/wol-sok-mono/issues/2910)) ([ed1c200](https://github.com/WolfSoko/wol-sok-mono/commit/ed1c2007e77cbb6ae1f3cfac5072ac6c9f0c1e6a)), closes [#2872](https://github.com/WolfSoko/wol-sok-mono/issues/2872)
+
 ## [74.148.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.147.0...v74.148.0) (2026-11-09)
 
 ### Features
