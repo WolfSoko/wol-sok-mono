@@ -3,19 +3,17 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import {
   isThemeChoice,
+  THEME_CHOICES,
   ThemeService,
   type ThemeChoice,
 } from '@wolsok/shared-theme';
 
-/** Each look, as the settings name it, in the order they offer them. */
-const DARSTELLUNGEN: readonly {
-  readonly wert: ThemeChoice;
-  readonly name: string;
-}[] = [
-  { wert: 'system', name: 'System' },
-  { wert: 'light', name: 'Hell' },
-  { wert: 'dark', name: 'Dunkel' },
-];
+/** Each look as the settings name it; a choice the lib adds needs its name. */
+const NAMEN: Readonly<Record<ThemeChoice, string>> = {
+  system: 'System',
+  light: 'Hell',
+  dark: 'Dunkel',
+};
 
 /**
  * The settings' choice of look: the device's (`System`, followed live),
@@ -40,13 +38,10 @@ const DARSTELLUNGEN: readonly {
           [value]="theme.choice()"
           (change)="waehlen($event.value)"
         >
-          @for (darstellung of DARSTELLUNGEN; track darstellung.wert) {
-            <mat-button-toggle
-              [value]="darstellung.wert"
-              [attr.data-qa]="'darstellung-' + darstellung.wert"
-            >
-              {{ darstellung.name }}
-            </mat-button-toggle>
+          @for (wahl of THEME_CHOICES; track wahl) {
+            <mat-button-toggle [value]="wahl">{{
+              NAMEN[wahl]
+            }}</mat-button-toggle>
           }
         </mat-button-toggle-group>
       </mat-card-content>
@@ -61,7 +56,8 @@ const DARSTELLUNGEN: readonly {
 })
 export class DarstellungWahlComponent {
   protected readonly theme = inject(ThemeService);
-  protected readonly DARSTELLUNGEN = DARSTELLUNGEN;
+  protected readonly THEME_CHOICES = THEME_CHOICES;
+  protected readonly NAMEN = NAMEN;
 
   /** Takes the toggle's value, which Material types as `any`. */
   protected waehlen(wert: unknown): void {

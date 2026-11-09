@@ -4,6 +4,9 @@ import { hatDunklenHintergrund } from './darstellung';
 /** In the fixtures, MTV Wasbüttel plays its last Spiel on 8 November 2026. */
 const MTV_WASBUETTEL = 313036;
 
+/** The app's own scripts; blocked, only the script in index.html runs. */
+const APP_SKRIPTE = /\.m?js(\?.*)?$/;
+
 // the service worker would answer the reload from its cache, past `route`
 test.use({ serviceWorkers: 'block' });
 
@@ -26,16 +29,12 @@ test.describe('Darstellung', () => {
 
       // only the script in index.html may set the look now: no flash of the
       // device's look while the app loads
-      await page.route(/\.m?js(\?.*)?$/, (route) => route.abort());
+      await page.route(APP_SKRIPTE, (route) => route.abort());
       await page.reload();
       await expect(page.locator('html')).toHaveAttribute('data-theme', wahl);
       expect(await hatDunklenHintergrund(page.locator('body'))).toBe(
         wahl === 'dark'
       );
-
-      await page.unroute(/\.m?js(\?.*)?$/);
-      await page.reload();
-      await expect(einstellungenPage.darstellung(name)).toBeChecked();
     });
   }
 

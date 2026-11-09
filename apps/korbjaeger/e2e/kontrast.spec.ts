@@ -38,7 +38,7 @@ test.describe('contrast', () => {
       ).toBeVisible();
       await kontrast();
 
-      await page.goto(`/spiel/${SPIEL_GEGEN_GIFHORN}`);
+      await spielPage.goto(SPIEL_GEGEN_GIFHORN);
       await expect(spielPage.kader).toHaveCount(2);
       await kontrast();
     });

@@ -9,7 +9,7 @@ import {
   Signal,
   signal,
 } from '@angular/core';
-import { readStored, writeStored } from '@wolsok/shared-theme';
+import { readStored, writeStored } from '../stored-choice';
 import {
   detectLanguage,
   isLanguage,

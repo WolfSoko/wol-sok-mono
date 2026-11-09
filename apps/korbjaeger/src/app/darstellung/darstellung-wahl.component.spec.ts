@@ -1,17 +1,13 @@
+import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { TestBed } from '@angular/core/testing';
+import { MatButtonToggleGroupHarness } from '@angular/material/button-toggle/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { ThemeService } from '@wolsok/shared-theme';
 import { DARSTELLUNG_SCHLUESSEL } from '../geraete-speicher';
 import { provideDarstellung } from './darstellung';
 import { DarstellungWahlComponent } from './darstellung-wahl.component';
 
-interface Wahl {
-  readonly element: HTMLElement;
-  readonly stabil: () => void;
-  readonly option: (wert: string) => HTMLButtonElement;
-}
-
-function oeffnen(): Wahl {
+async function oeffnen(): Promise<MatButtonToggleGroupHarness> {
   TestBed.configureTestingModule({
     providers: [
       provideDarstellung(),
@@ -19,25 +15,21 @@ function oeffnen(): Wahl {
     ],
   });
   const fixture = TestBed.createComponent(DarstellungWahlComponent);
-  const element = fixture.nativeElement as HTMLElement;
-  const stabil = (): void => {
-    TestBed.tick();
-    fixture.detectChanges();
-  };
-  stabil();
-  return {
-    element,
-    stabil,
-    option: (wert) => {
-      const knopf = element.querySelector<HTMLButtonElement>(
-        `[data-qa="darstellung-${wert}"] button`
-      );
-      if (!knopf) {
-        throw new Error(`no option ${wert}`);
-      }
-      return knopf;
-    },
-  };
+  return TestbedHarnessEnvironment.loader(fixture).getHarness(
+    MatButtonToggleGroupHarness.with({ selector: '[aria-label="Darstellung"]' })
+  );
+}
+
+async function gewaehlt(
+  gruppe: MatButtonToggleGroupHarness
+): Promise<string[]> {
+  const gewaehlte: string[] = [];
+  for (const option of await gruppe.getToggles()) {
+    if (await option.isChecked()) {
+      gewaehlte.push(await option.getText());
+    }
+  }
+  return gewaehlte;
 }
 
 describe('DarstellungWahlComponent', () => {
@@ -46,44 +38,35 @@ describe('DarstellungWahlComponent', () => {
     document.documentElement.removeAttribute('data-theme');
   });
 
-  it('offers System, Hell and Dunkel in German, System by default', () => {
-    const { element, option } = oeffnen();
+  it('offers System, Hell and Dunkel in German, System by default', async () => {
+    const gruppe = await oeffnen();
 
-    const optionen = [...element.querySelectorAll('mat-button-toggle')].map(
-      (toggle) => toggle.textContent?.trim()
+    const namen = await Promise.all(
+      (await gruppe.getToggles()).map((option) => option.getText())
     );
-    expect(optionen).toEqual(['System', 'Hell', 'Dunkel']);
-    expect(
-      element
-        .querySelector('mat-button-toggle-group')
-        ?.getAttribute('aria-label')
-    ).toBe('Darstellung');
-    expect(option('system').getAttribute('aria-checked')).toBe('true');
+    expect(namen).toEqual(['System', 'Hell', 'Dunkel']);
+    expect(await gewaehlt(gruppe)).toEqual(['System']);
   });
 
-  it('applies and keeps the look chosen', () => {
-    const { option, stabil } = oeffnen();
+  it('applies and keeps the look chosen', async () => {
+    const gruppe = await oeffnen();
 
-    option('dark').click();
-    stabil();
+    await (await gruppe.getToggles({ text: 'Dunkel' }))[0].check();
 
     expect(TestBed.inject(ThemeService).choice()).toBe('dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
     expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBe('dark');
-    expect(option('dark').getAttribute('aria-checked')).toBe('true');
+    expect(await gewaehlt(gruppe)).toEqual(['Dunkel']);
 
-    option('system').click();
-    stabil();
+    await (await gruppe.getToggles({ text: 'System' }))[0].check();
 
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
     expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBeNull();
   });
 
-  it('shows the look kept on the device', () => {
+  it('shows the look kept on the device', async () => {
     localStorage.setItem(DARSTELLUNG_SCHLUESSEL, 'light');
 
-    const { option } = oeffnen();
-
-    expect(option('light').getAttribute('aria-checked')).toBe('true');
+    expect(await gewaehlt(await oeffnen())).toEqual(['Hell']);
   });
 });

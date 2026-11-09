@@ -13,7 +13,8 @@ describe('the portfolio theme', () => {
       ` media="(prefers-color-scheme: light)" content="${THEME_COLORS.light}" /`,
       ` media="(prefers-color-scheme: dark)" content="${THEME_COLORS.dark}" /`,
     ]);
-    expect(html).toContain(`"${THEME_COLORS.dark}"`);
-    expect(html).toContain(`"${THEME_COLORS.light}"`);
+    const skript = /<script>([^<]*localStorage[^<]*)<\/script>/.exec(html)?.[1];
+    expect(skript).toContain(`"${THEME_COLORS.dark}"`);
+    expect(skript).toContain(`"${THEME_COLORS.light}"`);
   });
 });
