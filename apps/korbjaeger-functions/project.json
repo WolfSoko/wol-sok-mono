@@ -50,7 +50,7 @@
         "{workspaceRoot}/apps/korbjaeger/firestore.rules"
       ],
       "options": {
-        "command": "firebase emulators:exec --config apps/korbjaeger-functions/emulator.json --project demo-korbjaeger-functions-test --only firestore \"jest -c apps/korbjaeger-functions/jest.emulator.config.ts\""
+        "command": "firebase emulators:exec --config apps/korbjaeger-functions/emulator.json --project demo-korbjaeger-functions-test --only firestore,auth \"jest -c apps/korbjaeger-functions/jest.emulator.config.ts\""
       }
     },
     "deploy": {
@@ -68,6 +68,30 @@
           "firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive"
         ],
         "parallel": false
+      }
+    },
+    "build-cleanup": {
+      "executor": "@nx/esbuild:esbuild",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "main": "apps/korbjaeger-functions/src/cleanup/run-orphan-cleanup.ts",
+        "outputPath": "dist/apps/korbjaeger-functions-cleanup",
+        "outputFileName": "run-orphan-cleanup.js",
+        "tsConfig": "apps/korbjaeger-functions/tsconfig.app.json",
+        "platform": "node",
+        "format": ["esm"],
+        "bundle": true,
+        "thirdParty": false,
+        "generatePackageJson": false,
+        "declaration": false
+      }
+    },
+    "cleanup-orphans": {
+      "executor": "nx:run-commands",
+      "dependsOn": ["build-cleanup"],
+      "cache": false,
+      "options": {
+        "command": "node dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.js"
       }
     }
   }
