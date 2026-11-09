@@ -94,6 +94,17 @@ describe('DatenschutzComponent', () => {
     expect(loeschen).toContain('Konto löschen');
   });
 
+  // korbjaeger-functions' `kontoGeloescht` (#2912): the tombstone first, a
+  // day long, then the document; retried for up to 7 days
+  it('says what the server deletes once the account is gone, and what it keeps', () => {
+    const loeschen = abschnitt(zeigen(DatenschutzComponent), 'loeschen');
+
+    expect(loeschen).toContain('bis zu 7 Tage');
+    expect(loeschen).toContain('einen Tag');
+    expect(loeschen).toContain(REGIONEN.firestore.id);
+    expect(loeschen).not.toContain('E-Mail');
+  });
+
   it('tells Google’s own part from what it processes for us', () => {
     const usa = abschnitt(zeigen(DatenschutzComponent), 'usa');
 
