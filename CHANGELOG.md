@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.148.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.147.0...v74.148.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 12 — installable and usable offline ([#2909](https://github.com/WolfSoko/wol-sok-mono/issues/2909)) ([ecddce5](https://github.com/WolfSoko/wol-sok-mono/commit/ecddce5fdae8c905d205f8e9117fd0c3228d08bf)), closes [#2871](https://github.com/WolfSoko/wol-sok-mono/issues/2871), references [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875) [#2871](https://github.com/WolfSoko/wol-sok-mono/issues/2871) [#e37100](https://github.com/WolfSoko/wol-sok-mono/issues/e37100)
+
 ## [74.147.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.146.0...v74.147.0) (2026-11-08)
 
 ### Features
