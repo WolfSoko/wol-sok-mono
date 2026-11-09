@@ -98,6 +98,7 @@ const FARBEN = [
   '#00ff00',
   '#ff00ff',
   '#fffde7',
+  '#33ffdd', // fell to 4.47:1 at Material's standard contrast
 ];
 
 function paarePruefen(

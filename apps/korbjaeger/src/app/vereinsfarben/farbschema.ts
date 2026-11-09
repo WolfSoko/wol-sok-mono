@@ -98,10 +98,13 @@ export interface Vereinsfarben {
 const HEX_FARBE = /^#[0-9a-f]{6}$/i;
 
 /**
- * Material's standard contrast: every text on its ground reaches 4.5:1 and
- * every outline 3:1 (WCAG AA), for any colour, by shifting its tone.
+ * A little above Material's standard contrast (0), so every text on its
+ * ground reaches 4.5:1 and every outline 3:1 (WCAG AA) for any colour, by
+ * shifting its tone: at 0, rounding to `#rrggbb` leaves some just below
+ * (`#33ffdd` dark: on-primary-container 4.47:1); at 0.1 a grid of every
+ * eighth value per channel stays at 4.53:1 or more.
  */
-const STANDARD_KONTRAST = 0;
+const KONTRAST_STUFE = 0.1;
 
 /**
  * The colour scheme of a Verein's colours: Material's "content" scheme,
@@ -134,7 +137,7 @@ function schemaVon(farben: Vereinsfarben, dunkel: boolean): DynamicScheme {
   return new DynamicScheme({
     sourceColorHct: Hct.fromInt(argbAus(farben.primaer)),
     variant: Variant.CONTENT,
-    contrastLevel: STANDARD_KONTRAST,
+    contrastLevel: KONTRAST_STUFE,
     isDark: dunkel,
     // left out, the content scheme derives it from the first colour
     secondaryPalette:
