@@ -1,0 +1,9 @@
+# Plan: Korbjäger light/dark switch ([#2925](https://github.com/WolfSoko/wol-sok-mono/issues/2925))
+
+Spec: `docs/specs/2925-korbjaeger-light-dark-switch-system-hell-dunkel.md`.
+
+1. **Shared theme lib.** Generate `libs/shared/theme` (`@wolsok/shared-theme`, tag `shared`, Jest). Move `ThemeService` from `apps/portfolio/src/app/theme/` with `provideTheme({ storageKey, themeColors? })`, add `choose()`, make metas optional. Spec first: the moved portfolio spec plus `choose()` and "no colours leaves the metas alone". Portfolio imports the lib with `provideTheme` in its config; its index.html spec stays in the portfolio. Commit `feat(shared-theme): ...`.
+2. **Korbjäger storage key and styles.** `DARSTELLUNG_SCHLUESSEL` in `geraete-speicher.ts`, `GERAETE_SCHLUESSEL`, privacy policy text (spec of the policy first); `:root[data-theme]` rules and the link colour in `styles.scss`; pre-paint script in `index.html` with its spec; `provideTheme` in `app.config.ts`. Commit `feat(korbjaeger): ...`.
+3. **Settings card.** `DarstellungWahlComponent` with its spec (three toggles, German labels, choosing calls the service), placed in `EinstellungenComponent`; the settings' spec updated for the removed "nichts einzustellen" text. Commit `feat(korbjaeger): ...`.
+4. **E2E.** `e2e/darstellung.spec.ts`: choose, reload with scripts blocked (light and dark), System follows `emulateMedia` live, `.anzeigetafel` dark in all three. `@axe-core/playwright` devDependency and `e2e/kontrast.spec.ts` (overview, Team page, Spiel page, light and dark). Page object extended. Commit `test(korbjaeger): ...`.
+5. **Checks and docs.** `nx format:write`, affected lint, lint-templates, test, korbjaeger e2e; CLAUDE.md lines for the lib and the Korbjäger switch. Screenshots taken with Playwright, phone and desktop, light and dark.
