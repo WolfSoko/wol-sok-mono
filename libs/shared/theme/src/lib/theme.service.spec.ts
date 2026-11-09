@@ -93,6 +93,11 @@ describe('ThemeService', () => {
     expect(themeColors()).toEqual(['#e37100', '#e37100']);
   });
 
+  it('names provideTheme where an app left it out', () => {
+    TestBed.configureTestingModule({});
+    expect(() => TestBed.inject(ThemeService)).toThrow(/provideTheme/);
+  });
+
   it('keeps the choice for the visit where storage is blocked', () => {
     jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
       throw new DOMException('blocked', 'SecurityError');

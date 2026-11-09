@@ -19,7 +19,8 @@ export const THEME_CHOICES: readonly ThemeChoice[] = [
   'dark',
 ];
 
-function isThemeChoice(value: unknown): value is ThemeChoice {
+/** Whether `value` is one of `THEME_CHOICES`. */
+export function isThemeChoice(value: unknown): value is ThemeChoice {
   return THEME_CHOICES.some((choice) => choice === value);
 }
 

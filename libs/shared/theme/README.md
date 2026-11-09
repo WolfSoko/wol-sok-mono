@@ -13,6 +13,10 @@ The light/dark choice the apps share (portfolio, Korbjäger):
   the `theme-color` metas. Without it the metas stay as `index.html` has
   them.
 
+- `readStored(key)` / `writeStored(key, value)`: the storage access the
+  service uses (blocked storage and the server swallowed), for an app's
+  other choices kept on the device, like the portfolio's language.
+
 Each app sets `data-theme` before the first paint with a small inline
 script in its `index.html` reading the same key; the app's spec keeps the
 two equal.

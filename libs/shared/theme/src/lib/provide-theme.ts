@@ -23,7 +23,15 @@ export interface ThemeSettings {
 }
 
 export const THEME_SETTINGS = new InjectionToken<ThemeSettings>(
-  'THEME_SETTINGS'
+  'THEME_SETTINGS',
+  {
+    providedIn: 'root',
+    factory: () => {
+      throw new Error(
+        'ThemeService needs provideTheme({ storageKey }) in the app config.'
+      );
+    },
+  }
 );
 
 /** Sets up `ThemeService` for the app. */

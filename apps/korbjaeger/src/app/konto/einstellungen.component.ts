@@ -54,8 +54,9 @@ const KONTO_NICHT_GELOESCHT =
   'Deine Teams und Kinder sind gelöscht, dein Konto selbst noch nicht. Bitte lösche es noch einmal.';
 
 /**
- * The settings: the look (`korb-darstellung-wahl`) and the Google account, which keeps Meine Teams and Kinder the
- * same on every device signed in with it. Signing in, out and deleting go
+ * The settings: the look (`korb-darstellung-wahl`) and the Google account,
+ * which keeps Meine Teams and Kinder the same on every device signed in
+ * with it. Signing in, out and deleting go
  * through `KONTO_SITZUNG`, which loads Firebase as the page opens, so a
  * click opens Google's popup at once; a popup closed while signing in
  * shows nothing.

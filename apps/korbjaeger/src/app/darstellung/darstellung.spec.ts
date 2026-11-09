@@ -14,9 +14,13 @@ describe('the look before the first paint', () => {
     );
   });
 
-  it('sets the look before the stylesheet loads', () => {
-    expect(INDEX_HTML.indexOf('data-theme')).toBeLessThan(
+  it('sets the look in a classic script before the stylesheet loads', () => {
+    const vorDemStylesheet = INDEX_HTML.slice(
+      0,
       INDEX_HTML.indexOf('src/styles.scss')
+    );
+    expect(vorDemStylesheet).toMatch(
+      /<script>[^<]*setAttribute\("data-theme", t\)[^<]*<\/script>/
     );
   });
 });

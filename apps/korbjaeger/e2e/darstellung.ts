@@ -1,7 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-
-/** Where the settings keep the look (`DARSTELLUNG_SCHLUESSEL`). */
-export const DARSTELLUNG_SCHLUESSEL = 'korbjaeger-darstellung';
+import { DARSTELLUNG_SCHLUESSEL } from '../src/app/geraete-speicher';
 
 /** Starts every page of `page` with the look `wahl` kept on the device. */
 export async function mitDarstellung(

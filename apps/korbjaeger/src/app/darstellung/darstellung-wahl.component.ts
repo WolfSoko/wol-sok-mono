@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
-import { ThemeService, type ThemeChoice } from '@wolsok/shared-theme';
+import {
+  isThemeChoice,
+  ThemeService,
+  type ThemeChoice,
+} from '@wolsok/shared-theme';
 
 /** Each look, as the settings name it, in the order they offer them. */
 const DARSTELLUNGEN: readonly {
@@ -34,7 +38,7 @@ const DARSTELLUNGEN: readonly {
           aria-label="Darstellung"
           hideSingleSelectionIndicator
           [value]="theme.choice()"
-          (change)="theme.choose($event.value)"
+          (change)="waehlen($event.value)"
         >
           @for (darstellung of DARSTELLUNGEN; track darstellung.wert) {
             <mat-button-toggle
@@ -58,4 +62,11 @@ const DARSTELLUNGEN: readonly {
 export class DarstellungWahlComponent {
   protected readonly theme = inject(ThemeService);
   protected readonly DARSTELLUNGEN = DARSTELLUNGEN;
+
+  /** Takes the toggle's value, which Material types as `any`. */
+  protected waehlen(wert: unknown): void {
+    if (isThemeChoice(wert)) {
+      this.theme.choose(wert);
+    }
+  }
 }
