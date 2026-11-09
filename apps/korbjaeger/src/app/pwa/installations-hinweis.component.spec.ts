@@ -1,0 +1,86 @@
+import { signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import {
+  InstallationsHinweis,
+  type InstallationsAngebot,
+} from './installations-hinweis';
+import { InstallationsHinweisComponent } from './installations-hinweis.component';
+
+interface Aufbau {
+  readonly seite: HTMLElement;
+  readonly installieren: ReturnType<typeof vi.fn<() => Promise<void>>>;
+  /** Clicks the button labelled `text` and waits for the page. */
+  klicken(text: string): Promise<void>;
+}
+
+async function render(angebot: InstallationsAngebot): Promise<Aufbau> {
+  const stand = signal(angebot);
+  const installieren = vi.fn<() => Promise<void>>(() => Promise.resolve());
+  const hinweis: Pick<
+    InstallationsHinweis,
+    'angebot' | 'installieren' | 'ablehnen'
+  > = {
+    angebot: stand,
+    installieren,
+    ablehnen: () => stand.set('keins'),
+  };
+  TestBed.configureTestingModule({
+    providers: [{ provide: InstallationsHinweis, useValue: hinweis }],
+  });
+  const fixture = TestBed.createComponent(InstallationsHinweisComponent);
+  await fixture.whenStable();
+  const seite = fixture.nativeElement as HTMLElement;
+  return {
+    seite,
+    installieren,
+    klicken: async (text) => {
+      const knopf = [...seite.querySelectorAll('button')].find(
+        (element) => element.textContent?.trim() === text
+      );
+      if (knopf === undefined) {
+        throw new Error(`no button ${text}`);
+      }
+      knopf.click();
+      await fixture.whenStable();
+    },
+  };
+}
+
+function hinweisText(seite: HTMLElement): string | undefined {
+  return seite
+    .querySelector('[data-qa="installations-hinweis"]')
+    ?.textContent?.replace(/\s+/g, ' ');
+}
+
+describe('InstallationsHinweisComponent', () => {
+  it("offers the browser's install dialog", async () => {
+    const { seite, installieren, klicken } = await render('installieren');
+    expect(hinweisText(seite)).toContain('Korbjäger als App');
+
+    await klicken('Installieren');
+
+    expect(installieren).toHaveBeenCalledTimes(1);
+  });
+
+  it("explains Safari's share menu on iOS, with no install button", async () => {
+    const { seite } = await render('ios');
+
+    expect(hinweisText(seite)).toContain('Teilen');
+    expect(hinweisText(seite)).toContain('„Zum Home-Bildschirm“');
+    expect(seite.textContent).not.toContain('Installieren');
+  });
+
+  it('shows nothing where nothing is offered', async () => {
+    const { seite } = await render('keins');
+
+    expect(hinweisText(seite)).toBeUndefined();
+  });
+
+  it('goes once dismissed', async () => {
+    const { seite, klicken } = await render('ios');
+
+    await klicken('Ausblenden');
+
+    expect(hinweisText(seite)).toBeUndefined();
+  });
+});
