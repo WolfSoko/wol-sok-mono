@@ -11,7 +11,8 @@ export const APP_ORDNER = fileURLToPath(new URL('../app', import.meta.url));
 
 /**
  * The libs only the app uses, whose code is the app's as much as `src/app/`
- * (`LokaleAuswahl`'s and `LokaleLetzteAntworten`'s device keys): walked with it, so no check misses them.
+ * (`LokaleAuswahl`'s and `LokaleLetzteAntworten`'s device keys): walked
+ * with it, so no check misses them.
  */
 export const EIGENE_LIB_ORDNER: readonly string[] = [
   'korbjaeger-auswahl',

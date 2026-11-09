@@ -40,6 +40,18 @@ describe('LETZTE_ANTWORTEN', () => {
     vi.useRealTimers();
   });
 
+  it('deletes answers too old as soon as it is first taken', () => {
+    localStorage.setItem(
+      `${ANTWORT_PRAEFIX}${TEAM}`,
+      JSON.stringify({ v: 2, am: START, art: 'team-spiele', antwort: {} })
+    );
+    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
+
+    TestBed.inject(LETZTE_ANTWORTEN);
+
+    expect(gemerkt()).toBe(false);
+  });
+
   it('deletes answers too old once the page comes back into view', () => {
     merken();
     vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);

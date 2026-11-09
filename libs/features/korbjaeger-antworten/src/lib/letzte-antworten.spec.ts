@@ -7,8 +7,8 @@ import {
   type LetzteAntwort,
 } from './letzte-antworten';
 
-/** Another part of the app's key (Meine Teams), which the store never touches. */
-const ANDERER_SCHLUESSEL = 'korbjaeger-selection';
+/** A key the app keeps beside the answers (Meine Teams); the store never touches it. */
+const ANDERER_SCHLUESSEL = 'meine-teams';
 
 /** A `localStorage` that takes at most `zeichen` characters, keys and values. */
 class KleinerSpeicher implements AntwortSpeicher {

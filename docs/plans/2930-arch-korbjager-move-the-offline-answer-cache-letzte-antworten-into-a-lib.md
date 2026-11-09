@@ -13,7 +13,7 @@ Starts once PR #2937 is on `main`; a move, each task keeps every spec green.
    `refactor(utils-browser-storage): share the storage-full check`.
 2. **Scaffold `feat-korbjaeger-antworten`** like `feat-korbjaeger-auswahl`
    (`project.json`, `vite.config.ts`, `tsconfig*.json`, `package.json`,
-   `README.md`, `src/index.ts`, `src/test-setup.ts`), alias in
+   `README.md`, `src/index.ts`; no `test-setup.ts`, as the lib has no Angular), alias in
    `tsconfig.base.json`. Check: `nx show project feat-korbjaeger-antworten`.
 3. **Move the store.** `git mv` `letzte-antworten.ts` and its spec into
    `src/lib/`; imports to `@wolsok/utils-browser-storage`; export from the

@@ -9,6 +9,7 @@ export type PflegeSeite = Pick<
   'visibilityState' | 'addEventListener' | 'removeEventListener'
 >;
 
+/** What `antwortenPflegen` keeps clear, and where it listens. */
 export interface PflegeOptionen {
   /** The page whose return into view clears too. */
   readonly document: PflegeSeite;

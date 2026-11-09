@@ -44,7 +44,7 @@ transport and the wiring.
   `LokaleLetzteAntworten`, `ANTWORT_GRENZEN`, `MAX_ALTER_TAGE`,
   `MAX_ALTER_MS`, `ANTWORT_PRAEFIX`, `ANTWORT_INDEX`).
 - **The upkeep becomes a framework-free function in the lib**:
-  `antwortenPflegen(antworten, { document, arten, jetzt?, taktMs? })`
+  `antwortenPflegen(antworten, { document, arten })`
   clears at once, on `visibilitychange` to visible and every
   `PFLEGE_TAKT_MS` (an hour), and returns a function that stops it. The
   app's `LETZTE_ANTWORTEN` factory only builds the store, calls it with
