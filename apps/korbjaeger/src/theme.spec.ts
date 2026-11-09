@@ -51,11 +51,16 @@ function stileImTemplate(template: string): string[] {
   );
 }
 
-/** `stil` without comments; `//` after a colon (`url(http://…)`) stays. */
+/** A string, then a block or line comment (`//` after a colon is a URL). */
+const STRING_ODER_KOMMENTAR =
+  /("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*')|\/\*[\s\S]*?\*\/|(?<!:)\/\/.*$/gm;
+
+/** `stil` without comments; strings and `url(http://…)` stay as they are. */
 function ohneKommentare(stil: string): string {
-  return stil
-    .replace(/\/\*[\s\S]*?\*\//g, '')
-    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+  return stil.replace(
+    STRING_ODER_KOMMENTAR,
+    (_treffer, zeichenkette?: string) => zeichenkette ?? ''
+  );
 }
 
 /**
@@ -169,6 +174,9 @@ describe('the look', () => {
         farbenIn(
           ohneKommentare('a { background: url(http://x/y.png); color: #f00; }')
         )
+      ).toEqual(['#f00']);
+      expect(
+        farbenIn(ohneKommentare('a { content: "x//y"; color: #f00; }'))
       ).toEqual(['#f00']);
       expect(
         ohneKommentare('// --korb-weg: 1px\n/* --korb-auch: 2px */')
