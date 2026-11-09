@@ -212,9 +212,15 @@ A release is one pipeline, started by the CI/CD workflow after a green run on
 3. **`deploy.yml`, called by `release.yml`** - deploys at that tag, see below.
 
 The version job works on the commit CI validated, not on the branch tip. If `main`
-moved on while CI ran, its push is rejected and the job stands down without a
-release; the run for the newer commit releases both changes, since the CI/CD
-workflow counts affected projects since the last release tag (`v<version.json>`).
+moved on while CI ran, the job stands down without a release; the run for the
+newer commit releases both changes, since the CI/CD workflow counts affected
+projects since the last release tag (`v<version.json>`). It checks before
+versioning (`tools/release/branch-moved-on.sh`), since release runs wait for each
+other but keep no order: after a newer run released first, versioning the old
+checkout again would re-create its tags. A push rejected because `main` moved on
+after that check stands down the same way. Either way the stood-down changes wait
+for the newer commit's run, and if that run's CI fails, for the next green run on
+`main`.
 Deploys of one kind run one at a time, so a later version waits for the running
 deploy.
 

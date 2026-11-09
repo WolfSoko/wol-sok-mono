@@ -1,6 +1,7 @@
 import {
   ausgangVon,
   ergebnisVon,
+  ergebnisVorlaeufig,
   gegnerVon,
   ligaVon,
   parteiName,
@@ -29,6 +30,8 @@ export interface SpielZeile {
   readonly ergebnis?: string;
   /** How it ended for the Team, once decided (as its score shows it, confirmed or not). */
   readonly ausgang?: SpielAusgang;
+  /** Whether score and `ausgang` await the Verband's confirmation. */
+  readonly vorlaeufig: boolean;
   readonly markierung?: SpielSonderfall;
 }
 
@@ -52,6 +55,7 @@ export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && ergebnisText(ergebnis),
     ausgang: seite && ausgangVon(spiel, seite),
+    vorlaeufig: ergebnisVorlaeufig(spiel),
     markierung: sonderfallVon(spiel),
   };
 }

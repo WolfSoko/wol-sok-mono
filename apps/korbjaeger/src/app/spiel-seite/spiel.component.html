@@ -28,7 +28,14 @@
   </p>
   <korb-stand data-qa="spiel-stand" [stand]="details.stand()" />
   @if (spiel.ergebnis) {
-    <p class="ergebnis" data-qa="spiel-ergebnis">{{ spiel.ergebnis }}</p>
+    <p class="ergebnis">
+      <span data-qa="spiel-ergebnis">{{ spiel.ergebnis }}</span>
+      @if (spiel.vorlaeufig) {
+        &ngsp;<span class="vorlaeufig" data-qa="spiel-vorlaeufig">{{
+          vorlaeufigText
+        }}</span>
+      }
+    </p>
   }
   @if (spiel.status) {
     <p class="status" data-qa="spiel-status">{{ spiel.status }}</p>

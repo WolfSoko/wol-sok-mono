@@ -3,6 +3,7 @@ import {
   ausgangVon,
   datumInDeutschland,
   ergebnisVon,
+  ergebnisVorlaeufig,
   gegnerVon,
   seiteVon,
   istEntschieden,
@@ -177,6 +178,41 @@ describe('vergleicheAnwurf', () => {
     expect(vergleicheAnwurf(anwurf('2026-11-14'), anwurf('2026-11-14'))).toBe(
       0
     );
+  });
+});
+
+describe('ergebnisVorlaeufig', () => {
+  it('holds for a played Spiel the Verband has not confirmed yet', () => {
+    expect(
+      ergebnisVorlaeufig(
+        spiel({
+          status: {
+            art: 'gespielt',
+            ergebnis: { heim: 78, gast: 47 },
+            bestaetigt: false,
+          },
+        })
+      )
+    ).toBe(true);
+  });
+
+  it.each([
+    [
+      'a confirmed result',
+      { art: 'gespielt', ergebnis: { heim: 78, gast: 47 }, bestaetigt: true },
+    ],
+    ['a planned Spiel', { art: 'geplant' }],
+    ['a cancelled Spiel', { art: 'abgesagt' }],
+    [
+      'a forfeit',
+      {
+        art: 'kampflos',
+        verzichtet: ['gast'],
+        ergebnis: { heim: 20, gast: 0 },
+      },
+    ],
+  ] as const)('does not hold for %s', (_case, status) => {
+    expect(ergebnisVorlaeufig(spiel({ status }))).toBe(false);
   });
 });
 
