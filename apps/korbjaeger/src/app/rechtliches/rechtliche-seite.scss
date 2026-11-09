@@ -1,0 +1,36 @@
+// The privacy policy and the legal notice: long text set for reading.
+:host {
+  display: block;
+  --site-owner-link-color: var(--mat-sys-primary);
+}
+
+h1 {
+  font: var(--mat-sys-headline-medium);
+}
+
+h2 {
+  margin-top: 2rem;
+  font: var(--mat-sys-title-large);
+}
+
+h3 {
+  font: var(--mat-sys-title-medium);
+}
+
+p,
+li {
+  line-height: 1.6;
+}
+
+a {
+  color: var(--mat-sys-primary);
+  overflow-wrap: anywhere;
+}
+
+code {
+  overflow-wrap: anywhere;
+}
+
+.stand {
+  color: var(--mat-sys-on-surface-variant);
+}

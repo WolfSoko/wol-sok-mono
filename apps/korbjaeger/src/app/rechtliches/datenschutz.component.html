@@ -1,0 +1,233 @@
+<article>
+  <h1>Datenschutzerklärung</h1>
+  <p class="stand">Stand: 9. November 2026</p>
+  <p>
+    Diese Erklärung gilt für die App Korbjäger unter
+    <a [href]="seite">{{ host }}</a
+    >, im Browser und als installierte App. Kurz gesagt: Korbjäger zeigt
+    Spielpläne, Ergebnisse und Kader, die der Deutsche Basketball Bund (DBB)
+    öffentlich zeigt, und liest sie für dich über unseren Server beim DBB ab
+    (Abschnitt 3). Welche Teams du verfolgst und welche Kinder du markierst,
+    bleibt auf deinem Gerät (Abschnitt 4), bis du dich freiwillig mit Google
+    anmeldest; dann liegt es in deinem Konto (Abschnitt 5). Gespeichert werden
+    dabei nur Kennungen des DBB und ein Spitzname, den du selbst wählst, keine
+    Namen aus den Kadern. Die App setzt keine Cookies, zeigt keine Werbung,
+    misst keine Nutzung und verkauft keine Daten.
+  </p>
+
+  <h2 id="verantwortlich">1. Verantwortlicher</h2>
+  <wolsok-site-owner emailLabel="E-Mail" />
+  <p>
+    Für alle Fragen zum Datenschutz und zur Ausübung deiner Rechte kannst du
+    dich an diese Adresse wenden. Mehr zum Anbieter steht im
+    <a [routerLink]="['/', impressum]">Impressum</a>.
+  </p>
+  <p><wolsok-email-forwarding lang="de" /></p>
+
+  <h2 id="hosting">2. Aufruf der App (Hosting)</h2>
+  <p>
+    Die App liefert Firebase Hosting aus (Anbieter: Google Ireland Limited,
+    Gordon House, Barrow Street, Dublin 4, Irland). Wenn du sie lädst,
+    verarbeiten die Server technisch notwendig deine IP-Adresse, Datum und
+    Uhrzeit, die angefragte Datei sowie Angaben zu Browser und Betriebssystem,
+    um dir die Dateien zu schicken. Ausgeliefert werden sie vom nächstgelegenen
+    Standort des Content Delivery Networks von Google. Zugriffsprotokolle werten
+    wir nicht aus. Schriften und Symbole liefert die App selbst aus; sie baut
+    keine Verbindung zu Google Fonts oder einem anderen Schriftdienst auf.
+  </p>
+  <p>
+    Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: Unser berechtigtes Interesse
+    ist, die App sicher und schnell auszuliefern. Zur Übermittlung in die USA
+    siehe Abschnitt 7.
+  </p>
+
+  <h2 id="dbb">3. Daten des DBB und unser Server</h2>
+  <p>
+    Spielpläne, Ergebnisse, Tabellen, Hallen und Kader stammen vom Deutschen
+    Basketball Bund (<a href="https://www.basketball-bund.net"
+      >basketball-bund.net</a
+    >), der sie dort öffentlich zeigt, die Kader mit den Namen der Spielerinnen
+    und Spieler. Die App fragt sie nicht direkt beim DBB an, sondern über eine
+    Funktion auf unserem Server (Cloud Functions for Firebase, Anbieter wie in
+    Abschnitt 2, Region europe-central2 (Warschau)). Diese Funktion ruft beim
+    DBB nur die Seite ab, die du gerade öffnest, unter ihrem eigenen Namen und
+    ohne deine IP-Adresse, Cookies oder sonstigen Angaben weiterzugeben; der DBB
+    erfährt von dir also nichts. Damit er nicht für jeden Aufruf neu gefragt
+    wird, halten Google und dein Browser die Antworten einige Minuten vor; die
+    App kann deshalb einige Minuten hinter dem Stand des DBB liegen.
+  </p>
+  <p>
+    Zu jedem Aufruf der Funktion protokolliert Google wie beim Hosting deine
+    IP-Adresse, Datum und Uhrzeit, die angefragte Adresse (sie enthält nur
+    Kennungen des DBB, etwa die eines Teams) und Angaben zum Browser. Scheitert
+    eine Anfrage beim DBB, schreibt die Funktion zusätzlich die angefragte
+    Adresse und den Grund ins Protokoll, ohne Angaben zu dir. Google löscht
+    diese Protokolle nach 30 Tagen; wir sehen sie nur ein, um Fehler zu finden.
+    Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO: Unser berechtigtes Interesse
+    ist eine App, die funktioniert und den DBB nicht unnötig belastet.
+  </p>
+  <p>
+    Namen aus den Kadern speichert die App nirgends: Sie liest sie jedes Mal
+    frisch, wenn sie sie zeigt. Es gibt keine Suche nach Spielerinnen und
+    Spielern und keine Seiten zu einzelnen Kindern; Kinder erscheinen nur im
+    Kader eines Spiels. Wer beim DBB anonym geführt wird, bleibt es auch hier
+    und lässt sich nicht markieren. Tippst du bei einer Halle auf den Weg
+    dorthin, öffnet die App Google Maps mit der Anschrift der Halle; was Google
+    dabei verarbeitet, regelt die
+    <a href="https://policies.google.com/privacy?hl=de"
+      >Datenschutzerklärung von Google</a
+    >.
+  </p>
+
+  <h2 id="geraet">4. Speicherung auf deinem Gerät</h2>
+  <p>
+    Die App speichert im lokalen Speicher deines Browsers (localStorage), was
+    sie für dich braucht. Nichts davon wird ohne Anmeldung übertragen:
+  </p>
+  <ul>
+    <li>
+      <code>{{ schluessel.auswahl }}</code
+      >: Meine Teams und deine markierten Kinder, als Kennungen des DBB (die
+      Kennung eines Teams, die Personen-ID eines Kindes), jeweils mit dem
+      Zeitpunkt, zu dem du sie hinzugefügt hast, und mit dem Spitznamen, den du
+      einem Kind gibst. Die Einträge bleiben, bis du einem Team nicht mehr
+      folgst oder eine Markierung entfernst. Meldest du dich an, übernimmt dein
+      Konto sie, soweit sie hineinpassen, und die App löscht sie hier (Abschnitt
+      5).
+    </li>
+    <li>
+      <code>{{ schluessel.antwortPraefix }}…</code> und
+      <code>{{ schluessel.antwortIndex }}</code
+      >: die letzten Antworten des DBB zu Spielplänen, Tabellen, Spielen und
+      Vereinen, damit die App auch ohne Internet etwas zeigt, ohne die Personen
+      darin (also ohne Namen) und nie einen Spielbericht. Höchstens
+      {{ antwortAnzahl }} Antworten, jede höchstens {{ antwortTage }} Tage lang;
+      ältere löscht die App beim Start, beim Zurückkehren zur Seite und
+      stündlich.
+    </li>
+    <li>
+      <code>{{ schluessel.angemeldet }}</code
+      >: dass du auf diesem Gerät angemeldet bist, damit die App dein Konto beim
+      nächsten Start wieder öffnet.
+    </li>
+    <li>
+      <code>{{ schluessel.zwischenspeicherLeeren }}</code
+      >: dass nach dem Abmelden noch eine Kopie deines Kontos auf dem Gerät
+      liegt, die der nächste Start löscht.
+    </li>
+    <li>
+      <code>{{ schluessel.installationAbgelehnt }}</code
+      >: dass du den Hinweis zum Installieren der App ausgeblendet hast.
+    </li>
+  </ul>
+  <p>
+    Außerdem legt der Browser die Dateien der App in seinem Speicher für Service
+    Worker ab, damit sie schnell und auch ohne Internet startet; Daten über dich
+    enthält dieser Speicher nicht. Bist du angemeldet, speichert Firebase in der
+    IndexedDB des Browsers deine Anmeldung und eine Kopie deines Kontos
+    (Abschnitt 5), damit es auch ohne Internet funktioniert; beides löscht die
+    App beim Abmelden, spätestens beim nächsten Start.
+  </p>
+  <p>
+    Du kannst all das jederzeit löschen, indem du die Websitedaten von
+    {{ host }} in deinem Browser löschst oder die installierte App entfernst.
+    Rechtsgrundlage für das Speichern ist § 25 Abs. 2 Nr. 2 TDDDG, da es für die
+    von dir gewünschten Funktionen unbedingt erforderlich ist, und für die
+    weitere Verarbeitung Art. 6 Abs. 1 lit. b DSGVO.
+  </p>
+
+  <h2 id="konto">5. Mit Google anmelden (freiwillig)</h2>
+  <p>
+    Ohne Anmeldung kannst du die App vollständig nutzen. Meldest du dich in den
+    Einstellungen mit Google an, stehen Meine Teams und deine Kinder auf jedem
+    Gerät zur Verfügung, auf dem du dich anmeldest. Dafür nutzen wir Firebase
+    Authentication und Cloud Firestore (Anbieter wie in Abschnitt 2).
+  </p>
+  <p>
+    Bei der Anmeldung erhält Firebase von Google deinen Namen, deine
+    E-Mail-Adresse, die Adresse deines Profilbilds und deine Google-Kennung, und
+    legt dazu ein Konto mit einer zufälligen Kennung (User-ID) an. Die App
+    selbst nutzt davon nur die User-ID und zeigt deinen Namen in den
+    Einstellungen an, ohne ihn zu speichern. Für die Anmeldung öffnet die App
+    das Anmeldefenster von Google (accounts.google.com, apis.google.com und die
+    Anmeldeseite des Firebase-Projekts auf firebaseapp.com). Damit das Fenster
+    sofort aufgeht, lädt die App diesen Teil schon, wenn du die Einstellungen
+    öffnest, und Google kann dabei deine IP-Adresse und Angaben zum Browser
+    erhalten; öffnest du die Einstellungen nie und warst nie angemeldet, nimmt
+    die App keine Verbindung zu Google auf. Für die Anmeldung selbst gilt die
+    <a href="https://policies.google.com/privacy?hl=de"
+      >Datenschutzerklärung von Google</a
+    >.
+  </p>
+  <p>
+    In Cloud Firestore liegt zu deinem Konto ein einziges Dokument mit Meine
+    Teams und deinen Kindern, genau so wie auf dem Gerät (Abschnitt 4): die
+    Kennungen der Teams, die Personen-IDs der Kinder, jeweils mit dem Zeitpunkt
+    des Hinzufügens, und die Spitznamen, die du vergibst (höchstens
+    {{ spitznameLaenge }} Zeichen), sonst nichts; höchstens
+    {{ grenzen.teams }} Teams und {{ grenzen.kinder }} Kinder. Lesen und ändern
+    kann es nur dein Konto. Die Datenbank liegt in Googles Region europe-west3
+    (Frankfurt am Main). Den Spitznamen siehst nur du; den vollen Namen eines
+    Kindes brauchst du dafür nicht.
+  </p>
+  <p>
+    Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO: Du meldest dich an, damit
+    die App deine Auswahl für dich aufbewahrt. Die Daten bleiben gespeichert,
+    bis du dein Konto löschst (Abschnitt 6). Abmelden löscht die Kopie auf dem
+    Gerät, nicht dein Konto.
+  </p>
+
+  <h2 id="loeschen">6. Konto und Daten löschen</h2>
+  <p>
+    In den Einstellungen löscht „Konto löschen“ dein Konto: Google fragt dich
+    noch einmal nach deiner Anmeldung, dann löscht die App das Dokument mit
+    Meine Teams und deinen Kindern, wartet, bis der Server das bestätigt, und
+    löscht danach dein Konto bei Firebase Authentication. Ohne Internet geht das
+    nicht. Ist dein Konto zur selben Zeit auf einem anderen Gerät geöffnet, kann
+    die App dort deine Auswahl kurz danach noch einmal speichern; schreib mir in
+    dem Fall eine E-Mail an die Adresse in Abschnitt 1, dann lösche ich das
+    Dokument. Das gilt auch, wenn du dein Konto nicht selbst löschen kannst. Was
+    nur auf deinem Gerät liegt, löschst du wie in Abschnitt 4 beschrieben.
+  </p>
+
+  <h2 id="usa">7. Übermittlung in die USA</h2>
+  <p>
+    Google verarbeitet die Daten aus den Abschnitten 2, 3 und 5 als
+    Auftragsverarbeiter für uns. Dabei können Daten an Google LLC in den USA
+    gelangen, insbesondere bei der Anmeldung. Google LLC ist unter dem EU-US
+    Data Privacy Framework zertifiziert; die Übermittlung stützt sich auf den
+    Angemessenheitsbeschluss der EU-Kommission (Art. 45 DSGVO).
+  </p>
+
+  <h2 id="rechte">8. Deine Rechte</h2>
+  <p>Du hast nach der DSGVO das Recht auf</p>
+  <ul>
+    <li>Auskunft über deine Daten (Art. 15),</li>
+    <li>Berichtigung (Art. 16) und Löschung (Art. 17),</li>
+    <li>Einschränkung der Verarbeitung (Art. 18),</li>
+    <li>Datenübertragbarkeit (Art. 20),</li>
+    <li>
+      Widerspruch gegen Verarbeitungen, die auf Art. 6 Abs. 1 lit. f DSGVO
+      beruhen (Art. 21).
+    </li>
+  </ul>
+  <p>
+    Außerdem kannst du dich bei einer Datenschutz-Aufsichtsbehörde beschweren,
+    etwa bei der Behörde deines Wohnorts (Art. 77 DSGVO).
+  </p>
+
+  <h2 id="kinder">9. Kinder</h2>
+  <p>
+    Korbjäger ist für Eltern gedacht. Die App zeigt Kinder nur so, wie der DBB
+    sie in den Kadern öffentlich zeigt, und nur im Kader eines Spiels; sie
+    speichert von einem Kind, das du markierst, nur seine Personen-ID beim DBB
+    und den Spitznamen, den du wählst. Für die Anmeldung mit Google gelten die
+    Altersregeln von Google.
+  </p>
+
+  <h2 id="aenderungen">10. Änderungen</h2>
+  <p>
+    Ändert sich die App so, dass sie andere Daten verarbeitet, passen wir diese
+    Erklärung an. Es gilt die Fassung auf dieser Seite.
+  </p>
+</article>

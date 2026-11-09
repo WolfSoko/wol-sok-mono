@@ -70,13 +70,13 @@ that is not from the invented lists.
   Verband, age group and Liga, and mark the child in a Kader.
 - A Kind can only be marked once they appeared in a Spielbericht; the app
   explains this to Elternteile whose child has not played yet.
-- The privacy policy covers the Google sign-in, the Firestore document
-  (Team ids, person ids, nicknames), device storage, Hosting logs and
-  deletion; the portfolio does not link the app until the DBB has agreed.
-  The sign-in is live in production since #2873 (the owner's decision of
-  2026-11-09), with the Firestore rules (`apps/korbjaeger/firestore.rules`)
-  deployed with the app; the privacy policy that covers it is the open
-  item #2874. The Firestore database of the project `korbjaeger` is in
+- The privacy policy (`/privacy`, #2874) covers the Google sign-in, the
+  Firestore document (Team ids, person ids, nicknames), device storage,
+  the proxy's and Hosting's logs, the DBB as the source and deletion; the
+  portfolio does not link the app until the DBB has agreed. The sign-in is
+  live in production since #2873 (the owner's decision of 2026-11-09),
+  with the Firestore rules (`apps/korbjaeger/firestore.rules`) deployed
+  with the app. The Firestore database of the project `korbjaeger` is in
   `europe-west3` (Frankfurt), while the Nitro function serving the DBB
   proxy runs in `europe-central2`: a function that reads or writes
   Firestore (as the Auth-deletion function of #2912) belongs in

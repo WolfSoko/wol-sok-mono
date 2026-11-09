@@ -4,10 +4,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { RouterLink, RouterOutlet } from '@angular/router';
 import { environment } from '../environments/environment';
+import { FusszeileComponent } from './rechtliches/fusszeile.component';
 
 @Component({
   selector: 'korb-root',
   imports: [
+    FusszeileComponent,
     MatButtonModule,
     MatIconModule,
     MatToolbarModule,
@@ -32,6 +34,7 @@ import { environment } from '../environments/environment';
     <main>
       <router-outlet />
     </main>
+    <korb-fusszeile />
   `,
   styles: `
     .brand {

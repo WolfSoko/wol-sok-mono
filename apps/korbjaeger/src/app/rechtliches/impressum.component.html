@@ -1,0 +1,68 @@
+<article>
+  <h1>Impressum</h1>
+  <p class="stand">
+    Angaben gemäß § 5 DDG für die App Korbjäger unter
+    <a [href]="seite">{{ host }}</a
+    >.
+  </p>
+
+  <h2 id="anbieter">Anbieter</h2>
+  <wolsok-site-owner emailLabel="E-Mail" />
+
+  <h2 id="kontakt">Kontakt</h2>
+  <p>
+    Am schnellsten erreichst du mich per E-Mail an
+    <a href="mailto:{{ anbieter.email }}">{{ anbieter.email }}</a
+    >. Was die App speichert und wie du dein Konto löschst, steht in der
+    <a [routerLink]="['/', datenschutz]">Datenschutzerklärung</a>.
+  </p>
+
+  <h2 id="umsatzsteuer">Umsatzsteuer-ID</h2>
+  <p>
+    Umsatzsteuer-Identifikationsnummer gemäß § 27a Umsatzsteuergesetz:
+    {{ anbieter.vatId }}
+  </p>
+
+  <h2 id="streitbeilegung">Verbraucherstreitbeilegung</h2>
+  <p>
+    Ich bin nicht bereit und nicht verpflichtet, an Streitbeilegungsverfahren
+    vor einer Verbraucherschlichtungsstelle teilzunehmen (§ 36 VSBG).
+  </p>
+
+  <h2 id="daten">Herkunft der Daten</h2>
+  <p>
+    Spielpläne, Ergebnisse, Tabellen, Hallen und Kader stammen vom Deutschen
+    Basketball Bund (<a href="https://www.basketball-bund.net"
+      >basketball-bund.net</a
+    >), der sie öffentlich zeigt. Die App liest sie dort ab, wenn du sie
+    aufrufst, und kann einige Minuten hinter dem Stand des DBB liegen. Der DBB
+    betreibt die App nicht und ist für sie nicht verantwortlich; maßgeblich sind
+    seine eigenen Seiten.
+  </p>
+
+  <h2 id="inhalte">Haftung für Inhalte</h2>
+  <p>
+    Die App wurde mit Sorgfalt erstellt. Für Richtigkeit, Vollständigkeit und
+    Aktualität der angezeigten Daten übernehme ich jedoch keine Gewähr. Für
+    eigene Inhalte bin ich nach den allgemeinen Gesetzen verantwortlich. Bei
+    Hinweisen auf Rechtsverletzungen entferne ich betroffene Inhalte umgehend;
+    Hinweise bitte an die E-Mail-Adresse oben.
+  </p>
+
+  <h2 id="links">Haftung für Links</h2>
+  <p>
+    Die App verlinkt auf Seiten Dritter, etwa basketball-bund.net und Google
+    Maps für den Weg zur Halle, deren Inhalte ich nicht beeinflusse. Für sie ist
+    der jeweilige Anbieter verantwortlich. Zum Zeitpunkt der Verlinkung waren
+    keine Rechtsverstöße erkennbar; bekannt gewordene Verstöße führen zur
+    Entfernung des Links.
+  </p>
+
+  <h2 id="urheberrecht">Urheberrecht</h2>
+  <p>
+    Die App, ihre Grafiken und Texte unterliegen dem deutschen Urheberrecht. Ihr
+    Quellcode ist unter
+    <a href="https://github.com/WolfSoko/wol-sok-mono">github.com/WolfSoko</a>
+    veröffentlicht; die dort genannte Lizenz gilt für ihn.
+  </p>
+</article>
