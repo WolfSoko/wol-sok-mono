@@ -2,6 +2,8 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.161.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.0...v74.161.1) (2026-11-09)
+
 ## [74.161.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.3...v74.161.0) (2026-11-09)
 
 ### Features
