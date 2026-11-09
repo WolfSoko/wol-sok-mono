@@ -23,43 +23,7 @@
         ]
       },
       {
-        "source": "/",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/team/*",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/spiel/*",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/team-einrichten",
-        "headers": [
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          }
-        ]
-      },
-      {
-        "source": "/einstellungen",
+        "regex": "^/(?:(?:[^/.a][^/.]*|a(?:[^/.p][^/.]*)?|ap(?:[^/.i][^/.]*)?|api[^/.]+)(?:/[^/.]*)*)?$",
         "headers": [
           {
             "key": "Cache-Control",

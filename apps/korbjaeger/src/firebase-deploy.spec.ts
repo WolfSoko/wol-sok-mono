@@ -4,6 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+// what Firebase Hosting's emulator matches header rules with (RE2 for `regex`)
+import { configMatcher, re2Available } from 'superstatic/lib/utils/patterns';
 import {
   assertDeployableBuild,
   buildKonfigurationMerken,
@@ -26,8 +28,15 @@ interface FirebaseConfig {
     site?: string;
     public: string;
     rewrites: unknown[];
-    headers: { source: string; headers: { key: string; value: string }[] }[];
+    headers: HeaderRule[];
   };
+}
+
+/** A Hosting header rule: a glob (`source`) or an RE2 `regex`. */
+interface HeaderRule {
+  source?: string;
+  regex?: string;
+  headers: { key: string; value: string }[];
 }
 
 interface ProjectJson {
@@ -213,38 +222,39 @@ describe('the Firebase deploy', () => {
    * A tab opened before a release still asks for the old hashed chunks. Only
    * paths without a file extension fall back to the shell, so a chunk that
    * is gone answers 404 instead of HTML, and the shell itself is revalidated
-   * on every load, so a reload picks up the new release.
+   * on every load (every path it answers, unknown ones too), so a reload
+   * picks up the new release. One RE2 `regex` rule names them: segments
+   * without a dot, the first not `api` (RE2 has no lookahead, so "not api"
+   * is spelled out: `a`, `ap`, or longer than `api`, or another start).
    */
-  /**
-   * The Hosting path of each page file Analog routes (`src/app/pages`),
-   * but the catch-all (`[...nicht-gefunden]`): no header rule can name
-   * every unknown path without the proxy's `/api/**` too, so an unknown
-   * path gets the shell with Hosting's default caching.
-   */
+  /** A path of each page file Analog routes (`src/app/pages`), ids as `1`. */
   function pagePaths(): string[] {
     const pages = new URL('./app/pages/', import.meta.url);
     return readdirSync(pages, { recursive: true, encoding: 'utf8' })
       .filter((file) => file.endsWith('.page.ts'))
-      .filter((file) => !file.includes('[...'))
       .map((file) =>
         file
           .replace(/\.page\.ts$/, '')
           .replace(/\(home\)$/, '')
-          .replace(/\[[^\]]+\]/g, '*')
+          .replace(/\[[^\]]+\]/g, '1')
       )
       .map((route) => `/${route}`)
       .sort();
   }
 
-  const noCacheSources = () =>
-    config.hosting.headers
-      .filter((rule) =>
+  const cacheRules = config.hosting.headers.filter((rule) =>
+    rule.headers.some(({ key }) => key.toLowerCase() === 'cache-control')
+  );
+
+  /** Whether Hosting sends `path` with `Cache-Control: no-cache`. */
+  const revalidiert = (path: string): boolean =>
+    cacheRules.some(
+      (rule) =>
+        configMatcher(path, rule) &&
         rule.headers.some(
           ({ key, value }) => key === 'Cache-Control' && value === 'no-cache'
         )
-      )
-      .map((rule) => rule.source)
-      .sort();
+    );
 
   /**
    * The service worker's own files too: an old worker or manifest of the
@@ -256,27 +266,40 @@ describe('the Firebase deploy', () => {
     '/safety-worker.js',
   ];
 
-  it('revalidates the shell on every page and the service worker, so none asks for chunks a release removed', () => {
-    expect(noCacheSources()).toEqual(
-      [...pagePaths(), '/index.html', ...SERVICE_WORKER_FILES].sort()
-    );
+  it('matches header rules on RE2, as Hosting does', () => {
+    // without its native module superstatic falls back to JS RegExp
+    expect(re2Available()).toBe(true);
+  });
+
+  it.each([
+    ...pagePaths(),
+    '/team/1',
+    '/gibtsnicht',
+    '/team/1/gibtsnicht',
+    '/apix',
+    '/a',
+    '/index.html',
+    ...SERVICE_WORKER_FILES,
+  ])('revalidates %s, so none asks for chunks a release removed', (path) => {
+    expect(revalidiert(path)).toBe(true);
   });
 
   /**
    * Hosting's header rules override what the function sends, and a
    * catch-all no-cache rule once turned the proxy's
    * `public, max-age=60, s-maxage=300` into `no-cache`, so the CDN cached
-   * no DBB answer at all on its first live release.
+   * no DBB answer at all on its first live release. Hashed files keep
+   * Hosting's caching.
    */
-  it("leaves the proxy's Cache-Control to the function", () => {
-    const cacheRules = config.hosting.headers.filter((rule) =>
-      rule.headers.some(({ key }) => key.toLowerCase() === 'cache-control')
-    );
-
-    for (const { source } of cacheRules) {
-      expect(source.startsWith('/api')).toBe(false);
-      expect(source).not.toContain('**');
-    }
+  it.each([
+    '/api',
+    '/api/dbb/x',
+    '/api/dbb/team/313036/spiele',
+    '/assets/a.js',
+    '/main-ABC123.js',
+    '/icons/icon-192.png',
+  ])('leaves the caching of %s alone', (path) => {
+    expect(cacheRules.filter((rule) => configMatcher(path, rule))).toEqual([]);
   });
 
   /**
