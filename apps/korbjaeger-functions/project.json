@@ -50,7 +50,7 @@
         "{workspaceRoot}/apps/korbjaeger/firestore.rules"
       ],
       "options": {
-        "command": "firebase emulators:exec --config apps/korbjaeger-functions/emulator.json --project demo-korbjaeger-functions-test --only firestore \"jest -c apps/korbjaeger-functions/jest.emulator.config.ts\""
+        "command": "firebase emulators:exec --config apps/korbjaeger-functions/emulator.json --project demo-korbjaeger-functions-test --only firestore,auth \"jest -c apps/korbjaeger-functions/jest.emulator.config.ts\""
       }
     },
     "deploy": {
@@ -68,6 +68,13 @@
           "firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive"
         ],
         "parallel": false
+      }
+    },
+    "cleanup-orphans": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "esbuild apps/korbjaeger-functions/src/cleanup/run-orphan-cleanup.ts --bundle --platform=node --format=esm --external:firebase-admin --tsconfig=apps/korbjaeger-functions/tsconfig.app.json --log-level=warning --outfile=dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.mjs && node dist/apps/korbjaeger-functions-cleanup/run-orphan-cleanup.mjs"
       }
     }
   }

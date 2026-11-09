@@ -13,6 +13,8 @@ export default {
     '^.+\\.[tj]s$': ['ts-jest', { tsconfig: '<rootDir>/tsconfig.spec.json' }],
   },
   moduleFileExtensions: ['ts', 'js'],
+  // the cleanup's Auth adapter loads firebase-admin's Auth, which needs jose: ESM only
+  transformIgnorePatterns: ['node_modules/(?!jose/)'],
   testMatch: ['<rootDir>/src/**/*.emulator.ts'],
   // One Firestore for all: the specs clear it between them.
   maxWorkers: 1,
