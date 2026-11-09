@@ -1,7 +1,4 @@
-import {
-  FIRESTORE_REGION,
-  type Region,
-} from '@wolsok/feat-shared-korbjaeger-account';
+import { FIRESTORE_REGION } from '@wolsok/feat-shared-korbjaeger-account';
 import { FUNCTION_REGION } from './function-region';
 
 /**
@@ -13,4 +10,4 @@ import { FUNCTION_REGION } from './function-region';
 export const REGIONS = {
   function: FUNCTION_REGION,
   firestore: FIRESTORE_REGION,
-} as const satisfies Record<string, Region>;
+} as const;

@@ -1,8 +1,5 @@
 import { type RulesTestEnvironment } from '@firebase/rules-unit-testing';
-import {
-  emulatorEnv,
-  firestoreEmulatorFromEnv,
-} from '@wolsok/shared-firebase-emulator';
+import { emulatorEnv } from '@wolsok/shared-firebase-emulator';
 import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';
 import { getApps, initializeApp } from 'firebase-admin/app';
 import { type Firestore, getFirestore } from 'firebase-admin/firestore';
@@ -38,11 +35,7 @@ export function useEmulatorProject(): () => EmulatorProject {
   beforeAll(async () => {
     project = {
       admin: getFirestore(),
-      devices: await rulesTestEnvironment(
-        projectId,
-        firestoreEmulatorFromEnv(),
-        APP_RULES
-      ),
+      devices: await rulesTestEnvironment(projectId, APP_RULES),
     };
   });
 

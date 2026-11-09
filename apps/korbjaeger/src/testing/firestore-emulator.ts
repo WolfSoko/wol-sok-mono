@@ -4,8 +4,10 @@ import {
 } from '@firebase/rules-unit-testing';
 import { type Firestore, getDoc, setDoc } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
-import { type FirestoreEmulator } from '@wolsok/shared-firebase-emulator';
-import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';
+import {
+  type FirestoreEmulator,
+  rulesTestEnvironment,
+} from '@wolsok/shared-firebase-emulator/rules';
 import { auswahlDokumentVon } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
@@ -42,7 +44,7 @@ export function emulatorProjekt(
   projectId: string,
   regeln: string
 ): Promise<RulesTestEnvironment> {
-  return rulesTestEnvironment(projectId, FIRESTORE_EMULATOR, regeln);
+  return rulesTestEnvironment(projectId, regeln, FIRESTORE_EMULATOR);
 }
 
 /** A device signed in as `uid`: a Firestore instance of its own. */

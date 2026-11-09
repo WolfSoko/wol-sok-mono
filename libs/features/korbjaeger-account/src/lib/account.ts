@@ -1,4 +1,4 @@
-const DAY_MS = 24 * 60 * 60 * 1000;
+import { days, dToMs } from '@wolsok/utils-time';
 
 /**
  * Where the Firestore database with the accounts' choices lies: fixed when
@@ -8,10 +8,13 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 export const FIRESTORE_REGION = {
   id: 'europe-west3',
   place: 'Frankfurt am Main',
-} as const;
+} as const satisfies Region;
 
 /** One region of Google's: its id and the place the privacy policy names. */
-export type Region = { readonly id: string; readonly place: string };
+interface Region {
+  readonly id: string;
+  readonly place: string;
+}
 
 /**
  * The collection of the Elternteile's choices (Meine Teams, Kinder,
@@ -35,7 +38,7 @@ export const DELETED_ACCOUNTS_COLLECTION = 'geloeschteKonten';
 export const TOMBSTONE_DAYS = 1;
 
 /** `TOMBSTONE_DAYS` in milliseconds, for the tombstone's `expireAt`. */
-export const TOMBSTONE_DURATION_MS = TOMBSTONE_DAYS * DAY_MS;
+export const TOMBSTONE_DURATION_MS = dToMs(days(TOMBSTONE_DAYS));
 
 /**
  * How many days Cloud Functions retries a failed 1st-gen background

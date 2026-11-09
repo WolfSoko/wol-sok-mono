@@ -1,5 +1,1 @@
-export {
-  emulatorEnv,
-  type FirestoreEmulator,
-  firestoreEmulatorFromEnv,
-} from './lib/emulator-env';
+export { emulatorEnv } from './lib/emulator-env';
