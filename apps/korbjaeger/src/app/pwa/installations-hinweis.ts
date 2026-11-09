@@ -19,8 +19,8 @@ import {
 
 /**
  * What the install hint offers: nothing, the browser's own install
- * dialog (`beforeinstallprompt`), or the way through Safari's share menu
- * on iOS, which has no such dialog.
+ * dialog (`beforeinstallprompt`), or the way through the share menu on
+ * iOS, whose browsers have no such dialog.
  */
 export type InstallationsAngebot = 'keins' | 'installieren' | 'ios';
 
@@ -32,8 +32,8 @@ export interface InstallationsLage {
   readonly abgelehnt: boolean;
   /** The browser offered its install dialog (`beforeinstallprompt`). */
   readonly aufforderung: boolean;
-  /** Safari on iOS, which installs through its share menu only. */
-  readonly iosSafari: boolean;
+  /** iOS, whose browsers install through their share menu only. */
+  readonly ios: boolean;
 }
 
 /** Whether a hint may offer anything at all: not installed, not dismissed. */
@@ -54,7 +54,7 @@ export function installationsAngebot(
   if (lage.aufforderung) {
     return 'installieren';
   }
-  return lage.iosSafari ? 'ios' : 'keins';
+  return lage.ios ? 'ios' : 'keins';
 }
 
 /** What of `navigator` the install hint reads. */
@@ -66,26 +66,25 @@ export interface InstallationsNavigator {
 }
 
 /**
- * Other browsers and in-app views on iOS, which carry Safari's token too
- * but have no "Zum Home-Bildschirm" in their share menu: Chrome, Firefox,
- * Edge, Opera, the Google app, DuckDuckGo, Facebook and Instagram.
+ * In-app web views on iOS (the Google app, Facebook, Instagram): they have
+ * no share menu with "Zum Home-Bildschirm", unlike Safari and, since iOS
+ * 16.4, every other iOS browser.
  */
-const ANDERER_IOS_BROWSER =
-  /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|Ddg\/|DuckDuckGo|FBAN|FBAV|Instagram/;
+const IOS_IN_APP = /GSA\/|FBAN|FBAV|Instagram/;
 
 /**
- * Whether the browser is Safari on an iPhone or iPad: an iPad's Safari
- * says it is a Mac, but has a touch screen; the others on iOS name
- * themselves (`ANDERER_IOS_BROWSER`).
+ * Whether the page runs on an iPhone or iPad in a browser whose share menu
+ * offers "Zum Home-Bildschirm": an iPad's Safari says it is a Mac, but has
+ * a touch screen; in-app views (`IOS_IN_APP`) have no such menu.
  */
-export function istIosSafari(navigator: InstallationsNavigator): boolean {
+export function istIosMitTeilenMenue(
+  navigator: InstallationsNavigator
+): boolean {
   const agent = navigator.userAgent;
   const iosGeraet =
     /iPhone|iPad|iPod/.test(agent) ||
     (agent.includes('Macintosh') && navigator.maxTouchPoints > 1);
-  return (
-    iosGeraet && agent.includes('Safari') && !ANDERER_IOS_BROWSER.test(agent)
-  );
+  return iosGeraet && !IOS_IN_APP.test(agent);
 }
 
 /** The browser's `beforeinstallprompt` event, which no DOM typing names. */
@@ -132,15 +131,16 @@ export class InstallationsHinweis {
   private readonly installiert = signal(this.laeuftInstalliert());
   /** How many pages show the hint now (`anzeigen`). */
   private seitenMitHinweis = 0;
-  private readonly iosSafari =
-    this.umgebung !== undefined && istIosSafari(this.umgebung.navigator);
+  private readonly ios =
+    this.umgebung !== undefined &&
+    istIosMitTeilenMenue(this.umgebung.navigator);
 
   public readonly angebot: Signal<InstallationsAngebot> = computed(() =>
     installationsAngebot({
       installiert: this.installiert(),
       abgelehnt: this.abgelehnt(),
       aufforderung: this.aufforderung() !== undefined,
-      iosSafari: this.iosSafari,
+      ios: this.ios,
     })
   );
 

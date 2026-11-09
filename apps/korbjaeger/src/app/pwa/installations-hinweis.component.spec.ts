@@ -72,10 +72,11 @@ describe('InstallationsHinweisComponent', () => {
     expect(installieren).toHaveBeenCalledTimes(1);
   });
 
-  it("explains Safari's share menu on iOS, with no install button", async () => {
+  it("explains the share menu on iOS, in no browser's name, with no install button", async () => {
     const { seite } = await render('ios');
 
-    expect(hinweisText(seite)).toContain('Teilen');
+    expect(hinweisText(seite)).toContain('im Teilen-Menü');
+    expect(hinweisText(seite)).not.toContain('Safari');
     expect(hinweisText(seite)).toContain('„Zum Home-Bildschirm“');
     expect(seite.textContent).not.toContain('Installieren');
   });

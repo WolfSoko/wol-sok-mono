@@ -4,7 +4,7 @@ import {
   INSTALLATIONS_UMGEBUNG,
   InstallationsHinweis,
   installationsAngebot,
-  istIosSafari,
+  istIosMitTeilenMenue,
   provideInstallationsHinweis,
   type InstallationsNavigator,
   type InstallationsUmgebung,
@@ -21,14 +21,20 @@ const CHROME_IPHONE =
 const SAFARI_IPAD =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15';
 
-/** Other browsers and in-app views on iOS that carry Safari's token. */
+/** Other iOS browsers, whose share menu has "Zum Home-Bildschirm" since iOS 16.4. */
 const ANDERE_IOS_BROWSER = {
-  'the Google app':
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/321.0.649069647 Mobile/15E148 Safari/604.1',
-  Opera:
-    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 OPiOS/16.0.14.122053 Mobile/15E148 Safari/9537.53',
+  Chrome: CHROME_IPHONE,
+  Firefox:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) FxiOS/127.0 Mobile/15E148 Safari/605.1.15',
+  Edge: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 EdgiOS/126.2592.86 Mobile/15E148 Safari/605.1.15',
   DuckDuckGo:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1 Ddg/17.5',
+} as const;
+
+/** In-app web views on iOS, which have no such share menu. */
+const IOS_IN_APP = {
+  'the Google app':
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/321.0.649069647 Mobile/15E148 Safari/604.1',
   Facebook:
     'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1 [FBAN/FBIOS;FBAV/470.0.0.37.106;FBBV/625416307;FBDV/iPhone14,5;FBMD/iPhone;FBSN/iOS;FBSV/17.5;FBSS/3;FBID/phone;FBLC/de_DE;FBOP/5]',
   Instagram:
@@ -123,7 +129,7 @@ describe('installationsAngebot', () => {
     installiert: false,
     abgelehnt: false,
     aufforderung: false,
-    iosSafari: false,
+    ios: false,
   };
 
   it("offers the browser's install dialog where it has one", () => {
@@ -132,8 +138,8 @@ describe('installationsAngebot', () => {
     );
   });
 
-  it("explains Safari's share menu on iOS", () => {
-    expect(installationsAngebot({ ...LAGE, iosSafari: true })).toBe('ios');
+  it('explains the share menu on iOS', () => {
+    expect(installationsAngebot({ ...LAGE, ios: true })).toBe('ios');
   });
 
   it('offers nothing where the browser has no way to install', () => {
@@ -142,36 +148,42 @@ describe('installationsAngebot', () => {
 
   it('offers nothing once installed or dismissed', () => {
     for (const lage of [
-      { ...LAGE, aufforderung: true, iosSafari: true, installiert: true },
-      { ...LAGE, aufforderung: true, iosSafari: true, abgelehnt: true },
+      { ...LAGE, aufforderung: true, ios: true, installiert: true },
+      { ...LAGE, aufforderung: true, ios: true, abgelehnt: true },
     ]) {
       expect(installationsAngebot(lage)).toBe('keins');
     }
   });
 });
 
-describe('istIosSafari', () => {
+describe('istIosMitTeilenMenue', () => {
   const geraet = (
     userAgent: string,
     maxTouchPoints = 5
   ): InstallationsNavigator => ({ userAgent, maxTouchPoints });
 
   it("knows Safari on an iPhone, and on an iPad, which says it's a Mac", () => {
-    expect(istIosSafari(geraet(SAFARI_IPHONE))).toBe(true);
-    expect(istIosSafari(geraet(SAFARI_IPAD))).toBe(true);
+    expect(istIosMitTeilenMenue(geraet(SAFARI_IPHONE))).toBe(true);
+    expect(istIosMitTeilenMenue(geraet(SAFARI_IPAD))).toBe(true);
   });
 
   it.each(Object.entries(ANDERE_IOS_BROWSER))(
-    'takes no other browser or in-app view with Safari in its name: %s',
+    'takes another iOS browser too: %s',
     (_name, userAgent) => {
-      expect(istIosSafari(geraet(userAgent))).toBe(false);
+      expect(istIosMitTeilenMenue(geraet(userAgent))).toBe(true);
     }
   );
 
-  it('takes no Mac without a touch screen, nor another browser on iOS', () => {
-    expect(istIosSafari(geraet(SAFARI_IPAD, 0))).toBe(false);
-    expect(istIosSafari(geraet(CHROME_IPHONE))).toBe(false);
-    expect(istIosSafari(geraet(CHROME_ANDROID))).toBe(false);
+  it.each(Object.entries(IOS_IN_APP))(
+    'takes no in-app view: %s',
+    (_name, userAgent) => {
+      expect(istIosMitTeilenMenue(geraet(userAgent))).toBe(false);
+    }
+  );
+
+  it('takes no Mac without a touch screen, nor Android', () => {
+    expect(istIosMitTeilenMenue(geraet(SAFARI_IPAD, 0))).toBe(false);
+    expect(istIosMitTeilenMenue(geraet(CHROME_ANDROID))).toBe(false);
   });
 });
 
@@ -234,7 +246,7 @@ describe('InstallationsHinweis', () => {
     expect(hinweis.angebot()).toBe('keins');
   });
 
-  it('explains the share menu in Safari on iOS', () => {
+  it('explains the share menu on iOS', () => {
     const { hinweis } = starten({ userAgent: SAFARI_IPHONE });
 
     expect(hinweis.angebot()).toBe('ios');

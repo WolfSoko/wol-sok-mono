@@ -11,7 +11,7 @@ import { InstallationsHinweis } from './installations-hinweis';
 /**
  * Suggests installing Korbjäger on the home screen, as
  * `InstallationsHinweis` decides: with "Installieren" where the browser
- * has an install dialog, with the way through Safari's share menu on
+ * has an install dialog, with the way through the share menu on
  * iOS, and "Ausblenden" for good. Shows nothing where the app runs
  * installed.
  */
@@ -32,9 +32,9 @@ import { InstallationsHinweis } from './installations-hinweis';
           </p>
         } @else {
           <p>
-            Korbjäger als App auf dem Home-Bildschirm: in Safari auf
-            <mat-icon aria-hidden="true" inline>ios_share</mat-icon> Teilen
-            tippen, dann auf „Zum Home-Bildschirm“.
+            Korbjäger als App auf dem Home-Bildschirm: im Teilen-Menü
+            <mat-icon aria-hidden="true" inline>ios_share</mat-icon> auf „Zum
+            Home-Bildschirm“ tippen.
           </p>
         }
         <div class="knoepfe">
