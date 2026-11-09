@@ -22,9 +22,11 @@ function kontrast(a: string, b: string): number {
   return (hell + 0.05) / (dunkel + 0.05);
 }
 
-/** The hue in degrees (HCT, as Material keeps it). */
-function farbton(hex: string): number {
-  return Hct.fromInt(argbFromHex(hex)).hue;
+/** How far apart two colours' hues are, in degrees (HCT, as Material keeps them). */
+function farbtonAbstand(a: string, b: string): number {
+  const [x, y] = [a, b].map((hex) => Hct.fromInt(argbFromHex(hex)).hue);
+  const abstand = Math.abs(x - y);
+  return Math.min(abstand, 360 - abstand);
 }
 
 const FLAECHEN: readonly Systemfarbe[] = [
@@ -58,9 +60,16 @@ const TEXT_PAARE: readonly (readonly [Systemfarbe, Systemfarbe])[] = [
   ['inverse-on-surface', 'inverse-surface'],
   ['inverse-primary', 'inverse-surface'],
   ...FLAECHEN.flatMap((flaeche) =>
-    (['on-surface', 'on-surface-variant', 'primary'] as const).map(
-      (text) => [text, flaeche] as const
-    )
+    (
+      [
+        'on-surface',
+        'on-surface-variant',
+        'primary',
+        'secondary',
+        'tertiary',
+        'error',
+      ] as const
+    ).map((text) => [text, flaeche] as const)
   ),
 ];
 
@@ -121,6 +130,18 @@ describe('farbschema', () => {
     );
   });
 
+  describe.each(FARBEN)('with %s as the second colour', (zweite) => {
+    it.each([false, true])(
+      'keeps every text readable on its ground (dark: %s)',
+      (dunkel) => {
+        const schema = farbschema({ primaer: '#c8102e', zweite }, dunkel);
+
+        expect(paarePruefen(schema, TEXT_PAARE, 4.5)).toEqual([]);
+        expect(paarePruefen(schema, UI_PAARE, 3)).toEqual([]);
+      }
+    );
+  });
+
   it('gives every Material system colour as #rrggbb', () => {
     const schema = farbschema({ primaer: '#c8102e' }, false);
 
@@ -140,7 +161,7 @@ describe('farbschema', () => {
   it('keeps the club’s hue', () => {
     const rot = farbschema({ primaer: '#c8102e' }, false).primary;
 
-    expect(Math.abs(farbton(rot) - farbton('#c8102e'))).toBeLessThan(5);
+    expect(farbtonAbstand(rot, '#c8102e')).toBeLessThan(5);
   });
 
   it('takes the second colour for the secondary family', () => {
@@ -149,9 +170,7 @@ describe('farbschema', () => {
 
     expect(mit.primary).toBe(ohne.primary);
     expect(mit.secondary).not.toBe(ohne.secondary);
-    expect(Math.abs(farbton(mit.secondary) - farbton('#1d4ed8'))).toBeLessThan(
-      5
-    );
+    expect(farbtonAbstand(mit.secondary, '#1d4ed8')).toBeLessThan(5);
   });
 
   it('refuses what is no #rrggbb colour', () => {
