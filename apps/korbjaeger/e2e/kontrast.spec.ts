@@ -12,7 +12,10 @@ async function kontrastFehler(page: Page): Promise<string[]> {
     .withRules(['color-contrast'])
     .analyze();
   return violations.flatMap(({ nodes }) =>
-    nodes.map(({ target, failureSummary }) => `${target}: ${failureSummary}`)
+    nodes.map(
+      ({ target, failureSummary }) =>
+        `${target.join(' ')}: ${failureSummary ?? ''}`
+    )
   );
 }
 
