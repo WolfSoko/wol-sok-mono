@@ -31,6 +31,14 @@ export const CHOICES_COLLECTION = 'selections';
 export const DELETED_ACCOUNTS_COLLECTION = 'deletedAccounts';
 
 /**
+ * The index of every Club playing in a DBB League (#2988), one document per
+ * Association (`AssociationClubs` of `@wolsok/feat-shared-basketball-data`),
+ * written weekly by the functions' `clubIndex` and read by the app's server
+ * for `/api/clubs`. Closed to clients: no rule matches it. Persisted.
+ */
+export const CLUB_INDEX_COLLECTION = 'clubIndex';
+
+/**
  * The choices as versions 1 and 2 stored them, with German fields: read only
  * by the migration into `CHOICES_COLLECTION` and deleted with the account,
  * until the follow-up of #2966 removes it.
