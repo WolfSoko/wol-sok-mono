@@ -12,8 +12,8 @@ import { RouterLink } from '@angular/router';
 import {
   parseDbbId,
   type Spiel,
+  type Team,
   type TeamId,
-  type VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
@@ -28,7 +28,7 @@ import { spielberichtTeil } from './spielbericht-teil';
 import { StandComponent } from '../stand/stand.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { breadcrumb } from '../navigation/breadcrumb';
-import { followedSide, gefolgterVerein } from './gefolgter-verein';
+import { followedSide } from './gefolgter-verein';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
@@ -91,13 +91,14 @@ export class SpielComponent {
   );
 
   /**
-   * The Verein whose colours the page wears (#2918): the followed side's.
-   * While Meine Teams are read again (a sign-in or sign-out switches
-   * stores), the last one stays, so the page does not flash the app's own.
+   * The followed side's Team, whose colours the page wears (#2918) and
+   * which its breadcrumb leads up to. While Meine Teams are read again (a
+   * sign-in or sign-out switches stores), the last one stays, so the page
+   * neither flashes the app's own colours nor loses its way up.
    */
-  private readonly verein = linkedSignal<
+  private readonly followedTeam = linkedSignal<
     { spiel: Spiel | undefined; gefolgt: readonly TeamId[] | undefined },
-    VereinId | undefined
+    Team | undefined
   >({
     source: () => ({
       spiel: this.details.hasValue() ? this.details.value().spiel : undefined,
@@ -106,15 +107,13 @@ export class SpielComponent {
     computation: ({ spiel, gefolgt }, vorher) =>
       gefolgt === undefined
         ? vorher?.value
-        : spiel && gefolgterVerein(spiel, gefolgt),
+        : spiel && followedSide(spiel, gefolgt),
   });
 
   public constructor() {
-    vereinsfarbenAnwenden(this.verein);
+    vereinsfarbenAnwenden(() => this.followedTeam()?.vereinId);
     breadcrumb(() => {
-      const team =
-        this.details.hasValue() &&
-        followedSide(this.details.value().spiel, this.gefolgt());
+      const team = this.followedTeam();
       return [
         ...(team
           ? [{ title: team.name, link: ['/team', String(team.id)] }]

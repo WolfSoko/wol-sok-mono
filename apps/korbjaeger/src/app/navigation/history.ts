@@ -16,8 +16,15 @@ export type HistoryStep =
   | { readonly kind: 'push'; readonly id: number }
   /** The current entry gets a new id (`replaceUrl`, the first navigation). */
   | { readonly kind: 'replace'; readonly id: number }
-  /** Back or forward (`popstate`) to the entry created by navigation `id`. */
-  | { readonly kind: 'restore'; readonly id: number };
+  /**
+   * Back or forward (`popstate`) to the entry that held `restoredId`; it
+   * holds `id` from then on (Angular writes the restoring navigation's).
+   */
+  | {
+      readonly kind: 'restore';
+      readonly restoredId: number;
+      readonly id: number;
+    };
 
 export const EMPTY_HISTORY: NavigationHistory = { entries: [], position: -1 };
 
@@ -37,7 +44,7 @@ export function historyAfter(
             position: history.position,
           };
     case 'restore':
-      return restored(history, step.id);
+      return restored(history, step.restoredId, step.id);
   }
 }
 
@@ -60,9 +67,13 @@ function pushed(history: NavigationHistory, id: number): NavigationHistory {
  * An entry this start does not know (one from before a reload) starts the
  * history anew, as what lies around it is unknown.
  */
-function restored(history: NavigationHistory, id: number): NavigationHistory {
-  const position = history.entries.indexOf(id);
+function restored(
+  history: NavigationHistory,
+  restoredId: number,
+  id: number
+): NavigationHistory {
+  const position = history.entries.indexOf(restoredId);
   return position < 0
     ? { entries: [id], position: 0 }
-    : { ...history, position };
+    : { entries: history.entries.with(position, id), position };
 }

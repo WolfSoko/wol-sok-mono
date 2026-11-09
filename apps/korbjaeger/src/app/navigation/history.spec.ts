@@ -13,7 +13,12 @@ function after(...steps: HistoryStep[]): NavigationHistory {
 
 const push = (id: number): HistoryStep => ({ kind: 'push', id });
 const replace = (id: number): HistoryStep => ({ kind: 'replace', id });
-const restore = (id: number): HistoryStep => ({ kind: 'restore', id });
+/** Back or forward to the entry of `restoredId`, which then holds `id`. */
+const restore = (restoredId: number, id = restoredId): HistoryStep => ({
+  kind: 'restore',
+  restoredId,
+  id,
+});
 
 describe('historyAfter', () => {
   it('starts with the first navigation, which replaces the entry the browser opened', () => {
@@ -41,6 +46,22 @@ describe('historyAfter', () => {
     expect(historyAfter(back, restore(3)).position).toBe(2);
   });
 
+  it('finds an entry again under the id the restoring navigation gave it', () => {
+    // overview, Team, Spiel; back (the Team's entry now holds 4), forward (5), back
+    const history = after(
+      replace(1),
+      push(2),
+      push(3),
+      restore(2, 4),
+      restore(3, 5),
+      restore(4, 6)
+    );
+
+    expect(history).toEqual({ entries: [1, 6, 5], position: 1 });
+    expect(canGoBack(history)).toBe(true);
+    expect(canGoForward(history)).toBe(true);
+  });
+
   it('drops the entries ahead once a new navigation follows going back', () => {
     const history = after(replace(1), push(2), push(3), restore(1), push(4));
 
@@ -55,9 +76,9 @@ describe('historyAfter', () => {
   });
 
   it('starts anew on an entry it does not know, one from before a reload', () => {
-    const history = after(replace(7), restore(3));
+    const history = after(replace(7), restore(3, 8));
 
-    expect(history).toEqual({ entries: [3], position: 0 });
+    expect(history).toEqual({ entries: [8], position: 0 });
     expect(canGoBack(history)).toBe(false);
   });
 });

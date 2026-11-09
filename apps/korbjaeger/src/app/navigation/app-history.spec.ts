@@ -67,6 +67,30 @@ describe('AppHistory', () => {
     expect(history.canGoForward()).toBe(false);
   });
 
+  it('keeps track over several rounds of back and forward', async () => {
+    const { history, router, location, settle } = await setup();
+    await router.navigateByUrl('/team/1');
+    await router.navigateByUrl('/spiel/2');
+
+    for (let round = 0; round < 3; round++) {
+      history.back(undefined);
+      await settle();
+      expect(location.path()).toBe('/team/1');
+      expect(history.canGoForward()).toBe(true);
+      history.forward();
+      await settle();
+      expect(location.path()).toBe('/spiel/2');
+    }
+    history.back(undefined);
+    await settle();
+    history.back(undefined);
+    await settle();
+
+    expect(location.path()).toBe('/');
+    expect(history.canGoBack()).toBe(false);
+    expect(history.canGoForward()).toBe(true);
+  });
+
   it('goes up to the parent where nothing lies behind', async () => {
     const { history, location, settle } = await setup('/spiel/2');
 

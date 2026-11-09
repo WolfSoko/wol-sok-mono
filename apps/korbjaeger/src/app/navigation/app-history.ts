@@ -3,7 +3,10 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   type Event,
+  NavigationCancel,
   NavigationEnd,
+  NavigationError,
+  NavigationSkipped,
   NavigationStart,
   Router,
 } from '@angular/router';
@@ -26,8 +29,8 @@ export class AppHistory {
   private readonly location = inject(Location);
 
   private readonly history = signal(EMPTY_HISTORY);
-  /** The step each navigation still running takes, by its id. */
-  private readonly running = new Map<number, HistoryStep>();
+  /** The navigation running now, as far as the history cares. */
+  private running: RunningNavigation | undefined;
 
   public readonly canGoBack = computed(() => canGoBack(this.history()));
   public readonly canGoForward = computed(() => canGoForward(this.history()));
@@ -59,30 +62,71 @@ export class AppHistory {
 
   private follow(event: Event): void {
     if (event instanceof NavigationStart) {
-      const step = this.stepOf(event);
-      if (step !== undefined) {
-        this.running.set(event.id, step);
-      }
-    } else if (event instanceof NavigationEnd) {
-      const step = this.running.get(event.id);
-      if (step !== undefined) {
-        this.history.update((history) => historyAfter(history, step));
-      }
-      this.running.clear();
+      this.running = this.runningOf(event);
+      return;
+    }
+    const ended =
+      event instanceof NavigationEnd ||
+      event instanceof NavigationCancel ||
+      event instanceof NavigationError ||
+      event instanceof NavigationSkipped;
+    if (!ended || this.running?.id !== event.id) {
+      return;
+    }
+    const step = this.stepOf(this.running, event instanceof NavigationEnd);
+    this.running = undefined;
+    if (step !== undefined) {
+      this.history.update((history) => historyAfter(history, step));
     }
   }
 
-  private stepOf(event: NavigationStart): HistoryStep | undefined {
-    if (event.navigationTrigger === 'popstate') {
+  private runningOf(event: NavigationStart): RunningNavigation {
+    const extras = this.router.currentNavigation()?.extras;
+    return {
+      id: event.id,
+      restoredId:
+        event.navigationTrigger === 'popstate'
+          ? (event.restoredState?.navigationId ?? event.id)
+          : undefined,
+      replaceUrl: extras?.replaceUrl ?? false,
+      skipLocationChange: extras?.skipLocationChange ?? false,
+    };
+  }
+
+  /**
+   * Back and forward have moved the browser whether the navigation ended
+   * or not; every other navigation changes the history only once it ended.
+   */
+  private stepOf(
+    running: RunningNavigation,
+    succeeded: boolean
+  ): HistoryStep | undefined {
+    if (running.restoredId !== undefined) {
       return {
         kind: 'restore',
-        id: event.restoredState?.navigationId ?? event.id,
+        restoredId: running.restoredId,
+        id: this.entryId() ?? running.id,
       };
     }
-    const extras = this.router.currentNavigation()?.extras;
-    if (extras?.skipLocationChange) {
+    if (!succeeded || running.skipLocationChange) {
       return undefined;
     }
-    return { kind: extras?.replaceUrl ? 'replace' : 'push', id: event.id };
+    return { kind: running.replaceUrl ? 'replace' : 'push', id: running.id };
   }
+
+  /** The navigation id Angular keeps in the browser's current entry. */
+  private entryId(): number | undefined {
+    const state = this.location.getState() as { navigationId?: unknown } | null;
+    return typeof state?.navigationId === 'number'
+      ? state.navigationId
+      : undefined;
+  }
+}
+
+interface RunningNavigation {
+  readonly id: number;
+  /** The id the entry held that back or forward restores; none otherwise. */
+  readonly restoredId: number | undefined;
+  readonly replaceUrl: boolean;
+  readonly skipLocationChange: boolean;
 }

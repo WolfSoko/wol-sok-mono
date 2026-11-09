@@ -59,6 +59,11 @@ test.describe('Title bar', () => {
     await titleBar.forward.click();
     await expect(page).toHaveURL(/\/spiel\/2861436$/);
     await expect(titleBar.forward).toBeDisabled();
+
+    // a second round finds the entries again
+    await titleBar.back.click();
+    await expect(page).toHaveURL(new RegExp(`/team/${MTV_WASBUETTEL}$`));
+    await expect(titleBar.forward).toBeEnabled();
   });
 
   test('goes up to the overview from a Team page opened directly', async ({
