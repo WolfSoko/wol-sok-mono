@@ -682,8 +682,8 @@ describe('SpielComponent', () => {
       );
 
       expect(kader(seite)).toEqual([]);
-      expect(text(teil(seite, 'spielbericht-fehlt'))).toMatch(
-        /noch kein Spielbericht/i
+      expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+        'Noch kein Spielbericht. Schau später noch einmal vorbei.'
       );
     });
 
@@ -701,6 +701,54 @@ describe('SpielComponent', () => {
       expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
         'Das Spiel fällt aus, einen Spielbericht gibt es nicht.'
       );
+    });
+
+    describe('in a Liga the DBB keeps no Spielberichte for', () => {
+      const OHNE_BERICHTE: SpielDetails = {
+        ...GESPIELT,
+        liga: { ...GESPIELT.liga, ohneSpielberichte: true },
+      };
+
+      it('says so instead of asking to come back later', async () => {
+        const seite = await render(
+          fakeData(
+            async () => OHNE_BERICHTE,
+            async () => undefined
+          )
+        );
+
+        expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+          'Für diese Liga führt der DBB keine Spielberichte, Kader und Viertel gibt es hier nicht.'
+        );
+      });
+
+      it('still says a cancelled Spiel has no Spielbericht', async () => {
+        const seite = await render(
+          fakeData(
+            async () => ({
+              ...OHNE_BERICHTE,
+              spiel: { ...OHNE_BERICHTE.spiel, status: { art: 'abgesagt' } },
+            }),
+            async () => undefined
+          )
+        );
+
+        expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+          'Das Spiel fällt aus, einen Spielbericht gibt es nicht.'
+        );
+      });
+
+      it('shows a Spielbericht that comes all the same', async () => {
+        const seite = await render(
+          fakeData(
+            async () => OHNE_BERICHTE,
+            async () => bericht(MIT_WERTEN, OHNE_WERTE)
+          )
+        );
+
+        expect(kader(seite)).toHaveLength(2);
+        expect(teil(seite, 'spielbericht-fehlt')).toBeNull();
+      });
     });
 
     it('shows an Anonymer Spieler as anonymous: no link, no number, no id', async () => {

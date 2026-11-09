@@ -5,6 +5,9 @@ import { shapeError, type DbbObject } from './dbb-object';
 import { optionalField } from './optional-field';
 import { ownValue } from './own-value';
 
+/** The DBB's `statisticType` of a Liga it keeps no Spielberichte for. */
+const NO_STATISTICS = 0;
+
 const GESCHLECHTER: Readonly<Record<string, Geschlecht>> = {
   männlich: 'männlich',
   weiblich: 'weiblich',
@@ -27,7 +30,12 @@ export function mapLiga(ligaData: DbbObject): Liga {
     spielklasse: ligaData.string('skName'),
     ...optionalField('bezirk', bezirk),
     ...optionalField('saison', saison),
+    ...(keepsNoSpielberichte(ligaData) ? { ohneSpielberichte: true } : {}),
   };
+}
+
+function keepsNoSpielberichte(ligaData: DbbObject): boolean {
+  return ligaData.optionalNumber('statisticType') === NO_STATISTICS;
 }
 
 function mapSaison(ligaData: DbbObject): Saison | undefined {

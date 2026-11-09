@@ -142,4 +142,45 @@ describe('mapSpielDetails', () => {
     });
     expect(mapSpielDetails(withoutHalle).halle).toBeUndefined();
   });
+
+  describe('whether the DBB keeps the Liga’s Spielberichte', () => {
+    function withStatisticType(value: unknown): unknown {
+      const data = readEnvelope(geplant) as { ligaData: object };
+      return { ...data, ligaData: { ...data.ligaData, statisticType: value } };
+    }
+
+    it('marks a Liga of statisticType 0 as one without Spielberichte', () => {
+      expect(
+        mapSpielDetails(readEnvelope(abgesagt)).liga.ohneSpielberichte
+      ).toBe(true);
+    });
+
+    it('goes by the Liga, not by the Spiel’s own statisticType', () => {
+      // this Spiel says 0 itself, its Liga 1
+      expect(mapSpielDetails(readEnvelope(geplant)).liga).not.toHaveProperty(
+        'ohneSpielberichte'
+      );
+    });
+
+    it.each([
+      ['1', 1],
+      ['null', null],
+    ])('leaves it out for statisticType %s', (_name, value) => {
+      expect(mapSpielDetails(withStatisticType(value)).liga).not.toHaveProperty(
+        'ohneSpielberichte'
+      );
+    });
+
+    it('leaves it out where the Liga has no statisticType', () => {
+      const data = readEnvelope(geplant) as { ligaData: object };
+      const { statisticType: _none, ...ligaData } = data.ligaData as Record<
+        string,
+        unknown
+      >;
+
+      expect(mapSpielDetails({ ...data, ligaData }).liga).not.toHaveProperty(
+        'ohneSpielberichte'
+      );
+    });
+  });
 });
