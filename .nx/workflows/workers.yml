@@ -49,5 +49,16 @@ launch-templates:
         script: |
           npm install
 
+      # Before any task: the Firebase CLI downloads an emulator on first use
+      # with a non-atomic copy, so a second emulator task on the same worker
+      # started Java on the partial jar and failed within seconds (#2960).
+      # After npm install, so the locked CLI picks the jar versions.
+      # tools/ci/nx-cloud-workers.test.mjs keeps this list complete.
+      - name: Download the Firebase emulators
+        script: |
+          npx firebase setup:emulators:firestore
+          npx firebase setup:emulators:database
+          npx firebase setup:emulators:ui
+
       - name: Install Browsers (if needed)
         uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/install-browsers/main.yaml'

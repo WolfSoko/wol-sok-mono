@@ -14,7 +14,10 @@ lifecycle:
   stop-after:
     - lint
     - lint-templates
+    - typecheck-specs
+    - typecheck-tools
     - test
+    - test-emulator
     - build
     - e2e-ci
     - perf

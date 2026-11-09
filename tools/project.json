@@ -11,7 +11,21 @@
         "{workspaceRoot}/tools/**/*.ts",
         "{workspaceRoot}/tools/tsconfig.tools.json",
         "{workspaceRoot}/tsconfig.base.json",
-        { "fileset": "{projectRoot}/**/*.{ts,json}", "dependencies": true }
+        {
+          "fileset": "{projectRoot}/**/*.{ts,json}",
+          "dependencies": true
+        }
+      ]
+    },
+    "test": {
+      "command": "node --test tools/ci/nx-cloud-workers.test.mjs",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/tools/ci/**/*",
+        "{workspaceRoot}/.nx/workflows/workers.yml",
+        "{workspaceRoot}/.nx/ci-config.yaml",
+        "{workspaceRoot}/.github/workflows/ci-cd.yml",
+        "{workspaceRoot}/**/*.json"
       ]
     }
   }
