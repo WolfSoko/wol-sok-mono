@@ -55,8 +55,8 @@
     }
   </mat-card-content>
   <mat-card-actions align="end" data-qa="ueberblick-aktionen">
-    @if (team.art === "geladen") {
-      <korb-vereinsfarben-knopf [verein]="team.verein" />
+    @if (verein(); as verein) {
+      <korb-vereinsfarben-knopf [verein]="verein" />
     }
     <korb-team-folgen
       [teamId]="team.teamId"

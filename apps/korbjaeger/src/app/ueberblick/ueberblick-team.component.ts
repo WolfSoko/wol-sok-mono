@@ -50,10 +50,13 @@ export class UeberblickTeamComponent {
   /** The Team's name, or its id while its read has not given one. */
   protected readonly name = computed(() => kartenName(this.karte()));
 
+  /** The Team's Verein, once its Saison is read. */
+  protected readonly verein = computed(() => {
+    const karte = this.karte();
+    return karte.art === 'geladen' ? karte.verein : undefined;
+  });
+
   public constructor() {
-    vereinsfarbenAnwenden(() => {
-      const karte = this.karte();
-      return karte.art === 'geladen' ? karte.verein.id : undefined;
-    });
+    vereinsfarbenAnwenden(() => this.verein()?.id);
   }
 }

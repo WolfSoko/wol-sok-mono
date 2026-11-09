@@ -1,6 +1,5 @@
 import type { Resource } from '@angular/core';
 import {
-  istTeam,
   parteiName,
   type Kader,
   type SpielDetails,
@@ -8,6 +7,7 @@ import {
   type Spielbericht,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
+import { istGefolgt } from './gefolgter-verein';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 
 /** One Kader with what heads it on the page. */
@@ -85,8 +85,7 @@ function teil(
     seite,
     titel: partei ? parteiName(partei) : SEITE[seite],
     kader: bericht[seite],
-    gefolgt:
-      partei !== undefined && gefolgt.some((team) => istTeam(partei, team)),
+    gefolgt: partei !== undefined && istGefolgt(partei, gefolgt),
   };
 }
 

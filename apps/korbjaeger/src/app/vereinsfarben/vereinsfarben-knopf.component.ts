@@ -12,9 +12,8 @@ import type { Verein } from '@wolsok/feat-shared-basketball-data';
 /**
  * The button "Vereinsfarben" (named "Vereinsfarben von …" for screen
  * readers, as several cards may offer one): opens the bottom sheet for
- * `verein`, its code
- * loaded on the first tap, not with the screen. The one control every
- * screen offering a Verein's colours uses.
+ * `verein`, its code loaded on the first tap, not with the screen. The one
+ * control every screen offering a Verein's colours uses.
  */
 @Component({
   selector: 'korb-vereinsfarben-knopf',

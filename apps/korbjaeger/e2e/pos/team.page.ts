@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { linienfarbe } from './linienfarbe';
 
 /** One Spiel in the Team page's list. */
 export interface SpielEintrag {
@@ -80,9 +81,7 @@ export class TeamPage {
 
   /** The colour the court line under the heading takes, as the browser computes it. */
   public linienfarbe(): Promise<string> {
-    return this.heading.evaluate(
-      (h1) => getComputedStyle(h1).borderBlockEndColor
-    );
+    return linienfarbe(this.heading);
   }
 
   /** Gives the Team's Verein the preset `hauptfarbe` through the bottom sheet. */

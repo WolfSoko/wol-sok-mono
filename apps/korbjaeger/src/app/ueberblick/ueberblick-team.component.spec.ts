@@ -58,7 +58,9 @@ describe('UeberblickTeamComponent', () => {
     ] as const satisfies readonly TeamKarte[]) {
       TestBed.resetTestingModule();
       const element = await zeigen(karte);
-      await new Promise((fertig) => setTimeout(fertig, 50));
+      // the colour maths' chunk loaded: anything it would set is set
+      await import('../vereinsfarben/farbschema');
+      await new Promise((fertig) => setTimeout(fertig));
 
       expect(element.style.getPropertyValue('--mat-sys-primary')).toBe('');
       expect(vereinsfarbenKnopf(element)).toBeNull();

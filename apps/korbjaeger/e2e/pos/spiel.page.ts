@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { linienfarbe } from './linienfarbe';
 
 /** `/spiel/{id}`: a Spiel's result, quarters, Halle and both Kader. */
 export class SpielPage {
@@ -28,6 +29,11 @@ export class SpielPage {
     this.navigation = page.getByTestId('halle-navigation');
     this.kader = page.getByTestId('kader');
     this.berichtFehlt = page.getByTestId('spielbericht-fehlt');
+  }
+
+  /** The colour of the heading's court line, as the browser computes it. */
+  public linienfarbe(): Promise<string> {
+    return linienfarbe(this.heading);
   }
 
   public async goto(spielId: number): Promise<void> {

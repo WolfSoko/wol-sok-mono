@@ -1,20 +1,24 @@
 import AxeBuilder from '@axe-core/playwright';
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
+import type { SpielPage } from './pos/spiel.page';
+import type { StartPage } from './pos/start.page';
 import { expect, test } from './fixtures/pages.fixture';
 
 /** In the fixtures, MTV Wasbüttel's Team, and one of its Spiele the fake DBB has the details of. */
 const TEAM = 313036;
 const SPIEL_DES_TEAMS = 2861436;
 
-/** The overview's card, once it shows the Team's Spiele, not its loading state. */
-async function karteGeladen(page: Page): Promise<void> {
-  await expect(page.getByTestId('ueberblick-letztes')).toBeVisible();
+/** The card of the Team, once it shows the Team's Spiele, not its loading state. */
+async function karteGeladen(startPage: StartPage): Promise<Locator> {
+  const karte = startPage.team('MTV Wasbüttel');
+  await expect(startPage.letztesErgebnis(karte)).toBeVisible();
+  return karte;
 }
 
 /** The Spiel page, once its Spielbericht's Kader are there too. */
-async function spielGeladen(page: Page): Promise<void> {
-  await expect(page.getByTestId('spiel-ergebnis')).toBeVisible();
-  await expect(page.getByTestId('kader').first()).toBeVisible();
+async function spielGeladen(spielPage: SpielPage): Promise<void> {
+  await expect(spielPage.ergebnis).toBeVisible();
+  await expect(spielPage.kader.first()).toBeVisible();
 }
 
 /** What axe finds wrong with the contrast of text on the page. */
@@ -48,11 +52,11 @@ for (const schema of ['light', 'dark'] as const) {
 
       await teamPage.folgen.click();
       await startPage.goto();
-      await karteGeladen(page);
+      await karteGeladen(startPage);
       expect(await kontrastFehler(page)).toEqual([]);
 
       await spielPage.goto(SPIEL_DES_TEAMS);
-      await spielGeladen(page);
+      await spielGeladen(spielPage);
       expect(await kontrastFehler(page)).toEqual([]);
     });
 
@@ -73,29 +77,17 @@ for (const schema of ['light', 'dark'] as const) {
         const vereinsfarbe = await teamPage.linienfarbe();
 
         await startPage.goto();
-        await karteGeladen(page);
+        const karte = await karteGeladen(startPage);
         // the card wears the Verein's colours before axe looks
         await expect
-          .poll(() =>
-            page
-              .locator('korb-ueberblick-team')
-              .evaluate((karte) =>
-                karte.style.getPropertyValue('--mat-sys-primary')
-              )
-          )
-          .toContain('light-dark(');
+          .poll(() => startPage.traegtVereinsfarben(karte))
+          .toBe(true);
         expect(await kontrastFehler(page)).toEqual([]);
 
         // one of the followed Team's own Spiele: the page wears its colours
         await spielPage.goto(SPIEL_DES_TEAMS);
-        await spielGeladen(page);
-        await expect
-          .poll(() =>
-            page
-              .getByRole('heading', { level: 1 })
-              .evaluate((h1) => getComputedStyle(h1).borderBlockEndColor)
-          )
-          .toBe(vereinsfarbe);
+        await spielGeladen(spielPage);
+        await expect.poll(() => spielPage.linienfarbe()).toBe(vereinsfarbe);
         expect(await kontrastFehler(page)).toEqual([]);
       });
     }
