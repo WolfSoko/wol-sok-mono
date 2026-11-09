@@ -6,7 +6,12 @@ import {
   gespeichert as gespeichertIn,
   vorhanden as vorhandenIn,
 } from '../../testing/firestore-emulator';
-import { AUSWAHL_GRENZEN } from './auswahl-dokument';
+import { inhaltAus } from './auswahl-aenderungen';
+import {
+  AUSWAHL_GRENZEN,
+  auswahlDokumentLesen,
+  type AuswahlInhalt,
+} from './auswahl-dokument';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { geraetUebernehmen } from './geraet-uebernehmen';
 
@@ -25,6 +30,18 @@ const db = (uid: string) => alsGeraet(env, uid);
 const vorhanden = (uid: string, daten: object) => vorhandenIn(env, uid, daten);
 const gespeichert = (uid: string) => gespeichertIn(env, uid);
 
+/** What the account's document holds, as the app reads it. */
+async function gelesen(uid: string): Promise<AuswahlInhalt> {
+  const { teams, kinder } = inhaltAus(
+    auswahlDokumentLesen(await gespeichert(uid))
+  );
+  return { teams, kinder };
+}
+
+/** Teams as stored, followed in the order given. */
+const teamsRoh = (...ids: readonly number[]) =>
+  Object.fromEntries(ids.map((id, i) => [id, i + 1]));
+
 describe('geraetUebernehmen', () => {
   it("stores the device's choices in an empty account", async () => {
     const uid = konto();
@@ -34,8 +51,7 @@ describe('geraetUebernehmen', () => {
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
     });
 
-    expect(await gespeichert(uid)).toEqual({
-      version: 1,
+    expect(await gelesen(uid)).toEqual({
       teams: [313036],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }],
     });
@@ -49,8 +65,7 @@ describe('geraetUebernehmen', () => {
       kinder: [{ personId: 4711 }],
     });
 
-    expect(await gespeichert(uid)).toEqual({
-      version: 1,
+    expect(await gelesen(uid)).toEqual({
       teams: [],
       kinder: [{ personId: 4711 }],
     });
@@ -60,8 +75,8 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
     await vorhanden(uid, {
       version: 1,
-      teams: [313036],
-      kinder: [{ personId: 4711 }],
+      teams: teamsRoh(313036),
+      kinder: { 4711: { seit: 1 } },
     });
 
     await geraetUebernehmen(db(uid), uid, {
@@ -69,8 +84,7 @@ describe('geraetUebernehmen', () => {
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
     });
 
-    expect(await gespeichert(uid)).toEqual({
-      version: 1,
+    expect(await gelesen(uid)).toEqual({
       teams: [313036, 201500],
       kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
     });
@@ -80,8 +94,8 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
     const eingerichtet = {
       version: 1,
-      teams: [313036, 201500],
-      kinder: [{ personId: 4711, spitzname: 'Mimi' }],
+      teams: teamsRoh(313036, 201500),
+      kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
     };
     await vorhanden(uid, eingerichtet);
 
@@ -93,7 +107,7 @@ describe('geraetUebernehmen', () => {
     expect(await gespeichert(uid)).toEqual(eingerichtet);
   });
 
-  it('takes full lists over, one list a write', async () => {
+  it('takes full maps over, one map a write', async () => {
     const uid = konto();
     const kinder = Array.from({ length: 20 }, (_, i) => ({
       personId: i + 1,
@@ -103,12 +117,12 @@ describe('geraetUebernehmen', () => {
 
     await geraetUebernehmen(db(uid), uid, { teams, kinder });
 
-    expect(await gespeichert(uid)).toEqual({ version: 1, teams, kinder });
+    expect(await gelesen(uid)).toEqual({ teams, kinder });
   });
 
   it("leaves a newer version's selection alone", async () => {
     const uid = konto();
-    const neuer = { version: 2, teams: [] };
+    const neuer = { version: 2, teams: {} };
     await vorhanden(uid, neuer);
 
     await expect(
@@ -123,7 +137,7 @@ describe('geraetUebernehmen', () => {
       { length: AUSWAHL_GRENZEN.teams - 1 },
       (_, i) => i + 1
     );
-    await vorhanden(uid, { version: 1, teams, kinder: [] });
+    await vorhanden(uid, { version: 1, teams: teamsRoh(...teams) });
 
     const uebrig = await geraetUebernehmen(db(uid), uid, {
       teams: [9001, 9002, 9003],
@@ -131,8 +145,7 @@ describe('geraetUebernehmen', () => {
     });
 
     expect(uebrig).toEqual({ teams: 2, kinder: 0 });
-    expect(await gespeichert(uid)).toEqual({
-      version: 1,
+    expect(await gelesen(uid)).toEqual({
       teams: [...teams, 9001],
       kinder: [{ personId: 4711 }],
     });

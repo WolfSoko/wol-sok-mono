@@ -1,15 +1,18 @@
 rules_version = '2';
 
 // The Firestore rules of Korbjäger (ADR 0019): one document per signed-in
-// Elternteil, auswahl/{uid}, holding the ids of Meine Teams and the Kinder
-// (person id, optional Spitzname), nothing else and only theirs. Specs:
+// Elternteil, auswahl/{uid}, holding Meine Teams and the Kinder as maps
+// keyed by their DBB id (a Team: since when it is followed; a Kind: since
+// when it is marked, and an optional Spitzname), nothing else and only
+// theirs. Keyed by id, every change is a write of its own entries, which
+// the server merges with other devices' (auswahl-dokument.ts). Specs:
 // src/firestore-rules.emulator.ts (`nx run korbjaeger:test-emulator`).
 //
-// A request may evaluate at most 1000 expressions, and each read of a list
+// A request may evaluate at most 1000 expressions, and each read of a map
 // through a function counts again: 50 Teams and 20 Kinder are more than one
-// request can check. So a create checks both lists, an update only the
-// lists it changes, and the app writes one list at a time (the merge at
-// sign-in in two steps): each list holds up to its cap.
+// request can check. So a create checks both maps, an update only the maps
+// it changes, and the app changes one map a write (the merge at sign-in in
+// two steps): each holds up to its cap.
 service cloud.firestore {
   match /databases/{database}/documents {
     match /auswahl/{uid} {
@@ -45,36 +48,44 @@ service cloud.firestore {
       && daten.version is int && daten.version == 1;
   }
 
-  // The rules know no loop: each place of a list is checked by its index,
-  // up to the list's cap, `n` its size.
+  // The rules know no loop: each value of a map is checked by its index, up
+  // to the map's cap, `n` its size; the keys all at once, joined, as DBB
+  // ids (`ids`), which costs one expression instead of one per entry.
+  function sindIds(karte) {
+    return karte.keys().join(",").matches("([1-9][0-9]{0,15}(,[1-9][0-9]{0,15})*)?");
+  }
+
+  // Meine Teams: each Team's DBB id, since when it is followed.
   function sindTeams(teams) {
-    return teams is list && teams.size() <= 50
-      && teamsBis(teams, teams.size());
+    return teams is map && teams.size() <= 50 && sindIds(teams)
+      && teamsBis(teams.values(), teams.size());
   }
 
-  function teamsBis(teams, n) {
-    return (n <= 0 || teams[0] is int) && (n <= 1 || teams[1] is int) && (n <= 2 || teams[2] is int)
-      && (n <= 3 || teams[3] is int) && (n <= 4 || teams[4] is int) && (n <= 5 || teams[5] is int)
-      && (n <= 6 || teams[6] is int) && (n <= 7 || teams[7] is int) && (n <= 8 || teams[8] is int)
-      && (n <= 9 || teams[9] is int) && (n <= 10 || teams[10] is int) && (n <= 11 || teams[11] is int)
-      && (n <= 12 || teams[12] is int) && (n <= 13 || teams[13] is int) && (n <= 14 || teams[14] is int)
-      && (n <= 15 || teams[15] is int) && (n <= 16 || teams[16] is int) && (n <= 17 || teams[17] is int)
-      && (n <= 18 || teams[18] is int) && (n <= 19 || teams[19] is int) && (n <= 20 || teams[20] is int)
-      && (n <= 21 || teams[21] is int) && (n <= 22 || teams[22] is int) && (n <= 23 || teams[23] is int)
-      && (n <= 24 || teams[24] is int) && (n <= 25 || teams[25] is int) && (n <= 26 || teams[26] is int)
-      && (n <= 27 || teams[27] is int) && (n <= 28 || teams[28] is int) && (n <= 29 || teams[29] is int)
-      && (n <= 30 || teams[30] is int) && (n <= 31 || teams[31] is int) && (n <= 32 || teams[32] is int)
-      && (n <= 33 || teams[33] is int) && (n <= 34 || teams[34] is int) && (n <= 35 || teams[35] is int)
-      && (n <= 36 || teams[36] is int) && (n <= 37 || teams[37] is int) && (n <= 38 || teams[38] is int)
-      && (n <= 39 || teams[39] is int) && (n <= 40 || teams[40] is int) && (n <= 41 || teams[41] is int)
-      && (n <= 42 || teams[42] is int) && (n <= 43 || teams[43] is int) && (n <= 44 || teams[44] is int)
-      && (n <= 45 || teams[45] is int) && (n <= 46 || teams[46] is int) && (n <= 47 || teams[47] is int)
-      && (n <= 48 || teams[48] is int) && (n <= 49 || teams[49] is int);
+  function teamsBis(seit, n) {
+    return (n <= 0 || seit[0] is int) && (n <= 1 || seit[1] is int) && (n <= 2 || seit[2] is int)
+      && (n <= 3 || seit[3] is int) && (n <= 4 || seit[4] is int) && (n <= 5 || seit[5] is int)
+      && (n <= 6 || seit[6] is int) && (n <= 7 || seit[7] is int) && (n <= 8 || seit[8] is int)
+      && (n <= 9 || seit[9] is int) && (n <= 10 || seit[10] is int) && (n <= 11 || seit[11] is int)
+      && (n <= 12 || seit[12] is int) && (n <= 13 || seit[13] is int) && (n <= 14 || seit[14] is int)
+      && (n <= 15 || seit[15] is int) && (n <= 16 || seit[16] is int) && (n <= 17 || seit[17] is int)
+      && (n <= 18 || seit[18] is int) && (n <= 19 || seit[19] is int) && (n <= 20 || seit[20] is int)
+      && (n <= 21 || seit[21] is int) && (n <= 22 || seit[22] is int) && (n <= 23 || seit[23] is int)
+      && (n <= 24 || seit[24] is int) && (n <= 25 || seit[25] is int) && (n <= 26 || seit[26] is int)
+      && (n <= 27 || seit[27] is int) && (n <= 28 || seit[28] is int) && (n <= 29 || seit[29] is int)
+      && (n <= 30 || seit[30] is int) && (n <= 31 || seit[31] is int) && (n <= 32 || seit[32] is int)
+      && (n <= 33 || seit[33] is int) && (n <= 34 || seit[34] is int) && (n <= 35 || seit[35] is int)
+      && (n <= 36 || seit[36] is int) && (n <= 37 || seit[37] is int) && (n <= 38 || seit[38] is int)
+      && (n <= 39 || seit[39] is int) && (n <= 40 || seit[40] is int) && (n <= 41 || seit[41] is int)
+      && (n <= 42 || seit[42] is int) && (n <= 43 || seit[43] is int) && (n <= 44 || seit[44] is int)
+      && (n <= 45 || seit[45] is int) && (n <= 46 || seit[46] is int) && (n <= 47 || seit[47] is int)
+      && (n <= 48 || seit[48] is int) && (n <= 49 || seit[49] is int);
   }
 
+  // The Kinder: each one's person id, since when it is marked and its
+  // Spitzname.
   function sindKinder(kinder) {
-    return kinder is list && kinder.size() <= 20
-      && kinderBis(kinder, kinder.size());
+    return kinder is map && kinder.size() <= 20 && sindIds(kinder)
+      && kinderBis(kinder.values(), kinder.size());
   }
 
   function kinderBis(kinder, n) {
@@ -87,14 +98,15 @@ service cloud.firestore {
       && (n <= 18 || istKind(kinder[18])) && (n <= 19 || istKind(kinder[19]));
   }
 
-  // A Kind is its person id and, optionally, the Spitzname the app keeps to
-  // 30 characters (an emoji as one), here at most 330 code points
+  // A Kind: since when it is marked and, optionally, the Spitzname the app
+  // keeps to 30 characters (an emoji as one), here at most 330 code points
   // (SPITZNAME_CODEPUNKTE in kind.ts: 30 of the longest emoji); a regular
   // expression, as it costs fewer expressions than a type and a size check,
-  // and fails on anything but text.
+  // and fails on anything but text. Without `seit` it is none: a Spitzname
+  // written to a Kind another device unmarked meanwhile is refused, not
+  // made a Kind again.
   function istKind(kind) {
-    return kind.keys().hasOnly(["personId", "spitzname"])
-      && kind.personId is int && kind.personId > 0
+    return kind.keys().hasOnly(["seit", "spitzname"]) && kind.seit is int
       && (kind.size() == 1 || kind.spitzname.matches("(?s).{0,330}"));
   }
 }

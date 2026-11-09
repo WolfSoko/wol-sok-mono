@@ -1,9 +1,5 @@
 import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
-import {
-  AuswahlOfflineUnbekanntError,
-  AuswahlVollError,
-  AuswahlZuNeuError,
-} from '../auswahl/auswahl-fehler';
+import { AuswahlVollError, AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 
 /** What a screen says when a change to Meine Teams or Kinder was not stored. */
 export function auswahlFehlerText(fehler: unknown): string {
@@ -14,9 +10,6 @@ export function auswahlFehlerText(fehler: unknown): string {
     return fehler.liste === 'teams'
       ? `Du folgst schon ${AUSWAHL_GRENZEN.teams} Teams. Entfolge erst einem, um einem neuen zu folgen.`
       : `Du hast schon ${AUSWAHL_GRENZEN.kinder} Kinder markiert. Nimm erst eine Markierung weg, um ein neues zu markieren.`;
-  }
-  if (fehler instanceof AuswahlOfflineUnbekanntError) {
-    return 'Offline lässt sich das erst ändern, wenn dein Konto einmal mit Internet geladen ist.';
   }
   return 'Das ließ sich nicht speichern. Bitte noch einmal versuchen.';
 }

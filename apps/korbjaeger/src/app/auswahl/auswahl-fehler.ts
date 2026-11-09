@@ -20,15 +20,3 @@ export class AuswahlVollError extends Error {
     this.name = 'AuswahlVollError';
   }
 }
-
-/**
- * Offline, the account's selection was never read on this device: a
- * change could overwrite what the account holds, so it is refused until
- * the device was online once.
- */
-export class AuswahlOfflineUnbekanntError extends Error {
-  public constructor() {
-    super('Auswahl: not read yet, and offline');
-    this.name = 'AuswahlOfflineUnbekanntError';
-  }
-}

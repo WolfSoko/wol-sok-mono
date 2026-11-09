@@ -1,23 +1,27 @@
 import { type Firestore, runTransaction } from 'firebase/firestore';
 import { inhaltAus } from './auswahl-aenderungen';
 import {
-  AUSWAHL_VERSION,
   auswahlDokumentLesen,
+  auswahlFelder,
+  naechsterSeit,
   type AuswahlInhalt,
 } from './auswahl-dokument';
 import { AuswahlZuNeuError } from './auswahl-fehler';
-import { auswahlDokumentVon } from './firestore-auswahl';
+import { auswahlDokumentVon, firestoreFelder } from './firestore-auswahl';
 import { type NichtUebernommen, zusammenfuehren } from './zusammenfuehren';
 
-/** The lists of an `AuswahlDokument`, each taken over on its own. */
+/**
+ * The maps of an `AuswahlDokument`, each taken over in a transaction of its
+ * own, as the rules check one full map a write.
+ */
 const LISTEN = ['teams', 'kinder'] as const;
 
 /**
  * Takes `geraet`, the choices made on the device, into the account `uid`
  * at sign-in, as `zusammenfuehren` joins them: on every sign-in, since a
- * second one with the same choices changes nothing. One transaction a
- * list, as the rules check one list a write; a list the device adds
- * nothing to is not written. Only what fits under the caps joins; resolves
+ * second one with the same choices changes nothing. Written as every
+ * change is (`auswahlFelder`): only the entries the device adds, by id. One
+ * transaction a map; a map the device adds nothing to is not written. Only what fits under the caps joins; resolves
  * with how many of the device's Teams and Kinder did not. Rejects with
  * `AuswahlZuNeuError` where a newer version of the app stored the
  * account's selection, which it leaves alone.
@@ -39,20 +43,14 @@ export async function geraetUebernehmen(
       }
       const konto = inhaltAus(gelesen);
       const zusammenfuehrung = zusammenfuehren(konto, geraet);
-      const zusammen = zusammenfuehrung.inhalt[liste];
-      if (gelesen.art === 'aktuell' && zusammen === konto[liste]) {
-        return zusammenfuehrung.uebrig[liste];
-      }
-      // a document without its Teams is none: a new one gets both lists
-      const teile =
-        gelesen.art === 'aktuell'
-          ? { [liste]: zusammen }
-          : { ...konto, [liste]: zusammen };
-      transaktion.set(
-        dokument,
-        { version: AUSWAHL_VERSION, ...teile },
-        { merge: true }
+      const felder = auswahlFelder(
+        konto,
+        { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
+        naechsterSeit(gelesen)
       );
+      if (felder[liste] !== undefined) {
+        transaktion.set(dokument, firestoreFelder(felder), { merge: true });
+      }
       return zusammenfuehrung.uebrig[liste];
     });
   }

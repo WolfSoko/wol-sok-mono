@@ -6,6 +6,7 @@ import {
 import {
   collection,
   deleteDoc,
+  deleteField,
   doc,
   type Firestore,
   getDoc,
@@ -25,7 +26,7 @@ import {
 /**
  * The app's Firestore rules (`../firestore.rules`) on the emulator: one
  * `auswahl/{uid}` per signed-in Elternteil, only theirs, with only the
- * fields the `Auswahl` stores (ADR 0019) and lists capped as the app caps
+ * fields the `Auswahl` stores (ADR 0019) and maps capped as the app caps
  * them (`AUSWAHL_GRENZEN`).
  */
 let env: RulesTestEnvironment;
@@ -37,8 +38,8 @@ const ANDERES = 'elternteil-b';
 
 const GUELTIG = {
   version: 1,
-  teams: [313036, 201500],
-  kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
+  teams: { 313036: 1, 201500: 2 },
+  kinder: { 4711: { seit: 1, spitzname: 'Mimi' }, 4712: { seit: 2 } },
 };
 
 beforeAll(async () => {
@@ -68,74 +69,90 @@ const speichern = (data: object) =>
 const zahlen = (anzahl: number, ab = 100): number[] =>
   Array.from({ length: anzahl }, (_, i) => ab + i);
 
+/** `anzahl` Teams, keyed by id, each followed since its place. */
+const teamsVon = (anzahl: number): Record<string, number> =>
+  Object.fromEntries(zahlen(anzahl).map((id, seit) => [id, seit]));
+
 const kinderOhneNamen = (anzahl: number) =>
-  zahlen(anzahl).map((personId) => ({ personId }));
+  Object.fromEntries(zahlen(anzahl).map((id, seit) => [id, { seit }]));
 
 /** Kinder, each with a Spitzname as long as the rules take. */
 const volleKinder = (anzahl: number) =>
-  zahlen(anzahl).map((personId) => ({
-    personId,
-    spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE),
-  }));
+  Object.fromEntries(
+    zahlen(anzahl).map((id, seit) => [
+      id,
+      { seit, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE) },
+    ])
+  );
 
 /** Documents the rules refuse, whether created or changed into. */
 const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   ['a field it does not know', { ...GUELTIG, name: 'Mimi Muster' }],
-  ['a document without a version', { teams: [] }],
+  ['a document without a version', { teams: {} }],
   ['a document of another version', { ...GUELTIG, version: 2 }],
   ['a version that is no number', { ...GUELTIG, version: '1' }],
   [
     'more Teams than the cap',
-    { version: 1, teams: zahlen(TEAMS_HOECHSTENS + 1) },
+    { version: 1, teams: teamsVon(TEAMS_HOECHSTENS + 1) },
   ],
-  ['Teams that are no list', { version: 1, teams: 313036 }],
-  ['a Team that is no number', { version: 1, teams: [313036, 'Mimi'] }],
-  ['a Team that is no whole number', { version: 1, teams: [1.5] }],
+  ['Teams that are no map', { version: 1, teams: 313036 }],
+  ['Teams as a list', { version: 1, teams: [313036] }],
+  ['a Team whose id is no number', { version: 1, teams: { Mimi: 1 } }],
+  ['a Team whose id is 0', { version: 1, teams: { 0: 1 } }],
+  ['a Team since no whole number', { version: 1, teams: { 313036: 1.5 } }],
+  ['a Team since a text', { version: 1, teams: { 313036: 'heute' } }],
   [
     'an invalid Team at the end',
-    { version: 1, teams: [...zahlen(TEAMS_HOECHSTENS - 1), 'x'] },
+    { version: 1, teams: { ...teamsVon(TEAMS_HOECHSTENS - 1), 999999: 'x' } },
   ],
   [
     'more Kinder than the cap',
     { version: 1, kinder: kinderOhneNamen(KINDER_HOECHSTENS + 1) },
   ],
-  ['Kinder that are no list', { version: 1, kinder: { personId: 1 } }],
-  ['a Kind that is no map', { version: 1, kinder: [4711] }],
+  ['Kinder that are no map', { version: 1, kinder: 4711 }],
+  ['Kinder as a list', { version: 1, kinder: [{ personId: 4711 }] }],
+  ['a Kind that is no map', { version: 1, kinder: { 4711: 1 } }],
   [
-    'a Kind without a person id',
-    { version: 1, kinder: [{ spitzname: 'Mimi' }] },
+    'a Kind since when not',
+    { version: 1, kinder: { 4711: { spitzname: 'Mimi' } } },
   ],
   [
-    'a person id that is no number',
-    { version: 1, kinder: [{ personId: '4711' }] },
+    'a Kind whose id is no number',
+    { version: 1, kinder: { Mimi: { seit: 1 } } },
   ],
   [
-    'a person id that is no whole number',
-    { version: 1, kinder: [{ personId: 1.5 }] },
+    'a Kind whose id is negative',
+    { version: 1, kinder: { '-4': { seit: 1 } } },
   ],
-  ['a person id of 0', { version: 1, kinder: [{ personId: 0 }] }],
+  [
+    'a Kind since no whole number',
+    { version: 1, kinder: { 4711: { seit: 1.5 } } },
+  ],
   [
     'a Spitzname that is no text',
-    { version: 1, kinder: [{ personId: 4711, spitzname: 7 }] },
+    { version: 1, kinder: { 4711: { seit: 1, spitzname: 7 } } },
   ],
   [
     'a Spitzname longer than the app keeps',
     {
       version: 1,
-      kinder: [
-        { personId: 4711, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
-      ],
+      kinder: {
+        4711: { seit: 1, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
+      },
     },
   ],
   [
     'a name of the DBB beside a Kind',
-    { version: 1, kinder: [{ personId: 4711, vorname: 'Mimi' }] },
+    { version: 1, kinder: { 4711: { seit: 1, vorname: 'Mimi' } } },
   ],
   [
     'an invalid Kind at the end',
     {
       version: 1,
-      kinder: [...kinderOhneNamen(KINDER_HOECHSTENS - 1), { personId: -4 }],
+      kinder: {
+        ...kinderOhneNamen(KINDER_HOECHSTENS - 1),
+        999999: { seit: 'x' },
+      },
     },
   ],
 ];
@@ -147,7 +164,7 @@ describe('the Auswahl document', () => {
 
       await assertSucceeds(setDoc(eigene, GUELTIG));
       await assertSucceeds(getDoc(eigene));
-      await assertSucceeds(updateDoc(eigene, { teams: [313036] }));
+      await assertSucceeds(updateDoc(eigene, { teams: { 313036: 3 } }));
       await assertSucceeds(deleteDoc(eigene));
     });
 
@@ -157,7 +174,7 @@ describe('the Auswahl document', () => {
 
       await assertFails(getDoc(fremde));
       await assertFails(setDoc(fremde, GUELTIG));
-      await assertFails(updateDoc(fremde, { teams: [] }));
+      await assertFails(updateDoc(fremde, { teams: {} }));
       await assertFails(deleteDoc(fremde));
     });
 
@@ -185,8 +202,8 @@ describe('the Auswahl document', () => {
   describe('what it holds', () => {
     it('takes a document with only the version, Teams or Kinder', async () => {
       await assertSucceeds(speichern({ version: 1 }));
-      await assertSucceeds(speichern({ version: 1, teams: [313036] }));
-      await assertSucceeds(speichern({ version: 1, kinder: [] }));
+      await assertSucceeds(speichern({ version: 1, teams: { 313036: 1 } }));
+      await assertSucceeds(speichern({ version: 1, kinder: {} }));
       await assertSucceeds(speichern(GUELTIG));
     });
 
@@ -198,27 +215,76 @@ describe('the Auswahl document', () => {
       await assertSucceeds(
         speichern({
           version: 1,
-          kinder: [
-            { personId: 4711, spitzname: familie.repeat(SPITZNAME_LAENGE) },
-          ],
+          kinder: {
+            4711: { seit: 1, spitzname: familie.repeat(SPITZNAME_LAENGE) },
+          },
         })
       );
     });
 
-    it('takes both lists full, one list per write', async () => {
+    it('takes both maps full, one map per write', async () => {
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
       await assertSucceeds(
-        setDoc(eigene, { version: 1, teams: zahlen(TEAMS_HOECHSTENS) })
+        setDoc(eigene, { version: 1, teams: teamsVon(TEAMS_HOECHSTENS) })
       );
       await assertSucceeds(
         updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS) })
       );
       await assertSucceeds(
-        updateDoc(eigene, { teams: zahlen(TEAMS_HOECHSTENS - 1) })
+        updateDoc(eigene, { teams: teamsVon(TEAMS_HOECHSTENS - 1) })
       );
       await assertSucceeds(
         updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS - 1) })
+      );
+    });
+
+    it('takes a change of single entries, as the app writes them', async () => {
+      await vorhanden(ELTERNTEIL, {
+        version: 1,
+        teams: teamsVon(TEAMS_HOECHSTENS - 1),
+        kinder: volleKinder(KINDER_HOECHSTENS - 1),
+      });
+      const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
+
+      await assertSucceeds(
+        setDoc(eigene, { version: 1, teams: { 313036: 9 } }, { merge: true })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { 'kinder.4711': { seit: 9, spitzname: 'Mimi' } })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { 'kinder.4711.spitzname': 'Mi' })
+      );
+      await assertSucceeds(
+        updateDoc(eigene, { 'teams.313036': deleteField() })
+      );
+    });
+
+    it('refuses an entry merged past the cap, rather than cutting it', async () => {
+      await vorhanden(ELTERNTEIL, {
+        version: 1,
+        teams: teamsVon(TEAMS_HOECHSTENS),
+      });
+
+      await assertFails(
+        setDoc(
+          auswahlVon(db(ELTERNTEIL), ELTERNTEIL),
+          { version: 1, teams: { 313036: 9 } },
+          { merge: true }
+        )
+      );
+    });
+
+    it('refuses a Spitzname for a Kind no longer marked', async () => {
+      await vorhanden(ELTERNTEIL, { version: 1, kinder: {} });
+
+      await assertFails(
+        setDoc(
+          auswahlVon(db(ELTERNTEIL), ELTERNTEIL),
+          { version: 1, kinder: { 4711: { spitzname: 'Mimi' } } },
+          { merge: true }
+        )
       );
     });
 
@@ -236,9 +302,9 @@ describe('the Auswahl document', () => {
     );
 
     it.each([
-      ['Teams', { teams: [313036, 'Mimi Muster'] }],
-      ['Kinder', { kinder: [{ personId: 4711, vorname: 'Mimi' }] }],
-    ])('refuses to change one list into invalid %s', async (_, aenderung) => {
+      ['Teams', { 'teams.313036': 'Mimi Muster' }],
+      ['Kinder', { 'kinder.4711.vorname': 'Mimi' }],
+    ])('refuses to change one map into invalid %s', async (_, aenderung) => {
       await vorhanden(ELTERNTEIL);
 
       await assertFails(

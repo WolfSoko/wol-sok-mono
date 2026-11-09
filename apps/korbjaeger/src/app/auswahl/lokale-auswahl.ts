@@ -5,7 +5,6 @@ import {
   entfolgenAenderung,
   entmarkierenAenderung,
   folgenAenderung,
-  geaendert,
   gleicheKinder,
   grenzenPruefen,
   inhaltAus,
@@ -16,7 +15,9 @@ import {
 import {
   auswahlDokumentLesen,
   auswahlDokumentMit,
+  auswahlFelder,
   LEERE_AUSWAHL,
+  naechsterSeit,
   type AuswahlInhalt,
   type GelesenesDokument,
 } from './auswahl-dokument';
@@ -24,6 +25,7 @@ import { gleicheFolge } from '../gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
+import type { GeraeteSperre } from './geraete-sperre';
 
 /** The key of the `AuswahlDokument` in the device's storage. */
 export const AUSWAHL_SCHLUESSEL = 'korbjaeger-auswahl';
@@ -49,6 +51,9 @@ export type Fenster = Pick<
  *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
  * - A change over a list's cap (`AUSWAHL_GRENZEN`) rejects with
  *   `AuswahlVollError`, nothing stored.
+ * - Each change runs under `sperre` (the device's `AUSWAHL_SPERRE`), so it
+ *   reads and writes in one turn among the tabs, never between a sign-in's
+ *   check of the stored choices and their clearing.
  * - Where the storage is full, it has `platzSchaffen` free it (of the
  *   cached DBB answers) and tries once more. A change it still could not
  *   store (private mode, full, no storage) is kept as `offen`: applied on
@@ -82,7 +87,8 @@ export class LokaleAuswahl implements Auswahl {
   public constructor(
     private readonly speicher: GeraeteSpeicher | undefined,
     private readonly fenster?: Fenster,
-    private readonly platzSchaffen: () => void = () => undefined
+    private readonly platzSchaffen: () => void = () => undefined,
+    private readonly sperre: GeraeteSperre = async (tun) => tun()
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.anzeigen(this.lesen());
@@ -93,30 +99,30 @@ export class LokaleAuswahl implements Auswahl {
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
-  public async folgen(team: TeamId): Promise<void> {
-    this.aendern(folgenAenderung(team));
+  public folgen(team: TeamId): Promise<void> {
+    return this.aendern(folgenAenderung(team));
   }
 
-  public async entfolgen(team: TeamId): Promise<void> {
-    this.aendern(entfolgenAenderung(team));
+  public entfolgen(team: TeamId): Promise<void> {
+    return this.aendern(entfolgenAenderung(team));
   }
 
-  public async markieren(
+  public markieren(
     spieler: MarkierbarerSpieler,
     spitzname?: string
   ): Promise<void> {
-    this.aendern(markierenAenderung(spieler, spitzname));
+    return this.aendern(markierenAenderung(spieler, spitzname));
   }
 
-  public async spitznameSetzen(
+  public spitznameSetzen(
     person: PersonId,
     spitzname: string | undefined
   ): Promise<void> {
-    this.aendern(spitznameAenderung(person, spitzname));
+    return this.aendern(spitznameAenderung(person, spitzname));
   }
 
-  public async entmarkieren(person: PersonId): Promise<void> {
-    this.aendern(entmarkierenAenderung(person));
+  public entmarkieren(person: PersonId): Promise<void> {
+    return this.aendern(entmarkierenAenderung(person));
   }
 
   /**
@@ -130,8 +136,8 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   /**
-   * Takes the selection off the device: once an account holds it (signed
-   * in), or once the Elternteil signed out of it. Changes still `offen` go
+   * Takes the selection off the device, once an account holds it: only a
+   * sign-in's takeover calls it, under the device's lock. Changes still `offen` go
    * with it; a newer version's selection stays, as this version never
    * changes one. Where the storage removes nothing, an empty selection is
    * stored in its place.
@@ -146,7 +152,7 @@ export class LokaleAuswahl implements Auswahl {
       if (this.speicher?.removeItem) {
         this.speicher.removeItem(AUSWAHL_SCHLUESSEL);
       } else {
-        this.schreiben(auswahlDokumentMit(LEERE_AUSWAHL));
+        this.schreiben(auswahlDokumentMit({ art: 'keins' }, {}));
       }
     } catch {
       // blocked: nothing was stored lastingly either
@@ -158,12 +164,17 @@ export class LokaleAuswahl implements Auswahl {
     this.fenster?.removeEventListener('storage', this.beiAenderung);
   }
 
+  /** Runs `aenderung` under the device's lock (`aendernJetzt`). */
+  private aendern(aenderung: AuswahlAenderung): Promise<void> {
+    return this.sperre(() => this.aendernJetzt(aenderung));
+  }
+
   /**
    * Applies `aenderung` to what is stored now, with the changes still
    * `offen`, and stores the result where it changed anything or something
    * was still to be stored.
    */
-  private aendern(aenderung: AuswahlAenderung): void {
+  private aendernJetzt(aenderung: AuswahlAenderung): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
       this.anzeigen(gelesen);
@@ -177,10 +188,10 @@ export class LokaleAuswahl implements Auswahl {
     if (nachher === vorher && this.offen.length === 0) {
       return;
     }
-    const dokument =
-      gelesen.art === 'aktuell'
-        ? auswahlDokumentMit(geaendert(gespeichert, nachher), gelesen.roh)
-        : auswahlDokumentMit(nachher);
+    const dokument = auswahlDokumentMit(
+      gelesen,
+      auswahlFelder(gespeichert, nachher, naechsterSeit(gelesen))
+    );
     this.offen = this.schreiben(dokument) ? [] : [...this.offen, aenderung];
   }
 

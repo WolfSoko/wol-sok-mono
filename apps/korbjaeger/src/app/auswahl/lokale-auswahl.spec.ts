@@ -1,5 +1,17 @@
+import { inhaltAus } from './auswahl-aenderungen';
+import { auswahlDokumentLesen, type AuswahlInhalt } from './auswahl-dokument';
 import { AUSWAHL_SCHLUESSEL, LokaleAuswahl } from './lokale-auswahl';
 import { auswahlVertrag } from './testing/auswahl-vertrag';
+
+/** What `geraet` stores, as the app reads it. */
+function gespeichert(geraet: Pick<Storage, 'getItem'>): AuswahlInhalt {
+  const { teams, kinder } = inhaltAus(
+    auswahlDokumentLesen(
+      JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')
+    )
+  );
+  return { teams, kinder };
+}
 
 /**
  * The device's storage, as the adapter uses it, in memory. Like a browser
@@ -128,9 +140,54 @@ describe('LokaleAuswahl', () => {
 
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
       version: 1,
-      teams: [313036],
-      kinder: [],
+      teams: { 313036: expect.any(Number) },
     });
+  });
+
+  it('takes the lists version 1 stored at first into maps once they change, in their order', async () => {
+    const geraet = new SpeicherImSpec();
+    geraet.setzeLeise(
+      AUSWAHL_SCHLUESSEL,
+      JSON.stringify({
+        version: 1,
+        teams: [313036, 201500],
+        kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mimi' }],
+      })
+    );
+    const auswahl = new LokaleAuswahl(geraet);
+
+    await auswahl.folgen(201765);
+    await auswahl.spitznameSetzen(4711, 'Mi');
+
+    expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
+      version: 1,
+      teams: { 313036: 1, 201500: 2, 201765: expect.any(Number) },
+      kinder: { 4712: { seit: 1 }, 4711: { seit: 2, spitzname: 'Mi' } },
+    });
+    expect(gespeichert(geraet)).toEqual({
+      teams: [313036, 201500, 201765],
+      kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mi' }],
+    });
+  });
+
+  it('runs each change under the device lock', async () => {
+    const reihenfolge: string[] = [];
+    const auswahl = new LokaleAuswahl(
+      new SpeicherImSpec(),
+      undefined,
+      undefined,
+      async (tun) => {
+        reihenfolge.push('gesperrt');
+        const ergebnis = await tun();
+        reihenfolge.push('frei');
+        return ergebnis;
+      }
+    );
+
+    await auswahl.folgen(313036);
+
+    expect(reihenfolge).toEqual(['gesperrt', 'frei']);
+    expect(auswahl.teams()).toEqual([313036]);
   });
 
   it('writes nothing to mark a Kind marked already', async () => {
@@ -206,11 +263,7 @@ describe('LokaleAuswahl', () => {
       await new LokaleAuswahl(geraet, undefined, platzSchaffen).folgen(313036);
 
       expect(platzSchaffen).toHaveBeenCalledTimes(1);
-      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? 'null')).toEqual({
-        version: 1,
-        teams: [313036],
-        kinder: [],
-      });
+      expect(gespeichert(geraet)).toEqual({ teams: [313036], kinder: [] });
     });
 
     it('asks for room only on a full storage, and tries once more only', async () => {
@@ -353,8 +406,7 @@ describe('LokaleAuswahl', () => {
       await auswahl.folgen(201500);
 
       expect(auswahl.kinder()).toEqual([{ personId: 4711, spitzname: 'Lu' }]);
-      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-        version: 1,
+      expect(gespeichert(geraet)).toEqual({
         teams: [313036, 201500],
         kinder: [{ personId: 4711, spitzname: 'Lu' }],
       });
@@ -391,8 +443,7 @@ describe('LokaleAuswahl', () => {
       expect(tabA.kinder()).toEqual([{ personId: 4711 }]);
 
       await tabA.folgen(313036);
-      expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-        version: 1,
+      expect(gespeichert(geraet)).toEqual({
         teams: [201500, 313036],
         kinder: [{ personId: 4711 }],
       });

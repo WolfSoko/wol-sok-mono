@@ -100,20 +100,6 @@ export function inhaltAus(gelesen: GelesenesDokument): AuswahlInhalt {
   return gelesen.art === 'aktuell' ? gelesen : LEERE_AUSWAHL;
 }
 
-/**
- * The parts of `nachher` a change made anew, so a write leaves the others
- * as stored (Kinder this version could not read among them).
- */
-export function geaendert(
-  vorher: AuswahlInhalt,
-  nachher: AuswahlInhalt
-): Partial<AuswahlInhalt> {
-  return {
-    ...(nachher.teams !== vorher.teams && { teams: nachher.teams }),
-    ...(nachher.kinder !== vorher.kinder && { kinder: nachher.kinder }),
-  };
-}
-
 /** Whether two lists of Kinder hold the same Kinder in the same order. */
 export function gleicheKinder(a: readonly Kind[], b: readonly Kind[]): boolean {
   return gleicheFolge(a, b, gleichesKind);
