@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { folgenKnopf } from './folgen';
 
 /** `/`: the overview of Meine Teams and Kinder. */
 export class StartPage {
@@ -57,9 +58,9 @@ export class StartPage {
     return team.getByTestId('ueberblick-naechstes');
   }
 
-  /** The control on a Team's card, as `team(name)` finds it, that unfollows it. */
-  public nichtMehrFolgen(team: Locator): Locator {
-    return team.getByRole('button', { name: /^Nicht mehr folgen: / });
+  /** The control that unfollows the Team `name`, on its card or a Kind's. */
+  public nichtMehrFolgen(name: string): Locator {
+    return folgenKnopf(this.page, name, { gefolgt: true });
   }
 
   /** The snackbar's "Rückgängig", offered once a card unfollowed its Team. */

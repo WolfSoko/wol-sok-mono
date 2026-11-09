@@ -60,12 +60,12 @@ test.describe('Meine Teams', () => {
     const team = startPage.team('MTV Wasbüttel');
     await expect(startPage.letztesErgebnis(team)).toContainText('58:67');
 
-    await startPage.nichtMehrFolgen(team).click();
+    await startPage.nichtMehrFolgen('MTV Wasbüttel').click();
     await expect(startPage.leer).toBeVisible();
     await startPage.rueckgaengig.click();
     await expect(startPage.teams).toHaveCount(1);
 
-    await startPage.nichtMehrFolgen(team).click();
+    await startPage.nichtMehrFolgen('MTV Wasbüttel').click();
     await expect(startPage.leer).toBeVisible();
     await page.reload();
     await expect(startPage.leer).toBeVisible();

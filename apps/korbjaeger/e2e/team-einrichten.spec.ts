@@ -53,11 +53,12 @@ test.describe('Team einrichten', () => {
     await expect(teamPage.nichtMehrFolgen).toBeVisible();
 
     await wizard.goto();
-    await wizard.waehlen('Verband', 'Niedersachsen');
-    await wizard.waehlen('Altersklasse', 'U12');
-    await wizard.waehlen('Geschlecht', 'Jugend männlich');
-    await wizard.weitereLigen.click();
-    await wizard.liga('Regionsvorrunde Nord Braunschweig mu12').click();
+    await wizard.ligaOeffnen({
+      verband: 'Niedersachsen',
+      altersklasse: 'U12',
+      geschlecht: 'Jugend männlich',
+      liga: 'Regionsvorrunde Nord Braunschweig mu12',
+    });
     await expect(wizard.team('MTV Wasbüttel -RST-')).toContainText('Gefolgt');
 
     await wizard.nichtMehrFolgen('MTV Wasbüttel -RST-').click();

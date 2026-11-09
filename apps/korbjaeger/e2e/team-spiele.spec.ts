@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures/pages.fixture';
+import { folgenKnopf } from './pos/folgen';
 
 /** In the fixtures, MTV Wasbüttel plays a friendly Liga, then a Vorrunde. */
 const TEAM_IN_ZWEI_LIGEN = 313036;
@@ -44,18 +45,24 @@ test.describe('Team page', () => {
     await teamPage.goto(TEAM_IN_ZWEI_LIGEN);
     await expect(teamPage.spiele).toHaveCount(6);
 
-    const zeilen = await teamPage.spiele.all();
-    for (const zeile of zeilen) {
-      const reihe = await zeile.boundingBox();
-      const inhalt = await zeile.locator('korb-spiel-zeile').boundingBox();
-      expect(reihe).not.toBeNull();
-      expect(inhalt).not.toBeNull();
-      if (reihe !== null && inhalt !== null) {
-        expect(inhalt.y).toBeGreaterThanOrEqual(reihe.y);
-        expect(inhalt.y + inhalt.height).toBeLessThanOrEqual(
-          reihe.y + reihe.height
-        );
-      }
+    // each row's own box and its content's, all at once
+    const kaesten = await teamPage.spiele.evaluateAll((zeilen) =>
+      zeilen.map((zeile) => {
+        const reihe = zeile.getBoundingClientRect();
+        const inhalt = zeile
+          .querySelector('korb-spiel-zeile')
+          ?.getBoundingClientRect();
+        return {
+          reihe: { oben: reihe.top, unten: reihe.bottom },
+          inhalt: inhalt && { oben: inhalt.top, unten: inhalt.bottom },
+        };
+      })
+    );
+    expect(kaesten).toHaveLength(6);
+    for (const { reihe, inhalt } of kaesten) {
+      expect(inhalt).toBeDefined();
+      expect(inhalt?.oben).toBeGreaterThanOrEqual(reihe.oben);
+      expect(inhalt?.unten).toBeLessThanOrEqual(reihe.unten);
     }
   });
 
@@ -99,16 +106,14 @@ test.describe('Team page', () => {
     await expect(geschwister.getByRole('link')).toHaveText(
       'MTV Wasbüttel -RST-'
     );
-    const folgen = geschwister.getByRole('button', {
-      name: 'Team folgen: MTV Wasbüttel -RST-',
+    const folgen = folgenKnopf(geschwister, 'MTV Wasbüttel -RST-', {
+      gefolgt: false,
     });
     await expect(folgen).toBeVisible();
     await folgen.click();
 
     await expect(
-      geschwister.getByRole('button', {
-        name: 'Nicht mehr folgen: MTV Wasbüttel -RST-',
-      })
+      folgenKnopf(geschwister, 'MTV Wasbüttel -RST-', { gefolgt: true })
     ).toBeVisible();
     await expect(teamPage.folgen).toBeVisible();
   });
