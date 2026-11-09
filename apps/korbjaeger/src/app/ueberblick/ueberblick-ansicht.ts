@@ -51,11 +51,15 @@ export interface KindAbschnitt {
   /** The first next Spiel of its Teams, by which the overview orders them. */
   readonly naechstesSpiel?: Spiel;
   readonly naechstes?: SpielZeile;
+  /** Which of its Teams plays `naechstes`; named only where it has several. */
+  readonly naechstesTeam?: string;
   /** The read of that Spiel's Halle. */
   readonly halle?: HallenStand;
   readonly ausfaelle: readonly SpielZeile[];
   /** The latest result of its Teams. */
   readonly letztes?: SpielZeile;
+  /** Which of its Teams played `letztes`; named only where it has several. */
+  readonly letztesTeam?: string;
   /**
    * Whether the Kind was on the Kader of `letztes`; none where no
    * Spielbericht tells (none yet, not read, a forfeit).
@@ -65,6 +69,11 @@ export interface KindAbschnitt {
   readonly stand?: Stand;
   /** Why it shows no Team, once no Kader is still read. */
   readonly nichtGefunden?: NichtGefunden;
+  /**
+   * Whether another Team's Spielberichte could not all be read, so the Kind
+   * may play for more Teams than it shows.
+   */
+  readonly vielleichtMehrTeams: boolean;
 }
 
 /** What the overview tells an Elternteil who marked no Kind yet. */
@@ -80,8 +89,8 @@ export interface UeberblickAnsicht {
   readonly kinder: readonly KindAbschnitt[];
   /**
    * The followed Teams whose Kader named no Kind (all of them while none
-   * is marked), the one that plays first first. A Team whose Kader is
-   * still read shows in neither list yet.
+   * is marked), the one that plays first first; a Team whose Kader is
+   * still read shows here until a Kind is found in it.
    */
   readonly teams: readonly TeamKarte[];
   readonly hinweis?: KindHinweis;
@@ -133,6 +142,10 @@ function kindAbschnitt(
   const imKader = letztes && imKaderVon(vonTeam(letztes), letztes.spiel, kind);
   const nichtGefunden =
     seine.length === 0 && !sucht ? warumNicht(teams) : undefined;
+  const teamName = (spiel: SaisonSpiel) =>
+    seine.length > 1 ? spiel.saison.team.name : undefined;
+  const naechstesTeam = naechstes && teamName(naechstes);
+  const letztesTeam = letztes && teamName(letztes);
   return {
     personId: kind.personId,
     titel:
@@ -147,10 +160,17 @@ function kindAbschnitt(
       naechstes: zeile(naechstes),
       halle: vonTeam(naechstes)?.halle,
     }),
+    ...(naechstesTeam && { naechstesTeam }),
     ...(letztes && { letztes: zeile(letztes) }),
+    ...(letztesTeam && { letztesTeam }),
     ...(imKader !== undefined && { imKader }),
     stand: aeltesterStand(...seine.map(({ stand }) => stand)),
     ...(nichtGefunden && { nichtGefunden }),
+    vielleichtMehrTeams:
+      seine.length > 0 &&
+      teams.some(
+        (team) => !seine.includes(team) && team.funde?.unvollstaendig === true
+      ),
   };
 }
 
@@ -185,16 +205,13 @@ function warumNicht(teams: readonly TeamImUeberblick[]): NichtGefunden {
 }
 
 /**
- * Whether `team`'s Kader named none of `kinder` (or its Saison failed);
- * a Team whose first search still runs is in neither list yet, one
- * searched again keeps its place until the new finds are in.
+ * Whether `team`'s Kader named none of `kinder` so far (or its Saison
+ * failed): a Team whose search still runs shows among the others until a
+ * Kind is found in it.
  */
 function ohneKind(team: TeamImUeberblick, kinder: readonly Kind[]): boolean {
-  if (team.karte.art === 'fehler') {
-    return true;
-  }
   return (
-    team.funde !== undefined &&
+    team.karte.art === 'fehler' ||
     kinder.every(({ personId }) => vorname(team, personId) === undefined)
   );
 }

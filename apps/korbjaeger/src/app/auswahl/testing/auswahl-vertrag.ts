@@ -198,7 +198,14 @@ export function auswahlVertrag(
     it.each([
       ['no list', { personId: 4711 }],
       ['a Kind without a person id', [{ spitzname: 'Mimi' }]],
-      ['a person id that is no DBB id', [{ personId: '4711' }]],
+      ['a person id that is text', [{ personId: '4711' }]],
+      ['a person id of 0', [{ personId: 0 }]],
+      ['a negative person id', [{ personId: -1 }]],
+      ['a person id with a fraction', [{ personId: 1.5 }]],
+      [
+        'a person id beyond the safe integers',
+        [{ personId: Number.MAX_SAFE_INTEGER + 1 }],
+      ],
       ['a Spitzname that is no text', [{ personId: 4711, spitzname: 7 }]],
     ])(
       'keeps Meine Teams and has no Kind where the Kinder are %s',

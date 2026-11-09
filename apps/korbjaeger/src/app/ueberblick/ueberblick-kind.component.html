@@ -39,12 +39,17 @@
       <korb-naechstes-spiel
         [zeile]="naechstes"
         [halle]="kind.halle"
+        [team]="kind.naechstesTeam"
         data-qa="ueberblick-naechstes"
       />
     }
     @if (kind.letztes; as letztes) {
       <korb-spiel-link
-        titel="Letztes Ergebnis"
+        [titel]="
+          kind.letztesTeam
+            ? 'Letztes Ergebnis · ' + kind.letztesTeam
+            : 'Letztes Ergebnis'
+        "
         [zeile]="letztes"
         data-qa="ueberblick-letztes"
       />
@@ -64,6 +69,12 @@
           [stand]="team.vereinsTeams"
         />
       }
+    }
+    @if (kind.vielleichtMehrTeams) {
+      <p class="hinweis" data-qa="ueberblick-kind-unvollstaendig">
+        Nicht alle Spielberichte deiner Teams ließen sich lesen: Vielleicht
+        spielt dein Kind noch in einem weiteren.
+      </p>
     }
     @switch (kind.nichtGefunden) {
       @case ("nicht-im-kader") {

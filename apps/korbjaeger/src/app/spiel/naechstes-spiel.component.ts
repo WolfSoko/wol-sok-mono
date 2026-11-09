@@ -2,6 +2,7 @@ import {
   booleanAttribute,
   ChangeDetectionStrategy,
   Component,
+  computed,
   input,
 } from '@angular/core';
 import type { HallenStand } from '../halle/hallen-stand';
@@ -19,7 +20,7 @@ import type { SpielZeile } from './spiel-zeile';
   imports: [SpielHalleComponent, SpielLinkComponent],
   template: `
     <korb-spiel-link
-      titel="Nächstes Spiel"
+      [titel]="titel()"
       [zeile]="zeile()"
       [mitLiga]="mitLiga()"
     />
@@ -41,4 +42,11 @@ export class NaechstesSpielComponent {
   public readonly halle = input<HallenStand>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
+  /** The Team that plays it, where the screen shows several. */
+  public readonly team = input<string>();
+
+  protected readonly titel = computed(() => {
+    const team = this.team();
+    return team ? `Nächstes Spiel · ${team}` : 'Nächstes Spiel';
+  });
 }

@@ -35,8 +35,10 @@ export type Fenster = Pick<
  * - A document of a newer version is left alone: no Team is followed, no
  *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
  * - Where the storage is full, it has `platzSchaffen` free it (of the
- *   cached DBB answers) and tries once more. Where it still takes nothing
- *   (private mode, full), the selection lasts for this visit only.
+ *   cached DBB answers) and tries once more. A change it still could not
+ *   store (private mode, full, no storage) is kept as `offen`: applied on
+ *   top of what is read (another tab's changes too) until a write takes
+ *   it, so it lasts at least for this visit.
  */
 export class LokaleAuswahl implements Auswahl {
   public readonly teams: Signal<readonly TeamId[]>;
@@ -44,12 +46,15 @@ export class LokaleAuswahl implements Auswahl {
 
   private readonly inhalt = signal<AuswahlInhalt>(LEERE_AUSWAHL);
 
+  /** This visit's changes no write has stored yet, in their order. */
+  private offen: ReadonlyArray<(inhalt: AuswahlInhalt) => AuswahlInhalt> = [];
+
   private readonly beiAenderung = (event: Event): void => {
     if (
       event instanceof StorageEvent &&
       (event.key === null || event.key === AUSWAHL_SCHLUESSEL)
     ) {
-      this.inhalt.set(inhaltAus(this.lesen()));
+      this.inhalt.set(this.mitOffenen(inhaltAus(this.lesen())));
     }
   };
 
@@ -137,28 +142,34 @@ export class LokaleAuswahl implements Auswahl {
   }
 
   /**
-   * Applies `aenderung` to what is stored now and stores the result, if
-   * it changed anything.
+   * Applies `aenderung` to what is stored now, with the changes still
+   * `offen`, and stores the result where it changed anything or something
+   * was still to be stored.
    */
   private aendern(aenderung: (inhalt: AuswahlInhalt) => AuswahlInhalt): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
+      this.offen = [];
       this.inhalt.set(LEERE_AUSWAHL);
       throw new AuswahlZuNeuError();
     }
-    // where nothing could be read, what this visit chose stands
-    const [vorher, roh] =
-      gelesen.art === 'aktuell' ? [gelesen, gelesen.roh] : [this.inhalt(), {}];
+    const gespeichert = inhaltAus(gelesen);
+    const vorher = this.mitOffenen(gespeichert);
     const nachher = aenderung(vorher);
     this.inhalt.set(nachher);
-    if (nachher !== vorher) {
-      this.schreiben(
-        auswahlDokumentMit(
-          gelesen.art === 'aktuell' ? geaendert(vorher, nachher) : nachher,
-          roh
-        )
-      );
+    if (nachher === vorher && this.offen.length === 0) {
+      return;
     }
+    const dokument =
+      gelesen.art === 'aktuell'
+        ? auswahlDokumentMit(geaendert(gespeichert, nachher), gelesen.roh)
+        : auswahlDokumentMit(nachher);
+    this.offen = this.schreiben(dokument) ? [] : [...this.offen, aenderung];
+  }
+
+  /** `inhalt` with the changes still `offen` applied, in their order. */
+  private mitOffenen(inhalt: AuswahlInhalt): AuswahlInhalt {
+    return this.offen.reduce((stand, aenderung) => aenderung(stand), inhalt);
   }
 
   private lesen(): GelesenesDokument {
@@ -170,25 +181,29 @@ export class LokaleAuswahl implements Auswahl {
     }
   }
 
-  private schreiben(dokument: unknown): void {
+  /** Stores `dokument`; whether the device took it. */
+  private schreiben(dokument: unknown): boolean {
+    if (this.speicher === undefined) {
+      return false;
+    }
     const text = JSON.stringify(dokument);
     try {
-      this.speicher?.setItem(AUSWAHL_SCHLUESSEL, text);
+      this.speicher.setItem(AUSWAHL_SCHLUESSEL, text);
+      return true;
     } catch (error) {
-      if (istSpeicherVoll(error)) {
-        this.nachPlatzSchreiben(text);
-      }
-      // blocked: the selection lasts for this visit only
+      // blocked: no room to make
+      return istSpeicherVoll(error) && this.nachPlatzSchreiben(text);
     }
   }
 
   /** Has the cached data give way, then tries once more. */
-  private nachPlatzSchreiben(text: string): void {
+  private nachPlatzSchreiben(text: string): boolean {
     try {
       this.platzSchaffen();
       this.speicher?.setItem(AUSWAHL_SCHLUESSEL, text);
+      return true;
     } catch {
-      // still full: the selection lasts for this visit only
+      return false;
     }
   }
 }

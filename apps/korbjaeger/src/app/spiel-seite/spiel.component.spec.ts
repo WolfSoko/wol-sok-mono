@@ -11,8 +11,10 @@ import {
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
+import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
 import type { Kind } from '../auswahl/kind';
 import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -688,7 +690,8 @@ describe('SpielComponent', () => {
 
     async function mitAuswahl(
       teams: readonly number[],
-      kinder: readonly Kind[] = []
+      kinder: readonly Kind[] = [],
+      spielbericht: Spielbericht = bericht(MIT_WERTEN, OHNE_WERTE)
     ): Promise<{
       readonly seite: HTMLElement;
       readonly auswahl: LokaleAuswahl;
@@ -704,7 +707,7 @@ describe('SpielComponent', () => {
       const gerendert = await renderMit(
         fakeData(
           async () => GESPIELT,
-          async () => bericht(MIT_WERTEN, OHNE_WERTE)
+          async () => spielbericht
         ),
         auswahl
       );
@@ -935,9 +938,68 @@ describe('SpielComponent', () => {
       await stabil();
       await spitznameEingeben('Ilvi', stabil);
 
-      expect(
-        text(kaderVon(seite, 'MTV Wasbüttel').querySelector('[role="alert"]'))
-      ).toBe('Das ließ sich nicht speichern. Bitte noch einmal versuchen.');
+      expect(text(teil(seite, 'kind-fehler'))).toBe(
+        'Das ließ sich nicht speichern. Bitte noch einmal versuchen.'
+      );
+    });
+
+    it('keeps the reload hint where a newer version stored the selection, the controls gone', async () => {
+      const teams = signal<readonly number[]>([WASBUETTEL]);
+      const { seite, stabil } = await renderMit(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(MIT_WERTEN, OHNE_WERTE)
+        ),
+        fakeAuswahl({
+          teams,
+          markieren: async () => {
+            // as LokaleAuswahl does: it shows nothing of a newer version
+            teams.set([]);
+            throw new AuswahlZuNeuError();
+          },
+        })
+      );
+
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      await spitznameEingeben('Ilvi', stabil);
+
+      expect(markierKnoepfe(seite)).toEqual([]);
+      expect(teil(seite, 'kind-fehler')?.getAttribute('role')).toBe('alert');
+      expect(text(teil(seite, 'kind-fehler'))).toContain(
+        'Bitte die App neu laden.'
+      );
+    });
+
+    it('closes the Spitzname dialog where the Team was unfollowed meanwhile, and marks nobody', async () => {
+      const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
+      const markieren = vi.spyOn(auswahl, 'markieren');
+      markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
+      await stabil();
+      expect(dialog()).not.toBeNull();
+
+      // another tab unfollows the Team: its Kader offers no mark any more
+      await auswahl.entfolgen(WASBUETTEL);
+      await stabil();
+
+      expect(dialog()).toBeNull();
+      expect(markieren).not.toHaveBeenCalled();
+      expect(auswahl.kinder()).toEqual([]);
+    });
+
+    it('highlights a Kind in both Kader where both Teams are followed and it is in each', async () => {
+      const ilvio = MIT_WERTEN.eintraege[0];
+      const { seite } = await mitAuswahl(
+        [WASBUETTEL, GIFHORN],
+        [{ personId: ILVIO, spitzname: 'Ilvi' }],
+        bericht(MIT_WERTEN, { ...OHNE_WERTE, eintraege: [ilvio] })
+      );
+
+      for (const team of ['MTV Wasbüttel', 'MTV Gifhorn']) {
+        const zeile = zeileVon(kaderVon(seite, team), 'Ilvio');
+        expect(zeile.hasAttribute('data-kind')).toBe(true);
+        expect(text(teil(zeile, 'kader-spitzname'))).toBe('„Ilvi“');
+      }
     });
   });
 

@@ -14,6 +14,7 @@ import { spielDetailsResource } from '../basketball-data/spiel-details-resource'
 import { spielberichtResource } from '../basketball-data/spielbericht-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 import { HalleComponent } from '../halle/halle.component';
+import { KIND_AENDERUNG, provideKindAenderung } from '../kind/kind-aenderung';
 import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
@@ -35,6 +36,7 @@ import { StandComponent } from '../stand/stand.component';
     RouterLink,
     StandComponent,
   ],
+  providers: [provideKindAenderung()],
   templateUrl: './spiel.component.html',
   styleUrl: './spiel.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -46,6 +48,9 @@ export class SpielComponent {
   private readonly spiel = computed(() => parseDbbId(this.spielId()));
 
   private readonly gefolgt = inject(AUSWAHL).teams;
+
+  /** What the page says when marking a Kind failed. */
+  protected readonly kindFehler = inject(KIND_AENDERUNG).fehler;
 
   protected readonly details = spielDetailsResource(() => this.spiel());
 

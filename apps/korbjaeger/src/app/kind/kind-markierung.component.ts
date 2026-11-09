@@ -1,17 +1,18 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   inject,
   input,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, type MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
+import { KIND_AENDERUNG } from './kind-aenderung';
 import {
   SpitznameDialogComponent,
   type SpitznameAntwort,
@@ -22,7 +23,10 @@ import {
  * Marks a named player of a followed Team's Kader as the Elternteil's
  * Kind, asking for an optional Spitzname first; a marked one offers to
  * change its Spitzname or to take the mark away. Takes only a
- * `MarkierbarerSpieler`, so an Anonymer Spieler gets none.
+ * `MarkierbarerSpieler`, so an Anonymer Spieler gets none. A failed change
+ * shows on the page (`KIND_AENDERUNG`), which outlives the control; a
+ * dialog still open when the control goes (the Team unfollowed in another
+ * tab) is closed, and changes nothing.
  */
 @Component({
   selector: 'korb-kind-markierung',
@@ -60,20 +64,12 @@ import {
         <mat-icon aria-hidden="true">star_outline</mat-icon>
       </button>
     }
-    @if (aenderung.fehler(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
-    }
   `,
   styles: `
     :host {
       display: inline-flex;
       flex-wrap: wrap;
       align-items: center;
-    }
-    .fehler {
-      margin: 0;
-      color: var(--mat-sys-error);
-      white-space: normal;
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -88,7 +84,20 @@ export class KindMarkierungComponent {
   private readonly auswahl = inject(AUSWAHL);
   private readonly dialog = inject(MatDialog);
 
-  protected readonly aenderung = auswahlAenderung();
+  private readonly aenderung = inject(KIND_AENDERUNG);
+  /** The dialog open now, closed with the control. */
+  private offenerDialog?: MatDialogRef<
+    SpitznameDialogComponent,
+    SpitznameAntwort
+  >;
+  private beendet = false;
+
+  public constructor() {
+    inject(DestroyRef).onDestroy(() => {
+      this.beendet = true;
+      this.offenerDialog?.close();
+    });
+  }
 
   protected async markieren(): Promise<void> {
     const antwort = await this.fragen({
@@ -122,13 +131,21 @@ export class KindMarkierungComponent {
     return this.aenderung.ausfuehren(() => this.auswahl.entmarkieren(person));
   }
 
-  /** Opens the dialog; its answer, or none where it was cancelled. */
-  private fragen(frage: SpitznameFrage): Promise<SpitznameAntwort | undefined> {
+  /**
+   * Opens the dialog; its answer, or none where it was cancelled or the
+   * control went meanwhile.
+   */
+  private async fragen(
+    frage: SpitznameFrage
+  ): Promise<SpitznameAntwort | undefined> {
     const dialog = this.dialog.open<
       SpitznameDialogComponent,
       SpitznameFrage,
       SpitznameAntwort
     >(SpitznameDialogComponent, { data: frage });
-    return firstValueFrom(dialog.afterClosed());
+    this.offenerDialog = dialog;
+    const antwort = await firstValueFrom(dialog.afterClosed());
+    this.offenerDialog = undefined;
+    return this.beendet ? undefined : antwort;
   }
 }
