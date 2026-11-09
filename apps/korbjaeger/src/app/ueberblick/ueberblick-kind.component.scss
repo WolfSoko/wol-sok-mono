@@ -1,0 +1,13 @@
+@use 'ueberblick-karte';
+
+.stern {
+  display: grid;
+  place-items: center;
+  color: var(--mat-sys-primary);
+}
+
+.kader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

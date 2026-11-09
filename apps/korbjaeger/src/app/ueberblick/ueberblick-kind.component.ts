@@ -29,7 +29,7 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
     StandComponent,
   ],
   templateUrl: './ueberblick-kind.component.html',
-  styleUrl: './ueberblick-team.component.scss',
+  styleUrl: './ueberblick-kind.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class UeberblickKindComponent {
