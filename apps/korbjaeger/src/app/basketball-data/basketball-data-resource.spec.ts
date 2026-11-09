@@ -6,7 +6,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { BASKETBALL_DATA } from './basketball-data.provider';
-import { LokaleLetzteAntworten } from './letzte-antworten';
+import { LokaleLetzteAntworten } from '@wolsok/feat-korbjaeger-antworten';
 import type { KorbReadOptions } from './lesung';
 import { proxyTransport, type ProxyFetch } from './proxy-transport';
 import { teamSaisonResource } from './team-saison-resource';

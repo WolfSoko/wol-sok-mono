@@ -1,5 +1,5 @@
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
-import { istSpeicherVoll } from '@wolsok/feat-korbjaeger-auswahl';
+import { isStorageFull } from '@wolsok/utils-browser-storage';
 
 /** The last good answer of the proxy at one path, and when it came. */
 export interface LetzteAntwort {
@@ -246,7 +246,7 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
         return true;
       } catch (error) {
         const aeltester = aelteste.naechster();
-        if (!istSpeicherVoll(error) || aeltester === undefined) {
+        if (!isStorageFull(error) || aeltester === undefined) {
           return false;
         }
         this.entfernen(aeltester, index);

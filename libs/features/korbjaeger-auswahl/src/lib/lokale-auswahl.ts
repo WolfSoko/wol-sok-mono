@@ -35,7 +35,7 @@ import {
 } from './auswahl-dokument';
 import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
-import { istSpeicherVoll } from './speicher-voll';
+import { isStorageFull } from '@wolsok/utils-browser-storage';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
 /** The key of the `AuswahlDokument` in the device's storage. */
@@ -264,7 +264,7 @@ export class LokaleAuswahl implements Auswahl {
       return true;
     } catch (error) {
       // blocked: no room to make
-      return istSpeicherVoll(error) && this.nachPlatzSchreiben(text);
+      return isStorageFull(error) && this.nachPlatzSchreiben(text);
     }
   }
 

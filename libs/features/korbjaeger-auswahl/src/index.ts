@@ -31,7 +31,6 @@ export {
   spitznameZeichen,
 } from './lib/kind';
 export { AUSWAHL_SCHLUESSEL, LokaleAuswahl } from './lib/lokale-auswahl';
-export { istSpeicherVoll } from './lib/speicher-voll';
 export {
   KeineFarbeError,
   type Vereinsfarben,

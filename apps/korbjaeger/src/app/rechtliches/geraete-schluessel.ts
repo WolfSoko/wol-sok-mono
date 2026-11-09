@@ -2,7 +2,7 @@ import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANTWORT_INDEX,
   ANTWORT_PRAEFIX,
-} from '../basketball-data/letzte-antworten';
+} from '@wolsok/feat-korbjaeger-antworten';
 import {
   ANGEMELDET_SCHLUESSEL,
   DARSTELLUNG_SCHLUESSEL,

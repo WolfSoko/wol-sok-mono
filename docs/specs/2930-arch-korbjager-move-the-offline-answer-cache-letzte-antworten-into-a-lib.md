@@ -18,8 +18,8 @@ transport and the wiring.
 
 ## Non-goals
 
-- **No behaviour change.** Same keys (`korbjaeger-antwort:…`,
-  `korbjaeger-antworten`), same stored format (versions 2 and 1), same caps,
+- **No behaviour change.** Same keys (`korbjaeger-answer:…`,
+  `korbjaeger-answers`, as #2982 renamed them), same stored format (versions 2 and 1), same caps,
   ages and upkeep times; the privacy policy's text stays as it is.
 - **`proxy-transport.ts` stays in the app**, with `SPEICHERBARE_ARTEN`
   (which reads are kept is the transport's decision, tied to the proxy and
@@ -68,6 +68,10 @@ transport and the wiring.
   it avoids a second move of `istSpeicherVoll` and a conflict either way.
   Should #2937 stall, this goes first and #2937 rebases.
 - **CLAUDE.md's Korbjäger section** names the lib for the cache.
+- **Licence**: the lib is Korbjäger's, so it carries the same proprietary
+  `LICENSE` (copied from `feat-korbjaeger-auswahl`), `"license": "UNLICENSED"`
+  and its line in the root `LICENSE` (#2956); `utils-browser-storage` is a
+  shared lib and stays MIT.
 
 ## Acceptance
 

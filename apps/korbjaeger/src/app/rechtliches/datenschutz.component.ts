@@ -19,7 +19,7 @@ import {
 import {
   ANTWORT_GRENZEN,
   MAX_ALTER_TAGE,
-} from '../basketball-data/letzte-antworten';
+} from '@wolsok/feat-korbjaeger-antworten';
 import { DbbLinkComponent } from './dbb-link.component';
 import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { germanDays } from './german-days';
