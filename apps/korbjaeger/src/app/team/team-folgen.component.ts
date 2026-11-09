@@ -90,11 +90,11 @@ export class TeamFolgenComponent {
   /** The screen's, where this control goes with its Team. */
   private readonly nachEntfolgen = inject(NACH_ENTFOLGEN, { optional: true });
 
-  protected umschalten(): Promise<void> {
-    return this.folgt() ? this.entfolgen() : this.folgen();
+  protected async umschalten(): Promise<void> {
+    await (this.folgt() ? this.entfolgen() : this.folgen());
   }
 
-  private folgen(): Promise<void> {
+  private folgen(): Promise<boolean> {
     const team = this.teamId();
     return this.aenderung.ausfuehren(() => this.auswahl.folgen(team));
   }
@@ -102,8 +102,10 @@ export class TeamFolgenComponent {
   private async entfolgen(): Promise<void> {
     const team = this.teamId();
     const name = this.teamName() ?? 'Das Team';
-    await this.aenderung.ausfuehren(() => this.auswahl.entfolgen(team));
-    if (this.nachEntfolgen !== null && this.aenderung.fehler() === undefined) {
+    if (
+      (await this.aenderung.ausfuehren(() => this.auswahl.entfolgen(team))) &&
+      this.nachEntfolgen !== null
+    ) {
       this.nachEntfolgen(team);
       this.rueckgaengigAnbieten(team, name);
     }

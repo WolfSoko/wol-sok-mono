@@ -5,8 +5,11 @@ import { auswahlFehlerText } from './auswahl-fehler-text';
 export interface AuswahlAenderung {
   /** The text of the last change's failure; none while it succeeded. */
   readonly fehler: Signal<string | undefined>;
-  /** Runs `aenderung`, clearing the last failure first. */
-  ausfuehren(aenderung: () => Promise<void>): Promise<void>;
+  /**
+   * Runs `aenderung`, clearing the last failure first; resolves with
+   * whether it succeeded (never rejects).
+   */
+  ausfuehren(aenderung: () => Promise<void>): Promise<boolean>;
 }
 
 /**
@@ -21,8 +24,10 @@ export function auswahlAenderung(): AuswahlAenderung {
       fehler.set(undefined);
       try {
         await aenderung();
+        return true;
       } catch (grund: unknown) {
         fehler.set(auswahlFehlerText(grund));
+        return false;
       }
     },
   };

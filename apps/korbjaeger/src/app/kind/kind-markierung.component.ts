@@ -140,7 +140,7 @@ export class KindMarkierungComponent {
     }
   }
 
-  protected entmarkieren(): Promise<void> {
+  protected entmarkieren(): Promise<boolean> {
     const person = this.spieler().personId;
     return this.aenderung.ausfuehren(() => this.auswahl.entmarkieren(person));
   }
