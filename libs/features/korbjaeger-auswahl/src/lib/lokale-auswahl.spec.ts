@@ -63,7 +63,7 @@ describe('LokaleAuswahl', () => {
       const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
       geraet.setzeLeise(
         AUSWAHL_SCHLUESSEL,
-        JSON.stringify({ version: 1, teams: [201500], kinder: [] })
+        JSON.stringify({ version: 3, teams: { 201500: 1 } })
       );
 
       expect(auswahl.neuGelesen()).toEqual({
@@ -130,7 +130,7 @@ describe('LokaleAuswahl', () => {
       });
       expect(geraet.schreibvorgaenge).toBe(schreibvorgaenge + 1);
       expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-        version: 2,
+        version: 3,
         teams: {},
       });
     });
@@ -142,54 +142,9 @@ describe('LokaleAuswahl', () => {
     await new LokaleAuswahl(geraet).folgen(313036);
 
     expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-      version: 2,
+      version: 3,
       teams: { 313036: expect.any(Number) },
     });
-  });
-
-  it('takes the lists of version 1 into the maps of version 2 once they change, in their order', async () => {
-    const geraet = new SpeicherImSpec();
-    geraet.setzeLeise(
-      AUSWAHL_SCHLUESSEL,
-      JSON.stringify({
-        version: 1,
-        teams: [313036, 201500],
-        kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mimi' }],
-      })
-    );
-    const auswahl = new LokaleAuswahl(geraet);
-
-    await auswahl.folgen(201765);
-    await auswahl.spitznameSetzen(4711, 'Mi');
-
-    expect(JSON.parse(geraet.getItem(AUSWAHL_SCHLUESSEL) ?? '')).toEqual({
-      version: 2,
-      teams: { 313036: 1, 201500: 2, 201765: expect.any(Number) },
-      kinder: { 4712: { seit: 1 }, 4711: { seit: 2, spitzname: 'Mi' } },
-    });
-    expect(gespeichert(geraet)).toEqual({
-      teams: [313036, 201500, 201765],
-      kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mi' }],
-      vereinsfarben: [],
-    });
-  });
-
-  it('restores an unfollowed Team at its place in a document of version 1, of lists', async () => {
-    const geraet = new SpeicherImSpec();
-    geraet.setzeLeise(
-      AUSWAHL_SCHLUESSEL,
-      JSON.stringify({
-        version: 1,
-        teams: [313036, 201765, 201500],
-        kinder: [],
-      })
-    );
-    const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
-
-    const platz = await auswahl.entfolgen(201765);
-    await auswahl.folgen(201765, platz);
-
-    expect(gespeichert(geraet).teams).toEqual([313036, 201765, 201500]);
   });
 
   it('stores a change before the call returns, so leaving the page right after keeps it', () => {
@@ -239,11 +194,12 @@ describe('LokaleAuswahl', () => {
   });
 
   it.each([
-    ['another version', { version: 0, teams: [313036] }],
-    ['no version', { teams: [313036] }],
-    ['no list of Teams', { version: 1, teams: 313036 }],
-    ['a Team that is no DBB id', { version: 1, teams: [313036, '201500'] }],
-    ['a negative Team id', { version: 1, teams: [-1] }],
+    ['an earlier version', { version: 2, teams: { 313036: 1 } }],
+    ['no version', { teams: { 313036: 1 } }],
+    ['Teams as a list', { version: 3, teams: [313036] }],
+    ['no map of Teams', { version: 3, teams: 313036 }],
+    ['a Team that is no DBB id', { version: 3, teams: { 313036: 1, x: 2 } }],
+    ['a negative Team id', { version: 3, teams: { '-1': 1 } }],
     ['no object', [313036]],
     ['null', null],
   ])('ignores a stored document with %s', (_fall, dokument) => {
@@ -333,7 +289,7 @@ describe('LokaleAuswahl', () => {
 
       geraet.setItem(
         AUSWAHL_SCHLUESSEL,
-        JSON.stringify({ version: 1, teams: [313036], mehr: 1 })
+        JSON.stringify({ version: 3, teams: { 313036: 1 }, mehr: 1 })
       );
 
       expect(tabA.teams()).toBe(vorher);
@@ -345,7 +301,7 @@ describe('LokaleAuswahl', () => {
       await auswahl.folgen(313036);
       geraet.setzeLeise(
         AUSWAHL_SCHLUESSEL,
-        JSON.stringify({ version: 1, teams: [201500] })
+        JSON.stringify({ version: 3, teams: { 201500: 1 } })
       );
 
       geraet.fenster.dispatchEvent(

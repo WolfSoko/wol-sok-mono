@@ -58,9 +58,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
   `entfolgen`. Its local adapter
-  `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-auswahl`) as
-  `{ version: 1, teams: [...] }` (`auswahl-dokument.ts`: ids only, Kinder
-  join version 1 as a field of their own, #2872). It reads the document again
+  `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-selection`) as
+  `{ version: 3, teams, children, clubColors }` (`auswahl-dokument.ts`: ids
+  only; English field names since #2966). It reads the document again
   before each write and on the `storage` event, so two tabs keep each
   other's changes, and keeps fields it does not know. Storage that cannot
   be read or holds something else counts as empty, storage that takes
@@ -127,8 +127,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
   match info and a Verein's Spiele by its proxy path
   (`SPEICHERBARE_ARTEN`, `LokaleLetzteAntworten`, `localStorage` keys
-  `korbjaeger-antwort:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
-  an index `korbjaeger-antworten` of each one's size, time and kind). Each
+  `korbjaeger-answer:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
+  an index `korbjaeger-answers` of each one's size, time and kind). Each
   is kept without the persons it names (the lib's `dbbOhnePersonen`: a
   match info names top players and referees). Never kept: a Spielbericht
   (its Kader name children, ADR 0019), the wizard's Liga search and Liga

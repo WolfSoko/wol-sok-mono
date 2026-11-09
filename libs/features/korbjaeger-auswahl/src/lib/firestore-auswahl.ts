@@ -83,10 +83,8 @@ export function firestoreFelder(
   return {
     version: AUSWAHL_VERSION,
     ...(felder.teams && { teams: alsFeld(felder.teams) }),
-    ...(felder.kinder && { kinder: alsFeld(felder.kinder) }),
-    ...(felder.vereinsfarben && {
-      vereinsfarben: alsFeld(felder.vereinsfarben),
-    }),
+    ...(felder.children && { children: alsFeld(felder.children) }),
+    ...(felder.clubColors && { clubColors: alsFeld(felder.clubColors) }),
   };
 }
 
@@ -106,7 +104,7 @@ export interface FirestoreAuswahlOptionen {
 
 /**
  * The `Auswahl` of a signed-in Elternteil: their `AuswahlDokument` in
- * Firestore, `auswahl/{uid}`, the same on every device signed in with the
+ * Firestore, `selections/{uid}`, the same on every device signed in with the
  * account.
  * - It shows what the document holds, as Firestore tells it (other devices'
  *   changes too, until `beenden`), with this device's changes on top until

@@ -11,9 +11,9 @@ import {
 describe('auswahlDokumentLesen', () => {
   it("reads each Team's seit", () => {
     const gelesen = auswahlDokumentLesen({
-      version: 2,
+      version: 3,
       teams: { 201500: 20, 313036: 10 },
-      kinder: {},
+      children: {},
     });
 
     expect(gelesen.art === 'aktuell' && gelesen.teamsSeit).toEqual(
@@ -24,19 +24,10 @@ describe('auswahlDokumentLesen', () => {
     );
   });
 
-  it("counts a version-1 list's Teams 1, 2, 3, as the write that makes it a map", () => {
-    const gelesen = auswahlDokumentLesen({
-      version: 1,
-      teams: [313036, 201500],
-      kinder: [],
-    });
-
-    expect(gelesen.art === 'aktuell' && gelesen.teamsSeit).toEqual(
-      new Map([
-        [313036, 1],
-        [201500, 2],
-      ])
-    );
+  it('reads a document of an earlier version as none', () => {
+    expect(
+      auswahlDokumentLesen({ version: 2, teams: { 313036: 1 }, kinder: {} })
+    ).toEqual({ art: 'keins' });
   });
 });
 

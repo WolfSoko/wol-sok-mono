@@ -6,7 +6,10 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 // what Firebase Hosting's emulator matches header rules with
 import { configMatcher } from 'superstatic/lib/utils/patterns';
-import { DELETED_ACCOUNTS_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
+import {
+  DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_DELETED_ACCOUNTS_COLLECTION,
+} from '@wolsok/feat-shared-korbjaeger-account';
 import { FUNCTION_REGION } from './shared/function-region';
 import {
   assertDeployableBuild,
@@ -177,24 +180,28 @@ describe('the Firebase deploy', () => {
   });
 
   // the rules refuse a deleted account while its tombstone exists; the TTL
-  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`)
-  it("lets Firestore's TTL delete the deleted accounts' tombstones", () => {
-    const indexes = workspaceJson<{
-      fieldOverrides: {
-        collectionGroup: string;
-        fieldPath: string;
-        ttl?: boolean;
-      }[];
-    }>('apps/korbjaeger/firestore.indexes.json');
+  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`), in
+  // the legacy collection too, which holds those written before #2966
+  it.each([DELETED_ACCOUNTS_COLLECTION, LEGACY_DELETED_ACCOUNTS_COLLECTION])(
+    "lets Firestore's TTL delete the deleted accounts' tombstones in %s",
+    (graeber) => {
+      const indexes = workspaceJson<{
+        fieldOverrides: {
+          collectionGroup: string;
+          fieldPath: string;
+          ttl?: boolean;
+        }[];
+      }>('apps/korbjaeger/firestore.indexes.json');
 
-    expect(indexes.fieldOverrides).toContainEqual(
-      expect.objectContaining({
-        collectionGroup: DELETED_ACCOUNTS_COLLECTION,
-        fieldPath: 'expireAt',
-        ttl: true,
-      })
-    );
-  });
+      expect(indexes.fieldOverrides).toContainEqual(
+        expect.objectContaining({
+          collectionGroup: graeber,
+          fieldPath: 'expireAt',
+          ttl: true,
+        })
+      );
+    }
+  );
 
   // codebase konto is korbjaeger-functions', checked by its own spec; this
   // app's DEPLOY takes only `functions:default`

@@ -41,7 +41,7 @@ const kinderRoh = (
   Object.fromEntries(
     kinder.map(({ personId, spitzname }, i) => [
       personId,
-      { seit: i + 1, ...(spitzname && { spitzname }) },
+      { since: i + 1, ...(spitzname && { nickname: spitzname }) },
     ])
   );
 
@@ -286,9 +286,9 @@ export function auswahlVertrag(
     it('keeps the fields it does not know, which a later version added', async () => {
       const eltern = { zweitesElternteil: true };
       await speicher.schreibeRoh({
-        version: 2,
+        version: 3,
         teams: teamsRoh(MTV_GIFHORN),
-        kinder: {},
+        children: {},
         eltern,
       });
 
@@ -297,17 +297,17 @@ export function auswahlVertrag(
       await auswahl.markieren(LUMI);
 
       expect(await speicher.liesRoh()).toEqual({
-        version: 2,
+        version: 3,
         teams: { [MTV_GIFHORN]: 1, [MTV_WASBUETTEL]: IRGENDWANN },
-        kinder: { [LUMI.personId]: { seit: IRGENDWANN } },
+        children: { [LUMI.personId]: { since: IRGENDWANN } },
         eltern,
       });
     });
 
     it('reads Kinder stored without Teams, and keeps them when following', async () => {
       await speicher.schreibeRoh({
-        version: 2,
-        kinder: kinderRoh({ personId: 4711 }),
+        version: 3,
+        children: kinderRoh({ personId: 4711 }),
       });
       const auswahl = await speicher.oeffnen();
 
@@ -316,14 +316,14 @@ export function auswahlVertrag(
 
       await auswahl.folgen(MTV_WASBUETTEL);
       expect(await speicher.liesRoh()).toEqual({
-        version: 2,
+        version: 3,
         teams: { [MTV_WASBUETTEL]: IRGENDWANN },
-        kinder: kinderRoh({ personId: 4711 }),
+        children: kinderRoh({ personId: 4711 }),
       });
     });
 
     it('reads Meine Teams stored before Kinder joined, with no Kind', async () => {
-      await speicher.schreibeRoh({ version: 2, teams: teamsRoh(MTV_GIFHORN) });
+      await speicher.schreibeRoh({ version: 3, teams: teamsRoh(MTV_GIFHORN) });
 
       const auswahl = await speicher.oeffnen();
 
@@ -333,24 +333,24 @@ export function auswahlVertrag(
 
     it.each([
       ['no map', 4711],
-      ['a Kind not marked since a time', { 4711: { spitzname: 'Mimi' } }],
+      ['a Kind not marked since a time', { 4711: { nickname: 'Mimi' } }],
       ['a Kind that is no map', { 4711: 1 }],
-      ['a person id that is text', { Mimi: { seit: 1 } }],
-      ['a person id of 0', { 0: { seit: 1 } }],
-      ['a negative person id', { '-1': { seit: 1 } }],
-      ['a person id with a fraction', { '1.5': { seit: 1 } }],
+      ['a person id that is text', { Mimi: { since: 1 } }],
+      ['a person id of 0', { 0: { since: 1 } }],
+      ['a negative person id', { '-1': { since: 1 } }],
+      ['a person id with a fraction', { '1.5': { since: 1 } }],
       [
         'a person id beyond the safe integers',
-        { [Number.MAX_SAFE_INTEGER + 1]: { seit: 1 } },
+        { [Number.MAX_SAFE_INTEGER + 1]: { since: 1 } },
       ],
-      ['a Spitzname that is no text', { 4711: { seit: 1, spitzname: 7 } }],
+      ['a Spitzname that is no text', { 4711: { since: 1, nickname: 7 } }],
     ])(
       'keeps Meine Teams and has no Kind where the Kinder are %s',
       async (_fall, kinder) => {
         await speicher.schreibeRoh({
-          version: 2,
+          version: 3,
           teams: teamsRoh(MTV_GIFHORN),
-          kinder,
+          children: kinder,
         });
 
         const auswahl = await speicher.oeffnen();
@@ -362,12 +362,12 @@ export function auswahlVertrag(
 
     it('keeps the readable Kinder where one entry is malformed', async () => {
       await speicher.schreibeRoh({
-        version: 2,
+        version: 3,
         teams: teamsRoh(MTV_GIFHORN),
-        kinder: {
-          [LUMI.personId]: { seit: 1 },
-          kaputt: { seit: 2 },
-          [MORVO.personId]: { seit: 3, spitzname: 'Mo' },
+        children: {
+          [LUMI.personId]: { since: 1 },
+          kaputt: { since: 2 },
+          [MORVO.personId]: { since: 3, nickname: 'Mo' },
         },
       });
 
@@ -380,24 +380,24 @@ export function auswahlVertrag(
     });
 
     it.each([
-      ['a malformed entry', { 4711: { seit: 1 }, kaputt: { seit: 2 } }],
+      ['a malformed entry', { 4711: { since: 1 }, kaputt: { since: 2 } }],
       ['no map', 'kaputt'],
     ])(
       'leaves Kinder with %s as stored when Meine Teams change',
       async (_fall, kinder) => {
         await speicher.schreibeRoh({
-          version: 2,
+          version: 3,
           teams: teamsRoh(MTV_GIFHORN),
-          kinder,
+          children: kinder,
         });
 
         const auswahl = await speicher.oeffnen();
         await auswahl.folgen(MTV_WASBUETTEL);
 
         expect(await speicher.liesRoh()).toEqual({
-          version: 2,
+          version: 3,
           teams: { [MTV_GIFHORN]: 1, [MTV_WASBUETTEL]: IRGENDWANN },
-          kinder,
+          children: kinder,
         });
       }
     );
@@ -414,8 +414,8 @@ export function auswahlVertrag(
       await auswahl.markieren(spieler, 'Mimi');
 
       expect(await speicher.liesRoh()).toEqual({
-        version: 2,
-        kinder: { [LUMI.personId]: { seit: IRGENDWANN, spitzname: 'Mimi' } },
+        version: 3,
+        children: { [LUMI.personId]: { since: IRGENDWANN, nickname: 'Mimi' } },
       });
     });
 
@@ -614,8 +614,8 @@ export function auswahlVertrag(
         expect(auswahl.vereinsfarben()).toEqual(erwartet);
         expect((await speicher.oeffnen()).vereinsfarben()).toEqual(erwartet);
         expect(await speicher.liesRoh()).toEqual({
-          version: 2,
-          vereinsfarben: {
+          version: 3,
+          clubColors: {
             [VEREIN_ROT]: '#c8102e,#1d4ed8',
           },
         });
@@ -696,9 +696,9 @@ export function auswahlVertrag(
 
       it('keeps the readable colours where one entry is malformed', async () => {
         await speicher.schreibeRoh({
-          version: 2,
+          version: 3,
           teams: teamsRoh(MTV_GIFHORN),
-          vereinsfarben: {
+          clubColors: {
             [VEREIN_ROT]: '#c8102e',
             [VEREIN_BLAU]: 'blau',
           },
@@ -715,7 +715,7 @@ export function auswahlVertrag(
       it('sets no colours from a newer version', async () => {
         const neuer = {
           version: 99,
-          vereinsfarben: { [VEREIN_ROT]: '#c8102e' },
+          clubColors: { [VEREIN_ROT]: '#c8102e' },
         };
         await speicher.schreibeRoh(neuer);
 
@@ -738,7 +738,7 @@ export function auswahlVertrag(
 
       it('refuses to follow one Team more than its cap, and stores nothing', async () => {
         const voll = ids(AUSWAHL_GRENZEN.teams);
-        await speicher.schreibeRoh({ version: 2, teams: teamsRoh(...voll) });
+        await speicher.schreibeRoh({ version: 3, teams: teamsRoh(...voll) });
         const auswahl = await speicher.oeffnen();
 
         await expect(auswahl.folgen(MTV_WASBUETTEL)).rejects.toEqual(
@@ -747,7 +747,7 @@ export function auswahlVertrag(
 
         expect(auswahl.teams()).toEqual(voll);
         expect(await speicher.liesRoh()).toEqual({
-          version: 2,
+          version: 3,
           teams: teamsRoh(...voll),
         });
       });
@@ -756,7 +756,10 @@ export function auswahlVertrag(
         const voll = ids(AUSWAHL_GRENZEN.kinder).map((personId) => ({
           personId,
         }));
-        await speicher.schreibeRoh({ version: 2, kinder: kinderRoh(...voll) });
+        await speicher.schreibeRoh({
+          version: 3,
+          children: kinderRoh(...voll),
+        });
         const auswahl = await speicher.oeffnen();
 
         await expect(auswahl.markieren(LUMI)).rejects.toEqual(
@@ -769,8 +772,8 @@ export function auswahlVertrag(
       it("refuses one Verein's colours more than their cap", async () => {
         const voll = ids(AUSWAHL_GRENZEN.vereinsfarben);
         await speicher.schreibeRoh({
-          version: 2,
-          vereinsfarben: Object.fromEntries(voll.map((id) => [id, '#c8102e'])),
+          version: 3,
+          clubColors: Object.fromEntries(voll.map((id) => [id, '#c8102e'])),
         });
         const auswahl = await speicher.oeffnen();
 
@@ -789,7 +792,7 @@ export function auswahlVertrag(
 
       it('still unfollows where the stored Teams are over their cap', async () => {
         const zuViele = ids(AUSWAHL_GRENZEN.teams + 1);
-        await speicher.schreibeRoh({ version: 2, teams: teamsRoh(...zuViele) });
+        await speicher.schreibeRoh({ version: 3, teams: teamsRoh(...zuViele) });
         const auswahl = await speicher.oeffnen();
 
         await auswahl.entfolgen(zuViele[0]);

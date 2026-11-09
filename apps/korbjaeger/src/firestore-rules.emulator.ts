@@ -20,8 +20,10 @@ import {
   SPITZNAME_LAENGE,
 } from '@wolsok/feat-korbjaeger-auswahl';
 import {
-  CHOICES_COLLECTION,
   DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_DELETED_ACCOUNTS_COLLECTION,
+  LEGACY_CHOICES_COLLECTION,
+  CHOICES_COLLECTION,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
   alsGeraet,
@@ -33,7 +35,7 @@ import {
 
 /**
  * The app's Firestore rules (`../firestore.rules`) on the emulator: one
- * `auswahl/{uid}` per signed-in Elternteil, only theirs, with only the
+ * `selections/{uid}` per signed-in Elternteil, only theirs, with only the
  * fields the `Auswahl` stores (ADR 0019) and maps capped as the app caps
  * them (`AUSWAHL_GRENZEN`).
  */
@@ -49,9 +51,9 @@ const ELTERNTEIL = 'elternteil-a';
 const ANDERES = 'elternteil-b';
 
 const GUELTIG = {
-  version: 2,
+  version: 3,
   teams: { 313036: 1, 201500: 2 },
-  kinder: { 4711: { seit: 1, spitzname: 'Mimi' }, 4712: { seit: 2 } },
+  children: { 4711: { since: 1, nickname: 'Mimi' }, 4712: { since: 2 } },
 };
 
 beforeAll(async () => {
@@ -86,14 +88,14 @@ const teamsVon = (anzahl: number): Record<string, number> =>
   Object.fromEntries(zahlen(anzahl).map((id, seit) => [id, seit]));
 
 const kinderOhneNamen = (anzahl: number) =>
-  Object.fromEntries(zahlen(anzahl).map((id, seit) => [id, { seit }]));
+  Object.fromEntries(zahlen(anzahl).map((id, seit) => [id, { since: seit }]));
 
 /** Kinder, each with a Spitzname as long as the rules take. */
 const volleKinder = (anzahl: number) =>
   Object.fromEntries(
     zahlen(anzahl).map((id, seit) => [
       id,
-      { seit, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE) },
+      { since: seit, nickname: 'x'.repeat(SPITZNAME_CODEPUNKTE) },
     ])
   );
 
@@ -105,125 +107,134 @@ const volleVereinsfarben = (anzahl: number) =>
 const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   ['a field it does not know', { ...GUELTIG, name: 'Mimi Muster' }],
   ['a document without a version', { teams: {} }],
-  ['a document of another version', { ...GUELTIG, version: 3 }],
-  ['a version that is no number', { ...GUELTIG, version: '2' }],
+  ['a document of version 2', { ...GUELTIG, version: 2 }],
+  [
+    'the German fields of version 2',
+    { version: 3, kinder: { 4711: { seit: 1 } }, vereinsfarben: {} },
+  ],
+  [
+    'a Kind marked by its German field',
+    { version: 3, children: { 4711: { seit: 1 } } },
+  ],
+  [
+    'a Spitzname by its German field',
+    { version: 3, children: { 4711: { since: 1, spitzname: 'Mimi' } } },
+  ],
+  ['a version that is no number', { ...GUELTIG, version: '3' }],
   [
     'more Teams than the cap',
-    { version: 2, teams: teamsVon(TEAMS_HOECHSTENS + 1) },
+    { version: 3, teams: teamsVon(TEAMS_HOECHSTENS + 1) },
   ],
-  ['Teams that are no map', { version: 2, teams: 313036 }],
-  ['Teams as a list', { version: 2, teams: [313036] }],
-  ['a Team whose id is no number', { version: 2, teams: { Mimi: 1 } }],
-  ['a Team whose id is 0', { version: 2, teams: { 0: 1 } }],
+  ['Teams that are no map', { version: 3, teams: 313036 }],
+  ['Teams as a list', { version: 3, teams: [313036] }],
+  ['a Team whose id is no number', { version: 3, teams: { Mimi: 1 } }],
+  ['a Team whose id is 0', { version: 3, teams: { 0: 1 } }],
   [
     'a key that holds two Team ids',
-    { version: 2, teams: { '313036,201500': 1 } },
+    { version: 3, teams: { '313036,201500': 1 } },
   ],
   [
     'a Team id beyond the safe integers',
-    { version: 2, teams: { '9007199254740993': 1 } },
+    { version: 3, teams: { '9007199254740993': 1 } },
   ],
   [
     'a Kind key that holds two ids',
-    { version: 2, kinder: { '1,2': { seit: 1 } } },
+    { version: 3, children: { '1,2': { since: 1 } } },
   ],
-  ['a Team since no whole number', { version: 2, teams: { 313036: 1.5 } }],
-  ['a Team since a text', { version: 2, teams: { 313036: 'heute' } }],
+  ['a Team since no whole number', { version: 3, teams: { 313036: 1.5 } }],
+  ['a Team since a text', { version: 3, teams: { 313036: 'heute' } }],
   [
     'an invalid Team at the end',
-    { version: 2, teams: { ...teamsVon(TEAMS_HOECHSTENS - 1), 999999: 'x' } },
+    { version: 3, teams: { ...teamsVon(TEAMS_HOECHSTENS - 1), 999999: 'x' } },
   ],
   [
     'more Kinder than the cap',
-    { version: 2, kinder: kinderOhneNamen(KINDER_HOECHSTENS + 1) },
+    { version: 3, children: kinderOhneNamen(KINDER_HOECHSTENS + 1) },
   ],
-  ['Kinder that are no map', { version: 2, kinder: 4711 }],
-  ['Kinder as a list', { version: 2, kinder: [{ personId: 4711 }] }],
-  ['a Kind that is no map', { version: 2, kinder: { 4711: 1 } }],
+  ['Kinder that are no map', { version: 3, children: 4711 }],
+  ['Kinder as a list', { version: 3, children: [{ personId: 4711 }] }],
+  ['a Kind that is no map', { version: 3, children: { 4711: 1 } }],
   [
     'a Kind since when not',
-    { version: 2, kinder: { 4711: { spitzname: 'Mimi' } } },
+    { version: 3, children: { 4711: { nickname: 'Mimi' } } },
   ],
   [
     'a Kind whose id is no number',
-    { version: 2, kinder: { Mimi: { seit: 1 } } },
+    { version: 3, children: { Mimi: { since: 1 } } },
   ],
   [
     'a Kind whose id is negative',
-    { version: 2, kinder: { '-4': { seit: 1 } } },
+    { version: 3, children: { '-4': { since: 1 } } },
   ],
   [
     'a Kind since no whole number',
-    { version: 2, kinder: { 4711: { seit: 1.5 } } },
+    { version: 3, children: { 4711: { since: 1.5 } } },
   ],
   [
     'a Spitzname that is no text',
-    { version: 2, kinder: { 4711: { seit: 1, spitzname: 7 } } },
+    { version: 3, children: { 4711: { since: 1, nickname: 7 } } },
   ],
   [
     'a Spitzname longer than the app keeps',
     {
-      version: 2,
-      kinder: {
-        4711: { seit: 1, spitzname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
+      version: 3,
+      children: {
+        4711: { since: 1, nickname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
       },
     },
   ],
   [
     'a name of the DBB beside a Kind',
-    { version: 2, kinder: { 4711: { seit: 1, vorname: 'Mimi' } } },
+    { version: 3, children: { 4711: { since: 1, vorname: 'Mimi' } } },
   ],
   [
     'more Vereinsfarben than the cap',
-    { version: 2, vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS + 1) },
+    { version: 3, clubColors: volleVereinsfarben(VEREINE_HOECHSTENS + 1) },
   ],
-  ['Vereinsfarben that are no map', { version: 2, vereinsfarben: '#c8102e' }],
-  [
-    'a colour in upper case',
-    { version: 2, vereinsfarben: { 4242: '#C8102E' } },
-  ],
-  ['a colour by its name', { version: 2, vereinsfarben: { 4242: 'red' } }],
-  ['a colour of three digits', { version: 2, vereinsfarben: { 4242: '#c81' } }],
+  ['Vereinsfarben that are no map', { version: 3, clubColors: '#c8102e' }],
+  ['a colour in upper case', { version: 3, clubColors: { 4242: '#C8102E' } }],
+  ['a colour by its name', { version: 3, clubColors: { 4242: 'red' } }],
+  ['a colour of three digits', { version: 3, clubColors: { 4242: '#c81' } }],
   [
     'a second colour without a first',
-    { version: 2, vereinsfarben: { 4242: ',#1d4ed8' } },
+    { version: 3, clubColors: { 4242: ',#1d4ed8' } },
   ],
   [
     'a second colour that is no colour',
     {
-      version: 2,
-      vereinsfarben: { 4242: '#c8102e,7' },
+      version: 3,
+      clubColors: { 4242: '#c8102e,7' },
     },
   ],
   [
     "a name beside a Verein's colours",
     {
-      version: 2,
-      vereinsfarben: { 4242: '#c8102e,TSV Muster' },
+      version: 3,
+      clubColors: { 4242: '#c8102e,TSV Muster' },
     },
   ],
-  ['an empty colour', { version: 2, vereinsfarben: { 4242: '' } }],
+  ['an empty colour', { version: 3, clubColors: { 4242: '' } }],
   [
     'three colours',
-    { version: 2, vereinsfarben: { 4242: '#c8102e,#1d4ed8,#007a3d' } },
+    { version: 3, clubColors: { 4242: '#c8102e,#1d4ed8,#007a3d' } },
   ],
   [
     "two Vereine's colours in one value",
-    { version: 2, vereinsfarben: { 4242: '#c8102e;#1d4ed8' } },
+    { version: 3, clubColors: { 4242: '#c8102e;#1d4ed8' } },
   ],
   [
     'colours as a map',
-    { version: 2, vereinsfarben: { 4242: { primaer: '#c8102e' } } },
+    { version: 3, clubColors: { 4242: { primaer: '#c8102e' } } },
   ],
   [
     'a Verein whose id is no number',
-    { version: 2, vereinsfarben: { TSV: '#c8102e' } },
+    { version: 3, clubColors: { TSV: '#c8102e' } },
   ],
   [
     'invalid colours at the end',
     {
-      version: 2,
-      vereinsfarben: {
+      version: 3,
+      clubColors: {
         ...volleVereinsfarben(VEREINE_HOECHSTENS - 1),
         999999: 'x',
       },
@@ -232,10 +243,10 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
   [
     'an invalid Kind at the end',
     {
-      version: 2,
-      kinder: {
+      version: 3,
+      children: {
         ...kinderOhneNamen(KINDER_HOECHSTENS - 1),
-        999999: { seit: 'x' },
+        999999: { since: 'x' },
       },
     },
   ],
@@ -288,10 +299,14 @@ describe('the Auswahl document', () => {
   // the Auth deletion's trigger (korbjaeger-functions, `kontoGeloescht`)
   // writes the tombstone first: a second device's token stays valid for up
   // to an hour, so the rules refuse it from then on
-  describe('once the account is deleted', () => {
+  // tombstones written before #2966 live a day in the legacy collection
+  describe.each([
+    DELETED_ACCOUNTS_COLLECTION,
+    LEGACY_DELETED_ACCOUNTS_COLLECTION,
+  ])('once the account is deleted (tombstone in %s)', (graeber) => {
     const grabstein = (uid: string) =>
       ohneRegeln(env, (firestore) =>
-        setDoc(doc(firestore, DELETED_ACCOUNTS_COLLECTION, uid), {
+        setDoc(doc(firestore, graeber, uid), {
           expireAt: new Date(),
         })
       );
@@ -321,25 +336,19 @@ describe('the Auswahl document', () => {
 
     it('lets no client read or write the tombstone', async () => {
       await grabstein(ELTERNTEIL);
-      const eigener = doc(
-        db(ELTERNTEIL),
-        DELETED_ACCOUNTS_COLLECTION,
-        ELTERNTEIL
-      );
+      const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
 
       await assertFails(getDoc(eigener));
       await assertFails(deleteDoc(eigener));
-      await assertFails(
-        setDoc(doc(db(ANDERES), DELETED_ACCOUNTS_COLLECTION, ANDERES), {})
-      );
+      await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
     });
   });
 
   describe('what it holds', () => {
     it('takes a document with only the version, Teams or Kinder', async () => {
-      await assertSucceeds(speichern({ version: 2 }));
-      await assertSucceeds(speichern({ version: 2, teams: { 313036: 1 } }));
-      await assertSucceeds(speichern({ version: 2, kinder: {} }));
+      await assertSucceeds(speichern({ version: 3 }));
+      await assertSucceeds(speichern({ version: 3, teams: { 313036: 1 } }));
+      await assertSucceeds(speichern({ version: 3, children: {} }));
       await assertSucceeds(speichern(GUELTIG));
     });
 
@@ -350,9 +359,9 @@ describe('the Auswahl document', () => {
 
       await assertSucceeds(
         speichern({
-          version: 2,
-          kinder: {
-            4711: { seit: 1, spitzname: familie.repeat(SPITZNAME_LAENGE) },
+          version: 3,
+          children: {
+            4711: { since: 1, nickname: familie.repeat(SPITZNAME_LAENGE) },
           },
         })
       );
@@ -362,20 +371,20 @@ describe('the Auswahl document', () => {
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
       await assertSucceeds(
-        setDoc(eigene, { version: 2, teams: teamsVon(TEAMS_HOECHSTENS) })
+        setDoc(eigene, { version: 3, teams: teamsVon(TEAMS_HOECHSTENS) })
       );
       await assertSucceeds(
-        updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS) })
+        updateDoc(eigene, { children: volleKinder(KINDER_HOECHSTENS) })
       );
       await assertSucceeds(
         updateDoc(eigene, { teams: teamsVon(TEAMS_HOECHSTENS - 1) })
       );
       await assertSucceeds(
-        updateDoc(eigene, { kinder: volleKinder(KINDER_HOECHSTENS - 1) })
+        updateDoc(eigene, { children: volleKinder(KINDER_HOECHSTENS - 1) })
       );
       await assertSucceeds(
         updateDoc(eigene, {
-          vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS),
+          clubColors: volleVereinsfarben(VEREINE_HOECHSTENS),
         })
       );
     });
@@ -383,8 +392,8 @@ describe('the Auswahl document', () => {
     it('takes a full map of Vereinsfarben in the write that creates it', async () => {
       await assertSucceeds(
         speichern({
-          version: 2,
-          vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS),
+          version: 3,
+          clubColors: volleVereinsfarben(VEREINE_HOECHSTENS),
         })
       );
     });
@@ -392,7 +401,7 @@ describe('the Auswahl document', () => {
     it("takes a Verein's colours set and changed entry by entry, as the app writes them", async () => {
       await vorhanden(ELTERNTEIL, {
         ...GUELTIG,
-        vereinsfarben: volleVereinsfarben(VEREINE_HOECHSTENS - 1),
+        clubColors: volleVereinsfarben(VEREINE_HOECHSTENS - 1),
       });
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
@@ -400,8 +409,8 @@ describe('the Auswahl document', () => {
         setDoc(
           eigene,
           {
-            version: 2,
-            vereinsfarben: { 4242: '#c8102e,#1d4ed8' },
+            version: 3,
+            clubColors: { 4242: '#c8102e,#1d4ed8' },
           },
           { merge: true }
         )
@@ -410,8 +419,8 @@ describe('the Auswahl document', () => {
         setDoc(
           eigene,
           {
-            version: 2,
-            vereinsfarben: {
+            version: 3,
+            clubColors: {
               4242: '#007a3d',
             },
           },
@@ -419,26 +428,26 @@ describe('the Auswahl document', () => {
         )
       );
       await assertSucceeds(
-        updateDoc(eigene, { 'vereinsfarben.4242': deleteField() })
+        updateDoc(eigene, { 'clubColors.4242': deleteField() })
       );
     });
 
     it('takes a change of single entries, as the app writes them', async () => {
       await vorhanden(ELTERNTEIL, {
-        version: 2,
+        version: 3,
         teams: teamsVon(TEAMS_HOECHSTENS - 1),
-        kinder: volleKinder(KINDER_HOECHSTENS - 1),
+        children: volleKinder(KINDER_HOECHSTENS - 1),
       });
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
       await assertSucceeds(
-        setDoc(eigene, { version: 2, teams: { 313036: 9 } }, { merge: true })
+        setDoc(eigene, { version: 3, teams: { 313036: 9 } }, { merge: true })
       );
       await assertSucceeds(
-        updateDoc(eigene, { 'kinder.4711': { seit: 9, spitzname: 'Mimi' } })
+        updateDoc(eigene, { 'children.4711': { since: 9, nickname: 'Mimi' } })
       );
       await assertSucceeds(
-        updateDoc(eigene, { 'kinder.4711.spitzname': 'Mi' })
+        updateDoc(eigene, { 'children.4711.nickname': 'Mi' })
       );
       await assertSucceeds(
         updateDoc(eigene, { 'teams.313036': deleteField() })
@@ -447,14 +456,14 @@ describe('the Auswahl document', () => {
 
     it('refuses an entry merged past the cap, rather than cutting it', async () => {
       await vorhanden(ELTERNTEIL, {
-        version: 2,
+        version: 3,
         teams: teamsVon(TEAMS_HOECHSTENS),
       });
 
       await assertFails(
         setDoc(
           auswahlVon(db(ELTERNTEIL), ELTERNTEIL),
-          { version: 2, teams: { 313036: 9 } },
+          { version: 3, teams: { 313036: 9 } },
           { merge: true }
         )
       );
@@ -462,30 +471,32 @@ describe('the Auswahl document', () => {
 
     it('takes ids up to 15 digits, every DBB id', async () => {
       await assertSucceeds(
-        speichern({ version: 2, teams: { '999999999999999': 1 } })
+        speichern({ version: 3, teams: { '999999999999999': 1 } })
       );
     });
 
     it('lets a map over its cap, as stored earlier, shrink one entry at a time', async () => {
       await vorhanden(ELTERNTEIL, {
-        version: 2,
+        version: 3,
         teams: teamsVon(TEAMS_HOECHSTENS + 2),
-        kinder: kinderOhneNamen(KINDER_HOECHSTENS + 1),
+        children: kinderOhneNamen(KINDER_HOECHSTENS + 1),
       });
       const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
       await assertSucceeds(updateDoc(eigene, { 'teams.100': deleteField() }));
-      await assertSucceeds(updateDoc(eigene, { 'kinder.100': deleteField() }));
+      await assertSucceeds(
+        updateDoc(eigene, { 'children.100': deleteField() })
+      );
       await assertFails(updateDoc(eigene, { 'teams.999999': 1 }));
     });
 
     it('refuses a Spitzname for a Kind no longer marked', async () => {
-      await vorhanden(ELTERNTEIL, { version: 2, kinder: {} });
+      await vorhanden(ELTERNTEIL, { version: 3, children: {} });
 
       await assertFails(
         setDoc(
           auswahlVon(db(ELTERNTEIL), ELTERNTEIL),
-          { version: 2, kinder: { 4711: { spitzname: 'Mimi' } } },
+          { version: 3, children: { 4711: { nickname: 'Mimi' } } },
           { merge: true }
         )
       );
@@ -506,8 +517,8 @@ describe('the Auswahl document', () => {
 
     it.each([
       ['Teams', { 'teams.313036': 'Mimi Muster' }],
-      ['Kinder', { 'kinder.4711.vorname': 'Mimi' }],
-      ['Vereinsfarben', { 'vereinsfarben.4242': 'rot' }],
+      ['Kinder', { 'children.4711.vorname': 'Mimi' }],
+      ['Vereinsfarben', { 'clubColors.4242': 'rot' }],
     ])('refuses to change one map into invalid %s', async (_, aenderung) => {
       await vorhanden(ELTERNTEIL);
 
@@ -515,5 +526,58 @@ describe('the Auswahl document', () => {
         updateDoc(auswahlVon(db(ELTERNTEIL), ELTERNTEIL), aenderung)
       );
     });
+  });
+});
+
+// the selections of versions 1 and 2 (#2966): the app moves one into
+// `selections/{uid}` when the account is opened, then deletes it
+describe('the legacy Auswahl document', () => {
+  const LEGACY = {
+    version: 2,
+    teams: { 313036: 1 },
+    kinder: { 4711: { seit: 2, spitzname: 'Mimi' } },
+  };
+  const legacyVon = (firestore: Firestore, uid: string) =>
+    doc(firestore, LEGACY_CHOICES_COLLECTION, uid);
+  const legacyVorhanden = (uid: string) =>
+    ohneRegeln(env, (firestore) => setDoc(legacyVon(firestore, uid), LEGACY));
+
+  it('lets the owner read and delete it', async () => {
+    await legacyVorhanden(ELTERNTEIL);
+    const eigene = legacyVon(db(ELTERNTEIL), ELTERNTEIL);
+
+    await assertSucceeds(getDoc(eigene));
+    await assertSucceeds(deleteDoc(eigene));
+  });
+
+  it('lets the owner read it where there is none', async () => {
+    await assertSucceeds(getDoc(legacyVon(db(ELTERNTEIL), ELTERNTEIL)));
+  });
+
+  it('lets nobody create or change it, as the app of version 2 would', async () => {
+    const eigene = legacyVon(db(ELTERNTEIL), ELTERNTEIL);
+
+    await assertFails(setDoc(eigene, LEGACY));
+    await legacyVorhanden(ELTERNTEIL);
+    await assertFails(updateDoc(eigene, { teams: { 313036: 1, 201500: 2 } }));
+  });
+
+  it('lets nobody else near it', async () => {
+    await legacyVorhanden(ELTERNTEIL);
+    const fremde = legacyVon(db(ANDERES), ELTERNTEIL);
+
+    await assertFails(getDoc(fremde));
+    await assertFails(deleteDoc(fremde));
+  });
+
+  it('refuses the owner once the account is deleted', async () => {
+    await legacyVorhanden(ELTERNTEIL);
+    await ohneRegeln(env, (firestore) =>
+      setDoc(doc(firestore, DELETED_ACCOUNTS_COLLECTION, ELTERNTEIL), {
+        expireAt: new Date(),
+      })
+    );
+
+    await assertFails(getDoc(legacyVon(db(ELTERNTEIL), ELTERNTEIL)));
   });
 });

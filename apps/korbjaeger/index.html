@@ -11,11 +11,15 @@
     <meta name="color-scheme" content="light dark" />
     <!--
       The look chosen in the settings, before the first paint, so a reload
-      never flashes the other one (ThemeService, src/app/darstellung/).
+      never flashes the other one (ThemeService, src/app/darstellung/). The
+      second key is the one before #2966, which the start moves
+      (src/app/legacy-device-keys.ts) only after this ran.
     -->
     <script>
       try {
-        var t = localStorage.getItem("korbjaeger-darstellung");
+        var t =
+          localStorage.getItem("korbjaeger-theme") ||
+          localStorage.getItem("korbjaeger-darstellung");
         if (t === "light" || t === "dark") {
           document.documentElement.setAttribute("data-theme", t);
         }
