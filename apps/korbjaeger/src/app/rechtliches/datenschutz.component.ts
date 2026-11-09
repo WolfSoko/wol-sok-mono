@@ -8,6 +8,11 @@ import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
 import { REGIONS } from '../../shared/regions';
 import { SITE_HOST, SITE_URL } from '../../shared/site';
 import {
+  DELETION_RETRY_DAYS,
+  TOMBSTONE_DAYS,
+  TTL_DELETION_DAYS,
+} from '@wolsok/feat-shared-korbjaeger-account';
+import {
   AUSWAHL_GRENZEN,
   SPITZNAME_LAENGE,
 } from '@wolsok/feat-korbjaeger-auswahl';
@@ -16,6 +21,7 @@ import {
   MAX_ALTER_TAGE,
 } from '../basketball-data/letzte-antworten';
 import { DbbLinkComponent } from './dbb-link.component';
+import { germanDays } from './german-days';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
 /**
@@ -48,4 +54,10 @@ export class DatenschutzComponent {
     tage: MAX_ALTER_TAGE,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
+  /** How long section 6 says the server retries and keeps a tombstone. */
+  protected readonly loeschen = {
+    wiederholung: germanDays(DELETION_RETRY_DAYS),
+    grabstein: germanDays(TOMBSTONE_DAYS),
+    ttl: germanDays(TTL_DELETION_DAYS, { further: true }),
+  } as const;
 }
