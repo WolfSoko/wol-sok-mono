@@ -51,6 +51,7 @@ const IRGENDWANN = expect.any(Number);
 const MTV_WASBUETTEL: TeamId = 313036;
 const MTV_GIFHORN: TeamId = 201500;
 const SV_GROSS_OESINGEN: TeamId = 201765;
+const TSV_MEINE: TeamId = 201234;
 
 /** Vereine by their DBB id, of invented clubs. */
 const VEREIN_ROT: VereinId = 4242;
@@ -145,6 +146,95 @@ export function auswahlVertrag(
       const nachher = await speicher.oeffnen();
 
       expect(nachher.teams()).toEqual([MTV_WASBUETTEL]);
+    });
+
+    describe('following a Team again at the place it was unfollowed from', () => {
+      it('puts it back between the same Teams', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+        await auswahl.folgen(SV_GROSS_OESINGEN);
+        await auswahl.folgen(MTV_GIFHORN);
+
+        const platz = await auswahl.entfolgen(SV_GROSS_OESINGEN);
+        await auswahl.folgen(SV_GROSS_OESINGEN, platz);
+
+        expect(auswahl.teams()).toEqual([
+          MTV_WASBUETTEL,
+          SV_GROSS_OESINGEN,
+          MTV_GIFHORN,
+        ]);
+        const nachher = await speicher.oeffnen();
+        expect(nachher.teams()).toEqual([
+          MTV_WASBUETTEL,
+          SV_GROSS_OESINGEN,
+          MTV_GIFHORN,
+        ]);
+      });
+
+      it('keeps a Team followed meanwhile after the others', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+        await auswahl.folgen(SV_GROSS_OESINGEN);
+        await auswahl.folgen(MTV_GIFHORN);
+
+        const platz = await auswahl.entfolgen(SV_GROSS_OESINGEN);
+        await auswahl.folgen(TSV_MEINE);
+        await auswahl.folgen(SV_GROSS_OESINGEN, platz);
+
+        const erwartet = [
+          MTV_WASBUETTEL,
+          SV_GROSS_OESINGEN,
+          MTV_GIFHORN,
+          TSV_MEINE,
+        ];
+        expect(auswahl.teams()).toEqual(erwartet);
+        expect((await speicher.oeffnen()).teams()).toEqual(erwartet);
+      });
+
+      it('puts a Team just followed back at the end, where it was', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+        await auswahl.folgen(MTV_GIFHORN);
+
+        const platz = await auswahl.entfolgen(MTV_GIFHORN);
+        await auswahl.folgen(MTV_GIFHORN, platz);
+
+        expect(platz).toBeDefined();
+        expect(auswahl.teams()).toEqual([MTV_WASBUETTEL, MTV_GIFHORN]);
+      });
+
+      it('gives no place for a Team it does not follow', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+
+        expect(await auswahl.entfolgen(MTV_GIFHORN)).toBeUndefined();
+      });
+
+      it('changes nothing for a Team followed again meanwhile', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+        await auswahl.folgen(MTV_GIFHORN);
+        const platz = await auswahl.entfolgen(MTV_WASBUETTEL);
+        await auswahl.folgen(MTV_WASBUETTEL);
+
+        await auswahl.folgen(MTV_WASBUETTEL, platz);
+
+        expect(auswahl.teams()).toEqual([MTV_GIFHORN, MTV_WASBUETTEL]);
+      });
+
+      it('follows at the end again without the place', async () => {
+        const auswahl = await speicher.oeffnen();
+        await auswahl.folgen(MTV_WASBUETTEL);
+        await auswahl.folgen(MTV_GIFHORN);
+
+        await auswahl.entfolgen(MTV_WASBUETTEL);
+        await auswahl.folgen(MTV_WASBUETTEL);
+
+        expect((await speicher.oeffnen()).teams()).toEqual([
+          MTV_GIFHORN,
+          MTV_WASBUETTEL,
+        ]);
+      });
     });
 
     it("keeps another instance's follow when it follows itself", async () => {

@@ -61,6 +61,16 @@ describe('NachEntfolgen', () => {
     expect(document.activeElement?.textContent).toBe('Meine Teams');
   });
 
+  it('follows the Team again at the place it had', async () => {
+    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const { nachEntfolgen, leisten } = await render(fakeAuswahl({ folgen }));
+
+    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel', { seit: 5 });
+    await (await leisten.getHarness(MatSnackBarHarness)).dismissWithAction();
+
+    expect(folgen).toHaveBeenCalledWith(313036, { seit: 5 });
+  });
+
   it('takes the undo back once another store holds the choices (signed in or out elsewhere)', async () => {
     const quelle = signal<object>({ art: 'konto' });
     const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
