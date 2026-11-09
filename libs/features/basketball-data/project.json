@@ -1,0 +1,25 @@
+{
+  "name": "feat-shared-basketball-data",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/basketball-data/src",
+  "projectType": "library",
+  "tags": ["feat-shared"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.cjs",
+        "{workspaceRoot}/jest.config.ts"
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/basketball-data"],
+      "options": {
+        "jestConfig": "libs/features/basketball-data/jest.config.ts",
+        "codeCoverage": true,
+        "tsConfig": "libs/features/basketball-data/tsconfig.spec.json"
+      }
+    },
+    "typecheck-specs": {}
+  }
+}

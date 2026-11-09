@@ -1,0 +1,540 @@
+{
+  "timestamp": "2026-11-08T22:05:21+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "wam": {
+      "token": "0",
+      "verbandIds": [7],
+      "gebietIds": [],
+      "ligatypIds": [],
+      "akgGeschlechtIds": [],
+      "altersklasseIds": [],
+      "spielklasseIds": [],
+      "sortBy": 1
+    },
+    "verbaende": [
+      {
+        "id": 100,
+        "label": "Bundesligen",
+        "hits": 48
+      },
+      {
+        "id": 29,
+        "label": "Deutsche Meisterschaften",
+        "hits": 76
+      },
+      {
+        "id": 40,
+        "label": "Deutscher Rollstuhlbasketball",
+        "hits": 21
+      },
+      {
+        "id": 30,
+        "label": "Regionalliga Nord",
+        "hits": 8
+      },
+      {
+        "id": 32,
+        "label": "Regionalliga Südost",
+        "hits": 14
+      },
+      {
+        "id": 31,
+        "label": "Regionalliga Südwest",
+        "hits": 24
+      },
+      {
+        "id": 33,
+        "label": "Regionalliga West",
+        "hits": 17
+      },
+      {
+        "id": 1,
+        "label": "Baden-Württemberg",
+        "hits": 280
+      },
+      {
+        "id": 2,
+        "label": "Bayern",
+        "hits": 392
+      },
+      {
+        "id": 3,
+        "label": "Berlin",
+        "hits": 101
+      },
+      {
+        "id": 14,
+        "label": "Brandenburg",
+        "hits": 36
+      },
+      {
+        "id": 4,
+        "label": "Bremen",
+        "hits": 41
+      },
+      {
+        "id": 5,
+        "label": "Hamburg",
+        "hits": 74
+      },
+      {
+        "id": 6,
+        "label": "Hessen",
+        "hits": 130
+      },
+      {
+        "id": 12,
+        "label": "Mecklenburg-Vorpommern",
+        "hits": 22
+      },
+      {
+        "id": 7,
+        "label": "Niedersachsen",
+        "hits": 252
+      },
+      {
+        "id": 11,
+        "label": "Nordrhein-Westfalen",
+        "hits": 338
+      },
+      {
+        "id": 8,
+        "label": "Rheinland-Pfalz",
+        "hits": 96
+      },
+      {
+        "id": 9,
+        "label": "Saarland",
+        "hits": 28
+      },
+      {
+        "id": 15,
+        "label": "Sachsen",
+        "hits": 125
+      },
+      {
+        "id": 13,
+        "label": "Sachsen-Anhalt",
+        "hits": 75
+      },
+      {
+        "id": 10,
+        "label": "Schleswig-Holstein",
+        "hits": 54
+      },
+      {
+        "id": 16,
+        "label": "Thüringen",
+        "hits": 68
+      }
+    ],
+    "gebiete": [
+      {
+        "id": "_",
+        "bezirk": null,
+        "kreis": null,
+        "hits": 83
+      },
+      {
+        "id": "98_",
+        "bezirk": "Region Braunschweig",
+        "kreis": null,
+        "hits": 39
+      },
+      {
+        "id": "99_",
+        "bezirk": "Region Bremen",
+        "kreis": null,
+        "hits": 1
+      }
+    ],
+    "ligatypen": [
+      {
+        "id": 1,
+        "label": "Ligaspielbetrieb",
+        "hits": 213
+      },
+      {
+        "id": 2,
+        "label": "Pokalrunde",
+        "hits": 11
+      },
+      {
+        "id": 3,
+        "label": "Auf-/Abstiegsspiele",
+        "hits": 1
+      }
+    ],
+    "agkGeschlechtList": [
+      {
+        "id": "3_1",
+        "akg": "Senioren",
+        "geschlecht": "m",
+        "hits": 53
+      },
+      {
+        "id": "3_2",
+        "akg": "Senioren",
+        "geschlecht": "w",
+        "hits": 21
+      },
+      {
+        "id": "2_1",
+        "akg": "Jugend",
+        "geschlecht": "m",
+        "hits": 142
+      },
+      {
+        "id": "2_2",
+        "akg": "Jugend",
+        "geschlecht": "w",
+        "hits": 52
+      }
+    ],
+    "altersklassen": [
+      {
+        "id": 1,
+        "label": "Senioren",
+        "hits": 68
+      },
+      {
+        "id": 32,
+        "label": "Ü35",
+        "hits": 2
+      },
+      {
+        "id": 40,
+        "label": "Ü40",
+        "hits": 2
+      },
+      {
+        "id": 20,
+        "label": "U20",
+        "hits": 4
+      },
+      {
+        "id": 18,
+        "label": "U18",
+        "hits": 24
+      },
+      {
+        "id": 16,
+        "label": "U16",
+        "hits": 45
+      },
+      {
+        "id": 14,
+        "label": "U14",
+        "hits": 40
+      },
+      {
+        "id": 12,
+        "label": "U12",
+        "hits": 34
+      },
+      {
+        "id": 11,
+        "label": "U11",
+        "hits": 8
+      },
+      {
+        "id": 10,
+        "label": "U10",
+        "hits": 20
+      },
+      {
+        "id": 9,
+        "label": "U9",
+        "hits": 3
+      },
+      {
+        "id": 8,
+        "label": "U8",
+        "hits": 2
+      }
+    ],
+    "spielklassen": [
+      {
+        "id": 710,
+        "label": "Oberliga",
+        "hits": 6
+      },
+      {
+        "id": 711,
+        "label": "Landesliga",
+        "hits": 24
+      },
+      {
+        "id": 722,
+        "label": "Regionsliga",
+        "hits": 79
+      }
+    ],
+    "ligaListe": {
+      "startAtIndex": 0,
+      "ligen": [
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54136,
+          "liganame": "Oberliga Herren Ost",
+          "liganr": 4001,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54137,
+          "liganame": "Oberliga Herren West",
+          "liganr": 4002,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54138,
+          "liganame": "Oberliga Damen Ost",
+          "liganr": 4003,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54139,
+          "liganame": "Oberliga Damen West",
+          "liganr": 4004,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 2,
+          "geschlecht": "weiblich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55171,
+          "liganame": "Oberliga männlich U18",
+          "liganr": 1131,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U18",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 55173,
+          "liganame": "Oberliga männlich U16",
+          "liganr": 1133,
+          "skName": "Oberliga",
+          "skNameSmall": "OL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "U16",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54140,
+          "liganame": "Landesliga Herren 1",
+          "liganr": 4101,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54141,
+          "liganame": "Landesliga Herren 2",
+          "liganr": 4102,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54142,
+          "liganame": "Landesliga Herren 3",
+          "liganr": 4103,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        },
+        {
+          "seasonId": null,
+          "seasonName": null,
+          "actualMatchDay": null,
+          "ligaId": 54143,
+          "liganame": "Landesliga Herren 4",
+          "liganr": 4104,
+          "skName": "Landesliga",
+          "skNameSmall": "LL",
+          "skEbeneId": 0,
+          "skEbeneName": "Verband",
+          "akName": "Senioren",
+          "geschlechtId": 1,
+          "geschlecht": "männlich",
+          "verbandId": 7,
+          "verbandName": "Niedersachsen",
+          "bezirknr": null,
+          "bezirkName": null,
+          "kreisnr": null,
+          "kreisname": null,
+          "statisticType": null,
+          "vorabliga": false,
+          "tableExists": null,
+          "crossTableExists": null
+        }
+      ],
+      "hasMoreData": true,
+      "size": 10
+    }
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

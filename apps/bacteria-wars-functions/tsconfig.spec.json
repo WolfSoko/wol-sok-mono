@@ -10,6 +10,7 @@
     "src/**/*.spec.ts",
     "src/**/*.emulator.ts",
     "src/testing/**/*.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    "deploy/**/*.spec.ts"
   ]
 }

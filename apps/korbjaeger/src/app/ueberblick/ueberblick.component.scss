@@ -1,0 +1,19 @@
+.ueberblick {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.leer {
+  margin-block-end: 1rem;
+}
+
+.hinweis {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.ueberblick + h3 {
+  margin-block-start: 1.5rem;
+}

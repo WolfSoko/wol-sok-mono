@@ -13,7 +13,17 @@
         "jestConfig": "apps/nx-aws-cdk-v2-e2e/jest.config.ts",
         "runInBand": true,
         "passWithNoTests": false
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": false
+        }
       }
+    },
+    "e2e-ci": {
+      "executor": "nx:noop",
+      "dependsOn": ["e2e"]
     }
   }
 }

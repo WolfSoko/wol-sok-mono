@@ -10,7 +10,8 @@ import { I18nService } from '../i18n/i18n.service';
 import {
   BALANCE_VERSION,
   GPU_INT_REPLAY_VERSION,
-  IntSimulation,
+  GridWar,
+  intSimulation,
   type MatchRun,
   type Replay,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -48,12 +49,12 @@ function gpuIntReplay(): Replay {
 
 /** A GL painter whose integer passes are stood in for by their CPU twin. */
 function fakeGpu(
-  made: (simulation: IntSimulation) => void = () => undefined
+  made: (simulation: GridWar) => void = () => undefined
 ): GpuIntPainter & { createSimulation: jest.Mock } {
   return {
     createSimulation: jest.fn((balance, random, options) => {
-      const simulation = new IntSimulation(balance, random, options.matchSeed);
-      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      const simulation = intSimulation(balance, random, options.matchSeed);
+      Object.defineProperty(simulation, 'variant', { value: 'gpu-int' });
       made(simulation);
       return simulation as never;
     }),
@@ -132,7 +133,7 @@ describe('ReplayScene', () => {
 
   it('falls back to the CPU when the GPU does not set up, and asks it no more', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const broken = new IntSimulation({} as never, () => 0.5, 1);
+    const broken = intSimulation({} as never, () => 0.5, 1);
     const dispose = jest.spyOn(broken, 'dispose');
     jest.spyOn(broken, 'resize').mockImplementation(() => {
       throw new Error('Incomplete render target');
@@ -156,7 +157,7 @@ describe('ReplayScene', () => {
 
   it('falls back when the engine fails to set the GPU up, letting go of it', () => {
     const warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
-    const made: IntSimulation[] = [];
+    const made: GridWar[] = [];
     const failing = fakeGpu((simulation) => {
       jest.spyOn(simulation, 'init').mockImplementation(() => {
         throw new Error('Texture upload refused');

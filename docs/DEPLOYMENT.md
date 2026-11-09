@@ -140,6 +140,7 @@ git commit -m "feat(ws-thanos)!: change API structure"  # → 2.0.0
 
 - `pacetrainer` - Pace training app
 - `rollapolla-analog` - Rollapolla analog app
+- `korbjaeger` - Korbjäger, the basketball parents app
 
 ### Local Testing
 
@@ -171,6 +172,7 @@ The workflow:
 - `fourier-analysis-remote-cdk` - CDK stack for fourier analysis
 - `shader-examples-remote-cdk` - CDK stack for shader examples
 - `bacteria-game-remote-cdk` - DNS record of bacteria-wars.wolsok.de (the game is on Firebase Hosting)
+- `korbjaeger-cdk` - DNS record of korb.wolsok.de (Korbjäger is on Firebase Hosting)
 
 ### Local Testing
 
@@ -429,6 +431,7 @@ The monorepo contains multiple applications with different deployment targets:
 | angular-examples        | GitHub Pages / S3   | Manual / CI  | https://angularexamples.wolsok.de |
 | pacetrainer             | Firebase Hosting    | Firebase CLI | TBD                               |
 | rollapolla-analog       | Firebase Hosting    | Firebase CLI | TBD                               |
+| korbjaeger              | Firebase Hosting    | Firebase CLI | https://korb.wolsok.de            |
 | fourier-analysis-remote | AWS CloudFront + S3 | AWS CDK      | TBD                               |
 | bacteria-game-remote    | AWS CloudFront + S3 | AWS CDK      | TBD                               |
 | shader-examples-remote  | AWS CloudFront + S3 | AWS CDK      | TBD                               |
@@ -453,6 +456,7 @@ The monorepo contains multiple applications with different deployment targets:
    Each Firebase project has its own config file:
    - `firebase.pacetrainer.json`
    - `firebase.rollapolla-analog.json`
+   - `firebase.korbjaeger.json`
 
 ### Deploying Pacetrainer
 

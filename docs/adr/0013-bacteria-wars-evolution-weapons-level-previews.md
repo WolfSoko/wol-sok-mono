@@ -30,8 +30,10 @@ The shared model is `state/evolution.ts`.
   five levels each, multiply a colony trait per level. Each level costs
   exponentially more than the one before (`geneLevelCost`: 2 strands
   times 1.6 per level, rounded - 2, 3, 5, 8, 13). They extend the
-  boss's `ColonyTraits` with `toughnessFactor`, `speedFactor` and
-  `weaponCooldownFactor`; absent traits are 1.
+  boss's `ColonyTraits` with `toughnessFactor` and `speedFactor`; absent
+  traits are 1. A weapon recharges in its own `cooldownSec`: no gene
+  shortens it (the unused `weaponCooldownFactor` was dropped in
+  [#2877](https://github.com/WolfSoko/wol-sok-mono/issues/2877)).
 - **Weapons** (`toxin-bomb`, `cryo-pulse`, `phage-strike`, `agar-bloom`,
   `biofilm-shield`) are bought with DNA. One is carried into a match and
   fired at the crosshair with a second button next to the boost. Their

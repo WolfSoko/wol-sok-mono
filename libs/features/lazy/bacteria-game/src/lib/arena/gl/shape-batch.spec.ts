@@ -16,6 +16,9 @@ import {
   ShapeBatch,
 } from './shape-batch';
 
+/** Where an instance keeps the alpha of its first and its second colour. */
+const COLOR_ALPHA_OFFSET = 7;
+const COLOR2_ALPHA_OFFSET = 11;
 /** Where an instance keeps its kind, and after it the parameters `p0` to `p2`. */
 const KIND_OFFSET = 12;
 const PARAMS_OFFSET = KIND_OFFSET + 1;
@@ -227,6 +230,25 @@ describe('pushForeground', () => {
       SHAPE.rect,
       SHAPE.ring,
     ]);
+  });
+
+  it('pushes a translucent crosshair with its alpha from 0 to 1', () => {
+    const batch = new ShapeBatch();
+
+    pushForeground(
+      batch,
+      [],
+      [{ x: 90, y: 50, color: [0, 0, 255, 51], boostLeft: 0.5 }],
+      BASE_UNIT
+    );
+
+    expect(kinds(batch)).toEqual([SHAPE.rect, SHAPE.rect, SHAPE.ring]);
+    for (let index = 0; index < batch.count; index++) {
+      const floats = instance(batch, index);
+      // Float32 storage: 51 / 255 is only nearly 0.2.
+      expect(floats[COLOR_ALPHA_OFFSET]).toBeCloseTo(0.2, 6);
+      expect(floats[COLOR2_ALPHA_OFFSET]).toBeCloseTo(0.2, 6);
+    }
   });
 
   describe('on a grid of two cells per base cell', () => {

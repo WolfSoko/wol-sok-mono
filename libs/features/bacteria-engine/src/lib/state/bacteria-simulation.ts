@@ -4,13 +4,7 @@ import {
   WEAPON_EFFECTS,
   WeaponId,
 } from './evolution';
-import {
-  actsOn,
-  anyCovers,
-  covers,
-  toughnessOf,
-  WeaponEffects,
-} from './weapon-effects';
+import { actsOn, anyCovers, covers, toughnessOf } from './weapon-effects';
 import {
   heatedAggression,
   mapZones,
@@ -26,16 +20,15 @@ import {
   PLAIN_TRAITS,
 } from './game-balance';
 import { clamp, Point } from './geometry';
-import { NutrientPellets } from './nutrient-pellets';
+import { ArenaFixtures } from './arena-fixtures';
 import {
   BlockCounts,
   ColonyLayer,
   ColonySummary,
   Simulation,
 } from './simulation';
-import { compareDynamicWalls, DynamicWall, GameMap, stampRect } from './maps';
+import { DynamicWall, GameMap, stampRect } from './maps';
 import { escapeReach } from './arena-size';
-import { getMap } from './game-maps';
 import { Cells } from './cells';
 import {
   createBacteriaBlob,
@@ -258,8 +251,7 @@ const NEIGHBOUR_Y = Int8Array.from(NEIGHBOURS, ([, dy]) => dy);
  * 5. movement - follow your player, but hunt nearby enemies
  */
 export class BacteriaSimulation implements Simulation {
-  public readonly kind = 'cpu';
-  public readonly ruleset = 'cpu';
+  public readonly variant = 'cpu';
   private readonly balance: GameBalance;
   private readonly random: () => number;
 
@@ -314,21 +306,14 @@ export class BacteriaSimulation implements Simulation {
   /** The summaries as of the last step, built when first asked for. */
   private colonySummaries: ColonySummary[] | null = null;
   private colonyBlocks: BlockCounts | null = null;
-  private readonly pellets: NutrientPellets;
-  /** Wall layout the match is fought on. */
-  private map: GameMap = getMap('corridors');
   /** Match time, which drives the gates and the sliding walls. */
   private elapsedSec = 0;
-  /** The moving walls and gates as of the current match time. */
-  private dynamicWalls: DynamicWall[] = [];
-  /** What the last step did, for the sound. */
-  private events: StepEvents = noEvents();
-  /** The weapons' effects - none at all in a plain match. */
-  private readonly weaponEffects = new WeaponEffects();
   /** The part of a step each colony's flagella have made up - see `paceSteps`. */
   private paces: number[] = [];
   /** Which effects act on each colony, by colony index - kept from step to step. */
   private readonly hits: WeaponHits[] = [];
+  /** The map, pellets, effects, moving walls and the tick's events. */
+  private readonly arena: ArenaFixtures;
 
   constructor(
     balance: GameBalance = gameBalance,
@@ -336,7 +321,7 @@ export class BacteriaSimulation implements Simulation {
   ) {
     this.balance = balance;
     this.random = random;
-    this.pellets = new NutrientPellets(balance, random);
+    this.arena = new ArenaFixtures(balance, random);
   }
 
   /**
@@ -345,10 +330,10 @@ export class BacteriaSimulation implements Simulation {
    * as after.
    */
   public setMap(map: GameMap): void {
-    if (this.map === map) {
+    if (this.arena.map === map) {
       return;
     }
-    this.map = map;
+    this.arena.setMap(map);
     this.stampWalls();
     this.reset();
   }
@@ -359,25 +344,25 @@ export class BacteriaSimulation implements Simulation {
 
   /** The nutrient pellets currently on the map, for rendering. */
   public getNutrients(): Nutrient[] {
-    return this.pellets.nutrients;
+    return this.arena.pellets.nutrients;
   }
 
   public getActiveEffects(): readonly ActiveEffect[] {
-    return this.weaponEffects.active;
+    return this.arena.weaponEffects.active;
   }
 
   public addEffect(effect: ActiveEffect): void {
-    this.weaponEffects.add(effect);
+    this.arena.weaponEffects.add(effect);
   }
 
   /** The moving walls and gates as they stand right now, for rendering. */
   public getDynamicWalls(): readonly DynamicWall[] {
-    return this.dynamicWalls;
+    return this.arena.dynamicWalls;
   }
 
   /** What happened during the last step. */
   public getEvents(): StepEvents {
-    return this.events;
+    return this.arena.events;
   }
 
   /** Count, energy, score and centre of mass of every colony. */
@@ -503,8 +488,8 @@ export class BacteriaSimulation implements Simulation {
     this.colonySummaries = null;
     this.colonyBlocks = null;
     this.elapsedSec = 0;
-    this.events = noEvents();
-    this.weaponEffects.clear();
+    this.arena.resetEvents();
+    this.arena.weaponEffects.clear();
     this.paces = this.colonies.map(() => 0);
     this.stampWalls();
     this.reset();
@@ -559,28 +544,26 @@ export class BacteriaSimulation implements Simulation {
   /** Rebuilds the pristine grid: empty everywhere but inside the walls. */
   private stampWalls(): void {
     if (this.width === 0 || this.height === 0) {
-      this.dynamicWalls = [];
+      this.arena.clearWalls();
       return;
     }
     this.staticOwner.fill(EMPTY_CELL);
     this.zone.fill(0);
-    const zones = mapZones(this.map, this.width, this.height);
+    const zones = mapZones(this.arena.map, this.width, this.height);
     stampZones(this.zone, this.width, this.height, zones);
     this.hasZones = zones.length > 0;
     this.hasHill = zones.some(({ kind }) => kind === 'hill');
-    for (const wall of this.map.createWalls(this.width, this.height)) {
+    for (const wall of this.arena.map.createWalls(this.width, this.height)) {
       stampRect(this.staticOwner, this.width, this.height, wall, WALL_CELL);
     }
-    this.dynamicWalls =
-      this.map.createDynamicWalls?.(this.width, this.height, this.elapsedSec) ??
-      [];
+    this.arena.startWalls(this.width, this.height, this.elapsedSec);
     this.stampDynamicWalls();
   }
 
   /** The static walls plus whatever moving wall blocks right now. */
   private stampDynamicWalls(): void {
     this.baseOwner.set(this.staticOwner);
-    for (const wall of this.dynamicWalls) {
+    for (const wall of this.arena.dynamicWalls) {
       if (wall.solid) {
         stampRect(this.baseOwner, this.width, this.height, wall, WALL_CELL);
       }
@@ -593,20 +576,7 @@ export class BacteriaSimulation implements Simulation {
    * there is none - so a gate is worth getting out of before it closes.
    */
   private advanceDynamicWalls(): void {
-    if (this.map.createDynamicWalls == null) {
-      return;
-    }
-    const previous = this.dynamicWalls;
-    const next = this.map.createDynamicWalls(
-      this.width,
-      this.height,
-      this.elapsedSec
-    );
-    this.dynamicWalls = next;
-    const { changed, closed, warned } = compareDynamicWalls(previous, next);
-    this.events.gatesClosed += closed;
-    this.events.gatesWarned += warned;
-    if (!changed) {
+    if (!this.arena.advanceWalls(this.width, this.height, this.elapsedSec)) {
       return;
     }
     this.stampDynamicWalls();
@@ -658,13 +628,13 @@ export class BacteriaSimulation implements Simulation {
       cells.y[i] = Math.floor(cell / this.width);
       this.owner[cell] = victim;
     }
-    this.events.crushed += crushed.length;
+    this.arena.events.crushed += crushed.length;
     this.compact(crushed);
   }
 
   /** The closest free cell within a few steps, or -1 when it is all packed. */
   private findEscape(x: number, y: number): number {
-    const reach = escapeReach(this.width, this.map.size);
+    const reach = escapeReach(this.width, this.arena.map.size);
     for (let radius = 1; radius <= reach; radius++) {
       for (let dy = -radius; dy <= radius; dy++) {
         for (let dx = -radius; dx <= radius; dx++) {
@@ -688,7 +658,7 @@ export class BacteriaSimulation implements Simulation {
 
   /** Drops all nutrients and respawns a fresh set. */
   public reset(): void {
-    this.pellets.reset(this.width, this.height, this.isOpenCell);
+    this.arena.pellets.reset(this.width, this.height, this.isOpenCell);
     if (this.width === 0 || this.height === 0) {
       return;
     }
@@ -702,7 +672,7 @@ export class BacteriaSimulation implements Simulation {
   public step(players: Player[], deltaTimeSec: number): void {
     // Reset before the guard: a frame that does nothing must not report the
     // last frame's events again.
-    this.events = noEvents();
+    this.arena.resetEvents();
     this.colonySummaries = null;
     this.colonyBlocks = null;
     if (this.colonies.length === 0 || this.width === 0 || deltaTimeSec <= 0) {
@@ -711,7 +681,7 @@ export class BacteriaSimulation implements Simulation {
 
     this.elapsedSec += deltaTimeSec;
     this.advanceDynamicWalls();
-    const effects = this.weaponEffects.begin();
+    const effects = this.arena.weaponEffects.begin();
 
     const targets = this.colonies.map(
       (colony) =>
@@ -745,7 +715,7 @@ export class BacteriaSimulation implements Simulation {
     // handled first has an edge - shuffle to keep the colonies symmetric.
     this.divide(this.shuffled(), deltaTimeSec, hits);
     this.move(this.shuffled(), targets, deltaTimeSec, hits);
-    this.weaponEffects.end(deltaTimeSec);
+    this.arena.weaponEffects.end(deltaTimeSec);
 
     for (const colony of this.colonies) {
       let totalEnergy = 0;
@@ -829,7 +799,7 @@ export class BacteriaSimulation implements Simulation {
         this.colonies[winner].cells.push(x, y, cells.energy[i]);
         this.colonies[winner].captured++;
         colony.lost++;
-        this.events.captures++;
+        this.arena.events.captures++;
         this.owner[y * this.width + x] = winner;
         this.leaveFood(x, y, winner);
       }
@@ -979,7 +949,7 @@ export class BacteriaSimulation implements Simulation {
     this.nutrientBonus.fill(0);
     const { nutrientRadius, nutrientDrainPerSec } = this.balance;
     const gain = nutrientDrainPerSec * deltaTimeSec;
-    const nutrients = this.pellets.nutrients;
+    const nutrients = this.arena.pellets.nutrients;
     if (this.eaters.length !== this.colonies.length) {
       this.eaters = new Int32Array(this.colonies.length);
     }
@@ -988,7 +958,7 @@ export class BacteriaSimulation implements Simulation {
     for (let n = 0; n < nutrients.length; n++) {
       const nutrient = nutrients[n];
       if (nutrient.amount <= 0) {
-        this.pellets.tickEmpty(n, deltaTimeSec);
+        this.arena.pellets.tickEmpty(n, deltaTimeSec);
         continue;
       }
 
@@ -1009,9 +979,9 @@ export class BacteriaSimulation implements Simulation {
         }
       }
 
-      const eaten = this.pellets.drain(n, eaters, gain);
+      const eaten = this.arena.pellets.drain(n, eaters, gain);
       if (eaten !== null) {
-        this.events.pelletsEaten++;
+        this.arena.events.pelletsEaten++;
         if (eaten.by !== null) {
           this.colonies[eaten.by].pellets++;
         }
@@ -1180,7 +1150,7 @@ export class BacteriaSimulation implements Simulation {
       return;
     }
     const { captureEnergy, consumeChance } = this.balance;
-    this.events.captures += captures.length;
+    this.arena.events.captures += captures.length;
 
     for (const capture of captures) {
       const colony = this.colonies[capture.winner];

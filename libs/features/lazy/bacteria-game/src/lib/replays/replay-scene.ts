@@ -27,7 +27,7 @@ export type GpuIntPainter = Pick<GlArenaPainter, 'createSimulation'>;
 
 /**
  * The integer passes on `gpu`'s GPU for a `gpu-int` replay (ADR 0015), the
- * same war as `IntSimulation`, much faster - sized at once, so that a GPU
+ * same war as `intSimulation`, much faster - sized at once, so that a GPU
  * failing to set up throws while the engine is built, not on the first
  * tick, and `replayRun` falls back to the CPU.
  */

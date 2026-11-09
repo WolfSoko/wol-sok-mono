@@ -285,7 +285,7 @@ export class OnlineMatchService {
    * The ruleset the next match plays by: `gpu-int` when both devices
    * offered it in their hellos, `cpu` else (ADR 0015) - the host starts it,
    * the guest checks it. A device whose GPU failed since plays its
-   * `gpu-int` matches on `IntSimulation`, so the ruleset still holds.
+   * `gpu-int` matches on `intSimulation`, so the ruleset still holds.
    */
   public agreedRuleset(): Ruleset {
     return agreedRuleset(this.ownOffers, this.peerOffers);

@@ -46,7 +46,7 @@ export class MatchAnalytics {
   public started(
     plan: MatchPlan,
     state: MatchState,
-    simulation: Pick<Simulation, 'kind' | 'ruleset'>
+    simulation: Pick<Simulation, 'variant'>
   ): void {
     this.left(state.timePassed);
     this.running = matchParams(plan, state, simulation);
@@ -107,7 +107,7 @@ export class MatchAnalytics {
 export function matchParams(
   plan: MatchPlan,
   state: MatchState,
-  simulation: Pick<Simulation, 'kind' | 'ruleset'>
+  simulation: Pick<Simulation, 'variant'>
 ): MatchParams {
   const kind = ANALYTICS_KIND[state.kind];
   return {
@@ -120,8 +120,7 @@ export function matchParams(
     ranked:
       state.ranked !== null ||
       (state.kind === 'endless' && state.endlessRanked !== null),
-    simulation: simulation.kind,
-    ruleset: simulation.ruleset ?? 'float',
+    simulation: simulation.variant,
   };
 }
 

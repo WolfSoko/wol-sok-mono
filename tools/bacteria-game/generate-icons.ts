@@ -17,7 +17,7 @@
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
-import { render, toIco } from '../icons/render-icons';
+import { render, svgPage, toIco } from '../icons/render-icons';
 import { BLUE, ColonyColors, DISH_DEFS, ORANGE } from './dish';
 
 const srcDir = resolve('apps/bacteria-game-remote/src');
@@ -286,15 +286,6 @@ function monochromeSvg(viewBox: string): string {
 `;
 }
 
-function iconPage(svg: string, size: number): string {
-  return `<!doctype html>
-<html><head><style>
-  html, body { margin: 0; }
-  svg { display: block; width: ${size}px; height: ${size}px; }
-</style></head>
-<body>${svg}</body></html>`;
-}
-
 /** Manifest icons (any and maskable share one picture) and the iOS icon. */
 const PNG_ICONS: Array<{ file: string; size: number }> = [
   { file: 'icon-192.png', size: 192 },
@@ -379,7 +370,7 @@ async function main(): Promise<void> {
     for (const { file, size } of PNG_ICONS) {
       await writeFile(
         join(iconsDir, file),
-        await render(page, iconPage(svg, size), size, size, true)
+        await render(page, svgPage(svg, size), size, size, true)
       );
       console.log(`wrote icons/${file}`);
     }
@@ -388,7 +379,7 @@ async function main(): Promise<void> {
     for (const size of FAVICON_SIZES) {
       favicons.push({
         size,
-        png: await render(page, iconPage(svg, size), size, size, true),
+        png: await render(page, svgPage(svg, size), size, size, true),
       });
     }
     await writeFile(join(srcDir, 'favicon.ico'), toIco(favicons));
@@ -401,7 +392,7 @@ async function main(): Promise<void> {
         await mkdir(densityDir, { recursive: true });
         await writeFile(
           join(densityDir, file),
-          await render(page, iconPage(svg, size), size, size, true)
+          await render(page, svgPage(svg, size), size, size, true)
         );
         console.log(`wrote android ${dir}-${density}/${file}`);
       }

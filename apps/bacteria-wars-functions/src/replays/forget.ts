@@ -4,6 +4,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { timestampMillis } from '../timestamps';
 import type { ErasureContext } from '../erasure/context';
 import { eraseListed } from '../erasure/erase-listed';
 import { settleAll } from '../settle';
@@ -62,10 +63,9 @@ export async function forgetReplay(
     if (data === undefined) {
       return 'absent';
     }
-    const createdAt: unknown = data['createdAt'];
     const forgettable: ForgettableReplay = {
       ...data,
-      createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : null,
+      createdAt: timestampMillis(data['createdAt']),
     };
     const changes = forgetChanges(forgettable, uid, now);
     if (changes === null) {

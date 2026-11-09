@@ -1,0 +1,64 @@
+@let team = karte();
+<mat-card appearance="outlined" data-qa="ueberblick-team">
+  <mat-card-header>
+    <mat-card-title>
+      <a [routerLink]="['/team', team.teamId]" data-qa="ueberblick-name">{{
+        name()
+      }}</a>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @switch (team.art) {
+      @case ("laedt") {
+        <mat-progress-bar
+          mode="indeterminate"
+          aria-label="Spiele werden geladen"
+        />
+      }
+      @case ("fehler") {
+        <p class="fehler" data-qa="ueberblick-fehler">{{ team.text }}</p>
+      }
+      @case ("geladen") {
+        <korb-stand data-qa="ueberblick-stand" [stand]="team.stand" />
+        @for (ausfall of team.ausfaelle; track ausfall.id) {
+          <korb-spiel-link
+            titel="Fällt aus"
+            [zeile]="ausfall"
+            data-qa="ueberblick-ausfall"
+          />
+        }
+        @if (team.naechstes; as naechstes) {
+          <korb-naechstes-spiel
+            [zeile]="naechstes"
+            [halle]="team.halle"
+            data-qa="ueberblick-naechstes"
+          />
+        }
+        @if (team.letztes; as letztes) {
+          <korb-spiel-link
+            class="anzeigetafel"
+            titel="Letztes Ergebnis"
+            [zeile]="letztes"
+            data-qa="ueberblick-letztes"
+          />
+        }
+        @if (team.saisonBeendet) {
+          <korb-saison-ende-hinweis
+            data-qa="ueberblick-saison-beendet"
+            [stand]="team.vereinsTeams"
+          />
+        }
+        @if (!team.naechstes && !team.letztes && team.ausfaelle.length === 0) {
+          <p>Noch keine Spiele in dieser Saison.</p>
+        }
+      }
+    }
+  </mat-card-content>
+  <mat-card-actions align="end" data-qa="ueberblick-aktionen">
+    <korb-team-folgen
+      [teamId]="team.teamId"
+      [teamName]="name()"
+      verschwindetNachEntfolgen
+    />
+  </mat-card-actions>
+</mat-card>

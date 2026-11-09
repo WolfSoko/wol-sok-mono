@@ -1,0 +1,262 @@
+{
+  "timestamp": "2026-11-08T20:10:39+0100",
+  "status": "0",
+  "message": "",
+  "data": {
+    "ligaData": {
+      "seasonId": 2026,
+      "seasonName": "2026/2027",
+      "actualMatchDay": {
+        "spieltag": 5,
+        "bezeichnung": "5. Spieltag"
+      },
+      "ligaId": 54862,
+      "liganame": "Regionsvorrunde Nord Braunschweig mu12",
+      "liganr": 42185,
+      "skName": "Regionsklasse",
+      "skNameSmall": "RKl",
+      "skEbeneId": 1,
+      "skEbeneName": "Bezirk",
+      "akName": "U12",
+      "geschlechtId": 1,
+      "geschlecht": "männlich",
+      "verbandId": 7,
+      "verbandName": "Niedersachsen",
+      "bezirknr": 10,
+      "bezirkName": "Region Braunschweig",
+      "kreisnr": null,
+      "kreisname": null,
+      "statisticType": 1,
+      "vorabliga": false,
+      "tableExists": true,
+      "crossTableExists": true
+    },
+    "matchId": 2861436,
+    "matchDay": 2,
+    "matchNo": 8504,
+    "kickoffDate": "2026-09-20",
+    "kickoffTime": "09:00",
+    "homeTeam": {
+      "seasonTeamId": 454493,
+      "teamCompetitionId": 454493,
+      "teamPermanentId": 313036,
+      "teamname": "MTV Wasbüttel -RST-",
+      "teamnameSmall": "WAS",
+      "clubId": 1837,
+      "verzicht": false
+    },
+    "guestTeam": {
+      "seasonTeamId": 454491,
+      "teamCompetitionId": 454491,
+      "teamPermanentId": 201500,
+      "teamname": "MTV Gifhorn",
+      "teamnameSmall": "GIF",
+      "clubId": 645,
+      "verzicht": false
+    },
+    "result": "78:47",
+    "ergebnisbestaetigt": false,
+    "statisticType": 1,
+    "verzicht": false,
+    "abgesagt": false,
+    "matchResult": null,
+    "matchInfo": {
+      "topPerformances": [
+        {
+          "performance": "Punkte",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Rebounds",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Assists",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Steals",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Blocked_Shots",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        },
+        {
+          "performance": "Effektivitaet",
+          "playerA": {
+            "playerId": 98301566,
+            "no": "26",
+            "person": {
+              "id": 94680732,
+              "vorname": "Hilka",
+              "nachname": "Kastanienbühl",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "playerB": {
+            "playerId": 94330919,
+            "no": "7",
+            "person": {
+              "id": 90479265,
+              "vorname": "Orvin",
+              "nachname": "Nesselbach",
+              "anonym": false
+            },
+            "anonym": false
+          },
+          "performanceA": 0,
+          "performanceB": 0
+        }
+      ],
+      "spielfeld": {
+        "id": 101077,
+        "bezeichnung": "Schulsporthalle",
+        "strasse": "Schulstr. 12",
+        "plz": "38553",
+        "ort": "Wasbüttel"
+      },
+      "srList": [
+        {
+          "rolle": {
+            "id": 1,
+            "name": "1. Schiedsrichter",
+            "kurzname": "SR1"
+          },
+          "personData": {
+            "id": 0,
+            "vorname": "***",
+            "nachname": "****",
+            "anonym": true
+          }
+        }
+      ]
+    },
+    "matchBoxscore": null,
+    "playByPlay": null,
+    "hasPlayByPlay": false
+  },
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

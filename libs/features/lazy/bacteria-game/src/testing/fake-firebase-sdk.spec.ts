@@ -36,6 +36,26 @@ describe('FakeFirebase', () => {
     });
   });
 
+  describe('addDoc', () => {
+    it('stores the document under an id of its own, as a logged set', async () => {
+      const commands = sdk.collection({}, 'adminCommands');
+
+      const ref = await sdk.addDoc(commands, { at: sdk.serverTimestamp() });
+
+      expect(ref).toMatchObject({ path: 'adminCommands/auto1', id: 'auto1' });
+      expect(fake.docs.get('adminCommands/auto1')).toEqual({
+        at: FakeTimestamp.fromMillis(FAKE_SERVER_TIME),
+      });
+      expect(fake.writes).toEqual([
+        {
+          kind: 'set',
+          path: 'adminCommands/auto1',
+          data: { at: SERVER_TIMESTAMP },
+        },
+      ]);
+    });
+  });
+
   describe('the server time', () => {
     it('stores the server time as a timestamp, and logs the sentinel', async () => {
       fake = new FakeFirebase({ serverTime: 1_500 });
@@ -321,6 +341,16 @@ describe('FakeFirebase', () => {
       ).toThrow(/observer/);
     });
 
+    it('names the listeners still listening', () => {
+      const stop = sdk.onSnapshot(sdk.doc({}, 'a/1'), () => undefined);
+      sdk.onSnapshot(sdk.collection({}, 'b'), () => undefined);
+      expect(fake.openListeners()).toEqual(['a/1', 'b']);
+
+      stop();
+
+      expect(fake.openListeners()).toEqual(['b']);
+    });
+
     it('tells the Realtime Database values, and gives no database on request', async () => {
       const values: unknown[] = [];
       fake.rtdbSdk.onValue(fake.rtdbSdk.ref({}, 'bans/ada'), (snapshot) =>
@@ -334,6 +364,25 @@ describe('FakeFirebase', () => {
       expect(values).toEqual([null, 0]);
       expect(fake.listened).toEqual(['rtdb:bans/ada']);
       expect(fake.connection({ rtdb: false }).rtdb).toBeNull();
+    });
+
+    it('shares the refused paths and the server time with the Realtime Database', async () => {
+      fake = new FakeFirebase({ refused: ['rtdb:bans/ada'], serverTime: 7 });
+      const { rtdbSdk } = fake;
+
+      await rtdbSdk.set(rtdbSdk.ref({}, 'at'), rtdbSdk.serverTimestamp());
+
+      expect(fake.realtime.values.get('at')).toBe(7);
+      await expect(
+        rtdbSdk.set(rtdbSdk.ref({}, 'bans/ada'), 1)
+      ).rejects.toMatchObject({ code: 'PERMISSION_DENIED' });
+    });
+
+    it('hands the adapter its Auth part', () => {
+      const connection = fake.connection();
+
+      expect(connection.auth).toBe(fake.auth);
+      expect(connection.authSdk).toBe(fake.auth.sdk);
     });
   });
 

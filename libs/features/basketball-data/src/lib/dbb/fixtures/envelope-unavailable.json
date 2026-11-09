@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-11-08T13:38:45+0100",
+  "status": "-1",
+  "message": "Internal Server Error",
+  "data": null,
+  "version": "12.01.1-f733da5",
+  "dateFormat": "yyyy-MM-dd",
+  "timeFormat": "yyyy-MM-dd'T'HH:mm:ssZ",
+  "timeFormatShort": "HH:mm",
+  "serverInstance": "www",
+  "username": null,
+  "appContext": "https://www.basketball-bund.net"
+}

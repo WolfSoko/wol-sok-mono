@@ -12,6 +12,7 @@
     "**/*.spec.ts",
     "**/*.d.ts",
     "src/testing/**/*.ts",
+    "src/testing.ts",
     "gpu-crosscheck/**/*.ts",
     "perf/**/*.ts",
     "playwright.config.ts"

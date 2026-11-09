@@ -318,7 +318,7 @@ export class MatchEngine {
       // at the human's spawn a second into the match; a human's is ready.
       const charging =
         spawn.weapon != null && this.bots.has(index) && standIn === undefined
-          ? this.weaponCooldown(index, spawn.weapon)
+          ? weaponOf(spawn.weapon).cooldownSec
           : 0;
       return createPlayer({
         id: index,
@@ -579,7 +579,7 @@ export class MatchEngine {
       return false;
     }
     const weapon = weaponOf(player.weapon);
-    const cooldown = this.weaponCooldown(playerId, weapon.id);
+    const cooldown = weapon.cooldownSec;
     this.update(playerId, {
       weaponActiveSec: weapon.durationSec,
       weaponCooldownSec: cooldown,
@@ -598,14 +598,6 @@ export class MatchEngine {
       this.inputs.weapons.push([this.ticks, playerId]);
     }
     return true;
-  }
-
-  /** The seconds a seat's weapon takes to recharge, its genes counted. */
-  private weaponCooldown(playerId: number, id: WeaponId): number {
-    return (
-      weaponOf(id).cooldownSec *
-      (this.traits[playerId]?.weaponCooldownFactor ?? 1)
-    );
   }
 
   /**

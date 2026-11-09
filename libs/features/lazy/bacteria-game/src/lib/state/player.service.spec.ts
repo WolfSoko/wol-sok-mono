@@ -7,7 +7,7 @@ import {
   BacteriaSimulation,
   gameBalance,
   getMap,
-  IntSimulation,
+  intSimulation,
   MatchPlan,
   planMatch,
   PlayerColorArray,
@@ -77,15 +77,14 @@ describe('PlayerService', () => {
   describe('rulesets', () => {
     /** A deterministic GPU simulation, as far as the game can tell. */
     const gpuInt: SimulationFactory = (balance, random, seed) => {
-      const simulation = new IntSimulation(balance, random, seed);
-      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
+      const simulation = intSimulation(balance, random, seed);
+      Object.defineProperty(simulation, 'variant', { value: 'gpu-int' });
       return simulation;
     };
     /** The float GPU simulation, as far as the game can tell. */
     const gpuFloat: SimulationFactory = (balance, random) => {
       const simulation = new BacteriaSimulation(balance, random);
-      Object.defineProperty(simulation, 'kind', { value: 'gpu' });
-      Object.defineProperty(simulation, 'ruleset', { value: null });
+      Object.defineProperty(simulation, 'variant', { value: 'gpu-float' });
       return simulation;
     };
     const failing: SimulationFactory = () => {
@@ -101,8 +100,7 @@ describe('PlayerService', () => {
       const lockstep = new Lockstep(0, () => undefined);
 
       service.init(spawns(false), { lockstep, ruleset: 'gpu-int' });
-      expect(service.getSimulation().kind).toBe('gpu');
-      expect(service.getSimulation().ruleset).toBe('gpu-int');
+      expect(service.getSimulation().variant).toBe('gpu-int');
 
       service.init(spawns(false), { lockstep, ruleset: 'cpu' });
       expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
@@ -131,8 +129,7 @@ describe('PlayerService', () => {
         ruleset: 'gpu-int',
       });
 
-      expect(service.getSimulation().kind).toBe('gpu');
-      expect(service.getSimulation().ruleset).toBe('gpu-int');
+      expect(service.getSimulation().variant).toBe('gpu-int');
       expect(asked.at(-1)?.deterministic).toBe(true);
     });
 
@@ -163,15 +160,13 @@ describe('PlayerService', () => {
         ruleset: 'gpu-int',
       });
 
-      expect(service.getSimulation().kind).toBe('gpu');
-      expect(service.getSimulation().ruleset).toBe('gpu-int');
+      expect(service.getSimulation().variant).toBe('gpu-int');
     });
 
     it('records a local match on the device ruleset - the CPU one for the float GPU', () => {
       service.useSimulations({ gpu: { int: gpuInt }, plays: () => 'gpu-int' });
       service.init(spawns(true), { recordedSeats: new Set([0]) });
-      expect(service.getSimulation().kind).toBe('gpu');
-      expect(service.getSimulation().ruleset).toBe('gpu-int');
+      expect(service.getSimulation().variant).toBe('gpu-int');
 
       service.useSimulations({
         gpu: { int: gpuInt, float: gpuFloat },
@@ -179,7 +174,7 @@ describe('PlayerService', () => {
       });
       service.init(spawns(true), { recordedSeats: new Set([0]) });
       expect(service.getSimulation()).toBeInstanceOf(BacteriaSimulation);
-      expect(service.getSimulation().kind).toBe('cpu');
+      expect(service.getSimulation().variant).toBe('cpu');
     });
 
     it('plays any other match on what the device plays', () => {
@@ -190,8 +185,7 @@ describe('PlayerService', () => {
 
       service.init(spawns(false), { arena: { width: WIDTH, height: HEIGHT } });
 
-      expect(service.getSimulation().kind).toBe('gpu');
-      expect(service.getSimulation().ruleset).toBeNull();
+      expect(service.getSimulation().variant).toBe('gpu-float');
     });
 
     it('has no integer GPU passes to rank on without them, or once they failed', () => {
@@ -210,7 +204,7 @@ describe('PlayerService', () => {
         ruleset: 'gpu-int',
       });
 
-      expect(service.getSimulation()).toBeInstanceOf(IntSimulation);
+      expect(service.getSimulation()).toMatchObject({ variant: 'cpu-int' });
       expect(service.gpuIntReady()).toBe(false);
       expect(service.rulesetOffers()).toEqual(['cpu']);
     });
@@ -242,7 +236,7 @@ describe('PlayerService', () => {
       service.useSimulations(null);
 
       expect(dispose).toHaveBeenCalled();
-      expect(service.getSimulation().kind).toBe('cpu');
+      expect(service.getSimulation().variant).toBe('cpu');
     });
   });
 

@@ -94,6 +94,61 @@ describe('StoredMatchSetup', () => {
     expect(store.snapshot().difficulty).toBe('hard');
   });
 
+  it('keeps only the readable values of a stored setup that waits for the menu', () => {
+    gameState.start();
+
+    setup.restore({
+      levelId: 'moon',
+      colors: ['gold', 'blue'],
+      difficulty: 'hard',
+    });
+
+    expect(setup.toStore()).toMatchObject({
+      levelId: LEVELS[0].id,
+      colors: ['orange', 'blue'],
+      difficulty: 'hard',
+    });
+    gameState.reset();
+    expect(store.snapshot()).toMatchObject({
+      levelId: LEVELS[0].id,
+      colors: ['orange', 'blue'],
+      difficulty: 'hard',
+    });
+  });
+
+  it('writes back none of the unreadable values of a waiting setup', () => {
+    gameState.start();
+    const before = setup.toStore();
+
+    setup.restore({
+      mode: 'four-players',
+      difficulty: 'godlike',
+      levelId: 'moon',
+      colors: ['gold', 'blue'],
+      seriesLength: 4,
+      headStart: 7,
+    });
+
+    expect(setup.toStore()).toEqual(before);
+  });
+
+  it('keeps what the player changed over a waiting setup it partly read', () => {
+    gameState.start();
+    setup.restore({ levelId: LEVELS[2].id, colors: ['gold', 'blue'] });
+
+    gameState.setColor(0, 'purple');
+
+    expect(setup.toStore()).toMatchObject({
+      levelId: LEVELS[2].id,
+      colors: ['purple', 'blue'],
+    });
+    gameState.reset();
+    expect(store.snapshot()).toMatchObject({
+      levelId: LEVELS[2].id,
+      colors: ['purple', 'blue'],
+    });
+  });
+
   it('lets a stored setup wait for a series under way to end', () => {
     gameState.setMode('two-players');
     gameState.setSeriesLength(3);

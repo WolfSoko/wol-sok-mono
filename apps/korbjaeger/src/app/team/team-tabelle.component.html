@@ -1,0 +1,103 @@
+<section data-qa="tabelle">
+  <h3 [id]="ueberschriftId()">{{ liga().name }}</h3>
+  @if (tabelle.isLoading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Tabelle wird geladen" />
+  }
+  @if (fehler(); as text) {
+    <!-- no live region: on a DBB outage every Tabelle fails at once, and
+         one alert each would repeat the same text; it sits under its Liga -->
+    <p class="fehler" data-qa="tabelle-fehler">{{ text }}</p>
+  }
+  @if (tabelle.hasValue()) {
+    <korb-stand [stand]="tabelle.stand()" />
+    @if (zeilen().length === 0) {
+      <p>Für diese Liga führt der DBB keine Tabelle.</p>
+    } @else {
+      <div class="tabelle">
+        <table
+          mat-table
+          [dataSource]="zeilen()"
+          [attr.aria-labelledby]="ueberschriftId()"
+        >
+          <ng-container matColumnDef="rang">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              aria-label="Platz"
+              title="Platz"
+            >
+              Pl.
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.rang }}</td>
+          </ng-container>
+          <ng-container matColumnDef="team">
+            <th mat-header-cell *matHeaderCellDef>Team</th>
+            <td mat-cell *matCellDef="let zeile" data-qa="tabelle-team">
+              {{ zeile.team }}
+              @if (zeile.eigenes) {
+                <span class="cdk-visually-hidden">(dein Team)</span>
+              }
+            </td>
+          </ng-container>
+          <ng-container matColumnDef="spiele">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              aria-label="Spiele"
+              title="Spiele"
+            >
+              Sp.
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.spiele }}</td>
+          </ng-container>
+          <ng-container matColumnDef="siege">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              aria-label="Siege"
+              title="Siege"
+            >
+              S
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.siege }}</td>
+          </ng-container>
+          <ng-container matColumnDef="niederlagen">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              aria-label="Niederlagen"
+              title="Niederlagen"
+            >
+              N
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.niederlagen }}</td>
+          </ng-container>
+          <ng-container matColumnDef="koerbe">
+            <th mat-header-cell *matHeaderCellDef>Körbe</th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.koerbe }}</td>
+          </ng-container>
+          <ng-container matColumnDef="differenz">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              aria-label="Differenz"
+              title="Differenz"
+            >
+              Diff.
+            </th>
+            <td mat-cell *matCellDef="let zeile">{{ zeile.differenz }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="spalten"></tr>
+          <tr
+            mat-row
+            *matRowDef="let zeile; columns: spalten"
+            data-qa="tabelle-zeile"
+            [class.eigenes-team]="zeile.eigenes"
+            [attr.aria-current]="zeile.eigenes ? 'true' : null"
+          ></tr>
+        </table>
+      </div>
+    }
+  }
+</section>

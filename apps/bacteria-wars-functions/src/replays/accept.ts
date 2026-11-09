@@ -15,6 +15,7 @@ import { trackDeclaredMatch } from '../boards/rank-endless';
 import { NOT_REPORTED_AFTER_MS, REPLAY_TTL_MS } from '../config';
 import { hasGrpcCode } from '../grpc';
 import { isBanned, takeSubmissionSlot } from '../limits';
+import { timestampMillis } from '../timestamps';
 import {
   planAcceptance,
   type AcceptPlan,
@@ -238,7 +239,7 @@ function submissionMeta(
     uid,
     hint,
     ...(attempt === undefined ? {} : { attempt }),
-    createdAt: createdAt instanceof Timestamp ? createdAt.toMillis() : now,
+    createdAt: timestampMillis(createdAt) ?? now,
   };
 }
 

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <title>Korbjäger</title>
+    <base href="/" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#e37100" />
+    <meta
+      name="description"
+      content="Korbjäger – die Spiele deines Basketball-Teams auf einen Blick."
+    />
+    <!--
+      No page of the app is indexed (ADR 0019); robots.txt lets crawlers in on
+      purpose, so they can read this tag.
+    -->
+    <meta name="robots" content="noindex" />
+    <!-- installable (manifest) and its icons: npx nx run korbjaeger:icons -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/src/styles.scss" />
+  </head>
+  <body>
+    <korb-root></korb-root>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,100 @@
+{
+  "functions": {
+    "source": "dist/apps/korbjaeger/analog/server",
+    "predeploy": [
+      "rm -rf $RESOURCE_DIR/node_modules",
+      "npm --prefix $RESOURCE_DIR install --omit dev --legacy-peer-deps=false"
+    ]
+  },
+  "firestore": {
+    "rules": "apps/korbjaeger/firestore.rules"
+  },
+  "hosting": {
+    "public": "dist/apps/korbjaeger/analog/public",
+    "cleanUrls": true,
+    "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "X-Robots-Tag",
+            "value": "noindex"
+          }
+        ]
+      },
+      {
+        "source": "/",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/!(api|*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/!(api)/**/!(*.*)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/index.html",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/ngsw-worker.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/ngsw.json",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/safety-worker.js",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "no-cache"
+          }
+        ]
+      }
+    ],
+    "rewrites": [
+      {
+        "source": "/api/**",
+        "function": "server"
+      },
+      {
+        "source": "**/!(*.*)",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

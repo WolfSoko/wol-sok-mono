@@ -1,0 +1,59 @@
+// Long names wrap; should the numbers still not fit a narrow phone, the
+// Kader scrolls on its own rather than the page.
+.tabelle {
+  overflow-x: auto;
+}
+
+.ohne-werte {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.mat-mdc-header-cell,
+.mat-mdc-cell {
+  padding-inline: 0.375rem;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+
+  &.mat-column-name {
+    text-align: start;
+    white-space: normal;
+  }
+}
+
+.anonym {
+  font-style: italic;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.spieler {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+}
+
+.name {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 0.25rem;
+}
+
+// a marked Kind stands out by its star and Spitzname, the tint only adds
+.kind {
+  background: var(--mat-sys-secondary-container);
+
+  .mat-mdc-cell {
+    color: var(--mat-sys-on-secondary-container);
+    font-weight: 600;
+  }
+}
+
+.stern {
+  color: var(--mat-sys-primary);
+}
+
+.spitzname {
+  font-weight: 400;
+}

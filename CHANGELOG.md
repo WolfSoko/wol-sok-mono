@@ -2,6 +2,205 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.154.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.153.0...v74.154.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Vereinsfarben in the Auswahl, device and account ([#2927](https://github.com/WolfSoko/wol-sok-mono/issues/2927)) ([572c988](https://github.com/WolfSoko/wol-sok-mono/commit/572c98881a66e9de931628f34d5830dea1fa22e3)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb)
+
+## [74.153.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.152.0...v74.153.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** colour scheme from a Verein's colours ([#2924](https://github.com/WolfSoko/wol-sok-mono/issues/2924)) ([327e893](https://github.com/WolfSoko/wol-sok-mono/commit/327e893d390f3364d09765e6286b2ce110cedace)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb) [#33ffdd](https://github.com/WolfSoko/wol-sok-mono/issues/33ffdd)
+
+### Chore
+
+* **release:** publish ([a36d1bb](https://github.com/WolfSoko/wol-sok-mono/commit/a36d1bbd49ae061f9956cf32ddf1bba5df92708e))
+
+## [74.152.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.151.0...v74.152.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** the look "Hallenboden" (display face, scoreboard, court lines, worded results) ([#2922](https://github.com/WolfSoko/wol-sok-mono/issues/2922)) ([2b01002](https://github.com/WolfSoko/wol-sok-mono/commit/2b01002dc10ecae542ef0ea77637a62afd858d98)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918)
+
+### Chore
+
+* **release:** publish ([6e1e06a](https://github.com/WolfSoko/wol-sok-mono/commit/6e1e06a631bfc7da8fa485d9ead02fb093c95eda))
+
+## [74.151.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.1...v74.151.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** privacy policy, Impressum and DBB source note ([#2921](https://github.com/WolfSoko/wol-sok-mono/issues/2921)) ([cd66ace](https://github.com/WolfSoko/wol-sok-mono/commit/cd66acee5e8ec576c6a001a898de99ba7adadf13)), closes [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
+## [74.150.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.150.0...v74.150.1) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** unfollow everywhere, German-text guard, install hint, small fixes ([#2919](https://github.com/WolfSoko/wol-sok-mono/issues/2919)) ([e9946b1](https://github.com/WolfSoko/wol-sok-mono/commit/e9946b1c7cfe613b78a9086eb07a864ed8a79510))
+
+### Chore
+
+* **release:** publish ([171fabc](https://github.com/WolfSoko/wol-sok-mono/commit/171fabc74e83e60431df889b5e965f23233ee1c1))
+
+## [74.150.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.149.0...v74.150.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 8 — Google sign-in and sync across devices ([#2911](https://github.com/WolfSoko/wol-sok-mono/issues/2911)) ([1d1b09f](https://github.com/WolfSoko/wol-sok-mono/commit/1d1b09f3d5bc4b6251110683ad57a29ef21c7a2c)), closes [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873), references [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2874](https://github.com/WolfSoko/wol-sok-mono/issues/2874)
+
+## [74.149.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.148.0...v74.149.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 6 — mark a Kind in a Kader ([#2910](https://github.com/WolfSoko/wol-sok-mono/issues/2910)) ([ed1c200](https://github.com/WolfSoko/wol-sok-mono/commit/ed1c2007e77cbb6ae1f3cfac5072ac6c9f0c1e6a)), closes [#2872](https://github.com/WolfSoko/wol-sok-mono/issues/2872)
+
+## [74.148.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.147.0...v74.148.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Korbjäger 12 — installable and usable offline ([#2909](https://github.com/WolfSoko/wol-sok-mono/issues/2909)) ([ecddce5](https://github.com/WolfSoko/wol-sok-mono/commit/ecddce5fdae8c905d205f8e9117fd0c3228d08bf)), closes [#2871](https://github.com/WolfSoko/wol-sok-mono/issues/2871), references [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875) [#2871](https://github.com/WolfSoko/wol-sok-mono/issues/2871) [#e37100](https://github.com/WolfSoko/wol-sok-mono/issues/e37100)
+
+## [74.147.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.146.0...v74.147.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 7 — Teams of the Verein and the end of the Saison ([#2908](https://github.com/WolfSoko/wol-sok-mono/issues/2908)) ([287914d](https://github.com/WolfSoko/wol-sok-mono/commit/287914d5f3d1061d6fb939b5d4ae65889813a5c6)), closes [#2870](https://github.com/WolfSoko/wol-sok-mono/issues/2870), references [#2868](https://github.com/WolfSoko/wol-sok-mono/issues/2868) [#2870](https://github.com/WolfSoko/wol-sok-mono/issues/2870)
+
+## [74.146.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.1...v74.146.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 4 — Team einrichten (Verband → age group → Liga → Team) ([#2907](https://github.com/WolfSoko/wol-sok-mono/issues/2907)) ([f21bcdb](https://github.com/WolfSoko/wol-sok-mono/commit/f21bcdb68f91c6c997564b259024a761baab31f6)), closes [#2869](https://github.com/WolfSoko/wol-sok-mono/issues/2869), references [#2869](https://github.com/WolfSoko/wol-sok-mono/issues/2869) [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
+## [74.145.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.145.0...v74.145.1) (2026-11-08)
+
+### Bug Fixes
+
+* **korbjaeger:** set the functions' image cleanup policy before deploying ([#2906](https://github.com/WolfSoko/wol-sok-mono/issues/2906)) ([6194fd1](https://github.com/WolfSoko/wol-sok-mono/commit/6194fd15f80075468abc2e9545c4a7940136a4c1)), closes [#2905](https://github.com/WolfSoko/wol-sok-mono/issues/2905), references [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
+## [74.145.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.1...v74.145.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 10 — deploy to Firebase Hosting at korb.wolsok.de ([#2903](https://github.com/WolfSoko/wol-sok-mono/issues/2903)) ([52bc22e](https://github.com/WolfSoko/wol-sok-mono/commit/52bc22e5bf7ed0d78fcca96ec476ed9474e1a14f)), closes [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875), references [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861) [#2875](https://github.com/WolfSoko/wol-sok-mono/issues/2875)
+
+## [74.144.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.144.0...v74.144.1) (2026-11-08)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** fold the simulation's kind and ruleset into one variant ([#2902](https://github.com/WolfSoko/wol-sok-mono/issues/2902)) ([7c46d3d](https://github.com/WolfSoko/wol-sok-mono/commit/7c46d3d9a93d764f8add70028cac76b66e335bc6)), closes [#2801](https://github.com/WolfSoko/wol-sok-mono/issues/2801)
+
+## [74.144.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.1...v74.144.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 5 — Spiel page with Spielbericht and Halle ([#2901](https://github.com/WolfSoko/wol-sok-mono/issues/2901)) ([4aebe4b](https://github.com/WolfSoko/wol-sok-mono/commit/4aebe4bf4ec8fef1d6bae88f4aae40df99b8f59f)), references [#2868](https://github.com/WolfSoko/wol-sok-mono/issues/2868)
+
+### Refactorings
+
+* **bacteria-wars-functions:** map stored times through timestampMillis ([#2848](https://github.com/WolfSoko/wol-sok-mono/issues/2848)) ([592cdab](https://github.com/WolfSoko/wol-sok-mono/commit/592cdabd63be01b7e639ca9a56b869f4d9c69358)), closes [#2806](https://github.com/WolfSoko/wol-sok-mono/issues/2806)
+
+## [74.143.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.143.0...v74.143.1) (2026-11-08)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** move the remaining Firebase spec fakes onto FakeFirebase ([#2896](https://github.com/WolfSoko/wol-sok-mono/issues/2896)) ([66cf8fe](https://github.com/WolfSoko/wol-sok-mono/commit/66cf8fe7dfdaeac001cce84d2b85137a4f562e29))
+
+## [74.143.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.142.0...v74.143.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 3 — Meine Teams and the overview (on the device) ([#2897](https://github.com/WolfSoko/wol-sok-mono/issues/2897)) ([ce8f1b0](https://github.com/WolfSoko/wol-sok-mono/commit/ce8f1b09b6b1ea52cb578eecf52d22fd61b5a026)), references [#2867](https://github.com/WolfSoko/wol-sok-mono/issues/2867) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873) [#2872](https://github.com/WolfSoko/wol-sok-mono/issues/2872) [#2873](https://github.com/WolfSoko/wol-sok-mono/issues/2873)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** keep only readable values of a pending match setup ([#2892](https://github.com/WolfSoko/wol-sok-mono/issues/2892)) ([32e8336](https://github.com/WolfSoko/wol-sok-mono/commit/32e8336933ffbebddefb2cf3f8046f84e6f05199)), closes [#2811](https://github.com/WolfSoko/wol-sok-mono/issues/2811)
+
+### Testing
+
+* **nx-aws-cdk-v2:** typecheck the executor specs ([#2893](https://github.com/WolfSoko/wol-sok-mono/issues/2893)) ([974cdc5](https://github.com/WolfSoko/wol-sok-mono/commit/974cdc56c6f7aa89411736e8fbbcc35879e47c5e)), closes [#2852](https://github.com/WolfSoko/wol-sok-mono/issues/2852)
+
+## [74.142.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.141.0...v74.142.0) (2026-11-08)
+
+### Features
+
+* **nx-aws-cdk-v2:** migrate the failing starter test of apps generated before 4.1.3 ([#2849](https://github.com/WolfSoko/wol-sok-mono/issues/2849)) ([d73588f](https://github.com/WolfSoko/wol-sok-mono/commit/d73588f09ef1dc5bfd98992fbd09acbaa3ba8c15)), closes [#2842](https://github.com/WolfSoko/wol-sok-mono/issues/2842)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** drop the unused weapon cooldown trait ([#2889](https://github.com/WolfSoko/wol-sok-mono/issues/2889)) ([90be318](https://github.com/WolfSoko/wol-sok-mono/commit/90be318e415ce4dbed1283a7196cae9698827f59)), closes [#2877](https://github.com/WolfSoko/wol-sok-mono/issues/2877), references [#2877](https://github.com/WolfSoko/wol-sok-mono/issues/2877)
+
+### Chore
+
+* **release:** publish ([be1674b](https://github.com/WolfSoko/wol-sok-mono/commit/be1674b98eec63db6683dc7ac5b2da1599d4ff72))
+
+## [74.141.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.140.0...v74.141.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 2 — Tabelle of each Liga on the Team page ([#2887](https://github.com/WolfSoko/wol-sok-mono/issues/2887)) ([a3b478c](https://github.com/WolfSoko/wol-sok-mono/commit/a3b478c567fab20d334e21929c3c54780fa66c2e)), references [#2866](https://github.com/WolfSoko/wol-sok-mono/issues/2866)
+* **oxlint-workspace-rules:** forbid direct reads of version.json ([#2885](https://github.com/WolfSoko/wol-sok-mono/issues/2885)) ([8ef18b3](https://github.com/WolfSoko/wol-sok-mono/commit/8ef18b37a7d645156c2df4d5aad401911017e20f)), closes [#2846](https://github.com/WolfSoko/wol-sok-mono/issues/2846)
+
+### Bug Fixes
+
+* **github:** skip bot senders in the claude workflow ([#2890](https://github.com/WolfSoko/wol-sok-mono/issues/2890)) ([ee6da60](https://github.com/WolfSoko/wol-sok-mono/commit/ee6da60b5b6fbf07df272456ff912b40599640af)), closes [#2886](https://github.com/WolfSoko/wol-sok-mono/issues/2886), references [#2886](https://github.com/WolfSoko/wol-sok-mono/issues/2886)
+
+### Chore
+
+* **release:** publish ([bfce262](https://github.com/WolfSoko/wol-sok-mono/commit/bfce2626ba438bd604ed4fcf11f87ef1e56dd9a5))
+
+## [74.140.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.12...v74.140.0) (2026-11-08)
+
+### Features
+
+* **korbjaeger:** Korbjäger 1 — Team page with its Spiele of the Saison (tracer bullet) ([#2876](https://github.com/WolfSoko/wol-sok-mono/issues/2876)) ([ac50f73](https://github.com/WolfSoko/wol-sok-mono/commit/ac50f731b66acefa855e2458b26b1677376afd30)), references [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861) [#2864](https://github.com/WolfSoko/wol-sok-mono/issues/2864) [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861)
+
+### Bug Fixes
+
+* **nx-aws-cdk-v2-e2e:** fix the synth test and run the plugin e2e in CI ([#2845](https://github.com/WolfSoko/wol-sok-mono/issues/2845)) ([f17634b](https://github.com/WolfSoko/wol-sok-mono/commit/f17634b8d67692ec9ea5aaa2453dd6b00d5a84fe)), references [#2831](https://github.com/WolfSoko/wol-sok-mono/issues/2831) [#2831](https://github.com/WolfSoko/wol-sok-mono/issues/2831)
+
+### Chore
+
+* **release:** publish ([382fe42](https://github.com/WolfSoko/wol-sok-mono/commit/382fe425cdd658906e5461e4df16f42ec109657f))
+
+## [74.139.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.11...v74.139.12) (2026-11-08)
+
+### Bug Fixes
+
+* **angular-examples-cdk:** read the workspace version through utils-version ([#2843](https://github.com/WolfSoko/wol-sok-mono/issues/2843)) ([ebf614b](https://github.com/WolfSoko/wol-sok-mono/commit/ebf614b1edf9450d3a281ab5a719b8ff7936e900)), closes [#2841](https://github.com/WolfSoko/wol-sok-mono/issues/2841)
+* **feat-lazy-bacteria-game:** write simulation and ladder back to old local replays once ([#2880](https://github.com/WolfSoko/wol-sok-mono/issues/2880)) ([4df08a9](https://github.com/WolfSoko/wol-sok-mono/commit/4df08a9462a4d4c68e87132eaa0f103e91056c89)), closes [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857), references [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857) [#2857](https://github.com/WolfSoko/wol-sok-mono/issues/2857)
+
+## [74.139.11](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.10...v74.139.11) (2026-11-08)
+
+### Testing
+
+* **feat-shared-bacteria-engine:** type-check the engine's specs and fix the boss cooldown test ([#2881](https://github.com/WolfSoko/wol-sok-mono/issues/2881)) ([9ee95d9](https://github.com/WolfSoko/wol-sok-mono/commit/9ee95d91ebca20aafee3941abc27b93d1bfa691a)), closes [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803) [#2803](https://github.com/WolfSoko/wol-sok-mono/issues/2803)
+
+## [74.139.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.9...v74.139.10) (2026-11-08)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** retry the functions deploy once on failure ([#2879](https://github.com/WolfSoko/wol-sok-mono/issues/2879)) ([c614abc](https://github.com/WolfSoko/wol-sok-mono/commit/c614abcd57052e25b8dd463ef1ebdb79f8dabf2a)), closes [#2838](https://github.com/WolfSoko/wol-sok-mono/issues/2838), references [#2748](https://github.com/WolfSoko/wol-sok-mono/issues/2748) [#2830](https://github.com/WolfSoko/wol-sok-mono/issues/2830)
+* **feat-lazy-bacteria-game:** share the crosshair colour and boost ring between both painters ([#2878](https://github.com/WolfSoko/wol-sok-mono/issues/2878)) ([789b703](https://github.com/WolfSoko/wol-sok-mono/commit/789b703309ce2ec413f41be0c2506eb14398e52d)), closes [#2855](https://github.com/WolfSoko/wol-sok-mono/issues/2855)
+
+## [74.139.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.8...v74.139.9) (2026-11-08)
+
+### Chore
+
+* **deps:** update dependency @firebase/rules-unit-testing to v6 ([#2863](https://github.com/WolfSoko/wol-sok-mono/issues/2863)) ([e9a3ec0](https://github.com/WolfSoko/wol-sok-mono/commit/e9a3ec0f837128b456143509ae627b1630a55431))
+
+## [74.139.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.7...v74.139.8) (2026-11-08)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** one playback rule for stored replays (My matches, gallery) ([#2856](https://github.com/WolfSoko/wol-sok-mono/issues/2856)) ([bd695a3](https://github.com/WolfSoko/wol-sok-mono/commit/bd695a3b6377b7cf8c69331d6b14d8b24793a10f)), references [#2828](https://github.com/WolfSoko/wol-sok-mono/issues/2828)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** run the grid war over a CellPasses port ([#2862](https://github.com/WolfSoko/wol-sok-mono/issues/2862)) ([4ac5264](https://github.com/WolfSoko/wol-sok-mono/commit/4ac5264c097a83bb4bdf19272eba437d6db8b747)), closes [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790)
+
 ## [74.139.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.139.6...v74.139.7) (2026-11-07)
 
 ### Testing

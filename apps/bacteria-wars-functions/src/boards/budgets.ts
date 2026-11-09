@@ -36,7 +36,7 @@ export const FAILED_CHECKS_TO_SKIP = 2;
  * What a re-run is expected to cost, in ms of CPU a tick on an arena of
  * {@link RANKED_CELLS}. Ranked attempts play the `gpu-int` ruleset (ADR
  * 0015) on generated levels, all of the base arena's size on the online
- * grid, and `IntSimulation` took 6.8 to 9.8 ms a tick there in the re-run
+ * grid, and `intSimulation` took 6.8 to 9.8 ms a tick there in the re-run
  * benchmark of the closed #2618, on a development machine; the Cloud Run
  * benchmark ADR 0012 calls for still sets the final figure. A slice starts
  * a re-run only when its expected cost fits in what it has left, so it

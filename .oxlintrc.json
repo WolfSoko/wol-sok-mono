@@ -129,6 +129,7 @@
       }
     ],
     "wolsok/no-boundary-disable": "error",
+    "wolsok/no-version-json-read": "error",
     "unicorn/no-new-array": "off",
     "typescript/unbound-method": [
       "error",
@@ -156,7 +157,7 @@
       }
     },
     {
-      "files": ["apps/{pacetrainer,rollapolla-analog}/**/*.spec.ts"],
+      "files": ["apps/{korbjaeger,pacetrainer,rollapolla-analog}/**/*.spec.ts"],
       "plugins": ["vitest"],
       "env": {
         "vitest": true
@@ -189,6 +190,31 @@
                   "**/sound/*"
                 ],
                 "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, arena/, gl/ or sound/ imports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["libs/features/basketball-data/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@angular/*",
+                  "@ngrx/*",
+                  "rxjs",
+                  "rxjs/*",
+                  "firebase",
+                  "firebase/*",
+                  "firebase-admin",
+                  "firebase-admin/*"
+                ],
+                "message": "The basketball data lib (feat-shared-basketball-data) runs in the app's server routes too (ADR 0018): no Angular, NgRx, RxJS or Firebase imports."
               }
             ]
           }
@@ -231,6 +257,12 @@
       }
     },
     {
+      "files": ["libs/utils/version/**"],
+      "rules": {
+        "wolsok/no-version-json-read": "off"
+      }
+    },
+    {
       "files": ["libs/utils/version/src/version.ts"],
       "rules": {
         "@nx/enforce-module-boundaries": [
@@ -241,6 +273,23 @@
               {
                 "sourceTag": "utils",
                 "onlyDependOnLibsWithTags": ["utils"]
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/*/vite.config.ts"],
+      "rules": {
+        "@nx/enforce-module-boundaries": [
+          "error",
+          {
+            "allow": ["^\\.\\./\\.\\./tools/vite/nitro-ts-path-aliases$"],
+            "depConstraints": [
+              {
+                "sourceTag": "*",
+                "onlyDependOnLibsWithTags": []
               }
             ]
           }

@@ -203,10 +203,10 @@ storage until then. Settings stay with the device either way.
   `gpu-int` replay plays on the viewer's own GL painter (the third
   argument of `replayEngine`) where its renderer is the host's `gpu`
   (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
-  played; `/watch` runs no self-test and stays on `IntSimulation`).
+  played; `/watch` runs no self-test and stays on `intSimulation`).
   `ReplayScene.useGpu` moves the war between the GPU and the CPU where it
   was: onto the painter once it is there, off it before its context goes;
-  a GPU that fails to set up falls back to `IntSimulation` and is not
+  a GPU that fails to set up falls back to `intSimulation` and is not
   asked again.
   The timeline and the 10 s buttons seek (`ReplayScene.seek`): the war only
   plays forwards, so back restarts it, and the frames after a seek play on
@@ -256,14 +256,21 @@ storage until then. Settings stay with the device either way.
 - Only `firebase-connection.ts` imports Firebase at runtime, and only
   `provide-game-cloud.ts` imports that file; the rest takes types only, so
   the specs never load the SDK.
-- The specs of the Firebase adapters (`firestore-game-*.spec.ts`) run on
+- The specs of the Firebase adapters (`firestore-game-*.spec.ts`,
+  `rtdb-game-presence.spec.ts`, `firebase-game-account.spec.ts`, and the
+  admin lib's, through `@wolsok/feat-lazy-bac-game/testing`) run on
   `FakeFirebase` (`src/testing/fake-firebase-sdk.ts`), the one fake of the
-  SDK surface `FirebaseConnection` hands them: documents by path, auto ids,
-  the server's time as a `FakeTimestamp`, evaluated queries, live listeners,
-  batches, transactions, refused paths and the network's switches
-  (`offline`, `hanging`, `lateCommit`, `hangingReads`). A spec keeps only
-  its scenario; what the fake lacks goes into it, not into a fake of the
-  spec's own. The rules emulator suite stays the check of the rules.
+  SDK surface `FirebaseConnection` hands them. Firestore: documents by
+  path, auto ids (`doc(collection)`, `addDoc`), the server's time as a
+  `FakeTimestamp`, evaluated queries, live listeners, batches,
+  transactions, refused paths and the network's switches (`offline`,
+  `hanging`, `lateCommit`, `hangingReads`). Its parts of their own:
+  `realtime` (`fake-realtime-database.ts`: values by exact path,
+  refusals as `rtdb:<path>`, writes, `onDisconnect` and `disconnect()`)
+  and `auth` (`fake-firebase-auth.ts`: `become`, `newToken`, guests,
+  tokens, the popups as jest mocks). A spec keeps only its scenario; what
+  the fake lacks goes into it, not into a fake of the spec's own. The
+  rules emulator suite stays the check of the rules.
 - The release pipeline deploys `apps/bacteria-game-remote/firestore.rules`
   and `firestore.indexes.json` beside it, which holds the rooms' TTL policy
   (`bacteria-game-remote:deploy`, config `firebase.bacteria-game-remote.json`).
@@ -385,17 +392,27 @@ play each other.
 
 ## The deterministic simulation (ADR 0015)
 
-- `GridSimulation` (`state/grid-simulation.ts`) is what the GPU simulation
-  and its deterministic CPU twin share: walls, zones, pellets, effects, the
-  frame's uniforms and what a report means. Change the bookkeeping there,
-  once; `GpuSimulation` adds only the shader passes, `IntSimulation` their
-  TypeScript reference (`intReferenceTick`, `intReport`).
+- `GridWar` (`state/grid/grid-war.ts`) is the grid war's bookkeeping,
+  alike on every processor: walls, zones, pellets, effects, the frame's
+  uniforms and what a report means. Change it there, once. It runs over the
+  `CellPasses` port (`state/grid/cell-passes.ts`), whose adapters only run
+  the cell passes and render the report: `IntReferencePasses` (the
+  TypeScript reference, `intReferenceTick` and `intReport`; built by the
+  engine's `intSimulation`) and the game's `GpuCellPasses`
+  (`gl/gpu-cell-passes.ts`) with `GpuIntRules` or `GpuFloatRules`
+  (`gl/gpu-rules.ts`; built by `gpuSimulation`, `gl/gpu-simulation.ts`).
+  What tells the integer GPU passes from the float ones lives in the rules
+  only. Adapters read nothing of the war but what the calls hand them, and
+  hand their reports back through the `ReportSink`; `grid-war.spec.ts`
+  checks the bookkeeping on a stub port. The map, pellets, effects, moving
+  walls and the tick's events are `ArenaFixtures`
+  (`state/arena-fixtures.ts`), shared with `BacteriaSimulation`.
 - A change to the integer passes, the report or the uniforms has to land in
   the shaders and in the reference alike, or the GPU cross-check fails.
   Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
   and `SELF_TEST_GOLDEN`, bumping `GPU_SELF_TEST_VERSION`, so devices test
   again.
-- `GpuSimulation` runs its cell passes on the active area
+- `GpuCellPasses` runs its cell passes on the active area
   (`updateArea`) in deterministic matches too (ADR 0015, step 10): it
   must hold every cell a bacterium can reach since the report the area
   comes from, that report's own tick included, and the cells of the last
@@ -404,15 +421,17 @@ play each other.
   the self-test and the cross-check's `roomy` scenario play on the area
   and catch one far too small, not one a tick short.
 - Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
-  (`BacteriaSimulation`) and `gpu-int` (the integer passes: `GpuSimulation`
-  with `deterministic`, or `IntSimulation`). `Simulation.ruleset` names a
-  simulation's; the float GPU one has none (null) and is never recorded.
+  (`BacteriaSimulation`) and `gpu-int` (the integer passes: `gpuSimulation`
+  with `deterministic`, or `intSimulation`). A simulation names what
+  runs it by `Simulation.variant` (`cpu`, `cpu-int`, `gpu-int`,
+  `gpu-float`), its ruleset is `rulesetOf(variant)`; the float GPU one has
+  none (null) and is never recorded.
 - Which simulation plays a ruleset, and what stands in when the GPU fails
   to start, is the engine's `SimulationProvider`
   (`state/simulation-provider.ts`, `createSimulationProvider`): a match asks
   `simulationFor('cpu' | 'gpu-int' | 'device')`; a GPU that fails to start
   or to be sized is let go of and the provider steps down for good (this
-  match on `IntSimulation` for `gpu-int`, on `BacteriaSimulation` for the
+  match on `intSimulation` for `gpu-int`, on `BacteriaSimulation` for the
   device's own; later ones on the CPU, offering `cpu` only).
   `CPU_SIMULATIONS` is the default without a GPU; `PlayerService.useSimulations`
   and the engine's `replayRun` build theirs from the GPU adapter. Don't rebuild that
@@ -428,7 +447,7 @@ play each other.
   but takes hundreds of ms a tick, so it plays `cpu`; CI has only
   SwiftShader, and its GPU e2e opts in with `?sim=gpu-int`. Switched off, the float GPU simulation would
   play as before ADR 0015. The owner's policy: a device without a passing GPU plays and offers only
-  `cpu`; `IntSimulation` replays and checks `gpu-int` matches, it does not
+  `cpu`; `intSimulation` replays and checks `gpu-int` matches, it does not
   play them live (except as the stand-in when the GPU fails to start in an
   online `gpu-int` match).
 - A software renderer paints the arena with Canvas 2D, not WebGL2

@@ -16,6 +16,8 @@ import {
   randomSeed,
   ReplayInputs,
   Ruleset,
+  rulesetOf,
+  runsOnGpu,
   Simulation,
   SimulationProvider,
   SimulationRequest,
@@ -102,7 +104,7 @@ export class PlayerService {
    * An online match runs on the `ruleset` both devices agreed on, a
    * simulation they play alike, and its ticks wait for the `lockstep`. A
    * local match given a `ruleset` - a ranked one, `gpu-int` - plays it the
-   * same way: on the integer GPU passes, `IntSimulation` standing in only
+   * same way: on the integer GPU passes, `intSimulation` standing in only
    * should the GPU fail to start. A
    * match with `recordedSeats` runs on a ruleset too, one a recording plays
    * back on as it was played (ADR 0011, 0015): the device's, where that is
@@ -278,7 +280,7 @@ export class PlayerService {
 
   /** The ruleset the match plays by - null on the float GPU. */
   public get ruleset(): Ruleset | null {
-    return this.engine.simulation.ruleset;
+    return rulesetOf(this.engine.simulation.variant);
   }
 
   /** The nutrient pellets currently on the map - used for rendering only. */
@@ -315,7 +317,7 @@ export class PlayerService {
             },
           });
     this.gpuIntOnGpu.set(this.simulations.gpuIntReady());
-    if (sources === null && this.engine.simulation.kind === 'gpu') {
+    if (sources === null && runsOnGpu(this.engine.simulation.variant)) {
       // It may hold a context that is going away: let it go now.
       this.engine.dispose();
       this.engine = new MatchEngine([], { seed: 0 });

@@ -1,0 +1,56 @@
+@if (saison.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Spiele werden geladen" />
+}
+@if (fehler(); as text) {
+  <p class="fehler" role="alert">{{ text }}</p>
+}
+@if (saison.hasValue()) {
+  <h1>{{ saison.value().team.name }}</h1>
+  <p class="verein">{{ saison.value().verein.name }} · Spiele der Saison</p>
+  <korb-stand data-qa="team-stand" [stand]="kopfStand()" />
+}
+@if (folgbar(); as teamId) {
+  <!-- also where the read fails, so a followed Team can be unfollowed -->
+  <korb-team-folgen class="folgen" [teamId]="teamId" />
+}
+@if (beendet()) {
+  <korb-saison-ende-hinweis
+    class="saison-ende"
+    data-qa="saison-beendet"
+    [stand]="weitereTeams()"
+  />
+}
+@if (saison.hasValue()) {
+  @if (naechstes(); as zeile) {
+    <korb-naechstes-spiel
+      class="naechstes"
+      data-qa="team-naechstes"
+      [zeile]="zeile"
+      [halle]="naechsteHalle()"
+      mitLiga
+    />
+  }
+  @if (zeilen().length === 0) {
+    <p>Noch keine Spiele in dieser Saison.</p>
+  } @else {
+    <h2>Spiele</h2>
+    <mat-nav-list class="umbrechende-liste">
+      @for (zeile of zeilen(); track zeile.id) {
+        <a mat-list-item data-qa="spiel" [routerLink]="['/spiel', zeile.id]">
+          <korb-spiel-zeile matListItemTitle [zeile]="zeile" mitLiga />
+        </a>
+      }
+    </mat-nav-list>
+  }
+  @if (ligen().length > 0) {
+    <h2>Tabellen</h2>
+    @for (liga of ligen(); track liga.id) {
+      <korb-team-tabelle [liga]="liga" [teamId]="saison.value().team.id" />
+    }
+  }
+}
+@if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
+  <h2>Weitere Teams des Vereins</h2>
+  <korb-stand data-qa="vereins-stand" [stand]="vereinsTeams.stand()" />
+  <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
+}

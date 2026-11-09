@@ -26,7 +26,7 @@ const GOLDEN: Readonly<
 
 /**
  * What the same fixture comes to on the `gpu-int` ruleset (ADR 0015), played
- * on `IntSimulation` - bit for bit what a GPU that passed the self-test
+ * on `intSimulation` - bit for bit what a GPU that passed the self-test
  * plays. It retires with the same changes, and with any change to the
  * integer passes too (see `golden-gpu-sim.json`).
  */
@@ -77,7 +77,7 @@ describe('the golden replay', () => {
 });
 
 describe('the golden replay on the gpu-int ruleset', () => {
-  it('plays out on IntSimulation as it did on this balance version', () => {
+  it('plays out on intSimulation as it did on this balance version', () => {
     const expected = GPU_INT_GOLDEN[BALANCE_VERSION];
     if (expected === undefined) {
       throw new Error(
