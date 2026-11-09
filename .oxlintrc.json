@@ -306,30 +306,6 @@
       }
     },
     {
-      "files": ["tools/bacteria-game/balance/**", "tools/korbjaeger/**"],
-      "rules": {
-        "@nx/enforce-module-boundaries": [
-          "error",
-          {
-            "allow": [
-              "^(\\.\\./)+libs/features/(bacteria-engine|basketball-data)/src/"
-            ],
-            "depConstraints": [
-              {
-                "sourceTag": "tools",
-                "onlyDependOnLibsWithTags": [
-                  "feat-shared",
-                  "shared",
-                  "utils",
-                  "tools"
-                ]
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       "files": ["apps/*/federation.config.js"],
       "rules": {
         "@nx/enforce-module-boundaries": [

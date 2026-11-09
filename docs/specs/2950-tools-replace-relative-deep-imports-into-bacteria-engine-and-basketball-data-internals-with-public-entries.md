@@ -34,6 +34,8 @@ The engine's main entry already exports `isBigMap`, `isLadderLevel`, `LEVELS`, `
 4. **Every `tsx` call of these scripts passes `--tsconfig tools/tsconfig.tools.json`** (it extends `tsconfig.base.json`, so the aliases resolve): the `balance-check` and `balance` targets of `feat-shared-bacteria-engine`, `.github/workflows/bacteria-balance.yml`, the usage lines in the scripts' header comments, the fixtures `README.md` and the game lib's `CLAUDE.md`. tsx hands the path on as `TSX_TSCONFIG_PATH`, so the worker `run.ts` forks with `--import tsx` resolves the aliases too.
 5. **The allow override goes once #2951 is on `main`.** This branch starts from `main`, where `tools/` is not linted yet; before the merge it is rebased onto a `main` that holds #2951, and the override (`tools/bacteria-game/balance/**`, `tools/korbjaeger/**`) is deleted there. The merge waits for #2951.
 
+6. **`tools/tsconfig.json` extends `tools/tsconfig.tools.json`.** Type-aware oxlint takes a file's nearest `tsconfig.json`; `tools/` had none, so with the relative imports gone the aliases resolved to nothing and `no-redundant-type-constituents` saw `error` types in `run.ts`. The file holds no options of its own, so `tsconfig.tools.json` stays the one config `typecheck-tools` and `tsx` read.
+
 ## Acceptance
 
 1. `grep -rn "libs/features" tools --include=*.ts` finds no import into a lib's `src/`.
