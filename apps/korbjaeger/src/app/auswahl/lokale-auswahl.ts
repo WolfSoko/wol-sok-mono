@@ -2,6 +2,17 @@ import { computed, signal, type Signal } from '@angular/core';
 import type { PersonId, TeamId } from '@wolsok/feat-shared-basketball-data';
 import type { Auswahl } from './auswahl';
 import {
+  entfolgenAenderung,
+  entmarkierenAenderung,
+  folgenAenderung,
+  geaendert,
+  gleicheKinder,
+  inhaltAus,
+  markierenAenderung,
+  spitznameAenderung,
+  type AuswahlAenderung,
+} from './auswahl-aenderungen';
+import {
   auswahlDokumentLesen,
   auswahlDokumentMit,
   LEERE_AUSWAHL,
@@ -9,7 +20,7 @@ import {
   type GelesenesDokument,
 } from './auswahl-dokument';
 import { gleicheFolge } from '../gleiche-folge';
-import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
+import type { Kind, MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from '../geraete-speicher';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 
@@ -17,7 +28,8 @@ import { AuswahlZuNeuError } from './auswahl-fehler';
 export const AUSWAHL_SCHLUESSEL = 'korbjaeger-auswahl';
 
 /** The part of the device's storage (`localStorage`) the adapter uses. */
-export type GeraeteSpeicher = Pick<Storage, 'getItem' | 'setItem'>;
+export type GeraeteSpeicher = Pick<Storage, 'getItem' | 'setItem'> &
+  Partial<Pick<Storage, 'removeItem'>>;
 
 /** Where the browser tells of changes other tabs made (`window`). */
 export type Fenster = Pick<
@@ -47,7 +59,7 @@ export class LokaleAuswahl implements Auswahl {
   private readonly inhalt = signal<AuswahlInhalt>(LEERE_AUSWAHL);
 
   /** This visit's changes no write has stored yet, in their order. */
-  private offen: ReadonlyArray<(inhalt: AuswahlInhalt) => AuswahlInhalt> = [];
+  private offen: readonly AuswahlAenderung[] = [];
 
   private readonly beiAenderung = (event: Event): void => {
     if (
@@ -71,69 +83,50 @@ export class LokaleAuswahl implements Auswahl {
     this.anzeigen(this.lesen());
     this.teams = computed(() => this.inhalt().teams, { equal: gleicheFolge });
     this.kinder = computed(() => this.inhalt().kinder, {
-      equal: (a, b) => gleicheFolge(a, b, gleichesKind),
+      equal: gleicheKinder,
     });
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
   public async folgen(team: TeamId): Promise<void> {
-    this.aendern((inhalt) =>
-      inhalt.teams.includes(team)
-        ? inhalt
-        : { ...inhalt, teams: [...inhalt.teams, team] }
-    );
+    this.aendern(folgenAenderung(team));
   }
 
   public async entfolgen(team: TeamId): Promise<void> {
-    this.aendern((inhalt) =>
-      inhalt.teams.includes(team)
-        ? { ...inhalt, teams: inhalt.teams.filter((id) => id !== team) }
-        : inhalt
-    );
+    this.aendern(entfolgenAenderung(team));
   }
 
   public async markieren(
     spieler: MarkierbarerSpieler,
     spitzname?: string
   ): Promise<void> {
-    this.aendern((inhalt) =>
-      istMarkiert(inhalt, spieler.personId)
-        ? inhalt
-        : {
-            ...inhalt,
-            kinder: [...inhalt.kinder, kindMit(spieler.personId, spitzname)],
-          }
-    );
+    this.aendern(markierenAenderung(spieler, spitzname));
   }
 
   public async spitznameSetzen(
     person: PersonId,
     spitzname: string | undefined
   ): Promise<void> {
-    const neu = kindMit(person, spitzname);
-    this.aendern((inhalt) =>
-      inhalt.kinder.some(
-        (kind) => kind.personId === person && kind.spitzname !== neu.spitzname
-      )
-        ? {
-            ...inhalt,
-            kinder: inhalt.kinder.map((kind) =>
-              kind.personId === person ? neu : kind
-            ),
-          }
-        : inhalt
-    );
+    this.aendern(spitznameAenderung(person, spitzname));
   }
 
   public async entmarkieren(person: PersonId): Promise<void> {
-    this.aendern((inhalt) =>
-      istMarkiert(inhalt, person)
-        ? {
-            ...inhalt,
-            kinder: inhalt.kinder.filter((kind) => kind.personId !== person),
-          }
-        : inhalt
-    );
+    this.aendern(entmarkierenAenderung(person));
+  }
+
+  /**
+   * Takes the selection off the device: once an account holds it (signed
+   * in), or once the Elternteil signed out of it. Changes still `offen`
+   * go with it.
+   */
+  public leeren(): void {
+    this.offen = [];
+    this.inhalt.set(LEERE_AUSWAHL);
+    try {
+      this.speicher?.removeItem?.(AUSWAHL_SCHLUESSEL);
+    } catch {
+      // blocked: nothing was stored lastingly either
+    }
   }
 
   /** Stops listening to other tabs. */
@@ -146,7 +139,7 @@ export class LokaleAuswahl implements Auswahl {
    * `offen`, and stores the result where it changed anything or something
    * was still to be stored.
    */
-  private aendern(aenderung: (inhalt: AuswahlInhalt) => AuswahlInhalt): void {
+  private aendern(aenderung: AuswahlAenderung): void {
     const gelesen = this.lesen();
     if (gelesen.art === 'neuer') {
       this.anzeigen(gelesen);
@@ -217,30 +210,4 @@ export class LokaleAuswahl implements Auswahl {
       return false;
     }
   }
-}
-
-function inhaltAus(gelesen: GelesenesDokument): AuswahlInhalt {
-  return gelesen.art === 'aktuell' ? gelesen : LEERE_AUSWAHL;
-}
-
-function istMarkiert(inhalt: AuswahlInhalt, person: PersonId): boolean {
-  return inhalt.kinder.some((kind) => kind.personId === person);
-}
-
-/**
- * The parts of `nachher` a change made anew, so a write leaves the others
- * as stored (Kinder this version could not read among them).
- */
-function geaendert(
-  vorher: AuswahlInhalt,
-  nachher: AuswahlInhalt
-): Partial<AuswahlInhalt> {
-  return {
-    ...(nachher.teams !== vorher.teams && { teams: nachher.teams }),
-    ...(nachher.kinder !== vorher.kinder && { kinder: nachher.kinder }),
-  };
-}
-
-function gleichesKind(a: Kind, b: Kind): boolean {
-  return a.personId === b.personId && a.spitzname === b.spitzname;
 }
