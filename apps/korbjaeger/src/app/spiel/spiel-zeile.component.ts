@@ -59,7 +59,7 @@ import type { SpielZeile } from './spiel-zeile';
           }}</span>
         }
         @if (spiel.markierung) {
-          <mat-chip class="markierung" data-qa="spiel-markierung">{{
+          &ngsp;<mat-chip class="markierung" data-qa="spiel-markierung">{{
             spiel.markierung
           }}</mat-chip>
         }

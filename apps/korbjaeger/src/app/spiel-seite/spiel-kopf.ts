@@ -98,9 +98,9 @@ function statusText(spiel: Spiel): string | undefined {
       return verzicht === undefined ? 'kampflos' : `kampflos · ${verzicht}`;
     }
     case 'gespielt':
-      return spiel.status.bestaetigt
-        ? undefined
-        : 'Ergebnis noch nicht bestätigt';
+      return ergebnisVorlaeufig(spiel)
+        ? 'Ergebnis noch nicht bestätigt'
+        : undefined;
   }
 }
 

@@ -24,6 +24,7 @@ test.describe('Spiel page', () => {
     await expect(spielPage.ergebnis).toHaveText('78:47');
     // Niedersachsen records no quarters, and the result is not confirmed yet
     await expect(spielPage.viertel).toHaveCount(0);
+    await expect(spielPage.vorlaeufig).toHaveText('vorläufig');
     await expect(spielPage.status).toHaveText('Ergebnis noch nicht bestätigt');
     await expect(spielPage.halle.getByTestId('halle-name')).toHaveText(
       'Schulsporthalle'
