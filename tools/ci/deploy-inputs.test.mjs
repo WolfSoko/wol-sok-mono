@@ -14,7 +14,7 @@ const PROJECT_NAME = '{projectName}';
 const ROOT_FIREBASE_CONFIG =
   /(?:--config[=\s]+|-c\s+)(?:\.\/)?(firebase\.[^\s/"']+\.json)/g;
 
-function projects() {
+function readProjects() {
   return execFileSync('git', ['ls-files', 'project.json', '**/project.json'], {
     cwd: ROOT,
     encoding: 'utf8',
@@ -36,9 +36,11 @@ function stringInputs(target) {
 }
 
 function commandsOf(target) {
-  const options = target.options ?? {};
-  const configurations = Object.values(target.configurations ?? {});
-  return [target, options, ...configurations]
+  return [
+    target,
+    target.options ?? {},
+    ...Object.values(target.configurations ?? {}),
+  ]
     .flatMap((source) => [source.command, ...(source.commands ?? [])])
     .map((command) =>
       typeof command === 'object' ? command?.command : command
@@ -56,9 +58,11 @@ function rootFirebaseConfigsOf(project) {
   return [...new Set(configs)];
 }
 
+const PROJECTS = readProjects();
+
 describe('target inputs', () => {
   it('never use {projectName}, which Nx leaves unresolved in inputs', () => {
-    const unresolved = projects().flatMap((project) =>
+    const unresolved = PROJECTS.flatMap((project) =>
       targetsOf(project).flatMap(([targetName, target]) =>
         stringInputs(target)
           .filter((input) => input.includes(PROJECT_NAME))
@@ -71,7 +75,7 @@ describe('target inputs', () => {
 
 describe('deploy inputs', () => {
   it('name every root Firebase config the project passes to the CLI', () => {
-    const missing = projects().flatMap((project) => {
+    const missing = PROJECTS.flatMap((project) => {
       const deploy = project.json.targets?.deploy;
       if (!deploy) return [];
       const inputs = stringInputs(deploy);
@@ -84,8 +88,7 @@ describe('deploy inputs', () => {
   });
 
   it('cover the apps that deploy through a root Firebase config', () => {
-    const checked = projects()
-      .filter((project) => project.json.targets?.deploy)
+    const checked = PROJECTS.filter((project) => project.json.targets?.deploy)
       .filter((project) => rootFirebaseConfigsOf(project).length > 0)
       .map((project) => project.json.name)
       .sort();
