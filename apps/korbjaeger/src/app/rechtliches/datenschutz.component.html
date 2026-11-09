@@ -20,7 +20,7 @@
   <p>
     Für alle Fragen zum Datenschutz und zur Ausübung deiner Rechte kannst du
     dich an diese Adresse wenden. Mehr zum Anbieter steht im
-    <a [routerLink]="['/', impressum]">Impressum</a>.
+    <a routerLink="/impressum">Impressum</a>.
   </p>
   <p><wolsok-email-forwarding lang="de" /></p>
 
@@ -44,18 +44,17 @@
   <h2 id="dbb">3. Daten des DBB und unser Server</h2>
   <p>
     Spielpläne, Ergebnisse, Tabellen, Hallen und Kader stammen vom Deutschen
-    Basketball Bund (<a [href]="dbb.url">{{ dbb.name }}</a
-    >), der sie dort öffentlich zeigt, die Kader mit den Namen der Spielerinnen
-    und Spieler. Die App fragt sie nicht direkt beim DBB an, sondern über eine
-    Funktion auf unserem Server (Cloud Functions for Firebase, Anbieter wie in
-    Abschnitt 2, Region {{ regionen.funktion.id }} ({{
-      regionen.funktion.ort
-    }})). Diese Funktion ruft beim DBB nur die Seite ab, die du gerade öffnest,
-    unter ihrem eigenen Namen und ohne deine IP-Adresse, Cookies oder sonstigen
-    Angaben weiterzugeben; der DBB erfährt von dir also nichts. Damit er nicht
-    für jeden Aufruf neu gefragt wird, hält Google die Antworten bis zu
-    {{ cdnMinuten }} Minuten vor, den Spielbericht eines gespielten Spiels bis
-    zu {{ spielberichtMinuten }}
+    Basketball Bund (<korb-dbb-link />), der sie dort öffentlich zeigt, die
+    Kader mit den Namen der Spielerinnen und Spieler. Die App fragt sie nicht
+    direkt beim DBB an, sondern über eine Funktion auf unserem Server (Cloud
+    Functions for Firebase, Anbieter wie in Abschnitt 2, Region
+    {{ regionen.funktion.id }} ({{ regionen.funktion.ort }})). Diese Funktion
+    ruft beim DBB nur die Seite ab, die du gerade öffnest, unter ihrem eigenen
+    Namen und ohne deine IP-Adresse, Cookies oder sonstigen Angaben
+    weiterzugeben; der DBB erfährt von dir also nichts. Damit er nicht für jeden
+    Aufruf neu gefragt wird, hält Google die Antworten bis zu
+    {{ cache.cdn / 60 }} Minuten vor, den Spielbericht eines gespielten Spiels
+    bis zu {{ cache.cdnFertigerSpielbericht / 60 }}
     Minuten; die App kann deshalb einige Minuten hinter dem Stand des DBB
     liegen. Ohne Internet zeigt sie, was sie auf dem Gerät hat (Abschnitt 4),
     mit seinem Stand.
@@ -105,8 +104,9 @@
       >: die letzten Antworten des DBB zu Spielplänen, Tabellen, Spielen und
       Vereinen, damit die App auch ohne Internet etwas zeigt, ohne die Personen
       darin (also ohne Namen) und nie einen Spielbericht. Höchstens
-      {{ antwortAnzahl }} Antworten, jede höchstens {{ antwortTage }} Tage lang;
-      ältere löscht die App beim Start, beim Zurückkehren zur Seite und
+      {{ antworten.grenzen.eintraege }} Antworten mit zusammen höchstens
+      {{ antworten.zeichen }} Zeichen, jede höchstens {{ antworten.tage }} Tage
+      lang; ältere löscht die App beim Start, beim Zurückkehren zur Seite und
       stündlich.
     </li>
     <li>

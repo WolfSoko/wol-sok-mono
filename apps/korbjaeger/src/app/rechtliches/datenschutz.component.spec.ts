@@ -1,32 +1,16 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { SITE_OWNER } from '@wolsok/shared-legal';
 import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
 import { REGIONEN } from '../../shared/regionen';
+import { zeigen } from '../../testing/zeigen';
 import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
 import { SPITZNAME_LAENGE } from '../auswahl/kind';
-import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
 import {
   ANTWORT_GRENZEN,
-  ANTWORT_INDEX,
-  ANTWORT_PRAEFIX,
-  MAX_ALTER_MS,
+  MAX_ALTER_TAGE,
 } from '../basketball-data/letzte-antworten';
-import {
-  ANGEMELDET_SCHLUESSEL,
-  INSTALLATION_ABGELEHNT_SCHLUESSEL,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from '../geraete-speicher';
 import { DatenschutzComponent } from './datenschutz.component';
+import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
 describe('DatenschutzComponent', () => {
-  function zeigen(): HTMLElement {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    const fixture = TestBed.createComponent(DatenschutzComponent);
-    fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
-  }
-
   function abschnitt(seite: HTMLElement, id: string): string {
     const ueberschrift = seite.querySelector(`h2#${id}`);
     expect(ueberschrift).not.toBeNull();
@@ -41,41 +25,33 @@ describe('DatenschutzComponent', () => {
     return teile.join(' ').replace(/\s+/g, ' ');
   }
 
-  it('names the controller from SITE_OWNER', () => {
-    const seite = zeigen();
+  it('names the controller and how email reaches them', () => {
+    const seite = zeigen(DatenschutzComponent);
 
     expect(seite.querySelector('h1')?.textContent?.trim()).toBe(
       'Datenschutzerklärung'
     );
-    const verantwortlicher = seite
-      .querySelector('wolsok-site-owner address')
-      ?.textContent?.replace(/\s+/g, ' ');
-    expect(verantwortlicher).toContain(SITE_OWNER.name);
-    expect(verantwortlicher).toContain(`E-Mail: ${SITE_OWNER.email}`);
+    // what SiteOwnerComponent shows is the Impressum spec's to check
+    expect(seite.querySelector('wolsok-site-owner')).not.toBeNull();
     expect(seite.querySelector('wolsok-email-forwarding')).not.toBeNull();
   });
 
-  it('names every key the app keeps in the device’s storage', () => {
-    const geraet = abschnitt(zeigen(), 'geraet');
+  it('names every key the app keeps in the device’s storage, and its caps', () => {
+    const geraet = abschnitt(zeigen(DatenschutzComponent), 'geraet');
 
-    for (const schluessel of [
-      AUSWAHL_SCHLUESSEL,
-      ANTWORT_INDEX,
-      ANTWORT_PRAEFIX,
-      ANGEMELDET_SCHLUESSEL,
-      ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-      INSTALLATION_ABGELEHNT_SCHLUESSEL,
-    ]) {
+    for (const schluessel of Object.values(GERAETE_SCHLUESSEL)) {
       expect(geraet).toContain(schluessel);
     }
-    expect(geraet).toContain(`${MAX_ALTER_MS / (24 * 60 * 60_000)} Tage`);
+    const zeichen = new Intl.NumberFormat('de-DE').format(
+      ANTWORT_GRENZEN.zeichen
+    );
     expect(geraet).toContain(
-      `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten`
+      `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_ALTER_TAGE} Tage lang`
     );
   });
 
   it('names the entries Firebase keeps in localStorage while signed in', () => {
-    const geraet = abschnitt(zeigen(), 'geraet');
+    const geraet = abschnitt(zeigen(DatenschutzComponent), 'geraet');
 
     // Firestore's tab manager (persistentMultipleTabManager) and Auth's
     // fallback persistence (browserLocalPersistence)
@@ -84,7 +60,7 @@ describe('DatenschutzComponent', () => {
   });
 
   it('says what the account’s document holds, its caps and where it lies', () => {
-    const konto = abschnitt(zeigen(), 'konto');
+    const konto = abschnitt(zeigen(DatenschutzComponent), 'konto');
 
     expect(konto).toContain(`${AUSWAHL_GRENZEN.teams} Teams`);
     expect(konto).toContain(`${AUSWAHL_GRENZEN.kinder} Kinder`);
@@ -95,7 +71,7 @@ describe('DatenschutzComponent', () => {
   });
 
   it('covers the DBB as the source, the proxy and the hosting', () => {
-    const seite = zeigen();
+    const seite = zeigen(DatenschutzComponent);
 
     const dbb = abschnitt(seite, 'dbb');
     expect(dbb).toContain('basketball-bund.net');
@@ -109,14 +85,14 @@ describe('DatenschutzComponent', () => {
   });
 
   it('says how to delete the account and its data', () => {
-    const loeschen = abschnitt(zeigen(), 'loeschen');
+    const loeschen = abschnitt(zeigen(DatenschutzComponent), 'loeschen');
 
     expect(loeschen).toContain('Einstellungen');
     expect(loeschen).toContain('Konto löschen');
   });
 
   it('tells Google’s own part from what it processes for us', () => {
-    const usa = abschnitt(zeigen(), 'usa');
+    const usa = abschnitt(zeigen(DatenschutzComponent), 'usa');
 
     expect(usa).toContain('Auftragsverarbeiter');
     expect(usa).toContain('Google selbst verantwortlich');
@@ -124,6 +100,8 @@ describe('DatenschutzComponent', () => {
   });
 
   it('links the legal notice', () => {
-    expect(zeigen().querySelector('a[href="/impressum"]')).not.toBeNull();
+    expect(
+      zeigen(DatenschutzComponent).querySelector('a[href="/impressum"]')
+    ).not.toBeNull();
   });
 });

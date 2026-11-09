@@ -1,17 +1,9 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { zeigen } from '../../testing/zeigen';
 import { FusszeileComponent } from './fusszeile.component';
 
 describe('FusszeileComponent', () => {
-  function zeigen(): HTMLElement {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    const fixture = TestBed.createComponent(FusszeileComponent);
-    fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
-  }
-
   it('links the privacy policy and the legal notice', () => {
-    const fusszeile = zeigen();
+    const fusszeile = zeigen(FusszeileComponent);
 
     const links = Array.from(fusszeile.querySelectorAll('nav a')).map((a) => [
       a.textContent?.trim(),
@@ -24,7 +16,7 @@ describe('FusszeileComponent', () => {
   });
 
   it('names the DBB as the source and says its data may lag a few minutes', () => {
-    const fusszeile = zeigen();
+    const fusszeile = zeigen(FusszeileComponent);
 
     const text = fusszeile.textContent?.replace(/\s+/g, ' ') ?? '';
     expect(text).toContain('Deutschen Basketball Bund');

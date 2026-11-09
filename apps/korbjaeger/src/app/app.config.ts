@@ -17,7 +17,8 @@ export const appConfig: ApplicationConfig = {
     provideFileRouter(
       withComponentInputBinding(),
       // a link at a page's foot (the footer's) opens the next at its top;
-      // back returns to where the page was left
+      // back returns to the position where the page is there already, not
+      // to one its data still has to fill
       withInMemoryScrolling({ scrollPositionRestoration: 'enabled' })
     ),
     provideBasketballData(),

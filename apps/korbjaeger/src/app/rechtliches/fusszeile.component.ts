@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { DBB_SEITE } from './dbb-seite';
-import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
+import { DbbLinkComponent } from './dbb-link.component';
 
 /**
  * Below every page: where the data comes from (the DBB, through the proxy,
@@ -9,18 +8,16 @@ import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
  */
 @Component({
   selector: 'korb-fusszeile',
-  imports: [RouterLink],
+  imports: [DbbLinkComponent, RouterLink],
   template: `
     <footer>
       <p>
-        Die Spieldaten stammen vom Deutschen Basketball Bund (<a
-          [href]="dbb.url"
-          >{{ dbb.name }}</a
-        >) und können einige Minuten hinterherhinken.
+        Die Spieldaten stammen vom Deutschen Basketball Bund (<korb-dbb-link />)
+        und können einige Minuten hinterherhinken.
       </p>
       <nav aria-label="Rechtliches">
-        <a [routerLink]="['/', datenschutz]">Datenschutz</a>
-        <a [routerLink]="['/', impressum]">Impressum</a>
+        <a routerLink="/privacy">Datenschutz</a>
+        <a routerLink="/impressum">Impressum</a>
       </nav>
     </footer>
   `,
@@ -51,8 +48,4 @@ import { DATENSCHUTZ_PFAD, IMPRESSUM_PFAD } from './rechtliche-pfade';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class FusszeileComponent {
-  protected readonly dbb = DBB_SEITE;
-  protected readonly datenschutz = DATENSCHUTZ_PFAD;
-  protected readonly impressum = IMPRESSUM_PFAD;
-}
+export class FusszeileComponent {}

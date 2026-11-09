@@ -9,22 +9,12 @@ import { REGIONEN } from '../../shared/regionen';
 import { SITE_HOST, SITE_URL } from '../../shared/site';
 import { AUSWAHL_GRENZEN } from '../auswahl/auswahl-dokument';
 import { SPITZNAME_LAENGE } from '../auswahl/kind';
-import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
 import {
   ANTWORT_GRENZEN,
-  ANTWORT_INDEX,
-  ANTWORT_PRAEFIX,
-  MAX_ALTER_MS,
+  MAX_ALTER_TAGE,
 } from '../basketball-data/letzte-antworten';
-import {
-  ANGEMELDET_SCHLUESSEL,
-  INSTALLATION_ABGELEHNT_SCHLUESSEL,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from '../geraete-speicher';
-import { DBB_SEITE } from './dbb-seite';
-import { IMPRESSUM_PFAD } from './rechtliche-pfade';
-
-const TAG_MS = 24 * 60 * 60_000;
+import { DbbLinkComponent } from './dbb-link.component';
+import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
 /**
  * The privacy policy, in German like the whole app (ADR 0019). The keys,
@@ -33,7 +23,12 @@ const TAG_MS = 24 * 60 * 60_000;
  */
 @Component({
   selector: 'korb-datenschutz',
-  imports: [EmailForwardingComponent, RouterLink, SiteOwnerComponent],
+  imports: [
+    DbbLinkComponent,
+    EmailForwardingComponent,
+    RouterLink,
+    SiteOwnerComponent,
+  ],
   templateUrl: './datenschutz.component.html',
   styleUrl: './rechtliche-seite.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -41,23 +36,14 @@ const TAG_MS = 24 * 60 * 60_000;
 export class DatenschutzComponent {
   protected readonly seite = SITE_URL;
   protected readonly host = SITE_HOST;
-  protected readonly dbb = DBB_SEITE;
   protected readonly regionen = REGIONEN;
-  protected readonly cdnMinuten = PROXY_CACHE_SEKUNDEN.cdn / 60;
-  protected readonly spielberichtMinuten =
-    PROXY_CACHE_SEKUNDEN.cdnFertigerSpielbericht / 60;
-  protected readonly impressum = IMPRESSUM_PFAD;
-
-  protected readonly schluessel = {
-    auswahl: AUSWAHL_SCHLUESSEL,
-    antwortIndex: ANTWORT_INDEX,
-    antwortPraefix: ANTWORT_PRAEFIX,
-    angemeldet: ANGEMELDET_SCHLUESSEL,
-    zwischenspeicherLeeren: ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-    installationAbgelehnt: INSTALLATION_ABGELEHNT_SCHLUESSEL,
-  } as const;
-  protected readonly antwortTage = MAX_ALTER_MS / TAG_MS;
-  protected readonly antwortAnzahl = ANTWORT_GRENZEN.eintraege;
+  protected readonly cache = PROXY_CACHE_SEKUNDEN;
   protected readonly grenzen = AUSWAHL_GRENZEN;
   protected readonly spitznameLaenge = SPITZNAME_LAENGE;
+  protected readonly antworten = {
+    grenzen: ANTWORT_GRENZEN,
+    zeichen: new Intl.NumberFormat('de-DE').format(ANTWORT_GRENZEN.zeichen),
+    tage: MAX_ALTER_TAGE,
+  } as const;
+  protected readonly schluessel = GERAETE_SCHLUESSEL;
 }

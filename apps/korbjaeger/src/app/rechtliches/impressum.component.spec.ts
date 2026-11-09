@@ -1,18 +1,10 @@
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
 import { SITE_OWNER } from '@wolsok/shared-legal';
+import { zeigen } from '../../testing/zeigen';
 import { ImpressumComponent } from './impressum.component';
 
 describe('ImpressumComponent', () => {
-  function zeigen(): HTMLElement {
-    TestBed.configureTestingModule({ providers: [provideRouter([])] });
-    const fixture = TestBed.createComponent(ImpressumComponent);
-    fixture.detectChanges();
-    return fixture.nativeElement as HTMLElement;
-  }
-
   it('names the provider from SITE_OWNER, with the VAT ID', () => {
-    const seite = zeigen();
+    const seite = zeigen(ImpressumComponent);
 
     expect(seite.querySelector('h1')?.textContent?.trim()).toBe('Impressum');
     const anbieter = seite
@@ -27,7 +19,7 @@ describe('ImpressumComponent', () => {
   });
 
   it('says where the data comes from and links the privacy policy', () => {
-    const seite = zeigen();
+    const seite = zeigen(ImpressumComponent);
 
     expect(seite.textContent).toContain('Deutschen Basketball Bund');
     expect(seite.querySelector('a[href="/privacy"]')?.textContent).toContain(

@@ -14,7 +14,7 @@
     Am schnellsten erreichst du mich per E-Mail an
     <a href="mailto:{{ anbieter.email }}">{{ anbieter.email }}</a
     >. Was die App speichert und wie du dein Konto löschst, steht in der
-    <a [routerLink]="['/', datenschutz]">Datenschutzerklärung</a>.
+    <a routerLink="/privacy">Datenschutzerklärung</a>.
   </p>
 
   <h2 id="umsatzsteuer">Umsatzsteuer-ID</h2>
@@ -32,11 +32,10 @@
   <h2 id="daten">Herkunft der Daten</h2>
   <p>
     Spielpläne, Ergebnisse, Tabellen, Hallen und Kader stammen vom Deutschen
-    Basketball Bund (<a [href]="dbb.url">{{ dbb.name }}</a
-    >), der sie öffentlich zeigt. Die App liest sie dort ab, wenn du sie
-    aufrufst, und kann einige Minuten hinter dem Stand des DBB liegen. Der DBB
-    betreibt die App nicht und ist für sie nicht verantwortlich; maßgeblich sind
-    seine eigenen Seiten.
+    Basketball Bund (<korb-dbb-link />), der sie öffentlich zeigt. Die App liest
+    sie dort ab, wenn du sie aufrufst, und kann einige Minuten hinter dem Stand
+    des DBB liegen. Der DBB betreibt die App nicht und ist für sie nicht
+    verantwortlich; maßgeblich sind seine eigenen Seiten.
   </p>
 
   <h2 id="inhalte">Haftung für Inhalte</h2>
