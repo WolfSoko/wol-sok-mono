@@ -254,6 +254,9 @@ describe('gemeinsamerUeberblick', () => {
         gemeinsam.naechstes.spiel.id,
       ],
       ausfaelle: gemeinsam.ausfaelle.map(({ spiel }) => spiel.id),
+      spaetereAusfaelle: gemeinsam.spaetereAusfaelle.map(
+        ({ spiel }) => spiel.id
+      ),
       letztes: gemeinsam.letztes && [
         gemeinsam.letztes.saison.team.id,
         gemeinsam.letztes.spiel.id,
@@ -262,7 +265,7 @@ describe('gemeinsamerUeberblick', () => {
   }
 
   it('has nothing for no Saison', () => {
-    expect(ueberblick()).toEqual({ ausfaelle: [] });
+    expect(ueberblick()).toEqual({ ausfaelle: [], spaetereAusfaelle: [] });
   });
 
   it("takes the first next Spiel and the latest result of all Teams', each with its Saison", () => {
@@ -275,7 +278,12 @@ describe('gemeinsamerUeberblick', () => {
           spiel(4, '2026-11-14', { art: 'geplant' }, '18:00')
         )
       )
-    ).toEqual({ naechstes: [U14.id, 4], ausfaelle: [], letztes: [U14.id, 3] });
+    ).toEqual({
+      naechstes: [U14.id, 4],
+      ausfaelle: [],
+      spaetereAusfaelle: [],
+      letztes: [U14.id, 3],
+    });
   });
 
   it('orders by tip-off within a day, the first Saison winning a tie', () => {
@@ -319,8 +327,10 @@ describe('gemeinsamerUeberblick', () => {
       )
     );
 
+    // without a tip-off, it comes after the timed Spiele of its day
     expect(gemeinsam.naechstes).toEqual([UNSER_TEAM.id, 1]);
-    expect(gemeinsam.ausfaelle).toEqual([2]);
+    expect(gemeinsam.ausfaelle).toEqual([]);
+    expect(gemeinsam.spaetereAusfaelle).toEqual([2]);
   });
 
   it("keeps a Team's cancelled Spiel after another Team's next one", () => {
@@ -334,7 +344,8 @@ describe('gemeinsamerUeberblick', () => {
     );
 
     expect(gemeinsam.naechstes).toEqual([UNSER_TEAM.id, 1]);
-    expect(gemeinsam.ausfaelle).toEqual([2]);
+    expect(gemeinsam.ausfaelle).toEqual([]);
+    expect(gemeinsam.spaetereAusfaelle).toEqual([2]);
   });
 
   it('lists every Spiel falling through where none is next', () => {

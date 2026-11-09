@@ -83,7 +83,7 @@ export interface SaisonSpiel {
   readonly spiel: Spiel;
 }
 
-/** A Team's Saison with its overview (`teamUeberblick`), computed once. */
+/** A Team's Saison with its overview (`teamUeberblick`), as computed for it. */
 export interface SaisonMitUeberblick {
   readonly saison: TeamSaison;
   readonly ueberblick: TeamUeberblick;
@@ -99,17 +99,24 @@ export interface GemeinsamerUeberblick {
   readonly naechstes?: SaisonSpiel;
   /**
    * What falls through of each Team, as its own overview has it
-   * (`TeamUeberblick.ausfaelle`), by tip-off.
+   * (`TeamUeberblick.ausfaelle`), before `naechstes` (all of it where none
+   * is next), by tip-off.
    */
   readonly ausfaelle: readonly SaisonSpiel[];
+  /**
+   * What falls through of each Team after `naechstes`, by tip-off: a
+   * Team's own Ausfall can come after another Team's next Spiel.
+   */
+  readonly spaetereAusfaelle: readonly SaisonSpiel[];
   /** The latest last result of all the Teams. */
   readonly letztes?: SaisonSpiel;
 }
 
 /**
  * The overview of several Teams together, from each Team's own
- * `teamUeberblick`: the first next Spiel, every Spiel falling through and
- * the latest result. A tie goes to the Team listed first.
+ * `teamUeberblick`: the first next Spiel, every Spiel falling through
+ * (before and after it, so a screen shows them in tip-off order) and the
+ * latest result. A tie goes to the Team listed first.
  */
 export function gemeinsamerUeberblick(
   teams: readonly SaisonMitUeberblick[]
@@ -130,10 +137,13 @@ export function gemeinsamerUeberblick(
   const letztes = mit(({ letztes }) => [letztes])
     .sort((a, b) => nachAnwurf(b, a))
     .at(0);
-  const ausfaelle = mit(({ ausfaelle }) => ausfaelle).sort(nachAnwurf);
+  const alleAusfaelle = mit(({ ausfaelle }) => ausfaelle).sort(nachAnwurf);
+  const vorNaechstem = (ausfall: SaisonSpiel): boolean =>
+    naechstes === undefined || nachAnwurf(ausfall, naechstes) < 0;
   return {
     ...(naechstes && { naechstes }),
-    ausfaelle,
+    ausfaelle: alleAusfaelle.filter(vorNaechstem),
+    spaetereAusfaelle: alleAusfaelle.filter((a) => !vorNaechstem(a)),
     ...(letztes && { letztes }),
   };
 }
