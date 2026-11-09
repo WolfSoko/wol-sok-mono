@@ -55,8 +55,8 @@ interface Aufbau {
   /** Fires `beforeinstallprompt`, whose `prompt` the spec can watch. */
   auffordern(): ReturnType<typeof vi.fn<() => Promise<unknown>>>;
   installieren(): void;
-  /** Fires `beforeinstallprompt` and hands it back. */
-  aufforderungsEreignis(): Event;
+  /** Fires `beforeinstallprompt` (answered once `userChoice` settles) and hands it back. */
+  aufforderungsEreignis(userChoice?: Promise<unknown>): Event;
 }
 
 function umgebungVon(
@@ -97,10 +97,12 @@ function auffordernAuf(
 
 /** A `beforeinstallprompt` as the browser fires it: cancelable. */
 function ereignis(
-  prompt: () => Promise<unknown> = () => Promise.resolve()
+  prompt: () => Promise<unknown> = () => Promise.resolve(),
+  userChoice: Promise<unknown> = new Promise(() => undefined)
 ): Event {
   return Object.assign(new Event('beforeinstallprompt', { cancelable: true }), {
     prompt,
+    userChoice,
   });
 }
 
@@ -116,8 +118,8 @@ function starten(browser: Browser = {}): Aufbau {
     hinweis,
     auffordern: () => auffordernAuf(ziel),
     installieren: () => ziel.dispatchEvent(new Event('appinstalled')),
-    aufforderungsEreignis: () => {
-      const event = ereignis();
+    aufforderungsEreignis: (userChoice) => {
+      const event = ereignis(undefined, userChoice);
       ziel.dispatchEvent(event);
       return event;
     },
@@ -255,6 +257,19 @@ describe('InstallationsHinweis', () => {
     expect(hinweis.angebot()).toBe('keins');
     auffordern();
     expect(hinweis.angebot()).toBe('installieren');
+  });
+
+  it("drops an event the parent answered in the browser's own dialog", async () => {
+    const { hinweis, aufforderungsEreignis } = starten();
+    const antwort = Promise.withResolvers<unknown>();
+    aufforderungsEreignis(antwort.promise);
+    expect(hinweis.angebot()).toBe('installieren');
+
+    antwort.resolve({ outcome: 'dismissed', platform: '' });
+    await antwort.promise;
+    await Promise.resolve();
+
+    expect(hinweis.angebot()).toBe('keins');
   });
 
   it('hides the hint once the app was installed', () => {

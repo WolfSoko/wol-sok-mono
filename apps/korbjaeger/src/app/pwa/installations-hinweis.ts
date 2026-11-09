@@ -115,6 +115,8 @@ function abIosVersion(
 /** The browser's `beforeinstallprompt` event, which no DOM typing names. */
 export interface InstallAufforderung extends Event {
   prompt(): Promise<unknown>;
+  /** Settles once the parent answered its dialog, the browser's own too. */
+  readonly userChoice?: Promise<unknown>;
 }
 
 /** What of the browser the install hint uses; specs pass a fake. */
@@ -180,7 +182,13 @@ export class InstallationsHinweis {
       if (this.uebernimmtAufforderung()) {
         event.preventDefault();
       }
-      this.aufforderung.set(event as InstallAufforderung);
+      const aufforderung = event as InstallAufforderung;
+      this.aufforderung.set(aufforderung);
+      // answered (also in the browser's own dialog, on another page): spent
+      aufforderung.userChoice?.then(
+        () => this.verbraucht(aufforderung),
+        () => this.verbraucht(aufforderung)
+      );
     };
     const installiert = (): void => {
       this.installiert.set(true);
@@ -220,6 +228,13 @@ export class InstallationsHinweis {
       await aufforderung.prompt();
     } catch {
       // the event is spent; the browser offers a new one where it can
+    }
+  }
+
+  /** Drops `aufforderung` where it is still the one offered. */
+  private verbraucht(aufforderung: InstallAufforderung): void {
+    if (this.aufforderung() === aufforderung) {
+      this.aufforderung.set(undefined);
     }
   }
 
