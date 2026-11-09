@@ -20,6 +20,20 @@ const CHROME_IPHONE =
 const SAFARI_IPAD =
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Safari/605.1.15';
 
+/** Other browsers and in-app views on iOS that carry Safari's token. */
+const ANDERE_IOS_BROWSER = {
+  'the Google app':
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) GSA/321.0.649069647 Mobile/15E148 Safari/604.1',
+  Opera:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 OPiOS/16.0.14.122053 Mobile/15E148 Safari/9537.53',
+  DuckDuckGo:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1 Ddg/17.5',
+  Facebook:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1 [FBAN/FBIOS;FBAV/470.0.0.37.106;FBBV/625416307;FBDV/iPhone14,5;FBMD/iPhone;FBSN/iOS;FBSV/17.5;FBSS/3;FBID/phone;FBLC/de_DE;FBOP/5]',
+  Instagram:
+    'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 Safari/604.1 Instagram 334.0.4.32.98 (iPhone14,5; iOS 17_5; de_DE; de; scale=3.00; 1170x2532; 610979035)',
+} as const;
+
 /** A Storage on a Map, as `localStorage` behaves. */
 function speicher(): Storage {
   const werte = new Map<string, string>();
@@ -174,6 +188,13 @@ describe('istIosSafari', () => {
     expect(istIosSafari(geraet(SAFARI_IPHONE))).toBe(true);
     expect(istIosSafari(geraet(SAFARI_IPAD))).toBe(true);
   });
+
+  it.each(Object.entries(ANDERE_IOS_BROWSER))(
+    'takes no other browser or in-app view with Safari in its name: %s',
+    (_name, userAgent) => {
+      expect(istIosSafari(geraet(userAgent))).toBe(false);
+    }
+  );
 
   it('takes no Mac without a touch screen, nor another browser on iOS', () => {
     expect(istIosSafari(geraet(SAFARI_IPAD, 0))).toBe(false);

@@ -57,9 +57,17 @@ export interface InstallationsNavigator {
 }
 
 /**
+ * Other browsers and in-app views on iOS, which carry Safari's token too
+ * but have no "Zum Home-Bildschirm" in their share menu: Chrome, Firefox,
+ * Edge, Opera, the Google app, DuckDuckGo, Facebook and Instagram.
+ */
+const ANDERER_IOS_BROWSER =
+  /CriOS|FxiOS|EdgiOS|OPiOS|OPT\/|GSA\/|Ddg\/|DuckDuckGo|FBAN|FBAV|Instagram/;
+
+/**
  * Whether the browser is Safari on an iPhone or iPad: an iPad's Safari
- * says it is a Mac, but has a touch screen. Chrome, Firefox and Edge on
- * iOS name themselves (`CriOS`, `FxiOS`, `EdgiOS`).
+ * says it is a Mac, but has a touch screen; the others on iOS name
+ * themselves (`ANDERER_IOS_BROWSER`).
  */
 export function istIosSafari(navigator: InstallationsNavigator): boolean {
   const agent = navigator.userAgent;
@@ -67,7 +75,7 @@ export function istIosSafari(navigator: InstallationsNavigator): boolean {
     /iPhone|iPad|iPod/.test(agent) ||
     (agent.includes('Macintosh') && navigator.maxTouchPoints > 1);
   return (
-    iosGeraet && agent.includes('Safari') && !/CriOS|FxiOS|EdgiOS/.test(agent)
+    iosGeraet && agent.includes('Safari') && !ANDERER_IOS_BROWSER.test(agent)
   );
 }
 
