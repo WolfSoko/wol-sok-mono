@@ -36,6 +36,29 @@ test.describe('Team page', () => {
     );
   });
 
+  test('keeps each Spiel inside its row on a phone, its text wrapped', async ({
+    page,
+    teamPage,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await teamPage.goto(TEAM_IN_ZWEI_LIGEN);
+    await expect(teamPage.spiele).toHaveCount(6);
+
+    const zeilen = await teamPage.spiele.all();
+    for (const zeile of zeilen) {
+      const reihe = await zeile.boundingBox();
+      const inhalt = await zeile.locator('korb-spiel-zeile').boundingBox();
+      expect(reihe).not.toBeNull();
+      expect(inhalt).not.toBeNull();
+      if (reihe !== null && inhalt !== null) {
+        expect(inhalt.y).toBeGreaterThanOrEqual(reihe.y);
+        expect(inhalt.y + inhalt.height).toBeLessThanOrEqual(
+          reihe.y + reihe.height
+        );
+      }
+    }
+  });
+
   test("shows both Ligen's Tabellen, the current first, the Team highlighted", async ({
     page,
     teamPage,
