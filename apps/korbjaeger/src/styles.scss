@@ -8,7 +8,6 @@
 @import '@fontsource/roboto/latin-500.css';
 @import '@fontsource/roboto/latin-700.css';
 // the display face of the look "Hallenboden": scores, Team names, headings
-@import '@fontsource/barlow-condensed/latin-600.css';
 @import '@fontsource/barlow-condensed/latin-700.css';
 @import 'material-icons/iconfont/filled.css';
 
@@ -26,10 +25,22 @@ html {
         plain-family: Roboto,
         brand-family: 'Barlow Condensed',
         bold-weight: 700,
-        medium-weight: 600,
+        medium-weight: 500,
         regular-weight: 400,
       ),
       density: 0,
+    )
+  );
+  // the brand face's styles bold, the one weight of it the app loads
+  @include mat.theme-overrides(
+    (
+      display-large-weight: 700,
+      display-medium-weight: 700,
+      display-small-weight: 700,
+      headline-large-weight: 700,
+      headline-medium-weight: 700,
+      headline-small-weight: 700,
+      title-large-weight: 700,
     )
   );
 }
@@ -44,8 +55,6 @@ html {
   --korb-sieg-on-container: var(--mat-sys-on-primary);
   --korb-niederlage-container: var(--mat-sys-surface-container-highest);
   --korb-niederlage-on-container: var(--mat-sys-on-surface);
-  --korb-unentschieden-container: var(--mat-sys-secondary-container);
-  --korb-unentschieden-on-container: var(--mat-sys-on-secondary-container);
   --korb-marke-rundung: var(--mat-sys-corner-extra-small);
 
   // the court's lines: under headings, along the top of cards
@@ -62,12 +71,20 @@ html {
     var(--mat-sys-on-surface)
   );
   --korb-anzeigetafel-text-leise: light-dark(
-    var(--mat-sys-inverse-on-surface),
+    color-mix(
+      in srgb,
+      var(--mat-sys-inverse-on-surface) 80%,
+      var(--mat-sys-inverse-surface)
+    ),
     var(--mat-sys-on-surface-variant)
   );
   --korb-anzeigetafel-akzent: light-dark(
     var(--mat-sys-inverse-primary),
     var(--mat-sys-primary)
+  );
+  --korb-anzeigetafel-fehler: light-dark(
+    var(--mat-sys-error-container),
+    var(--mat-sys-error)
   );
   --korb-anzeigetafel-hover: light-dark(
     var(--mat-sys-on-surface-variant),
@@ -119,14 +136,11 @@ body {
 // `.cdk-visually-hidden`: text for screen readers only, e.g. "(dein Team)"
 @include cdk.a11y-visually-hidden();
 
-// Headings in the display face, the page's title on a court line.
-h1,
-h2 {
+// Headings in the display face; the page's title in capitals on a court
+// line (dialog titles and the legal pages' sections keep their case).
+h1 {
   text-transform: uppercase;
   letter-spacing: 0.02em;
-}
-
-h1 {
   display: inline-block;
   margin-block: 0.5rem 1rem;
   padding-block-end: 0.25rem;
@@ -146,8 +160,8 @@ h2 {
   --mat-sys-on-surface-variant: var(--korb-anzeigetafel-text-leise);
   --mat-sys-primary: var(--korb-anzeigetafel-akzent);
   --mat-sys-surface-container-high: var(--korb-anzeigetafel-hover);
+  --mat-sys-error: var(--korb-anzeigetafel-fehler);
 
-  display: block;
   padding: 0.75rem 1rem;
   border-block-start: var(--korb-linie-breite) solid
     var(--korb-anzeigetafel-akzent);

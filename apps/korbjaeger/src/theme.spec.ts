@@ -16,7 +16,11 @@ const GLOBALE_STILE = readFileSync(
   'utf8'
 );
 
-const INLINE_STILE = /\bstyles:\s*`([\s\S]*?)`/g;
+/** A component's inline styles: one template literal, or an array of them. */
+const INLINE_STILE = /\bstyles:\s*(`[\s\S]*?`|\[[\s\S]*?\])/g;
+const INLINE_TEMPLATE = /\btemplate:\s*`([\s\S]*?)`/g;
+/** A style set in a template: `style="…"` or a `[style…]` binding. */
+const STIL_IM_TEMPLATE = /\[?style(?:\.[\w-]+)*\]?\s*=\s*"([^"]*)"/g;
 
 /** A colour written out: hex, a colour function or a CSS colour name. */
 const FARBE = new RegExp(
@@ -30,12 +34,30 @@ const FARBE = new RegExp(
 
 const KORB_TOKEN = /var\(\s*(--korb-[\w-]+)/g;
 
-/** The styles of a source file: an `.scss` file itself, or its inline ones. */
+function treffer(text: string, muster: RegExp): string[] {
+  return [...text.matchAll(muster)].map((treffer) => treffer[1]);
+}
+
+/** Styles a template sets on its elements. */
+function stileImTemplate(template: string): string[] {
+  return treffer(template, STIL_IM_TEMPLATE);
+}
+
+/**
+ * The styles of a source file: an `.scss` file itself; a component's inline
+ * styles and those its inline template sets; those an `.html` template sets.
+ */
 function stileIn(pfad: string, inhalt: string): string[] {
   if (pfad.endsWith('.scss')) {
     return [inhalt];
   }
-  return [...inhalt.matchAll(INLINE_STILE)].map((treffer) => treffer[1]);
+  if (pfad.endsWith('.html')) {
+    return stileImTemplate(inhalt);
+  }
+  return [
+    ...treffer(inhalt, INLINE_STILE),
+    ...treffer(inhalt, INLINE_TEMPLATE).flatMap(stileImTemplate),
+  ];
 }
 
 function quelldateien(ordner: string): string[] {
@@ -45,7 +67,8 @@ function quelldateien(ordner: string): string[] {
       return quelldateien(pfad);
     }
     const istQuelle =
-      /\.(ts|scss)$/.test(eintrag.name) && !eintrag.name.endsWith('.spec.ts');
+      /\.(ts|scss|html)$/.test(eintrag.name) &&
+      !eintrag.name.endsWith('.spec.ts');
     return istQuelle ? [pfad] : [];
   });
 }
@@ -109,6 +132,14 @@ describe('the look', () => {
       'grid-template-columns: 1fr auto;',
     ])('lets %s pass', (stil) => {
       expect(farbenIn(stil)).toEqual([]);
+    });
+
+    it.each([
+      ['an inline style array', "styles: ['a { color: #f00 }']", 'x.ts'],
+      ['a style attribute', 'template: `<p style="color: red">x</p>`', 'x.ts'],
+      ['a style binding', `<p [style.background]="'#fff'">x</p>`, 'x.html'],
+    ])('reads %s', (_art, quelle, datei) => {
+      expect(stileIn(datei, quelle).flatMap(farbenIn)).not.toEqual([]);
     });
   });
 });

@@ -27,13 +27,10 @@ export interface SpielZeile {
   readonly gegner: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
-  /** How it ended for the Team, in words; once decided. */
-  readonly ausgang?: Ausgang;
+  /** How it ended for the Team, once decided and confirmed. */
+  readonly ausgang?: SpielAusgang;
   readonly markierung?: SpielSonderfall;
 }
-
-/** A decided Spiel's end as the screens say it. */
-export type Ausgang = 'Sieg' | 'Niederlage' | 'Unentschieden';
 
 /** Every Spiel of `saison`, across its Ligen, in the port's date order. */
 export function spielZeilen(saison: TeamSaison): readonly SpielZeile[] {
@@ -54,19 +51,9 @@ export function spielZeile(saison: TeamSaison, spiel: Spiel): SpielZeile {
       ? parteiName(gegnerVon(spiel, seite))
       : `${parteiName(spiel.heim)} – ${parteiName(spiel.gast)}`,
     ergebnis: ergebnis && ergebnisText(ergebnis),
-    ausgang: ausgangText(seite && ausgangVon(spiel, seite)),
+    ausgang: seite && ausgangVon(spiel, seite),
     markierung: sonderfallVon(spiel),
   };
 }
 
 const ORT = { heim: 'Heim', gast: 'Auswärts' } as const;
-
-const AUSGANG: Record<SpielAusgang, Ausgang> = {
-  sieg: 'Sieg',
-  niederlage: 'Niederlage',
-  unentschieden: 'Unentschieden',
-};
-
-function ausgangText(ausgang: SpielAusgang | undefined): Ausgang | undefined {
-  return ausgang && AUSGANG[ausgang];
-}

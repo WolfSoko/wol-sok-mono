@@ -5,6 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
+import type { SpielAusgang } from '@wolsok/feat-shared-basketball-data';
 import type { SpielZeile } from './spiel-zeile';
 
 /**
@@ -40,9 +41,9 @@ import type { SpielZeile } from './spiel-zeile';
         @if (spiel.ausgang; as ausgang) {
           <span
             class="ausgang-marke"
-            [attr.data-ausgang]="ausgang"
+            [class]="ausgang"
             data-qa="spiel-ausgang"
-            >{{ ausgang }}</span
+            >{{ ausgangText[ausgang] }}</span
           >
         }
         @if (spiel.ergebnis) {
@@ -101,14 +102,12 @@ import type { SpielZeile } from './spiel-zeile';
       font: var(--mat-sys-label-large);
       text-transform: uppercase;
       letter-spacing: 0.04em;
-      background: var(--korb-unentschieden-container);
-      color: var(--korb-unentschieden-on-container);
     }
-    .ausgang-marke[data-ausgang='Sieg'] {
+    .sieg {
       background: var(--korb-sieg-container);
       color: var(--korb-sieg-on-container);
     }
-    .ausgang-marke[data-ausgang='Niederlage'] {
+    .niederlage {
       background: var(--korb-niederlage-container);
       color: var(--korb-niederlage-on-container);
     }
@@ -125,4 +124,10 @@ export class SpielZeileComponent {
   public readonly titel = input<string>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
+
+  /** How a result reads: in words, never by colour alone. */
+  protected readonly ausgangText: Record<SpielAusgang, string> = {
+    sieg: 'Sieg',
+    niederlage: 'Niederlage',
+  };
 }

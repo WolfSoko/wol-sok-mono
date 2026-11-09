@@ -218,10 +218,37 @@ describe('ausgangVon', () => {
     expect(ausgangVon(spielMit, 'gast')).toBe('niederlage');
   });
 
-  it('calls equal points a draw', () => {
-    expect(ausgangVon(spiel({ status: gespielt(50, 50) }), 'heim')).toBe(
-      'unentschieden'
-    );
+  it('has none for equal points: basketball has no draws, so no result yet', () => {
+    expect(
+      ausgangVon(spiel({ status: gespielt(0, 0) }), 'heim')
+    ).toBeUndefined();
+    expect(
+      ausgangVon(
+        spiel({
+          status: {
+            art: 'kampflos',
+            verzichtet: [],
+            ergebnis: { heim: 0, gast: 0 },
+          },
+        }),
+        'gast'
+      )
+    ).toBeUndefined();
+  });
+
+  it('reads a result the Verband has not confirmed yet, as its points show', () => {
+    expect(
+      ausgangVon(
+        spiel({
+          status: {
+            art: 'gespielt',
+            ergebnis: { heim: 78, gast: 47 },
+            bestaetigt: false,
+          },
+        }),
+        'heim'
+      )
+    ).toBe('sieg');
   });
 
   it('gives a forfeit to the side that did not forfeit', () => {
