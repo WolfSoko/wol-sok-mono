@@ -37,6 +37,15 @@
       <li><korb-ueberblick-team [karte]="karte" /></li>
     }
   </ul>
+  @if (ansicht.kinder.length > 0 || ansicht.teams.length > 0) {
+    <a
+      class="weiteres-team"
+      mat-stroked-button
+      routerLink="/suchen"
+      data-qa="ueberblick-weiteres-team"
+      >Weiteres Team suchen</a
+    >
+  }
 } @else if (nichtLesbar()) {
   <p class="hinweis" role="alert" data-qa="ueberblick-nicht-lesbar">
     Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu

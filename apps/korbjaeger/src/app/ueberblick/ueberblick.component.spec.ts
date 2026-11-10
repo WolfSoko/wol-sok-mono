@@ -257,6 +257,7 @@ describe('UeberblickComponent', () => {
     );
 
     expect(seite.querySelector('[data-qa="ueberblick-leer"]')).toBeNull();
+    expect(seite.querySelector('a[href="/suchen"]')).toBeNull();
     expect(eintraege(seite)).toEqual([]);
     expect(data.teamGames).not.toHaveBeenCalled();
   });
@@ -286,6 +287,7 @@ describe('UeberblickComponent', () => {
       'Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu laden.'
     );
     expect(eintraege(seite)).toEqual([]);
+    expect(seite.querySelector('a[href="/suchen"]')).toBeNull();
   });
 
   it('invites to follow a first Team while none is followed', async () => {
@@ -308,6 +310,10 @@ describe('UeberblickComponent', () => {
     );
     expect(text(link)).toBe('Team suchen');
     expect(link?.getAttribute('href')).toBe('/suchen');
+    expect(link?.hasAttribute('mat-flat-button')).toBe(true);
+    expect(
+      seite.querySelector('[data-qa="ueberblick-weiteres-team"]')
+    ).toBeNull();
   });
 
   it("labels a card with its Team's last good Spiele and their age", async () => {
@@ -367,12 +373,21 @@ describe('UeberblickComponent', () => {
     );
   });
 
-  it('offers no set-up once a Team is followed', async () => {
+  it('offers to search a further Team, after the cards, once a Team is followed', async () => {
     const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
       WASBUETTEL.id,
     ]);
 
-    expect(seite.querySelector('a[href="/suchen"]')).toBeNull();
+    const links =
+      seite.querySelectorAll<HTMLAnchorElement>('a[href="/suchen"]');
+    expect([...links].map(text)).toEqual(['Weiteres Team suchen']);
+    const [link] = links;
+    expect(link.hasAttribute('mat-stroked-button')).toBe(true);
+    expect(link.closest('[data-qa="ueberblick-leer"]')).toBeNull();
+    const karte = eintraege(seite)[0];
+    expect(
+      karte.compareDocumentPosition(link) & Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
   });
 
   it('shows the next Spiel with day, time, home or away and opponent', async () => {

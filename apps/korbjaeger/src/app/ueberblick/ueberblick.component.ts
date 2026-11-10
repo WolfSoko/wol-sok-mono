@@ -13,8 +13,8 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
  * it plays for, the one that plays first first, then the other Teams as
  * cards ("Weitere Teams"); while no Kind is marked, every Team's card and
  * how to mark one. Shows nothing until Meine Teams are read, then offers
- * to set up a first Team while there is none; says so where they cannot be
- * read at all. A Team unfollowed from a card takes its control away, so
+ * to search a first Team while there is none, and a further one below
+ * the cards once there are some; says so where they cannot be read at all. A Team unfollowed from a card takes its control away, so
  * focus moves to the heading (`NachEntfolgen`).
  */
 @Component({
