@@ -10,12 +10,9 @@ import {
   AUSWAHL_LISTEN,
   everyList,
   LEERE_AUSWAHL,
-  listDescriptor,
+  listWithout,
   type AuswahlInhalt,
-  type AuswahlListe,
   type SelectionLists,
-  type ListDescriptorOf,
-  type ListValue,
 } from './selection-lists';
 import {
   gleicheFarben,
@@ -174,7 +171,7 @@ export function vereinsfarbenZuruecksetzenAenderung(
 export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
   return (selection) => {
     const left = everyList<SelectionLists>((list) =>
-      withoutEqual(list, selection, abgegeben)
+      listWithout(list, selection, abgegeben, true)
     );
     return AUSWAHL_LISTEN.every(
       (list) => left[list].length === selection[list].length
@@ -183,19 +180,6 @@ export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
       : // the Teams that stay keep their places (`teamsSeit`)
         { ...selection, ...left };
   };
-}
-
-/** The entries of `list` in `selection` that `without` holds no equal of. */
-function withoutEqual<L extends AuswahlListe>(
-  list: L,
-  selection: SelectionLists,
-  without: SelectionLists
-): readonly ListValue<L>[] {
-  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
-  return selection[list].filter(
-    (value) =>
-      !without[list].some((previous) => descriptor.equals(previous, value))
-  );
 }
 
 /** Unmarks the Kind `person`, if it is marked. */

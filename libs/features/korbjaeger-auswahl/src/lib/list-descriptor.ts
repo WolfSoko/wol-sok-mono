@@ -11,12 +11,13 @@ import type { AuswahlInhalt } from './selection-lists';
  * @typeParam F what a change writes of an entry, `ENTFERNT` where it goes
  * @typeParam D the document's field that stores the list
  */
-export interface ListDescriptor<W, F, D extends string = string> {
+export interface ListDescriptor<W, F, D extends string> {
   /** The document's field that stores the list, a map by `id`. */
   readonly field: D;
   /**
    * Whether its entries are ordered by when they joined, each with a
-   * `seit` of its own (Teams, Kinder); one that is not hands out none.
+   * `since` of its own (Teams, Kinder); one that is not (its `order` decides)
+   * reads each with a `since` of 0, which no other entry's order depends on.
    */
   readonly orderedBySince: boolean;
   /** The DBB id the map stores an entry under, which tells entries apart. */
@@ -30,15 +31,17 @@ export interface ListDescriptor<W, F, D extends string = string> {
    */
   readonly read: (raw: unknown) => readonly ReadEntry<W>[] | undefined;
   /**
-   * What a change writes of an entry that joins; `seit` gives it the next
-   * place, for a list ordered by when its entries joined.
+   * What a change writes of an entry that joins `after`; `since` gives it
+   * the next place, for a list ordered by when its entries joined, unless
+   * `after` knows one (a Team followed at its old place).
    */
   readonly added: (
     value: W,
-    since: () => number
+    since: () => number,
+    after: AuswahlInhalt
   ) => Exclude<F, typeof ENTFERNT>;
   /**
-   * What a change writes of an entry it changes (same id, not `gleich`);
+   * What a change writes of an entry it changes (same id, not `equals`);
    * a list whose entries are their id alone has none.
    */
   readonly changed?: (previous: W, current: W) => Exclude<F, typeof ENTFERNT>;
@@ -54,9 +57,4 @@ export interface ListDescriptor<W, F, D extends string = string> {
   readonly complete?: (account: W, device: W) => W;
   /** The order the list keeps, where it is not the order entries joined. */
   readonly order?: (list: readonly W[]) => readonly W[];
-  /** The place `selection` already knows for an entry that joins (`added`). */
-  readonly knownSince?: (
-    selection: AuswahlInhalt,
-    value: W
-  ) => number | undefined;
 }

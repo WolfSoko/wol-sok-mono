@@ -40,8 +40,7 @@ export const TEAMS: ListDescriptor<TeamId, TeamFeld, 'teams'> = {
     }
     return bySince(entries, (team) => team);
   },
-  added: (_team, since) => since(),
+  // a Team followed again keeps its old place (`folgenAenderung`)
+  added: (team, since, after) => after.teamsSeit?.get(team) ?? since(),
   merge: eintraegeMit,
-  // a Team followed again at its old place (`folgenAenderung`)
-  knownSince: (selection, team) => selection.teamsSeit?.get(team),
 };

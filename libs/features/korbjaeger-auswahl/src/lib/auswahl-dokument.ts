@@ -125,7 +125,10 @@ export const LISTS_BY_SINCE: readonly AuswahlListe[] = AUSWAHL_LISTEN.filter(
 function readLists(document: RohesDokument): ReadLists | undefined {
   const lists = everyList<{
     readonly [L in AuswahlListe]: ReadLists[L] | undefined;
-  }>((list) => listDescriptor(list).read(document[listDescriptor(list).field]));
+  }>((list) => {
+    const descriptor = listDescriptor(list);
+    return descriptor.read(document[descriptor.field]);
+  });
   // every list read: the type of each is its own
   return AUSWAHL_LISTEN.every((list) => lists[list] !== undefined)
     ? (lists as ReadLists)
@@ -201,8 +204,12 @@ function fieldsOf<L extends AuswahlListe>(
   after: AuswahlInhalt,
   next: () => number
 ): ListFields<L> {
-  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
   const fields: Record<string, ListField<L> | typeof ENTFERNT> = {};
+  if (before[list] === after[list]) {
+    // a list the change leaves alone writes nothing
+    return fields;
+  }
+  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
   const earlier = new Map(
     before[list].map((value) => [descriptor.id(value), value])
   );
@@ -212,10 +219,7 @@ function fieldsOf<L extends AuswahlListe>(
     const previous = earlier.get(id);
     gone.delete(id);
     if (previous === undefined) {
-      fields[id] = descriptor.added(
-        value,
-        () => descriptor.knownSince?.(after, value) ?? next()
-      );
+      fields[id] = descriptor.added(value, next, after);
     } else if (!descriptor.equals(previous, value) && descriptor.changed) {
       fields[id] = descriptor.changed(previous, value);
     }

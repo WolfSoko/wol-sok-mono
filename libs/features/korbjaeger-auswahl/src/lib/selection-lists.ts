@@ -8,9 +8,9 @@ import { CLUB_COLORS, type VereinsfarbenFeld } from './lists/club-colors';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
 
 /**
- * Each list of an `Auswahl`: what an entry is (`wert`), what a change
- * writes of one (`feld`) and the document's field that stores it
- * (`dokument`). A new list gets its entry here, its descriptor in
+ * Each list of an `Auswahl`: what an entry is (`value`), what a change
+ * writes of one (`field`) and the document's field that stores it
+ * (`document`). A new list gets its entry here, its descriptor in
  * `LIST_DESCRIPTORS`, its cap in `AUSWAHL_GRENZEN` and its rules.
  */
 interface ListTypes {
@@ -67,12 +67,14 @@ export const AUSWAHL_GRENZEN = {
   vereinsfarben: 50,
 } as const satisfies Record<AuswahlListe, number>;
 
-/** Every list of an `Auswahl`, in the order a change gives out `since` values. */
-export const AUSWAHL_LISTEN: readonly AuswahlListe[] = [
-  'teams',
-  'kinder',
-  'vereinsfarben',
-];
+/**
+ * Every list of an `Auswahl`, in `LIST_DESCRIPTORS`' order, which is the
+ * order a change gives out `since` values; taken from the table, so a list
+ * it holds is never left out of a loop.
+ */
+export const AUSWAHL_LISTEN = Object.keys(
+  LIST_DESCRIPTORS
+) as readonly AuswahlListe[];
 
 /** The descriptor of `list`, typed for it. */
 export function listDescriptor<L extends AuswahlListe>(
@@ -100,17 +102,13 @@ export interface AuswahlInhalt extends SelectionLists {
 }
 
 /** An `Auswahl` that holds nothing. */
-export const LEERE_AUSWAHL: AuswahlInhalt = {
-  teams: [],
-  kinder: [],
-  vereinsfarben: [],
-};
+export const LEERE_AUSWAHL: AuswahlInhalt = everyList<SelectionLists>(() => []);
 
 /**
- * One value for each list, from `wert`: the one place the lists are put
- * together. TypeScript cannot check that `wert` gives each list its own
+ * One value for each list, from `value`: the one place the lists are put
+ * together. TypeScript cannot check that `value` gives each list its own
  * type (`T[L]` of a concrete `T` reads as every list's at once), so the
- * cast lives here; `wert` is a generic helper of the list (`listWithout`),
+ * cast lives here; `value` is a generic helper of the list (`listWithout`),
  * whose own types hold.
  */
 export function everyList<T extends { readonly [L in AuswahlListe]: unknown }>(
@@ -121,15 +119,27 @@ export function everyList<T extends { readonly [L in AuswahlListe]: unknown }>(
   ) as T;
 }
 
-/** The entries of `list` in `selection` without those `without` holds, by id. */
-function listWithout<L extends AuswahlListe>(
+/**
+ * The entries of `list` in `selection` without those `without` holds: by
+ * id, or, with `byEquals`, only those equal in all they hold (a Kind with
+ * another Spitzname stays).
+ */
+export function listWithout<L extends AuswahlListe>(
   list: L,
   selection: SelectionLists,
-  without: SelectionLists
+  without: SelectionLists,
+  byEquals = false
 ): readonly ListValue<L>[] {
   const descriptor: ListDescriptorOf<L> = listDescriptor(list);
-  const ids = new Set(without[list].map((value) => descriptor.id(value)));
-  return selection[list].filter((value) => !ids.has(descriptor.id(value)));
+  const byId = new Map(
+    without[list].map((value) => [descriptor.id(value), value])
+  );
+  return selection[list].filter((value) => {
+    const other = byId.get(descriptor.id(value));
+    return (
+      other === undefined || (byEquals && !descriptor.equals(other, value))
+    );
+  });
 }
 
 /** `selection` without the entries of `without`, each list by its ids. */
@@ -165,5 +175,5 @@ export function equalLists<L extends AuswahlListe>(
   b: readonly ListValue<L>[]
 ): boolean {
   const descriptor: ListDescriptorOf<L> = listDescriptor(list);
-  return gleicheFolge(a, b, (x, y) => descriptor.equals(x, y));
+  return gleicheFolge(a, b, descriptor.equals);
 }

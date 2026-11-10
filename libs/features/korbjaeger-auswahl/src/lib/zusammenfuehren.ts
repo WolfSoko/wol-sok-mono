@@ -3,6 +3,7 @@ import {
   AUSWAHL_LISTEN,
   everyList,
   listDescriptor,
+  listWithout,
   type AuswahlInhalt,
   type AuswahlListe,
   type SelectionLists,
@@ -57,23 +58,9 @@ function joinList<L extends AuswahlListe>(
 ): JoinedList<ListValue<L>> {
   const descriptor: ListDescriptorOf<L> = listDescriptor(list);
   const inAccount = account[list];
-  const byDevice = new Map(
-    device[list].map((value) => [descriptor.id(value), value])
-  );
-  let completed = false;
-  const completedAccount = inAccount.map((value) => {
-    const fromDevice = byDevice.get(descriptor.id(value));
-    const kept =
-      fromDevice === undefined || descriptor.complete === undefined
-        ? value
-        : descriptor.complete(value, fromDevice);
-    completed ||= kept !== value;
-    return kept;
-  });
-  const ids = new Set(inAccount.map((value) => descriptor.id(value)));
-  const newOnes = device[list].filter(
-    (value) => !ids.has(descriptor.id(value))
-  );
+  const completedAccount = completedBy(list, inAccount, device[list]);
+  const completed = completedAccount !== inAccount;
+  const newOnes = listWithout(list, device, account);
   const free = Math.max(0, AUSWAHL_GRENZEN[list] - inAccount.length);
   const joining = newOnes.slice(0, free);
   const left = newOnes.slice(free);
@@ -82,4 +69,28 @@ function joinList<L extends AuswahlListe>(
   }
   const joined = [...completedAccount, ...joining];
   return { list: descriptor.order?.(joined) ?? joined, left };
+}
+
+/**
+ * `inAccount` with each entry the device holds too completed from it
+ * (`ListDescriptor.complete`); `inAccount` itself where nothing changes.
+ */
+function completedBy<L extends AuswahlListe>(
+  list: L,
+  inAccount: readonly ListValue<L>[],
+  onDevice: readonly ListValue<L>[]
+): readonly ListValue<L>[] {
+  const { complete, id } = listDescriptor(list);
+  if (complete === undefined) {
+    return inAccount;
+  }
+  const byDevice = new Map(onDevice.map((value) => [id(value), value]));
+  let changed = false;
+  const completed = inAccount.map((value) => {
+    const fromDevice = byDevice.get(id(value));
+    const kept = fromDevice === undefined ? value : complete(value, fromDevice);
+    changed ||= kept !== value;
+    return kept;
+  });
+  return changed ? completed : inAccount;
 }

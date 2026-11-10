@@ -38,20 +38,16 @@ export async function geraetUebernehmen(
   geraet: AuswahlInhalt
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
-  const leftByList: Partial<Record<AuswahlListe, NichtUebernommen>> = {};
+  const left: Partial<Record<AuswahlListe, readonly unknown[]>> = {};
   // one map a transaction, one after the other
   for (const list of AUSWAHL_LISTEN) {
     // a list the device holds nothing of adds nothing: no round trip
     if (geraet[list].length > 0) {
-      leftByList[list] = await listeUebernehmen(
-        firestore,
-        dokument,
-        geraet,
-        list
-      );
+      const uebrig = await listeUebernehmen(firestore, dokument, geraet, list);
+      left[list] = uebrig[list];
     }
   }
-  return everyList<SelectionLists>((list) => leftByList[list]?.[list] ?? []);
+  return everyList<SelectionLists>((list) => left[list] ?? []);
 }
 
 /**

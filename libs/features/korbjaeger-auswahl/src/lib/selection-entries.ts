@@ -24,17 +24,15 @@ export function vorSeit(
   return a.seit - b.seit || a.sortierung - b.sortierung;
 }
 
-/** `entries` in the reader's order (`vorSeit`), `id` giving each its id. */
+/**
+ * `entries` in the reader's order (as `vorSeit`: by `since`, the id a tie),
+ * `id` giving each its id; sorts the list it is given.
+ */
 export function bySince<W>(
-  entries: readonly ReadEntry<W>[],
+  entries: ReadEntry<W>[],
   id: (value: W) => number
 ): readonly ReadEntry<W>[] {
-  return [...entries].sort((a, b) =>
-    vorSeit(
-      { seit: a.since, sortierung: id(a.value) },
-      { seit: b.since, sortierung: id(b.value) }
-    )
-  );
+  return entries.sort((a, b) => a.since - b.since || id(a.value) - id(b.value));
 }
 
 /** `eintraege` with each of `felder` set, or deleted where it goes. */
