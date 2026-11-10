@@ -66,14 +66,29 @@ function fakeData(
 
 function fakeStore(
   lists: AssociationClubs[],
-  attempts = new Map<number, number>()
+  attempts = new Map<number, number>(),
+  noted: readonly number[] = [],
+  unmarked: readonly number[] = []
 ): ClubIndexStore & { log: string[]; saved: AssociationClubs[] } {
   const log: string[] = [];
   const saved: AssociationClubs[] = [];
+  const ids = new Set([
+    ...lists.map(({ association }) => association.id),
+    ...attempts.keys(),
+    ...noted,
+  ]);
+  const offered = new Set(
+    [...lists.map(({ association }) => association.id), ...noted].filter(
+      (id) => !unmarked.includes(id)
+    )
+  );
   return {
     log,
     saved,
-    read: async () => ({ lists, attempts }),
+    read: async () => ({ lists, attempts, ids, offered }),
+    noteOffered: async (associations) => {
+      log.push(`note ${associations.join(',')}`);
+    },
     markAttempt: async (id, at) => {
       log.push(`attempt ${id} ${at}`);
     },
@@ -116,9 +131,10 @@ describe('runClubIndex', () => {
 
     expect(result).toEqual({
       removed: 0,
+      noted: 1,
       crawled: { association: 3, clubs: 2, namedByTeam: 0 },
     });
-    expect(store.log).toEqual([`attempt 3 ${NOW}`, 'save 3']);
+    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`, 'save 3']);
     expect(store.saved).toEqual([
       {
         association: BERLIN,
@@ -169,7 +185,7 @@ describe('runClubIndex', () => {
 
     const result = await runClubIndex(runWith(store));
 
-    expect(result).toEqual({ removed: 0 });
+    expect(result).toEqual({ removed: 0, noted: 0 });
     expect(store.log).toEqual([]);
   });
 
@@ -188,7 +204,7 @@ describe('runClubIndex', () => {
         )
       )
     ).rejects.toMatchObject({ kind: 'unavailable' });
-    expect(store.log).toEqual([`attempt 3 ${NOW}`]);
+    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`]);
   });
 
   it('deletes the lists of Associations the DBB no longer offers', async () => {
@@ -198,8 +214,68 @@ describe('runClubIndex', () => {
       { association: BERLIN, clubs: [], updatedAt: NOW },
     ]);
 
-    expect(await runClubIndex(runWith(store))).toEqual({ removed: 1 });
+    expect(await runClubIndex(runWith(store))).toEqual({
+      removed: 1,
+      noted: 0,
+    });
     expect(store.log).toEqual(['remove 40']);
+  });
+
+  it('deletes the attempts and notes of Associations the DBB no longer offers, so none keeps the index incomplete', async () => {
+    const store = fakeStore(
+      [
+        { association: BAYERN, clubs: [], updatedAt: NOW },
+        { association: BERLIN, clubs: [], updatedAt: NOW },
+      ],
+      new Map([[41, NOW - DAY]]),
+      [42]
+    );
+
+    expect(await runClubIndex(runWith(store))).toEqual({
+      removed: 2,
+      noted: 0,
+    });
+    expect(store.log).toEqual(['remove 41', 'remove 42']);
+  });
+
+  it('notes every offered Association without a document, before its first crawl', async () => {
+    const store = fakeStore([]);
+
+    const result = await runClubIndex(runWith(store));
+
+    expect(result).toMatchObject({ noted: 2, crawled: { association: 2 } });
+    expect(store.log[0]).toBe('note 2,3');
+  });
+
+  it('marks the lists stored before it noted Verbände, so the server waits for them', async () => {
+    const store = fakeStore(
+      [
+        { association: BAYERN, clubs: [], updatedAt: NOW },
+        { association: BERLIN, clubs: [], updatedAt: NOW },
+      ],
+      new Map(),
+      [],
+      [2, 3]
+    );
+
+    expect(await runClubIndex(runWith(store))).toEqual({
+      removed: 0,
+      noted: 2,
+    });
+    expect(store.log).toEqual(['note 2,3']);
+  });
+
+  it('notes no Association again that it noted before', async () => {
+    const store = fakeStore(
+      [{ association: BAYERN, clubs: [], updatedAt: NOW }],
+      new Map(),
+      [3]
+    );
+
+    const result = await runClubIndex(runWith(store));
+
+    expect(result).toMatchObject({ noted: 0, crawled: { association: 3 } });
+    expect(store.log).toEqual([`attempt 3 ${NOW}`, 'save 3']);
   });
 
   it('deletes nothing when the DBB offers no Association at all', async () => {

@@ -1,8 +1,14 @@
 // @vitest-environment node
-import type { AssociationClubs } from '@wolsok/feat-shared-basketball-data';
+import type {
+  AssociationClubs,
+  StoredClubIndex,
+} from '@wolsok/feat-shared-basketball-data';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { CLUB_INDEX_CACHE_SECONDS } from '../../shared/proxy-cache';
+import {
+  CLUB_INDEX_CACHE_SECONDS,
+  PROXY_CACHE_SEKUNDEN,
+} from '../../shared/proxy-cache';
 import {
   CLUB_INDEX_CACHE_CONTROL,
   clubIndexResponse,
@@ -27,6 +33,8 @@ const LISTS: readonly AssociationClubs[] = [
   },
 ];
 
+const COMPLETE: StoredClubIndex = { lists: LISTS, complete: true };
+
 const NO_QUERY = new URLSearchParams();
 
 beforeEach(() => {
@@ -45,7 +53,7 @@ describe('GET /api/clubs', () => {
   });
 
   it('answers every Club once, by name, with its Associations', async () => {
-    const response = await clubIndexResponse(async () => LISTS, NO_QUERY);
+    const response = await clubIndexResponse(async () => COMPLETE, NO_QUERY);
 
     expect(response.status).toBe(200);
     expect(JSON.parse(response.body)).toEqual([
@@ -61,27 +69,54 @@ describe('GET /api/clubs', () => {
     );
   });
 
-  it('lets the browser keep it an hour and the CDN a day', async () => {
-    const response = await clubIndexResponse(async () => LISTS, NO_QUERY);
+  it('lets the browser keep a complete index an hour and the CDN a day', async () => {
+    const response = await clubIndexResponse(async () => COMPLETE, NO_QUERY);
 
-    expect(CLUB_INDEX_CACHE_SECONDS).toEqual({ browser: 3600, cdn: 86_400 });
-    expect(response.headers['cache-control']).toBe(CLUB_INDEX_CACHE_CONTROL);
-    expect(CLUB_INDEX_CACHE_CONTROL).toBe(
+    expect(CLUB_INDEX_CACHE_SECONDS.complete).toEqual({
+      browser: 3600,
+      cdn: 86_400,
+    });
+    expect(response.headers['cache-control']).toBe(
       'public, max-age=3600, s-maxage=86400'
     );
   });
 
-  it('answers an empty list while the index is still empty', async () => {
-    const response = await clubIndexResponse(async () => [], NO_QUERY);
+  it('keeps an index still filling only as long as the DBB proxy keeps its answers', async () => {
+    const response = await clubIndexResponse(
+      async () => ({ lists: LISTS, complete: false }),
+      NO_QUERY
+    );
+
+    expect(CLUB_INDEX_CACHE_SECONDS.filling).toEqual({
+      browser: PROXY_CACHE_SEKUNDEN.browser,
+      cdn: PROXY_CACHE_SEKUNDEN.cdn,
+    });
+    expect(response.headers['cache-control']).toBe(
+      'public, max-age=60, s-maxage=300'
+    );
+    expect(response.headers['cache-control']).toBe(
+      CLUB_INDEX_CACHE_CONTROL.filling
+    );
+    expect(JSON.parse(response.body)).toHaveLength(2);
+  });
+
+  it('answers an empty list, briefly kept, while the index is still empty', async () => {
+    const response = await clubIndexResponse(
+      async () => ({ lists: [], complete: false }),
+      NO_QUERY
+    );
 
     expect(response.status).toBe(200);
     expect(response.body).toBe('[]');
+    expect(response.headers['cache-control']).toBe(
+      CLUB_INDEX_CACHE_CONTROL.filling
+    );
   });
 
   it.each(['q=post', 'verband=2', 'x'])(
     'answers a query (%s) with 404, not stored, without reading',
     async (query) => {
-      const read = vi.fn(async () => LISTS);
+      const read = vi.fn(async () => COMPLETE);
 
       const response = await clubIndexResponse(
         read,

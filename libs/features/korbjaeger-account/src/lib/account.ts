@@ -39,6 +39,14 @@ export const DELETED_ACCOUNTS_COLLECTION = 'deletedAccounts';
 export const CLUB_INDEX_COLLECTION = 'clubIndex';
 
 /**
+ * How many days apart the functions' `clubIndex` crawls a Verband: its
+ * list once it is `maxAge` old, again `retryAfter` after a crawl that
+ * left none (or a Team's name standing in for a Club's). The privacy
+ * policy names both (#3004).
+ */
+export const CLUB_INDEX_CRAWL_DAYS = { maxAge: 7, retryAfter: 1 } as const;
+
+/**
  * The choices as versions 1 and 2 stored them, with German fields: read only
  * by the migration into `CHOICES_COLLECTION` and deleted with the account,
  * until the follow-up of #2966 removes it.
