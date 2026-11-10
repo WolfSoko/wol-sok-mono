@@ -9,8 +9,8 @@ Test first in each task; before each commit `npx nx format:write` and
    fixture, an answer without `club`); `club` on `BasketballData`
    (`basketball-data.ts`) and `DbbBasketballData` with `CLUB_NAME_DAYS`
    (`dbb-basketball-data.ts`), specs in `dbb-basketball-data.spec.ts`
-   (request sent, name mapped, `not-found`, non-DBB id). Export from the
-   lib's `index.ts` where the other constants are.
+   (request sent, name mapped, `not-found`, non-DBB id).
+   `CLUB_NAME_DAYS` stays inside the lib: nothing outside reads it.
    Commit: `feat(feat-shared-basketball-data): read a Verein's name alone (club)`.
 2. **The crawl uses it.** `ClubCrawlSource` and `clubName` through `club` in
    `club-index/crawl-clubs.ts`; `crawl-clubs.spec.ts` fakes only the four

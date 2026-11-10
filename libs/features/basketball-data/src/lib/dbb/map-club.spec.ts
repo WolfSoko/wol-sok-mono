@@ -20,6 +20,12 @@ describe('mapClub', () => {
     expect(mapClub(data).name).toBe('Post SV Nürnberg');
   });
 
+  it('reads a Verein without Spiele in the range', () => {
+    const data = { ...(readEnvelope(clubMatches) as object), matches: [] };
+
+    expect(mapClub(data)).toEqual({ id: 1476, name: 'Post SV Nürnberg' });
+  });
+
   it('rejects an answer without its Verein as unexpected', () => {
     const data = { ...(readEnvelope(clubMatches) as object), club: null };
 

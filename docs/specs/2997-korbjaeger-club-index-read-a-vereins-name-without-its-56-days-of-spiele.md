@@ -17,7 +17,9 @@ these reads. A read of its own asks the same allowlisted path with
 Probed on 2026-11-10 (Verein 4468): `rangeDays=1` answers 4.9 kB with 4 Spiele,
 `rangeDays=28` 41.7 kB with 37 Spiele; both carry the same `club` object
 (`vereinId`, `vereinsname`). An unknown id answers `status:"1"` with
-`club: null`, as before.
+`club: null`, as before. A Verein without Spiele in the range (52, 53)
+answers `status:"0"` with its `club` and `matches: []`, so the name is read
+for it too.
 
 ## Non-goals
 
