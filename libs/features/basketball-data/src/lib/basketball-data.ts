@@ -9,6 +9,7 @@ import type { Spielbericht } from './domain/spielbericht';
 import type { Tabelle } from './domain/tabelle';
 import type { Team } from './domain/team';
 import type { TeamSaison, VereinsTeams } from './domain/team-saison';
+import type { Verein } from './domain/verein';
 
 /**
  * The part of an `AbortSignal` a read uses. A browser's or Node's
@@ -57,6 +58,8 @@ export interface BasketballData<O extends ReadOptions = ReadOptions> {
   ligaTeams(liga: LigaId, options?: O): Promise<readonly Team[]>;
   /** The Teams seen in a Verein's Spiele of the last and next weeks. */
   vereinsTeams(verein: VereinId, options?: O): Promise<VereinsTeams>;
+  /** A Verein alone, by its id: its name without its Spiele. */
+  club(club: VereinId, options?: O): Promise<Verein>;
   /** All Spiele of a Team in the Saison, across its Ligen, by date. */
   teamSpiele(team: TeamId, options?: O): Promise<TeamSaison>;
   tabelle(liga: LigaId, options?: O): Promise<Tabelle>;

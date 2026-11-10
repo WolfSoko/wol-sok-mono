@@ -14,6 +14,7 @@ import type { Spielbericht } from '../domain/spielbericht';
 import type { Tabelle } from '../domain/tabelle';
 import type { Team } from '../domain/team';
 import type { TeamSaison, VereinsTeams } from '../domain/team-saison';
+import type { Verein } from '../domain/verein';
 import {
   assertValidDbbRequest,
   dbbIdOf,
@@ -22,6 +23,7 @@ import {
   type DbbTransport,
 } from './dbb-request';
 import { readEnvelope } from './envelope';
+import { mapClub } from './map-club';
 import { mapLigaSeite, mapLigaSuche } from './map-liga-suche';
 import { mapLigaTeams } from './map-liga-teams';
 import { mapSpielDetails } from './map-spiel-details';
@@ -39,6 +41,14 @@ import { mapVereinsTeams } from './map-vereins-teams';
  * every read a longer list for little gain.
  */
 export const VEREINS_SPIELE_TAGE = 28;
+
+/**
+ * How far either way a Verein's Spiele are asked for when only the Verein
+ * is read (`club`): the least the DBB's day range takes, as its answer
+ * carries the Verein whatever the range, and each day more only adds
+ * Spiele that are never read.
+ */
+export const CLUB_NAME_DAYS = 1;
 
 /**
  * `BasketballData` read from the DBB's JSON API through `transport`, which
@@ -79,6 +89,14 @@ export class DbbBasketballData<
     return this.read(
       { kind: 'vereins-spiele', vereinId: verein, tage: VEREINS_SPIELE_TAGE },
       mapVereinsTeams,
+      options
+    );
+  }
+
+  public club(club: VereinId, options?: O): Promise<Verein> {
+    return this.read(
+      { kind: 'vereins-spiele', vereinId: club, tage: CLUB_NAME_DAYS },
+      mapClub,
       options
     );
   }
