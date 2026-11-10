@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.162.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.162.0...v74.162.1) (2026-11-10)
+
+### Bug Fixes
+
+* **korbjaeger:** fix the doubled comma in the German licence text ([#3000](https://github.com/WolfSoko/wol-sok-mono/issues/3000)) ([d0b4a07](https://github.com/WolfSoko/wol-sok-mono/commit/d0b4a07640c09c27dd8024b66356e1e95de56147)), closes [#2994](https://github.com/WolfSoko/wol-sok-mono/issues/2994), references [#2994](https://github.com/WolfSoko/wol-sok-mono/issues/2994)
+
+### Refactorings
+
+* **feat-korbjaeger-antworten:** move the answer cache out of korbjaeger ([#2949](https://github.com/WolfSoko/wol-sok-mono/issues/2949)) ([3acc0b3](https://github.com/WolfSoko/wol-sok-mono/commit/3acc0b3bb6c92da2a5eea8b1bc73de173ea0cef0)), closes [#2930](https://github.com/WolfSoko/wol-sok-mono/issues/2930), references [#2930](https://github.com/WolfSoko/wol-sok-mono/issues/2930)
+
 ## [74.162.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.1...v74.162.0) (2026-11-09)
 
 ### Features
