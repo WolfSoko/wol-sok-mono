@@ -7,6 +7,24 @@ export {
   DbbBasketballData,
   VEREINS_SPIELE_TAGE,
 } from './lib/dbb/dbb-basketball-data';
+export {
+  clubsMatching,
+  mergeAssociationClubs,
+} from './lib/club-index/club-index';
+export type {
+  AssociationClubs,
+  ClubIndexEntry,
+  IndexedClub,
+} from './lib/club-index/club-index';
+export { crawlClubs } from './lib/club-index/crawl-clubs';
+export {
+  CLUB_INDEX_VERSION,
+  parseAssociationClubs,
+  parseAssociationClubsList,
+  storedAssociationClubs,
+} from './lib/club-index/stored-association-clubs';
+export type { StoredAssociationClubs } from './lib/club-index/stored-association-clubs';
+export type { ClubCrawlOptions } from './lib/club-index/crawl-clubs';
 export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
 export { dbbOhnePersonen } from './lib/dbb/ohne-personen';
 export {

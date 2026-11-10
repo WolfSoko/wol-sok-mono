@@ -4,6 +4,9 @@ import * as main from './main';
 interface Endpoint {
   region?: string[];
   eventTrigger?: { eventType: string; retry: boolean };
+  scheduleTrigger?: { schedule: string; retryConfig?: { retryCount?: number } };
+  timeoutSeconds?: number;
+  maxInstances?: number;
 }
 
 const endpointOf = (fn: unknown): Endpoint =>
@@ -20,8 +23,20 @@ describe('the deployed functions', () => {
   });
 
   // `--force` deletes a function of the codebase that is gone from here
-  it('are the Auth deletion trigger only', () => {
-    expect(Object.keys(main)).toEqual(['auswahlLoeschen']);
+  it('are the Auth deletion trigger and the club index', () => {
+    expect(Object.keys(main)).toEqual(['auswahlLoeschen', 'clubIndex']);
+  });
+
+  it('crawl the club index hourly, next to the database, one at a time, unretried', () => {
+    expect(endpointOf(main.clubIndex)).toMatchObject({
+      region: [REGION],
+      scheduleTrigger: {
+        schedule: '23 * * * *',
+        retryConfig: { retryCount: 0 },
+      },
+      timeoutSeconds: 1800,
+      maxInstances: 1,
+    });
   });
 
   it('delete the Auswahl on every Auth deletion, next to the database, retried until it succeeds', () => {
