@@ -17,15 +17,18 @@ each task go in before its code.
 3. **Types from the table.** `selection-lists.ts`: drop `ListTypes`, infer `ListValue`,
    `ListField`, `ListDocumentField` from `typeof LIST_DESCRIPTORS`; `SinceByList` and
    `AuswahlInhalt.since`; `withEntryAt`, `sinceOf`, `withSince`. `auswahl-dokument.ts`: derived
-   `AuswahlDokument` type. Test: `selection-lists.spec.ts` (`withEntryAt` for Kinder, `sinceOf`).
+   `AuswahlDokument` type. Test: new `since-by-list.spec.ts` (`withEntryAt` for Kinder, `sinceOf`,
+   `withSince`, club colours read without `since`).
 4. **Writer reports its since.** `auswahl-dokument.ts`: reader fills `since` per list and the
-   highest from every read `since`; `auswahlFelder` returns `SelectionWrite`
-   (`fields`, `since`, `lastSince`), looks up known `since` per list; drop
-   `geschriebeneTeamsSeit`, `mitTeamsSeit`, `LISTS_BY_SINCE`. Callers: `lokale-auswahl.ts`,
-   `geraet-uebernehmen.ts` take `.fields`. Test: `auswahl-dokument.spec.ts` (known Kind since,
-   `lastSince`, `since` returned; existing Team cases rewritten on `since.teams`).
+   highest from every read `since`; new `selectionWrite` returns `SelectionWrite`
+   (`fields`, `since`, `lastSince`), looks up known `since` per list; `auswahlFelder` stays as its
+   `.fields`, so `lokale-auswahl.ts` and `geraet-uebernehmen.ts` don't change; drop
+   `geschriebeneTeamsSeit`, `mitTeamsSeit`, `LISTS_BY_SINCE`. Test: `since-by-list.spec.ts`
+   (known Kind since, `lastSince`, `since` returned); `auswahl-dokument.spec.ts`'s Team cases
+   take `since.teams` for `teamsSeit` (in-memory names only, as decided on request 855).
 5. **Changes and Firestore.** `auswahl-aenderungen.ts`: `folgenAenderung`/`teamPlatz` through
-   `withEntryAt`/`sinceOf`, comments; `firestore-auswahl.ts`: `lastSince` budget, pending changes
+   `withEntryAt`/`sinceOf`, `markierenAenderung` through `withEntryAt` (so a Kind marked again
+   keeps no stale `since`), comments; `firestore-auswahl.ts`: `lastSince` budget, pending changes
    through `withSince`. Tests: `auswahl-aenderungen.spec.ts`, `zusammenfuehren.spec.ts`,
    `firestore-auswahl.spec.ts` on `since`, then `npx nx run korbjaeger:test-emulator`.
 6. **Docs and checks.** CLAUDE.md only where it names a removed identifier (none expected); grep of

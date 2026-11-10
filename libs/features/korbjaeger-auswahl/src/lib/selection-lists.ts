@@ -33,19 +33,19 @@ type DescriptorTypes<T> =
  * Each list's types, read off its descriptor once per list, so a generic
  * list's types stay indexed (`ListValue<L>`) rather than conditional.
  */
-type ListTypes = {
+type TypesByList = {
   readonly [L in AuswahlListe]: DescriptorTypes<(typeof LIST_DESCRIPTORS)[L]>;
 };
 
 /** An entry of the list `L`. */
-export type ListValue<L extends AuswahlListe> = ListTypes[L]['value'];
+export type ListValue<L extends AuswahlListe> = TypesByList[L]['value'];
 
 /** What a change writes of an entry of the list `L`. */
-export type ListField<L extends AuswahlListe> = ListTypes[L]['field'];
+export type ListField<L extends AuswahlListe> = TypesByList[L]['field'];
 
 /** The document's field that stores the list `L`. */
 export type ListDocumentField<L extends AuswahlListe> =
-  ListTypes[L]['document'];
+  TypesByList[L]['document'];
 
 /** The descriptor of the list `L`. */
 export type ListDescriptorOf<L extends AuswahlListe> = ListDescriptor<

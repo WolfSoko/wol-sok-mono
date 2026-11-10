@@ -45,17 +45,20 @@ After this change each of these is handled once, for every list, through the tab
    later entry and `teamPlatz` become list-generic helpers in `selection-lists.ts`
    (`withEntryAt(list, selection, value, since?)`, `sinceOf(list, selection, id)`); the Team change
    functions call them for `teams`. `TeamPlatz` stays the port's type.
-3. **`auswahlFelder` reports what it gave out.** It returns `SelectionWrite`:
-   `{ fields: AuswahlFelder; since: SinceByList; lastSince: number }`: the fields to write, the
-   `since` it wrote for each entry that joins (given out or known), and the last one it gave out
-   (`firstSince - 1` where it gave out none). `FirestoreAuswahl` keeps `lastSince` as its budget
+3. **The writer reports what it gave out.** A new `selectionWrite(before, after, firstSince)` returns
+   `SelectionWrite`: `{ fields: AuswahlFelder; since: SinceByList; lastSince: number }`: the fields
+   to write, the `since` it wrote for each entry that joins (given out or known), and the last one
+   it gave out (`firstSince - 1` where it gave out none). `auswahlFelder` keeps its signature as
+   `selectionWrite(...).fields`, for the writers that need no more (`LokaleAuswahl`, the takeover),
+   so the round-trip specs stay as they are. `FirestoreAuswahl` keeps `lastSince` as its budget
    and shows pending changes with `since` merged in (`withSince`, generic successor of
    `mitTeamsSeit`); `geschriebeneTeamsSeit` disappears, as nothing has to parse written fields
    again.
    _Why:_ the writer knows exactly what it gave out; re-deriving it over-reserves and has to know
    which lists are ordered by since.
 4. **Field names come from the descriptors.** `ListTypes` goes: `ListValue<L>`, `ListField<L>` and
-   `ListDocumentField<L>` are inferred from `typeof LIST_DESCRIPTORS` (each descriptor constant is
+   `ListDocumentField<L>` are read off `typeof LIST_DESCRIPTORS` (through a mapped `TypesByList`, so
+   a generic list's types stay indexed) (each descriptor constant is
    typed with its own literal `field`). The `AuswahlDokument` interface is replaced by a type
    derived from the table (`version` plus each list's field as a map), so the doc comments that
    name it (account lib, app testing helpers) stay true.
@@ -75,7 +78,7 @@ After this change each of these is handled once, for every list, through the tab
 3. A new unit spec shows the generic place: a Kind given a known `since` in `AuswahlInhalt.since`
    is written with that `since` by `auswahlFelder`, and `withEntryAt` puts it before the first
    later Kind.
-4. `auswahlFelder`'s `lastSince` is the last `since` it gave out (spec: two new entries from 100
+4. `selectionWrite`'s `lastSince` is the last `since` it gave out (spec: two new entries from 100
    give 101; none gives 99) and `FirestoreAuswahl` gives two changes within one millisecond
    increasing `since` values (existing specs).
 5. Club colours read without a `since` (spec on `CLUB_COLORS.read`).
