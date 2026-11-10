@@ -32,11 +32,8 @@ import {
 import {
   AUSWAHL_VERSION,
   auswahlDokumentLesen,
-  auswahlFelder,
+  selectionWrite,
   listFields,
-  geschriebeneTeamsSeit,
-  LISTS_BY_SINCE,
-  mitTeamsSeit,
   naechsterSeit,
   type AuswahlFelder,
   type GelesenesDokument,
@@ -47,6 +44,7 @@ import {
   AUSWAHL_LISTEN,
   LEERE_AUSWAHL,
   listDescriptor,
+  withSince,
   type AuswahlInhalt,
 } from './selection-lists';
 import { listSignals } from './list-signals';
@@ -171,8 +169,8 @@ export class FirestoreAuswahl implements Auswahl {
   private readonly dokument: DocumentReference;
   private readonly abbestellen: Unsubscribe;
   private readonly erstesLesen: Promise<void>;
-  /** The latest `seit` this adapter gave. */
-  private letzterSeit = 0;
+  /** The latest `since` this adapter gave out. */
+  private lastSince = 0;
 
   public constructor(
     firestore: Firestore,
@@ -303,22 +301,21 @@ export class FirestoreAuswahl implements Auswahl {
       return vorher;
     }
     grenzenPruefen(vorher, nachher);
-    const seit = naechsterSeit(gelesen, this.letzterSeit);
-    const felder = auswahlFelder(vorher, nachher, seit);
-    // at most one `seit` per entry
-    this.letzterSeit =
-      seit +
-      LISTS_BY_SINCE.reduce((sum, list) => sum + nachher[list].length, 0);
-    // a Team it follows is shown with the `seit` it writes, so it has its
+    const write = selectionWrite(
+      vorher,
+      nachher,
+      naechsterSeit(gelesen, this.lastSince)
+    );
+    this.lastSince = Math.max(this.lastSince, write.lastSince);
+    // an entry it adds is shown with the `since` it writes, so it has its
     // place before the listener tells
-    const seiten = geschriebeneTeamsSeit(felder);
     const gezeigt: AuswahlAenderung =
-      seiten.size === 0
+      Object.keys(write.since).length === 0
         ? aenderung
-        : (stand) => mitTeamsSeit(aenderung(stand), seiten);
+        : (stand) => withSince(aenderung(stand), write.since);
     this.ausstehend.update((alle) => [...alle, gezeigt]);
     // answered once online; a refusal takes the change back in the cache
-    void setDoc(this.dokument, firestoreFelder(felder), { merge: true })
+    void setDoc(this.dokument, firestoreFelder(write.fields), { merge: true })
       .catch(() => undefined)
       .finally(() =>
         this.ausstehend.update((alle) => alle.filter((a) => a !== gezeigt))

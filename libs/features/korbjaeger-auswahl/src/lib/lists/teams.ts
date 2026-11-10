@@ -6,7 +6,7 @@ import {
   istKarte,
   istZahl,
   bySince,
-  type ReadEntry,
+  type EntrySince,
 } from '../selection-entries';
 import type { ListDescriptor } from '../list-descriptor';
 
@@ -20,7 +20,6 @@ export type TeamFeld = number | typeof ENTFERNT;
  */
 export const TEAMS: ListDescriptor<TeamId, TeamFeld, 'teams'> = {
   field: 'teams',
-  orderedBySince: true,
   id: (team) => team,
   equals: (a, b) => a === b,
   read: (raw) => {
@@ -30,7 +29,7 @@ export const TEAMS: ListDescriptor<TeamId, TeamFeld, 'teams'> = {
     if (!istKarte(raw)) {
       return undefined;
     }
-    const entries: ReadEntry<TeamId>[] = [];
+    const entries: EntrySince<TeamId>[] = [];
     for (const [key, since] of Object.entries(raw)) {
       const team = idAus(key);
       if (team === undefined || !istZahl(since)) {
@@ -40,7 +39,6 @@ export const TEAMS: ListDescriptor<TeamId, TeamFeld, 'teams'> = {
     }
     return bySince(entries, (team) => team);
   },
-  // a Team followed again keeps its old place (`folgenAenderung`)
-  added: (team, since, after) => after.teamsSeit?.get(team) ?? since(),
+  added: (_team, since) => since(),
   merge: eintraegeMit,
 };

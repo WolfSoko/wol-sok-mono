@@ -6,12 +6,21 @@ export type RohesDokument = Readonly<Record<string, unknown>>;
 /** Marks an entry, or a part of one, that a change takes away. */
 export const ENTFERNT = Symbol('entfernt');
 
-/** An entry of a stored map as read: its value and since when it is there. */
+/**
+ * An entry of a stored map as read: its value and, in a list ordered by
+ * when its entries joined, since when it is there.
+ */
 export interface ReadEntry<W> {
   readonly value: W;
-  /** Milliseconds since 1970; 0 for a list whose entries keep no order of their own. */
-  readonly since: number;
+  /**
+   * Milliseconds since 1970; none in a list that keeps an order of its
+   * own (`ListDescriptor.order`).
+   */
+  readonly since?: number;
 }
+
+/** An entry of a list ordered by when its entries joined, as read. */
+export type EntrySince<W> = ReadEntry<W> & { readonly since: number };
 
 /**
  * The order of the entries of a map, as the reader gives them: by `seit`,
@@ -29,9 +38,9 @@ export function vorSeit(
  * `id` giving each its id; sorts the list it is given.
  */
 export function bySince<W>(
-  entries: ReadEntry<W>[],
+  entries: EntrySince<W>[],
   id: (value: W) => number
-): readonly ReadEntry<W>[] {
+): readonly EntrySince<W>[] {
   return entries.sort((a, b) => a.since - b.since || id(a.value) - id(b.value));
 }
 

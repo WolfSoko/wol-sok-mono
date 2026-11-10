@@ -29,7 +29,6 @@ export const CLUB_COLORS: ListDescriptor<
   'clubColors'
 > = {
   field: 'clubColors',
-  orderedBySince: false,
   id: (wahl) => wahl.vereinId,
   equals: (a, b) => a.vereinId === b.vereinId && gleicheFarben(a, b),
   read: (raw) => {
@@ -44,10 +43,9 @@ export const CLUB_COLORS: ListDescriptor<
         colors.push({ vereinId, ...farben });
       }
     }
-    // ordered by Verein, not by `seit` (`orderedBySince: false`)
+    // ordered by Verein (`order`), so its entries carry no `since`
     return nachVerein(colors).map((value): ReadEntry<VereinsfarbenWahl> => ({
       value,
-      since: 0,
     }));
   },
   added: (wahl) => farbenText(wahl),

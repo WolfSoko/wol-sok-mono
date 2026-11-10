@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.165.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.0...v74.165.1) (2026-11-10)
+
+### Bug Fixes
+
+* **github:** deploy only what the deploy task reads ([#3019](https://github.com/WolfSoko/wol-sok-mono/issues/3019)) ([eaa51bc](https://github.com/WolfSoko/wol-sok-mono/commit/eaa51bc7cff5432261c23d330d2e352c5a9978f3)), closes [#2888](https://github.com/WolfSoko/wol-sok-mono/issues/2888), references [#2888](https://github.com/WolfSoko/wol-sok-mono/issues/2888)
+
+### Refactorings
+
+* **feat-korbjaeger-auswahl:** handle each list's since through the list table ([#3027](https://github.com/WolfSoko/wol-sok-mono/issues/3027)) ([dfb9c39](https://github.com/WolfSoko/wol-sok-mono/commit/dfb9c395e90493150f4770255f76154cd272f69b)), references [#3003](https://github.com/WolfSoko/wol-sok-mono/issues/3003) [#3003](https://github.com/WolfSoko/wol-sok-mono/issues/3003) [#3003](https://github.com/WolfSoko/wol-sok-mono/issues/3003) [#3003](https://github.com/WolfSoko/wol-sok-mono/issues/3003)
+
 ## [74.165.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.2...v74.165.0) (2026-11-10)
 
 ### Features
