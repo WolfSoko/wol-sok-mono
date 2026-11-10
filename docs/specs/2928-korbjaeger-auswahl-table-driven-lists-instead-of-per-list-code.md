@@ -13,12 +13,14 @@ by hand loops over that table instead. A fourth list then needs its
 descriptor, its cap, its rules and its port methods, not edits in about
 fifteen places.
 
-The places that loop over the table afterwards
-(`apps/korbjaeger/src/app/auswahl/` and `konto/`):
+The places that loop over the table afterwards (the lib
+`libs/features/korbjaeger-auswahl/src/lib/`, and the app's
+`apps/korbjaeger/src/app/konto/`):
 
 - `auswahl-dokument.ts`: `auswahlDokumentLesen` (each map read, the highest
   `seit`), `auswahlFelder` (the diff), `auswahlDokumentMit` (merge into the
-  stored map, a version-1 list turned into a map).
+  stored map); `DOCUMENT_FIELD` (the stored field per list) becomes the
+  descriptor's `feld`.
 - `firestore-auswahl.ts`: `firestoreFelder`, the list signals, the gap of
   `seit` a write reserves (`letzterSeit`).
 - `lokale-auswahl.ts`: the list signals, `neuGelesen`.
@@ -26,67 +28,84 @@ The places that loop over the table afterwards
   (`gleicheKinder`, `gleicheVereinsfarben`).
 - `zusammenfuehren.ts`: joining each list up to its cap.
 - `geraet-uebernehmen.ts`: one transaction a list.
-- `konto/konto-sitzung.ts`: `ohne`, `vereint`, the `AktuelleAuswahl` signals.
+- `konto/konto-sitzung.ts` (app): `ohne`, `vereint`, `istLeer`, the
+  `AktuelleAuswahl` signals.
 
 ## Non-goals
 
 - **No change in behaviour or stored shape.** `AuswahlDokument`, its version
-  (2), the Firestore rules and every spec's expectations stay as they are.
+  (3), the Firestore rules and every spec's expectations stay as they are.
   This is a refactor; the existing unit and emulator specs are its safety net.
 - **No change to the port `Auswahl`** (its signals and methods per list stay:
   screens call `folgen`, `markieren`, `vereinsfarbenSetzen`, which say what
   they do). The change functions in `auswahl-aenderungen.ts` that only one
   list has (`folgenAenderung`, `spitznameAenderung`, …) stay per list.
 - **No move into a lib here.** The manager decided (2026-11-09) that
-  [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917) goes first:
-  this refactor is built only after #2917 is merged, on the lib's paths.
-  The paths in this spec name today's files in `apps/korbjaeger/src/app/`;
-  read them as their place in the new lib, and the new files go next to
-  the moved ones there.
+  [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917) goes first;
+  it was merged (PR [#2937](https://github.com/WolfSoko/wol-sok-mono/pull/2937)),
+  so this refactor works on the lib `feat-korbjaeger-auswahl`.
+- No change to the migration of versions 1 and 2 (`legacy-*.ts`), which
+  reads the German fields and goes with #2966's follow-up.
 - No change to `nicht-uebernommen-text.ts` (it already loops over
   `AUSWAHL_LISTEN` and its wording per list is UI text).
 
 ## Decisions
 
-- **A descriptor `AuswahlListenArt<Wert, Feld>` per list** (new
-  `auswahl/auswahl-liste.ts` for the interface, one file per list under
-  `auswahl/listen/`: `teams.ts`, `kinder.ts`, `vereinsfarben.ts`), with
-  - `schluessel(wert)`: the id the map stores it under (Team id, person id,
-    Verein id);
+Built after #2917 and #2966 (version 3, English fields, no version-1 lists
+left in the reader) and #2920 (`teamsSeit`, a Team's old place), so the
+descriptor carries the stored field and the known place, and needs no
+conversion of version-1 lists.
+
+- **A descriptor `AuswahlListenArt<Wert, Feld, Dokument>` per list**
+  (`auswahl-liste.ts` for the interface, one file per list under `listen/`:
+  `teams.ts`, `kinder.ts`, `vereinsfarben.ts`, each with its stored types:
+  `TeamFeld`, `KindEintrag`/`KindFeld`, `VereinsfarbenFeld`), with
+  - `feld`: the document's field (`teams`, `children`, `clubColors`);
+  - `id(wert)`: the DBB id the map stores it under;
   - `gleich(a, b)`: whether two entries are the same (Kind with its
     Spitzname, Verein with its colours);
-  - `lesen(roh)`: the entries of a stored map or version-1 list with their
-    `seit`, in order; `undefined` only where the list makes the whole
-    document unreadable (Teams that are not all ids), as today;
-  - `felder(vorher, nachher, seit)`: the entries a change writes, with
-    `seit` a counter shared across lists, so new Teams and Kinder still get
-    one millisecond each in the same order as today;
+  - `lesen(roh)`: the readable entries of the stored map with their `seit`,
+    in order; `undefined` only where the list makes the whole document
+    unreadable (Teams that are not all ids), as before;
+  - `neu(wert, seit)` and `geaendert?(alt, neu)`: what a change writes of an
+    entry that joins or changes; the diff itself (gone, new, changed) is one
+    generic loop, with `seit` a counter shared across lists in
+    `AUSWAHL_LISTEN`'s order, so new Teams and Kinder still get one
+    millisecond each in the same order;
+  - `bekannterSeit?(inhalt, wert)`: a place `nachher` already knows (a Team
+    followed at its old place, `teamsSeit`);
   - `mit(gespeichert, felder)`: those entries merged into a stored map;
-  - `alsKarte(werte)`: a version-1 list as a map, for the first change;
-  - `zusammen(konto, geraet)`: joining the device's into the account's,
-    each list with its own rule (Kinder fill a missing Spitzname, Vereine
-    keep their order by id); the cap comes from `AUSWAHL_GRENZEN`.
-    Why: these are exactly the operations the fifteen places spell out per
-    list; everything else is the same loop.
-- **The table `AUSWAHL_LISTEN_ARTEN`** (in a new `auswahl/auswahl-listen.ts`,
-  beside `AUSWAHL_GRENZEN`, `AUSWAHL_LISTEN` and `AuswahlInhalt`) is typed
-  as a mapped type over one type map (`ListenTypen`: per list its `wert`
-  and `feld`), and `AuswahlInhalt` and `AuswahlFelder` are derived from the
-  same map. Generic code takes `<L extends AuswahlListe>`, so TypeScript
-  keeps list and descriptor correlated without casts at the call sites;
-  where a loop has to rebuild a whole `AuswahlInhalt`, one helper
-  (`jedeListe`) does it, so the cast lives in one place.
-- **`auswahl-dokument.ts` keeps the document** (version, reading, writing)
-  and loses the per-list readers and mergers to the descriptors; the
-  low-level helpers they share (`istKarte`, `idAus`, `istZahl`, `geordnet`,
-  `ENTFERNT`, `RohesDokument`) move to `auswahl/auswahl-eintraege.ts`.
-  Existing exports stay importable from where they are today (types
-  re-exported from `auswahl-dokument.ts`), so screens and specs need no
-  import changes beyond the touched modules.
-- **Signals per list come from one helper** (`listenSignale(inhalt, …)`),
-  which builds a `computed` per list with that list's equality; the adapters
-  and `AktuelleAuswahl` assign its result. The port keeps its named
+  - `ergaenzen?(konto, geraet)` and `ordnen?(liste)`: the list's own rule
+    when the device's choices join the account's (Kinder fill a missing
+    Spitzname, Vereinsfarben keep the order by Verein); joining up to the
+    cap (`AUSWAHL_GRENZEN`) is one generic loop.
+    Why: these are exactly what the places spelled out per list; the rest
+    is the same loop.
+- **The table `AUSWAHL_LISTEN_ARTEN`** (`auswahl-listen.ts`, beside
+  `AUSWAHL_GRENZEN`, `AUSWAHL_LISTEN`, `AuswahlInhalt`, `LEERE_AUSWAHL`) is
+  typed as a mapped type over one type map (`ListenTypen`: per list its
+  `wert`, `feld` and `dokument`); `AuswahlInhalt` and `AuswahlFelder` (keyed
+  by the stored field, as before) are derived from it. Generic helpers take
+  `<L extends AuswahlListe>` and get their descriptor from `listenArt(liste)`.
+  One helper, `jedeListe`, puts a value for each list together; TypeScript
+  cannot check per list that its callback gives each list its own type (a
+  concrete mapped type indexed by a generic key reads as all lists at once),
+  so its callback is untyped and the one cast lives there; the callbacks
+  are the typed generic helpers.
+- **`auswahl-dokument.ts` keeps the document** (version, `AuswahlDokument`,
+  reading, `auswahlFelder`, `auswahlDokumentMit`, `teamsSeit` helpers); the
+  low-level helpers shared with the descriptors and the migration
+  (`istKarte`, `idAus`, `istId`, `istZahl`, `vorSeit`, `eintraegeMit`,
+  `ENTFERNT`, `RohesDokument`) move to `auswahl-eintraege.ts`. The lib's
+  public entry keeps every export it had.
+- **Signals per list come from one helper**, `listenSignale(lesen)` (its
+  own file, the only part that needs Angular), which builds a `computed`
+  per list with that list's equality from a reader of the list; both
+  adapters and the app's `AktuelleAuswahl` use it. The port keeps its named
   properties.
+- **The app's `ohne`, `vereint` and `istLeer`** become the lib's
+  `auswahlOhne`, `auswahlVereint`, `auswahlLeer` (by each list's ids),
+  exported from its entry.
 
 ## Acceptance
 
@@ -96,9 +115,11 @@ The places that loop over the table afterwards
 2. Every existing spec of the app passes unchanged in its expectations:
    `nx test korbjaeger` and `nx run korbjaeger:test-emulator` (rules,
    `FirestoreAuswahl` contract, takeover); `typecheck` and lint green.
-3. A spec on the table checks each descriptor's round trip
-   (`felder` → `mit` → `lesen` gives back `nachher`) and that
-   `AUSWAHL_LISTEN_ARTEN` holds exactly `AUSWAHL_LISTEN`.
+3. A spec on the table (`auswahl-listen.spec.ts`) checks each list's round
+   trip (`auswahlFelder` → `auswahlDokumentMit` → `auswahlDokumentLesen`
+   gives back `nachher`), that `AUSWAHL_LISTEN_ARTEN` and `AUSWAHL_GRENZEN`
+   hold exactly `AUSWAHL_LISTEN`, each list in a field of its own, and
+   `auswahlOhne`/`auswahlVereint`/`auswahlLeer`.
 4. CLAUDE.md's Korbjäger section names the table where it describes the
    Auswahl document, so the next list goes there.
 
