@@ -19,9 +19,13 @@ export {
   CLUB_INDEX_VERSION,
   parseAssociationClubs,
   parseAssociationClubsList,
+  parseClubIndex,
   storedAssociationClubs,
 } from './lib/club-index/stored-association-clubs';
-export type { StoredAssociationClubs } from './lib/club-index/stored-association-clubs';
+export type {
+  ClubIndex,
+  StoredAssociationClubs,
+} from './lib/club-index/stored-association-clubs';
 export type {
   ClubCrawlOptions,
   ClubCrawlSource,

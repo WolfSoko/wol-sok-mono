@@ -62,6 +62,27 @@ export function parseAssociationClubsList(
     .filter((list): list is AssociationClubs => list !== undefined);
 }
 
+/** What the server reads from the club index. */
+export interface ClubIndex {
+  readonly lists: readonly AssociationClubs[];
+  /**
+   * Whether every Association the crawl noted holds a list: the index has
+   * documents and each one is a list (#3005). A Verband noted before its
+   * first crawl, a first crawl still pending or a document this reader
+   * cannot read leaves it incomplete.
+   */
+  readonly complete: boolean;
+}
+
+/** The club index of the stored documents `data`. */
+export function parseClubIndex(data: readonly unknown[]): ClubIndex {
+  const lists = parseAssociationClubsList(data);
+  return {
+    lists,
+    complete: data.length > 0 && lists.length === data.length,
+  };
+}
+
 /** Only the fields an entry has, so nothing else reaches the store. */
 function entryOf({ id, name, nameFromTeam }: ClubIndexEntry): ClubIndexEntry {
   return nameFromTeam === true ? { id, name, nameFromTeam } : { id, name };

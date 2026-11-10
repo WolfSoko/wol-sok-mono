@@ -3,6 +3,7 @@ import {
   CLUB_INDEX_VERSION,
   parseAssociationClubs,
   parseAssociationClubsList,
+  parseClubIndex,
   storedAssociationClubs,
 } from './stored-association-clubs';
 
@@ -72,5 +73,37 @@ describe('the stored club index', () => {
     ],
   ])('skips a document with %s', (_case, data) => {
     expect(parseAssociationClubs(data)).toBeUndefined();
+  });
+});
+
+describe('parseClubIndex', () => {
+  const BERLIN: AssociationClubs = {
+    association: { id: 3, name: 'Berlin' },
+    clubs: [{ id: 700, name: 'ALBA Berlin' }],
+    updatedAt: 1_700_000_000_001,
+  };
+
+  it('calls an index without documents incomplete', () => {
+    expect(parseClubIndex([])).toEqual({ lists: [], complete: false });
+  });
+
+  it('calls it complete once every document holds a list, a pending crawl beside one included', () => {
+    expect(
+      parseClubIndex([
+        storedAssociationClubs(BAYERN),
+        { ...storedAssociationClubs(BERLIN), attemptedAt: 42 },
+      ])
+    ).toEqual({ lists: [BAYERN, BERLIN], complete: true });
+  });
+
+  it.each([
+    ['a Verband noted before its first crawl', { offeredAt: 42 }],
+    ['a first crawl still pending', { attemptedAt: 42 }],
+    ['a document of another version', { version: 99 }],
+  ])('calls it incomplete beside %s, keeping the lists', (_case, data) => {
+    expect(parseClubIndex([storedAssociationClubs(BAYERN), data])).toEqual({
+      lists: [BAYERN],
+      complete: false,
+    });
   });
 });
