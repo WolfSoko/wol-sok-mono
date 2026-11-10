@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.163.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.163.0...v74.163.1) (2026-11-10)
+
+### Refactorings
+
+* **feat-korbjaeger-auswahl:** describe each Auswahl list once, in a table ([#3001](https://github.com/WolfSoko/wol-sok-mono/issues/3001)) ([4c097a5](https://github.com/WolfSoko/wol-sok-mono/commit/4c097a5a33c33726bb65730a225c5d8a43fc3ba8)), closes [#2928](https://github.com/WolfSoko/wol-sok-mono/issues/2928), references [#2928](https://github.com/WolfSoko/wol-sok-mono/issues/2928) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967)
+
 ## [74.163.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.162.1...v74.163.0) (2026-11-10)
 
 ### Features
