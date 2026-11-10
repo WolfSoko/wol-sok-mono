@@ -10,7 +10,10 @@ import { proxyRouteHandler } from '../../server/dbb/dbb-proxy';
 import type { DbbUpstream } from '../../server/dbb/dbb-upstream';
 import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
-import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
+import type {
+  LetzteAntwort,
+  LetzteAntworten,
+} from '@wolsok/feat-korbjaeger-antworten';
 import { Lesung, type KorbReadOptions } from './lesung';
 import { KeinInternetError } from './kein-internet-error';
 import {

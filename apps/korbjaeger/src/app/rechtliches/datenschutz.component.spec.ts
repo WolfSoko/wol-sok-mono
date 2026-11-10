@@ -13,7 +13,7 @@ import {
 import {
   ANTWORT_GRENZEN,
   MAX_ALTER_TAGE,
-} from '../basketball-data/letzte-antworten';
+} from '@wolsok/feat-korbjaeger-antworten';
 import { DatenschutzComponent } from './datenschutz.component';
 import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';

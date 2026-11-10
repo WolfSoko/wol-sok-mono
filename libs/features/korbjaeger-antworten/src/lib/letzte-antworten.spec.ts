@@ -1,4 +1,3 @@
-import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANTWORT_INDEX,
   ANTWORT_PRAEFIX,
@@ -7,6 +6,9 @@ import {
   type AntwortSpeicher,
   type LetzteAntwort,
 } from './letzte-antworten';
+
+/** A key the app keeps beside the answers (Meine Teams); the store never touches it. */
+const ANDERER_SCHLUESSEL = 'meine-teams';
 
 /** A `localStorage` that takes at most `zeichen` characters, keys and values. */
 class KleinerSpeicher implements AntwortSpeicher {
@@ -201,7 +203,7 @@ describe('LokaleLetzteAntworten', () => {
 
     it('never evicts what the app keeps beside them, and gives up when that fills the storage', () => {
       const speicher = new KleinerSpeicher(120);
-      speicher.setItem(AUSWAHL_SCHLUESSEL, 'x'.repeat(100));
+      speicher.setItem(ANDERER_SCHLUESSEL, 'x'.repeat(100));
       const antworten = new LokaleLetzteAntworten(speicher);
 
       expect(() =>
@@ -209,12 +211,12 @@ describe('LokaleLetzteAntworten', () => {
       ).not.toThrow();
 
       expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
-      expect(speicher.getItem(AUSWAHL_SCHLUESSEL)).toHaveLength(100);
+      expect(speicher.getItem(ANDERER_SCHLUESSEL)).toHaveLength(100);
     });
 
     it('drops the older answer of a path whose new one the full storage does not take', () => {
       const speicher = new KleinerSpeicher(700);
-      speicher.setItem(AUSWAHL_SCHLUESSEL, 'x'.repeat(400));
+      speicher.setItem(ANDERER_SCHLUESSEL, 'x'.repeat(400));
       const antworten = new LokaleLetzteAntworten(speicher);
       antworten.merken(TEAM, 'team-spiele', antwort(1000));
       expect(antworten.lesen(TEAM, JETZT)).toBeDefined();
@@ -262,14 +264,14 @@ describe('LokaleLetzteAntworten', () => {
 
   it('gives all its room away for what must not give way (Meine Teams)', () => {
     const speicher = new KleinerSpeicher();
-    speicher.setItem(AUSWAHL_SCHLUESSEL, '{}');
+    speicher.setItem(ANDERER_SCHLUESSEL, '{}');
     const antworten = new LokaleLetzteAntworten(speicher);
     antworten.merken(TEAM, 'team-spiele', antwort(1000));
     antworten.merken(TABELLE, 'tabelle', antwort(2000));
 
     antworten.leeren();
 
-    expect([...speicher.eintraege.keys()]).toEqual([AUSWAHL_SCHLUESSEL]);
+    expect([...speicher.eintraege.keys()]).toEqual([ANDERER_SCHLUESSEL]);
     expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([]);
     antworten.merken(SPIEL, 'spiel-info', antwort(3000));
     expect(gemerkt(antworten, [SPIEL])).toEqual([SPIEL]);

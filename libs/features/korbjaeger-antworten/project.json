@@ -1,0 +1,16 @@
+{
+  "name": "feat-korbjaeger-antworten",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/korbjaeger-antworten/src",
+  "projectType": "library",
+  "tags": ["feature"],
+  "targets": {
+    "test": {
+      "executor": "@nx/vitest:test",
+      "options": {
+        "configFile": "libs/features/korbjaeger-antworten/vite.config.ts"
+      }
+    },
+    "typecheck-specs": {}
+  }
+}

@@ -68,6 +68,9 @@
       "@wolsok/feat-shared-bacteria-engine/testing": [
         "./libs/features/bacteria-engine/src/testing.ts"
       ],
+      "@wolsok/feat-korbjaeger-antworten": [
+        "./libs/features/korbjaeger-antworten/src/index.ts"
+      ],
       "@wolsok/feat-korbjaeger-auswahl": [
         "./libs/features/korbjaeger-auswahl/src/index.ts"
       ],
@@ -110,6 +113,9 @@
       "@wolsok/test-helper": ["./libs/test-helper/src/index.ts"],
       "@wolsok/thanos": ["./libs/public/ws-thanos/src/index.ts"],
       "@wolsok/ui-kit": ["./libs/ui-kit/src/index.ts"],
+      "@wolsok/utils-browser-storage": [
+        "./libs/utils/browser-storage/src/index.ts"
+      ],
       "@wolsok/utils-decorators": ["./libs/utils/decorators/src/index.ts"],
       "@wolsok/utils-gpu-calc": ["./libs/utils/gpu-calc/src/index.ts"],
       "@wolsok/utils-json": ["./libs/utils/json/src/index.ts"],
