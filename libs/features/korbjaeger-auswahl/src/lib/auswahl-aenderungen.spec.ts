@@ -4,7 +4,7 @@ import {
   folgenAenderung,
   teamPlatz,
 } from './auswahl-aenderungen';
-import { LEERE_AUSWAHL, type AuswahlInhalt } from './auswahl-dokument';
+import { LEERE_AUSWAHL, type AuswahlInhalt } from './auswahl-listen';
 
 const A = 313036;
 const B = 201765;

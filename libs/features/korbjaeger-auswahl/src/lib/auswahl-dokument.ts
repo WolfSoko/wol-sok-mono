@@ -1,16 +1,25 @@
+import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
-  isDbbId,
-  type TeamId,
-  type VereinId,
-} from '@wolsok/feat-shared-basketball-data';
+  ENTFERNT,
+  idAus,
+  istKarte,
+  istZahl,
+  type GelesenerEintrag,
+  type RohesDokument,
+} from './auswahl-eintraege';
+import type { AuswahlListenArt } from './auswahl-liste';
 import {
-  farbenAusText,
-  farbenText,
-  nachVerein,
-  type VereinsfarbenWahl,
-} from './vereinsfarben-wahl';
-import { gleicheFarben } from './vereinsfarben';
-import { kindMit, type Kind } from './kind';
+  AUSWAHL_LISTEN,
+  jedeListe,
+  listenArt,
+  type AuswahlInhalt,
+  type AuswahlListe,
+  type AuswahlListen,
+  type ListenDokumentFeld,
+  type ListenFeld,
+  type ListenWert,
+} from './auswahl-listen';
+import type { KindEintrag } from './listen/kinder';
 
 /**
  * The version of `AuswahlDokument` this app writes. Bumped only for a
@@ -24,38 +33,11 @@ import { kindMit, type Kind } from './kind';
 export const AUSWAHL_VERSION = 3;
 
 /**
- * How many Teams, Kinder and Vereine with colours an `Auswahl` holds at
- * most: the Firestore rules (`firestore.rules`) refuse more, and their spec
- * checks these numbers.
- */
-export const AUSWAHL_GRENZEN = {
-  teams: 50,
-  kinder: 20,
-  vereinsfarben: 50,
-} as const;
-
-/** The lists of an `Auswahl`, each with its cap. */
-export type AuswahlListe = keyof typeof AUSWAHL_GRENZEN;
-
-/** Every list of an `Auswahl`, for code that treats each the same way. */
-export const AUSWAHL_LISTEN: readonly AuswahlListe[] = [
-  'teams',
-  'kinder',
-  'vereinsfarben',
-];
-
-/** A marked Kind as stored: since when it is marked, and its Spitzname. */
-export interface KindEintrag {
-  /** Milliseconds since 1970, the order of the Kinder. */
-  readonly since: number;
-  readonly nickname?: string;
-}
-
-/**
  * What an adapter stores of an `Auswahl`: ids only, never names from the
  * DBB. Keyed by id, so each change writes its own entries and the server
  * merges them with another device's (a Team followed, a Kind unmarked, a
  * Spitzname changed: none overwrites the other); `since` keeps the order.
+ * Each list's field is its descriptor's (`AUSWAHL_LISTEN_ARTEN`).
  */
 export interface AuswahlDokument {
   readonly version: typeof AUSWAHL_VERSION;
@@ -70,29 +52,6 @@ export interface AuswahlDokument {
   readonly clubColors?: Readonly<Record<string, string>>;
 }
 
-/** The stored field of each list of an `Auswahl`. */
-export const DOCUMENT_FIELD = {
-  teams: 'teams',
-  kinder: 'children',
-  vereinsfarben: 'clubColors',
-} as const satisfies Record<AuswahlListe, keyof AuswahlDokument>;
-
-/**
- * What an `Auswahl` holds: Meine Teams and the marked Kinder, each once,
- * and the Vereine's colours, one entry a Verein, by its id.
- */
-export interface AuswahlInhalt {
-  readonly teams: readonly TeamId[];
-  readonly kinder: readonly Kind[];
-  readonly vereinsfarben: readonly VereinsfarbenWahl[];
-  /**
-   * Each Team's `seit`, where it is known: as read for a stored Team, as
-   * given for one followed at its old place (`folgenAenderung`). A Team
-   * without one (followed, not stored yet) counts as the newest.
-   */
-  readonly teamsSeit?: ReadonlyMap<TeamId, number>;
-}
-
 /**
  * The place a Team had among Meine Teams, which `Auswahl.entfolgen` hands
  * out so an undo can follow it there again; only an adapter makes one.
@@ -101,16 +60,6 @@ export interface TeamPlatz {
   /** The Team's `seit`, which orders Meine Teams. */
   readonly seit: number;
 }
-
-/** An `Auswahl` that holds nothing. */
-export const LEERE_AUSWAHL: AuswahlInhalt = {
-  teams: [],
-  kinder: [],
-  vereinsfarben: [],
-};
-
-/** A stored document's fields, as read. */
-export type RohesDokument = Readonly<Record<string, unknown>>;
 
 /**
  * What a stored document turned out to be:
@@ -130,41 +79,54 @@ export type GelesenesDokument =
 
 const KEINS: GelesenesDokument = { art: 'keins' };
 
+/** Every list's entries as read, with their `seit`. */
+type GeleseneListen = {
+  readonly [L in AuswahlListe]: readonly GelesenerEintrag<ListenWert<L>>[];
+};
+
 /**
- * Tells what `gelesen`, a stored document, is. Without Teams (a document
- * holding only Kinder) it has none; with Teams that are not all ids it is
- * none. Of its Kinder it keeps each entry it can read; where the field is
- * no map (missing or malformed) it has none, the Teams kept all the same;
- * so with its Vereinsfarben, which come by the Verein's id. Entries come in
- * the order of their `since`, the id deciding a tie. A document of another
- * version than this one is none, of a newer one `neuer`.
+ * Tells what `gelesen`, a stored document, is: each list as its
+ * descriptor reads it (Teams that are not all ids make it none; an entry of
+ * the other lists it cannot read is left out, the rest kept). A document of
+ * another version than this one is none, of a newer one `neuer`.
  */
 export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (!istKarte(gelesen)) {
     return KEINS;
   }
-  const { version, teams, children, clubColors } = gelesen;
+  const { version } = gelesen;
   if (typeof version === 'number' && version > AUSWAHL_VERSION) {
     return { art: 'neuer' };
   }
-  const gelesenTeams = teams === undefined ? [] : teamsLesen(teams);
-  if (version !== AUSWAHL_VERSION || gelesenTeams === undefined) {
+  const listen = version === AUSWAHL_VERSION ? listenLesen(gelesen) : undefined;
+  if (listen === undefined) {
     return KEINS;
   }
-  const gelesenKinder = kinderLesen(children);
   return {
     art: 'aktuell',
-    teams: gelesenTeams.map(({ id }) => id),
-    teamsSeit: new Map(gelesenTeams.map(({ id, seit }) => [id, seit])),
-    kinder: gelesenKinder.map(({ kind }) => kind),
-    vereinsfarben: vereinsfarbenLesen(clubColors),
+    ...jedeListe<AuswahlListen>((liste) =>
+      listen[liste].map(({ wert }) => wert)
+    ),
+    teamsSeit: new Map(listen.teams.map(({ wert, seit }) => [wert, seit])),
     hoechsterSeit: Math.max(
       0,
-      ...gelesenTeams.map(({ seit }) => seit),
-      ...gelesenKinder.map(({ seit }) => seit)
+      ...AUSWAHL_LISTEN.flatMap((liste) =>
+        listen[liste].map(({ seit }) => seit)
+      )
     ),
     roh: gelesen,
   };
+}
+
+/** Each list of `dokument`; `undefined` where one makes it unreadable. */
+function listenLesen(dokument: RohesDokument): GeleseneListen | undefined {
+  const listen = jedeListe<{
+    readonly [L in AuswahlListe]: GeleseneListen[L] | undefined;
+  }>((liste) => listenArt(liste).lesen(dokument[listenArt(liste).feld]));
+  // every list read: the type of each is its own
+  return AUSWAHL_LISTEN.every((liste) => listen[liste] !== undefined)
+    ? (listen as GeleseneListen)
+    : undefined;
 }
 
 /**
@@ -180,38 +142,36 @@ export function naechsterSeit(gelesen: GelesenesDokument, letzter = 0): number {
   );
 }
 
-/** Marks an entry, or a Spitzname, that a change takes away. */
-export const ENTFERNT = Symbol('entfernt');
-
-/** What a change writes of a Team: since when it is followed, or that it goes. */
-export type TeamFeld = number | typeof ENTFERNT;
-
-/** What a change writes of a Kind: all of it, its Spitzname, or that it goes. */
-export type KindFeld =
-  | KindEintrag
-  | { readonly nickname: string | typeof ENTFERNT }
-  | typeof ENTFERNT;
-
-/** What a change writes of a Verein's colours: their text, or that they go. */
-export type VereinsfarbenFeld = string | typeof ENTFERNT;
+/** The entries a change writes of the list `L`, by id. */
+type ListenFelder<L extends AuswahlListe> = Readonly<
+  Record<string, ListenFeld<L>>
+>;
 
 /**
- * The entries a change writes, by id; a map it does not change is left
- * out, so a write keeps it as stored (Kinder this version cannot read too).
+ * The entries a change writes, by id, under each list's document field; a
+ * map it does not change is left out, so a write keeps it as stored
+ * (entries this version cannot read too).
  */
-export interface AuswahlFelder {
-  readonly teams?: Readonly<Record<string, TeamFeld>>;
-  readonly children?: Readonly<Record<string, KindFeld>>;
-  readonly clubColors?: Readonly<Record<string, VereinsfarbenFeld>>;
+export type AuswahlFelder = {
+  readonly [L in AuswahlListe as ListenDokumentFeld<L>]?: ListenFelder<L>;
+};
+
+/** The entries `felder` writes of `liste`; none where it leaves it out. */
+export function felderDerListe<L extends AuswahlListe>(
+  felder: AuswahlFelder,
+  liste: L
+): ListenFelder<L> | undefined {
+  const alle: Readonly<Record<string, ListenFelder<L> | undefined>> = felder;
+  return alle[listenArt(liste).feld];
 }
 
 /**
- * The entries that take `vorher` to `nachher`: the Teams and Kinder gone,
- * the new ones (since `seitAb`, one millisecond each, in their order), the
- * Spitznamen changed and the Vereine whose colours changed or went. Every adapter writes them: the device's merged
- * into its document (`auswahlDokumentMit`), Firestore as fields the server
- * merges. A new Team whose `seit` `nachher` knows (`teamsSeit`, one followed
- * at its old place) gets that one.
+ * The entries that take `vorher` to `nachher`, list by list in
+ * `AUSWAHL_LISTEN`'s order: those gone, the new ones (since `seitAb`, one
+ * millisecond each, in their order, unless `nachher` knows a place for one:
+ * a Team followed at its old place) and the ones changed (a Spitzname,
+ * colours). Every adapter writes them: the device's merged into its
+ * document (`auswahlDokumentMit`), Firestore as fields the server merges.
  */
 export function auswahlFelder(
   vorher: AuswahlInhalt,
@@ -219,45 +179,47 @@ export function auswahlFelder(
   seitAb: number
 ): AuswahlFelder {
   let seit = seitAb;
-  const teams: Record<string, TeamFeld> = {};
-  for (const team of vorher.teams) {
-    if (!nachher.teams.includes(team)) {
-      teams[team] = ENTFERNT;
+  const naechster = (): number => seit++;
+  const felder: Record<string, unknown> = {};
+  for (const liste of AUSWAHL_LISTEN) {
+    const eintraege = listenFelder(liste, vorher, nachher, naechster);
+    if (Object.keys(eintraege).length > 0) {
+      felder[listenArt(liste).feld] = eintraege;
     }
   }
-  for (const team of nachher.teams) {
-    if (!vorher.teams.includes(team)) {
-      teams[team] = nachher.teamsSeit?.get(team) ?? seit++;
-    }
-  }
-  const kinder: Record<string, KindFeld> = {};
-  const davor = new Map(vorher.kinder.map((kind) => [kind.personId, kind]));
-  const danach = new Set(nachher.kinder.map(({ personId }) => personId));
-  for (const { personId } of vorher.kinder) {
-    if (!danach.has(personId)) {
-      kinder[personId] = ENTFERNT;
-    }
-  }
-  for (const { personId, spitzname } of nachher.kinder) {
-    const alt = davor.get(personId);
+  // each list's entries under its own field, as `AuswahlFelder` has them
+  return felder as AuswahlFelder;
+}
+
+/** What `auswahlFelder` writes of `liste`. */
+function listenFelder<L extends AuswahlListe>(
+  liste: L,
+  vorher: AuswahlInhalt,
+  nachher: AuswahlInhalt,
+  naechster: () => number
+): ListenFelder<L> {
+  const art: AuswahlListenArt<ListenWert<L>, ListenFeld<L>> = listenArt(liste);
+  const felder: Record<string, ListenFeld<L> | typeof ENTFERNT> = {};
+  const davor = new Map(vorher[liste].map((wert) => [art.id(wert), wert]));
+  for (const wert of nachher[liste]) {
+    const id = art.id(wert);
+    const alt = davor.get(id);
+    davor.delete(id);
     if (alt === undefined) {
-      kinder[personId] = {
-        since: seit++,
-        ...(spitzname && { nickname: spitzname }),
-      };
-    } else if (alt.spitzname !== spitzname) {
-      kinder[personId] = { nickname: spitzname ?? ENTFERNT };
+      felder[id] = art.neu(
+        wert,
+        () => art.bekannterSeit?.(nachher, wert) ?? naechster()
+      );
+    } else if (!art.gleich(alt, wert) && art.geaendert) {
+      felder[id] = art.geaendert(alt, wert);
     }
   }
-  const vereinsfarben = vereinsfarbenFelder(
-    vorher.vereinsfarben,
-    nachher.vereinsfarben
-  );
-  return {
-    ...(Object.keys(teams).length > 0 && { teams }),
-    ...(Object.keys(kinder).length > 0 && { children: kinder }),
-    ...(Object.keys(vereinsfarben).length > 0 && { clubColors: vereinsfarben }),
-  };
+  // what is left was there before and is gone now
+  for (const id of davor.keys()) {
+    felder[id] = ENTFERNT;
+  }
+  // every list's `feld` takes `ENTFERNT`
+  return felder as ListenFelder<L>;
 }
 
 /** The `seit` a write of `felder` stores for each Team it follows. */
@@ -292,194 +254,30 @@ export function mitTeamsSeit(
   return { ...inhalt, teamsSeit };
 }
 
-function vereinsfarbenFelder(
-  vorher: readonly VereinsfarbenWahl[],
-  nachher: readonly VereinsfarbenWahl[]
-): Readonly<Record<string, VereinsfarbenFeld>> {
-  const felder: Record<string, VereinsfarbenFeld> = {};
-  if (vorher === nachher) {
-    return felder;
-  }
-  const davor = new Map(vorher.map((wahl) => [wahl.vereinId, wahl]));
-  for (const wahl of nachher) {
-    const alt = davor.get(wahl.vereinId);
-    davor.delete(wahl.vereinId);
-    if (alt === undefined || !gleicheFarben(alt, wahl)) {
-      felder[wahl.vereinId] = farbenText(wahl);
-    }
-  }
-  // what is left was there before and is gone now
-  for (const vereinId of davor.keys()) {
-    felder[vereinId] = ENTFERNT;
-  }
-  return felder;
-}
-
 /**
  * The document to store: `gelesen`'s fields with this version and `felder`
- * merged into its maps, as Firestore merges them. A map a change leaves
- * out stays as read. A Spitzname for a Kind no longer marked is dropped.
+ * merged into its maps, each by its list's descriptor, as Firestore merges
+ * them. A map a change leaves out stays as read.
  */
 export function auswahlDokumentMit(
   gelesen: GelesenesDokument,
   felder: AuswahlFelder
 ): RohesDokument {
   const roh = gelesen.art === 'aktuell' ? gelesen.roh : {};
-  const karte = (feld: keyof AuswahlFelder): RohesDokument => {
-    const wert = roh[feld];
-    return istKarte(wert) ? wert : {};
-  };
-  return {
+  const dokument: Record<string, unknown> = {
     ...roh,
     version: AUSWAHL_VERSION,
-    ...(felder.teams && { teams: eintraegeMit(karte('teams'), felder.teams) }),
-    ...(felder.children && {
-      children: kinderMit(karte('children'), felder.children),
-    }),
-    ...(felder.clubColors && {
-      clubColors: eintraegeMit(karte('clubColors'), felder.clubColors),
-    }),
   };
-}
-
-/** `eintraege` with each of `felder` set, or deleted where it goes. */
-function eintraegeMit(
-  eintraege: RohesDokument,
-  felder: Readonly<Record<string, TeamFeld | VereinsfarbenFeld>>
-): RohesDokument {
-  const neu: Record<string, unknown> = { ...eintraege };
-  for (const [id, feld] of Object.entries(felder)) {
-    if (feld === ENTFERNT) {
-      delete neu[id];
-    } else {
-      neu[id] = feld;
+  for (const liste of AUSWAHL_LISTEN) {
+    const eintraege = felderDerListe(felder, liste);
+    if (eintraege !== undefined) {
+      const art: AuswahlListenArt<unknown, unknown> = listenArt(liste);
+      const gespeichert = roh[art.feld];
+      dokument[art.feld] = art.mit(
+        istKarte(gespeichert) ? gespeichert : {},
+        eintraege
+      );
     }
   }
-  return neu;
-}
-
-function kinderMit(
-  kinder: RohesDokument,
-  felder: Readonly<Record<string, KindFeld>>
-): RohesDokument {
-  const neu: Record<string, unknown> = { ...kinder };
-  for (const [id, feld] of Object.entries(felder)) {
-    const alt = neu[id];
-    if (feld === ENTFERNT) {
-      delete neu[id];
-    } else if ('since' in feld) {
-      neu[id] = { ...(istKarte(alt) ? alt : {}), ...feld };
-    } else if (istKarte(alt)) {
-      const { nickname: _alt, ...ohne } = alt;
-      neu[id] =
-        feld.nickname === ENTFERNT
-          ? ohne
-          : { ...ohne, nickname: feld.nickname };
-    }
-  }
-  return neu;
-}
-
-interface Gelesen<T> {
-  readonly seit: number;
-  readonly sortierung: number;
-  readonly wert: T;
-}
-
-/** The Teams of a map; `undefined` where any is no id. */
-function teamsLesen(
-  teams: unknown
-): readonly { readonly id: TeamId; readonly seit: number }[] | undefined {
-  if (!istKarte(teams)) {
-    return undefined;
-  }
-  const eintraege: Gelesen<TeamId>[] = [];
-  for (const [schluessel, seit] of Object.entries(teams)) {
-    const id = idAus(schluessel);
-    if (id === undefined || !istZahl(seit)) {
-      return undefined;
-    }
-    eintraege.push({ seit, sortierung: id, wert: id });
-  }
-  return geordnet(eintraege).map(({ wert, seit }) => ({ id: wert, seit }));
-}
-
-/** The readable Kinder of a map. */
-function kinderLesen(
-  kinder: unknown
-): readonly { readonly kind: Kind; readonly seit: number }[] {
-  if (!istKarte(kinder)) {
-    return [];
-  }
-  const eintraege: Gelesen<Kind>[] = [];
-  for (const [schluessel, eintrag] of Object.entries(kinder)) {
-    const personId = idAus(schluessel);
-    if (
-      personId !== undefined &&
-      istKarte(eintrag) &&
-      istZahl(eintrag['since']) &&
-      (eintrag['nickname'] === undefined ||
-        typeof eintrag['nickname'] === 'string')
-    ) {
-      eintraege.push({
-        seit: eintrag['since'],
-        sortierung: personId,
-        wert: kindMit(personId, eintrag['nickname']),
-      });
-    }
-  }
-  return geordnet(eintraege).map(({ wert, seit }) => ({ kind: wert, seit }));
-}
-
-/** The readable colours of a map, by the Verein's id. */
-function vereinsfarbenLesen(
-  vereinsfarben: unknown
-): readonly VereinsfarbenWahl[] {
-  if (!istKarte(vereinsfarben)) {
-    return [];
-  }
-  const gelesen: VereinsfarbenWahl[] = [];
-  for (const [schluessel, text] of Object.entries(vereinsfarben)) {
-    const vereinId: VereinId | undefined = idAus(schluessel);
-    const farben = farbenAusText(text);
-    if (vereinId !== undefined && farben) {
-      gelesen.push({ vereinId, ...farben });
-    }
-  }
-  return nachVerein(gelesen);
-}
-
-/**
- * The order of the entries of a map, as the reader gives them: by `seit`,
- * the id (`sortierung`) deciding a tie.
- */
-export function vorSeit(
-  a: { readonly seit: number; readonly sortierung: number },
-  b: { readonly seit: number; readonly sortierung: number }
-): number {
-  return a.seit - b.seit || a.sortierung - b.sortierung;
-}
-
-function geordnet<T>(eintraege: Gelesen<T>[]): readonly Gelesen<T>[] {
-  return eintraege.sort(vorSeit);
-}
-
-/** The DBB id a map's key holds; `undefined` where it holds none. */
-function idAus(schluessel: string): number | undefined {
-  const id = Number(schluessel);
-  return istId(id) && String(id) === schluessel ? id : undefined;
-}
-
-/** Whether `wert` is a DBB id. */
-export function istId(wert: unknown): wert is number {
-  return typeof wert === 'number' && isDbbId(wert);
-}
-
-function istZahl(wert: unknown): wert is number {
-  return typeof wert === 'number' && Number.isFinite(wert);
-}
-
-/** Whether `wert` is a map: an object that is no list. */
-export function istKarte(wert: unknown): wert is RohesDokument {
-  return typeof wert === 'object' && wert !== null && !Array.isArray(wert);
+  return dokument;
 }

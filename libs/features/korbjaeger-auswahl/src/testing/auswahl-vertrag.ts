@@ -1,7 +1,7 @@
 import type { TeamId, VereinId } from '@wolsok/feat-shared-basketball-data';
 import type { MarkierbarerSpieler } from '../lib/kind';
 import type { Auswahl } from '../lib/auswahl';
-import { AUSWAHL_GRENZEN } from '../lib/auswahl-dokument';
+import { AUSWAHL_GRENZEN } from '../lib/auswahl-listen';
 import { AuswahlVollError, AuswahlZuNeuError } from '../lib/auswahl-fehler';
 import { KeineFarbeError } from '../lib/vereinsfarben';
 

@@ -1,12 +1,11 @@
 import {
   auswahlDokumentLesen,
   auswahlFelder,
-  LEERE_AUSWAHL,
-  ENTFERNT,
   geschriebeneTeamsSeit,
   mitTeamsSeit,
-  type AuswahlInhalt,
 } from './auswahl-dokument';
+import { ENTFERNT } from './auswahl-eintraege';
+import { LEERE_AUSWAHL, type AuswahlInhalt } from './auswahl-listen';
 
 describe('auswahlDokumentLesen', () => {
   it("reads each Team's seit", () => {

@@ -1,4 +1,4 @@
-import { computed, signal, type Signal } from '@angular/core';
+import { signal, type Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
@@ -12,8 +12,6 @@ import {
   entfolgenAenderung,
   entmarkierenAenderung,
   folgenAenderung,
-  gleicheKinder,
-  gleicheVereinsfarben,
   grenzenPruefen,
   inhaltAus,
   markierenAenderung,
@@ -27,13 +25,17 @@ import {
   auswahlDokumentLesen,
   auswahlDokumentMit,
   auswahlFelder,
-  LEERE_AUSWAHL,
   naechsterSeit,
-  type AuswahlInhalt,
   type GelesenesDokument,
   type TeamPlatz,
 } from './auswahl-dokument';
-import { gleicheFolge } from './gleiche-folge';
+import {
+  jedeListe,
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
+  type AuswahlListen,
+} from './auswahl-listen';
+import { listenSignale } from './listen-signale';
 import type { Kind, MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from './speicher-voll';
 import { AuswahlZuNeuError } from './auswahl-fehler';
@@ -103,13 +105,10 @@ export class LokaleAuswahl implements Auswahl {
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.anzeigen(this.lesen());
-    this.teams = computed(() => this.inhalt().teams, { equal: gleicheFolge });
-    this.kinder = computed(() => this.inhalt().kinder, {
-      equal: gleicheKinder,
-    });
-    this.vereinsfarben = computed(() => this.inhalt().vereinsfarben, {
-      equal: gleicheVereinsfarben,
-    });
+    const signale = listenSignale((liste) => this.inhalt()[liste]);
+    this.teams = signale.teams;
+    this.kinder = signale.kinder;
+    this.vereinsfarben = signale.vereinsfarben;
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
@@ -158,8 +157,8 @@ export class LokaleAuswahl implements Auswahl {
    */
   public neuGelesen(): AuswahlInhalt {
     this.anzeigen(this.lesen());
-    const { teams, kinder, vereinsfarben } = this.inhalt();
-    return { teams, kinder, vereinsfarben };
+    const inhalt = this.inhalt();
+    return jedeListe<AuswahlListen>((liste) => inhalt[liste]);
   }
 
   /**

@@ -20,8 +20,6 @@ import {
   entfolgenAenderung,
   entmarkierenAenderung,
   folgenAenderung,
-  gleicheKinder,
-  gleicheVereinsfarben,
   grenzenPruefen,
   inhaltAus,
   markierenAenderung,
@@ -35,19 +33,24 @@ import {
   AUSWAHL_VERSION,
   auswahlDokumentLesen,
   auswahlFelder,
-  ENTFERNT,
+  felderDerListe,
   geschriebeneTeamsSeit,
   mitTeamsSeit,
   naechsterSeit,
   type AuswahlFelder,
-  type AuswahlInhalt,
   type GelesenesDokument,
-  LEERE_AUSWAHL,
   type TeamPlatz,
 } from './auswahl-dokument';
+import { ENTFERNT } from './auswahl-eintraege';
+import {
+  AUSWAHL_LISTEN,
+  LEERE_AUSWAHL,
+  listenArt,
+  type AuswahlInhalt,
+} from './auswahl-listen';
+import { listenSignale } from './listen-signale';
 import { CHOICES_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import { AuswahlZuNeuError } from './auswahl-fehler';
-import { gleicheFolge } from './gleiche-folge';
 import type { Kind, MarkierbarerSpieler } from './kind';
 
 /**
@@ -80,12 +83,14 @@ export function firestoreFelder(
             ])
           )
         : wert;
-  return {
-    version: AUSWAHL_VERSION,
-    ...(felder.teams && { teams: alsFeld(felder.teams) }),
-    ...(felder.children && { children: alsFeld(felder.children) }),
-    ...(felder.clubColors && { clubColors: alsFeld(felder.clubColors) }),
-  };
+  const geschrieben: Record<string, unknown> = { version: AUSWAHL_VERSION };
+  for (const liste of AUSWAHL_LISTEN) {
+    const eintraege = felderDerListe(felder, liste);
+    if (eintraege !== undefined) {
+      geschrieben[listenArt(liste).feld] = alsFeld(eintraege);
+    }
+  }
+  return geschrieben;
 }
 
 /** No document yet: an empty one, which a change creates. */
@@ -178,15 +183,10 @@ export class FirestoreAuswahl implements Auswahl {
       const gelesen = this.gelesen();
       return gelesen === undefined ? undefined : inhaltAus(gelesen);
     });
-    this.teams = computed(() => inhalt()?.teams, {
-      equal: (a, b) => a === b || (!!a && !!b && gleicheFolge(a, b)),
-    });
-    this.kinder = computed(() => inhalt()?.kinder, {
-      equal: (a, b) => a === b || (!!a && !!b && gleicheKinder(a, b)),
-    });
-    this.vereinsfarben = computed(() => inhalt()?.vereinsfarben, {
-      equal: (a, b) => a === b || (!!a && !!b && gleicheVereinsfarben(a, b)),
-    });
+    const signale = listenSignale<undefined>((liste) => inhalt()?.[liste]);
+    this.teams = signale.teams;
+    this.kinder = signale.kinder;
+    this.vereinsfarben = signale.vereinsfarben;
     this.nichtLesbar = this.fehlgeschlagen.asReadonly();
     const { promise, resolve, reject } = Promise.withResolvers<void>();
     this.erstesLesen = promise;
@@ -305,7 +305,9 @@ export class FirestoreAuswahl implements Auswahl {
     const seit = naechsterSeit(gelesen, this.letzterSeit);
     const felder = auswahlFelder(vorher, nachher, seit);
     // at most one `seit` per entry
-    this.letzterSeit = seit + nachher.teams.length + nachher.kinder.length;
+    this.letzterSeit =
+      seit +
+      AUSWAHL_LISTEN.reduce((summe, liste) => summe + nachher[liste].length, 0);
     // a Team it follows is shown with the `seit` it writes, so it has its
     // place before the listener tells
     const seiten = geschriebeneTeamsSeit(felder);

@@ -1,5 +1,4 @@
-import type { AuswahlInhalt } from './auswahl-dokument';
-import { AUSWAHL_GRENZEN } from './auswahl-dokument';
+import { AUSWAHL_GRENZEN, type AuswahlInhalt } from './auswahl-listen';
 import { zusammenfuehren } from './zusammenfuehren';
 
 const LEER: AuswahlInhalt = { teams: [], kinder: [], vereinsfarben: [] };
