@@ -312,10 +312,9 @@ describe('the Auswahl document', () => {
   // writes the tombstone first: a second device's token stays valid for up
   // to an hour, so the rules refuse it from then on
   describe('once the account is deleted', () => {
-    const graeber = DELETED_ACCOUNTS_COLLECTION;
     const grabstein = (uid: string) =>
       ohneRegeln(env, (firestore) =>
-        setDoc(doc(firestore, graeber, uid), {
+        setDoc(doc(firestore, DELETED_ACCOUNTS_COLLECTION, uid), {
           expireAt: new Date(),
         })
       );
@@ -345,11 +344,17 @@ describe('the Auswahl document', () => {
 
     it('lets no client read or write the tombstone', async () => {
       await grabstein(ELTERNTEIL);
-      const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
+      const eigener = doc(
+        db(ELTERNTEIL),
+        DELETED_ACCOUNTS_COLLECTION,
+        ELTERNTEIL
+      );
 
       await assertFails(getDoc(eigener));
       await assertFails(deleteDoc(eigener));
-      await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
+      await assertFails(
+        setDoc(doc(db(ANDERES), DELETED_ACCOUNTS_COLLECTION, ANDERES), {})
+      );
     });
   });
 

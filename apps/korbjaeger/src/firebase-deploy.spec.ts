@@ -182,7 +182,6 @@ describe('the Firebase deploy', () => {
   // the file stays live in Firestore (#2983: that of the tombstones of
   // before #2966, for the last ones written there)
   it("lets Firestore's TTL delete the deleted accounts' tombstones", () => {
-    const graeber = DELETED_ACCOUNTS_COLLECTION;
     const indexes = workspaceJson<{
       fieldOverrides: {
         collectionGroup: string;
@@ -193,7 +192,7 @@ describe('the Firebase deploy', () => {
 
     expect(indexes.fieldOverrides).toContainEqual(
       expect.objectContaining({
-        collectionGroup: graeber,
+        collectionGroup: DELETED_ACCOUNTS_COLLECTION,
         fieldPath: 'expireAt',
         ttl: true,
       })

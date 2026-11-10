@@ -7,7 +7,6 @@ import {
 import {
   dropKeysBeforeEnglishNames,
   KEYS_BEFORE_ENGLISH_NAMES as OLD,
-  type OldKeyStorage,
 } from './keys-before-english-names';
 
 /** A device as the app before #2966 left it. */
@@ -30,27 +29,14 @@ function oldDevice(): void {
 describe('dropKeysBeforeEnglishNames', () => {
   beforeEach(() => localStorage.clear());
 
-  it('removes every key of before #2966, the choices too', () => {
+  it('removes every key of before #2966, carrying only the two flags over', () => {
     oldDevice();
 
     dropKeysBeforeEnglishNames(localStorage);
 
-    const left = Object.keys(localStorage);
-    expect(left.filter((key) => key.startsWith('korbjaeger-antwort'))).toEqual(
-      []
+    expect(Object.keys(localStorage).sort()).toEqual(
+      [ANGEMELDET_SCHLUESSEL, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL].sort()
     );
-    for (const key of Object.values(OLD)) {
-      expect(localStorage.getItem(key)).toBeNull();
-    }
-    expect(localStorage.getItem(AUSWAHL_SCHLUESSEL)).toBeNull();
-    expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBeNull();
-  });
-
-  it('carries the signed-in and clear-cache flags over', () => {
-    oldDevice();
-
-    dropKeysBeforeEnglishNames(localStorage);
-
     expect(localStorage.getItem(ANGEMELDET_SCHLUESSEL)).toBe('1');
     expect(localStorage.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL)).toBe('1');
   });
@@ -75,7 +61,7 @@ describe('dropKeysBeforeEnglishNames', () => {
       getItem: () => null,
       setItem: () => undefined,
       removeItem: () => undefined,
-    } satisfies OldKeyStorage;
+    } as unknown as Storage;
 
     expect(() => dropKeysBeforeEnglishNames(undefined)).not.toThrow();
     expect(() => dropKeysBeforeEnglishNames(refusing)).not.toThrow();

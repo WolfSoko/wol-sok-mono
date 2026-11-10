@@ -1,7 +1,5 @@
 import {
   ANGEMELDET_SCHLUESSEL,
-  flagGesetzt,
-  flagSetzen,
   ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
 } from './geraete-speicher';
 
@@ -28,39 +26,31 @@ const FLAGS_KEPT: readonly (readonly [string, string])[] = [
   [KEYS_BEFORE_ENGLISH_NAMES.clearCache, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL],
 ];
 
-/** The part of the device's storage the removal uses. */
-export type OldKeyStorage = Pick<
-  Storage,
-  'getItem' | 'setItem' | 'removeItem' | 'key' | 'length'
->;
-
 /**
  * Removes every key of before #2966 from the device, before the app reads
  * any (`main.ts`). Only the two flags carry over (signed in, clear the
  * cache); the choices, the look and the cached answers go, as the issue
  * decided. Where the storage refuses, the keys wait for the next start.
  */
-export function dropKeysBeforeEnglishNames(
-  storage: OldKeyStorage | undefined
-): void {
+export function dropKeysBeforeEnglishNames(storage: Storage | undefined): void {
   if (storage === undefined) {
     return;
   }
   try {
     for (const [old, current] of FLAGS_KEPT) {
-      if (flagGesetzt(storage, old)) {
-        flagSetzen(storage, current, true);
+      if (storage.getItem(old) === '1') {
+        storage.setItem(current, '1');
       }
     }
     for (const key of oldKeys(storage)) {
       storage.removeItem(key);
     }
   } catch {
-    // blocked: the keys wait for the next start
+    // blocked or full: the keys left wait for the next start
   }
 }
 
-function oldKeys(storage: OldKeyStorage): string[] {
+function oldKeys(storage: Storage): string[] {
   const { answerPrefix, ...named } = KEYS_BEFORE_ENGLISH_NAMES;
   const keys: string[] = Object.values(named);
   for (let index = 0; index < storage.length; index++) {

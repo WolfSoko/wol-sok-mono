@@ -5,6 +5,7 @@ import {
   CLUB_INDEX_COLLECTION,
   DELETED_ACCOUNTS_COLLECTION,
 } from '@wolsok/feat-shared-korbjaeger-account';
+import { treffer } from './testing/app-quellen';
 
 /** The rules as the deploy takes them: they cannot import the names. */
 const RULES = readFileSync(
@@ -14,9 +15,7 @@ const RULES = readFileSync(
 
 describe('the collections the Firestore rules name', () => {
   it('are the account lib’s choices, the only ones a client may open', () => {
-    const matched = [
-      ...RULES.matchAll(/^\s*match \/(\w+)\/\{[\w=*]+\}\s*\{/gm),
-    ].map(([, collection]) => collection);
+    const matched = treffer(RULES, /^\s*match \/(\w+)\/\{[\w=*]+\}\s*\{/gm);
 
     expect(matched).toEqual([CHOICES_COLLECTION]);
   });
@@ -26,11 +25,10 @@ describe('the collections the Firestore rules name', () => {
   });
 
   it('look up the tombstones in the account lib’s collection only', () => {
-    const lookedUp = [
-      ...RULES.matchAll(
-        /exists\(\/databases\/\$\(database\)\/documents\/(\w+)\//g
-      ),
-    ].map(([, collection]) => collection);
+    const lookedUp = treffer(
+      RULES,
+      /exists\(\/databases\/\$\(database\)\/documents\/(\w+)\//g
+    );
 
     expect(lookedUp).toEqual([DELETED_ACCOUNTS_COLLECTION]);
   });

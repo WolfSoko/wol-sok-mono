@@ -59,7 +59,8 @@ export class DatenschutzComponent {
     tage: MAX_ALTER_TAGE,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
-  protected readonly alteSchluessel = KEYS_BEFORE_ENGLISH_NAMES;
+  /** The key before #2966 the policy names as an example of what the start removes. */
+  protected readonly oldSelectionKey = KEYS_BEFORE_ENGLISH_NAMES.selection;
   /** How long section 6 says the server retries and keeps a tombstone. */
   protected readonly deletion = {
     retry: germanDays(DELETION_RETRY_DAYS),
