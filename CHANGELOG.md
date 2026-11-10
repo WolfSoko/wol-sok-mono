@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.165.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.1...v74.165.2) (2026-11-10)
+
+### Bug Fixes
+
+* **feat-korbjaeger-auswahl:** mark a named player by its English kind in the since spec ([#3028](https://github.com/WolfSoko/wol-sok-mono/issues/3028)) ([f7e91ee](https://github.com/WolfSoko/wol-sok-mono/commit/f7e91eef6218a410db244116fc699fe1c9a97e01)), references [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#3027](https://github.com/WolfSoko/wol-sok-mono/issues/3027) [#3023](https://github.com/WolfSoko/wol-sok-mono/issues/3023)
+
+### Refactorings
+
+* **feat-shared-basketball-data:** English identifiers, part A of [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) ([#3023](https://github.com/WolfSoko/wol-sok-mono/issues/3023)) ([0929558](https://github.com/WolfSoko/wol-sok-mono/commit/09295582fa75ca2a06324f95de4482e3c1d6a45c))
+
 ## [74.165.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.0...v74.165.1) (2026-11-10)
 
 ### Bug Fixes
