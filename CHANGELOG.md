@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.165.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.2...v74.165.0) (2026-11-10)
+
+### Features
+
+* **korbjaeger:** search "Über mein Kind": Verein, Team, then mark the Kind ([#2990](https://github.com/WolfSoko/wol-sok-mono/issues/2990)) ([#3018](https://github.com/WolfSoko/wol-sok-mono/issues/3018)) ([212c4e2](https://github.com/WolfSoko/wol-sok-mono/commit/212c4e2abb0658f940f13587304ccd3ba43554cd))
+
 ## [74.164.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.1...v74.164.2) (2026-11-10)
 
 ### Bug Fixes
