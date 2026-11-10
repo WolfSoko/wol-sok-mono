@@ -23,6 +23,7 @@ import {
   ANTWORT_GRENZEN,
   MAX_ALTER_TAGE,
 } from '@wolsok/feat-korbjaeger-antworten';
+import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DbbLinkComponent } from './dbb-link.component';
 import { germanDays } from './german-days';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
@@ -58,6 +59,7 @@ export class DatenschutzComponent {
     tage: MAX_ALTER_TAGE,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
+  protected readonly alteSchluessel = KEYS_BEFORE_ENGLISH_NAMES;
   /** How long section 6 says the server retries and keeps a tombstone. */
   protected readonly deletion = {
     retry: germanDays(DELETION_RETRY_DAYS),

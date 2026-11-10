@@ -311,49 +311,47 @@ describe('the Auswahl document', () => {
   // the Auth deletion's trigger (korbjaeger-functions, `kontoGeloescht`)
   // writes the tombstone first: a second device's token stays valid for up
   // to an hour, so the rules refuse it from then on
-  describe.each([DELETED_ACCOUNTS_COLLECTION])(
-    'once the account is deleted (tombstone in %s)',
-    (graeber) => {
-      const grabstein = (uid: string) =>
-        ohneRegeln(env, (firestore) =>
-          setDoc(doc(firestore, graeber, uid), {
-            expireAt: new Date(),
-          })
-        );
+  describe('once the account is deleted', () => {
+    const graeber = DELETED_ACCOUNTS_COLLECTION;
+    const grabstein = (uid: string) =>
+      ohneRegeln(env, (firestore) =>
+        setDoc(doc(firestore, graeber, uid), {
+          expireAt: new Date(),
+        })
+      );
 
-      it('refuses the owner every request on the Auswahl', async () => {
-        await vorhanden(ELTERNTEIL);
-        await grabstein(ELTERNTEIL);
-        const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
+    it('refuses the owner every request on the Auswahl', async () => {
+      await vorhanden(ELTERNTEIL);
+      await grabstein(ELTERNTEIL);
+      const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
-        await assertFails(getDoc(eigene));
-        await assertFails(setDoc(eigene, GUELTIG));
-        await assertFails(updateDoc(eigene, { teams: { 313036: 3 } }));
-        await assertFails(deleteDoc(eigene));
-      });
+      await assertFails(getDoc(eigene));
+      await assertFails(setDoc(eigene, GUELTIG));
+      await assertFails(updateDoc(eigene, { teams: { 313036: 3 } }));
+      await assertFails(deleteDoc(eigene));
+    });
 
-      it('refuses the owner creating it anew', async () => {
-        await grabstein(ELTERNTEIL);
+    it('refuses the owner creating it anew', async () => {
+      await grabstein(ELTERNTEIL);
 
-        await assertFails(speichern(GUELTIG));
-      });
+      await assertFails(speichern(GUELTIG));
+    });
 
-      it('leaves other accounts alone', async () => {
-        await grabstein(ANDERES);
+    it('leaves other accounts alone', async () => {
+      await grabstein(ANDERES);
 
-        await assertSucceeds(speichern(GUELTIG));
-      });
+      await assertSucceeds(speichern(GUELTIG));
+    });
 
-      it('lets no client read or write the tombstone', async () => {
-        await grabstein(ELTERNTEIL);
-        const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
+    it('lets no client read or write the tombstone', async () => {
+      await grabstein(ELTERNTEIL);
+      const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
 
-        await assertFails(getDoc(eigener));
-        await assertFails(deleteDoc(eigener));
-        await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
-      });
-    }
-  );
+      await assertFails(getDoc(eigener));
+      await assertFails(deleteDoc(eigener));
+      await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
+    });
+  });
 
   describe('what it holds', () => {
     it('takes a document with only the version, Teams or Kinder', async () => {

@@ -64,8 +64,9 @@ export async function findOrphanedAccounts(
  * Deletes what orphaned accounts left, as the Auth deletion trigger does
  * (`kontoGeloescht`: the tombstone first, then `selections/{uid}`), and
  * then the account's document of before #2966, which the trigger no longer
- * knows (#2983), so a rerun ends the same. Without `deleteOrphans` it only counts (dry run). A failed
- * deletion is counted, not thrown, so the report says how far it got.
+ * knows (#2983), so a rerun ends the same. Without `deleteOrphans` it only
+ * counts (dry run). A failed deletion is counted, not thrown, so the report
+ * says how far it got.
  */
 export async function cleanUpOrphanedAccounts(
   db: Firestore,

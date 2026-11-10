@@ -40,8 +40,9 @@ export const CLUB_INDEX_COLLECTION = 'clubIndex';
 
 /**
  * The choices as versions 1 and 2 stored them, with German fields. None is
- * left (#2983) and no rule opens it; only the one-off orphan cleanup of
- * `korbjaeger-functions` still lists it, to show it stays empty.
+ * left (#2983) and no rule opens it: the one-off orphan cleanup of
+ * `korbjaeger-functions` still lists it, to show it stays empty, and the
+ * app's rules spec checks it stays closed.
  */
 export const LEGACY_CHOICES_COLLECTION = 'auswahl';
 

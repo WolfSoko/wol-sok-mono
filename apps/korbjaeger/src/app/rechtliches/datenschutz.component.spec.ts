@@ -17,6 +17,7 @@ import {
   ANTWORT_GRENZEN,
   MAX_ALTER_TAGE,
 } from '@wolsok/feat-korbjaeger-antworten';
+import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DatenschutzComponent } from './datenschutz.component';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 import { germanDays } from './german-days';
@@ -59,6 +60,14 @@ describe('DatenschutzComponent', () => {
     expect(geraet).toContain(
       `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_ALTER_TAGE} Tage lang`
     );
+  });
+
+  // #2983: the keys of before #2966 are removed at start
+  it('says the keys of an earlier version are removed', () => {
+    const geraet = abschnitt(zeigen(DatenschutzComponent), 'geraet');
+
+    expect(geraet).toContain(KEYS_BEFORE_ENGLISH_NAMES.selection);
+    expect(geraet).toContain('löscht die App beim Start');
   });
 
   it('names the entries Firebase keeps in localStorage while signed in', () => {

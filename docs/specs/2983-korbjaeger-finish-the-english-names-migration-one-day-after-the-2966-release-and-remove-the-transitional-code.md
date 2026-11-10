@@ -44,6 +44,16 @@ No Korbjäger code, rule, index or text knows the German names of before
   listing `auswahl/{uid}`, so a rerun shows the collection is still empty,
   and deletes an orphan's legacy document itself after `kontoGeloescht`,
   which from now on deletes `selections/{uid}` only.
+- **The start removes the device keys of before #2966** (review of PR
+  #3009): `dropKeysBeforeEnglishNames` (`src/app/keys-before-english-names.ts`)
+  deletes them in `main.ts`, so a device not started since keeps no
+  children's ids the privacy policy no longer lists; only the signed-in and
+  clear-cache flags carry over (the policy promises the pending clearing at
+  the next start). The policy says so in one sentence.
+- **A client still on #2966's bundle cannot delete its account until it
+  reloads** (review of PR #3009): its `auswahlLoeschen` also deletes
+  `auswahl/{uid}`, which the rules now refuse. Accepted: the service worker
+  updates the app on its next start, and a reload fixes it.
 - **The `geloeschteKonten` TTL leaves the index file, but stays live.** The
   deploy runs `firestore:indexes` without `--force`, so the Firebase CLI keeps
   a field override missing from the file instead of deleting it: the TTL
@@ -60,8 +70,8 @@ No Korbjäger code, rule, index or text knows the German names of before
 
 1. No source, rule, index or spec of `korbjaeger`, `korbjaeger-functions`,
    `feat-korbjaeger-auswahl` or `feat-shared-korbjaeger-account` names
-   `geloeschteKonten`, the device keys of before #2966 or the move of the
-   names before #2966; `auswahl` as a collection remains only in the account
+   `geloeschteKonten` or the move of the names before #2966; the device keys
+   of before #2966 only in `keys-before-english-names.ts`, which removes them; `auswahl` as a collection remains only in the account
    lib's constant and the cleanup CLI.
 2. `kontoGeloescht` writes the tombstone in `deletedAccounts` only and
    deletes `selections/{uid}` (emulator spec).

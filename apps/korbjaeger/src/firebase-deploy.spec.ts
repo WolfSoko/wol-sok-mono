@@ -181,26 +181,24 @@ describe('the Firebase deploy', () => {
   // DEPLOY runs `firestore:indexes` without `--force`, so a TTL dropped from
   // the file stays live in Firestore (#2983: that of the tombstones of
   // before #2966, for the last ones written there)
-  it.each([DELETED_ACCOUNTS_COLLECTION])(
-    "lets Firestore's TTL delete the deleted accounts' tombstones in %s",
-    (graeber) => {
-      const indexes = workspaceJson<{
-        fieldOverrides: {
-          collectionGroup: string;
-          fieldPath: string;
-          ttl?: boolean;
-        }[];
-      }>('apps/korbjaeger/firestore.indexes.json');
+  it("lets Firestore's TTL delete the deleted accounts' tombstones", () => {
+    const graeber = DELETED_ACCOUNTS_COLLECTION;
+    const indexes = workspaceJson<{
+      fieldOverrides: {
+        collectionGroup: string;
+        fieldPath: string;
+        ttl?: boolean;
+      }[];
+    }>('apps/korbjaeger/firestore.indexes.json');
 
-      expect(indexes.fieldOverrides).toContainEqual(
-        expect.objectContaining({
-          collectionGroup: graeber,
-          fieldPath: 'expireAt',
-          ttl: true,
-        })
-      );
-    }
-  );
+    expect(indexes.fieldOverrides).toContainEqual(
+      expect.objectContaining({
+        collectionGroup: graeber,
+        fieldPath: 'expireAt',
+        ttl: true,
+      })
+    );
+  });
 
   // codebase konto is korbjaeger-functions', checked by its own spec; this
   // app's DEPLOY takes only `functions:default`
