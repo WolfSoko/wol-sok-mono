@@ -9,16 +9,14 @@ export class StartPage {
   public readonly teams: Locator;
   /** What the overview says while no Team is followed. */
   public readonly leer: Locator;
-  /** Opens the Team wizard, offered while no Team is followed. */
-  public readonly teamEinrichten: Locator;
+  /** Opens the search, offered while no Team is followed. */
+  public readonly searchTeam: Locator;
 
   public constructor(private readonly page: Page) {
     this.kinder = page.getByTestId('ueberblick-kind');
     this.teams = page.getByTestId('ueberblick-team');
     this.leer = page.getByTestId('ueberblick-leer');
-    this.teamEinrichten = this.leer.getByRole('link', {
-      name: 'Team einrichten',
-    });
+    this.searchTeam = this.leer.getByRole('link', { name: 'Team suchen' });
   }
 
   /** Whether the card `team` wears a Verein's colours (its own `--mat-sys-*` tokens). */

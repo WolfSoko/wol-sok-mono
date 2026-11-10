@@ -2,16 +2,18 @@ import { test as base } from '@playwright/test';
 import { EinstellungenPage } from '../pos/einstellungen.page';
 import { SpielPage } from '../pos/spiel.page';
 import { StartPage } from '../pos/start.page';
+import { SearchPage } from '../pos/search.page';
 import { TeamEinrichtenPage } from '../pos/team-einrichten.page';
 import { TeamPage } from '../pos/team.page';
 import { TitleBar } from '../pos/title-bar';
 
 /**
- * `test` with the page objects of the start, wizard, Team, Spiel and
- * settings pages, and of the title bar above them.
+ * `test` with the page objects of the start, search, wizard, Team, Spiel
+ * and settings pages, and of the title bar above them.
  */
 export const test = base.extend<{
   startPage: StartPage;
+  searchPage: SearchPage;
   teamEinrichtenPage: TeamEinrichtenPage;
   teamPage: TeamPage;
   spielPage: SpielPage;
@@ -20,6 +22,9 @@ export const test = base.extend<{
 }>({
   startPage: async ({ page }, use) => {
     await use(new StartPage(page));
+  },
+  searchPage: async ({ page }, use) => {
+    await use(new SearchPage(page));
   },
   teamEinrichtenPage: async ({ page }, use) => {
     await use(new TeamEinrichtenPage(page));

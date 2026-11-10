@@ -49,6 +49,7 @@ for (const schema of ['light', 'dark'] as const) {
     test("keeps every text readable in the app's own colours", async ({
       page,
       startPage,
+      searchPage,
       teamPage,
       spielPage,
     }) => {
@@ -63,6 +64,22 @@ for (const schema of ['light', 'dark'] as const) {
 
       await spielPage.goto(SPIEL_DES_TEAMS);
       await spielGeladen(spielPage);
+      expect(await kontrastFehler(page)).toEqual([]);
+
+      await page.route('**/api/clubs', (route) =>
+        route.fulfill({
+          json: [
+            {
+              id: 1837,
+              name: 'MTV Wasbüttel',
+              associations: [{ id: 7, name: 'Niedersachsen' }],
+            },
+          ],
+        })
+      );
+      await searchPage.goto();
+      await searchPage.clubSearch.fill('wasbuttel');
+      await expect(searchPage.clubs).toHaveCount(1);
       expect(await kontrastFehler(page)).toEqual([]);
     });
 

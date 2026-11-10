@@ -7,7 +7,7 @@ import { UeberblickComponent } from '../ueberblick/ueberblick.component';
 /**
  * `/`: the overview of Meine Teams, the hint to install the app where
  * the browser can, and a way to open a Team by its id or
- * to find it through its Liga (`/team-einrichten`).
+ * to find it through its Verein or Liga (`/suchen`).
  */
 @Component({
   selector: 'korb-home',
@@ -26,7 +26,9 @@ import { UeberblickComponent } from '../ueberblick/ueberblick.component';
     <korb-team-id-form />
     <p>
       Keine Team-ID zur Hand?
-      <a routerLink="/team-einrichten">Such das Team über seine Liga.</a>
+      <a routerLink="/suchen"
+        >Such das Team über seinen Verein oder seine Liga.</a
+      >
     </p>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

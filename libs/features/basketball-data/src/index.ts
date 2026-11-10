@@ -7,10 +7,8 @@ export {
   DbbBasketballData,
   VEREINS_SPIELE_TAGE,
 } from './lib/dbb/dbb-basketball-data';
-export {
-  clubsMatching,
-  mergeAssociationClubs,
-} from './lib/club-index/club-index';
+export { clubSearch, mergeAssociationClubs } from './lib/club-index/club-index';
+export { parseIndexedClubs } from './lib/club-index/indexed-clubs';
 export type {
   AssociationClubs,
   ClubIndexEntry,

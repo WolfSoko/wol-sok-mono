@@ -16,12 +16,8 @@ import type {
 } from '@wolsok/feat-korbjaeger-antworten';
 import { Lesung, type KorbReadOptions } from './lesung';
 import { KeinInternetError } from './kein-internet-error';
-import {
-  PROXY_ZEITLIMIT_MS,
-  proxyTransport,
-  SPEICHERBARE_ARTEN,
-  type ProxyFetch,
-} from './proxy-transport';
+import { proxyTransport, SPEICHERBARE_ARTEN } from './proxy-transport';
+import { PROXY_ZEITLIMIT_MS, type ProxyFetch } from './proxy-fetch';
 
 /** The DBB as the fake DBB server answers it, from the recorded fixtures. */
 const recordedDbb: DbbUpstream = async (call) => {
