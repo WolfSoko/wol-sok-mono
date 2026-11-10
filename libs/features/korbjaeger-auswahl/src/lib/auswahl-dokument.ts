@@ -26,9 +26,8 @@ import type { KindEintrag } from './lists/children';
  * change an older app would misread; a new field is none, since every
  * write keeps the fields it does not know. Version 3 (#2966) names the
  * fields in English and lives under new names (`selections/{uid}`,
- * `korbjaeger-selection`); versions 1 and 2, with the German fields, are
- * read only by the migration (`legacy-selection.ts`), which turns them into
- * this version.
+ * `korbjaeger-selection`); versions 1 and 2, with German fields, are read as
+ * none.
  */
 export const AUSWAHL_VERSION = 3;
 

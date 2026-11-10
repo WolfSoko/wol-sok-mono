@@ -19,14 +19,6 @@ export { FirestoreAuswahl, auswahlDokumentVon } from './lib/firestore-auswahl';
 export { geraetUebernehmen } from './lib/geraet-uebernehmen';
 export { gleicheFolge } from './lib/gleiche-folge';
 export {
-  legacyAccountMigration,
-  legacySelectionDocument,
-} from './lib/legacy-account-migration';
-export {
-  LEGACY_SELECTION_KEY,
-  moveLegacyDeviceSelection,
-} from './lib/legacy-device-selection';
-export {
   type Kind,
   type MarkierbarerSpieler,
   SPITZNAME_CODEPUNKTE,

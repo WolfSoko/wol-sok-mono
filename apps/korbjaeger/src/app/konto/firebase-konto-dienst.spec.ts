@@ -9,7 +9,6 @@ const firebase = vi.hoisted(() => ({
   terminate: vi.fn<() => Promise<void>>(),
   clearIndexedDbPersistence: vi.fn<() => Promise<void>>(),
   deleteDoc: vi.fn<() => Promise<void>>(),
-  getDocFromServer: vi.fn<() => Promise<{ exists: () => boolean }>>(),
   waitForPendingWrites: vi.fn<() => Promise<void>>(),
 }));
 
@@ -40,9 +39,6 @@ vi.mock('firebase/firestore', () => ({
   setDoc: vi.fn(),
 }));
 
-/** A device that holds no choices. */
-const LEER = { teams: [], kinder: [], vereinsfarben: [] };
-
 const UMGEBUNG = {
   firebase: { projectId: 'korbjaeger' },
 } as unknown as Environment;
@@ -53,7 +49,6 @@ describe('FirebaseKontoDienst', () => {
     firebase.terminate.mockResolvedValue(undefined);
     firebase.clearIndexedDbPersistence.mockResolvedValue(undefined);
     firebase.deleteDoc.mockResolvedValue(undefined);
-    firebase.getDocFromServer.mockResolvedValue({ exists: () => false });
     firebase.waitForPendingWrites.mockResolvedValue(undefined);
   });
 
@@ -104,87 +99,12 @@ describe('FirebaseKontoDienst', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('deletes the legacy document of the account too', async () => {
+  it("deletes the account's document only", async () => {
+    firebase.deleteDoc.mockClear();
+
     await firebaseKontoDienst(UMGEBUNG).auswahlLoeschen('uid-1');
 
-    expect(firebase.deleteDoc).toHaveBeenCalledTimes(2);
-  });
-
-  // #2966: the move itself is tested on the emulator
-  // (legacy-account-migration.emulator.ts)
-  describe("moving the account's legacy selection", () => {
-    beforeEach(() => {
-      firebase.getDocFromServer.mockClear();
-    });
-
-    it('looks for it once a visit, before it opens the account or takes the device in', async () => {
-      const dienst = firebaseKontoDienst(UMGEBUNG);
-
-      await dienst.geraetUebernehmen('uid-1', LEER);
-      await dienst.auswahl('uid-1', () => undefined);
-      await dienst.auswahl('uid-2', () => undefined);
-      await new Promise((weiter) => setTimeout(weiter));
-
-      expect(firebase.getDocFromServer).toHaveBeenCalledTimes(2);
-    });
-
-    it('takes the device in where it fails, and tries again next time', async () => {
-      const warnen = vi
-        .spyOn(console, 'warn')
-        .mockImplementation(() => undefined);
-      firebase.getDocFromServer.mockRejectedValueOnce(new Error('offline'));
-      const dienst = firebaseKontoDienst(UMGEBUNG);
-
-      await expect(
-        dienst.geraetUebernehmen('uid-1', LEER)
-      ).resolves.toBeDefined();
-      await dienst.auswahl('uid-1', () => undefined);
-      await new Promise((weiter) => setTimeout(weiter));
-
-      expect(firebase.getDocFromServer).toHaveBeenCalledTimes(2);
-      expect(warnen).toHaveBeenCalled();
-      warnen.mockRestore();
-    });
-
-    it('opens the account without waiting for it, as the listener shows it', async () => {
-      firebase.getDocFromServer.mockReturnValue(new Promise(() => undefined));
-
-      await expect(
-        firebaseKontoDienst(UMGEBUNG).auswahl('uid-1', () => undefined)
-      ).resolves.toBeDefined();
-    });
-
-    it('takes the device in only once it moved, the account’s older choices first', async () => {
-      const gelesen = Promise.withResolvers<{ exists: () => boolean }>();
-      firebase.getDocFromServer.mockReturnValue(gelesen.promise);
-      let uebernommen = false;
-
-      const uebernahme = firebaseKontoDienst(UMGEBUNG)
-        .geraetUebernehmen('uid-1', LEER)
-        .then(() => (uebernommen = true));
-      await Promise.resolve();
-      expect(uebernommen).toBe(false);
-
-      gelesen.resolve({ exists: () => false });
-      await uebernahme;
-      expect(uebernommen).toBe(true);
-    });
-
-    it('deletes the account’s documents only once a move still running ended', async () => {
-      const gelesen = Promise.withResolvers<{ exists: () => boolean }>();
-      firebase.getDocFromServer.mockReturnValue(gelesen.promise);
-      firebase.deleteDoc.mockClear();
-      const dienst = firebaseKontoDienst(UMGEBUNG);
-      await dienst.auswahl('uid-1', () => undefined);
-
-      const loeschen = dienst.auswahlLoeschen('uid-1');
-      await new Promise((weiter) => setTimeout(weiter));
-      expect(firebase.deleteDoc).not.toHaveBeenCalled();
-
-      gelesen.resolve({ exists: () => false });
-      await loeschen;
-      expect(firebase.deleteDoc).toHaveBeenCalledTimes(2);
-    });
+    expect(firebase.deleteDoc).toHaveBeenCalledTimes(1);
   });
 
   describe('whether all was sent', () => {

@@ -31,8 +31,6 @@ import {
   auswahlDokumentVon,
   FirestoreAuswahl,
   geraetUebernehmen,
-  legacyAccountMigration,
-  legacySelectionDocument,
   type NichtUebernommen,
 } from '@wolsok/feat-korbjaeger-auswahl';
 import {
@@ -84,8 +82,6 @@ class FirebaseKontoDienst implements KontoDienst {
   private readonly app: FirebaseApp;
   private readonly auth: Auth;
   private firestore?: Promise<Firestore>;
-  /** Each account's move of its legacy selection, this visit (#2966). */
-  private readonly legacyMigrations = new Map<string, Promise<void>>();
 
   public constructor(private readonly environment: Environment) {
     const { emulatoren } = environment;
@@ -148,9 +144,7 @@ class FirebaseKontoDienst implements KontoDienst {
     uid: string,
     beiFehler: (fehler: unknown) => void
   ): Promise<KontoAuswahl> {
-    // the listener shows the moved choices once written; the cache shows
-    // the account at once, offline too
-    void this.legacyMigrated(uid);
+    // the cache shows the account at once, offline too
     return new FirestoreAuswahl(await this.db(), uid, { beiFehler });
   }
 
@@ -158,25 +152,17 @@ class FirebaseKontoDienst implements KontoDienst {
     uid: string,
     geraet: AuswahlInhalt
   ): Promise<NichtUebernommen> {
-    // the account's older choices first, then the device's
-    await this.legacyMigrated(uid);
     return geraetUebernehmen(await this.db(), uid, geraet);
   }
 
   /**
    * Resolves once the server confirmed the deletion of the account's
-   * document and of its legacy one (#2966), however long that takes: once
-   * queued, Firestore deletes them even where this gave up, so giving up
-   * would leave the account without its choices.
+   * document, however long that takes: once queued, Firestore deletes it
+   * even where this gave up, so giving up would leave the account without
+   * its choices.
    */
   public async auswahlLoeschen(uid: string): Promise<void> {
-    // a move still running would write the document anew after its deletion
-    await this.legacyMigrations.get(uid);
-    const db = await this.db();
-    await Promise.all([
-      deleteDoc(auswahlDokumentVon(db, uid)),
-      deleteDoc(legacySelectionDocument(db, uid)),
-    ]);
+    await deleteDoc(auswahlDokumentVon(await this.db(), uid));
   }
 
   public async allesGesendet(): Promise<boolean> {
@@ -203,25 +189,6 @@ class FirebaseKontoDienst implements KontoDienst {
       console.warn('Korbjäger: Firestore cache not cleared', fehler);
       leerenAusstehendSetzen(true);
     }
-  }
-
-  /**
-   * Moves the account's legacy selection into its document, once a visit
-   * (`legacyAccountMigration`). Never rejects: where the move fails
-   * (offline, say), the next opening tries again.
-   */
-  private legacyMigrated(uid: string): Promise<void> {
-    let migration = this.legacyMigrations.get(uid);
-    if (migration === undefined) {
-      migration = this.db()
-        .then((db) => legacyAccountMigration(db, uid))
-        .catch((fehler: unknown) => {
-          this.legacyMigrations.delete(uid);
-          console.warn('Korbjäger: legacy selection not moved yet', fehler);
-        });
-      this.legacyMigrations.set(uid, migration);
-    }
-    return migration;
   }
 
   private db(): Promise<Firestore> {

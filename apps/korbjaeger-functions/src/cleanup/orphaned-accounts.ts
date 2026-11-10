@@ -62,8 +62,9 @@ export async function findOrphanedAccounts(
 
 /**
  * Deletes what orphaned accounts left, as the Auth deletion trigger does
- * (`kontoGeloescht`: tombstones first, then both documents), so a rerun ends
- * the same. Without `deleteOrphans` it only counts (dry run). A failed
+ * (`kontoGeloescht`: the tombstone first, then `selections/{uid}`), and
+ * then the account's document of before #2966, which the trigger no longer
+ * knows (#2983), so a rerun ends the same. Without `deleteOrphans` it only counts (dry run). A failed
  * deletion is counted, not thrown, so the report says how far it got.
  */
 export async function cleanUpOrphanedAccounts(
@@ -92,6 +93,7 @@ export async function cleanUpOrphanedAccounts(
   for (const uid of search.orphans) {
     try {
       await kontoGeloescht(db, uid);
+      await db.collection(LEGACY_CHOICES_COLLECTION).doc(uid).delete();
       orphansDeleted++;
     } catch {
       // counted as not deleted; the error may name the uid, so it is not printed

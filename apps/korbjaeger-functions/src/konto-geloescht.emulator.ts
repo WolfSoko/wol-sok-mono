@@ -2,8 +2,6 @@ import { assertSucceeds } from '@firebase/rules-unit-testing';
 import { Timestamp } from 'firebase-admin/firestore';
 import {
   DELETED_ACCOUNTS_COLLECTION,
-  LEGACY_CHOICES_COLLECTION,
-  LEGACY_DELETED_ACCOUNTS_COLLECTION,
   CHOICES_COLLECTION,
   TOMBSTONE_DURATION_MS,
 } from '@wolsok/feat-shared-korbjaeger-account';
@@ -20,13 +18,6 @@ const AUSWAHL_DOKUMENT = {
   children: { 4711: { since: 1, nickname: 'Mimi' } },
 };
 
-/** A selection of before #2966, never moved. */
-const LEGACY_DOKUMENT = {
-  version: 2,
-  teams: { 313036: 1 },
-  kinder: { 4711: { seit: 1, spitzname: 'Mimi' } },
-};
-
 const project = useEmulatorProject();
 
 const auswahlVon = (uid: string) =>
@@ -34,9 +25,6 @@ const auswahlVon = (uid: string) =>
 
 const grabsteinVon = (uid: string) =>
   project().admin.collection(DELETED_ACCOUNTS_COLLECTION).doc(uid);
-
-const legacyVon = (uid: string) =>
-  project().admin.collection(LEGACY_CHOICES_COLLECTION).doc(uid);
 
 /** A device signed in as `uid`, under the app's rules. */
 const geraet = (uid: string) =>
@@ -59,29 +47,6 @@ describe('kontoGeloescht', () => {
     expect((await grabsteinVon(ELTERNTEIL).get()).data()).toEqual({
       expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
     });
-  });
-
-  it('writes the tombstone in the collection of before #2966 too', async () => {
-    await kontoGeloescht(project().admin, ELTERNTEIL, JETZT);
-
-    expect(
-      (
-        await project()
-          .admin.collection(LEGACY_DELETED_ACCOUNTS_COLLECTION)
-          .doc(ELTERNTEIL)
-          .get()
-      ).data()
-    ).toEqual({
-      expireAt: Timestamp.fromMillis(JETZT + TOMBSTONE_DURATION_MS),
-    });
-  });
-
-  it('deletes the selection of before #2966 too', async () => {
-    await legacyVon(ELTERNTEIL).set(LEGACY_DOKUMENT);
-
-    await kontoGeloescht(project().admin, ELTERNTEIL, JETZT);
-
-    expect((await legacyVon(ELTERNTEIL).get()).exists).toBe(false);
   });
 
   it("leaves other accounts' Auswahl as it is", async () => {

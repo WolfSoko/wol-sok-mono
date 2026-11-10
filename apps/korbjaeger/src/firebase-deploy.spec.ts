@@ -6,10 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 // what Firebase Hosting's emulator matches header rules with
 import { configMatcher } from 'superstatic/lib/utils/patterns';
-import {
-  DELETED_ACCOUNTS_COLLECTION,
-  LEGACY_DELETED_ACCOUNTS_COLLECTION,
-} from '@wolsok/feat-shared-korbjaeger-account';
+import { DELETED_ACCOUNTS_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import { FUNCTION_REGION } from './shared/function-region';
 import {
   assertDeployableBuild,
@@ -180,9 +177,11 @@ describe('the Firebase deploy', () => {
   });
 
   // the rules refuse a deleted account while its tombstone exists; the TTL
-  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`), in
-  // the legacy collection too, which holds those written before #2966
-  it.each([DELETED_ACCOUNTS_COLLECTION, LEGACY_DELETED_ACCOUNTS_COLLECTION])(
+  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`).
+  // DEPLOY runs `firestore:indexes` without `--force`, so a TTL dropped from
+  // the file stays live in Firestore (#2983: that of the tombstones of
+  // before #2966, for the last ones written there)
+  it.each([DELETED_ACCOUNTS_COLLECTION])(
     "lets Firestore's TTL delete the deleted accounts' tombstones in %s",
     (graeber) => {
       const indexes = workspaceJson<{

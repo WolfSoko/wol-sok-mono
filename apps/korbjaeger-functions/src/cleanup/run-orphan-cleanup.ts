@@ -1,5 +1,5 @@
 /**
- * One-off run (#2986, before #2983's migration): deletes `selections/{uid}`
+ * One-off run (#2986, run before #2983): deletes `selections/{uid}`
  * and `auswahl/{uid}` of accounts Auth no longer knows. Not deployed: the
  * owner runs it through `nx run korbjaeger-functions:cleanup-orphans`,
  * signed in with application default credentials, a dry run first.

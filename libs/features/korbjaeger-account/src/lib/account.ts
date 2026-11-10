@@ -39,17 +39,11 @@ export const DELETED_ACCOUNTS_COLLECTION = 'deletedAccounts';
 export const CLUB_INDEX_COLLECTION = 'clubIndex';
 
 /**
- * The choices as versions 1 and 2 stored them, with German fields: read only
- * by the migration into `CHOICES_COLLECTION` and deleted with the account,
- * until the follow-up of #2966 removes it.
+ * The choices as versions 1 and 2 stored them, with German fields. None is
+ * left (#2983) and no rule opens it; only the one-off orphan cleanup of
+ * `korbjaeger-functions` still lists it, to show it stays empty.
  */
 export const LEGACY_CHOICES_COLLECTION = 'auswahl';
-
-/**
- * The tombstones written before #2966: the rules still honour them, and the
- * deletion still writes one, until the follow-up of #2966 removes it.
- */
-export const LEGACY_DELETED_ACCOUNTS_COLLECTION = 'geloeschteKonten';
 
 /**
  * How many days a tombstone stays: longer than any ID token of the deleted

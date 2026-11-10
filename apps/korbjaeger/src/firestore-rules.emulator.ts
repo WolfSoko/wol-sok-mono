@@ -21,7 +21,6 @@ import {
 } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   DELETED_ACCOUNTS_COLLECTION,
-  LEGACY_DELETED_ACCOUNTS_COLLECTION,
   LEGACY_CHOICES_COLLECTION,
   CHOICES_COLLECTION,
   CLUB_INDEX_COLLECTION,
@@ -312,50 +311,49 @@ describe('the Auswahl document', () => {
   // the Auth deletion's trigger (korbjaeger-functions, `kontoGeloescht`)
   // writes the tombstone first: a second device's token stays valid for up
   // to an hour, so the rules refuse it from then on
-  // tombstones written before #2966 live a day in the legacy collection
-  describe.each([
-    DELETED_ACCOUNTS_COLLECTION,
-    LEGACY_DELETED_ACCOUNTS_COLLECTION,
-  ])('once the account is deleted (tombstone in %s)', (graeber) => {
-    const grabstein = (uid: string) =>
-      ohneRegeln(env, (firestore) =>
-        setDoc(doc(firestore, graeber, uid), {
-          expireAt: new Date(),
-        })
-      );
+  describe.each([DELETED_ACCOUNTS_COLLECTION])(
+    'once the account is deleted (tombstone in %s)',
+    (graeber) => {
+      const grabstein = (uid: string) =>
+        ohneRegeln(env, (firestore) =>
+          setDoc(doc(firestore, graeber, uid), {
+            expireAt: new Date(),
+          })
+        );
 
-    it('refuses the owner every request on the Auswahl', async () => {
-      await vorhanden(ELTERNTEIL);
-      await grabstein(ELTERNTEIL);
-      const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
+      it('refuses the owner every request on the Auswahl', async () => {
+        await vorhanden(ELTERNTEIL);
+        await grabstein(ELTERNTEIL);
+        const eigene = auswahlVon(db(ELTERNTEIL), ELTERNTEIL);
 
-      await assertFails(getDoc(eigene));
-      await assertFails(setDoc(eigene, GUELTIG));
-      await assertFails(updateDoc(eigene, { teams: { 313036: 3 } }));
-      await assertFails(deleteDoc(eigene));
-    });
+        await assertFails(getDoc(eigene));
+        await assertFails(setDoc(eigene, GUELTIG));
+        await assertFails(updateDoc(eigene, { teams: { 313036: 3 } }));
+        await assertFails(deleteDoc(eigene));
+      });
 
-    it('refuses the owner creating it anew', async () => {
-      await grabstein(ELTERNTEIL);
+      it('refuses the owner creating it anew', async () => {
+        await grabstein(ELTERNTEIL);
 
-      await assertFails(speichern(GUELTIG));
-    });
+        await assertFails(speichern(GUELTIG));
+      });
 
-    it('leaves other accounts alone', async () => {
-      await grabstein(ANDERES);
+      it('leaves other accounts alone', async () => {
+        await grabstein(ANDERES);
 
-      await assertSucceeds(speichern(GUELTIG));
-    });
+        await assertSucceeds(speichern(GUELTIG));
+      });
 
-    it('lets no client read or write the tombstone', async () => {
-      await grabstein(ELTERNTEIL);
-      const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
+      it('lets no client read or write the tombstone', async () => {
+        await grabstein(ELTERNTEIL);
+        const eigener = doc(db(ELTERNTEIL), graeber, ELTERNTEIL);
 
-      await assertFails(getDoc(eigener));
-      await assertFails(deleteDoc(eigener));
-      await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
-    });
-  });
+        await assertFails(getDoc(eigener));
+        await assertFails(deleteDoc(eigener));
+        await assertFails(setDoc(doc(db(ANDERES), graeber, ANDERES), {}));
+      });
+    }
+  );
 
   describe('what it holds', () => {
     it('takes a document with only the version, Teams or Kinder', async () => {
@@ -542,55 +540,23 @@ describe('the Auswahl document', () => {
   });
 });
 
-// the selections of versions 1 and 2 (#2966): the app moves one into
-// `selections/{uid}` when the account is opened, then deletes it
-describe('the legacy Auswahl document', () => {
-  const LEGACY = {
-    version: 2,
-    teams: { 313036: 1 },
-    kinder: { 4711: { seit: 2, spitzname: 'Mimi' } },
-  };
+// the selections of versions 1 and 2, before #2966: none is left (#2983),
+// and no client may open one any more
+describe('the Auswahl document of before #2966', () => {
   const legacyVon = (firestore: Firestore, uid: string) =>
     doc(firestore, LEGACY_CHOICES_COLLECTION, uid);
-  const legacyVorhanden = (uid: string) =>
-    ohneRegeln(env, (firestore) => setDoc(legacyVon(firestore, uid), LEGACY));
 
-  it('lets the owner read and delete it', async () => {
-    await legacyVorhanden(ELTERNTEIL);
-    const eigene = legacyVon(db(ELTERNTEIL), ELTERNTEIL);
-
-    await assertSucceeds(getDoc(eigene));
-    await assertSucceeds(deleteDoc(eigene));
-  });
-
-  it('lets the owner read it where there is none', async () => {
-    await assertSucceeds(getDoc(legacyVon(db(ELTERNTEIL), ELTERNTEIL)));
-  });
-
-  it('lets nobody create or change it, as the app of version 2 would', async () => {
-    const eigene = legacyVon(db(ELTERNTEIL), ELTERNTEIL);
-
-    await assertFails(setDoc(eigene, LEGACY));
-    await legacyVorhanden(ELTERNTEIL);
-    await assertFails(updateDoc(eigene, { teams: { 313036: 1, 201500: 2 } }));
-  });
-
-  it('lets nobody else near it', async () => {
-    await legacyVorhanden(ELTERNTEIL);
-    const fremde = legacyVon(db(ANDERES), ELTERNTEIL);
-
-    await assertFails(getDoc(fremde));
-    await assertFails(deleteDoc(fremde));
-  });
-
-  it('refuses the owner once the account is deleted', async () => {
-    await legacyVorhanden(ELTERNTEIL);
+  it('is closed to its owner too', async () => {
     await ohneRegeln(env, (firestore) =>
-      setDoc(doc(firestore, DELETED_ACCOUNTS_COLLECTION, ELTERNTEIL), {
-        expireAt: new Date(),
+      setDoc(legacyVon(firestore, ELTERNTEIL), {
+        version: 2,
+        teams: { 313036: 1 },
       })
     );
+    const eigene = legacyVon(db(ELTERNTEIL), ELTERNTEIL);
 
-    await assertFails(getDoc(legacyVon(db(ELTERNTEIL), ELTERNTEIL)));
+    await assertFails(getDoc(eigene));
+    await assertFails(deleteDoc(eigene));
+    await assertFails(setDoc(eigene, { version: 2 }));
   });
 });

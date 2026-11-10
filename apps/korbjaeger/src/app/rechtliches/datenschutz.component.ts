@@ -24,7 +24,6 @@ import {
   MAX_ALTER_TAGE,
 } from '@wolsok/feat-korbjaeger-antworten';
 import { DbbLinkComponent } from './dbb-link.component';
-import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { germanDays } from './german-days';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
@@ -65,5 +64,4 @@ export class DatenschutzComponent {
     tombstone: germanDays(TOMBSTONE_DAYS),
     ttl: germanDays(TTL_DELETION_DAYS, { further: true }),
   } as const;
-  protected readonly alteSchluessel = LEGACY_DEVICE_KEYS;
 }

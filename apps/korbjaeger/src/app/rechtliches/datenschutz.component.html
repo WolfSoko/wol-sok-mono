@@ -145,13 +145,6 @@
     </li>
   </ul>
   <p>
-    Frühere Versionen der App speicherten dasselbe unter deutschen Namen (etwa
-    <code>{{ alteSchluessel.selection }}</code
-    >). Beim ersten Start dieser Version übernimmt die App diese Einträge unter
-    die oben genannten Namen und löscht die alten; zwischengespeicherte
-    Antworten des DBB löscht sie dabei, ohne sie zu übernehmen.
-  </p>
-  <p>
     Außerdem legt der Browser die Dateien der App in seinem Speicher für Service
     Worker ab, damit sie schnell und auch ohne Internet startet; Daten über dich
     enthält dieser Speicher nicht. Bist du angemeldet, speichert Firebase in der
@@ -208,9 +201,7 @@
     Konto. Die Datenbank liegt in Googles Region {{ regions.firestore.id }} ({{
       regions.firestore.place
     }}). Den Spitznamen siehst nur du; den vollen Namen eines Kindes brauchst du
-    dafür nicht. Hat eine frühere Version der App dein Konto noch in einem
-    Dokument mit deutschen Feldnamen gespeichert, überträgt die App es beim
-    nächsten Öffnen deines Kontos in das neue und löscht das alte.
+    dafür nicht.
   </p>
   <p>
     Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO: Du meldest dich an, damit
@@ -225,8 +216,7 @@
     noch einmal nach deiner Anmeldung, dann löscht die App das Dokument mit
     Meine Teams und deinen Kindern, wartet, bis der Server das bestätigt, und
     löscht danach dein Konto bei Firebase Authentication. Ohne Internet geht das
-    nicht. Ein Dokument einer früheren Version der App (Abschnitt 5) löscht sie
-    dabei mit. Sobald das Konto gelöscht ist, löscht unser Server (eine Cloud
+    nicht. Sobald das Konto gelöscht ist, löscht unser Server (eine Cloud
     Function in Googles Region {{ regions.firestore.id }}, wo auch die Datenbank
     liegt) das Dokument noch einmal, für den Fall, dass ein anderes Gerät, auf
     dem dein Konto zur selben Zeit geöffnet war, deine Auswahl inzwischen wieder
