@@ -67,22 +67,24 @@ export function mergeAssociationClubs(
 }
 
 /**
- * The Clubs of `index` whose name holds every word of `term`, in the
- * index's order; none for a term without words. Case, diacritics and `ß`
- * do not matter: `wasbuttel` finds `MTV Wasbüttel`.
+ * A search over `index`: the Clubs whose name holds every word of a term,
+ * in the index's order; none for a term without words. Case, diacritics
+ * and `ß` do not matter: `wasbuttel` finds `MTV Wasbüttel`. Each name is
+ * folded once, here, so a search per keystroke only compares strings.
  */
-export function clubsMatching<C extends { readonly name: string }>(
-  index: readonly C[],
-  term: string
-): readonly C[] {
-  const words = folded(term).split(/\s+/).filter(Boolean);
-  if (words.length === 0) {
-    return [];
-  }
-  return index.filter((club) => {
-    const name = folded(club.name);
-    return words.every((word) => name.includes(word));
-  });
+export function clubSearch<C extends { readonly name: string }>(
+  index: readonly C[]
+): (term: string) => readonly C[] {
+  const names = index.map((club) => ({ club, name: folded(club.name) }));
+  return (term) => {
+    const words = folded(term).split(/\s+/).filter(Boolean);
+    if (words.length === 0) {
+      return [];
+    }
+    return names
+      .filter(({ name }) => words.every((word) => name.includes(word)))
+      .map(({ club }) => club);
+  };
 }
 
 /** Orders Clubs as the index lists them: by name, German collation. */

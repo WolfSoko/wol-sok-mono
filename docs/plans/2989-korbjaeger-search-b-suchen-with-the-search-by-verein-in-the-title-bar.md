@@ -1,6 +1,6 @@
 # Plan: Korbjäger search B ([#2989](https://github.com/WolfSoko/wol-sok-mono/issues/2989))
 
-Spec: `docs/specs/2989-korbjaeger-search-b-suchen-with-the-search-by-verein-in-the-title-bar.md`. Branch on top of PR #2995; merged only after #2995 is on `main`, then rebased.
+Spec: `docs/specs/2989-korbjaeger-search-b-suchen-with-the-search-by-verein-in-the-title-bar.md`. Branch off `main`, which holds PR #2995.
 
 1. **Lib: fold once, parse the answer.** `libs/features/basketball-data/src/lib/club-index/club-index.ts`: `clubSearch(index)` replaces `clubsMatching`; `parseIndexedClubs(body)`. Tests in `club-index.spec.ts`. Commit `feat(feat-shared-basketball-data): fold club names once and parse the club index (#2989)`.
 2. **App: shared proxy fetch.** Extract `reach`, `readJson`, `browserOnline`, `offline`/`unavailable` from `src/app/basketball-data/proxy-transport.ts` into `proxy-fetch.ts`; the transport's specs stay green. Commit `refactor(korbjaeger): share the proxy fetch with the club index (#2989)`.
