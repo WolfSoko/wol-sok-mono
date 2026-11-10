@@ -12,12 +12,18 @@ export const PROXY_CACHE_SEKUNDEN = {
 } as const;
 
 /**
- * How long the club index (`/api/clubs`, #2988) may be reused, in seconds:
- * an hour in the browser, a day in the CDN. Its lists change weekly, and a
- * long CDN cache keeps nearly every request off the server and Firestore.
- * The route's headers and the privacy policy both take them from here.
+ * How long the club index (`/api/clubs`, #2988) may be reused, in seconds.
+ * `complete`, once every Verband has its list: an hour in the browser, a
+ * day in the CDN, since its lists change weekly and a long CDN cache keeps
+ * nearly every request off the server and Firestore. `filling`, while it
+ * is empty or misses a Verband (#3005): as briefly as the DBB proxy's, so
+ * each hourly crawl shows within minutes. The route's headers and the
+ * privacy policy both take them from here.
  */
 export const CLUB_INDEX_CACHE_SECONDS = {
-  browser: 3600,
-  cdn: 86_400,
+  complete: { browser: 3600, cdn: 86_400 },
+  filling: {
+    browser: PROXY_CACHE_SEKUNDEN.browser,
+    cdn: PROXY_CACHE_SEKUNDEN.cdn,
+  },
 } as const;
