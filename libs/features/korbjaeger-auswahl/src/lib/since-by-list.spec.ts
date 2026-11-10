@@ -112,7 +112,7 @@ describe('CLUB_COLORS.read', () => {
 describe('a Kind marked again after its unmark', () => {
   it('gets a new since, not the one it had', () => {
     const unmarked = entmarkierenAenderung(MIA.personId)(marked);
-    const again = markierenAenderung({ art: 'benannt', personId: 4711 })(
+    const again = markierenAenderung({ kind: 'named', personId: 4711 })(
       unmarked
     );
 
