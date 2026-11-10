@@ -17,11 +17,17 @@ export type {
 export { crawlClubs } from './lib/club-index/crawl-clubs';
 export {
   CLUB_INDEX_VERSION,
+  isOfferedAssociation,
+  OFFERED_ASSOCIATION,
   parseAssociationClubs,
   parseAssociationClubsList,
+  parseClubIndex,
   storedAssociationClubs,
 } from './lib/club-index/stored-association-clubs';
-export type { StoredAssociationClubs } from './lib/club-index/stored-association-clubs';
+export type {
+  StoredAssociationClubs,
+  StoredClubIndex,
+} from './lib/club-index/stored-association-clubs';
 export type {
   ClubCrawlOptions,
   ClubCrawlSource,

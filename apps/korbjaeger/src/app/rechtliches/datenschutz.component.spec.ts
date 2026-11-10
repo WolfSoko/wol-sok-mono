@@ -5,6 +5,7 @@ import {
 import { REGIONS } from '../../shared/regions';
 import { zeigen } from '../../testing/zeigen';
 import {
+  CLUB_INDEX_CRAWL_DAYS,
   DELETION_RETRY_DAYS,
   TOMBSTONE_DAYS,
   TTL_DELETION_DAYS,
@@ -107,7 +108,7 @@ describe('DatenschutzComponent', () => {
     expect(abschnitt(seite, 'hosting')).toContain('Firebase Hosting');
   });
 
-  it('covers the club index: its source, no persons, the search on the device and its cache times', () => {
+  it('covers the club index: its source, no persons, the search on the device, its renewal and its cache times', () => {
     const dbb = abschnitt(zeigen(DatenschutzComponent), 'dbb');
 
     const { firestore } = REGIONS;
@@ -115,8 +116,13 @@ describe('DatenschutzComponent', () => {
     expect(dbb).toContain(`Region ${firestore.id} (${firestore.place})`);
     expect(dbb).toContain('keine Personen');
     expect(dbb).toContain('verlässt dein Gerät nicht');
+    const { complete, filling } = CLUB_INDEX_CACHE_SECONDS;
+    expect(CLUB_INDEX_CRAWL_DAYS).toEqual({ maxAge: 7, retryAfter: 1 });
     expect(dbb).toContain(
-      `bis zu ${CLUB_INDEX_CACHE_SECONDS.cdn / 3600} Stunden vor, dein Browser bis zu ${CLUB_INDEX_CACHE_SECONDS.browser / 60} Minuten`
+      'Sie erneuert die Liste jedes Verbands in der Regel alle 7 Tage, nach einem Fehler schon einen Tag später.'
+    );
+    expect(dbb).toContain(
+      `bis zu ${complete.cdn / 3600} Stunden vor, dein Browser bis zu ${complete.browser / 60} Minuten; solange darin noch Verbände fehlen, nur bis zu ${filling.cdn / 60} Minuten, dein Browser bis zu ${filling.browser} Sekunden.`
     );
   });
 

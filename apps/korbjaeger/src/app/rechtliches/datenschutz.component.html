@@ -63,15 +63,19 @@
   <p>
     Damit du einen Verein über seinen Namen finden kannst, stellt eine weitere
     Funktion (Region {{ regions.firestore.id }} ({{ regions.firestore.place }}))
-    einmal in der Woche aus den öffentlichen Ligen des DBB eine Liste aller
-    Vereine zusammen: nur die Kennung und den Namen jedes Vereins und die
-    Verbände, in denen er spielt, keine Personen. Die Liste liegt in Googles
+    aus den öffentlichen Ligen des DBB eine Liste aller Vereine zusammen: nur
+    die Kennung und den Namen jedes Vereins und die Verbände, in denen er
+    spielt, keine Personen. Sie erneuert die Liste jedes Verbands in der Regel
+    alle {{ clubIndex.crawl.maxAge }}, nach einem Fehler schon
+    {{ clubIndex.crawl.retryAfter }} später. Die Liste liegt in Googles
     Datenbank Firestore in derselben Region. Die App lädt die ganze Liste und
     sucht darin auf deinem Gerät: Was du ins Suchfeld tippst, verlässt dein
     Gerät nicht. Google hält die Liste bis zu
-    {{ vereinsIndex.cdn / 3600 }} Stunden vor, dein Browser bis zu
-    {{ vereinsIndex.browser / 60 }} Minuten; ein neuer Verein erscheint deshalb
-    erst nach einigen Tagen.
+    {{ clubIndex.cache.complete.cdn / 3600 }} Stunden vor, dein Browser bis zu
+    {{ clubIndex.cache.complete.browser / 60 }} Minuten; solange darin noch
+    Verbände fehlen, nur bis zu {{ clubIndex.cache.filling.cdn / 60 }} Minuten,
+    dein Browser bis zu {{ clubIndex.cache.filling.browser }} Sekunden. Ein
+    neuer Verein erscheint deshalb erst nach einigen Tagen.
   </p>
   <p>
     Zu jedem Aufruf der Funktion protokolliert Google wie beim Hosting deine
