@@ -1,4 +1,3 @@
-import { isBasketballDataError } from '../domain/basketball-data-error';
 import { parseIndexedClubs } from './indexed-clubs';
 
 const NIEDERSACHSEN = { id: 7, name: 'Niedersachsen' };
@@ -43,12 +42,9 @@ describe('parseIndexedClubs', () => {
   it.each([{}, null, 'clubs'])(
     'rejects an answer that is no list (%j)',
     (body) => {
-      expect.assertions(1);
-      try {
-        parseIndexedClubs(body);
-      } catch (error) {
-        expect(isBasketballDataError(error, 'unexpected-shape')).toBe(true);
-      }
+      expect(() => parseIndexedClubs(body)).toThrow(
+        expect.objectContaining({ kind: 'unexpected-shape' })
+      );
     }
   );
 });
