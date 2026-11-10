@@ -17,13 +17,13 @@ export type VereinsTeamsStand =
   | { readonly art: 'gelesen'; readonly teams: readonly VereinsTeamZeile[] };
 
 /**
- * The Verein's Teams other than `ohne` as their read stands: `undefined`
+ * The Verein's Teams (other than `ohne`, if given) as their read stands: `undefined`
  * while it reads nothing (no Verein to read yet). A read again keeps
  * showing the Teams it had.
  */
 export function vereinsTeamsStand(
   read: Resource<VereinsTeams | undefined>,
-  ohne: TeamId
+  ohne?: TeamId
 ): VereinsTeamsStand | undefined {
   if (read.status() === 'idle') {
     return undefined;
@@ -39,7 +39,7 @@ export function vereinsTeamsStand(
 
 function zeilen(
   vereinsTeams: VereinsTeams,
-  ohne: TeamId
+  ohne: TeamId | undefined
 ): readonly VereinsTeamZeile[] {
   return vereinsTeams.teams
     .filter(({ team }) => team.id !== ohne)

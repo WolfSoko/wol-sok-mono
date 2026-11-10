@@ -1,4 +1,7 @@
-import type { ClubFinder, IndexedClub } from '@wolsok/feat-shared-basketball-data';
+import type {
+  ClubFinder,
+  IndexedClub,
+} from '@wolsok/feat-shared-basketball-data';
 import { vereinslisteFehlerText } from '../fehler/fehler-text';
 
 /** How many hits the search lists at most: a longer list helps nobody. */
@@ -69,6 +72,34 @@ function hitOf({ id, name, associations }: IndexedClub): ClubHit {
   return {
     id,
     name,
-    associations: associations.map((association) => association.name).join(' · '),
+    associations: associations
+      .map((association) => association.name)
+      .join(' · '),
   };
+}
+
+/**
+ * What the search says of its state, for the screen and a screen reader:
+ * how much to type, how many Vereine matched; nothing while loading or
+ * failed, which say so themselves.
+ */
+export function clubSearchStatus(view: ClubSearchView): string {
+  switch (view.kind) {
+    case 'typing':
+      return view.tooShort ? 'Bitte mindestens zwei Zeichen eingeben.' : '';
+    case 'hits':
+      return hitsStatus(view.hits.length, view.more);
+    default:
+      return '';
+  }
+}
+
+function hitsStatus(count: number, more: boolean): string {
+  if (more) {
+    return `Mehr als ${MAX_CLUB_HITS} Vereine gefunden. Bitte genauer eingeben.`;
+  }
+  if (count === 0) {
+    return 'Kein Verein gefunden. Bitte anders schreiben oder kürzer eingeben.';
+  }
+  return count === 1 ? 'Ein Verein gefunden.' : `${count} Vereine gefunden.`;
 }

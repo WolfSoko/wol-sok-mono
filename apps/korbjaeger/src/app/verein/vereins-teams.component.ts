@@ -29,7 +29,13 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
       }
       @case ('gelesen') {
         @if (vereinsTeams.teams.length === 0) {
-          <p>Keine weiteren Teams des Vereins in den letzten Wochen.</p>
+          <p data-qa="vereins-teams-leer">
+            @if (weitere()) {
+              Keine weiteren Teams des Vereins in den letzten Wochen.
+            } @else {
+              Keine Teams des Vereins in den letzten Wochen.
+            }
+          </p>
         } @else {
           <ul>
             @for (team of vereinsTeams.teams; track team.teamId) {
@@ -91,4 +97,6 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
 })
 export class VereinsTeamsComponent {
   public readonly stand = input.required<VereinsTeamsStand>();
+  /** Whether the list leaves out a Team the screen shows (its "weitere" Teams). */
+  public readonly weitere = input(true);
 }

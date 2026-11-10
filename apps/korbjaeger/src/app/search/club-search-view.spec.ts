@@ -4,7 +4,12 @@ import {
   type IndexedClub,
 } from '@wolsok/feat-shared-basketball-data';
 import { VEREINSLISTE_NICHT_ERREICHBAR } from '../fehler/fehler-text';
-import { clubSearchView, MAX_CLUB_HITS } from './club-search-view';
+import {
+  clubSearchStatus,
+  clubSearchView,
+  MAX_CLUB_HITS,
+  type ClubSearchView,
+} from './club-search-view';
 
 const BAYERN = { id: 2, name: 'Bayern' };
 const REGIONALLIGA = { id: 30, name: 'Regionalliga Südost' };
@@ -85,5 +90,42 @@ describe('clubSearchView', () => {
       hits: [],
       more: false,
     });
+  });
+});
+
+describe('clubSearchStatus', () => {
+  const hits = (count: number, more = false): ClubSearchView => ({
+    kind: 'hits',
+    hits: Array.from({ length: count }, (_, at) => ({
+      id: at + 1,
+      name: `TSV ${at}`,
+      associations: 'Bayern',
+    })),
+    more,
+  });
+
+  it.each<[string, ClubSearchView, string]>([
+    ['nothing typed', { kind: 'typing', tooShort: false }, ''],
+    [
+      'too little typed',
+      { kind: 'typing', tooShort: true },
+      'Bitte mindestens zwei Zeichen eingeben.',
+    ],
+    ['the list loading', { kind: 'loading' }, ''],
+    ['the list failed', { kind: 'failed', text: 'x' }, ''],
+    [
+      'no match',
+      hits(0),
+      'Kein Verein gefunden. Bitte anders schreiben oder kürzer eingeben.',
+    ],
+    ['one match', hits(1), 'Ein Verein gefunden.'],
+    ['matches', hits(3), '3 Vereine gefunden.'],
+    [
+      'too many matches',
+      hits(MAX_CLUB_HITS, true),
+      `Mehr als ${MAX_CLUB_HITS} Vereine gefunden. Bitte genauer eingeben.`,
+    ],
+  ])('says what fits %s', (_case, view, text) => {
+    expect(clubSearchStatus(view)).toBe(text);
   });
 });
