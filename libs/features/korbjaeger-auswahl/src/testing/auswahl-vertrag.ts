@@ -1,4 +1,4 @@
-import type { TeamId, VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { TeamId, ClubId } from '@wolsok/feat-shared-basketball-data';
 import type { MarkierbarerSpieler } from '../lib/kind';
 import type { Auswahl } from '../lib/auswahl';
 import { AUSWAHL_GRENZEN } from '../lib/selection-lists';
@@ -54,13 +54,13 @@ const SV_GROSS_OESINGEN: TeamId = 201765;
 const TSV_MEINE: TeamId = 201234;
 
 /** Vereine by their DBB id, of invented clubs. */
-const VEREIN_ROT: VereinId = 4242;
-const VEREIN_BLAU: VereinId = 4343;
+const VEREIN_ROT: ClubId = 4242;
+const VEREIN_BLAU: ClubId = 4343;
 
 /** Named players, as a Kader gives them, of invented persons. */
-const LUMI: MarkierbarerSpieler = { art: 'benannt', personId: 4711 };
-const MORVO: MarkierbarerSpieler = { art: 'benannt', personId: 4712 };
-const NELKA: MarkierbarerSpieler = { art: 'benannt', personId: 4713 };
+const LUMI: MarkierbarerSpieler = { kind: 'named', personId: 4711 };
+const MORVO: MarkierbarerSpieler = { kind: 'named', personId: 4712 };
+const NELKA: MarkierbarerSpieler = { kind: 'named', personId: 4713 };
 
 /**
  * The behaviour every adapter of `Auswahl` shares. Each adapter's spec
@@ -406,9 +406,9 @@ export function auswahlVertrag(
       const auswahl = await speicher.oeffnen();
       const spieler = {
         ...LUMI,
-        vorname: 'Lumi',
-        nachname: 'Ahornwiese',
-        trikotnummer: '7',
+        firstName: 'Lumi',
+        lastName: 'Ahornwiese',
+        shirtNumber: '7',
       };
 
       await auswahl.markieren(spieler, 'Mimi');

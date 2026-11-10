@@ -4,7 +4,7 @@ import {
   MAT_BOTTOM_SHEET_DATA,
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   AuswahlVollError,
@@ -24,7 +24,7 @@ const VEREIN: VereinsfarbenBlattDaten = {
 
 async function oeffnen(
   vorhanden: readonly VereinsfarbenWahl[] = [],
-  setzen: (verein: VereinId, farben: Vereinsfarben) => Promise<void> = () =>
+  setzen: (verein: ClubId, farben: Vereinsfarben) => Promise<void> = () =>
     Promise.resolve()
 ) {
   const gesetzt = vi.fn(setzen);

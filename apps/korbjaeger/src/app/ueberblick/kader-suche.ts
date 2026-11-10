@@ -1,8 +1,8 @@
 import { inject, Injector } from '@angular/core';
 import {
-  kaderSuchen,
-  type KaderFunde,
-  type KaderSucheAuftrag,
+  searchRosters,
+  type RosterFinds,
+  type RosterSearchJob,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   basketballDataResource,
@@ -12,21 +12,21 @@ import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * How many of a Team's last played Spiele the overview looks into for the
- * marked Kinder (`zuletztGespielt`). A Kind missing from all of them
+ * marked Kinder (`lastPlayed`). A Kind missing from all of them
  * leaves the Team among the Teams without a Kind.
  */
 export const KADER_SUCHE_SPIELE = 5;
 
 /**
- * A resource running `kaderSuchen` for the order `auftrag` gives, none
+ * A resource running `searchRosters` for the order `auftrag` gives, none
  * while it gives none; a new order cancels the last. Created in an
  * injection context, or on `injector`.
  */
 export function kaderSucheResource(
-  auftrag: () => KaderSucheAuftrag | undefined,
+  auftrag: () => RosterSearchJob | undefined,
   injector: Injector = inject(Injector)
-): DatenResource<KaderFunde | undefined> {
-  return basketballDataResource(auftrag, kaderSuchen, injector);
+): DatenResource<RosterFinds | undefined> {
+  return basketballDataResource(auftrag, searchRosters, injector);
 }
 
 /**
@@ -36,8 +36,8 @@ export function kaderSucheResource(
  * are, those of the Kind unmarked unused.
  */
 export function gleicherAuftrag(
-  a: KaderSucheAuftrag | undefined,
-  b: KaderSucheAuftrag | undefined
+  a: RosterSearchJob | undefined,
+  b: RosterSearchJob | undefined
 ): boolean {
   if (a === undefined || b === undefined) {
     return a === b;
@@ -45,10 +45,10 @@ export function gleicherAuftrag(
   return (
     a.team === b.team &&
     gleicheFolge(
-      a.spiele.map(({ id }) => id),
-      b.spiele.map(({ id }) => id)
+      a.games.map(({ id }) => id),
+      b.games.map(({ id }) => id)
     ) &&
-    b.kinder.length > 0 &&
-    b.kinder.every((person) => a.kinder.includes(person))
+    b.children.length > 0 &&
+    b.children.every((person) => a.children.includes(person))
   );
 }

@@ -1,25 +1,25 @@
-import type { Kader, Spielerwerte } from '@wolsok/feat-shared-basketball-data';
+import type { Roster, PlayerStats } from '@wolsok/feat-shared-basketball-data';
 import { kaderZeilen } from './kader-zeilen';
 
-const WERTE: Spielerwerte = {
-  punkte: 29,
-  zweier: 9,
-  dreier: 3,
-  freiwuerfe: { getroffen: 2, versucht: 7 },
+const WERTE: PlayerStats = {
+  points: 29,
+  twoPointers: 9,
+  threePointers: 3,
+  freeThrows: { made: 2, attempted: 7 },
   fouls: 3,
 };
 
 describe('kaderZeilen', () => {
   it('names a player as the DBB shows them, with their shirt number', () => {
-    const kader: Kader = {
-      spielerwerteErfasst: false,
-      eintraege: [
+    const kader: Roster = {
+      playerStatsRecorded: false,
+      entries: [
         {
-          art: 'benannt',
+          kind: 'named',
           personId: 7,
-          vorname: 'Orvin',
-          nachname: 'Nesselbach',
-          trikotnummer: '7',
+          firstName: 'Orvin',
+          lastName: 'Nesselbach',
+          shirtNumber: '7',
         },
       ],
     };
@@ -30,9 +30,9 @@ describe('kaderZeilen', () => {
   });
 
   it('shows an Anonymer Spieler as such, without number or person id', () => {
-    const kader: Kader = {
-      spielerwerteErfasst: true,
-      eintraege: [{ art: 'anonym', spielerwerte: WERTE }],
+    const kader: Roster = {
+      playerStatsRecorded: true,
+      entries: [{ kind: 'anonymous', playerStats: WERTE }],
     };
 
     expect(kaderZeilen(kader)).toEqual([
@@ -45,9 +45,9 @@ describe('kaderZeilen', () => {
   });
 
   it('gives no Spielerwerte for a Kader without, never zeros', () => {
-    const kader: Kader = {
-      spielerwerteErfasst: false,
-      eintraege: [{ art: 'anonym' }],
+    const kader: Roster = {
+      playerStatsRecorded: false,
+      entries: [{ kind: 'anonymous' }],
     };
 
     expect(kaderZeilen(kader)[0].werte).toBeUndefined();
@@ -55,12 +55,17 @@ describe('kaderZeilen', () => {
 });
 
 describe('kaderZeilen of a followed Team', () => {
-  const kader: Kader = {
-    spielerwerteErfasst: false,
-    eintraege: [
-      { art: 'benannt', personId: 7, vorname: 'Orvin', nachname: 'Nesselbach' },
-      { art: 'benannt', personId: 8, vorname: 'Lumi', nachname: 'Ahornwiese' },
-      { art: 'anonym' },
+  const kader: Roster = {
+    playerStatsRecorded: false,
+    entries: [
+      {
+        kind: 'named',
+        personId: 7,
+        firstName: 'Orvin',
+        lastName: 'Nesselbach',
+      },
+      { kind: 'named', personId: 8, firstName: 'Lumi', lastName: 'Ahornwiese' },
+      { kind: 'anonymous' },
     ],
   };
 
@@ -68,8 +73,8 @@ describe('kaderZeilen of a followed Team', () => {
     const zeilen = kaderZeilen(kader, []);
 
     expect(zeilen.map((zeile) => zeile.spieler)).toEqual([
-      { art: 'benannt', personId: 7 },
-      { art: 'benannt', personId: 8 },
+      { kind: 'named', personId: 7 },
+      { kind: 'named', personId: 8 },
       undefined,
     ]);
   });

@@ -11,8 +11,8 @@ import {
 import type {
   PersonId,
   TeamId,
-  VereinId,
-  VereinsTeams,
+  ClubId,
+  ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
@@ -54,7 +54,7 @@ export class MeineTeamsUeberblick {
     new Map()
   );
   private readonly vereinsLesungen = signal<
-    ReadonlyMap<VereinId, DatenResource<VereinsTeams | undefined>>
+    ReadonlyMap<ClubId, DatenResource<ClubTeams | undefined>>
   >(new Map());
 
   /** The Vereine to suggest Teams from: of each Team whose Saison looks over. */
@@ -63,7 +63,7 @@ export class MeineTeamsUeberblick {
       new Set(
         [...this.lesungen().values()]
           .map((lesung) => lesung.saisonEndeVerein())
-          .filter((verein): verein is VereinId => verein !== undefined)
+          .filter((verein): verein is ClubId => verein !== undefined)
       )
   );
 

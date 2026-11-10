@@ -10,7 +10,7 @@ const GESPIELT: SpielZeile = {
   ort: 'Heim',
   gegner: 'MTV Gifhorn',
   ergebnis: '78:47',
-  ausgang: 'sieg',
+  ausgang: 'win',
   vorlaeufig: false,
 };
 

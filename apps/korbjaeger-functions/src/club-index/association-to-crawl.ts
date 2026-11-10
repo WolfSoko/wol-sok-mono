@@ -1,7 +1,7 @@
 import type {
   AssociationClubs,
-  Verband,
-  VerbandId,
+  Association,
+  AssociationId,
 } from '@wolsok/feat-shared-basketball-data';
 
 /** When the club index crawls an Association. */
@@ -27,14 +27,14 @@ export interface ClubIndexSchedule {
  * Equally due ones go in the order of `associations`.
  */
 export function associationToCrawl(
-  associations: readonly Verband[],
+  associations: readonly Association[],
   lists: readonly AssociationClubs[],
-  attempts: ReadonlyMap<VerbandId, number>,
+  attempts: ReadonlyMap<AssociationId, number>,
   schedule: ClubIndexSchedule,
   now: number
-): Verband | undefined {
+): Association | undefined {
   const listOf = new Map(lists.map((list) => [list.association.id, list]));
-  const dueAt = ({ id }: Verband): number => {
+  const dueAt = ({ id }: Association): number => {
     const list = listOf.get(id);
     const updated = list?.updatedAt;
     const due =

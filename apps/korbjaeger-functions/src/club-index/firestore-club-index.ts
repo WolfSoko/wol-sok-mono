@@ -5,7 +5,7 @@ import {
   storedAssociationClubs,
 } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
-import type { VerbandId } from '@wolsok/feat-shared-basketball-data';
+import type { AssociationId } from '@wolsok/feat-shared-basketball-data';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { ClubIndexStore } from './run-club-index';
 
@@ -69,7 +69,7 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
 }
 
 /** The Association ids of `docs`, skipping an id that is none. */
-function idsOf(docs: readonly { readonly id: string }[]): Set<VerbandId> {
+function idsOf(docs: readonly { readonly id: string }[]): Set<AssociationId> {
   return new Set(
     docs
       .map((document) => Number(document.id))

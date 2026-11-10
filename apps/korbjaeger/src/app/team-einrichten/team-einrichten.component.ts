@@ -8,12 +8,12 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import {
-  KEIN_LIGA_FILTER,
-  type AltersgruppeGeschlechtId,
-  type AltersklasseId,
-  type Liga,
-  type LigaSucheFilter,
-  type VerbandId,
+  NO_LEAGUE_FILTER,
+  type AgeGroupGenderId,
+  type AgeGroupId,
+  type League,
+  type LeagueSearchFilter,
+  type AssociationId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   KEINE_LIGEN_IM_VERBAND,
@@ -48,30 +48,26 @@ import { LigaWahlComponent } from './liga-wahl.component';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeamEinrichtenComponent {
-  protected readonly verband = signal<VerbandId | undefined>(undefined);
+  protected readonly verband = signal<AssociationId | undefined>(undefined);
   protected readonly altersklasse = linkedSignal<
-    VerbandId | undefined,
-    AltersklasseId | undefined
+    AssociationId | undefined,
+    AgeGroupId | undefined
   >({ source: this.verband, computation: () => undefined });
   protected readonly geschlecht = linkedSignal<
-    AltersklasseId | undefined,
-    AltersgruppeGeschlechtId | undefined
+    AgeGroupId | undefined,
+    AgeGroupGenderId | undefined
   >({ source: this.altersklasse, computation: () => undefined });
 
   /** Each step's filter: its pick added to the last; none until made. */
   private readonly verbandFilter = computed(() =>
-    eingeengt(KEIN_LIGA_FILTER, 'verbandIds', this.verband())
+    eingeengt(NO_LEAGUE_FILTER, 'associationIds', this.verband())
   );
   private readonly altersklasseFilter = computed(() =>
-    eingeengt(this.verbandFilter(), 'altersklasseIds', this.altersklasse())
+    eingeengt(this.verbandFilter(), 'ageGroupIds', this.altersklasse())
   );
   /** The filter the Ligen are listed for, once all three are picked. */
   protected readonly ligaFilter = computed(() =>
-    eingeengt(
-      this.altersklasseFilter(),
-      'altersgruppeGeschlechtIds',
-      this.geschlecht()
-    )
+    eingeengt(this.altersklasseFilter(), 'ageGroupGenderIds', this.geschlecht())
   );
 
   /**
@@ -81,23 +77,23 @@ export class TeamEinrichtenComponent {
   protected readonly ligen = ligenSeiten(() => this.ligaFilter());
 
   protected readonly liga = linkedSignal<
-    LigaSucheFilter | undefined,
-    Liga | undefined
+    LeagueSearchFilter | undefined,
+    League | undefined
   >({ source: this.ligaFilter, computation: () => undefined });
 
   protected readonly verbaende = facettenSchritt(
-    () => KEIN_LIGA_FILTER,
-    'verbaende',
+    () => NO_LEAGUE_FILTER,
+    'associations',
     KEINE_VERBAENDE
   );
   protected readonly altersklassen = facettenSchritt(
     () => this.verbandFilter(),
-    'altersklassen',
+    'ageGroups',
     KEINE_LIGEN_IM_VERBAND
   );
   protected readonly geschlechter = facettenSchritt(
     () => this.altersklasseFilter(),
-    'altersgruppenGeschlechter',
+    'ageGroupGenders',
     KEINE_LIGEN_IN_ALTERSKLASSE
   );
 
@@ -114,11 +110,11 @@ export class TeamEinrichtenComponent {
  * `davor` narrowed to `pick` in its list `liste`; none while either is
  * missing, so a step's filter waits for the steps before it.
  */
-function eingeengt<K extends keyof LigaSucheFilter>(
-  davor: LigaSucheFilter | undefined,
+function eingeengt<K extends keyof LeagueSearchFilter>(
+  davor: LeagueSearchFilter | undefined,
   liste: K,
-  pick: LigaSucheFilter[K][number] | undefined
-): LigaSucheFilter | undefined {
+  pick: LeagueSearchFilter[K][number] | undefined
+): LeagueSearchFilter | undefined {
   return davor === undefined || pick === undefined
     ? undefined
     : { ...davor, [liste]: [pick] };

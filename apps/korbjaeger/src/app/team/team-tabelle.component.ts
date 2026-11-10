@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
-import type { Liga, TeamId } from '@wolsok/feat-shared-basketball-data';
+import type { League, TeamId } from '@wolsok/feat-shared-basketball-data';
 import { tabelleResource } from '../basketball-data/tabelle-resource';
 import { fehlerText } from '../fehler/fehler-text';
 import { StandComponent } from '../stand/stand.component';
@@ -39,7 +39,7 @@ const SPALTEN = [
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class TeamTabelleComponent {
-  public readonly liga = input.required<Liga>();
+  public readonly liga = input.required<League>();
   /** The Team whose page it is. */
   public readonly teamId = input.required<TeamId>();
 

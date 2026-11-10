@@ -1,5 +1,5 @@
 import type { Resource } from '@angular/core';
-import type { TeamId, VereinsTeams } from '@wolsok/feat-shared-basketball-data';
+import type { TeamId, ClubTeams } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_VEREIN } from '../fehler/fehler-text';
 
 /** One Team of a Verein as `VereinsTeamsComponent` lists it. */
@@ -22,7 +22,7 @@ export type VereinsTeamsStand =
  * read again keeps showing the Teams it had.
  */
 export function vereinsTeamsStand(
-  read: Resource<VereinsTeams | undefined>,
+  read: Resource<ClubTeams | undefined>,
   ohne?: TeamId
 ): VereinsTeamsStand | undefined {
   if (read.status() === 'idle') {
@@ -38,12 +38,12 @@ export function vereinsTeamsStand(
 }
 
 function zeilen(
-  vereinsTeams: VereinsTeams,
+  vereinsTeams: ClubTeams,
   ohne: TeamId | undefined
 ): readonly VereinsTeamZeile[] {
   return vereinsTeams.teams
     .filter(({ team }) => team.id !== ohne)
-    .map(({ team, ligen }) => ({
+    .map(({ team, leagues: ligen }) => ({
       teamId: team.id,
       name: team.name,
       ligen: ligen.map((liga) => liga.name).join(' · '),

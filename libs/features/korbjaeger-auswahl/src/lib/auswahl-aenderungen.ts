@@ -1,7 +1,7 @@
 import type {
   PersonId,
   TeamId,
-  VereinId,
+  ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { GelesenesDokument, TeamPlatz } from './auswahl-dokument';
 import { vorSeit } from './selection-entries';
@@ -126,7 +126,7 @@ export function spitznameAenderung(
  * it has.
  */
 export function vereinsfarbenAenderung(
-  verein: VereinId,
+  verein: ClubId,
   farben: Vereinsfarben
 ): AuswahlAenderung {
   let neu: VereinsfarbenWahl | undefined;
@@ -151,7 +151,7 @@ export function vereinsfarbenAenderung(
 
 /** Takes the colours of `verein` away, so the app's own apply again. */
 export function vereinsfarbenZuruecksetzenAenderung(
-  verein: VereinId
+  verein: ClubId
 ): AuswahlAenderung {
   return (inhalt) => {
     const andere = inhalt.vereinsfarben.filter(

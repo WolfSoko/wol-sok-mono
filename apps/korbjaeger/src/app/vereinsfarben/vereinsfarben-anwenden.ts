@@ -7,7 +7,7 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   vereinsfarbenVon,
@@ -77,9 +77,7 @@ function farbenAnwenden(farben: () => Vereinsfarben | undefined): void {
  * stores), the last ones stay, so the page does not flash the app's own.
  * Call it in an injection context.
  */
-export function vereinsfarbenAnwenden(
-  verein: () => VereinId | undefined
-): void {
+export function vereinsfarbenAnwenden(verein: () => ClubId | undefined): void {
   const auswahl = inject(AUSWAHL);
   const liste = linkedSignal<
     readonly VereinsfarbenWahl[] | undefined,

@@ -1,8 +1,8 @@
 import {
-  istTeam,
-  parteiName,
-  type Tabelle,
-  type TabellenZeile,
+  isTeam,
+  participantName,
+  type Standings,
+  type StandingsRow,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 
@@ -24,25 +24,25 @@ export interface TabelleZeileAnsicht {
 
 /** The lines of `tabelle`, the one of Team `teamId` marked as its own. */
 export function tabelleZeilen(
-  tabelle: Tabelle,
+  tabelle: Standings,
   teamId: TeamId
 ): readonly TabelleZeileAnsicht[] {
-  return tabelle.zeilen.map((zeile) => tabelleZeile(zeile, teamId));
+  return tabelle.rows.map((zeile) => tabelleZeile(zeile, teamId));
 }
 
 function tabelleZeile(
-  zeile: TabellenZeile,
+  zeile: StandingsRow,
   teamId: TeamId
 ): TabelleZeileAnsicht {
   return {
-    rang: zeile.rang,
-    team: parteiName(zeile.partei),
-    spiele: zeile.spiele,
-    siege: zeile.siege,
-    niederlagen: zeile.niederlagen,
-    koerbe: `${zeile.koerbe}:${zeile.gegenkoerbe}`,
-    differenz: vorzeichen(zeile.korbdifferenz),
-    eigenes: istTeam(zeile.partei, teamId),
+    rang: zeile.rank,
+    team: participantName(zeile.participant),
+    spiele: zeile.games,
+    siege: zeile.wins,
+    niederlagen: zeile.losses,
+    koerbe: `${zeile.pointsFor}:${zeile.pointsAgainst}`,
+    differenz: vorzeichen(zeile.pointDifference),
+    eigenes: isTeam(zeile.participant, teamId),
   };
 }
 

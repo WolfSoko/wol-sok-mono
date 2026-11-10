@@ -5,7 +5,7 @@ export type {
 } from './lib/basketball-data';
 export {
   DbbBasketballData,
-  VEREINS_SPIELE_TAGE,
+  CLUB_GAMES_DAYS,
 } from './lib/dbb/dbb-basketball-data';
 export { clubSearch, mergeAssociationClubs } from './lib/club-index/club-index';
 export { parseIndexedClubs } from './lib/club-index/indexed-clubs';
@@ -33,11 +33,11 @@ export type {
   ClubCrawlSource,
 } from './lib/club-index/crawl-clubs';
 export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
-export { dbbOhnePersonen } from './lib/dbb/ohne-personen';
+export { dbbWithoutPersons } from './lib/dbb/without-persons';
 export {
   DBB_BASE_URL,
   DBB_WEBSITE_URL,
-  MAX_VEREINS_SPIELE_TAGE,
+  MAX_CLUB_GAMES_DAYS,
   assertValidDbbRequest,
   dbbFetchInput,
   dbbHttpRequest,
@@ -48,7 +48,7 @@ export {
 export type {
   DbbFetchInput,
   DbbHttpRequest,
-  DbbLigaFilterBody,
+  DbbLeagueFilterBody,
   DbbRequest,
   DbbRequestKind,
   DbbTransport,
@@ -59,98 +59,97 @@ export {
   isBasketballDataError,
 } from './lib/domain/basketball-data-error';
 export type { BasketballDataErrorKind } from './lib/domain/basketball-data-error';
-export type { Geschlecht } from './lib/domain/geschlecht';
-export { halleAdresse, halleNavigationUrl } from './lib/domain/halle';
-export type { Halle } from './lib/domain/halle';
+export type { Gender } from './lib/domain/gender';
+export { venueAddress, venueNavigationUrl } from './lib/domain/venue';
+export type { Venue } from './lib/domain/venue';
 export type {
-  AltersgruppeGeschlechtId,
-  AltersklasseId,
-  LigaId,
+  AgeGroupGenderId,
+  AgeGroupId,
+  LeagueId,
   PersonId,
-  SaisonId,
-  SpielId,
+  SeasonId,
+  GameId,
   TeamId,
-  VerbandId,
-  VereinId,
+  AssociationId,
+  ClubId,
 } from './lib/domain/ids';
-export type { Liga } from './lib/domain/liga';
+export type { League } from './lib/domain/league';
 export {
-  KEIN_LIGA_FILTER,
-  angeboten,
-  naechsterStartIndex,
-} from './lib/domain/liga-suche';
+  NO_LEAGUE_FILTER,
+  offered,
+  nextStartIndex,
+} from './lib/domain/league-search';
 export type {
-  Facette,
-  LigaSeite,
-  LigaSuche,
-  LigaSucheFacetten,
-  LigaSucheFilter,
-} from './lib/domain/liga-suche';
-export { istTeam, parteiName } from './lib/domain/partei';
-export type { SpielPartei } from './lib/domain/partei';
-export type { Saison } from './lib/domain/saison';
+  Facet,
+  LeaguePage,
+  LeagueSearch,
+  LeagueSearchFacets,
+  LeagueSearchFilter,
+} from './lib/domain/league-search';
+export { isTeam, participantName } from './lib/domain/participant';
+export type { Participant } from './lib/domain/participant';
+export type { Season } from './lib/domain/season';
 export {
-  ausgangVon,
-  datumInDeutschland,
-  ergebnisVon,
-  ergebnisVorlaeufig,
-  gegnerVon,
-  seiteVon,
-  sonderfallVon,
-} from './lib/domain/spiel';
+  outcomeOf,
+  dateInGermany,
+  resultOf,
+  resultProvisional,
+  opponentOf,
+  sideOf,
+  irregularityOf,
+} from './lib/domain/game';
 export type {
-  Spiel,
-  SpielAusgang,
-  SpielDetails,
-  SpielSeite,
-  SpielSonderfall,
-  SpielStatus,
-  Spielstand,
-} from './lib/domain/spiel';
-export { kaderDesTeams, kinderImKader } from './lib/domain/kinder-im-kader';
-export { kaderSuchen } from './lib/domain/kader-suche';
-export type {
-  KaderFunde,
-  KaderSucheAuftrag,
-  KinderImKader,
-} from './lib/domain/kader-suche';
+  Game,
+  GameOutcome,
+  GameDetails,
+  GameSide,
+  GameIrregularity,
+  GameStatus,
+  Score,
+} from './lib/domain/game';
 export {
-  feldkoerbe,
-  istBenannt,
-  spielerwerteErfasst,
-} from './lib/domain/spielbericht';
+  rosterOfTeam,
+  childrenInRoster,
+} from './lib/domain/children-in-roster';
+export { searchRosters } from './lib/domain/roster-search';
 export type {
-  AnonymerSpieler,
-  BenannterSpieler,
-  Kader,
-  KaderEintrag,
-  Spielbericht,
-  Spielerwerte,
-} from './lib/domain/spielbericht';
-export type { Tabelle, TabellenZeile } from './lib/domain/tabelle';
+  RosterFinds,
+  RosterSearchJob,
+  ChildrenInRoster,
+} from './lib/domain/roster-search';
+export {
+  fieldGoals,
+  isNamed,
+  playerStatsRecorded,
+} from './lib/domain/game-report';
+export type {
+  AnonymousPlayer,
+  NamedPlayer,
+  Roster,
+  RosterEntry,
+  GameReport,
+  PlayerStats,
+} from './lib/domain/game-report';
+export type { Standings, StandingsRow } from './lib/domain/standings';
 export type { Team } from './lib/domain/team';
 export {
-  ligaVon,
-  ligenAktuellZuerst,
-  naechstesSpiel,
-  saisonBeendet,
-  zuletztGespielt,
-} from './lib/domain/team-saison';
-export type {
-  TeamSaison,
-  VereinsTeam,
-  VereinsTeams,
-} from './lib/domain/team-saison';
+  leagueOf,
+  leaguesCurrentFirst,
+  nextGame,
+  seasonOver,
+  lastPlayed,
+} from './lib/domain/team-season';
+export type { TeamSeason, ClubTeam, ClubTeams } from './lib/domain/team-season';
 export {
-  gemeinsamerUeberblick,
-  nachNaechstemSpiel,
-  teamUeberblick,
-} from './lib/domain/team-ueberblick';
+  combinedOverview,
+  byNextGame,
+  teamOverview,
+} from './lib/domain/team-overview';
 export type {
-  GemeinsamerUeberblick,
-  SaisonMitUeberblick,
-  SaisonSpiel,
-  TeamUeberblick,
-} from './lib/domain/team-ueberblick';
-export type { Verband } from './lib/domain/verband';
-export type { Verein } from './lib/domain/verein';
+  CombinedOverview,
+  SeasonWithOverview,
+  SeasonGame,
+  TeamOverview,
+} from './lib/domain/team-overview';
+export type { Association } from './lib/domain/association';
+export type { Club } from './lib/domain/club';

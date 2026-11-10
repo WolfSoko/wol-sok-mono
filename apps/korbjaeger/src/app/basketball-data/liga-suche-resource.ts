@@ -1,7 +1,7 @@
 import { inject, Injector } from '@angular/core';
 import type {
-  LigaSuche,
-  LigaSucheFilter,
+  LeagueSearch,
+  LeagueSearchFilter,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   basketballDataResource,
@@ -15,12 +15,12 @@ import {
  * `injector`.
  */
 export function ligaSucheResource(
-  filter: () => LigaSucheFilter | undefined,
+  filter: () => LeagueSearchFilter | undefined,
   injector: Injector = inject(Injector)
-): DatenResource<LigaSuche | undefined> {
+): DatenResource<LeagueSearch | undefined> {
   return basketballDataResource(
     filter,
-    (data, gegeben, options) => data.ligaSuche(gegeben, options),
+    (data, gegeben, options) => data.leagueSearch(gegeben, options),
     injector
   );
 }

@@ -8,7 +8,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import type { Liga } from '@wolsok/feat-shared-basketball-data';
+import type { League } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEINE_LIGEN } from '../fehler/fehler-text';
 import { ligaBeschreibung } from './liga-beschreibung';
 import type { LigenSeiten } from './ligen-seiten';
@@ -58,7 +58,7 @@ export class LigaWahlComponent {
   /** The Ligen of the Verband, age group and gender picked. */
   public readonly seiten = input.required<LigenSeiten>();
   /** The Liga tapped. */
-  public readonly gewaehlt = output<Liga>();
+  public readonly gewaehlt = output<League>();
 
   protected readonly beschreibung = ligaBeschreibung;
 

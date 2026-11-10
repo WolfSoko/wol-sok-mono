@@ -11,7 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
 import {
   parseDbbId,
-  type Spiel,
+  type Game,
   type Team,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
@@ -97,11 +97,11 @@ export class SpielComponent {
    * neither flashes the app's own colours nor loses its way up.
    */
   private readonly followedTeam = linkedSignal<
-    { spiel: Spiel | undefined; gefolgt: readonly TeamId[] | undefined },
+    { spiel: Game | undefined; gefolgt: readonly TeamId[] | undefined },
     Team | undefined
   >({
     source: () => ({
-      spiel: this.details.hasValue() ? this.details.value().spiel : undefined,
+      spiel: this.details.hasValue() ? this.details.value().game : undefined,
       gefolgt: this.gefolgt(),
     }),
     computation: ({ spiel, gefolgt }, vorher) =>
@@ -111,7 +111,7 @@ export class SpielComponent {
   });
 
   public constructor() {
-    vereinsfarbenAnwenden(() => this.followedTeam()?.vereinId);
+    vereinsfarbenAnwenden(() => this.followedTeam()?.clubId);
     breadcrumb(() => {
       const team = this.followedTeam();
       const spiel = { title: 'Spiel' };

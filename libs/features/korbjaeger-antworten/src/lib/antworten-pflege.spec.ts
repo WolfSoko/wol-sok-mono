@@ -1,6 +1,7 @@
+import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
 import { antwortenPflegen, PFLEGE_TAKT_MS } from './antworten-pflege';
 
-const ARTEN: ReadonlySet<string> = new Set(['team-spiele']);
+const ARTEN: ReadonlySet<DbbRequestKind> = new Set(['team-games']);
 const START = Date.parse('2026-11-08T12:00:00+01:00');
 const MINUTE = 60_000;
 

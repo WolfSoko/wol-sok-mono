@@ -1,6 +1,6 @@
 import type {
-  Tabelle,
-  TabellenZeile,
+  Standings,
+  StandingsRow,
 } from '@wolsok/feat-shared-basketball-data';
 import { tabelleZeilen } from './tabelle-zeilen';
 
@@ -10,30 +10,30 @@ function zeile(
   name: string,
   koerbe: number,
   gegenkoerbe: number
-): TabellenZeile {
+): StandingsRow {
   return {
-    rang,
-    partei: { art: 'team', team: { id, name, vereinId: id } },
-    spiele: 5,
-    siege: 5 - rang,
-    niederlagen: rang,
-    punkte: 2 * (5 - rang),
-    koerbe,
-    gegenkoerbe,
-    korbdifferenz: koerbe - gegenkoerbe,
+    rank: rang,
+    participant: { kind: 'team', team: { id, name, clubId: id } },
+    games: 5,
+    wins: 5 - rang,
+    losses: rang,
+    points: 2 * (5 - rang),
+    pointsFor: koerbe,
+    pointsAgainst: gegenkoerbe,
+    pointDifference: koerbe - gegenkoerbe,
   };
 }
 
-const TABELLE: Tabelle = {
-  liga: {
+const TABELLE: Standings = {
+  league: {
     id: 54862,
     name: 'Regionsvorrunde Nord Braunschweig mu12',
-    verband: { id: 7, name: 'Niedersachsen' },
-    altersklasse: 'U12',
-    geschlecht: 'mix',
-    spielklasse: 'Regionsliga',
+    association: { id: 7, name: 'Niedersachsen' },
+    ageGroup: 'U12',
+    gender: 'mixed',
+    division: 'Regionsliga',
   },
-  zeilen: [
+  rows: [
     zeile(1, 313040, 'TV Jahn Wolfsburg', 510, 191),
     zeile(2, 313036, 'MTV Wasbüttel', 470, 470),
     zeile(3, 322695, 'SV Groß Schwülper', 102, 575),
@@ -67,13 +67,13 @@ describe('tabelleZeilen', () => {
   });
 
   it('names a slot of a Hauptrunde, which is never the Team', () => {
-    const slot: TabellenZeile = {
+    const slot: StandingsRow = {
       ...zeile(1, 0, '', 0, 0),
-      partei: { art: 'offen', bezeichnung: 'Nord 1. Platz' },
+      participant: { kind: 'open', label: 'Nord 1. Platz' },
     };
 
     expect(
-      tabelleZeilen({ ...TABELLE, zeilen: [slot] }, 313036)[0]
+      tabelleZeilen({ ...TABELLE, rows: [slot] }, 313036)[0]
     ).toMatchObject({ team: 'Nord 1. Platz', eigenes: false, differenz: '0' });
   });
 

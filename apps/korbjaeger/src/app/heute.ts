@@ -1,5 +1,5 @@
 import { computed, inject, InjectionToken, type Signal } from '@angular/core';
-import { datumInDeutschland } from '@wolsok/feat-shared-basketball-data';
+import { dateInGermany } from '@wolsok/feat-shared-basketball-data';
 import { JETZT } from './jetzt';
 
 /**
@@ -11,6 +11,6 @@ export const HEUTE = new InjectionToken<Signal<string>>('HEUTE', {
   providedIn: 'root',
   factory: () => {
     const jetzt = inject(JETZT);
-    return computed(() => datumInDeutschland(new Date(jetzt())));
+    return computed(() => dateInGermany(new Date(jetzt())));
   },
 });

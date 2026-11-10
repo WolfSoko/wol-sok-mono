@@ -1,8 +1,8 @@
 import {
-  feldkoerbe,
-  type Kader,
-  type KaderEintrag,
-  type Spielerwerte,
+  fieldGoals,
+  type Roster,
+  type RosterEntry,
+  type PlayerStats,
 } from '@wolsok/feat-shared-basketball-data';
 import type {
   Kind,
@@ -46,45 +46,45 @@ export const ANONYMER_SPIELER = 'Anonymer Spieler';
  * Team's Kader) nobody is.
  */
 export function kaderZeilen(
-  kader: Kader,
+  kader: Roster,
   kinder?: readonly Kind[]
 ): readonly KaderZeile[] {
-  return kader.eintraege.map((eintrag) => {
+  return kader.entries.map((eintrag) => {
     const zeile = kaderZeile(eintrag);
-    if (kinder === undefined || eintrag.art === 'anonym') {
+    if (kinder === undefined || eintrag.kind === 'anonymous') {
       return zeile;
     }
     const { personId } = eintrag;
     const kind = kinder.find((markiert) => markiert.personId === personId);
     return {
       ...zeile,
-      spieler: { art: 'benannt', personId },
+      spieler: { kind: 'named', personId },
       ...(kind && { kind }),
     };
   });
 }
 
-function kaderZeile(eintrag: KaderEintrag): KaderZeile {
-  const werte = eintrag.spielerwerte && werteZeile(eintrag.spielerwerte);
+function kaderZeile(eintrag: RosterEntry): KaderZeile {
+  const werte = eintrag.playerStats && werteZeile(eintrag.playerStats);
   const mitWerten = werte === undefined ? {} : { werte };
-  if (eintrag.art === 'anonym') {
+  if (eintrag.kind === 'anonymous') {
     return { name: ANONYMER_SPIELER, anonym: true, ...mitWerten };
   }
   return {
-    ...(eintrag.trikotnummer === undefined
+    ...(eintrag.shirtNumber === undefined
       ? {}
-      : { nummer: eintrag.trikotnummer }),
-    name: `${eintrag.vorname} ${eintrag.nachname}`,
+      : { nummer: eintrag.shirtNumber }),
+    name: `${eintrag.firstName} ${eintrag.lastName}`,
     anonym: false,
     ...mitWerten,
   };
 }
 
-function werteZeile(werte: Spielerwerte): SpielerwerteZeile {
+function werteZeile(werte: PlayerStats): SpielerwerteZeile {
   return {
-    punkte: werte.punkte,
-    feldkoerbe: feldkoerbe(werte),
-    freiwuerfe: `${werte.freiwuerfe.getroffen}/${werte.freiwuerfe.versucht}`,
+    punkte: werte.points,
+    feldkoerbe: fieldGoals(werte),
+    freiwuerfe: `${werte.freeThrows.made}/${werte.freeThrows.attempted}`,
     fouls: werte.fouls,
   };
 }

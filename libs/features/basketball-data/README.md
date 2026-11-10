@@ -18,9 +18,9 @@ and tools are no Nx project.
 
 ## What it holds
 
-- **`BasketballData`**, the port the screens read: `ligaSuche`,
-  `ligaSeite`, `ligaTeams`, `vereinsTeams`, `teamSpiele`, `tabelle`,
-  `spiel`, `spielbericht`. All async, all in domain types, all rejecting
+- **`BasketballData`**, the port the screens read: `leagueSearch`,
+  `leaguePage`, `leagueTeams`, `vereinsTeams`, `teamGames`, `standings`,
+  `game`, `gameReport`. All async, all in domain types, all rejecting
   with a `BasketballDataError` of kind `not-found`, `unavailable` or
   `unexpected-shape` only. Each takes an optional `{ signal }`
   (`ReadOptions`; `ReadSignal` is the part of an `AbortSignal` it uses,
@@ -29,26 +29,26 @@ and tools are no Nx project.
 - **The domain types** (`src/lib/domain/`). Ids are the DBB's stable ones:
   a Team is its `teamPermanentId`, a Kind its `person.id`; the
   season-specific `seasonTeamId` stays in the adapter. A Kader entry is a
-  `BenannterSpieler` or an `AnonymerSpieler`, which has no person id and so
+  `NamedPlayer` or an `AnonymousPlayer`, which has no person id and so
   cannot be marked. Each Kader of a Spielbericht says whether its
-  Spielerwerte were recorded (`spielerwerteErfasst`); one whose numbers are
+  Spielerwerte were recorded (`playerStatsRecorded`); one whose numbers are
   all 0 has `false` and no Spielerwerte, never zeros. A player's field
-  goals are `feldkoerbe(spielerwerte)` (twos and threes made).
-  `spiel.ts` answers the questions a screen asks of a Spiel: the side a
-  Team plays (`seiteVon`), its opponent (`gegnerVon`), the result
-  (`ergebnisVon`) and whether it was cancelled or forfeited
-  (`sonderfallVon`); a Spiel's `datum` is the German calendar day
-  (`datumInDeutschland`). `partei.ts` tells a Team from a slot (`istTeam`,
-  `parteiName`), for Spiele and Tabellen alike. `team-saison.ts` answers
-  what a Team's page asks of its Saison: a Liga by id (`ligaVon`), the
-  next Spiel to go to (`naechstesSpiel`: still to be played, so passing
+  goals are `fieldGoals(spielerwerte)` (twos and threes made).
+  `game.ts` answers the questions a screen asks of a Spiel: the side a
+  Team plays (`sideOf`), its opponent (`opponentOf`), the result
+  (`resultOf`) and whether it was cancelled or forfeited
+  (`irregularityOf`); a Spiel's `datum` is the German calendar day
+  (`dateInGermany`). `participant.ts` tells a Team from a slot (`isTeam`,
+  `participantName`), for Spiele and Tabellen alike. `team-saison.ts` answers
+  what a Team's page asks of its Saison: a Liga by id (`leagueOf`), the
+  next Spiel to go to (`nextGame`: still to be played, so passing
   over cancelled, played and forfeited ones) and its Ligen
-  with the current one first (`ligenAktuellZuerst`). `team-ueberblick.ts`
+  with the current one first (`leaguesCurrentFirst`). `team-ueberblick.ts`
   answers what the overview asks: a Team's next Spiel, the Spiele
   before it that fall through (cancelled or forfeited) and its last
-  result up to today (`teamUeberblick`), and the
+  result up to today (`teamOverview`), and the
   order of the overview's entries by next Spiel, those without one last
-  (`nachNaechstemSpiel`).
+  (`byNextGame`).
 - **`DbbBasketballData`** (`src/lib/dbb/`), the adapter over the DBB's
   undocumented JSON API (ADR 0018). It takes a `DbbTransport`, a function
   that answers one allowlisted `DbbRequest` with the DBB's JSON;

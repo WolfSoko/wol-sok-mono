@@ -2,7 +2,7 @@ import type { Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
-  VereinId,
+  ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { Vereinsfarben } from './vereinsfarben';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
@@ -89,7 +89,7 @@ export interface Auswahl {
    * stored in lower case, and what is no `#rrggbb` rejects with
    * `KeineFarbeError`. Only once `vereinsfarben` is read.
    */
-  vereinsfarbenSetzen(verein: VereinId, farben: Vereinsfarben): Promise<void>;
+  vereinsfarbenSetzen(verein: ClubId, farben: Vereinsfarben): Promise<void>;
   /** Takes the colours of `verein` away, if it has any. */
-  vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void>;
+  vereinsfarbenZuruecksetzen(verein: ClubId): Promise<void>;
 }

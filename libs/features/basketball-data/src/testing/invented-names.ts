@@ -3,7 +3,7 @@
  * up so they read like names but belong to nobody; the fixtures' spec
  * checks that every name in them comes from these lists.
  */
-export const INVENTED_VORNAMEN = [
+export const INVENTED_FIRST_NAMES = [
   'Alvo',
   'Brina',
   'Catu',
@@ -26,7 +26,7 @@ export const INVENTED_VORNAMEN = [
   'Tavina',
 ] as const;
 
-export const INVENTED_NACHNAMEN = [
+export const INVENTED_LAST_NAMES = [
   'Ahornwiese',
   'Birkentaler',
   'Dornhagel',

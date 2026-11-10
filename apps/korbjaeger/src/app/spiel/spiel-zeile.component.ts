@@ -5,14 +5,17 @@ import {
   input,
 } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
-import type { SpielAusgang } from '@wolsok/feat-shared-basketball-data';
+import type {
+  GameIrregularity,
+  GameOutcome,
+} from '@wolsok/feat-shared-basketball-data';
 import { VORLAEUFIG } from './spiel-format';
 import type { SpielZeile } from './spiel-zeile';
 
 /**
  * One Spiel as a line, on the Team page and the overview alike: home or
  * away and the opponent, day and time, the Liga where asked, and the
- * result (vorläufig while `ergebnisVorlaeufig` says so) and whether it was
+ * result (vorläufig while `resultProvisional` says so) and whether it was
  * cancelled or forfeited.
  */
 @Component({
@@ -60,7 +63,7 @@ import type { SpielZeile } from './spiel-zeile';
         }
         @if (spiel.markierung) {
           &ngsp;<mat-chip class="markierung" data-qa="spiel-markierung">{{
-            spiel.markierung
+            markierungText[spiel.markierung]
           }}</mat-chip>
         }
       </span>
@@ -115,11 +118,11 @@ import type { SpielZeile } from './spiel-zeile';
       text-transform: uppercase;
       letter-spacing: 0.04em;
     }
-    .sieg {
+    .win {
       background: var(--mat-sys-primary);
       color: var(--mat-sys-on-primary);
     }
-    .niederlage {
+    .loss {
       background: var(--mat-sys-surface-container-highest);
       color: var(--mat-sys-on-surface);
     }
@@ -140,8 +143,14 @@ export class SpielZeileComponent {
   protected readonly vorlaeufigText = VORLAEUFIG;
 
   /** How a result reads: in words, never by colour alone. */
-  protected readonly ausgangText: Record<SpielAusgang, string> = {
-    sieg: 'Sieg',
-    niederlage: 'Niederlage',
+  protected readonly ausgangText: Record<GameOutcome, string> = {
+    win: 'Sieg',
+    loss: 'Niederlage',
+  };
+
+  /** How a Spiel out of the plain schedule reads, as the DBB words it. */
+  protected readonly markierungText: Record<GameIrregularity, string> = {
+    cancelled: 'abgesagt',
+    forfeited: 'kampflos',
   };
 }

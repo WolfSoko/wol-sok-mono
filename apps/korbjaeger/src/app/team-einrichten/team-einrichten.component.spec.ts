@@ -11,9 +11,9 @@ import {
   DbbBasketballData,
   dbbHttpRequest,
   type DbbTransport,
-  type LigaSeite,
-  type LigaSuche,
-  type LigaSucheFilter,
+  type LeaguePage,
+  type LeagueSearch,
+  type LeagueSearchFilter,
   type ReadOptions,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
@@ -53,11 +53,11 @@ class HaengendeSeiten extends DbbBasketballData {
     super(recordedDbb);
   }
 
-  public override ligaSeite(
-    _filter: LigaSucheFilter,
+  public override leaguePage(
+    _filter: LeagueSearchFilter,
     _startIndex: number,
     options?: ReadOptions
-  ): Promise<LigaSeite> {
+  ): Promise<LeaguePage> {
     if (options?.signal !== undefined) {
       this.signale.push(options.signal);
     }
@@ -68,25 +68,25 @@ class HaengendeSeiten extends DbbBasketballData {
 /** The recorded DBB, whose search finds nothing where `leer` holds. */
 class OhneFacetten extends DbbBasketballData {
   public constructor(
-    private readonly leer: (filter: LigaSucheFilter) => boolean
+    private readonly leer: (filter: LeagueSearchFilter) => boolean
   ) {
     super(recordedDbb);
   }
 
-  public override ligaSuche(
-    filter: LigaSucheFilter,
+  public override leagueSearch(
+    filter: LeagueSearchFilter,
     options?: ReadOptions
-  ): Promise<LigaSuche> {
+  ): Promise<LeagueSearch> {
     return this.leer(filter)
       ? Promise.resolve({
-          facetten: {
-            verbaende: [],
-            altersklassen: [],
-            altersgruppenGeschlechter: [],
+          facets: {
+            associations: [],
+            ageGroups: [],
+            ageGroupGenders: [],
           },
-          ersteSeite: { startIndex: 0, ligen: [], weitere: false },
+          firstPage: { startIndex: 0, leagues: [], more: false },
         })
-      : super.ligaSuche(filter, options);
+      : super.leagueSearch(filter, options);
   }
 }
 
@@ -505,7 +505,7 @@ describe('TeamEinrichtenComponent', () => {
 
   it('says so when a Verband has no age group', async () => {
     const assistent = await render(
-      new OhneFacetten((filter) => filter.verbandIds.length > 0)
+      new OhneFacetten((filter) => filter.associationIds.length > 0)
     );
 
     await assistent.waehlen('verband', 'Niedersachsen');

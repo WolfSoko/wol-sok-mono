@@ -1,11 +1,11 @@
 import { signal } from '@angular/core';
 import type {
-  KaderFunde,
-  SpielDetails,
-  TeamSaison,
-  TeamUeberblick,
-  VereinId,
-  VereinsTeams,
+  RosterFinds,
+  GameDetails,
+  TeamSeason,
+  TeamOverview,
+  ClubId,
+  ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   FakeDatenResource,
@@ -17,30 +17,30 @@ import { teamImUeberblick } from './team-im-ueberblick';
 import type { TeamLesungen } from './team-lesungen';
 
 const TEAM = 313036;
-const VEREIN: VereinId = 1837;
+const VEREIN: ClubId = 1837;
 
-const SAISON: TeamSaison = {
-  team: { id: TEAM, name: 'MTV Wasbüttel', vereinId: VEREIN },
-  verein: { id: VEREIN, name: 'MTV Wasbüttel' },
-  ligen: [],
-  spiele: [],
+const SAISON: TeamSeason = {
+  team: { id: TEAM, name: 'MTV Wasbüttel', clubId: VEREIN },
+  club: { id: VEREIN, name: 'MTV Wasbüttel' },
+  leagues: [],
+  games: [],
 };
 
-const UEBERBLICK: TeamUeberblick = { ausfaelle: [] };
+const UEBERBLICK: TeamOverview = { cancellations: [] };
 
-const FUNDE: KaderFunde = {
-  spiele: new Map([[3, new Map([[4711, 'Lumi']])]]),
-  unvollstaendig: false,
+const FUNDE: RosterFinds = {
+  games: new Map([[3, new Map([[4711, 'Lumi']])]]),
+  incomplete: false,
 };
 
 const ALT: Stand = { gespeichertAm: 1000, grund: 'kein-internet' };
 const AELTER: Stand = { gespeichertAm: 500, grund: 'unavailable' };
 
 interface Lesungen {
-  readonly saison?: FakeLesung<TeamSaison>;
+  readonly saison?: FakeLesung<TeamSeason>;
   readonly sucht?: boolean;
-  readonly funde?: KaderFunde;
-  readonly saisonEndeVerein?: VereinId;
+  readonly funde?: RosterFinds;
+  readonly saisonEndeVerein?: ClubId;
 }
 
 /** A Team's reads as `lesungen` shows them; its Saison read, by default. */
@@ -53,8 +53,8 @@ function lesung({
   return {
     saison: new FakeDatenResource(saison),
     ueberblick: signal(saison.value && UEBERBLICK),
-    naechsteDetails: new FakeDatenResource<SpielDetails>({ status: 'idle' }),
-    kaderSuche: new FakeDatenResource<KaderFunde>({ status: 'idle' }),
+    naechsteDetails: new FakeDatenResource<GameDetails>({ status: 'idle' }),
+    kaderSuche: new FakeDatenResource<RosterFinds>({ status: 'idle' }),
     sucht: signal(sucht),
     funde: signal(funde),
     saisonEndeVerein: signal(saisonEndeVerein),
@@ -112,8 +112,8 @@ describe('teamImUeberblick', () => {
       saisonBeendet: false,
     });
     expect(mitKindern.saison).toEqual({
-      saison: SAISON,
-      ueberblick: UEBERBLICK,
+      season: SAISON,
+      overview: UEBERBLICK,
     });
     expect(mitKindern.funde).toBe(FUNDE);
     expect(mitKindern.sucht).toBe(false);
@@ -148,9 +148,9 @@ describe('teamImUeberblick', () => {
   });
 
   it("dates the card by its Verein's Teams too, the Team itself by its own reads", () => {
-    const vereinsTeams = new FakeDatenResource<VereinsTeams>({
+    const vereinsTeams = new FakeDatenResource<ClubTeams>({
       status: 'resolved',
-      value: { verein: SAISON.verein, teams: [] },
+      value: { club: SAISON.club, teams: [] },
       stand: AELTER,
     });
 

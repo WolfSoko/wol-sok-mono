@@ -19,7 +19,7 @@ function gemerkt(): boolean {
 
 /** An answer at `TEAM`, stored now; too old a week and a minute later. */
 function merken(): void {
-  TestBed.inject(LETZTE_ANTWORTEN).merken(TEAM, 'team-spiele', {
+  TestBed.inject(LETZTE_ANTWORTEN).merken(TEAM, 'team-games', {
     antwort: { status: '0' },
     gespeichertAm: Date.now(),
   });

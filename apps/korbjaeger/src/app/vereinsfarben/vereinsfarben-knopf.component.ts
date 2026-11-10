@@ -7,7 +7,7 @@ import {
 import { MatBottomSheet } from '@angular/material/bottom-sheet';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import type { Verein } from '@wolsok/feat-shared-basketball-data';
+import type { Club } from '@wolsok/feat-shared-basketball-data';
 
 /**
  * The button "Vereinsfarben" (named "Vereinsfarben von …" for screen
@@ -33,7 +33,7 @@ import type { Verein } from '@wolsok/feat-shared-basketball-data';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VereinsfarbenKnopfComponent {
-  public readonly verein = input.required<Verein>();
+  public readonly verein = input.required<Club>();
 
   private readonly blatt = inject(MatBottomSheet);
 

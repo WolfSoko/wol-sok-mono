@@ -7,7 +7,7 @@ describe('childStep', () => {
       saisonOf(
         spielOn(1, '2026-09-20', PLAYED),
         spielOn(2, '2026-10-04', PLAYED),
-        spielOn(3, '2026-11-15', { art: 'geplant' })
+        spielOn(3, '2026-11-15', { kind: 'scheduled' })
       ),
       '2026-11-08'
     );
@@ -19,8 +19,8 @@ describe('childStep', () => {
     const step = childStep(
       saisonOf(
         spielOn(1, '2026-09-20', PLAYED),
-        spielOn(2, '2026-10-04', { art: 'abgesagt' }),
-        spielOn(3, '2026-10-11', { art: 'kampflos', verzichtet: ['gast'] })
+        spielOn(2, '2026-10-04', { kind: 'cancelled' }),
+        spielOn(3, '2026-10-11', { kind: 'forfeited', forfeitedBy: ['away'] })
       ),
       '2026-11-08'
     );
@@ -30,7 +30,7 @@ describe('childStep', () => {
 
   it('waits for the first Spiel where none was played', () => {
     const step = childStep(
-      saisonOf(spielOn(1, '2026-11-15', { art: 'geplant' })),
+      saisonOf(spielOn(1, '2026-11-15', { kind: 'scheduled' })),
       '2026-11-08'
     );
 

@@ -2,7 +2,7 @@ import {
   BasketballDataError,
   type AssociationClubs,
   type ClubCrawlSource,
-  type LigaSeite,
+  type LeaguePage,
   type Team,
 } from '@wolsok/feat-shared-basketball-data';
 import {
@@ -17,49 +17,49 @@ const NOW = 10 * WEEK;
 const BAYERN = { id: 2, name: 'Bayern' };
 const BERLIN = { id: 3, name: 'Berlin' };
 
-const BERLIN_PAGE: LigaSeite = {
+const BERLIN_PAGE: LeaguePage = {
   startIndex: 0,
-  weitere: false,
-  ligen: [
+  more: false,
+  leagues: [
     {
       id: 51,
       name: 'Oberliga U14',
-      verband: BERLIN,
-      altersklasse: 'U14',
-      geschlecht: 'männlich',
-      spielklasse: 'Oberliga',
+      association: BERLIN,
+      ageGroup: 'U14',
+      gender: 'male',
+      division: 'Oberliga',
     },
   ],
 };
 
 const BERLIN_TEAMS = async (): Promise<readonly Team[]> => [
-  { id: 1, name: 'ALBA Berlin 2', vereinId: 700 },
-  { id: 2, name: 'TuS Lichterfelde', vereinId: 800 },
+  { id: 1, name: 'ALBA Berlin 2', clubId: 700 },
+  { id: 2, name: 'TuS Lichterfelde', clubId: 800 },
 ];
 
 function fakeData(
   teams: () => Promise<readonly Team[]> = BERLIN_TEAMS,
   offered = [
-    { ...BAYERN, treffer: 392 },
-    { ...BERLIN, treffer: 101 },
-    { id: 99, name: 'Ohne Ligen', treffer: 0 },
+    { ...BAYERN, hits: 392 },
+    { ...BERLIN, hits: 101 },
+    { id: 99, name: 'Ohne Ligen', hits: 0 },
   ]
 ): ClubCrawlSource {
   const unused = () => Promise.reject(new Error('not read'));
   return {
-    ligaSuche: async (filter) => ({
-      facetten: {
-        verbaende: offered,
-        altersklassen: [],
-        altersgruppenGeschlechter: [],
+    leagueSearch: async (filter) => ({
+      facets: {
+        associations: offered,
+        ageGroups: [],
+        ageGroupGenders: [],
       },
-      ersteSeite:
-        filter.verbandIds.length === 0
-          ? { startIndex: 0, ligen: [], weitere: true }
+      firstPage:
+        filter.associationIds.length === 0
+          ? { startIndex: 0, leagues: [], more: true }
           : BERLIN_PAGE,
     }),
-    ligaSeite: unused,
-    ligaTeams: teams,
+    leaguePage: unused,
+    leagueTeams: teams,
     club: async (verein) => ({ id: verein, name: `Verein ${verein}` }),
   };
 }

@@ -3,7 +3,7 @@
   @if (zeilen().length === 0) {
     <p>Im Spielbericht steht kein Kader.</p>
   } @else {
-    @if (!kader().spielerwerteErfasst) {
+    @if (!kader().playerStatsRecorded) {
       <p class="ohne-werte" data-qa="kader-ohne-werte">
         Für dieses Team sind keine Spielerwerte erfasst.
       </p>

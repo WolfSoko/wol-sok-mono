@@ -63,7 +63,7 @@ async function aufbauen(
 async function angemeldet(): Promise<Aufbau> {
   const aufbau = await aufbauen();
   await aufbau.lokal.folgen(313036);
-  await aufbau.lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+  await aufbau.lokal.markieren({ kind: 'named', personId: 4711 }, 'Mimi');
   await aufbau.sitzung.anmelden();
   aufbau.dienst.aufrufe.length = 0;
   return aufbau;
@@ -170,7 +170,7 @@ describe('KontoSitzung', () => {
     it("takes the device's choices into the account, then off the device", async () => {
       const { sitzung, dienst, lokal, merker } = await aufbauen();
       await lokal.folgen(313036);
-      await lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      await lokal.markieren({ kind: 'named', personId: 4711 }, 'Mimi');
 
       await sitzung.anmelden();
 
@@ -329,7 +329,7 @@ describe('KontoSitzung', () => {
     it('takes off the device only what it took over, so a Kind renamed meanwhile goes over next', async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
       await lokal.folgen(313036);
-      await lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      await lokal.markieren({ kind: 'named', personId: 4711 }, 'Mimi');
       const uebernommen: unknown[] = [];
       dienst.beiJederUebernahme = async () => {
         uebernommen.push(dienst.uebernommen);

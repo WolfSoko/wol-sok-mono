@@ -1,18 +1,18 @@
 import {
-  istTeam,
-  type Spiel,
-  type SpielPartei,
+  isTeam,
+  type Game,
+  type Participant,
   type Team,
   type TeamId,
-  type VereinId,
+  type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 
 /** Whether `partei` is one of the followed Teams `gefolgt`. */
 export function istGefolgt(
-  partei: SpielPartei,
+  partei: Participant,
   gefolgt: readonly TeamId[] | undefined
 ): boolean {
-  return gefolgt?.some((team) => istTeam(partei, team)) ?? false;
+  return gefolgt?.some((team) => isTeam(partei, team)) ?? false;
 }
 
 /**
@@ -21,11 +21,11 @@ export function istGefolgt(
  * are; none where no side is, or Meine Teams are not read yet.
  */
 export function followedSide(
-  spiel: Spiel,
+  spiel: Game,
   gefolgt: readonly TeamId[] | undefined
 ): Team | undefined {
-  for (const partei of [spiel.heim, spiel.gast]) {
-    if (partei.art === 'team' && istGefolgt(partei, gefolgt)) {
+  for (const partei of [spiel.home, spiel.away]) {
+    if (partei.kind === 'team' && istGefolgt(partei, gefolgt)) {
       return partei.team;
     }
   }
@@ -34,8 +34,8 @@ export function followedSide(
 
 /** The Verein whose colours the Spiel page wears: that of `followedSide`. */
 export function gefolgterVerein(
-  spiel: Spiel,
+  spiel: Game,
   gefolgt: readonly TeamId[] | undefined
-): VereinId | undefined {
-  return followedSide(spiel, gefolgt)?.vereinId;
+): ClubId | undefined {
+  return followedSide(spiel, gefolgt)?.clubId;
 }

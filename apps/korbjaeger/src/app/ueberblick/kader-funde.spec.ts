@@ -1,5 +1,5 @@
 import type { ResourceStatus } from '@angular/core';
-import type { KaderFunde } from '@wolsok/feat-shared-basketball-data';
+import type { RosterFinds } from '@wolsok/feat-shared-basketball-data';
 import {
   fundeNach,
   NICHT_LESBAR,
@@ -8,12 +8,12 @@ import {
   type KaderSuchStand,
 } from './kader-funde';
 
-const FUNDE: KaderFunde = {
-  spiele: new Map([[3, new Map([[4711, 'Lumi']])]]),
-  unvollstaendig: false,
+const FUNDE: RosterFinds = {
+  games: new Map([[3, new Map([[4711, 'Lumi']])]]),
+  incomplete: false,
 };
 
-function suche(status: ResourceStatus, value?: KaderFunde): KaderSuchStand {
+function suche(status: ResourceStatus, value?: RosterFinds): KaderSuchStand {
   return status === 'error'
     ? { status, error: new Error('offline') }
     : { status, value };
@@ -40,9 +40,9 @@ describe('suchEnde', () => {
 });
 
 describe('fundeNach', () => {
-  const VORHER: KaderFunde = {
-    spiele: new Map([[2, undefined]]),
-    unvollstaendig: false,
+  const VORHER: RosterFinds = {
+    games: new Map([[2, undefined]]),
+    incomplete: false,
   };
 
   it('takes the finds of a search that ended', () => {
@@ -55,8 +55,8 @@ describe('fundeNach', () => {
 
   it('keeps the last finds of a failed run, marked as incomplete', () => {
     expect(fundeNach({ art: 'gescheitert' }, VORHER)).toEqual({
-      spiele: VORHER.spiele,
-      unvollstaendig: true,
+      games: VORHER.games,
+      incomplete: true,
     });
   });
 
