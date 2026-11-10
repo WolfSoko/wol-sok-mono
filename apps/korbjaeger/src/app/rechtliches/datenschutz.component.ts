@@ -4,7 +4,10 @@ import {
   EmailForwardingComponent,
   SiteOwnerComponent,
 } from '@wolsok/shared-legal';
-import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+import {
+  CLUB_INDEX_CACHE_SECONDS,
+  PROXY_CACHE_SEKUNDEN,
+} from '../../shared/proxy-cache';
 import { REGIONS } from '../../shared/regions';
 import { SITE_HOST, SITE_URL } from '../../shared/site';
 import {
@@ -47,6 +50,7 @@ export class DatenschutzComponent {
   protected readonly host = SITE_HOST;
   protected readonly regions = REGIONS;
   protected readonly cache = PROXY_CACHE_SEKUNDEN;
+  protected readonly vereinsIndex = CLUB_INDEX_CACHE_SECONDS;
   protected readonly grenzen = AUSWAHL_GRENZEN;
   protected readonly spitznameLaenge = SPITZNAME_LAENGE;
   protected readonly antworten = {
