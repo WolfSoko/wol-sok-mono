@@ -4,22 +4,22 @@ import {
   idAus,
   istKarte,
   istZahl,
-  type GelesenerEintrag,
+  type ReadEntry,
   type RohesDokument,
-} from './auswahl-eintraege';
+} from './selection-entries';
 import {
   AUSWAHL_LISTEN,
-  jedeListe,
-  listenArt,
+  everyList,
+  listDescriptor,
   type AuswahlInhalt,
   type AuswahlListe,
-  type AuswahlListen,
-  type ListenArt,
-  type ListenDokumentFeld,
-  type ListenFeld,
-  type ListenWert,
-} from './auswahl-listen';
-import type { KindEintrag } from './listen/kinder';
+  type SelectionLists,
+  type ListDescriptorOf,
+  type ListDocumentField,
+  type ListField,
+  type ListValue,
+} from './selection-lists';
+import type { KindEintrag } from './lists/children';
 
 /**
  * The version of `AuswahlDokument` this app writes. Bumped only for a
@@ -37,7 +37,7 @@ export const AUSWAHL_VERSION = 3;
  * DBB. Keyed by id, so each change writes its own entries and the server
  * merges them with another device's (a Team followed, a Kind unmarked, a
  * Spitzname changed: none overwrites the other); `since` keeps the order.
- * Each list's field is its descriptor's (`AUSWAHL_LISTEN_ARTEN`).
+ * Each list's field is its descriptor's (`LIST_DESCRIPTORS`).
  */
 export interface AuswahlDokument {
   readonly version: typeof AUSWAHL_VERSION;
@@ -80,8 +80,8 @@ export type GelesenesDokument =
 const KEINS: GelesenesDokument = { art: 'keins' };
 
 /** Every list's entries as read, with their `seit`. */
-type GeleseneListen = {
-  readonly [L in AuswahlListe]: readonly GelesenerEintrag<ListenWert<L>>[];
+type ReadLists = {
+  readonly [L in AuswahlListe]: readonly ReadEntry<ListValue<L>>[];
 };
 
 /**
@@ -98,39 +98,37 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (typeof version === 'number' && version > AUSWAHL_VERSION) {
     return { art: 'neuer' };
   }
-  const listen = version === AUSWAHL_VERSION ? listenLesen(gelesen) : undefined;
-  if (listen === undefined) {
+  const lists = version === AUSWAHL_VERSION ? readLists(gelesen) : undefined;
+  if (lists === undefined) {
     return KEINS;
   }
   return {
     art: 'aktuell',
-    ...jedeListe<AuswahlListen>((liste) =>
-      listen[liste].map(({ wert }) => wert)
+    ...everyList<SelectionLists>((list) =>
+      lists[list].map(({ value }) => value)
     ),
-    teamsSeit: new Map(listen.teams.map(({ wert, seit }) => [wert, seit])),
+    teamsSeit: new Map(lists.teams.map(({ value, since }) => [value, since])),
     hoechsterSeit: Math.max(
       0,
-      ...LISTEN_NACH_SEIT.flatMap((liste) =>
-        listen[liste].map(({ seit }) => seit)
-      )
+      ...LISTS_BY_SINCE.flatMap((list) => lists[list].map(({ since }) => since))
     ),
     roh: gelesen,
   };
 }
 
-/** The lists whose entries carry a `seit` (`AuswahlListenArt.nachSeit`). */
-export const LISTEN_NACH_SEIT: readonly AuswahlListe[] = AUSWAHL_LISTEN.filter(
-  (liste) => listenArt(liste).nachSeit
+/** The lists whose entries carry a `since` (`ListDescriptor.orderedBySince`). */
+export const LISTS_BY_SINCE: readonly AuswahlListe[] = AUSWAHL_LISTEN.filter(
+  (list) => listDescriptor(list).orderedBySince
 );
 
-/** Each list of `dokument`; `undefined` where one makes it unreadable. */
-function listenLesen(dokument: RohesDokument): GeleseneListen | undefined {
-  const listen = jedeListe<{
-    readonly [L in AuswahlListe]: GeleseneListen[L] | undefined;
-  }>((liste) => listenArt(liste).lesen(dokument[listenArt(liste).feld]));
+/** Each list of `document`; `undefined` where one makes it unreadable. */
+function readLists(document: RohesDokument): ReadLists | undefined {
+  const lists = everyList<{
+    readonly [L in AuswahlListe]: ReadLists[L] | undefined;
+  }>((list) => listDescriptor(list).read(document[listDescriptor(list).field]));
   // every list read: the type of each is its own
-  return AUSWAHL_LISTEN.every((liste) => listen[liste] !== undefined)
-    ? (listen as GeleseneListen)
+  return AUSWAHL_LISTEN.every((list) => lists[list] !== undefined)
+    ? (lists as ReadLists)
     : undefined;
 }
 
@@ -148,8 +146,8 @@ export function naechsterSeit(gelesen: GelesenesDokument, letzter = 0): number {
 }
 
 /** The entries a change writes of the list `L`, by id. */
-type ListenFelder<L extends AuswahlListe> = Readonly<
-  Record<string, ListenFeld<L>>
+type ListFields<L extends AuswahlListe> = Readonly<
+  Record<string, ListField<L>>
 >;
 
 /**
@@ -158,73 +156,75 @@ type ListenFelder<L extends AuswahlListe> = Readonly<
  * (entries this version cannot read too).
  */
 export type AuswahlFelder = {
-  readonly [L in AuswahlListe as ListenDokumentFeld<L>]?: ListenFelder<L>;
+  readonly [L in AuswahlListe as ListDocumentField<L>]?: ListFields<L>;
 };
 
-/** The entries `felder` writes of `liste`; none where it leaves it out. */
-export function felderDerListe<L extends AuswahlListe>(
-  felder: AuswahlFelder,
-  liste: L
-): ListenFelder<L> | undefined {
-  const alle: Readonly<Record<string, ListenFelder<L> | undefined>> = felder;
-  return alle[listenArt(liste).feld];
+/** The entries `fields` writes of `list`; none where it leaves it out. */
+export function listFields<L extends AuswahlListe>(
+  fields: AuswahlFelder,
+  list: L
+): ListFields<L> | undefined {
+  const byField: Readonly<Record<string, ListFields<L> | undefined>> = fields;
+  return byField[listDescriptor(list).field];
 }
 
 /**
- * The entries that take `vorher` to `nachher`, list by list in
- * `AUSWAHL_LISTEN`'s order: those gone, the new ones (since `seitAb`, one
- * millisecond each, in their order, unless `nachher` knows a place for one:
+ * The entries that take `before` to `after`, list by list in
+ * `AUSWAHL_LISTEN`'s order: those gone, the new ones (from `firstSince`, one
+ * millisecond each, in their order, unless `after` knows a place for one:
  * a Team followed at its old place) and the ones changed (a Spitzname,
  * colours). Every adapter writes them: the device's merged into its
  * document (`auswahlDokumentMit`), Firestore as fields the server merges.
  */
 export function auswahlFelder(
-  vorher: AuswahlInhalt,
-  nachher: AuswahlInhalt,
-  seitAb: number
+  before: AuswahlInhalt,
+  after: AuswahlInhalt,
+  firstSince: number
 ): AuswahlFelder {
-  let seit = seitAb;
-  const naechster = (): number => seit++;
-  const felder: Record<string, unknown> = {};
-  for (const liste of AUSWAHL_LISTEN) {
-    const eintraege = felderFuer(liste, vorher, nachher, naechster);
-    if (Object.keys(eintraege).length > 0) {
-      felder[listenArt(liste).feld] = eintraege;
+  let since = firstSince;
+  const next = (): number => since++;
+  const fields: Record<string, unknown> = {};
+  for (const list of AUSWAHL_LISTEN) {
+    const entries = fieldsOf(list, before, after, next);
+    if (Object.keys(entries).length > 0) {
+      fields[listDescriptor(list).field] = entries;
     }
   }
   // each list's entries under its own field, as `AuswahlFelder` has them
-  return felder as AuswahlFelder;
+  return fields as AuswahlFelder;
 }
 
-/** What `auswahlFelder` writes of `liste`. */
-function felderFuer<L extends AuswahlListe>(
-  liste: L,
-  vorher: AuswahlInhalt,
-  nachher: AuswahlInhalt,
-  naechster: () => number
-): ListenFelder<L> {
-  const art: ListenArt<L> = listenArt(liste);
-  const felder: Record<string, ListenFeld<L> | typeof ENTFERNT> = {};
-  const davor = new Map(vorher[liste].map((wert) => [art.id(wert), wert]));
-  const gegangen = new Set(davor.keys());
-  for (const wert of nachher[liste]) {
-    const id = art.id(wert);
-    const alt = davor.get(id);
-    gegangen.delete(id);
-    if (alt === undefined) {
-      felder[id] = art.neu(
-        wert,
-        () => art.bekannterSeit?.(nachher, wert) ?? naechster()
+/** What `auswahlFelder` writes of `list`. */
+function fieldsOf<L extends AuswahlListe>(
+  list: L,
+  before: AuswahlInhalt,
+  after: AuswahlInhalt,
+  next: () => number
+): ListFields<L> {
+  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
+  const fields: Record<string, ListField<L> | typeof ENTFERNT> = {};
+  const earlier = new Map(
+    before[list].map((value) => [descriptor.id(value), value])
+  );
+  const gone = new Set(earlier.keys());
+  for (const value of after[list]) {
+    const id = descriptor.id(value);
+    const previous = earlier.get(id);
+    gone.delete(id);
+    if (previous === undefined) {
+      fields[id] = descriptor.added(
+        value,
+        () => descriptor.knownSince?.(after, value) ?? next()
       );
-    } else if (!art.gleich(alt, wert) && art.geaendert) {
-      felder[id] = art.geaendert(alt, wert);
+    } else if (!descriptor.equals(previous, value) && descriptor.changed) {
+      fields[id] = descriptor.changed(previous, value);
     }
   }
-  for (const id of gegangen) {
-    felder[id] = ENTFERNT;
+  for (const id of gone) {
+    fields[id] = ENTFERNT;
   }
-  // every list's `feld` takes `ENTFERNT`
-  return felder as ListenFelder<L>;
+  // every list's `field` type takes `ENTFERNT`
+  return fields as ListFields<L>;
 }
 
 /** The `seit` a write of `felder` stores for each Team it follows. */
@@ -266,23 +266,23 @@ export function mitTeamsSeit(
  */
 export function auswahlDokumentMit(
   gelesen: GelesenesDokument,
-  felder: AuswahlFelder
+  fields: AuswahlFelder
 ): RohesDokument {
-  const roh = gelesen.art === 'aktuell' ? gelesen.roh : {};
-  const dokument: Record<string, unknown> = {
-    ...roh,
+  const raw = gelesen.art === 'aktuell' ? gelesen.roh : {};
+  const document: Record<string, unknown> = {
+    ...raw,
     version: AUSWAHL_VERSION,
   };
-  for (const liste of AUSWAHL_LISTEN) {
-    const eintraege = felderDerListe(felder, liste);
-    if (eintraege !== undefined) {
-      const art: ListenArt<typeof liste> = listenArt(liste);
-      const gespeichert = roh[art.feld];
-      dokument[art.feld] = art.mit(
-        istKarte(gespeichert) ? gespeichert : {},
-        eintraege
+  for (const list of AUSWAHL_LISTEN) {
+    const entries = listFields(fields, list);
+    if (entries !== undefined) {
+      const descriptor: ListDescriptorOf<typeof list> = listDescriptor(list);
+      const stored = raw[descriptor.field];
+      document[descriptor.field] = descriptor.merge(
+        istKarte(stored) ? stored : {},
+        entries
       );
     }
   }
-  return dokument;
+  return document;
 }

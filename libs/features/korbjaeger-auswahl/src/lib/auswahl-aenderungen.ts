@@ -4,19 +4,19 @@ import type {
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { GelesenesDokument, TeamPlatz } from './auswahl-dokument';
-import { vorSeit } from './auswahl-eintraege';
+import { vorSeit } from './selection-entries';
 import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
-  jedeListe,
+  everyList,
   LEERE_AUSWAHL,
-  listenArt,
+  listDescriptor,
   type AuswahlInhalt,
   type AuswahlListe,
-  type AuswahlListen,
-  type ListenArt,
-  type ListenWert,
-} from './auswahl-listen';
+  type SelectionLists,
+  type ListDescriptorOf,
+  type ListValue,
+} from './selection-lists';
 import {
   gleicheFarben,
   vereinsfarbenAus,
@@ -172,28 +172,29 @@ export function vereinsfarbenZuruecksetzenAenderung(
  * joined since stays too.
  */
 export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
-  return (inhalt) => {
-    const uebrig = jedeListe<AuswahlListen>((liste) =>
-      ohneGleiche(liste, inhalt, abgegeben)
+  return (selection) => {
+    const left = everyList<SelectionLists>((list) =>
+      withoutEqual(list, selection, abgegeben)
     );
     return AUSWAHL_LISTEN.every(
-      (liste) => uebrig[liste].length === inhalt[liste].length
+      (list) => left[list].length === selection[list].length
     )
-      ? inhalt
+      ? selection
       : // the Teams that stay keep their places (`teamsSeit`)
-        { ...inhalt, ...uebrig };
+        { ...selection, ...left };
   };
 }
 
-/** The entries of `liste` in `inhalt` that `ohneDiese` holds no equal of. */
-function ohneGleiche<L extends AuswahlListe>(
-  liste: L,
-  inhalt: AuswahlListen,
-  ohneDiese: AuswahlListen
-): readonly ListenWert<L>[] {
-  const art: ListenArt<L> = listenArt(liste);
-  return inhalt[liste].filter(
-    (wert) => !ohneDiese[liste].some((alt) => art.gleich(alt, wert))
+/** The entries of `list` in `selection` that `without` holds no equal of. */
+function withoutEqual<L extends AuswahlListe>(
+  list: L,
+  selection: SelectionLists,
+  without: SelectionLists
+): readonly ListValue<L>[] {
+  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
+  return selection[list].filter(
+    (value) =>
+      !without[list].some((previous) => descriptor.equals(previous, value))
   );
 }
 

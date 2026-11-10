@@ -1,6 +1,6 @@
 import { inhaltAus } from './auswahl-aenderungen';
 import { auswahlDokumentLesen } from './auswahl-dokument';
-import type { AuswahlInhalt } from './auswahl-listen';
+import type { AuswahlInhalt } from './selection-lists';
 import { AUSWAHL_SCHLUESSEL, LokaleAuswahl } from './lokale-auswahl';
 import { auswahlVertrag } from '../testing/auswahl-vertrag';
 

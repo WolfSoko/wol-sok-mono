@@ -1,14 +1,14 @@
 import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
-  jedeListe,
-  listenArt,
+  everyList,
+  listDescriptor,
   type AuswahlInhalt,
   type AuswahlListe,
-  type AuswahlListen,
-  type ListenArt,
-  type ListenWert,
-} from './auswahl-listen';
+  type SelectionLists,
+  type ListDescriptorOf,
+  type ListValue,
+} from './selection-lists';
 
 /** The device's Teams, Kinder and Vereinsfarben that did not fit into the account. */
 export type NichtUebernommen = AuswahlInhalt;
@@ -20,9 +20,9 @@ export interface Zusammenfuehrung {
 }
 
 /** One list of a `Zusammenfuehrung`. */
-interface ZusammengefuehrteListe<W> {
-  readonly liste: readonly W[];
-  readonly uebrig: readonly W[];
+interface JoinedList<W> {
+  readonly list: readonly W[];
+  readonly left: readonly W[];
 }
 
 /**
@@ -36,46 +36,50 @@ interface ZusammengefuehrteListe<W> {
  * (idempotent).
  */
 export function zusammenfuehren(
-  konto: AuswahlInhalt,
-  geraet: AuswahlInhalt
+  account: AuswahlInhalt,
+  device: AuswahlInhalt
 ): Zusammenfuehrung {
-  const listen = jedeListe<{
-    readonly [L in AuswahlListe]: ZusammengefuehrteListe<ListenWert<L>>;
-  }>((liste) => listeZusammen(liste, konto, geraet));
-  const uebrig = jedeListe<AuswahlListen>((liste) => listen[liste].uebrig);
-  const inhalt = jedeListe<AuswahlListen>((liste) => listen[liste].liste);
-  const unveraendert = AUSWAHL_LISTEN.every(
-    (liste) => inhalt[liste] === konto[liste]
+  const lists = everyList<{
+    readonly [L in AuswahlListe]: JoinedList<ListValue<L>>;
+  }>((list) => joinList(list, account, device));
+  const left = everyList<SelectionLists>((list) => lists[list].left);
+  const selection = everyList<SelectionLists>((list) => lists[list].list);
+  const unchanged = AUSWAHL_LISTEN.every(
+    (list) => selection[list] === account[list]
   );
-  return { inhalt: unveraendert ? konto : inhalt, uebrig };
+  return { inhalt: unchanged ? account : selection, uebrig: left };
 }
 
-function listeZusammen<L extends AuswahlListe>(
-  liste: L,
-  konto: AuswahlListen,
-  geraet: AuswahlListen
-): ZusammengefuehrteListe<ListenWert<L>> {
-  const art: ListenArt<L> = listenArt(liste);
-  const imKonto = konto[liste];
-  const ausGeraet = new Map(geraet[liste].map((wert) => [art.id(wert), wert]));
-  let ergaenzt = false;
-  const ergaenztesKonto = imKonto.map((wert) => {
-    const vomGeraet = ausGeraet.get(art.id(wert));
-    const neu =
-      vomGeraet === undefined || art.ergaenzen === undefined
-        ? wert
-        : art.ergaenzen(wert, vomGeraet);
-    ergaenzt ||= neu !== wert;
-    return neu;
+function joinList<L extends AuswahlListe>(
+  list: L,
+  account: SelectionLists,
+  device: SelectionLists
+): JoinedList<ListValue<L>> {
+  const descriptor: ListDescriptorOf<L> = listDescriptor(list);
+  const inAccount = account[list];
+  const byDevice = new Map(
+    device[list].map((value) => [descriptor.id(value), value])
+  );
+  let completed = false;
+  const completedAccount = inAccount.map((value) => {
+    const fromDevice = byDevice.get(descriptor.id(value));
+    const kept =
+      fromDevice === undefined || descriptor.complete === undefined
+        ? value
+        : descriptor.complete(value, fromDevice);
+    completed ||= kept !== value;
+    return kept;
   });
-  const ids = new Set(imKonto.map((wert) => art.id(wert)));
-  const neue = geraet[liste].filter((wert) => !ids.has(art.id(wert)));
-  const frei = Math.max(0, AUSWAHL_GRENZEN[liste] - imKonto.length);
-  const dazu = neue.slice(0, frei);
-  const uebrig = neue.slice(frei);
-  if (!ergaenzt && dazu.length === 0) {
-    return { liste: imKonto, uebrig };
+  const ids = new Set(inAccount.map((value) => descriptor.id(value)));
+  const newOnes = device[list].filter(
+    (value) => !ids.has(descriptor.id(value))
+  );
+  const free = Math.max(0, AUSWAHL_GRENZEN[list] - inAccount.length);
+  const joining = newOnes.slice(0, free);
+  const left = newOnes.slice(free);
+  if (!completed && joining.length === 0) {
+    return { list: inAccount, left };
   }
-  const vereint = [...ergaenztesKonto, ...dazu];
-  return { liste: art.ordnen?.(vereint) ?? vereint, uebrig };
+  const joined = [...completedAccount, ...joining];
+  return { list: descriptor.order?.(joined) ?? joined, left };
 }

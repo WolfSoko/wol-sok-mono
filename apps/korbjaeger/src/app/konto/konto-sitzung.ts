@@ -10,10 +10,10 @@ import {
   type Auswahl,
   type TeamPlatz,
   LEERE_AUSWAHL,
-  auswahlLeer,
-  auswahlOhne,
-  auswahlVereint,
-  listenSignale,
+  selectionIsEmpty,
+  selectionWithout,
+  selectionJoined,
+  listSignals,
   type Kind,
   type MarkierbarerSpieler,
   type LokaleAuswahl,
@@ -343,16 +343,19 @@ export class KontoSitzung {
     let neu = this.lokal.neuGelesen();
     for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
       const passtNicht = await dienst.geraetUebernehmen(benutzer.uid, neu);
-      uebrig = auswahlVereint(uebrig, passtNicht);
-      neu = auswahlOhne(
-        this.lokal.abgeben(auswahlOhne(neu, passtNicht)),
+      uebrig = selectionJoined(uebrig, passtNicht);
+      neu = selectionWithout(
+        this.lokal.abgeben(selectionWithout(neu, passtNicht)),
         uebrig
       );
-      if (auswahlLeer(neu)) {
+      if (selectionIsEmpty(neu)) {
         break;
       }
     }
-    this.hinweisSetzen(benutzer.uid, { uebrig, behalten: !auswahlLeer(neu) });
+    this.hinweisSetzen(benutzer.uid, {
+      uebrig,
+      behalten: !selectionIsEmpty(neu),
+    });
     return uebrig;
   }
 
@@ -415,7 +418,7 @@ export class KontoSitzung {
    */
   private async behalteneUebernehmen(benutzer: Benutzer): Promise<void> {
     const dienst = this.dienst;
-    if (dienst === undefined || auswahlLeer(this.lokal.neuGelesen())) {
+    if (dienst === undefined || selectionIsEmpty(this.lokal.neuGelesen())) {
       return;
     }
     try {
@@ -586,12 +589,12 @@ class AktuelleAuswahl implements Auswahl {
     kontoNichtLesbar: Signal<boolean>
   ) {
     // an account that cannot be read shows none of what it read before
-    const signale = listenSignale<undefined>((liste) =>
-      kontoNichtLesbar() ? undefined : aktuell()?.[liste]()
+    const signals = listSignals<undefined>((list) =>
+      kontoNichtLesbar() ? undefined : aktuell()?.[list]()
     );
-    this.teams = signale.teams;
-    this.kinder = signale.kinder;
-    this.vereinsfarben = signale.vereinsfarben;
+    this.teams = signals.teams;
+    this.kinder = signals.kinder;
+    this.vereinsfarben = signals.vereinsfarben;
     this.nichtLesbar = computed(
       () => kontoNichtLesbar() || (aktuell()?.nichtLesbar() ?? false)
     );

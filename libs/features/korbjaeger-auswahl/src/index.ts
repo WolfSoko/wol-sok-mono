@@ -9,11 +9,11 @@ export {
   type AuswahlInhalt,
   type AuswahlListe,
   LEERE_AUSWAHL,
-  auswahlLeer,
-  auswahlOhne,
-  auswahlVereint,
-} from './lib/auswahl-listen';
-export { listenSignale } from './lib/listen-signale';
+  selectionIsEmpty,
+  selectionWithout,
+  selectionJoined,
+} from './lib/selection-lists';
+export { listSignals } from './lib/list-signals';
 export { AuswahlVollError, AuswahlZuNeuError } from './lib/auswahl-fehler';
 export { FirestoreAuswahl, auswahlDokumentVon } from './lib/firestore-auswahl';
 export { geraetUebernehmen } from './lib/geraet-uebernehmen';

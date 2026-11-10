@@ -51,43 +51,50 @@ The places that loop over the table afterwards (the lib
 
 ## Decisions
 
+Names are English (CLAUDE.md, Coding Rule 10): every name this change
+introduces, files included; the existing German identifiers it moves or
+keeps (`auswahlFelder`, `vorSeit`, `AuswahlInhalt`, …) stay for
+[#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967).
+
 Built after #2917 and #2966 (version 3, English fields, no version-1 lists
 left in the reader) and #2920 (`teamsSeit`, a Team's old place), so the
 descriptor carries the stored field and the known place, and needs no
 conversion of version-1 lists.
 
-- **A descriptor `AuswahlListenArt<Wert, Feld, Dokument>` per list**
-  (`auswahl-liste.ts` for the interface, one file per list under `listen/`:
+- **A descriptor `ListDescriptor<Value, Field, DocumentField>` per list**
+  (`list-descriptor.ts` for the interface, one file per list under `lists/`:
   `teams.ts`, `kinder.ts`, `vereinsfarben.ts`, each with its stored types:
   `TeamFeld`, `KindEintrag`/`KindFeld`, `VereinsfarbenFeld`), with
-  - `feld`: the document's field (`teams`, `children`, `clubColors`);
-  - `id(wert)`: the DBB id the map stores it under;
-  - `gleich(a, b)`: whether two entries are the same (Kind with its
+  - `field`: the document's field (`teams`, `children`, `clubColors`);
+  - `orderedBySince`: whether its entries carry a `since` (Teams, Kinder),
+    so only those lists take part in `hoechsterSeit` and `letzterSeit`;
+  - `id(value)`: the DBB id the map stores it under;
+  - `equals(a, b)`: whether two entries are the same (Kind with its
     Spitzname, Verein with its colours);
-  - `lesen(roh)`: the readable entries of the stored map with their `seit`,
+  - `read(raw)`: the readable entries of the stored map with their `since`,
     in order; `undefined` only where the list makes the whole document
     unreadable (Teams that are not all ids), as before;
-  - `neu(wert, seit)` and `geaendert?(alt, neu)`: what a change writes of an
+  - `added(value, since)` and `changed?(previous, current)`: what a change writes of an
     entry that joins or changes; the diff itself (gone, new, changed) is one
     generic loop, with `seit` a counter shared across lists in
     `AUSWAHL_LISTEN`'s order, so new Teams and Kinder still get one
     millisecond each in the same order;
-  - `bekannterSeit?(inhalt, wert)`: a place `nachher` already knows (a Team
+  - `knownSince?(selection, value)`: a place the new state already knows (a Team
     followed at its old place, `teamsSeit`);
-  - `mit(gespeichert, felder)`: those entries merged into a stored map;
-  - `ergaenzen?(konto, geraet)` and `ordnen?(liste)`: the list's own rule
+  - `merge(stored, fields)`: those entries merged into a stored map;
+  - `complete?(account, device)` and `order?(list)`: the list's own rule
     when the device's choices join the account's (Kinder fill a missing
     Spitzname, Vereinsfarben keep the order by Verein); joining up to the
     cap (`AUSWAHL_GRENZEN`) is one generic loop.
     Why: these are exactly what the places spelled out per list; the rest
     is the same loop.
-- **The table `AUSWAHL_LISTEN_ARTEN`** (`auswahl-listen.ts`, beside
+- **The table `LIST_DESCRIPTORS`** (`selection-lists.ts`, beside
   `AUSWAHL_GRENZEN`, `AUSWAHL_LISTEN`, `AuswahlInhalt`, `LEERE_AUSWAHL`) is
-  typed as a mapped type over one type map (`ListenTypen`: per list its
-  `wert`, `feld` and `dokument`); `AuswahlInhalt` and `AuswahlFelder` (keyed
+  typed as a mapped type over one type map (`ListTypes`: per list its
+  `value`, `field` and `document`); `AuswahlInhalt` and `AuswahlFelder` (keyed
   by the stored field, as before) are derived from it. Generic helpers take
-  `<L extends AuswahlListe>` and get their descriptor from `listenArt(liste)`.
-  One helper, `jedeListe`, puts a value for each list together; TypeScript
+  `<L extends AuswahlListe>` and get their descriptor from `listDescriptor(liste)`.
+  One helper, `everyList`, puts a value for each list together; TypeScript
   cannot check per list that its callback gives each list its own type (a
   concrete mapped type indexed by a generic key reads as all lists at once),
   so its callback is untyped and the one cast lives there; the callbacks
@@ -96,30 +103,30 @@ conversion of version-1 lists.
   reading, `auswahlFelder`, `auswahlDokumentMit`, `teamsSeit` helpers); the
   low-level helpers shared with the descriptors and the migration
   (`istKarte`, `idAus`, `istId`, `istZahl`, `vorSeit`, `eintraegeMit`,
-  `ENTFERNT`, `RohesDokument`) move to `auswahl-eintraege.ts`. The lib's
+  `ENTFERNT`, `RohesDokument`) move to `selection-entries.ts`. The lib's
   public entry keeps every export it had.
-- **Signals per list come from one helper**, `listenSignale(lesen)` (its
+- **Signals per list come from one helper**, `listSignals(read)` (its
   own file, the only part that needs Angular), which builds a `computed`
   per list with that list's equality from a reader of the list; both
   adapters and the app's `AktuelleAuswahl` use it. The port keeps its named
   properties.
 - **The app's `ohne`, `vereint` and `istLeer`** become the lib's
-  `auswahlOhne`, `auswahlVereint`, `auswahlLeer` (by each list's ids),
+  `selectionWithout`, `selectionJoined`, `selectionIsEmpty` (by each list's ids),
   exported from its entry.
 
 ## Acceptance
 
 1. `teams`, `kinder` and `vereinsfarben` are each described by one
-   descriptor in `AUSWAHL_LISTEN_ARTEN`; none of the places named in "Goal"
+   descriptor in `LIST_DESCRIPTORS`; none of the places named in "Goal"
    names a list by hand any more for what the descriptor covers.
 2. Every existing spec of the app passes unchanged in its expectations:
    `nx test korbjaeger` and `nx run korbjaeger:test-emulator` (rules,
    `FirestoreAuswahl` contract, takeover); `typecheck` and lint green.
-3. A spec on the table (`auswahl-listen.spec.ts`) checks each list's round
+3. A spec on the table (`selection-lists.spec.ts`) checks each list's round
    trip (`auswahlFelder` → `auswahlDokumentMit` → `auswahlDokumentLesen`
-   gives back `nachher`), that `AUSWAHL_LISTEN_ARTEN` and `AUSWAHL_GRENZEN`
+   gives back `nachher`), that `LIST_DESCRIPTORS` and `AUSWAHL_GRENZEN`
    hold exactly `AUSWAHL_LISTEN`, each list in a field of its own, and
-   `auswahlOhne`/`auswahlVereint`/`auswahlLeer`.
+   `selectionWithout`/`selectionJoined`/`selectionIsEmpty`.
 4. CLAUDE.md's Korbjäger section names the table where it describes the
    Auswahl document, so the next list goes there.
 

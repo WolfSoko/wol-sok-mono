@@ -13,12 +13,12 @@ together); the squash merge makes it one commit anyway.
 
 1. **Spec and plan.** `docs/specs/2928-…`, `docs/plans/2928-…`. Commit:
    `docs(korbjaeger): spec and plan for table-driven Auswahl lists`.
-2. **Descriptors and table.** New `auswahl-eintraege.ts`
+2. **Descriptors and table.** New `selection-entries.ts`
    (shared helpers moved out of `auswahl-dokument.ts`),
-   `auswahl-liste.ts` (interface), `listen/{teams,kinder,vereinsfarben}.ts`,
-   `auswahl-listen.ts` (type map, table, `AUSWAHL_GRENZEN`,
-   `AUSWAHL_LISTEN`, `AuswahlInhalt`, `LEERE_AUSWAHL`, `jedeListe`). Test:
-   `auswahl-listen.spec.ts` (round trip per list, table equals
+   `list-descriptor.ts` (interface), `lists/{teams,children,club-colors}.ts`,
+   `selection-lists.ts` (type map, table, `AUSWAHL_GRENZEN`,
+   `AUSWAHL_LISTEN`, `AuswahlInhalt`, `LEERE_AUSWAHL`, `everyList`). Test:
+   `selection-lists.spec.ts` (round trip per list, table equals
    `AUSWAHL_LISTEN`), checked by a hand mutation (a descriptor without
    `geaendert` turns it red).
 3. **Document through the table.** `auswahl-dokument.ts`:
@@ -31,12 +31,12 @@ together); the squash merge makes it one commit anyway.
    `geraet-uebernehmen.ts`, `firestore-auswahl.ts` (`firestoreFelder`,
    `letzterSeit`). Tests: existing unit specs, then
    `npx nx run korbjaeger:test-emulator`.
-5. **Signals and the session.** `listenSignale` helper; `LokaleAuswahl`,
+5. **Signals and the session.** `listSignals` helper; `LokaleAuswahl`,
    `FirestoreAuswahl`, `konto-sitzung.ts` (`ohne`, `vereint`,
    `AktuelleAuswahl`). Tests: `konto-sitzung.spec.ts`,
    `einstellungen.component.spec.ts`, the adapters' specs.
 6. **Docs.** CLAUDE.md's Korbjäger Auswahl paragraph names
-   `AUSWAHL_LISTEN_ARTEN` as where a new list goes.
+   `LIST_DESCRIPTORS` as where a new list goes.
    Tasks 2 to 6 are one commit:
    `refactor(feat-korbjaeger-auswahl): describe each Auswahl list once, in a table`.
 7. **Checks before the PR**: `npx nx format:write`,

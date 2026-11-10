@@ -7,16 +7,16 @@ import { inhaltAus } from './auswahl-aenderungen';
 import {
   auswahlDokumentLesen,
   auswahlFelder,
-  felderDerListe,
+  listFields,
   naechsterSeit,
 } from './auswahl-dokument';
 import {
   AUSWAHL_LISTEN,
-  jedeListe,
+  everyList,
   type AuswahlInhalt,
   type AuswahlListe,
-  type AuswahlListen,
-} from './auswahl-listen';
+  type SelectionLists,
+} from './selection-lists';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { auswahlDokumentVon, firestoreFelder } from './firestore-auswahl';
 import { type NichtUebernommen, zusammenfuehren } from './zusammenfuehren';
@@ -38,20 +38,20 @@ export async function geraetUebernehmen(
   geraet: AuswahlInhalt
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
-  const uebrig: Partial<Record<AuswahlListe, NichtUebernommen>> = {};
+  const leftByList: Partial<Record<AuswahlListe, NichtUebernommen>> = {};
   // one map a transaction, one after the other
-  for (const liste of AUSWAHL_LISTEN) {
+  for (const list of AUSWAHL_LISTEN) {
     // a list the device holds nothing of adds nothing: no round trip
-    if (geraet[liste].length > 0) {
-      uebrig[liste] = await listeUebernehmen(
+    if (geraet[list].length > 0) {
+      leftByList[list] = await listeUebernehmen(
         firestore,
         dokument,
         geraet,
-        liste
+        list
       );
     }
   }
-  return jedeListe<AuswahlListen>((liste) => uebrig[liste]?.[liste] ?? []);
+  return everyList<SelectionLists>((list) => leftByList[list]?.[list] ?? []);
 }
 
 /**
@@ -78,7 +78,7 @@ function listeUebernehmen(
       { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
       naechsterSeit(gelesen)
     );
-    if (felderDerListe(felder, liste) !== undefined) {
+    if (listFields(felder, liste) !== undefined) {
       transaktion.set(dokument, firestoreFelder(felder), { merge: true });
     }
     return zusammenfuehrung.uebrig;

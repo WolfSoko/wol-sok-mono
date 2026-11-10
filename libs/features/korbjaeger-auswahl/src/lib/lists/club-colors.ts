@@ -4,9 +4,9 @@ import {
   eintraegeMit,
   idAus,
   istKarte,
-  type GelesenerEintrag,
-} from '../auswahl-eintraege';
-import type { AuswahlListenArt } from '../auswahl-liste';
+  type ReadEntry,
+} from '../selection-entries';
+import type { ListDescriptor } from '../list-descriptor';
 import { gleicheFarben } from '../vereinsfarben';
 import {
   farbenAusText,
@@ -23,34 +23,35 @@ export type VereinsfarbenFeld = string | typeof ENTFERNT;
  * a Verein without any having no entry; kept in the order of the Verein's
  * id. An entry it cannot read is left out.
  */
-export const VEREINSFARBEN: AuswahlListenArt<
+export const CLUB_COLORS: ListDescriptor<
   VereinsfarbenWahl,
   VereinsfarbenFeld,
   'clubColors'
 > = {
-  feld: 'clubColors',
-  nachSeit: false,
+  field: 'clubColors',
+  orderedBySince: false,
   id: (wahl) => wahl.vereinId,
-  gleich: (a, b) => a.vereinId === b.vereinId && gleicheFarben(a, b),
-  lesen: (roh) => {
-    if (!istKarte(roh)) {
+  equals: (a, b) => a.vereinId === b.vereinId && gleicheFarben(a, b),
+  read: (raw) => {
+    if (!istKarte(raw)) {
       return [];
     }
-    const gelesen: VereinsfarbenWahl[] = [];
-    for (const [schluessel, text] of Object.entries(roh)) {
-      const vereinId: VereinId | undefined = idAus(schluessel);
+    const colors: VereinsfarbenWahl[] = [];
+    for (const [key, text] of Object.entries(raw)) {
+      const vereinId: VereinId | undefined = idAus(key);
       const farben = farbenAusText(text);
       if (vereinId !== undefined && farben) {
-        gelesen.push({ vereinId, ...farben });
+        colors.push({ vereinId, ...farben });
       }
     }
-    // ordered by Verein, not by `seit` (`nachSeit: false`)
-    return nachVerein(gelesen).map(
-      (wert): GelesenerEintrag<VereinsfarbenWahl> => ({ wert, seit: 0 })
-    );
+    // ordered by Verein, not by `seit` (`orderedBySince: false`)
+    return nachVerein(colors).map((value): ReadEntry<VereinsfarbenWahl> => ({
+      value,
+      since: 0,
+    }));
   },
-  neu: (wahl) => farbenText(wahl),
-  geaendert: (_alt, jetzt) => farbenText(jetzt),
-  mit: eintraegeMit,
-  ordnen: nachVerein,
+  added: (wahl) => farbenText(wahl),
+  changed: (_alt, current) => farbenText(current),
+  merge: eintraegeMit,
+  order: nachVerein,
 };

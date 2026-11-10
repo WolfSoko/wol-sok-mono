@@ -30,12 +30,12 @@ import {
   type TeamPlatz,
 } from './auswahl-dokument';
 import {
-  jedeListe,
+  everyList,
   LEERE_AUSWAHL,
   type AuswahlInhalt,
-  type AuswahlListen,
-} from './auswahl-listen';
-import { listenSignale } from './listen-signale';
+  type SelectionLists,
+} from './selection-lists';
+import { listSignals } from './list-signals';
 import type { Kind, MarkierbarerSpieler } from './kind';
 import { istSpeicherVoll } from './speicher-voll';
 import { AuswahlZuNeuError } from './auswahl-fehler';
@@ -105,10 +105,10 @@ export class LokaleAuswahl implements Auswahl {
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.anzeigen(this.lesen());
-    const signale = listenSignale((liste) => this.inhalt()[liste]);
-    this.teams = signale.teams;
-    this.kinder = signale.kinder;
-    this.vereinsfarben = signale.vereinsfarben;
+    const signals = listSignals((list) => this.inhalt()[list]);
+    this.teams = signals.teams;
+    this.kinder = signals.kinder;
+    this.vereinsfarben = signals.vereinsfarben;
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
@@ -158,7 +158,7 @@ export class LokaleAuswahl implements Auswahl {
   public neuGelesen(): AuswahlInhalt {
     this.anzeigen(this.lesen());
     const inhalt = this.inhalt();
-    return jedeListe<AuswahlListen>((liste) => inhalt[liste]);
+    return everyList<SelectionLists>((list) => inhalt[list]);
   }
 
   /**

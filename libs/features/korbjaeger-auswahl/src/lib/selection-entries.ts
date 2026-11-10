@@ -7,10 +7,10 @@ export type RohesDokument = Readonly<Record<string, unknown>>;
 export const ENTFERNT = Symbol('entfernt');
 
 /** An entry of a stored map as read: its value and since when it is there. */
-export interface GelesenerEintrag<W> {
-  readonly wert: W;
+export interface ReadEntry<W> {
+  readonly value: W;
   /** Milliseconds since 1970; 0 for a list whose entries keep no order of their own. */
-  readonly seit: number;
+  readonly since: number;
 }
 
 /**
@@ -24,15 +24,15 @@ export function vorSeit(
   return a.seit - b.seit || a.sortierung - b.sortierung;
 }
 
-/** `eintraege` in the reader's order (`vorSeit`), `id` giving each its id. */
-export function nachSeit<W>(
-  eintraege: readonly GelesenerEintrag<W>[],
-  id: (wert: W) => number
-): readonly GelesenerEintrag<W>[] {
-  return [...eintraege].sort((a, b) =>
+/** `entries` in the reader's order (`vorSeit`), `id` giving each its id. */
+export function bySince<W>(
+  entries: readonly ReadEntry<W>[],
+  id: (value: W) => number
+): readonly ReadEntry<W>[] {
+  return [...entries].sort((a, b) =>
     vorSeit(
-      { seit: a.seit, sortierung: id(a.wert) },
-      { seit: b.seit, sortierung: id(b.wert) }
+      { seit: a.since, sortierung: id(a.value) },
+      { seit: b.since, sortierung: id(b.value) }
     )
   );
 }

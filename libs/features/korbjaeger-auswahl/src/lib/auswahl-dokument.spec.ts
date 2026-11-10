@@ -4,8 +4,8 @@ import {
   geschriebeneTeamsSeit,
   mitTeamsSeit,
 } from './auswahl-dokument';
-import { ENTFERNT } from './auswahl-eintraege';
-import { LEERE_AUSWAHL, type AuswahlInhalt } from './auswahl-listen';
+import { ENTFERNT } from './selection-entries';
+import { LEERE_AUSWAHL, type AuswahlInhalt } from './selection-lists';
 
 describe('auswahlDokumentLesen', () => {
   it("reads each Team's seit", () => {
