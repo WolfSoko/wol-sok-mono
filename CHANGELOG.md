@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.164.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.163.1...v74.164.0) (2026-11-10)
+
+### Features
+
+* **korbjaeger:** search a Verein on /suchen, from the title bar ([#2989](https://github.com/WolfSoko/wol-sok-mono/issues/2989)) ([#3006](https://github.com/WolfSoko/wol-sok-mono/issues/3006)) ([06df102](https://github.com/WolfSoko/wol-sok-mono/commit/06df102c41ed9fb8643d218265567a3098879937))
+
 ## [74.163.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.163.0...v74.163.1) (2026-11-10)
 
 ### Refactorings
