@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { ClubSearchComponent } from './club-search.component';
-
-/** Where a hit of the search "Über mein Kind" leads, then the Verein's id. */
-export const CHILD_CLUB_LINK = '/suchen/kind/verein';
+import { CHILD_CLUB_LINK } from './search-level';
 
 /**
  * `/suchen/kind`: the way to marking the Elternteil's Kind, through its

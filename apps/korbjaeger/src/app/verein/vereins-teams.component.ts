@@ -61,10 +61,12 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
                   [teamId]="team.teamId"
                   [teamName]="team.name"
                 />
-                <ng-container
-                  [ngTemplateOutlet]="teamDetail()?.template ?? null"
-                  [ngTemplateOutletContext]="{ $implicit: team }"
-                />
+                @if (teamDetail(); as detail) {
+                  <ng-container
+                    [ngTemplateOutlet]="detail.template"
+                    [ngTemplateOutletContext]="{ $implicit: team }"
+                  />
+                }
               </li>
             }
           </ul>

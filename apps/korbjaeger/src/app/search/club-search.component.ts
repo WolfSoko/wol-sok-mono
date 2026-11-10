@@ -20,6 +20,7 @@ import {
 } from './club-search-result';
 import { ClubSearchTerm } from './club-search-term';
 import { debounced } from './debounced';
+import { CLUB_LINK } from './search-level';
 
 /** How long typing pauses before the search runs. */
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -128,7 +129,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
 })
 export class ClubSearchComponent {
   /** Where a hit leads, followed by the Verein's id. */
-  public readonly clubLink = input('/suchen/verein');
+  public readonly clubLink = input(CLUB_LINK);
   protected readonly clubIndex = inject(ClubIndex);
   protected readonly term = inject(ClubSearchTerm);
   protected readonly maxHits = MAX_HITS;

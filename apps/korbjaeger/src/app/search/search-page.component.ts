@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { ClubSearchComponent } from './club-search.component';
+import { CHILD_SEARCH_LEVEL } from './search-level';
 
 /**
  * `/suchen`: the ways to a Team without its id, by its Verein's name, by
@@ -23,7 +24,7 @@ import { ClubSearchComponent } from './club-search.component';
       <p>
         Über seinen Verein zu seinem Team, dann markierst du dein Kind im Kader.
       </p>
-      <a matButton="outlined" routerLink="/suchen/kind" data-qa="by-child"
+      <a matButton="outlined" [routerLink]="byChild" data-qa="by-child"
         >Über mein Kind suchen</a
       >
     </section>
@@ -55,4 +56,6 @@ import { ClubSearchComponent } from './club-search.component';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchPageComponent {}
+export class SearchPageComponent {
+  protected readonly byChild = CHILD_SEARCH_LEVEL.link;
+}

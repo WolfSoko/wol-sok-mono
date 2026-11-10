@@ -8,7 +8,8 @@ export interface VereinsTeamDetailContext {
 
 /**
  * Marks the `ng-template` a screen puts into `VereinsTeamsComponent` to
- * show below each Team (`*korbVereinsTeamDetail="let team"`), typing the
+ * show below each Team (`<ng-template korbVereinsTeamDetail let-team>`),
+ * typing the
  * row it is given.
  */
 @Directive({ selector: '[korbVereinsTeamDetail]' })

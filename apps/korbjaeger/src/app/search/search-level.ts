@@ -8,3 +8,9 @@ export const CHILD_SEARCH_LEVEL: Level = {
   title: 'Mein Kind',
   link: ['/suchen/kind'],
 };
+
+/** Where a hit of the search by Verein leads, followed by the Verein's id. */
+export const CLUB_LINK = '/suchen/verein';
+
+/** Where a hit of the search "Über mein Kind" leads, then the Verein's id. */
+export const CHILD_CLUB_LINK = '/suchen/kind/verein';

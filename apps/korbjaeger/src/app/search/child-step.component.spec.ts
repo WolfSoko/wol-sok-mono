@@ -1,11 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import {
-  BasketballDataError,
-  type Spiel,
-  type TeamSaison,
-} from '@wolsok/feat-shared-basketball-data';
+import { BasketballDataError } from '@wolsok/feat-shared-basketball-data';
 import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
@@ -13,36 +9,13 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { JETZT } from '../jetzt';
+import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
 import { ChildStepComponent } from './child-step.component';
 
 type TeamSpieleRead = KorbjaegerData['teamSpiele'];
 
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
-const WASBUETTEL = { id: 313036, name: 'MTV Wasbüttel -RST-', vereinId: 1837 };
-const GIFHORN = { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 };
-
-function spiel(id: number, datum: string, played: boolean): Spiel {
-  return {
-    id,
-    ligaId: 54862,
-    spieltag: 1,
-    datum,
-    heim: { art: 'team', team: WASBUETTEL },
-    gast: { art: 'team', team: GIFHORN },
-    status: played
-      ? { art: 'gespielt', ergebnis: { heim: 78, gast: 47 }, bestaetigt: true }
-      : { art: 'geplant' },
-  };
-}
-
-function saison(...spiele: Spiel[]): TeamSaison {
-  return {
-    team: WASBUETTEL,
-    verein: { id: 1837, name: 'MTV Wasbüttel' },
-    ligen: [],
-    spiele,
-  };
-}
+const WASBUETTEL = WASBUETTEL_RST;
 
 async function render(
   read: TeamSpieleRead,
@@ -79,10 +52,10 @@ function text(element: Element | null | undefined): string {
 describe('ChildStepComponent', () => {
   it("links a followed Team's last played Spiel, to mark the Kind there", async () => {
     const { page, teamSpiele } = await render(async () =>
-      saison(
-        spiel(2861436, '2026-09-20', true),
-        spiel(2861440, '2026-10-04', true),
-        spiel(2861450, '2026-11-15', false)
+      saisonOf(
+        spielOn(2861436, '2026-09-20'),
+        spielOn(2861440, '2026-10-04'),
+        spielOn(2861450, '2026-11-15', { art: 'geplant' })
       )
     );
 
@@ -96,7 +69,7 @@ describe('ChildStepComponent', () => {
 
   it('says the Kind can be marked after its first Spiel where none was played', async () => {
     const { page } = await render(async () =>
-      saison(spiel(2861450, '2026-11-15', false))
+      saisonOf(spielOn(2861450, '2026-11-15', { art: 'geplant' }))
     );
 
     expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
@@ -113,7 +86,7 @@ describe('ChildStepComponent', () => {
         gespeichertAm: JETZT_IM_SPEC - 2 * 60 * 60_000,
         grund: 'keine-verbindung',
       });
-      return saison(spiel(2861436, '2026-09-20', true));
+      return saisonOf(spielOn(2861436, '2026-09-20'));
     });
 
     expect(text(page.querySelector('[data-qa="child-step-stand"]'))).toContain(
@@ -135,7 +108,7 @@ describe('ChildStepComponent', () => {
   });
 
   it('shows and reads nothing for a Team not followed', async () => {
-    const { page, teamSpiele } = await render(async () => saison(), {
+    const { page, teamSpiele } = await render(async () => saisonOf(), {
       followed: false,
     });
 
