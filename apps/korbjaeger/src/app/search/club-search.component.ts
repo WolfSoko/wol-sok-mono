@@ -4,14 +4,12 @@ import {
   computed,
   inject,
 } from '@angular/core';
-import { toObservable, toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { debounceTime } from 'rxjs';
 import { fehlerText } from '../fehler/fehler-text';
 import { ClubIndex } from './club-index';
 import {
@@ -20,6 +18,7 @@ import {
   type ClubSearchResult,
 } from './club-search-result';
 import { ClubSearchTerm } from './club-search-term';
+import { debounced } from './debounced';
 
 /** How long typing pauses before the search runs. */
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -137,10 +136,7 @@ export class ClubSearchComponent {
   protected readonly maxHits = MAX_HITS;
 
   /** The term once typing paused, the one kept from before at once. */
-  private readonly searched = toSignal(
-    toObservable(this.term.value).pipe(debounceTime(SEARCH_DEBOUNCE_MS)),
-    { initialValue: this.term.value() }
-  );
+  private readonly searched = debounced(this.term.value, SEARCH_DEBOUNCE_MS);
 
   /** What the search shows, none while the index is not loaded. */
   protected readonly result = computed<ClubSearchResult | undefined>(() => {
