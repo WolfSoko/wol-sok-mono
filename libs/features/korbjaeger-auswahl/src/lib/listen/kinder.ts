@@ -30,6 +30,7 @@ export type KindFeld =
  */
 export const KINDER: AuswahlListenArt<Kind, KindFeld, 'children'> = {
   feld: 'children',
+  nachSeit: true,
   id: (kind) => kind.personId,
   gleich: (a, b) => a.personId === b.personId && a.spitzname === b.spitzname,
   lesen: (roh) => {

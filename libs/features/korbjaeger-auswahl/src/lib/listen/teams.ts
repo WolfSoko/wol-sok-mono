@@ -20,6 +20,7 @@ export type TeamFeld = number | typeof ENTFERNT;
  */
 export const TEAMS: AuswahlListenArt<TeamId, TeamFeld, 'teams'> = {
   feld: 'teams',
+  nachSeit: true,
   id: (team) => team,
   gleich: (a, b) => a === b,
   lesen: (roh) => {

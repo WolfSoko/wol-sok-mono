@@ -35,6 +35,7 @@ import {
   auswahlFelder,
   felderDerListe,
   geschriebeneTeamsSeit,
+  LISTEN_NACH_SEIT,
   mitTeamsSeit,
   naechsterSeit,
   type AuswahlFelder,
@@ -307,7 +308,10 @@ export class FirestoreAuswahl implements Auswahl {
     // at most one `seit` per entry
     this.letzterSeit =
       seit +
-      AUSWAHL_LISTEN.reduce((summe, liste) => summe + nachher[liste].length, 0);
+      LISTEN_NACH_SEIT.reduce(
+        (summe, liste) => summe + nachher[liste].length,
+        0
+      );
     // a Team it follows is shown with the `seit` it writes, so it has its
     // place before the listener tells
     const seiten = geschriebeneTeamsSeit(felder);

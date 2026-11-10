@@ -48,6 +48,23 @@ describe('auswahlFelder', () => {
   });
 });
 
+describe('auswahlFelder with an entry twice', () => {
+  it('writes nothing for an entry it held already', () => {
+    const vorher: AuswahlInhalt = {
+      ...LEERE_AUSWAHL,
+      teams: [313036],
+      kinder: [{ personId: 4711 }],
+    };
+    const nachher: AuswahlInhalt = {
+      ...LEERE_AUSWAHL,
+      teams: [313036, 313036],
+      kinder: [{ personId: 4711 }, { personId: 4711 }],
+    };
+
+    expect(auswahlFelder(vorher, nachher, 100)).toEqual({});
+  });
+});
+
 describe('mitTeamsSeit', () => {
   it('gives the Teams it holds the seit a write stores for them', () => {
     const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036, 201500] };

@@ -29,6 +29,7 @@ export const VEREINSFARBEN: AuswahlListenArt<
   'clubColors'
 > = {
   feld: 'clubColors',
+  nachSeit: false,
   id: (wahl) => wahl.vereinId,
   gleich: (a, b) => a.vereinId === b.vereinId && gleicheFarben(a, b),
   lesen: (roh) => {
@@ -43,13 +44,13 @@ export const VEREINSFARBEN: AuswahlListenArt<
         gelesen.push({ vereinId, ...farben });
       }
     }
-    // no order of their own: no `seit`
+    // ordered by Verein, not by `seit` (`nachSeit: false`)
     return nachVerein(gelesen).map(
       (wert): GelesenerEintrag<VereinsfarbenWahl> => ({ wert, seit: 0 })
     );
   },
   neu: (wahl) => farbenText(wahl),
-  geaendert: (_alt, neu) => farbenText(neu),
+  geaendert: (_alt, jetzt) => farbenText(jetzt),
   mit: eintraegeMit,
   ordnen: nachVerein,
 };

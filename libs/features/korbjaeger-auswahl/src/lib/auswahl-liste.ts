@@ -18,38 +18,46 @@ import type { AuswahlInhalt } from './auswahl-listen';
 export interface AuswahlListenArt<W, F, D extends string = string> {
   /** The document's field that stores the list, a map by `id`. */
   readonly feld: D;
+  /**
+   * Whether its entries are ordered by when they joined, each with a
+   * `seit` of its own (Teams, Kinder); one that is not hands out none.
+   */
+  readonly nachSeit: boolean;
   /** The DBB id the map stores an entry under, which tells entries apart. */
-  id(wert: W): number;
+  readonly id: (wert: W) => number;
   /** Whether two entries of the same id hold the same. */
-  gleich(a: W, b: W): boolean;
+  readonly gleich: (a: W, b: W) => boolean;
   /**
    * The readable entries of the stored field, in the list's order; an entry
    * it cannot read is left out. `undefined` where the field makes the whole
    * document unreadable.
    */
-  lesen(roh: unknown): readonly GelesenerEintrag<W>[] | undefined;
+  readonly lesen: (roh: unknown) => readonly GelesenerEintrag<W>[] | undefined;
   /**
    * What a change writes of an entry that joins; `seit` gives it the next
    * place, for a list ordered by when its entries joined.
    */
-  neu(wert: W, seit: () => number): Exclude<F, typeof ENTFERNT>;
+  readonly neu: (wert: W, seit: () => number) => Exclude<F, typeof ENTFERNT>;
   /**
    * What a change writes of an entry it changes (same id, not `gleich`);
    * a list whose entries are their id alone has none.
    */
-  geaendert?(alt: W, neu: W): Exclude<F, typeof ENTFERNT>;
+  readonly geaendert?: (alt: W, jetzt: W) => Exclude<F, typeof ENTFERNT>;
   /** The stored map with `felder` merged into it, as Firestore merges them. */
-  mit(
+  readonly mit: (
     gespeichert: RohesDokument,
     felder: Readonly<Record<string, F>>
-  ): RohesDokument;
+  ) => RohesDokument;
   /**
    * An entry both account and device hold, as the account keeps it once
    * they join (`zusammenfuehren`); the account's as it is where absent.
    */
-  ergaenzen?(konto: W, geraet: W): W;
+  readonly ergaenzen?: (konto: W, geraet: W) => W;
   /** The order the list keeps, where it is not the order entries joined. */
-  ordnen?(liste: readonly W[]): readonly W[];
+  readonly ordnen?: (liste: readonly W[]) => readonly W[];
   /** The place `inhalt` already knows for an entry that joins (`neu`). */
-  bekannterSeit?(inhalt: AuswahlInhalt, wert: W): number | undefined;
+  readonly bekannterSeit?: (
+    inhalt: AuswahlInhalt,
+    wert: W
+  ) => number | undefined;
 }

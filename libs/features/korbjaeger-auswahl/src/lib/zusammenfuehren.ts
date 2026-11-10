@@ -1,4 +1,3 @@
-import type { AuswahlListenArt } from './auswahl-liste';
 import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
@@ -7,6 +6,7 @@ import {
   type AuswahlInhalt,
   type AuswahlListe,
   type AuswahlListen,
+  type ListenArt,
   type ListenWert,
 } from './auswahl-listen';
 
@@ -55,11 +55,11 @@ function listeZusammen<L extends AuswahlListe>(
   konto: AuswahlListen,
   geraet: AuswahlListen
 ): ZusammengefuehrteListe<ListenWert<L>> {
-  const art: AuswahlListenArt<ListenWert<L>, unknown> = listenArt(liste);
+  const art: ListenArt<L> = listenArt(liste);
   const imKonto = konto[liste];
   const ausGeraet = new Map(geraet[liste].map((wert) => [art.id(wert), wert]));
   let ergaenzt = false;
-  const ergaenzteKonto = imKonto.map((wert) => {
+  const ergaenztesKonto = imKonto.map((wert) => {
     const vomGeraet = ausGeraet.get(art.id(wert));
     const neu =
       vomGeraet === undefined || art.ergaenzen === undefined
@@ -76,6 +76,6 @@ function listeZusammen<L extends AuswahlListe>(
   if (!ergaenzt && dazu.length === 0) {
     return { liste: imKonto, uebrig };
   }
-  const vereint = [...ergaenzteKonto, ...dazu];
+  const vereint = [...ergaenztesKonto, ...dazu];
   return { liste: art.ordnen?.(vereint) ?? vereint, uebrig };
 }

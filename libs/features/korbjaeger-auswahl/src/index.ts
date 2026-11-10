@@ -13,7 +13,7 @@ export {
   auswahlOhne,
   auswahlVereint,
 } from './lib/auswahl-listen';
-export { type ListenSignale, listenSignale } from './lib/listen-signale';
+export { listenSignale } from './lib/listen-signale';
 export { AuswahlVollError, AuswahlZuNeuError } from './lib/auswahl-fehler';
 export { FirestoreAuswahl, auswahlDokumentVon } from './lib/firestore-auswahl';
 export { geraetUebernehmen } from './lib/geraet-uebernehmen';

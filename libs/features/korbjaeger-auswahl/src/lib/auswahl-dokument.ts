@@ -7,7 +7,6 @@ import {
   type GelesenerEintrag,
   type RohesDokument,
 } from './auswahl-eintraege';
-import type { AuswahlListenArt } from './auswahl-liste';
 import {
   AUSWAHL_LISTEN,
   jedeListe,
@@ -15,6 +14,7 @@ import {
   type AuswahlInhalt,
   type AuswahlListe,
   type AuswahlListen,
+  type ListenArt,
   type ListenDokumentFeld,
   type ListenFeld,
   type ListenWert,
@@ -110,13 +110,18 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
     teamsSeit: new Map(listen.teams.map(({ wert, seit }) => [wert, seit])),
     hoechsterSeit: Math.max(
       0,
-      ...AUSWAHL_LISTEN.flatMap((liste) =>
+      ...LISTEN_NACH_SEIT.flatMap((liste) =>
         listen[liste].map(({ seit }) => seit)
       )
     ),
     roh: gelesen,
   };
 }
+
+/** The lists whose entries carry a `seit` (`AuswahlListenArt.nachSeit`). */
+export const LISTEN_NACH_SEIT: readonly AuswahlListe[] = AUSWAHL_LISTEN.filter(
+  (liste) => listenArt(liste).nachSeit
+);
 
 /** Each list of `dokument`; `undefined` where one makes it unreadable. */
 function listenLesen(dokument: RohesDokument): GeleseneListen | undefined {
@@ -182,7 +187,7 @@ export function auswahlFelder(
   const naechster = (): number => seit++;
   const felder: Record<string, unknown> = {};
   for (const liste of AUSWAHL_LISTEN) {
-    const eintraege = listenFelder(liste, vorher, nachher, naechster);
+    const eintraege = felderFuer(liste, vorher, nachher, naechster);
     if (Object.keys(eintraege).length > 0) {
       felder[listenArt(liste).feld] = eintraege;
     }
@@ -192,19 +197,20 @@ export function auswahlFelder(
 }
 
 /** What `auswahlFelder` writes of `liste`. */
-function listenFelder<L extends AuswahlListe>(
+function felderFuer<L extends AuswahlListe>(
   liste: L,
   vorher: AuswahlInhalt,
   nachher: AuswahlInhalt,
   naechster: () => number
 ): ListenFelder<L> {
-  const art: AuswahlListenArt<ListenWert<L>, ListenFeld<L>> = listenArt(liste);
+  const art: ListenArt<L> = listenArt(liste);
   const felder: Record<string, ListenFeld<L> | typeof ENTFERNT> = {};
   const davor = new Map(vorher[liste].map((wert) => [art.id(wert), wert]));
+  const gegangen = new Set(davor.keys());
   for (const wert of nachher[liste]) {
     const id = art.id(wert);
     const alt = davor.get(id);
-    davor.delete(id);
+    gegangen.delete(id);
     if (alt === undefined) {
       felder[id] = art.neu(
         wert,
@@ -214,8 +220,7 @@ function listenFelder<L extends AuswahlListe>(
       felder[id] = art.geaendert(alt, wert);
     }
   }
-  // what is left was there before and is gone now
-  for (const id of davor.keys()) {
+  for (const id of gegangen) {
     felder[id] = ENTFERNT;
   }
   // every list's `feld` takes `ENTFERNT`
@@ -271,7 +276,7 @@ export function auswahlDokumentMit(
   for (const liste of AUSWAHL_LISTEN) {
     const eintraege = felderDerListe(felder, liste);
     if (eintraege !== undefined) {
-      const art: AuswahlListenArt<unknown, unknown> = listenArt(liste);
+      const art: ListenArt<typeof liste> = listenArt(liste);
       const gespeichert = roh[art.feld];
       dokument[art.feld] = art.mit(
         istKarte(gespeichert) ? gespeichert : {},

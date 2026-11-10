@@ -5,7 +5,6 @@ import type {
 } from '@wolsok/feat-shared-basketball-data';
 import type { GelesenesDokument, TeamPlatz } from './auswahl-dokument';
 import { vorSeit } from './auswahl-eintraege';
-import type { AuswahlListenArt } from './auswahl-liste';
 import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
@@ -15,6 +14,7 @@ import {
   type AuswahlInhalt,
   type AuswahlListe,
   type AuswahlListen,
+  type ListenArt,
   type ListenWert,
 } from './auswahl-listen';
 import {
@@ -191,7 +191,7 @@ function ohneGleiche<L extends AuswahlListe>(
   inhalt: AuswahlListen,
   ohneDiese: AuswahlListen
 ): readonly ListenWert<L>[] {
-  const art: AuswahlListenArt<ListenWert<L>, unknown> = listenArt(liste);
+  const art: ListenArt<L> = listenArt(liste);
   return inhalt[liste].filter(
     (wert) => !ohneDiese[liste].some((alt) => art.gleich(alt, wert))
   );

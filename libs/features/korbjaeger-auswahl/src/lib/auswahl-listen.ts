@@ -125,7 +125,7 @@ function listeOhne<L extends AuswahlListe>(
   inhalt: AuswahlListen,
   ohneDiese: AuswahlListen
 ): readonly ListenWert<L>[] {
-  const art: AuswahlListenArt<ListenWert<L>, unknown> = listenArt(liste);
+  const art: ListenArt<L> = listenArt(liste);
   const ids = new Set(ohneDiese[liste].map((wert) => art.id(wert)));
   return inhalt[liste].filter((wert) => !ids.has(art.id(wert)));
 }
@@ -162,6 +162,6 @@ export function gleicheListe<L extends AuswahlListe>(
   a: readonly ListenWert<L>[],
   b: readonly ListenWert<L>[]
 ): boolean {
-  const art: AuswahlListenArt<ListenWert<L>, unknown> = listenArt(liste);
+  const art: ListenArt<L> = listenArt(liste);
   return gleicheFolge(a, b, (x, y) => art.gleich(x, y));
 }
