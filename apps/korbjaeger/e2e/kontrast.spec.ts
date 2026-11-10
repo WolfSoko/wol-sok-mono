@@ -49,9 +49,22 @@ for (const schema of ['light', 'dark'] as const) {
     test("keeps every text readable in the app's own colours", async ({
       page,
       startPage,
+      suchePage,
       teamPage,
       spielPage,
     }) => {
+      await suchePage.clubIndex([
+        {
+          id: 1837,
+          name: 'MTV Wasbüttel',
+          associations: [{ id: 7, name: 'Niedersachsen' }],
+        },
+      ]);
+      await suchePage.goto();
+      await suchePage.vereinssuche.fill('wasbüttel');
+      await expect(suchePage.vereine).toHaveCount(1);
+      expect(await kontrastFehler(page)).toEqual([]);
+
       await teamPage.goto(TEAM);
       await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
       expect(await kontrastFehler(page)).toEqual([]);

@@ -89,7 +89,10 @@ function abortSignalOf(
 }
 
 /** The JSON body of `response`; one without is `unavailable`. */
-export async function readJson(path: string, response: Response): Promise<unknown> {
+export async function readJson(
+  path: string,
+  response: Response
+): Promise<unknown> {
   try {
     return await response.json();
   } catch (error) {
