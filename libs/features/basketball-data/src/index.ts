@@ -22,7 +22,10 @@ export {
   storedAssociationClubs,
 } from './lib/club-index/stored-association-clubs';
 export type { StoredAssociationClubs } from './lib/club-index/stored-association-clubs';
-export type { ClubCrawlOptions } from './lib/club-index/crawl-clubs';
+export type {
+  ClubCrawlOptions,
+  ClubCrawlSource,
+} from './lib/club-index/crawl-clubs';
 export { dbbBoxscoreFinished } from './lib/dbb/boxscore-finished';
 export { dbbOhnePersonen } from './lib/dbb/ohne-personen';
 export {
