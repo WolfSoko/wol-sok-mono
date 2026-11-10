@@ -86,6 +86,60 @@ test.describe('Search', () => {
     expect(requests.filter((url) => url.includes('wasbuttel'))).toEqual([]);
   });
 
+  test("an Elternteil finds the Verein, follows the Kind's Team and marks the Kind in its Kader", async ({
+    page,
+    startPage,
+    searchPage: search,
+    spielPage,
+    teamPage,
+    titleBar,
+  }) => {
+    // the day after Spiel 2861436, the Team's last played one then, whose
+    // Kader names Fenja Ahornwiese (an invented name)
+    await page.clock.setFixedTime(new Date('2026-09-21T12:00:00+02:00'));
+    await clubIndex(page, CLUB_INDEX);
+    const requests: string[] = [];
+    page.on('request', (request) => requests.push(request.url()));
+
+    await search.goto();
+    await search.byChild.click();
+    await expect(page).toHaveURL(/\/suchen\/kind$/);
+    await expect(search.heading).toHaveText('Über mein Kind');
+    await expect(titleBar.levels).toHaveText([
+      'Korbjäger',
+      'Suchen',
+      'Mein Kind',
+    ]);
+
+    await search.clubSearch.fill('wasbuttel');
+    await search.club('MTV Wasbüttel').click();
+    await expect(page).toHaveURL(/\/suchen\/kind\/verein\/1837$/);
+    await expect(titleBar.levels).toHaveText([
+      'Korbjäger',
+      'Suchen',
+      'Mein Kind',
+      'MTV Wasbüttel',
+    ]);
+    await expect(search.followFirst).toBeVisible();
+
+    const teamName = 'MTV Wasbüttel -RST-';
+    const team = teamPage.vereinsTeam('Regionsliga Braunschweig mu12');
+    await expect(search.markChild(team, teamName)).toHaveCount(0);
+    await folgenKnopf(team, teamName, { gefolgt: false }).click();
+    await search.markChild(team, teamName).click();
+
+    await expect(page).toHaveURL(/\/spiel\/2861436$/);
+    await spielPage.alsKindMarkieren(
+      spielPage.kaderVon(teamName),
+      'Fenja Ahornwiese',
+      'Fenni'
+    );
+
+    await titleBar.level('Korbjäger').click();
+    await expect(startPage.kind('Fenni')).toHaveCount(1);
+    expect(requests.filter((url) => url.includes('wasbuttel'))).toEqual([]);
+  });
+
   test('opens the Liga wizard below the search', async ({
     page,
     startPage,
@@ -149,7 +203,12 @@ test.describe('Search', () => {
     await expect(search.club('Post SV Nürnberg')).toHaveCount(1);
   });
 
-  for (const pfad of ['/suchen', '/suchen/verein/1837']) {
+  for (const pfad of [
+    '/suchen',
+    '/suchen/verein/1837',
+    '/suchen/kind',
+    '/suchen/kind/verein/1837',
+  ]) {
     test(`${pfad} opens directly and is noindex`, async ({ page }) => {
       await clubIndex(page, CLUB_INDEX);
       await page.goto(pfad);

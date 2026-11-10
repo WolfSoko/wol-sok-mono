@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
+import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
 import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from '../team/nach-entfolgen';
 import { MeineTeamsUeberblick } from './meine-teams-ueberblick';
@@ -32,6 +33,7 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
 })
 export class UeberblickComponent {
   private readonly ueberblick = inject(MeineTeamsUeberblick);
+  protected readonly afterFirstGameHint = AFTER_FIRST_GAME_HINT;
   protected readonly ansicht = this.ueberblick.ansicht;
   protected readonly nichtLesbar = this.ueberblick.nichtLesbar;
 }

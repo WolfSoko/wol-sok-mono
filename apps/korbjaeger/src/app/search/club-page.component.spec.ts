@@ -1,9 +1,10 @@
-import { signal } from '@angular/core';
+import { ApplicationRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
   type Liga,
+  type TeamSaison,
   type VereinsTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
@@ -40,9 +41,17 @@ const WASBUETTEL: VereinsTeams = {
   ],
 };
 
+const NO_GAMES_YET: TeamSaison = {
+  team: WASBUETTEL.teams[0].team,
+  verein: WASBUETTEL.verein,
+  ligen: [VORRUNDE],
+  spiele: [],
+};
+
 async function render(
   read: VereinsTeamsRead,
-  clubId = '1837'
+  clubId = '1837',
+  { forChild = false }: { forChild?: boolean } = {}
 ): Promise<{
   page: HTMLElement;
   breadcrumb: Breadcrumb;
@@ -52,7 +61,11 @@ async function render(
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
-      { provide: BASKETBALL_DATA, useValue: { vereinsTeams } },
+      {
+        provide: BASKETBALL_DATA,
+        // the Team's Saison, for the Kind's step: no Spiel played yet
+        useValue: { vereinsTeams, teamSpiele: async () => NO_GAMES_YET },
+      },
       // in memory: nothing reaches the device's storage
       { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
       { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
@@ -60,6 +73,7 @@ async function render(
   });
   const fixture = TestBed.createComponent(ClubPageComponent);
   fixture.componentRef.setInput('clubId', clubId);
+  fixture.componentRef.setInput('forChild', forChild);
   await fixture.whenStable();
   return {
     page: fixture.nativeElement as HTMLElement,
@@ -142,5 +156,64 @@ describe('ClubPageComponent', () => {
     expect(text(page.querySelector('[data-qa="vereins-teams-fehler"]'))).toBe(
       'Diesen Verein kennt der DBB nicht.'
     );
+  });
+
+  describe('in the search "Über mein Kind"', () => {
+    it('puts it below the search for the Kind in the breadcrumb', async () => {
+      const { breadcrumb } = await render(async () => WASBUETTEL, '1837', {
+        forChild: true,
+      });
+
+      expect(breadcrumb.levels()).toEqual([
+        { title: 'Korbjäger', link: ['/'] },
+        { title: 'Suchen', link: ['/suchen'] },
+        { title: 'Mein Kind', link: ['/suchen/kind'] },
+        { title: 'MTV Wasbüttel' },
+      ]);
+    });
+
+    it("asks to follow the Kind's Team first, then leads on from it", async () => {
+      const { page } = await render(async () => WASBUETTEL, '1837', {
+        forChild: true,
+      });
+
+      expect(
+        text(page.querySelector('[data-qa="child-search-follow-first"]'))
+      ).toBe(
+        'Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.'
+      );
+      const team = page.querySelector('[data-qa="vereins-team"]');
+      expect(text(team?.querySelector('korb-child-step'))).toBe('');
+
+      team?.querySelector<HTMLElement>('[data-qa="team-folgen"]')?.click();
+      await TestBed.inject(ApplicationRef).whenStable();
+
+      expect(
+        text(team?.querySelector('[data-qa="child-step-after-first-game"]'))
+      ).toContain('nach seinem ersten Spiel');
+    });
+
+    it('asks to follow nothing where the Teams could not be read', async () => {
+      const { page } = await render(
+        async () => {
+          throw new BasketballDataError('unavailable', 'DBB down');
+        },
+        '1837',
+        { forChild: true }
+      );
+
+      expect(
+        page.querySelector('[data-qa="child-search-follow-first"]')
+      ).toBeNull();
+    });
+
+    it('offers no step outside it', async () => {
+      const { page } = await render(async () => WASBUETTEL);
+
+      expect(page.querySelector('korb-child-step')).toBeNull();
+      expect(
+        page.querySelector('[data-qa="child-search-follow-first"]')
+      ).toBeNull();
+    });
   });
 });

@@ -1669,7 +1669,7 @@ describe('UeberblickComponent', () => {
         );
 
         expect(hinweis(seite)).toBe(
-          'Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in einem Spielbericht steht: Öffne dann das Spiel und markiere es im Kader.'
+          'Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in einem Spielbericht steht. Öffne dann das Spiel und markiere es im Kader.'
         );
         expect(teamNamen(seite)).toEqual(['MTV Wasbüttel']);
       });

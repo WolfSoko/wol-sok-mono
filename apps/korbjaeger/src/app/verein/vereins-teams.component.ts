@@ -1,18 +1,31 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  contentChild,
+  input,
+} from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
+import { VereinsTeamDetailDirective } from './vereins-team-detail.directive';
 import type { VereinsTeamsStand } from './vereins-teams-stand';
 
 /**
  * A Verein's Teams as their read stands (`stand`): loading, why it
  * failed, or each Team with its Ligen, linking to its page, and a control
- * to follow it. Reads nothing itself; the screen holding the read passes
- * it.
+ * to follow it, and what the screen's `korbVereinsTeamDetail` template adds
+ * below each Team.
+ * Reads nothing itself; the screen holding the read passes it.
  */
 @Component({
   selector: 'korb-vereins-teams',
-  imports: [MatProgressBarModule, RouterLink, TeamFolgenComponent],
+  imports: [
+    MatProgressBarModule,
+    NgTemplateOutlet,
+    RouterLink,
+    TeamFolgenComponent,
+  ],
   template: `
     @let vereinsTeams = stand();
     @switch (vereinsTeams.art) {
@@ -48,6 +61,12 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
                   [teamId]="team.teamId"
                   [teamName]="team.name"
                 />
+                @if (teamDetail(); as detail) {
+                  <ng-container
+                    [ngTemplateOutlet]="detail.template"
+                    [ngTemplateOutletContext]="{ $implicit: team }"
+                  />
+                }
               </li>
             }
           </ul>
@@ -95,4 +114,9 @@ export class VereinsTeamsComponent {
   public readonly emptyText = input(
     'Keine weiteren Teams des Vereins in den letzten Wochen.'
   );
+  /**
+   * What the screen shows below each Team, given the Team's row: it takes
+   * a line of its own where it sets `flex-basis: 100%`.
+   */
+  protected readonly teamDetail = contentChild(VereinsTeamDetailDirective);
 }
