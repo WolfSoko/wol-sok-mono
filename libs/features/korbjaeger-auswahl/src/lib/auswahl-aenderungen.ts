@@ -3,15 +3,17 @@ import type {
   TeamId,
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
+import type { GelesenesDokument, TeamPlatz } from './auswahl-dokument';
+import { vorSeit } from './selection-entries';
 import {
   AUSWAHL_GRENZEN,
-  LEERE_AUSWAHL,
-  type AuswahlInhalt,
   AUSWAHL_LISTEN,
-  type GelesenesDokument,
-  type TeamPlatz,
-  vorSeit,
-} from './auswahl-dokument';
+  everyList,
+  LEERE_AUSWAHL,
+  listWithout,
+  type AuswahlInhalt,
+  type SelectionLists,
+} from './selection-lists';
 import {
   gleicheFarben,
   vereinsfarbenAus,
@@ -19,8 +21,7 @@ import {
 } from './vereinsfarben';
 import { nachVerein, type VereinsfarbenWahl } from './vereinsfarben-wahl';
 import { AuswahlVollError } from './auswahl-fehler';
-import { gleicheFolge } from './gleiche-folge';
-import { kindMit, type Kind, type MarkierbarerSpieler } from './kind';
+import { kindMit, type MarkierbarerSpieler } from './kind';
 
 /**
  * A change of an `Auswahl`, as every adapter applies it to what it read:
@@ -163,28 +164,21 @@ export function vereinsfarbenZuruecksetzenAenderung(
 }
 
 /**
- * Takes what `abgegeben` holds out: its Teams, and its Kinder and
- * Vereinsfarben as they were (one changed since stays). What joined since
- * stays too.
+ * Takes what `abgegeben` holds out: each list's entries as they were (one
+ * changed since, a Kind's Spitzname or a Verein's colours, stays). What
+ * joined since stays too.
  */
 export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
-  return (inhalt) => {
-    const teams = inhalt.teams.filter(
-      (team) => !abgegeben.teams.includes(team)
+  return (selection) => {
+    const left = everyList<SelectionLists>((list) =>
+      listWithout(list, selection, abgegeben, true)
     );
-    const kinder = inhalt.kinder.filter(
-      (kind) => !abgegeben.kinder.some((alt) => gleichesKind(alt, kind))
-    );
-    const vereinsfarben = inhalt.vereinsfarben.filter(
-      (wahl) =>
-        !abgegeben.vereinsfarben.some((alt) => gleicheVereinsfarbe(alt, wahl))
-    );
-    return teams.length === inhalt.teams.length &&
-      kinder.length === inhalt.kinder.length &&
-      vereinsfarben.length === inhalt.vereinsfarben.length
-      ? inhalt
+    return AUSWAHL_LISTEN.every(
+      (list) => left[list].length === selection[list].length
+    )
+      ? selection
       : // the Teams that stay keep their places (`teamsSeit`)
-        { ...inhalt, teams, kinder, vereinsfarben };
+        { ...selection, ...left };
   };
 }
 
@@ -223,30 +217,6 @@ export function inhaltAus(gelesen: GelesenesDokument): AuswahlInhalt {
   return gelesen.art === 'aktuell' ? gelesen : LEERE_AUSWAHL;
 }
 
-/** Whether two lists of Kinder hold the same Kinder in the same order. */
-export function gleicheKinder(a: readonly Kind[], b: readonly Kind[]): boolean {
-  return gleicheFolge(a, b, gleichesKind);
-}
-
-/** Whether two lists of Vereinsfarben hold the same colours of the same Vereine. */
-export function gleicheVereinsfarben(
-  a: readonly VereinsfarbenWahl[],
-  b: readonly VereinsfarbenWahl[]
-): boolean {
-  return gleicheFolge(a, b, gleicheVereinsfarbe);
-}
-
-function gleicheVereinsfarbe(
-  a: VereinsfarbenWahl,
-  b: VereinsfarbenWahl
-): boolean {
-  return a.vereinId === b.vereinId && gleicheFarben(a, b);
-}
-
 function istMarkiert(inhalt: AuswahlInhalt, person: PersonId): boolean {
   return inhalt.kinder.some((kind) => kind.personId === person);
-}
-
-function gleichesKind(a: Kind, b: Kind): boolean {
-  return a.personId === b.personId && a.spitzname === b.spitzname;
 }

@@ -1,4 +1,4 @@
-import type { AuswahlListe } from './auswahl-dokument';
+import type { AuswahlListe } from './selection-lists';
 
 /**
  * The stored `Auswahl` was written by a newer version of the app. It is

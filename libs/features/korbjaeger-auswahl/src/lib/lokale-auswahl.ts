@@ -1,4 +1,4 @@
-import { computed, signal, type Signal } from '@angular/core';
+import { signal, type Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
@@ -12,8 +12,6 @@ import {
   entfolgenAenderung,
   entmarkierenAenderung,
   folgenAenderung,
-  gleicheKinder,
-  gleicheVereinsfarben,
   grenzenPruefen,
   inhaltAus,
   markierenAenderung,
@@ -27,13 +25,17 @@ import {
   auswahlDokumentLesen,
   auswahlDokumentMit,
   auswahlFelder,
-  LEERE_AUSWAHL,
   naechsterSeit,
-  type AuswahlInhalt,
   type GelesenesDokument,
   type TeamPlatz,
 } from './auswahl-dokument';
-import { gleicheFolge } from './gleiche-folge';
+import {
+  everyList,
+  LEERE_AUSWAHL,
+  type AuswahlInhalt,
+  type SelectionLists,
+} from './selection-lists';
+import { listSignals } from './list-signals';
 import type { Kind, MarkierbarerSpieler } from './kind';
 import { isStorageFull } from '@wolsok/utils-browser-storage';
 import { AuswahlZuNeuError } from './auswahl-fehler';
@@ -103,13 +105,10 @@ export class LokaleAuswahl implements Auswahl {
   ) {
     // read at once, so `teams` and `kinder` are never undefined here
     this.anzeigen(this.lesen());
-    this.teams = computed(() => this.inhalt().teams, { equal: gleicheFolge });
-    this.kinder = computed(() => this.inhalt().kinder, {
-      equal: gleicheKinder,
-    });
-    this.vereinsfarben = computed(() => this.inhalt().vereinsfarben, {
-      equal: gleicheVereinsfarben,
-    });
+    const signals = listSignals((list) => this.inhalt()[list]);
+    this.teams = signals.teams;
+    this.kinder = signals.kinder;
+    this.vereinsfarben = signals.vereinsfarben;
     fenster?.addEventListener('storage', this.beiAenderung);
   }
 
@@ -158,8 +157,8 @@ export class LokaleAuswahl implements Auswahl {
    */
   public neuGelesen(): AuswahlInhalt {
     this.anzeigen(this.lesen());
-    const { teams, kinder, vereinsfarben } = this.inhalt();
-    return { teams, kinder, vereinsfarben };
+    const inhalt = this.inhalt();
+    return everyList<SelectionLists>((list) => inhalt[list]);
   }
 
   /**

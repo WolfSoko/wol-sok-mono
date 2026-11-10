@@ -7,12 +7,16 @@ import { inhaltAus } from './auswahl-aenderungen';
 import {
   auswahlDokumentLesen,
   auswahlFelder,
-  DOCUMENT_FIELD,
+  listFields,
   naechsterSeit,
-  LEERE_AUSWAHL,
+} from './auswahl-dokument';
+import {
+  AUSWAHL_LISTEN,
+  everyList,
   type AuswahlInhalt,
   type AuswahlListe,
-} from './auswahl-dokument';
+  type SelectionLists,
+} from './selection-lists';
 import { AuswahlZuNeuError } from './auswahl-fehler';
 import { auswahlDokumentVon, firestoreFelder } from './firestore-auswahl';
 import { type NichtUebernommen, zusammenfuehren } from './zusammenfuehren';
@@ -34,16 +38,16 @@ export async function geraetUebernehmen(
   geraet: AuswahlInhalt
 ): Promise<NichtUebernommen> {
   const dokument = auswahlDokumentVon(firestore, uid);
-  // a list the device holds nothing of adds nothing: no round trip
-  const uebernehmen = (liste: AuswahlListe): Promise<NichtUebernommen> =>
-    geraet[liste].length === 0
-      ? Promise.resolve(LEERE_AUSWAHL)
-      : listeUebernehmen(firestore, dokument, geraet, liste);
+  const left: Partial<Record<AuswahlListe, readonly unknown[]>> = {};
   // one map a transaction, one after the other
-  const { teams } = await uebernehmen('teams');
-  const { kinder } = await uebernehmen('kinder');
-  const { vereinsfarben } = await uebernehmen('vereinsfarben');
-  return { teams, kinder, vereinsfarben };
+  for (const list of AUSWAHL_LISTEN) {
+    // a list the device holds nothing of adds nothing: no round trip
+    if (geraet[list].length > 0) {
+      const uebrig = await listeUebernehmen(firestore, dokument, geraet, list);
+      left[list] = uebrig[list];
+    }
+  }
+  return everyList<SelectionLists>((list) => left[list] ?? []);
 }
 
 /**
@@ -70,7 +74,7 @@ function listeUebernehmen(
       { ...konto, [liste]: zusammenfuehrung.inhalt[liste] },
       naechsterSeit(gelesen)
     );
-    if (felder[DOCUMENT_FIELD[liste]] !== undefined) {
+    if (listFields(felder, liste) !== undefined) {
       transaktion.set(dokument, firestoreFelder(felder), { merge: true });
     }
     return zusammenfuehrung.uebrig;

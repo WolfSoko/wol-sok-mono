@@ -1,9 +1,5 @@
-import {
-  AUSWAHL_VERSION,
-  istId,
-  istKarte,
-  type RohesDokument,
-} from './auswahl-dokument';
+import { AUSWAHL_VERSION } from './auswahl-dokument';
+import { istId, istKarte, type RohesDokument } from './selection-entries';
 
 /** The versions before #2966, with German fields. */
 const LEGACY_VERSIONS: readonly unknown[] = [1, 2];

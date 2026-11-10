@@ -2,15 +2,18 @@
 // and the merge stay inside the lib.
 export { type Auswahl } from './lib/auswahl';
 export { inhaltAus } from './lib/auswahl-aenderungen';
+export { type TeamPlatz, auswahlDokumentLesen } from './lib/auswahl-dokument';
 export {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
   type AuswahlInhalt,
   type AuswahlListe,
-  type TeamPlatz,
   LEERE_AUSWAHL,
-  auswahlDokumentLesen,
-} from './lib/auswahl-dokument';
+  selectionIsEmpty,
+  selectionWithout,
+  selectionJoined,
+} from './lib/selection-lists';
+export { listSignals } from './lib/list-signals';
 export { AuswahlVollError, AuswahlZuNeuError } from './lib/auswahl-fehler';
 export { FirestoreAuswahl, auswahlDokumentVon } from './lib/firestore-auswahl';
 export { geraetUebernehmen } from './lib/geraet-uebernehmen';

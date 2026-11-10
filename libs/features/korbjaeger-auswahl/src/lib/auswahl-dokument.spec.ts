@@ -1,12 +1,11 @@
 import {
   auswahlDokumentLesen,
   auswahlFelder,
-  LEERE_AUSWAHL,
-  ENTFERNT,
   geschriebeneTeamsSeit,
   mitTeamsSeit,
-  type AuswahlInhalt,
 } from './auswahl-dokument';
+import { ENTFERNT } from './selection-entries';
+import { LEERE_AUSWAHL, type AuswahlInhalt } from './selection-lists';
 
 describe('auswahlDokumentLesen', () => {
   it("reads each Team's seit", () => {
@@ -46,6 +45,23 @@ describe('auswahlFelder', () => {
     expect(auswahlFelder(vorher, nachher, 100)).toEqual({
       teams: { 201765: 5, 201500: 100 },
     });
+  });
+});
+
+describe('auswahlFelder with an entry twice', () => {
+  it('writes nothing for an entry it held already', () => {
+    const vorher: AuswahlInhalt = {
+      ...LEERE_AUSWAHL,
+      teams: [313036],
+      kinder: [{ personId: 4711 }],
+    };
+    const nachher: AuswahlInhalt = {
+      ...LEERE_AUSWAHL,
+      teams: [313036, 313036],
+      kinder: [{ personId: 4711 }, { personId: 4711 }],
+    };
+
+    expect(auswahlFelder(vorher, nachher, 100)).toEqual({});
   });
 });
 
