@@ -38,7 +38,7 @@ test.describe('Team einrichten', () => {
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     await expect(startPage.teams).toHaveCount(1);
     await expect(startPage.team('MTV Wasbüttel')).toHaveCount(1);
-    await expect(startPage.teamSuchen).toHaveCount(0);
+    await expect(startPage.searchTeam).toHaveCount(0);
   });
 
   test('unfollows a Team from its row in the wizard', async ({

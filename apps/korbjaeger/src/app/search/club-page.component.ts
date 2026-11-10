@@ -10,6 +10,7 @@ import { KEIN_VEREIN } from '../fehler/fehler-text';
 import { breadcrumb } from '../navigation/breadcrumb';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { StandComponent } from '../stand/stand.component';
 import { SEARCH_LEVEL } from './search-level';
 
 /** What the page is titled before the Verein's name is read. */
@@ -21,17 +22,18 @@ const CLUB_TITLE = 'Verein';
  */
 @Component({
   selector: 'korb-club-page',
-  imports: [VereinsTeamsComponent],
+  imports: [StandComponent, VereinsTeamsComponent],
   template: `
-    <h1 data-qa="verein-name">{{ title() }}</h1>
+    <h1 data-qa="club-name">{{ title() }}</h1>
     @if (stand(); as stand) {
+      <korb-stand data-qa="vereins-stand" [stand]="teams.stand()" />
       <korb-vereins-teams
         data-qa="vereins-teams"
         [stand]="stand"
         emptyText="Keine Teams des Vereins in den letzten Wochen."
       />
     } @else {
-      <p class="fehler" data-qa="vereins-teams-fehler">{{ unknownClub }}</p>
+      <p data-qa="vereins-teams-fehler">{{ unknownClub }}</p>
     }
   `,
   styles: `
@@ -53,7 +55,7 @@ export class ClubPageComponent {
   protected readonly unknownClub = KEIN_VEREIN;
 
   private readonly club = computed(() => parseDbbId(this.clubId()));
-  private readonly teams = vereinsTeamsResource(() => this.club());
+  protected readonly teams = vereinsTeamsResource(() => this.club());
 
   /** The read's stand; none for an id that is no DBB id. */
   protected readonly stand = computed(() =>

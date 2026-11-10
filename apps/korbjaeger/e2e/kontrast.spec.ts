@@ -49,7 +49,7 @@ for (const schema of ['light', 'dark'] as const) {
     test("keeps every text readable in the app's own colours", async ({
       page,
       startPage,
-      suchenPage,
+      searchPage,
       teamPage,
       spielPage,
     }) => {
@@ -77,9 +77,9 @@ for (const schema of ['light', 'dark'] as const) {
           ],
         })
       );
-      await suchenPage.goto();
-      await suchenPage.vereinssuche.fill('wasbuttel');
-      await expect(suchenPage.vereine).toHaveCount(1);
+      await searchPage.goto();
+      await searchPage.clubSearch.fill('wasbuttel');
+      await expect(searchPage.clubs).toHaveCount(1);
       expect(await kontrastFehler(page)).toEqual([]);
     });
 

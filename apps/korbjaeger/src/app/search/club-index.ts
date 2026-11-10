@@ -37,8 +37,8 @@ export type ClubIndexState =
   | { readonly kind: 'failed'; readonly error: unknown };
 
 /**
- * The club index, loaded from the app's server once per start, on the
- * first search, and kept in memory, so typing sends nothing: the device
+ * The club index, loaded from the app's server once per start, once the
+ * search is used, and kept in memory, so typing sends nothing: the device
  * searches the list itself. A failed load can be tried again.
  */
 @Injectable({ providedIn: 'root' })
@@ -48,10 +48,16 @@ export class ClubIndex {
 
   public readonly state = this.current.asReadonly();
 
-  /** Loads the index, unless it is loaded or loading already. */
+  /**
+   * Loads the index, unless it is loading or loaded already; an empty one
+   * (its first fill still running) is read again, as a failed one is.
+   */
   public load(): void {
-    const { kind } = this.current();
-    if (kind === 'loading' || kind === 'loaded') {
+    const state = this.current();
+    if (
+      state.kind === 'loading' ||
+      (state.kind === 'loaded' && state.size > 0)
+    ) {
       return;
     }
     this.current.set({ kind: 'loading' });

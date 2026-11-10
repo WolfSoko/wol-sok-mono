@@ -2,7 +2,7 @@ import { test as base } from '@playwright/test';
 import { EinstellungenPage } from '../pos/einstellungen.page';
 import { SpielPage } from '../pos/spiel.page';
 import { StartPage } from '../pos/start.page';
-import { SuchenPage } from '../pos/suchen.page';
+import { SearchPage } from '../pos/search.page';
 import { TeamEinrichtenPage } from '../pos/team-einrichten.page';
 import { TeamPage } from '../pos/team.page';
 import { TitleBar } from '../pos/title-bar';
@@ -13,7 +13,7 @@ import { TitleBar } from '../pos/title-bar';
  */
 export const test = base.extend<{
   startPage: StartPage;
-  suchenPage: SuchenPage;
+  searchPage: SearchPage;
   teamEinrichtenPage: TeamEinrichtenPage;
   teamPage: TeamPage;
   spielPage: SpielPage;
@@ -23,8 +23,8 @@ export const test = base.extend<{
   startPage: async ({ page }, use) => {
     await use(new StartPage(page));
   },
-  suchenPage: async ({ page }, use) => {
-    await use(new SuchenPage(page));
+  searchPage: async ({ page }, use) => {
+    await use(new SearchPage(page));
   },
   teamEinrichtenPage: async ({ page }, use) => {
     await use(new TeamEinrichtenPage(page));

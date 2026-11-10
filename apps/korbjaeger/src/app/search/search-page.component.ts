@@ -20,7 +20,7 @@ import { ClubSearchComponent } from './club-search.component';
     <section aria-labelledby="ueber-die-liga">
       <h2 id="ueber-die-liga">Über die Liga</h2>
       <p>Schritt für Schritt über Verband, Altersklasse und Liga.</p>
-      <a matButton="outlined" routerLink="/team-einrichten" data-qa="ueber-liga"
+      <a matButton="outlined" routerLink="/team-einrichten" data-qa="by-league"
         >Über die Liga suchen</a
       >
     </section>

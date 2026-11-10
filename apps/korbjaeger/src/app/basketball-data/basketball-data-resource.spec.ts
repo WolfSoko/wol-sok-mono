@@ -8,7 +8,8 @@ import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { BASKETBALL_DATA } from './basketball-data.provider';
 import { LokaleLetzteAntworten } from '@wolsok/feat-korbjaeger-antworten';
 import type { KorbReadOptions } from './lesung';
-import { proxyTransport, type ProxyFetch } from './proxy-transport';
+import type { ProxyFetch } from './proxy-fetch';
+import { proxyTransport } from './proxy-transport';
 import { teamSaisonResource } from './team-saison-resource';
 
 const TEAM_SPIELE = '/api/dbb/team/313036/spiele';

@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { fehlerText } from '../fehler/fehler-text';
+import { clubIndexFailureText } from './club-index-failure-text';
 import { ClubIndex } from './club-index';
 import {
   clubSearchResult,
@@ -23,13 +23,11 @@ import { debounced } from './debounced';
 /** How long typing pauses before the search runs. */
 export const SEARCH_DEBOUNCE_MS = 300;
 
-/** What the search says where the index answered as not found. */
-const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
-
 /**
- * The search by a Verein's name over the club index, which it loads on
- * the device first: the term (debounced), the hits as links to each
- * Verein's Teams, and why there are none.
+ * The search by a Verein's name over the club index, which it loads once
+ * the field is used (or a term kept from before is shown): the term
+ * (debounced), the hits as links to each Verein's Teams, and why there
+ * are none.
  */
 @Component({
   selector: 'korb-club-search',
@@ -49,9 +47,10 @@ const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
         type="search"
         autocomplete="off"
         enterkeyhint="search"
-        data-qa="vereinssuche"
+        data-qa="club-search"
         [value]="term.value()"
-        (input)="term.value.set(inputValue($event))"
+        (focus)="clubIndex.load()"
+        (input)="clubIndex.load(); term.value.set(inputValue($event))"
       />
       <mat-hint>Zum Beispiel „Wasbüttel“ oder „Post Nürnberg“</mat-hint>
     </mat-form-field>
@@ -64,7 +63,7 @@ const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
         />
       }
       @case ('failed') {
-        <div class="fehler" data-qa="vereinssuche-fehler">
+        <div class="failure" data-qa="club-search-failure">
           <p>{{ failureText() }}</p>
           <button matButton="outlined" type="button" (click)="clubIndex.load()">
             Erneut versuchen
@@ -76,24 +75,24 @@ const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
     @let shown = result();
     @switch (shown?.kind) {
       @case ('empty-index') {
-        <p data-qa="vereinssuche-leer">
+        <p data-qa="club-search-empty">
           Die Vereinsliste wird gerade aufgebaut. Bis sie fertig ist, findest du
           das Team über seine Liga.
         </p>
       }
       @case ('no-hits') {
-        <p data-qa="vereinssuche-kein-treffer">
+        <p data-qa="club-search-no-hits">
           Kein Verein gefunden. Die Vereinsliste enthält vielleicht noch nicht
           jeden Verein; über seine Liga findest du jedes Team.
         </p>
       }
     }
     @if (shown?.kind === 'hits') {
-      <mat-nav-list data-qa="vereine">
+      <mat-nav-list data-qa="clubs">
         @for (club of shown.clubs; track club.id) {
           <a
             mat-list-item
-            data-qa="verein"
+            data-qa="club"
             [routerLink]="['/suchen/verein', club.id]"
           >
             <span matListItemTitle>{{ club.name }}</span>
@@ -102,7 +101,7 @@ const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
         }
       </mat-nav-list>
       @if (shown.more) {
-        <p data-qa="vereinssuche-mehr">
+        <p data-qa="club-search-more">
           Mehr als {{ maxHits }} Vereine gefunden. Gib mehr vom Namen ein.
         </p>
       }
@@ -119,7 +118,7 @@ const NO_CLUB_INDEX = 'Die Vereinsliste ist gerade nicht da.';
     p {
       margin: 0;
     }
-    .fehler {
+    .failure {
       display: grid;
       justify-items: start;
       gap: 0.5rem;
@@ -149,7 +148,7 @@ export class ClubSearchComponent {
   protected readonly failureText = computed(() => {
     const index = this.clubIndex.state();
     return index.kind === 'failed'
-      ? fehlerText(index.error, NO_CLUB_INDEX)
+      ? clubIndexFailureText(index.error)
       : undefined;
   });
 
@@ -171,7 +170,10 @@ export class ClubSearchComponent {
   });
 
   public constructor() {
-    this.clubIndex.load();
+    // Back from a Verein's page: its hits at once
+    if (this.term.value() !== '') {
+      this.clubIndex.load();
+    }
   }
 
   protected inputValue(event: Event): string {

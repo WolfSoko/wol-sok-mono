@@ -35,7 +35,12 @@ interface Setup {
   settle(): Promise<void>;
 }
 
-async function setup(fetchProxy: ProxyFetch, term = ''): Promise<Setup> {
+/** Renders the search; the field is focused (the index loads) unless `used` is false. */
+async function setup(
+  fetchProxy: ProxyFetch,
+  term = '',
+  { used = true }: { used?: boolean } = {}
+): Promise<Setup> {
   const recorded = vi.fn<ProxyFetch>(fetchProxy);
   TestBed.configureTestingModule({
     providers: [
@@ -51,22 +56,29 @@ async function setup(fetchProxy: ProxyFetch, term = ''): Promise<Setup> {
     await fixture.whenStable();
   };
   await settle();
+  if (used) {
+    field(page).dispatchEvent(new Event('focus'));
+    await settle();
+  }
   return {
     page,
     fetchProxy: recorded,
     settle,
     type: async (typed) => {
-      const input = page.querySelector<HTMLInputElement>(
-        '[data-qa="vereinssuche"]'
-      );
-      if (input === null) {
-        throw new Error('no search field');
-      }
+      const input = field(page);
       input.value = typed;
       input.dispatchEvent(new Event('input'));
       await settle();
     },
   };
+}
+
+function field(page: HTMLElement): HTMLInputElement {
+  const input = page.querySelector<HTMLInputElement>('[data-qa="club-search"]');
+  if (input === null) {
+    throw new Error('no search field');
+  }
+  return input;
 }
 
 function pause(ms: number): Promise<void> {
@@ -78,7 +90,7 @@ function text(element: Element | null | undefined): string {
 }
 
 function hits(page: HTMLElement): HTMLAnchorElement[] {
-  return [...page.querySelectorAll<HTMLAnchorElement>('[data-qa="verein"]')];
+  return [...page.querySelectorAll<HTMLAnchorElement>('[data-qa="club"]')];
 }
 
 /** A hit as it reads: the Verein's name, then its Verbände. */
@@ -113,7 +125,7 @@ describe('ClubSearchComponent', () => {
   it('searches only once typing paused', async () => {
     const { page, settle } = await setup(answering(200, [WASBUETTEL]));
     const input = page.querySelector<HTMLInputElement>(
-      '[data-qa="vereinssuche"]'
+      '[data-qa="club-search"]'
     );
     if (input === null) {
       throw new Error('no search field');
@@ -138,11 +150,36 @@ describe('ClubSearchComponent', () => {
     expect(fetchProxy).toHaveBeenCalledWith('/api/clubs', expect.anything());
   });
 
+  it('loads nothing until the field is used', async () => {
+    const { fetchProxy } = await setup(answering(200, [WASBUETTEL]), '', {
+      used: false,
+    });
+
+    expect(fetchProxy).not.toHaveBeenCalled();
+  });
+
+  it('reads an empty list again once the field is used again', async () => {
+    const fetchProxy = vi
+      .fn<ProxyFetch>()
+      .mockImplementationOnce(answering(200, []))
+      .mockImplementationOnce(answering(200, [WASBUETTEL]));
+    const { page, settle, type } = await setup(fetchProxy);
+    expect(page.querySelector('[data-qa="club-search-empty"]')).not.toBeNull();
+
+    field(page).dispatchEvent(new Event('focus'));
+    await settle();
+    await type('wasbuttel');
+
+    expect(hits(page)).toHaveLength(1);
+  });
+
   it('shows the term kept from before, with its hits, at once', async () => {
-    const { page } = await setup(answering(200, [WASBUETTEL]), 'wasbuttel');
+    const { page } = await setup(answering(200, [WASBUETTEL]), 'wasbuttel', {
+      used: false,
+    });
 
     expect(
-      page.querySelector<HTMLInputElement>('[data-qa="vereinssuche"]')?.value
+      page.querySelector<HTMLInputElement>('[data-qa="club-search"]')?.value
     ).toBe('wasbuttel');
     expect(hits(page)).toHaveLength(1);
   });
@@ -153,9 +190,7 @@ describe('ClubSearchComponent', () => {
     await type('w');
 
     expect(hits(page)).toEqual([]);
-    expect(page.querySelector('[data-qa="vereinssuche-kein-treffer"]')).toBe(
-      null
-    );
+    expect(page.querySelector('[data-qa="club-search-no-hits"]')).toBe(null);
   });
 
   it('says where no Verein matches, and points to the Liga', async () => {
@@ -164,14 +199,14 @@ describe('ClubSearchComponent', () => {
     await type('bamberg');
 
     expect(
-      text(page.querySelector('[data-qa="vereinssuche-kein-treffer"]'))
+      text(page.querySelector('[data-qa="club-search-no-hits"]'))
     ).toContain('über seine Liga');
   });
 
   it('says the list is still being built while it is empty', async () => {
     const { page } = await setup(answering(200, []));
 
-    expect(text(page.querySelector('[data-qa="vereinssuche-leer"]'))).toContain(
+    expect(text(page.querySelector('[data-qa="club-search-empty"]'))).toContain(
       'wird gerade aufgebaut'
     );
   });
@@ -187,7 +222,7 @@ describe('ClubSearchComponent', () => {
     await type('tsv');
 
     expect(hits(page)).toHaveLength(MAX_HITS);
-    expect(text(page.querySelector('[data-qa="vereinssuche-mehr"]'))).toBe(
+    expect(text(page.querySelector('[data-qa="club-search-more"]'))).toBe(
       `Mehr als ${MAX_HITS} Vereine gefunden. Gib mehr vom Namen ein.`
     );
   });
@@ -199,13 +234,15 @@ describe('ClubSearchComponent', () => {
       .mockImplementationOnce(answering(200, [WASBUETTEL]));
     const { page, settle, type } = await setup(fetchProxy);
 
-    const failure = page.querySelector('[data-qa="vereinssuche-fehler"]');
-    expect(text(failure)).toContain('nicht erreichbar');
+    const failure = page.querySelector('[data-qa="club-search-failure"]');
+    expect(text(failure)).toContain(
+      'Die Vereinsliste ist gerade nicht erreichbar'
+    );
     failure?.querySelector('button')?.click();
     await settle();
     await type('wasbuttel');
 
-    expect(page.querySelector('[data-qa="vereinssuche-fehler"]')).toBeNull();
+    expect(page.querySelector('[data-qa="club-search-failure"]')).toBeNull();
     expect(hits(page)).toHaveLength(1);
   });
 
@@ -214,7 +251,7 @@ describe('ClubSearchComponent', () => {
     const { page } = await setup(answering(200, [WASBUETTEL]));
 
     expect(
-      text(page.querySelector('[data-qa="vereinssuche-fehler"]'))
+      text(page.querySelector('[data-qa="club-search-failure"]'))
     ).toContain('Kein Internet');
   });
 
@@ -224,7 +261,7 @@ describe('ClubSearchComponent', () => {
     });
 
     expect(
-      text(page.querySelector('[data-qa="vereinssuche-fehler"]'))
+      text(page.querySelector('[data-qa="club-search-failure"]'))
     ).toContain('Keine Verbindung');
   });
 });

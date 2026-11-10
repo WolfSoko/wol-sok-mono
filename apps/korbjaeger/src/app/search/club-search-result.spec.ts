@@ -24,9 +24,12 @@ describe('clubSearchResult', () => {
     });
   });
 
-  it.each(['', ' ', 'w', ' w '])('waits for a longer term than %j', (term) => {
-    expect(resultFor(INDEX, term)).toEqual({ kind: 'too-short' });
-  });
+  it.each(['', ' ', 'w', ' w ', 'a b'])(
+    'waits for a longer term than %j',
+    (term) => {
+      expect(resultFor(INDEX, term)).toEqual({ kind: 'too-short' });
+    }
+  );
 
   it('says so where nothing matches', () => {
     expect(resultFor(INDEX, 'bamberg')).toEqual({ kind: 'no-hits' });

@@ -26,8 +26,6 @@ import {
 } from './proxy-fetch';
 import type { StandGrund } from './stand';
 
-export { PROXY_ZEITLIMIT_MS, type ProxyFetch } from './proxy-fetch';
-
 const HTTP_NOT_FOUND = 404;
 
 /** What the transport asks of the browser beside `fetch`; specs pass fakes. */

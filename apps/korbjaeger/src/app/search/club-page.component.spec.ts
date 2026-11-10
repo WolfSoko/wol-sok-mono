@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
@@ -11,10 +12,14 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
+import { JETZT } from '../jetzt';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { ClubPageComponent } from './club-page.component';
 
 type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
+
+const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
+const ZWEI_STUNDEN = 2 * 60 * 60_000;
 
 const VORRUNDE: Liga = {
   id: 54862,
@@ -50,6 +55,7 @@ async function render(
       { provide: BASKETBALL_DATA, useValue: { vereinsTeams } },
       // in memory: nothing reaches the device's storage
       { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
+      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(ClubPageComponent);
@@ -80,6 +86,21 @@ describe('ClubPageComponent', () => {
       team?.querySelector('button')?.getAttribute('aria-label') ??
         text(team?.querySelector('button'))
     ).toContain('Team folgen');
+  });
+
+  it('says how old the Teams are where the last good answer stood in', async () => {
+    const { page } = await render(async (_, options) => {
+      options?.lesung?.ersetzt({
+        gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
+        grund: 'keine-verbindung',
+      });
+      return WASBUETTEL;
+    });
+
+    expect(text(page.querySelector('[data-qa="vereins-stand"]'))).toContain(
+      'Stand: vor 2 Std.'
+    );
+    expect(page.querySelectorAll('[data-qa="vereins-team"]')).toHaveLength(1);
   });
 
   it("puts the Verein's name below the search in the breadcrumb", async () => {

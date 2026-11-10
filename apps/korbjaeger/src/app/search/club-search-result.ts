@@ -1,6 +1,6 @@
 import type { IndexedClub } from '@wolsok/feat-shared-basketball-data';
 
-/** The fewest characters a term needs before the search lists Clubs. */
+/** The fewest characters a term's longest word needs before the search lists Clubs. */
 export const MIN_TERM_LENGTH = 2;
 
 /** The most hits the search lists at once; a longer term narrows them. */
@@ -34,7 +34,7 @@ export function clubSearchResult(
   if (size === 0) {
     return { kind: 'empty-index' };
   }
-  if (term.trim().length < MIN_TERM_LENGTH) {
+  if (!term.split(/\s+/).some((word) => word.length >= MIN_TERM_LENGTH)) {
     return { kind: 'too-short' };
   }
   const clubs = search(term);

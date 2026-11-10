@@ -68,7 +68,9 @@ describe('ClubIndex', () => {
   });
 
   it('loads once per start, however often it is asked', async () => {
-    const fetchProxy = vi.fn<ProxyFetch>(answering(200, '[]'));
+    const fetchProxy = vi.fn<ProxyFetch>(
+      answering(200, JSON.stringify([WASBUETTEL]))
+    );
     const index = setup(fetchProxy);
 
     index.load();
@@ -79,13 +81,20 @@ describe('ClubIndex', () => {
     expect(fetchProxy).toHaveBeenCalledTimes(1);
   });
 
-  it('takes an empty index as one still being built', async () => {
-    const index = setup(answering(200, '[]'));
+  it('takes an empty index as one still being built, and reads it again', async () => {
+    const fetchProxy = vi
+      .fn<ProxyFetch>()
+      .mockImplementationOnce(answering(200, '[]'))
+      .mockImplementationOnce(answering(200, JSON.stringify([WASBUETTEL])));
+    const index = setup(fetchProxy);
 
     index.load();
-    const state = await settled(index);
+    const empty = await settled(index);
+    expect(empty.kind === 'loaded' && empty.size).toBe(0);
 
-    expect(state.kind === 'loaded' && state.size).toBe(0);
+    index.load();
+    const filled = await settled(index);
+    expect(filled.kind === 'loaded' && filled.size).toBe(1);
   });
 
   it('fails as unavailable on a 502, and loads again when asked', async () => {
