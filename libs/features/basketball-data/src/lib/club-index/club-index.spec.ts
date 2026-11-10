@@ -1,4 +1,4 @@
-import { clubsMatching, mergeAssociationClubs } from './club-index';
+import { clubFinder, mergeAssociationClubs } from './club-index';
 import type { AssociationClubs, IndexedClub } from './club-index';
 
 const BAYERN = { id: 2, name: 'Bayern' };
@@ -22,30 +22,40 @@ const STRASSBURG: IndexedClub = {
 };
 const INDEX = [WASBUETTEL, POST_SV, STRASSBURG];
 
-describe('clubsMatching', () => {
+describe('clubFinder', () => {
+  const find = clubFinder(INDEX);
+
   it.each(['wasbuttel', 'Wasbüttel', 'mtv was', '  MTV   wasbüttel '])(
     'finds MTV Wasbüttel for %j',
     (term) => {
-      expect(clubsMatching(INDEX, term)).toEqual([WASBUETTEL]);
+      expect(find(term)).toEqual([WASBUETTEL]);
     }
   );
 
   it('finds a name by every word, in any order', () => {
-    expect(clubsMatching(INDEX, 'nurnberg post')).toEqual([POST_SV]);
+    expect(find('nurnberg post')).toEqual([POST_SV]);
   });
 
   it('folds ß and diacritics on both sides', () => {
-    expect(clubsMatching(INDEX, 'grossstrasse')).toEqual([STRASSBURG]);
-    expect(clubsMatching(INDEX, 'Großstraße')).toEqual([STRASSBURG]);
+    expect(find('grossstrasse')).toEqual([STRASSBURG]);
+    expect(find('Großstraße')).toEqual([STRASSBURG]);
   });
 
   it('finds nothing for an empty term', () => {
-    expect(clubsMatching(INDEX, '')).toEqual([]);
-    expect(clubsMatching(INDEX, '   ')).toEqual([]);
+    expect(find('')).toEqual([]);
+    expect(find('   ')).toEqual([]);
   });
 
   it('finds nothing when one word is missing', () => {
-    expect(clubsMatching(INDEX, 'post bamberg')).toEqual([]);
+    expect(find('post bamberg')).toEqual([]);
+  });
+
+  it('keeps the order of the index', () => {
+    expect(find('tv')).toEqual([WASBUETTEL, STRASSBURG]);
+  });
+
+  it('finds nothing in an empty index', () => {
+    expect(clubFinder([])('post')).toEqual([]);
   });
 });
 
