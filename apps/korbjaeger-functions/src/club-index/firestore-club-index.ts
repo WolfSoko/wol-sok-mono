@@ -9,10 +9,15 @@ import type { ClubIndexStore } from './run-club-index';
 /** The field noting when a crawl started; a saved list drops it. */
 const ATTEMPTED_AT = 'attemptedAt';
 
+/** The field noting an offered Verband before its first crawl (#3005). */
+const OFFERED_AT = 'offeredAt';
+
 /**
  * The club index in Firestore: `clubIndex/{associationId}`, one list each,
- * with `attemptedAt` while a crawl started after it left none. A document
- * holding only that is no list (`parseAssociationClubs` skips it).
+ * with `attemptedAt` while a crawl started after it left none, and
+ * `offeredAt` on an offered Verband not crawled yet. A document holding
+ * only those is no list (`parseAssociationClubs` skips it), which tells
+ * the server the index is still incomplete (`parseClubIndex`).
  */
 export function firestoreClubIndex(db: Firestore): ClubIndexStore {
   const lists = db.collection(CLUB_INDEX_COLLECTION);
@@ -32,7 +37,23 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
               : [];
           })
         ),
+        ids: new Set(
+          docs
+            .map((document) => Number(document.id))
+            .filter((id) => Number.isSafeInteger(id))
+        ),
       };
+    },
+    noteOffered: async (associations, at) => {
+      const batch = db.batch();
+      for (const association of associations) {
+        batch.set(
+          lists.doc(String(association)),
+          { [OFFERED_AT]: at },
+          { merge: true }
+        );
+      }
+      await batch.commit();
     },
     markAttempt: async (association, at) => {
       await lists

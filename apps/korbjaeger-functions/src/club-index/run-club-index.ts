@@ -17,16 +17,23 @@ export interface ClubIndexState {
   readonly lists: readonly AssociationClubs[];
   /** When a crawl of an Association last started, in milliseconds. */
   readonly attempts: ReadonlyMap<VerbandId, number>;
+  /** The Associations the index holds a document of, list or not. */
+  readonly ids: ReadonlySet<VerbandId>;
 }
 
 /** Where the index keeps one list per Association. */
 export interface ClubIndexStore {
   read(): Promise<ClubIndexState>;
+  /**
+   * Notes each of `associations` as offered `at`, with no list yet, so the
+   * server sees the index is incomplete until each has one (#3005).
+   */
+  noteOffered(associations: readonly VerbandId[], at: number): Promise<void>;
   /** Notes that a crawl of `association` starts `at`, keeping its list. */
   markAttempt(association: VerbandId, at: number): Promise<void>;
   /** Replaces the list of `list.association`, and its attempt. */
   save(list: AssociationClubs): Promise<void>;
-  /** Deletes the list of an Association the DBB no longer offers. */
+  /** Deletes the document of an Association the DBB no longer offers. */
   remove(association: VerbandId): Promise<void>;
 }
 
@@ -42,8 +49,10 @@ export interface ClubIndexRun {
 
 /** What a run did, for the log: no Club named. */
 export interface ClubIndexResult {
-  /** Lists of Associations the DBB no longer offers, deleted. */
+  /** Documents of Associations the DBB no longer offers, deleted. */
   readonly removed: number;
+  /** Offered Associations noted without a list, before their first crawl. */
+  readonly noted: number;
   readonly crawled?: {
     readonly association: VerbandId;
     readonly clubs: number;
@@ -53,8 +62,10 @@ export interface ClubIndexResult {
 }
 
 /**
- * One run of the club index (#2988): deletes the lists of Associations the
- * DBB no longer offers, then crawls the Association due first
+ * One run of the club index (#2988): deletes the documents of Associations
+ * the DBB no longer offers, notes each offered one the index has no
+ * document of (so the server can tell the index is complete, #3005), then
+ * crawls the Association due first
  * (`associationToCrawl`) and replaces its list. It notes the crawl's start
  * first, so a crawl that fails or runs out of time holds up no other
  * Association; a failed crawl writes no list, so the old one stays. Clubs'
@@ -70,6 +81,13 @@ export async function runClubIndex(
   const state = await run.store.read();
   const removed = await removeUnoffered(run.store, state, associations);
   const start = run.now();
+  const unnoted = associations
+    .map(({ id }) => id)
+    .filter((id) => !state.ids.has(id));
+  if (unnoted.length > 0) {
+    await run.store.noteOffered(unnoted, start);
+  }
+  const noted = unnoted.length;
   const association = associationToCrawl(
     associations,
     state.lists,
@@ -78,7 +96,7 @@ export async function runClubIndex(
     start
   );
   if (association === undefined) {
-    return { removed };
+    return { removed, noted };
   }
   await run.store.markAttempt(association.id, start);
   const knownNames = new Map(
@@ -96,6 +114,7 @@ export async function runClubIndex(
   await run.store.save({ association, clubs, updatedAt: run.now() });
   return {
     removed,
+    noted,
     crawled: {
       association: association.id,
       clubs: clubs.length,
@@ -105,7 +124,8 @@ export async function runClubIndex(
 }
 
 /**
- * Deletes the lists of Associations missing from `offered`, unless the DBB
+ * Deletes every document (list, attempt or note) of an Association missing
+ * from `offered`, so none keeps the index incomplete; unless the DBB
  * offered none at all (then it is the DBB that is off, not the lists).
  */
 async function removeUnoffered(
@@ -117,11 +137,9 @@ async function removeUnoffered(
     return 0;
   }
   const ids = new Set(offered.map(({ id }) => id));
-  const gone = state.lists.filter(
-    ({ association }) => !ids.has(association.id)
-  );
-  for (const { association } of gone) {
-    await store.remove(association.id);
+  const gone = [...state.ids].filter((id) => !ids.has(id));
+  for (const id of gone) {
+    await store.remove(id);
   }
   return gone.length;
 }

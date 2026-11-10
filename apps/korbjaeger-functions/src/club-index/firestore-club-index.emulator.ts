@@ -43,13 +43,39 @@ describe('the club index in Firestore', () => {
     expect([...(await store.read()).attempts]).toEqual([[6, 43]]);
   });
 
-  it('deletes a list', async () => {
+  it('notes offered Verbände without a list, and replaces a note with the saved list', async () => {
     const store = firestoreClubIndex(project().admin);
     await store.save(BAYERN);
 
-    await store.remove(2);
+    await store.noteOffered([3, 6], 42);
+    await store.markAttempt(3, 43);
 
-    expect((await store.read()).lists).toEqual([]);
+    const noted = await store.read();
+    expect(noted.lists).toEqual([BAYERN]);
+    expect([...noted.ids]).toEqual([2, 3, 6]);
+    expect([...noted.attempts]).toEqual([[3, 43]]);
+
+    await store.save({ ...BAYERN, association: { id: 3, name: 'Berlin' } });
+    const saved = await project()
+      .admin.collection(CLUB_INDEX_COLLECTION)
+      .doc('3')
+      .get();
+    expect(saved.get('offeredAt')).toBeUndefined();
+    expect(saved.get('attemptedAt')).toBeUndefined();
+  });
+
+  it('deletes a list and a note', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.save(BAYERN);
+
+    await store.noteOffered([3], 42);
+
+    await store.remove(2);
+    await store.remove(3);
+
+    const read = await store.read();
+    expect(read.lists).toEqual([]);
+    expect([...read.ids]).toEqual([]);
   });
 
   it('skips a list it cannot read', async () => {
