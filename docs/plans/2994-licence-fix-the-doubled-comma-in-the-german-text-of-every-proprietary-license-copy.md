@@ -6,7 +6,7 @@ Spec: [docs/specs/2994-licence-fix-the-doubled-comma-in-the-german-text-of-every
 
 - Files: the nine `LICENSE` files named in the spec.
 - Change: `,, gehört` → `, gehört` on line 36, nothing else.
-- Check (in place of a test, see the spec): `git grep ',, gehört'` empty;
+- Check (in place of a test, see the spec): `git grep ',, gehört' -- '*LICENSE'` empty;
   `cmp` of each copy against `apps/korbjaeger/LICENSE`; `git diff --stat`
   shows one line per file; `npx nx format:check` on the change.
 - Commit: `fix(korbjaeger): fix the doubled comma in the German licence text`,

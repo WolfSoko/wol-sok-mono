@@ -31,7 +31,7 @@ copy.
 
 ## Acceptance
 
-1. `git grep ',, gehört'` finds nothing.
+1. `git grep ',, gehört' -- '*LICENSE'` finds nothing.
 2. Each of the nine copies reads `(die „Software“), gehört` on line 36.
 3. All nine copies are byte-identical (`cmp` against `apps/korbjaeger/LICENSE`).
 4. The diff touches only line 36 of those nine files (plus this spec and plan).
