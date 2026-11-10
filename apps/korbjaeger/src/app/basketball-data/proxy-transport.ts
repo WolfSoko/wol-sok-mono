@@ -8,7 +8,10 @@ import {
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { proxyUrl } from '../../shared/dbb-proxy-routes';
-import type { LetzteAntwort, LetzteAntworten } from './letzte-antworten';
+import type {
+  LetzteAntwort,
+  LetzteAntworten,
+} from '@wolsok/feat-korbjaeger-antworten';
 import { KeinInternetError } from './kein-internet-error';
 import type { KorbReadOptions, Lesung } from './lesung';
 import type { StandGrund } from './stand';

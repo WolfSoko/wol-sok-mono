@@ -1,13 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { SPEICHER_FREIGEBEN } from '../geraete-speicher';
 import { provideBasketballData } from './basketball-data.provider';
-import { ANTWORT_PRAEFIX, MAX_ALTER_MS } from './letzte-antworten';
+import {
+  ANTWORT_PRAEFIX,
+  MAX_ALTER_MS,
+  PFLEGE_TAKT_MS,
+} from '@wolsok/feat-korbjaeger-antworten';
 import { LETZTE_ANTWORTEN } from './letzte-antworten-pflege';
 
 const TEAM = '/api/dbb/team/313036/spiele';
 const START = Date.parse('2026-11-08T12:00:00+01:00');
 const MINUTE = 60_000;
-const STUNDE = 60 * MINUTE;
 
 /** Whether the device still keeps an answer at `TEAM`. */
 function gemerkt(): boolean {
@@ -37,6 +40,18 @@ describe('LETZTE_ANTWORTEN', () => {
     vi.useRealTimers();
   });
 
+  it('deletes answers too old as soon as it is first taken', () => {
+    localStorage.setItem(
+      `${ANTWORT_PRAEFIX}${TEAM}`,
+      JSON.stringify({ v: 2, am: START, art: 'team-spiele', antwort: {} })
+    );
+    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
+
+    TestBed.inject(LETZTE_ANTWORTEN);
+
+    expect(gemerkt()).toBe(false);
+  });
+
   it('deletes answers too old once the page comes back into view', () => {
     merken();
     vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
@@ -46,33 +61,13 @@ describe('LETZTE_ANTWORTEN', () => {
     expect(gemerkt()).toBe(false);
   });
 
-  it('deletes answers too old hourly while the page stays open', () => {
-    merken();
-    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
-    vi.advanceTimersByTime(STUNDE - MINUTE);
-    expect(gemerkt()).toBe(true);
-
-    vi.advanceTimersByTime(MINUTE);
-
-    expect(gemerkt()).toBe(false);
-  });
-
-  it('keeps answers young enough', () => {
-    merken();
-
-    sichtbarWerden();
-    vi.advanceTimersByTime(STUNDE);
-
-    expect(gemerkt()).toBe(true);
-  });
-
   it('stops with the app', () => {
     merken();
     TestBed.resetTestingModule();
     vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
 
     sichtbarWerden();
-    vi.advanceTimersByTime(STUNDE);
+    vi.advanceTimersByTime(PFLEGE_TAKT_MS);
 
     expect(gemerkt()).toBe(true);
   });
