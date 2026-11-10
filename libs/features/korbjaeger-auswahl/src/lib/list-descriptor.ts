@@ -1,5 +1,4 @@
 import type { ENTFERNT, ReadEntry, RohesDokument } from './selection-entries';
-import type { AuswahlInhalt } from './selection-lists';
 
 /**
  * What tells one list of an `Auswahl` from the others (`LIST_DESCRIPTORS`):
@@ -14,12 +13,6 @@ import type { AuswahlInhalt } from './selection-lists';
 export interface ListDescriptor<W, F, D extends string> {
   /** The document's field that stores the list, a map by `id`. */
   readonly field: D;
-  /**
-   * Whether its entries are ordered by when they joined, each with a
-   * `since` of its own (Teams, Kinder); one that is not (its `order` decides)
-   * reads each with a `since` of 0, which no other entry's order depends on.
-   */
-  readonly orderedBySince: boolean;
   /** The DBB id the map stores an entry under, which tells entries apart. */
   readonly id: (value: W) => number;
   /** Whether two entries of the same id hold the same. */
@@ -27,18 +20,19 @@ export interface ListDescriptor<W, F, D extends string> {
   /**
    * The readable entries of the stored field, in the list's order; an entry
    * it cannot read is left out. `undefined` where the field makes the whole
-   * document unreadable.
+   * document unreadable. Each entry carries its `since`, unless the list
+   * keeps an `order` of its own.
    */
   readonly read: (raw: unknown) => readonly ReadEntry<W>[] | undefined;
   /**
-   * What a change writes of an entry that joins `after`; `since` gives it
-   * the next place, for a list ordered by when its entries joined, unless
-   * `after` knows one (a Team followed at its old place).
+   * What a change writes of an entry that joins; `since` gives its place
+   * in a list ordered by when its entries joined: its old one where the
+   * change knows it (a Team followed again), else the next. A list with an
+   * `order` of its own never calls it.
    */
   readonly added: (
     value: W,
-    since: () => number,
-    after: AuswahlInhalt
+    since: () => number
   ) => Exclude<F, typeof ENTFERNT>;
   /**
    * What a change writes of an entry it changes (same id, not `equals`);
@@ -55,6 +49,9 @@ export interface ListDescriptor<W, F, D extends string> {
    * they join (`zusammenfuehren`); the account's as it is where absent.
    */
   readonly complete?: (account: W, device: W) => W;
-  /** The order the list keeps, where it is not the order entries joined. */
+  /**
+   * The order the list keeps, where it is not the order entries joined; a
+   * list without one is ordered by its entries' `since`.
+   */
   readonly order?: (list: readonly W[]) => readonly W[];
 }

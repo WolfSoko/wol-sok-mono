@@ -1,11 +1,13 @@
 import {
   auswahlDokumentLesen,
   auswahlFelder,
-  geschriebeneTeamsSeit,
-  mitTeamsSeit,
+  selectionWrite,
 } from './auswahl-dokument';
-import { ENTFERNT } from './selection-entries';
-import { LEERE_AUSWAHL, type AuswahlInhalt } from './selection-lists';
+import {
+  LEERE_AUSWAHL,
+  withSince,
+  type AuswahlInhalt,
+} from './selection-lists';
 
 describe('auswahlDokumentLesen', () => {
   it("reads each Team's seit", () => {
@@ -15,7 +17,7 @@ describe('auswahlDokumentLesen', () => {
       children: {},
     });
 
-    expect(gelesen.art === 'aktuell' && gelesen.teamsSeit).toEqual(
+    expect(gelesen.art === 'aktuell' && gelesen.since?.teams).toEqual(
       new Map([
         [313036, 10],
         [201500, 20],
@@ -36,10 +38,12 @@ describe('auswahlFelder', () => {
     const nachher: AuswahlInhalt = {
       ...LEERE_AUSWAHL,
       teams: [201765, 313036, 201500],
-      teamsSeit: new Map([
-        [201765, 5],
-        [313036, 10],
-      ]),
+      since: {
+        teams: new Map([
+          [201765, 5],
+          [313036, 10],
+        ]),
+      },
     };
 
     expect(auswahlFelder(vorher, nachher, 100)).toEqual({
@@ -65,21 +69,23 @@ describe('auswahlFelder with an entry twice', () => {
   });
 });
 
-describe('mitTeamsSeit', () => {
+describe('withSince', () => {
   it('gives the Teams it holds the seit a write stores for them', () => {
     const inhalt: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036, 201500] };
 
-    const seiten = geschriebeneTeamsSeit({
-      teams: { 201500: 42, 201765: 43, 313036: ENTFERNT },
-    });
+    const { since: seiten } = selectionWrite(
+      { ...LEERE_AUSWAHL, teams: [313036] },
+      { ...LEERE_AUSWAHL, teams: [201500, 201765] },
+      42
+    );
 
-    expect(seiten).toEqual(
+    expect(seiten.teams).toEqual(
       new Map([
         [201500, 42],
         [201765, 43],
       ])
     );
-    expect(mitTeamsSeit(inhalt, seiten).teamsSeit).toEqual(
+    expect(withSince(inhalt, seiten).since?.teams).toEqual(
       new Map([[201500, 42]])
     );
   });

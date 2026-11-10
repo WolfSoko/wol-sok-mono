@@ -14,11 +14,13 @@ const D = 201999;
 const gelesen: AuswahlInhalt = {
   ...LEERE_AUSWAHL,
   teams: [A, B, C],
-  teamsSeit: new Map([
-    [A, 10],
-    [B, 20],
-    [C, 30],
-  ]),
+  since: {
+    teams: new Map([
+      [A, 10],
+      [B, 20],
+      [C, 30],
+    ]),
+  },
 };
 
 describe('teamPlatz', () => {
@@ -41,7 +43,7 @@ describe('folgenAenderung', () => {
     const nachher = folgenAenderung(B, platz)(ohneB);
 
     expect(nachher.teams).toEqual([A, B, C]);
-    expect(nachher.teamsSeit?.get(B)).toBe(20);
+    expect(nachher.since?.teams?.get(B)).toBe(20);
   });
 
   it('puts a Team at its place before Teams whose seit is not known yet', () => {
@@ -54,7 +56,7 @@ describe('folgenAenderung', () => {
     const gleich: AuswahlInhalt = {
       ...LEERE_AUSWAHL,
       teams: [B],
-      teamsSeit: new Map([[B, 20]]),
+      since: { teams: new Map([[B, 20]]) },
     };
 
     expect(folgenAenderung(C, { seit: 20 })(gleich).teams).toEqual([C, B]);
@@ -74,7 +76,7 @@ describe('a plain follow after an unfollow', () => {
   it('keeps no old seit for the Team, so the write gives it a new one', () => {
     const wieder = folgenAenderung(B)(entfolgenAenderung(B)(gelesen));
 
-    expect(wieder.teamsSeit?.has(B)).toBe(false);
+    expect(wieder.since?.teams?.has(B)).toBe(false);
   });
 });
 
