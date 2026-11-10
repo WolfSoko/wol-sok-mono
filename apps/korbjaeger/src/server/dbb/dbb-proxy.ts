@@ -70,7 +70,7 @@ export async function proxyDbbRead(
 
 /** How long a success may be reused: a played Spiel's Spielbericht longer. */
 function cacheControlOf(request: DbbRequest, body: unknown): string {
-  return request.kind === 'spielbericht' && dbbBoxscoreFinished(body)
+  return request.kind === 'game-report' && dbbBoxscoreFinished(body)
     ? FINISHED_BOXSCORE_CACHE_CONTROL
     : DBB_PROXY_CACHE_CONTROL;
 }

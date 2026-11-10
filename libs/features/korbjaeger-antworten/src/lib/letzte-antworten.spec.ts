@@ -72,8 +72,8 @@ describe('LokaleLetzteAntworten', () => {
   it('gives back the last good answer of a path, with when it was stored', () => {
     const antworten = new LokaleLetzteAntworten(new KleinerSpeicher());
 
-    antworten.merken(TEAM, 'team-spiele', antwort(1000, { data: [1] }));
-    antworten.merken(TEAM, 'team-spiele', antwort(2000, { data: [2] }));
+    antworten.merken(TEAM, 'team-games', antwort(1000, { data: [1] }));
+    antworten.merken(TEAM, 'team-games', antwort(2000, { data: [2] }));
 
     expect(antworten.lesen(TEAM, JETZT)).toEqual(antwort(2000, { data: [2] }));
     expect(antworten.lesen(TABELLE, JETZT)).toBeUndefined();
@@ -83,7 +83,7 @@ describe('LokaleLetzteAntworten', () => {
     const speicher = new KleinerSpeicher();
     new LokaleLetzteAntworten(speicher).merken(
       TEAM,
-      'team-spiele',
+      'team-games',
       antwort(1000)
     );
 
@@ -95,7 +95,7 @@ describe('LokaleLetzteAntworten', () => {
   describe('age', () => {
     it('serves an answer up to seven days old', () => {
       const antworten = new LokaleLetzteAntworten(new KleinerSpeicher());
-      antworten.merken(TEAM, 'team-spiele', antwort(0));
+      antworten.merken(TEAM, 'team-games', antwort(0));
 
       expect(antworten.lesen(TEAM, MAX_ALTER_MS)).toEqual(antwort(0));
       expect(MAX_ALTER_MS).toBe(7 * 24 * 60 * MINUTE);
@@ -104,7 +104,7 @@ describe('LokaleLetzteAntworten', () => {
     it('serves no answer seven days and a minute old, and deletes it', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher);
-      antworten.merken(TEAM, 'team-spiele', antwort(0));
+      antworten.merken(TEAM, 'team-games', antwort(0));
 
       expect(antworten.lesen(TEAM, MAX_ALTER_MS + MINUTE)).toBeUndefined();
       expect(speicher.getItem(`${ANTWORT_PRAEFIX}${TEAM}`)).toBeNull();
@@ -113,15 +113,15 @@ describe('LokaleLetzteAntworten', () => {
     it('clears answers too old, of kinds no longer kept and of older versions', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher);
-      antworten.merken(TEAM, 'team-spiele', antwort(0));
-      antworten.merken(TABELLE, 'tabelle', antwort(MAX_ALTER_MS));
-      antworten.merken(SPIEL, 'spielbericht', antwort(MAX_ALTER_MS));
+      antworten.merken(TEAM, 'team-games', antwort(0));
+      antworten.merken(TABELLE, 'standings', antwort(MAX_ALTER_MS));
+      antworten.merken(SPIEL, 'game-report', antwort(MAX_ALTER_MS));
       speicher.setItem(
         `${ANTWORT_PRAEFIX}/api/dbb/liga/1/tabelle`,
         JSON.stringify({ v: 1, am: MAX_ALTER_MS, antwort: {} })
       );
 
-      antworten.aufraeumen(MAX_ALTER_MS + MINUTE, new Set(['tabelle']));
+      antworten.aufraeumen(MAX_ALTER_MS + MINUTE, new Set(['standings']));
 
       expect(
         [...speicher.eintraege.keys()].filter((key) =>
@@ -137,9 +137,9 @@ describe('LokaleLetzteAntworten', () => {
         eintraege: 2,
       });
 
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
+      antworten.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
         TABELLE,
@@ -152,9 +152,9 @@ describe('LokaleLetzteAntworten', () => {
         eintraege: 2,
       });
 
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
-      antworten.merken(TEAM, 'team-spiele', antwort(3000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
+      antworten.merken(TEAM, 'team-games', antwort(3000));
 
       expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TEAM, TABELLE]);
     });
@@ -165,8 +165,8 @@ describe('LokaleLetzteAntworten', () => {
       });
       const gross = { data: 'x'.repeat(100) };
 
-      antworten.merken(TEAM, 'team-spiele', antwort(1000, gross));
-      antworten.merken(TABELLE, 'tabelle', antwort(2000, gross));
+      antworten.merken(TEAM, 'team-games', antwort(1000, gross));
+      antworten.merken(TABELLE, 'standings', antwort(2000, gross));
 
       expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
     });
@@ -175,12 +175,12 @@ describe('LokaleLetzteAntworten', () => {
       const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(), {
         zeichen: 250,
       });
-      antworten.merken(TABELLE, 'tabelle', antwort(1000));
-      antworten.merken(TEAM, 'team-spiele', antwort(1500));
+      antworten.merken(TABELLE, 'standings', antwort(1000));
+      antworten.merken(TEAM, 'team-games', antwort(1500));
 
       antworten.merken(
         TEAM,
-        'team-spiele',
+        'team-games',
         antwort(2000, { data: 'x'.repeat(300) })
       );
 
@@ -191,9 +191,9 @@ describe('LokaleLetzteAntworten', () => {
       const antworten = new LokaleLetzteAntworten(new KleinerSpeicher(2600));
       const daten = { data: 'x'.repeat(1000) };
 
-      antworten.merken(TEAM, 'team-spiele', antwort(1000, daten));
-      antworten.merken(TABELLE, 'tabelle', antwort(2000, daten));
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000, daten));
+      antworten.merken(TEAM, 'team-games', antwort(1000, daten));
+      antworten.merken(TABELLE, 'standings', antwort(2000, daten));
+      antworten.merken(SPIEL, 'game-info', antwort(3000, daten));
 
       expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
         TABELLE,
@@ -207,7 +207,7 @@ describe('LokaleLetzteAntworten', () => {
       const antworten = new LokaleLetzteAntworten(speicher);
 
       expect(() =>
-        antworten.merken(TEAM, 'team-spiele', antwort(1000))
+        antworten.merken(TEAM, 'team-games', antwort(1000))
       ).not.toThrow();
 
       expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
@@ -218,12 +218,12 @@ describe('LokaleLetzteAntworten', () => {
       const speicher = new KleinerSpeicher(700);
       speicher.setItem(ANDERER_SCHLUESSEL, 'x'.repeat(400));
       const antworten = new LokaleLetzteAntworten(speicher);
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
       expect(antworten.lesen(TEAM, JETZT)).toBeDefined();
 
       antworten.merken(
         TEAM,
-        'team-spiele',
+        'team-games',
         antwort(2000, { data: 'x'.repeat(300) })
       );
 
@@ -233,12 +233,12 @@ describe('LokaleLetzteAntworten', () => {
     it('evicts nothing for a storage that refuses writes for another reason', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher);
-      antworten.merken(TABELLE, 'tabelle', antwort(1000));
+      antworten.merken(TABELLE, 'standings', antwort(1000));
       vi.spyOn(speicher, 'setItem').mockImplementation(() => {
         throw new DOMException('denied', 'SecurityError');
       });
 
-      antworten.merken(TEAM, 'team-spiele', antwort(2000));
+      antworten.merken(TEAM, 'team-games', antwort(2000));
 
       expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([TABELLE]);
     });
@@ -247,8 +247,8 @@ describe('LokaleLetzteAntworten', () => {
   it('evicts nothing for a write the storage refuses for another reason, even at its limit', () => {
     const speicher = new KleinerSpeicher();
     const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-    antworten.merken(TEAM, 'team-spiele', antwort(1000));
-    antworten.merken(TABELLE, 'tabelle', antwort(2000));
+    antworten.merken(TEAM, 'team-games', antwort(1000));
+    antworten.merken(TABELLE, 'standings', antwort(2000));
     const schreiben = speicher.setItem.bind(speicher);
     vi.spyOn(speicher, 'setItem').mockImplementation((key, value) => {
       if (key === `${ANTWORT_PRAEFIX}${SPIEL}`) {
@@ -257,7 +257,7 @@ describe('LokaleLetzteAntworten', () => {
       schreiben(key, value);
     });
 
-    antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+    antworten.merken(SPIEL, 'game-info', antwort(3000));
 
     expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([TEAM, TABELLE]);
   });
@@ -266,14 +266,14 @@ describe('LokaleLetzteAntworten', () => {
     const speicher = new KleinerSpeicher();
     speicher.setItem(ANDERER_SCHLUESSEL, '{}');
     const antworten = new LokaleLetzteAntworten(speicher);
-    antworten.merken(TEAM, 'team-spiele', antwort(1000));
-    antworten.merken(TABELLE, 'tabelle', antwort(2000));
+    antworten.merken(TEAM, 'team-games', antwort(1000));
+    antworten.merken(TABELLE, 'standings', antwort(2000));
 
     antworten.leeren();
 
     expect([...speicher.eintraege.keys()]).toEqual([ANDERER_SCHLUESSEL]);
     expect(gemerkt(antworten, [TEAM, TABELLE])).toEqual([]);
-    antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+    antworten.merken(SPIEL, 'game-info', antwort(3000));
     expect(gemerkt(antworten, [SPIEL])).toEqual([SPIEL]);
   });
 
@@ -282,14 +282,14 @@ describe('LokaleLetzteAntworten', () => {
       const speicher = new KleinerSpeicher();
       new LokaleLetzteAntworten(speicher).merken(
         TEAM,
-        'team-spiele',
+        'team-games',
         antwort(1000)
       );
       const antworten = new LokaleLetzteAntworten(speicher);
       const geparst = vi.spyOn(JSON, 'parse');
 
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
+      antworten.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(geparst).toHaveBeenCalledTimes(1);
     });
@@ -298,10 +298,10 @@ describe('LokaleLetzteAntworten', () => {
       const speicher = new KleinerSpeicher();
       const hier = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
       const dort = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-      hier.merken(TEAM, 'team-spiele', antwort(1000));
-      dort.merken(TABELLE, 'tabelle', antwort(2000));
+      hier.merken(TEAM, 'team-games', antwort(1000));
+      dort.merken(TABELLE, 'standings', antwort(2000));
 
-      hier.merken(SPIEL, 'spiel-info', antwort(3000));
+      hier.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(gemerkt(hier, [TEAM, TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
     });
@@ -309,11 +309,11 @@ describe('LokaleLetzteAntworten', () => {
     it('reads no stored answer for a write within the limits', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher);
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
       const gelesen = vi.spyOn(speicher, 'getItem');
 
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
+      antworten.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(
         gelesen.mock.calls.filter(([key]) => key !== ANTWORT_INDEX)
@@ -323,11 +323,11 @@ describe('LokaleLetzteAntworten', () => {
     it('counts no answer deleted behind its back', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
       speicher.removeItem(`${ANTWORT_PRAEFIX}${TEAM}`);
 
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+      antworten.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(gemerkt(antworten, [TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
     });
@@ -335,11 +335,11 @@ describe('LokaleLetzteAntworten', () => {
     it('rebuilds itself from the answers when it cannot be read', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-      antworten.merken(TABELLE, 'tabelle', antwort(2000));
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TABELLE, 'standings', antwort(2000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
       speicher.setItem(ANTWORT_INDEX, '{kaputt');
 
-      antworten.merken(SPIEL, 'spiel-info', antwort(3000));
+      antworten.merken(SPIEL, 'game-info', antwort(3000));
 
       expect(gemerkt(antworten, [TEAM, TABELLE, SPIEL])).toEqual([
         TABELLE,
@@ -350,10 +350,10 @@ describe('LokaleLetzteAntworten', () => {
     it('evicts an answer it cannot read first', () => {
       const speicher = new KleinerSpeicher();
       const antworten = new LokaleLetzteAntworten(speicher, { eintraege: 2 });
-      antworten.merken(TABELLE, 'tabelle', antwort(1000));
+      antworten.merken(TABELLE, 'standings', antwort(1000));
       speicher.setItem(`${ANTWORT_PRAEFIX}${TEAM}`, '{kaputt');
 
-      antworten.merken(SPIEL, 'spiel-info', antwort(2000));
+      antworten.merken(SPIEL, 'game-info', antwort(2000));
 
       expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
       expect(gemerkt(antworten, [TABELLE, SPIEL])).toEqual([TABELLE, SPIEL]);
@@ -373,10 +373,39 @@ describe('LokaleLetzteAntworten', () => {
     ).toBeUndefined();
   });
 
+  describe('the stored kinds', () => {
+    it('stores each kind under its name before #2967', () => {
+      const speicher = new KleinerSpeicher();
+      new LokaleLetzteAntworten(speicher).merken(
+        TEAM,
+        'team-games',
+        antwort(1000)
+      );
+
+      expect(
+        JSON.parse(speicher.getItem(`${ANTWORT_PRAEFIX}${TEAM}`) ?? '{}')
+      ).toMatchObject({ art: 'team-spiele' });
+      expect(speicher.getItem(ANTWORT_INDEX)).toContain('"art":"team-spiele"');
+    });
+
+    it('serves and keeps an answer stored before #2967', () => {
+      const speicher = new KleinerSpeicher();
+      speicher.setItem(
+        `${ANTWORT_PRAEFIX}${TEAM}`,
+        JSON.stringify({ v: 2, am: 1000, art: 'team-spiele', antwort: {} })
+      );
+      const antworten = new LokaleLetzteAntworten(speicher);
+
+      antworten.aufraeumen(JETZT, new Set(['team-games']));
+
+      expect(antworten.lesen(TEAM, JETZT)).toEqual(antwort(1000, {}));
+    });
+  });
+
   it('keeps nothing, and fails nothing, without a storage', () => {
     const antworten = new LokaleLetzteAntworten(undefined);
 
-    antworten.merken(TEAM, 'team-spiele', antwort(1000));
+    antworten.merken(TEAM, 'team-games', antwort(1000));
     antworten.aufraeumen(JETZT, new Set());
 
     expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();
@@ -398,7 +427,7 @@ describe('LokaleLetzteAntworten', () => {
     const antworten = new LokaleLetzteAntworten(speicher);
 
     expect(() => {
-      antworten.merken(TEAM, 'team-spiele', antwort(1000));
+      antworten.merken(TEAM, 'team-games', antwort(1000));
       antworten.aufraeumen(JETZT, new Set());
     }).not.toThrow();
     expect(antworten.lesen(TEAM, JETZT)).toBeUndefined();

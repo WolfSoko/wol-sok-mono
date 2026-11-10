@@ -1,6 +1,6 @@
 import {
-  KEIN_LIGA_FILTER,
-  VEREINS_SPIELE_TAGE,
+  NO_LEAGUE_FILTER,
+  CLUB_GAMES_DAYS,
   type DbbRequest,
 } from '@wolsok/feat-shared-basketball-data';
 import {
@@ -28,31 +28,31 @@ function readAt(route: AnyProxyRoute, url: string): DbbRequest | undefined {
 }
 
 const NIEDERSACHSEN_U12_JUGEND_MAENNLICH = {
-  verbandIds: [7],
-  altersklasseIds: [12],
-  altersgruppeGeschlechtIds: ['2_1'],
+  associationIds: [7],
+  ageGroupIds: [12],
+  ageGroupGenderIds: ['2_1'],
 };
 
 describe('DBB proxy routes', () => {
   it.each([
     [
       'the Liga search without a filter',
-      { kind: 'liga-suche', filter: KEIN_LIGA_FILTER },
+      { kind: 'league-search', filter: NO_LEAGUE_FILTER },
       '/api/dbb/ligen',
     ],
     [
       'the Liga search with a filter',
-      { kind: 'liga-suche', filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH },
+      { kind: 'league-search', filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH },
       '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1',
     ],
     [
       'the Liga search with several values each',
       {
-        kind: 'liga-suche',
+        kind: 'league-search',
         filter: {
-          verbandIds: [7, 10],
-          altersklasseIds: [12, 14],
-          altersgruppeGeschlechtIds: ['2_1', '2_2'],
+          associationIds: [7, 10],
+          ageGroupIds: [12, 14],
+          ageGroupGenderIds: ['2_1', '2_2'],
         },
       },
       '/api/dbb/ligen?verband=7&verband=10&altersklasse=12&altersklasse=14&geschlecht=2_1&geschlecht=2_2',
@@ -60,7 +60,7 @@ describe('DBB proxy routes', () => {
     [
       'a later page of the Liga list',
       {
-        kind: 'liga-seite',
+        kind: 'league-page',
         filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
         startIndex: 10,
       },
@@ -68,32 +68,32 @@ describe('DBB proxy routes', () => {
     ],
     [
       "a Liga's Spielplan",
-      { kind: 'spielplan', ligaId: 54862 },
+      { kind: 'schedule', leagueId: 54862 },
       '/api/dbb/liga/54862/spielplan',
     ],
     [
       "a Team's Spiele",
-      { kind: 'team-spiele', teamId: 313036 },
+      { kind: 'team-games', teamId: 313036 },
       '/api/dbb/team/313036/spiele',
     ],
     [
       "a Verein's Spiele of the weeks around today",
-      { kind: 'vereins-spiele', vereinId: 1837, tage: VEREINS_SPIELE_TAGE },
+      { kind: 'club-games', clubId: 1837, days: CLUB_GAMES_DAYS },
       '/api/dbb/verein/1837/spiele',
     ],
     [
       "a Liga's Tabelle",
-      { kind: 'tabelle', ligaId: 54862 },
+      { kind: 'standings', leagueId: 54862 },
       '/api/dbb/liga/54862/tabelle',
     ],
     [
       "a Spiel's match info",
-      { kind: 'spiel-info', spielId: 2861436 },
+      { kind: 'game-info', gameId: 2861436 },
       '/api/dbb/spiel/2861436',
     ],
     [
       "a Spiel's Spielbericht",
-      { kind: 'spielbericht', spielId: 2861436 },
+      { kind: 'game-report', gameId: 2861436 },
       '/api/dbb/spiel/2861436/bericht',
     ],
   ] as const)('maps %s to its URL and back', (_case, request, url) => {
@@ -117,16 +117,13 @@ describe('DBB proxy routes', () => {
   it("has no URL for a Verein's Spiele of another day range", () => {
     // the route reads the one range the adapter asks for, so it caches once
     expect(() =>
-      proxyUrl({ kind: 'vereins-spiele', vereinId: 1837, tage: 7 })
+      proxyUrl({ kind: 'club-games', clubId: 1837, days: 7 })
     ).toThrow(RangeError);
   });
 
   it("takes no day range for a Verein's Spiele from the query", () => {
     expect(
-      readAt(
-        PROXY_ROUTES['vereins-spiele'],
-        '/api/dbb/verein/1837/spiele?tage=7'
-      )
+      readAt(PROXY_ROUTES['club-games'], '/api/dbb/verein/1837/spiele?tage=7')
     ).toBeUndefined();
   });
 
@@ -175,8 +172,8 @@ describe('DBB proxy routes', () => {
   });
 
   describe('the Liga search', () => {
-    const suche = PROXY_ROUTES['liga-suche'];
-    const seite = PROXY_ROUTES['liga-seite'];
+    const suche = PROXY_ROUTES['league-search'];
+    const seite = PROXY_ROUTES['league-page'];
 
     it.each([
       ['a non-numeric Verband', 'verband=abc'],
@@ -206,8 +203,8 @@ describe('DBB proxy routes', () => {
 
     it('takes the first page as a page too', () => {
       expect(readAt(seite, '/api/dbb/ligen/seite?start=0')).toEqual({
-        kind: 'liga-seite',
-        filter: KEIN_LIGA_FILTER,
+        kind: 'league-page',
+        filter: NO_LEAGUE_FILTER,
         startIndex: 0,
       });
     });

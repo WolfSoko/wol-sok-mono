@@ -1,3 +1,4 @@
+import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
 import type { LokaleLetzteAntworten } from './letzte-antworten';
 
 /** How often an open page clears answers too old: hourly. */
@@ -14,7 +15,7 @@ export interface PflegeOptionen {
   /** The page whose return into view clears too. */
   readonly document: PflegeSeite;
   /** The kinds of read still kept; answers of any other kind go. */
-  readonly arten: ReadonlySet<string>;
+  readonly arten: ReadonlySet<DbbRequestKind>;
 }
 
 /**

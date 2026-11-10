@@ -1,11 +1,10 @@
-import type { Verein } from '../domain/verein';
-import { DbbObject } from './dbb-object';
-import { mapVerein } from './map-verein';
+import type { Club } from '../domain/club';
+import type { DbbObject } from './dbb-object';
 
-/**
- * Only the Verein of a Verein's Spiele (`club/id/{clubId}/actualmatches`):
- * its Spiele are left unread, so one the mappers cannot read costs no name.
- */
-export function mapClub(data: unknown): Verein {
-  return mapVerein(DbbObject.of(data, 'clubMatches').object('club'));
+/** A Verein from the DBB's `club` object (`vereinId`, `vereinsname`). */
+export function mapClub(club: DbbObject): Club {
+  return {
+    id: club.number('vereinId'),
+    name: club.string('vereinsname').trim(),
+  };
 }

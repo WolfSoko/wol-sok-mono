@@ -1,6 +1,6 @@
 import {
   BasketballDataError,
-  dbbOhnePersonen,
+  dbbWithoutPersons,
   dbbStatusOf,
   isBasketballDataError,
   type DbbRequestKind,
@@ -47,10 +47,10 @@ export interface ProxyTransportOptions {
  * answer Meine Teams need offline.
  */
 export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
-  'team-spiele',
-  'tabelle',
-  'spiel-info',
-  'vereins-spiele',
+  'team-games',
+  'standings',
+  'game-info',
+  'club-games',
 ]);
 
 /** Keeps nothing: a read that fails has no answer to fall back on. */
@@ -69,7 +69,7 @@ const KEINE_ANTWORTEN: LetzteAntworten = {
  * `unavailable`.
  *
  * The 200 of a read of `SPEICHERBARE_ARTEN` is kept in `antworten` by its
- * proxy path, without the persons in it (`dbbOhnePersonen`), once its `Lesung` (`KorbReadOptions`) says the read mapped
+ * proxy path, without the persons in it (`dbbWithoutPersons`), once its `Lesung` (`KorbReadOptions`) says the read mapped
  * it. A read with a `Lesung` that then fails as `offline` or
  * `unavailable` is answered from it instead, and the `Lesung` hears when
  * it came and why; a 404 (the thing is gone) and a cancelled read never
@@ -98,7 +98,7 @@ export function proxyTransport(
           const gespeichertAm = jetzt();
           lesung?.vormerken(() =>
             antworten.merken(path, request.kind, {
-              antwort: dbbOhnePersonen(body),
+              antwort: dbbWithoutPersons(body),
               gespeichertAm,
             })
           );

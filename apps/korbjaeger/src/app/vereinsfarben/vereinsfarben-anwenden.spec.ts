@@ -1,6 +1,6 @@
 import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import type {
@@ -16,7 +16,7 @@ import {
 /** A component wearing a Verein's colours, as the Team page does. */
 @Component({ selector: 'korb-im-verein', template: '' })
 class ImVerein {
-  public readonly verein = input<VereinId | undefined>();
+  public readonly verein = input<ClubId | undefined>();
 
   public constructor() {
     vereinsfarbenAnwenden(this.verein);
@@ -31,7 +31,7 @@ class ImVerein {
   `,
 })
 class Seite {
-  public readonly verein = signal<VereinId | undefined>(4242);
+  public readonly verein = signal<ClubId | undefined>(4242);
   public readonly farben = signal<Vereinsfarben | undefined>(undefined);
 }
 

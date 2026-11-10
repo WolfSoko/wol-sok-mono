@@ -12,8 +12,8 @@ import {
 } from './fixture-persons';
 import {
   INVENTED_ID_BASE,
-  INVENTED_NACHNAMEN,
-  INVENTED_VORNAMEN,
+  INVENTED_LAST_NAMES,
+  INVENTED_FIRST_NAMES,
 } from './invented-names';
 import { objectsIn, stringFieldsIn } from './json-walk';
 
@@ -21,8 +21,8 @@ const FIXTURES_DIR = join(__dirname, '../lib/dbb/fixtures');
 const INVENTED: Readonly<
   Record<(typeof NAME_KEYS)[number], ReadonlySet<string>>
 > = {
-  vorname: new Set(INVENTED_VORNAMEN),
-  nachname: new Set(INVENTED_NACHNAMEN),
+  vorname: new Set(INVENTED_FIRST_NAMES),
+  nachname: new Set(INVENTED_LAST_NAMES),
 };
 
 interface Fixture {

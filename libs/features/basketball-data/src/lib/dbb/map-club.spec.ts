@@ -1,34 +1,25 @@
 import { caughtError } from '../../testing/caught-error';
-import { readEnvelope } from './envelope';
-import clubMatches from './fixtures/club-1476-actualmatches.json';
+import { DbbObject } from './dbb-object';
 import { mapClub } from './map-club';
 
 describe('mapClub', () => {
-  it('reads the Verein of a Verein’s Spiele', () => {
-    expect(mapClub(readEnvelope(clubMatches))).toEqual({
-      id: 1476,
-      name: 'Post SV Nürnberg',
-    });
+  it('reads the Verein by its id and name', () => {
+    const club = DbbObject.of(
+      {
+        vereinId: 1476,
+        vereinsname: ' Post SV Nürnberg ',
+        vereinsnummer: '0231318',
+      },
+      'club'
+    );
+
+    expect(mapClub(club)).toEqual({ id: 1476, name: 'Post SV Nürnberg' });
   });
 
-  it('reads the Verein without reading its Spiele', () => {
-    const data = {
-      ...(readEnvelope(clubMatches) as object),
-      matches: [{ matchId: 'not a Spiel' }],
-    };
-
-    expect(mapClub(data).name).toBe('Post SV Nürnberg');
-  });
-
-  it('reads a Verein without Spiele in the range', () => {
-    const data = { ...(readEnvelope(clubMatches) as object), matches: [] };
-
-    expect(mapClub(data)).toEqual({ id: 1476, name: 'Post SV Nürnberg' });
-  });
-
-  it('rejects an answer without its Verein as unexpected', () => {
-    const data = { ...(readEnvelope(clubMatches) as object), club: null };
-
-    expect(caughtError(() => mapClub(data)).kind).toBe('unexpected-shape');
+  it('refuses a Verein without a name', () => {
+    expect(
+      caughtError(() => mapClub(DbbObject.of({ vereinId: 1476 }, 'club')))
+        .message
+    ).toBe('club.vereinsname: expected a string, got nothing');
   });
 });

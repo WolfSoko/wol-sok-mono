@@ -1,7 +1,7 @@
 import {
-  zuletztGespielt,
-  type SpielId,
-  type TeamSaison,
+  lastPlayed,
+  type GameId,
+  type TeamSeason,
 } from '@wolsok/feat-shared-basketball-data';
 
 /**
@@ -10,18 +10,18 @@ import {
  * first one.
  */
 export type ChildStep =
-  | { readonly kind: 'mark'; readonly spielId: SpielId }
+  | { readonly kind: 'mark'; readonly spielId: GameId }
   | { readonly kind: 'after-first-game' };
 
 /**
  * The step for `saison` on `heute`: the last Spiel played up to today
- * (`zuletztGespielt`, so a cancelled or forfeited one, which has no
+ * (`lastPlayed`, so a cancelled or forfeited one, which has no
  * Spielbericht, is passed over), else waiting for the first.
  *
- * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
+ * @param heute a German calendar day, `YYYY-MM-DD` (`dateInGermany`)
  */
-export function childStep(saison: TeamSaison, heute: string): ChildStep {
-  const [last] = zuletztGespielt(saison, heute, 1);
+export function childStep(saison: TeamSeason, heute: string): ChildStep {
+  const [last] = lastPlayed(saison, heute, 1);
   return last
     ? { kind: 'mark', spielId: last.id }
     : { kind: 'after-first-game' };

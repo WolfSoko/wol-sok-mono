@@ -11,7 +11,7 @@ import {
   MAT_BOTTOM_SHEET_DATA,
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   vereinsfarbenVon,
@@ -24,7 +24,7 @@ import { FarbschemaDirective } from './vereinsfarben-anwenden';
 
 /** What the bottom sheet is opened for: a Verein, with its name to show. */
 export interface VereinsfarbenBlattDaten {
-  readonly vereinId: VereinId;
+  readonly vereinId: ClubId;
   readonly vereinName: string;
 }
 

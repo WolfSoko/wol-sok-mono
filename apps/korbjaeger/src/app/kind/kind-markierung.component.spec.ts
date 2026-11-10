@@ -26,7 +26,7 @@ describe('KindMarkierungComponent', () => {
     });
     const fixture = TestBed.createComponent(KindMarkierungComponent);
     fixture.componentRef.setInput('spieler', {
-      art: 'benannt',
+      kind: 'named',
       personId: 4711,
     });
     fixture.componentRef.setInput('name', 'Lumi Ahornwiese');

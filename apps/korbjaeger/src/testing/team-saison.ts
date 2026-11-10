@@ -1,47 +1,47 @@
 import type {
-  Spiel,
-  SpielStatus,
-  TeamSaison,
+  Game,
+  GameStatus,
+  TeamSeason,
 } from '@wolsok/feat-shared-basketball-data';
 
 /** MTV Wasbüttel's U12 Team, as the fixtures name it. */
 export const WASBUETTEL_RST = {
   id: 313036,
   name: 'MTV Wasbüttel -RST-',
-  vereinId: 1837,
+  clubId: 1837,
 };
-const GIFHORN = { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 };
+const GIFHORN = { id: 201500, name: 'MTV Gifhorn', clubId: 201500 };
 
 /** A result, confirmed. */
-export const PLAYED: SpielStatus = {
-  art: 'gespielt',
-  ergebnis: { heim: 78, gast: 47 },
-  bestaetigt: true,
+export const PLAYED: GameStatus = {
+  kind: 'played',
+  result: { home: 78, away: 47 },
+  confirmed: true,
 };
 
 /** A Spiel of `WASBUETTEL_RST` at home against MTV Gifhorn. */
 export function spielOn(
   id: number,
   datum: string,
-  status: SpielStatus = PLAYED
-): Spiel {
+  status: GameStatus = PLAYED
+): Game {
   return {
     id,
-    ligaId: 54862,
-    spieltag: 1,
-    datum,
-    heim: { art: 'team', team: WASBUETTEL_RST },
-    gast: { art: 'team', team: GIFHORN },
+    leagueId: 54862,
+    matchday: 1,
+    date: datum,
+    home: { kind: 'team', team: WASBUETTEL_RST },
+    away: { kind: 'team', team: GIFHORN },
     status,
   };
 }
 
 /** `WASBUETTEL_RST`'s Saison with `spiele`, in date order. */
-export function saisonOf(...spiele: Spiel[]): TeamSaison {
+export function saisonOf(...spiele: Game[]): TeamSeason {
   return {
     team: WASBUETTEL_RST,
-    verein: { id: 1837, name: 'MTV Wasbüttel' },
-    ligen: [],
-    spiele,
+    club: { id: 1837, name: 'MTV Wasbüttel' },
+    leagues: [],
+    games: spiele,
   };
 }

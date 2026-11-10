@@ -1,7 +1,7 @@
 import type {
   TeamId,
-  VereinId,
-  VereinsTeams,
+  ClubId,
+  ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { aeltesterStand } from '../basketball-data/stand';
@@ -23,8 +23,8 @@ export function teamImUeberblick(
   teamId: TeamId,
   lesung: TeamLesungen | undefined,
   vereinsTeamsVon: (
-    verein: VereinId
-  ) => DatenResource<VereinsTeams | undefined> | undefined,
+    verein: ClubId
+  ) => DatenResource<ClubTeams | undefined> | undefined,
   mitKindern: boolean
 ): TeamImUeberblick {
   const saison = lesung?.saison;
@@ -54,7 +54,7 @@ export function teamImUeberblick(
   const funde = mitKindern ? lesung.funde() : undefined;
   return {
     karte,
-    saison: { saison: saison.value(), ueberblick },
+    saison: { season: saison.value(), overview: ueberblick },
     halle,
     stand,
     ...(funde && { funde }),

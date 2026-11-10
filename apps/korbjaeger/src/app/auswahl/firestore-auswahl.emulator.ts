@@ -86,8 +86,8 @@ auswahlVertrag('Firestore', () => {
 });
 
 describe('FirestoreAuswahl', () => {
-  const MIMI = { art: 'benannt', personId: 4711 } as const;
-  const OTTO = { art: 'benannt', personId: 4712 } as const;
+  const MIMI = { kind: 'named', personId: 4711 } as const;
+  const OTTO = { kind: 'named', personId: 4712 } as const;
   const offen: FirestoreAuswahl[] = [];
   afterEach(() => offen.splice(0).forEach((auswahl) => auswahl.beenden()));
 

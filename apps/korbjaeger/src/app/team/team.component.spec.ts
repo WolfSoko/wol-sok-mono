@@ -3,14 +3,14 @@ import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
-  type Halle,
-  type Liga,
-  type Spiel,
-  type SpielPartei,
-  type Tabelle,
+  type Venue,
+  type League,
+  type Game,
+  type Participant,
+  type Standings,
   type Team,
-  type TeamSaison,
-  type VereinsTeams,
+  type TeamSeason,
+  type ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   BASKETBALL_DATA,
@@ -24,67 +24,67 @@ import { JETZT } from '../jetzt';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { TeamComponent } from './team.component';
 
-const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 };
+const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', clubId: 1837 };
 
-function liga(id: number, name: string): Liga {
+function liga(id: number, name: string): League {
   return {
     id,
     name,
-    verband: { id: 7, name: 'Niedersachsen' },
-    altersklasse: 'U12',
-    geschlecht: 'mix',
-    spielklasse: 'Kreisliga',
+    association: { id: 7, name: 'Niedersachsen' },
+    ageGroup: 'U12',
+    gender: 'mixed',
+    division: 'Kreisliga',
   };
 }
 
 const VORRUNDE = liga(54862, 'U12 Vorrunde Nord');
 const TESTSPIELE = liga(54689, 'Testspiele Braunschweig u12');
 
-function gegner(id: number, name: string): SpielPartei {
-  return { art: 'team', team: { id, name, vereinId: id } };
+function gegner(id: number, name: string): Participant {
+  return { kind: 'team', team: { id, name, clubId: id } };
 }
 
-const UNS: SpielPartei = { art: 'team', team: UNSER_TEAM };
+const UNS: Participant = { kind: 'team', team: UNSER_TEAM };
 
-function spiel(overrides: Partial<Spiel> & Pick<Spiel, 'id' | 'datum'>): Spiel {
+function spiel(overrides: Partial<Game> & Pick<Game, 'id' | 'date'>): Game {
   return {
-    ligaId: VORRUNDE.id,
-    spieltag: 1,
-    uhrzeit: '10:00',
-    heim: UNS,
-    gast: gegner(201500, 'MTV Gifhorn'),
-    status: { art: 'geplant' },
+    leagueId: VORRUNDE.id,
+    matchday: 1,
+    time: '10:00',
+    home: UNS,
+    away: gegner(201500, 'MTV Gifhorn'),
+    status: { kind: 'scheduled' },
     ...overrides,
   };
 }
 
-function tabellenZeile(rang: number, team: Team): Tabelle['zeilen'][number] {
+function tabellenZeile(rang: number, team: Team): Standings['rows'][number] {
   return {
-    rang,
-    partei: { art: 'team', team },
-    spiele: 2,
-    siege: 2 - rang + 1,
-    niederlagen: rang - 1,
-    punkte: 2 * (2 - rang + 1),
-    koerbe: 100,
-    gegenkoerbe: 90,
-    korbdifferenz: 10,
+    rank: rang,
+    participant: { kind: 'team', team },
+    games: 2,
+    wins: 2 - rang + 1,
+    losses: rang - 1,
+    points: 2 * (2 - rang + 1),
+    pointsFor: 100,
+    pointsAgainst: 90,
+    pointDifference: 10,
   };
 }
 
-function saison(spiele: readonly Spiel[]): TeamSaison {
+function saison(spiele: readonly Game[]): TeamSeason {
   return {
     team: UNSER_TEAM,
-    verein: { id: 1837, name: 'MTV Wasbüttel' },
-    ligen: [TESTSPIELE, VORRUNDE],
-    spiele,
+    club: { id: 1837, name: 'MTV Wasbüttel' },
+    leagues: [TESTSPIELE, VORRUNDE],
+    games: spiele,
   };
 }
 
-type TeamSpieleRead = KorbjaegerData['teamSpiele'];
-type TabelleRead = KorbjaegerData['tabelle'];
-type SpielRead = KorbjaegerData['spiel'];
-type VereinsTeamsRead = KorbjaegerData['vereinsTeams'];
+type TeamSpieleRead = KorbjaegerData['teamGames'];
+type TabelleRead = KorbjaegerData['standings'];
+type SpielRead = KorbjaegerData['game'];
+type VereinsTeamsRead = KorbjaegerData['clubTeams'];
 
 /** The day the specs run on: after the last Spiel of the fixtures below. */
 const HEUTE_IM_SPEC = '2026-11-08';
@@ -94,68 +94,68 @@ const ZWEI_STUNDEN = 2 * 60 * 60_000;
 
 /** An empty Tabelle of Liga `ligaId`. */
 const keineZeilen: TabelleRead = async (ligaId) => ({
-  liga: [TESTSPIELE, VORRUNDE].find(({ id }) => id === ligaId) ?? VORRUNDE,
-  zeilen: [],
+  league: [TESTSPIELE, VORRUNDE].find(({ id }) => id === ligaId) ?? VORRUNDE,
+  rows: [],
 });
 
-const SCHULSPORTHALLE: Halle = {
+const SCHULSPORTHALLE: Venue = {
   name: 'Schulsporthalle',
-  strasse: 'Schulstr. 12',
-  plz: '38553',
-  ort: 'Wasbüttel',
+  street: 'Schulstr. 12',
+  postcode: '38553',
+  town: 'Wasbüttel',
 };
 
 /** A Spiel's details, played in the Schulsporthalle. */
 const inDerSchulsporthalle: SpielRead = async (spielId) => ({
-  spiel: spiel({ id: spielId, datum: '2026-11-21' }),
-  liga: VORRUNDE,
-  halle: SCHULSPORTHALLE,
-  viertel: [],
-  verlaengerungen: [],
+  game: spiel({ id: spielId, date: '2026-11-21' }),
+  league: VORRUNDE,
+  venue: SCHULSPORTHALLE,
+  quarters: [],
+  overtimes: [],
 });
 
 /** The Verein's Teams of its recent Spiele: ours and two others. */
-const UNSER_VEREIN: VereinsTeams = {
-  verein: { id: 1837, name: 'MTV Wasbüttel' },
+const UNSER_VEREIN: ClubTeams = {
+  club: { id: 1837, name: 'MTV Wasbüttel' },
   teams: [
-    { team: UNSER_TEAM, ligen: [VORRUNDE] },
+    { team: UNSER_TEAM, leagues: [VORRUNDE] },
     {
-      team: { id: 317618, name: 'MTV Wasbüttel 2', vereinId: 1837 },
-      ligen: [liga(54900, 'Regionsvorrunde Nordwest mu14')],
+      team: { id: 317618, name: 'MTV Wasbüttel 2', clubId: 1837 },
+      leagues: [liga(54900, 'Regionsvorrunde Nordwest mu14')],
     },
     {
-      team: { id: 270037, name: 'MTV Wasbüttel', vereinId: 1837 },
-      ligen: [liga(54901, 'Regionsliga Braunschweig mu16')],
+      team: { id: 270037, name: 'MTV Wasbüttel', clubId: 1837 },
+      leagues: [liga(54901, 'Regionsliga Braunschweig mu16')],
     },
   ],
 };
 
 /** A Verein whose recent Spiele show no Team. */
 const OHNE_TEAMS: VereinsTeamsRead = async () => ({
-  verein: UNSER_VEREIN.verein,
+  club: UNSER_VEREIN.club,
   teams: [],
 });
 
 /**
- * `KorbjaegerData` answering `teamSpiele` with `read`, Tabellen empty,
+ * `KorbjaegerData` answering `teamGames` with `read`, Tabellen empty,
  * every Spiel in the Schulsporthalle, the Verein without other Teams.
  */
 function fakeData(
   read: TeamSpieleRead,
-  tabelle: TabelleRead = keineZeilen,
+  standings: TabelleRead = keineZeilen,
   details: SpielRead = inDerSchulsporthalle,
-  vereinsTeams: VereinsTeamsRead = OHNE_TEAMS
+  clubTeams: VereinsTeamsRead = OHNE_TEAMS
 ): {
-  readonly teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
-  readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
-  readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
-  readonly vereinsTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
+  readonly teamGames: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  readonly standings: ReturnType<typeof vi.fn<TabelleRead>>;
+  readonly game: ReturnType<typeof vi.fn<SpielRead>>;
+  readonly clubTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
 } {
   return {
-    teamSpiele: vi.fn<TeamSpieleRead>(read),
-    tabelle: vi.fn<TabelleRead>(tabelle),
-    spiel: vi.fn<SpielRead>(details),
-    vereinsTeams: vi.fn<VereinsTeamsRead>(vereinsTeams),
+    teamGames: vi.fn<TeamSpieleRead>(read),
+    standings: vi.fn<TabelleRead>(standings),
+    game: vi.fn<SpielRead>(details),
+    clubTeams: vi.fn<VereinsTeamsRead>(clubTeams),
   };
 }
 
@@ -204,7 +204,7 @@ describe('TeamComponent', () => {
             gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
             grund: 'kein-internet',
           });
-          return saison([spiel({ id: 1, datum: '2026-09-20' })]);
+          return saison([spiel({ id: 1, date: '2026-09-20' })]);
         })
       );
 
@@ -218,7 +218,7 @@ describe('TeamComponent', () => {
     it("labels the Team's head with the oldest Stand of what it shows, the next Spiel's Halle too", async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          async () => saison([spiel({ id: 1, date: '2026-11-14' })]),
           keineZeilen,
           async (spielId, options?: KorbReadOptions) => {
             options?.lesung?.ersetzt({
@@ -238,7 +238,7 @@ describe('TeamComponent', () => {
     it("labels the Verein's other Teams with their own Stand", async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, datum: '2026-11-14' })]),
+          async () => saison([spiel({ id: 1, date: '2026-11-14' })]),
           keineZeilen,
           inDerSchulsporthalle,
           async (verein, options?: KorbReadOptions) => {
@@ -271,7 +271,7 @@ describe('TeamComponent', () => {
 
     await render(data, '313036');
 
-    expect(data.teamSpiele).toHaveBeenCalledWith(
+    expect(data.teamGames).toHaveBeenCalledWith(
       313036,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
@@ -288,10 +288,10 @@ describe('TeamComponent', () => {
     const page = await render(
       fakeData(async () =>
         saison([
-          spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
-          spiel({ id: 2, datum: '2026-09-20', uhrzeit: '15:00' }),
-          spiel({ id: 3, datum: '2026-09-20', uhrzeit: '09:00' }),
-          spiel({ id: 4, datum: '2026-09-12' }),
+          spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
+          spiel({ id: 2, date: '2026-09-20', time: '15:00' }),
+          spiel({ id: 3, date: '2026-09-20', time: '09:00' }),
+          spiel({ id: 4, date: '2026-09-12' }),
         ])
       )
     );
@@ -319,7 +319,7 @@ describe('TeamComponent', () => {
   it('shows no time where the DBB has none', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([spiel({ id: 1, datum: '2026-09-12', uhrzeit: undefined })])
+        saison([spiel({ id: 1, date: '2026-09-12', time: undefined })])
       )
     );
 
@@ -330,12 +330,12 @@ describe('TeamComponent', () => {
     const page = await render(
       fakeData(async () =>
         saison([
-          spiel({ id: 1, datum: '2026-09-12', gast: gegner(2, 'MTV Gifhorn') }),
+          spiel({ id: 1, date: '2026-09-12', away: gegner(2, 'MTV Gifhorn') }),
           spiel({
             id: 2,
-            datum: '2026-09-20',
-            heim: gegner(3, 'SV Groß Oesingen'),
-            gast: UNS,
+            date: '2026-09-20',
+            home: gegner(3, 'SV Groß Oesingen'),
+            away: UNS,
           }),
         ])
       )
@@ -354,9 +354,9 @@ describe('TeamComponent', () => {
         saison([
           spiel({
             id: 1,
-            datum: '2026-09-12',
-            heim: gegner(2, 'MTV Gifhorn'),
-            gast: gegner(3, 'SV Groß Oesingen'),
+            date: '2026-09-12',
+            home: gegner(2, 'MTV Gifhorn'),
+            away: gegner(3, 'SV Groß Oesingen'),
           }),
         ])
       )
@@ -374,8 +374,8 @@ describe('TeamComponent', () => {
         saison([
           spiel({
             id: 1,
-            datum: '2026-12-05',
-            gast: { art: 'offen', bezeichnung: 'Nord 1. Platz' },
+            date: '2026-12-05',
+            away: { kind: 'open', label: 'Nord 1. Platz' },
           }),
         ])
       )
@@ -390,16 +390,16 @@ describe('TeamComponent', () => {
         saison([
           spiel({
             id: 1,
-            datum: '2026-09-12',
-            heim: gegner(3, 'TuS Müden-Dieckhorst'),
-            gast: UNS,
+            date: '2026-09-12',
+            home: gegner(3, 'TuS Müden-Dieckhorst'),
+            away: UNS,
             status: {
-              art: 'gespielt',
-              ergebnis: { heim: 46, gast: 99 },
-              bestaetigt: true,
+              kind: 'played',
+              result: { home: 46, away: 99 },
+              confirmed: true,
             },
           }),
-          spiel({ id: 2, datum: '2026-11-21' }),
+          spiel({ id: 2, date: '2026-11-21' }),
         ])
       )
     );
@@ -415,20 +415,20 @@ describe('TeamComponent', () => {
         saison([
           spiel({
             id: 1,
-            datum: '2026-09-12',
+            date: '2026-09-12',
             status: {
-              art: 'gespielt',
-              ergebnis: { heim: 99, gast: 46 },
-              bestaetigt: false,
+              kind: 'played',
+              result: { home: 99, away: 46 },
+              confirmed: false,
             },
           }),
           spiel({
             id: 2,
-            datum: '2026-09-19',
+            date: '2026-09-19',
             status: {
-              art: 'gespielt',
-              ergebnis: { heim: 60, gast: 50 },
-              bestaetigt: true,
+              kind: 'played',
+              result: { home: 60, away: 50 },
+              confirmed: true,
             },
           }),
         ])
@@ -442,27 +442,27 @@ describe('TeamComponent', () => {
   });
 
   it('shows a result the DBB never confirms (BBL, ProA, ProB) as final', async () => {
-    const bbl: Liga = {
+    const bbl: League = {
       ...liga(55802, '1. Bundesliga (easyCredit BBL)'),
-      verband: { id: 100, name: 'Bundesligen' },
-      ohneSpielberichte: true,
+      association: { id: 100, name: 'Bundesligen' },
+      withoutGameReports: true,
       resultsNeverConfirmed: true,
     };
-    const unbestaetigt = (id: number, ligaId: number): Spiel =>
+    const unbestaetigt = (id: number, ligaId: number): Game =>
       spiel({
         id,
-        ligaId,
-        datum: `2026-09-1${id}`,
+        leagueId: ligaId,
+        date: `2026-09-1${id}`,
         status: {
-          art: 'gespielt',
-          ergebnis: { heim: 99, gast: 46 },
-          bestaetigt: false,
+          kind: 'played',
+          result: { home: 99, away: 46 },
+          confirmed: false,
         },
       });
     const page = await render(
       fakeData(async () => ({
         ...saison([unbestaetigt(1, bbl.id), unbestaetigt(2, VORRUNDE.id)]),
-        ligen: [bbl, VORRUNDE],
+        leagues: [bbl, VORRUNDE],
       }))
     );
 
@@ -476,27 +476,27 @@ describe('TeamComponent', () => {
   it('says in words how each decided Spiel ended for the Team', async () => {
     const gespielt = (heim: number, gast: number) =>
       ({
-        art: 'gespielt',
-        ergebnis: { heim, gast },
-        bestaetigt: true,
+        kind: 'played',
+        result: { home: heim, away: gast },
+        confirmed: true,
       }) as const;
     const page = await render(
       fakeData(async () =>
         saison([
           spiel({
             id: 1,
-            datum: '2026-09-12',
-            heim: gegner(3, 'TuS Müden-Dieckhorst'),
-            gast: UNS,
+            date: '2026-09-12',
+            home: gegner(3, 'TuS Müden-Dieckhorst'),
+            away: UNS,
             status: gespielt(46, 99),
           }),
-          spiel({ id: 2, datum: '2026-09-19', status: gespielt(40, 52) }),
+          spiel({ id: 2, date: '2026-09-19', status: gespielt(40, 52) }),
           spiel({
             id: 3,
-            datum: '2026-09-26',
-            status: { art: 'kampflos', verzichtet: ['heim'] },
+            date: '2026-09-26',
+            status: { kind: 'forfeited', forfeitedBy: ['home'] },
           }),
-          spiel({ id: 4, datum: '2026-11-21' }),
+          spiel({ id: 4, date: '2026-11-21' }),
         ])
       )
     );
@@ -513,7 +513,7 @@ describe('TeamComponent', () => {
     const page = await render(
       fakeData(async () =>
         saison([
-          spiel({ id: 1, datum: '2026-10-03', status: { art: 'abgesagt' } }),
+          spiel({ id: 1, date: '2026-10-03', status: { kind: 'cancelled' } }),
         ])
       )
     );
@@ -528,17 +528,17 @@ describe('TeamComponent', () => {
         saison([
           spiel({
             id: 1,
-            datum: '2026-10-03',
+            date: '2026-10-03',
             status: {
-              art: 'kampflos',
-              verzichtet: ['gast'],
-              ergebnis: { heim: 20, gast: 0 },
+              kind: 'forfeited',
+              forfeitedBy: ['away'],
+              result: { home: 20, away: 0 },
             },
           }),
           spiel({
             id: 2,
-            datum: '2026-10-10',
-            status: { art: 'kampflos', verzichtet: [] },
+            date: '2026-10-10',
+            status: { kind: 'forfeited', forfeitedBy: [] },
           }),
         ])
       )
@@ -555,8 +555,8 @@ describe('TeamComponent', () => {
     const page = await render(
       fakeData(async () =>
         saison([
-          spiel({ id: 2861436, datum: '2026-09-20' }),
-          spiel({ id: 2861439, datum: '2026-09-25' }),
+          spiel({ id: 2861436, date: '2026-09-20' }),
+          spiel({ id: 2861439, date: '2026-09-25' }),
         ])
       )
     );
@@ -570,15 +570,15 @@ describe('TeamComponent', () => {
     const MIT_NAECHSTEM = saison([
       spiel({
         id: 1,
-        datum: '2026-10-03',
+        date: '2026-10-03',
         status: {
-          art: 'gespielt',
-          ergebnis: { heim: 78, gast: 47 },
-          bestaetigt: true,
+          kind: 'played',
+          result: { home: 78, away: 47 },
+          confirmed: true,
         },
       }),
-      spiel({ id: 2, datum: '2026-11-21', uhrzeit: '11:00' }),
-      spiel({ id: 3, datum: '2026-11-28' }),
+      spiel({ id: 2, date: '2026-11-21', time: '11:00' }),
+      spiel({ id: 3, date: '2026-11-28' }),
     ]);
 
     function naechstes(page: HTMLElement): HTMLElement | null {
@@ -610,16 +610,16 @@ describe('TeamComponent', () => {
 
       await render(data);
 
-      expect(data.spiel.mock.calls.map(([spielId]) => spielId)).toEqual([2]);
+      expect(data.game.mock.calls.map(([spielId]) => spielId)).toEqual([2]);
     });
 
     it('shows none and reads no Halle once every Spiel is played', async () => {
-      const data = fakeData(async () => saison([MIT_NAECHSTEM.spiele[0]]));
+      const data = fakeData(async () => saison([MIT_NAECHSTEM.games[0]]));
 
       const page = await render(data);
 
       expect(naechstes(page)).toBeNull();
-      expect(data.spiel).not.toHaveBeenCalled();
+      expect(data.game).not.toHaveBeenCalled();
     });
 
     it('keeps the Spiele when its Halle cannot be read', async () => {
@@ -700,7 +700,7 @@ describe('TeamComponent', () => {
   it("names the page 'Team' in the breadcrumb until the Team is read", async () => {
     TestBed.configureTestingModule({
       providers: providers(
-        fakeData(() => new Promise<TeamSaison>(() => undefined))
+        fakeData(() => new Promise<TeamSeason>(() => undefined))
       ),
     });
     const fixture = TestBed.createComponent(TeamComponent);
@@ -719,7 +719,7 @@ describe('TeamComponent', () => {
   it('shows that it is loading', async () => {
     TestBed.configureTestingModule({
       providers: providers(
-        fakeData(() => new Promise<TeamSaison>(() => undefined))
+        fakeData(() => new Promise<TeamSeason>(() => undefined))
       ),
     });
     const fixture = TestBed.createComponent(TeamComponent);
@@ -756,22 +756,22 @@ describe('TeamComponent', () => {
       expect(page.querySelector('[role="alert"]')?.textContent).toContain(
         'Dieses Team kennt der DBB nicht.'
       );
-      expect(data.teamSpiele).not.toHaveBeenCalled();
+      expect(data.teamGames).not.toHaveBeenCalled();
     }
   );
 
   it('cancels the read of a Team the page has left', async () => {
-    const data = fakeData(() => new Promise<TeamSaison>(() => undefined));
+    const data = fakeData(() => new Promise<TeamSeason>(() => undefined));
     TestBed.configureTestingModule({ providers: providers(data) });
     const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
-    const erster = data.teamSpiele.mock.calls[0][1]?.signal;
+    const erster = data.teamGames.mock.calls[0][1]?.signal;
 
     fixture.componentRef.setInput('teamId', '201500');
     fixture.detectChanges();
 
-    expect(data.teamSpiele).toHaveBeenLastCalledWith(
+    expect(data.teamGames).toHaveBeenLastCalledWith(
       201500,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
@@ -779,9 +779,9 @@ describe('TeamComponent', () => {
   });
   describe('Tabellen', () => {
     const ZWEI_LIGEN = saison([
-      spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
-      spiel({ id: 2, datum: '2026-09-12' }),
-      spiel({ id: 3, datum: '2026-11-08' }),
+      spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
+      spiel({ id: 2, date: '2026-09-12' }),
+      spiel({ id: 3, date: '2026-11-08' }),
     ]);
 
     function tabellen(page: HTMLElement): HTMLElement[] {
@@ -792,10 +792,10 @@ describe('TeamComponent', () => {
       return tabelle.querySelector('h3')?.textContent?.trim();
     }
 
-    const VORRUNDE_TABELLE: Tabelle = {
-      liga: VORRUNDE,
-      zeilen: [
-        tabellenZeile(1, { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 }),
+    const VORRUNDE_TABELLE: Standings = {
+      league: VORRUNDE,
+      rows: [
+        tabellenZeile(1, { id: 201500, name: 'MTV Gifhorn', clubId: 201500 }),
         tabellenZeile(2, UNSER_TEAM),
       ],
     };
@@ -809,7 +809,7 @@ describe('TeamComponent', () => {
         VORRUNDE.name,
         TESTSPIELE.name,
       ]);
-      expect(data.tabelle.mock.calls.map(([ligaId]) => ligaId)).toEqual([
+      expect(data.standings.mock.calls.map(([ligaId]) => ligaId)).toEqual([
         VORRUNDE.id,
         TESTSPIELE.id,
       ]);
@@ -821,9 +821,9 @@ describe('TeamComponent', () => {
         providers: providers(
           fakeData(async () =>
             saison([
-              spiel({ id: 1, datum: '2026-08-29', ligaId: TESTSPIELE.id }),
-              spiel({ id: 2, datum: '2026-11-08' }),
-              spiel({ id: 3, datum: '2026-11-21', ligaId: TESTSPIELE.id }),
+              spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
+              spiel({ id: 2, date: '2026-11-08' }),
+              spiel({ id: 3, date: '2026-11-21', leagueId: TESTSPIELE.id }),
             ])
           ),
           heute
@@ -854,7 +854,7 @@ describe('TeamComponent', () => {
           async (ligaId) =>
             ligaId === VORRUNDE.id
               ? VORRUNDE_TABELLE
-              : { liga: TESTSPIELE, zeilen: [] }
+              : { league: TESTSPIELE, rows: [] }
         )
       );
 
@@ -908,12 +908,12 @@ describe('TeamComponent', () => {
       const page = await render(data);
 
       expect(tabellen(page)).toEqual([]);
-      expect(data.tabelle).not.toHaveBeenCalled();
+      expect(data.standings).not.toHaveBeenCalled();
     });
   });
 
   describe('weitere Teams des Vereins', () => {
-    const MIT_VEREIN = (spiele: readonly Spiel[]) =>
+    const MIT_VEREIN = (spiele: readonly Game[]) =>
       fakeData(
         async () => saison(spiele),
         keineZeilen,
@@ -925,7 +925,7 @@ describe('TeamComponent', () => {
       return zeile.querySelector(`[data-qa="${qa}"]`)?.textContent?.trim();
     }
 
-    function vereinsTeams(page: HTMLElement): HTMLElement[] {
+    function clubTeams(page: HTMLElement): HTMLElement[] {
       return [
         ...page.querySelectorAll<HTMLElement>('[data-qa="vereins-team"]'),
       ];
@@ -936,7 +936,7 @@ describe('TeamComponent', () => {
 
       await render(data);
 
-      expect(data.vereinsTeams).toHaveBeenCalledWith(
+      expect(data.clubTeams).toHaveBeenCalledWith(
         1837,
         expect.objectContaining({ signal: expect.any(AbortSignal) })
       );
@@ -946,7 +946,7 @@ describe('TeamComponent', () => {
       const page = await render(MIT_VEREIN([]));
 
       expect(
-        vereinsTeams(page).map((zeile) => [
+        clubTeams(page).map((zeile) => [
           feldIn(zeile, 'vereins-team-name'),
           feldIn(zeile, 'vereins-team-ligen'),
         ])
@@ -955,7 +955,7 @@ describe('TeamComponent', () => {
         ['MTV Wasbüttel', 'Regionsliga Braunschweig mu16'],
       ]);
       expect(
-        vereinsTeams(page).map((zeile) =>
+        clubTeams(page).map((zeile) =>
           zeile.querySelector('a')?.getAttribute('href')
         )
       ).toEqual(['/team/317618', '/team/270037']);
@@ -974,7 +974,7 @@ describe('TeamComponent', () => {
       await fixture.whenStable();
       const page = fixture.nativeElement as HTMLElement;
 
-      const knopf = vereinsTeams(page)[0].querySelector('button');
+      const knopf = clubTeams(page)[0].querySelector('button');
       expect(knopf?.getAttribute('aria-label')).toBe(
         'Team folgen: MTV Wasbüttel 2'
       );
@@ -992,7 +992,7 @@ describe('TeamComponent', () => {
       const geschwister: Team = {
         id: 317618,
         name: 'MTV Wasbüttel 2',
-        vereinId: 1837,
+        clubId: 1837,
       };
       const data = fakeData(
         async (teamId) => ({
@@ -1015,9 +1015,9 @@ describe('TeamComponent', () => {
       expect(page.querySelector('h1')?.textContent).toContain(
         'MTV Wasbüttel 2'
       );
-      expect(data.vereinsTeams).toHaveBeenCalledTimes(1);
+      expect(data.clubTeams).toHaveBeenCalledTimes(1);
       expect(
-        vereinsTeams(page).map((zeile) =>
+        clubTeams(page).map((zeile) =>
           zeile.querySelector('a')?.getAttribute('href')
         )
       ).toEqual(['/team/313036', '/team/270037']);
@@ -1026,7 +1026,7 @@ describe('TeamComponent', () => {
     it('says so where the Verein shows no other Team', async () => {
       const page = await render(fakeData(async () => saison([])));
 
-      expect(vereinsTeams(page)).toEqual([]);
+      expect(clubTeams(page)).toEqual([]);
       expect(
         page.querySelector('[data-qa="vereins-teams"]')?.textContent
       ).toContain('Keine weiteren Teams');
@@ -1035,7 +1035,7 @@ describe('TeamComponent', () => {
     it('keeps the Spiele when the Verein cannot be read', async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, datum: '2026-11-21' })]),
+          async () => saison([spiel({ id: 1, date: '2026-11-21' })]),
           keineZeilen,
           inDerSchulsporthalle,
           async () => {
@@ -1053,15 +1053,15 @@ describe('TeamComponent', () => {
   });
 
   describe('the end of the Saison', () => {
-    const GESPIELT: Spiel['status'] = {
-      art: 'gespielt',
-      ergebnis: { heim: 78, gast: 47 },
-      bestaetigt: true,
+    const GESPIELT: Game['status'] = {
+      kind: 'played',
+      result: { home: 78, away: 47 },
+      confirmed: true,
     };
 
     function mitLetztemSpielAm(datum: string) {
       return fakeData(
-        async () => saison([spiel({ id: 1, datum, status: GESPIELT })]),
+        async () => saison([spiel({ id: 1, date: datum, status: GESPIELT })]),
         keineZeilen,
         inDerSchulsporthalle,
         async () => UNSER_VEREIN
@@ -1103,8 +1103,8 @@ describe('TeamComponent', () => {
       const page = await render(
         fakeData(async () =>
           saison([
-            spiel({ id: 1, datum: '2026-09-20', status: GESPIELT }),
-            spiel({ id: 2, datum: '2026-12-05' }),
+            spiel({ id: 1, date: '2026-09-20', status: GESPIELT }),
+            spiel({ id: 2, date: '2026-12-05' }),
           ])
         )
       );

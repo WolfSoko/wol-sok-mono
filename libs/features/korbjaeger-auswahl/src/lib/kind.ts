@@ -1,5 +1,5 @@
 import type {
-  BenannterSpieler,
+  NamedPlayer,
   PersonId,
 } from '@wolsok/feat-shared-basketball-data';
 
@@ -15,10 +15,10 @@ export interface Kind {
 }
 
 /**
- * What marking takes of a player: only a named one (`BenannterSpieler`)
+ * What marking takes of a player: only a named one (`NamedPlayer`)
  * has it, so an Anonymer Spieler cannot be marked.
  */
-export type MarkierbarerSpieler = Pick<BenannterSpieler, 'art' | 'personId'>;
+export type MarkierbarerSpieler = Pick<NamedPlayer, 'kind' | 'personId'>;
 
 /** How long a Spitzname may be, in characters. */
 export const SPITZNAME_LAENGE = 30;

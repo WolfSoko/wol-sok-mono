@@ -1,9 +1,9 @@
-import type { VereinId } from '../domain/ids';
-import type { Verband } from '../domain/verband';
+import type { ClubId } from '../domain/ids';
+import type { Association } from '../domain/association';
 
 /** A Club as the index keeps it: its DBB id and name, nothing else. */
 export interface ClubIndexEntry {
-  readonly id: VereinId;
+  readonly id: ClubId;
   readonly name: string;
   /**
    * Set where the Club's own name could not be read (in time) and one of
@@ -14,7 +14,7 @@ export interface ClubIndexEntry {
 
 /** The Clubs playing in one Association's Leagues, as one crawl found them. */
 export interface AssociationClubs {
-  readonly association: Verband;
+  readonly association: Association;
   /** By name. */
   readonly clubs: readonly ClubIndexEntry[];
   /** When the crawl ended, in milliseconds since the epoch. */
@@ -23,10 +23,10 @@ export interface AssociationClubs {
 
 /** A Club of the index with every Association it plays in. */
 export interface IndexedClub {
-  readonly id: VereinId;
+  readonly id: ClubId;
   readonly name: string;
   /** By name. */
-  readonly associations: readonly Verband[];
+  readonly associations: readonly Association[];
 }
 
 const BY_NAME = new Intl.Collator('de');
@@ -42,8 +42,8 @@ export function mergeAssociationClubs(
 ): readonly IndexedClub[] {
   const newestFirst = [...lists].sort((a, b) => b.updatedAt - a.updatedAt);
   const clubs = new Map<
-    VereinId,
-    { name: string; fromTeam: boolean; associations: Verband[] }
+    ClubId,
+    { name: string; fromTeam: boolean; associations: Association[] }
   >();
   for (const { association, clubs: entries } of newestFirst) {
     for (const { id, name, nameFromTeam } of entries) {

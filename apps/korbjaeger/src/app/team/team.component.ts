@@ -16,12 +16,12 @@ import { hallenStand } from '../halle/hallen-stand';
 import { HEUTE } from '../heute';
 import { RouterLink } from '@angular/router';
 import {
-  ligenAktuellZuerst,
-  naechstesSpiel,
+  leaguesCurrentFirst,
+  nextGame,
   parseDbbId,
-  saisonBeendet,
-  type TeamSaison,
-  type VereinId,
+  seasonOver,
+  type TeamSeason,
+  type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
@@ -43,7 +43,7 @@ import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knop
  * (each opening its Spiel page), across all its Ligen, by date, then the
  * Tabelle of each of those Ligen, the current one first, and the
  * Verein's other Teams; with a control to follow the Team and each of
- * those. Once the Team's Saison looks over (`saisonBeendet`), a hint asks
+ * those. Once the Team's Saison looks over (`seasonOver`), a hint asks
  * whether it is and offers the Verein's Teams first. The page wears the
  * colours an Elternteil gave the Verein ("Vereinsfarben", a bottom sheet).
  */
@@ -95,7 +95,7 @@ export class TeamComponent {
   /** The next Spiel to go to, from today on. */
   private readonly kommendesSpiel = computed(() =>
     this.saison.hasValue()
-      ? naechstesSpiel(this.saison.value(), this.heute())
+      ? nextGame(this.saison.value(), this.heute())
       : undefined
   );
 
@@ -117,14 +117,14 @@ export class TeamComponent {
 
   protected readonly ligen = computed(() =>
     this.saison.hasValue()
-      ? ligenAktuellZuerst(this.saison.value(), this.heute())
+      ? leaguesCurrentFirst(this.saison.value(), this.heute())
       : []
   );
 
   /** Whether the Team's Saison looks over, as of today. */
   protected readonly beendet = computed(
     () =>
-      this.saison.hasValue() && saisonBeendet(this.saison.value(), this.heute())
+      this.saison.hasValue() && seasonOver(this.saison.value(), this.heute())
   );
 
   /**
@@ -132,11 +132,11 @@ export class TeamComponent {
    * the same Verein reads it no second time.
    */
   private readonly vereinId = linkedSignal<
-    TeamSaison | undefined,
-    VereinId | undefined
+    TeamSeason | undefined,
+    ClubId | undefined
   >({
     source: () => (this.saison.hasValue() ? this.saison.value() : undefined),
-    computation: (saison, vorher) => saison?.verein.id ?? vorher?.value,
+    computation: (saison, vorher) => saison?.club.id ?? vorher?.value,
   });
 
   protected readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
@@ -171,7 +171,7 @@ export class TeamComponent {
   public constructor() {
     // this Team's Verein only: `vereinId` keeps the last one while the next loads
     vereinsfarbenAnwenden(() =>
-      this.saison.hasValue() ? this.saison.value().verein.id : undefined
+      this.saison.hasValue() ? this.saison.value().club.id : undefined
     );
     breadcrumb(() => [
       {

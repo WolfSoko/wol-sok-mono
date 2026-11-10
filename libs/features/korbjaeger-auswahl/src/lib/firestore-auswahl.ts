@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
-  VereinId,
+  ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { Vereinsfarben } from './vereinsfarben';
 import type { VereinsfarbenWahl } from './vereinsfarben-wahl';
@@ -243,13 +243,13 @@ export class FirestoreAuswahl implements Auswahl {
   }
 
   public vereinsfarbenSetzen(
-    verein: VereinId,
+    verein: ClubId,
     farben: Vereinsfarben
   ): Promise<void> {
     return this.aendern(vereinsfarbenAenderung(verein, farben));
   }
 
-  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
+  public vereinsfarbenZuruecksetzen(verein: ClubId): Promise<void> {
     return this.aendern(vereinsfarbenZuruecksetzenAenderung(verein));
   }
 

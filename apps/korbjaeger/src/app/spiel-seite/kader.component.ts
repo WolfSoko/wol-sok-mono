@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import type { Kader } from '@wolsok/feat-shared-basketball-data';
+import type { Roster } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { KindMarkierungComponent } from '../kind/kind-markierung.component';
 import { kaderZeilen } from './kader-zeilen';
@@ -34,7 +34,7 @@ const WERTE_SPALTEN = ['punkte', 'feldkoerbe', 'freiwuerfe', 'fouls'] as const;
 export class KaderComponent {
   /** The Team's name, or its side while the Spiel cannot be read. */
   public readonly titel = input.required<string>();
-  public readonly kader = input.required<Kader>();
+  public readonly kader = input.required<Roster>();
   /** Unique on the page, to name the table by its heading. */
   public readonly seite = input.required<string>();
   /** Whether the Team is one of Meine Teams, so its Kinder can be marked. */
@@ -54,7 +54,7 @@ export class KaderComponent {
       ? ['nummer']
       : []),
     'name',
-    ...(this.kader().spielerwerteErfasst ? WERTE_SPALTEN : []),
+    ...(this.kader().playerStatsRecorded ? WERTE_SPALTEN : []),
   ]);
   protected readonly ueberschriftId = computed(() => `kader-${this.seite()}`);
 }

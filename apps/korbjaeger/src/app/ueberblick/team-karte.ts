@@ -1,9 +1,9 @@
 import type {
-  Spiel,
+  Game,
   TeamId,
-  TeamSaison,
-  TeamUeberblick,
-  Verein,
+  TeamSeason,
+  TeamOverview,
+  Club,
 } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import type { Stand } from '../basketball-data/stand';
@@ -17,7 +17,7 @@ export interface KartenZusatz {
   readonly stand?: Stand;
   /** The read of the next Spiel's Halle, once it started. */
   readonly halle?: HallenStand;
-  /** Whether the Team's Saison looks over (`saisonBeendet`). */
+  /** Whether the Team's Saison looks over (`seasonOver`). */
   readonly saisonBeendet: boolean;
   /** The read of the Verein's Teams to suggest, once it started. */
   readonly vereinsTeams?: VereinsTeamsStand;
@@ -32,9 +32,9 @@ export type TeamKarte =
       readonly teamId: TeamId;
       readonly name: string;
       /** The Team's Verein, whose colours the card wears. */
-      readonly verein: Verein;
+      readonly verein: Club;
       /** The next Spiel, by which the overview orders the cards. */
-      readonly naechstesSpiel?: Spiel;
+      readonly naechstesSpiel?: Game;
       readonly naechstes?: SpielZeile;
       readonly ausfaelle: readonly SpielZeile[];
       readonly letztes?: SpielZeile;
@@ -47,18 +47,18 @@ export function kartenName(karte: TeamKarte): string {
 
 /**
  * The card of a Team whose Saison was read, from its overview
- * (`teamUeberblick`), with `zusatz`.
+ * (`teamOverview`), with `zusatz`.
  */
 export function geladeneKarte(
-  saison: TeamSaison,
-  { naechstes, ausfaelle, letztes }: TeamUeberblick,
+  saison: TeamSeason,
+  { next: naechstes, cancellations: ausfaelle, last: letztes }: TeamOverview,
   zusatz: KartenZusatz
 ): TeamKarte {
   return {
     art: 'geladen',
     teamId: saison.team.id,
     name: saison.team.name,
-    verein: saison.verein,
+    verein: saison.club,
     naechstesSpiel: naechstes,
     naechstes: naechstes && spielZeile(saison, naechstes),
     ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),

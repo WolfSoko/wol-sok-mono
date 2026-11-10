@@ -84,7 +84,7 @@ describe('LokaleAuswahl', () => {
   });
 
   describe('abgeben', () => {
-    const MIMI = { art: 'benannt', personId: 4711 } as const;
+    const MIMI = { kind: 'named', personId: 4711 } as const;
 
     it('takes off what an account took over, leaving what joined meanwhile', async () => {
       const geraet = new SpeicherImSpec();
@@ -152,7 +152,7 @@ describe('LokaleAuswahl', () => {
     const geraet = new SpeicherImSpec();
     const auswahl = new LokaleAuswahl(geraet);
     void auswahl.folgen(313036);
-    void auswahl.markieren({ art: 'benannt', personId: 4711 });
+    void auswahl.markieren({ kind: 'named', personId: 4711 });
 
     void auswahl.entfolgen(313036);
 
@@ -166,10 +166,10 @@ describe('LokaleAuswahl', () => {
   it('writes nothing to mark a Kind marked already', async () => {
     const geraet = new SpeicherImSpec();
     const auswahl = new LokaleAuswahl(geraet);
-    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    await auswahl.markieren({ kind: 'named', personId: 4711 }, 'Mimi');
     const vorher = geraet.schreibvorgaenge;
 
-    await auswahl.markieren({ art: 'benannt', personId: 4711 });
+    await auswahl.markieren({ kind: 'named', personId: 4711 });
     await auswahl.spitznameSetzen(4711, ' Mimi ');
     await auswahl.entmarkieren(4799);
 
@@ -179,7 +179,7 @@ describe('LokaleAuswahl', () => {
   it('keeps its Kinder as they are where another tab stored the same', async () => {
     const geraet = new SpeicherImSpec();
     const auswahl = new LokaleAuswahl(geraet, geraet.fenster);
-    await auswahl.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+    await auswahl.markieren({ kind: 'named', personId: 4711 }, 'Mimi');
     const vorher = auswahl.kinder();
 
     await auswahl.folgen(313036);
@@ -371,7 +371,7 @@ describe('LokaleAuswahl', () => {
       return { geraet, voll };
     }
 
-    const LUMI = { art: 'benannt', personId: 4711 } as const;
+    const LUMI = { kind: 'named', personId: 4711 } as const;
 
     it('is kept for the next change, and stored with it once there is room', async () => {
       const { geraet, voll } = zeitweiseVoll();

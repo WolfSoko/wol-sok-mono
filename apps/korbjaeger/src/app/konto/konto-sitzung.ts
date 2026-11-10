@@ -2,7 +2,7 @@ import { computed, signal, type Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
-  VereinId,
+  ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   type Vereinsfarben,
@@ -628,13 +628,13 @@ class AktuelleAuswahl implements Auswahl {
   }
 
   public vereinsfarbenSetzen(
-    verein: VereinId,
+    verein: ClubId,
     farben: Vereinsfarben
   ): Promise<void> {
     return this.mit((auswahl) => auswahl.vereinsfarbenSetzen(verein, farben));
   }
 
-  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
+  public vereinsfarbenZuruecksetzen(verein: ClubId): Promise<void> {
     return this.mit((auswahl) => auswahl.vereinsfarbenZuruecksetzen(verein));
   }
 

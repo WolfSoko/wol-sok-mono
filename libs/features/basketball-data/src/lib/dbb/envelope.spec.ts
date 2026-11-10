@@ -1,7 +1,7 @@
 import { caughtError } from '../../testing/caught-error';
 import { dbbStatusOf, readEnvelope } from './envelope';
 import notFound from './fixtures/table-not-found.json';
-import teamSpiele from './fixtures/team-313036-matches.json';
+import teamGames from './fixtures/team-313036-matches.json';
 import unavailable from './fixtures/envelope-unavailable.json';
 
 describe('readEnvelope', () => {
@@ -47,7 +47,7 @@ describe('readEnvelope', () => {
 
 describe('dbbStatusOf', () => {
   it.each([
-    ['ok', teamSpiele],
+    ['ok', teamGames],
     ['not-found', notFound],
     ['server-error', unavailable],
   ])('reads %s from a recorded envelope', (status, envelope) => {

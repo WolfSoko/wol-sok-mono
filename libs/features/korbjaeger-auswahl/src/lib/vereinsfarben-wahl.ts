@@ -1,15 +1,15 @@
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { istFarbe, type Vereinsfarben } from './vereinsfarben';
 
 /** A Verein's colours, as the `Auswahl` holds them: by the Verein's DBB id. */
 export interface VereinsfarbenWahl extends Vereinsfarben {
-  readonly vereinId: VereinId;
+  readonly vereinId: ClubId;
 }
 
 /** The colours `liste` holds for `verein`; `undefined` for none. */
 export function vereinsfarbenVon(
   liste: readonly VereinsfarbenWahl[] | undefined,
-  verein: VereinId
+  verein: ClubId
 ): VereinsfarbenWahl | undefined {
   return liste?.find(({ vereinId }) => vereinId === verein);
 }

@@ -1,10 +1,10 @@
 import {
   assertValidDbbRequest,
   parseDbbId,
-  VEREINS_SPIELE_TAGE,
+  CLUB_GAMES_DAYS,
   type DbbRequest,
   type DbbRequestKind,
-  type LigaSucheFilter,
+  type LeagueSearchFilter,
 } from '@wolsok/feat-shared-basketball-data';
 
 /**
@@ -60,53 +60,53 @@ const DIGITS = /^\d+$/;
  * in `KorbjaegerData`.
  */
 export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
-  'liga-suche': filterRoute('/api/dbb/ligen', (filter) => ({
-    kind: 'liga-suche',
+  'league-search': filterRoute('/api/dbb/ligen', (filter) => ({
+    kind: 'league-search',
     filter,
   })),
-  'liga-seite': filterRoute(
+  'league-page': filterRoute(
     '/api/dbb/ligen/seite',
     (filter, query) => {
       const startIndex = startIndexOf(query);
       return startIndex === undefined
         ? undefined
-        : { kind: 'liga-seite', filter, startIndex };
+        : { kind: 'league-page', filter, startIndex };
     },
     { [START_PARAM]: ({ startIndex }) => String(startIndex) }
   ),
-  spielplan: idRoute(
+  schedule: idRoute(
     '/api/dbb/liga/:ligaId/spielplan',
-    (ligaId) => ({ kind: 'spielplan', ligaId }),
-    ({ ligaId }) => ligaId
+    (ligaId) => ({ kind: 'schedule', leagueId: ligaId }),
+    ({ leagueId }) => leagueId
   ),
-  'team-spiele': idRoute(
+  'team-games': idRoute(
     '/api/dbb/team/:teamId/spiele',
-    (teamId) => ({ kind: 'team-spiele', teamId }),
+    (teamId) => ({ kind: 'team-games', teamId }),
     ({ teamId }) => teamId
   ),
-  'vereins-spiele': idRoute(
+  'club-games': idRoute(
     '/api/dbb/verein/:vereinId/spiele',
     (vereinId) => ({
-      kind: 'vereins-spiele',
-      vereinId,
-      tage: VEREINS_SPIELE_TAGE,
+      kind: 'club-games',
+      clubId: vereinId,
+      days: CLUB_GAMES_DAYS,
     }),
     vereinMitFesterSpanne
   ),
-  tabelle: idRoute(
+  standings: idRoute(
     '/api/dbb/liga/:ligaId/tabelle',
-    (ligaId) => ({ kind: 'tabelle', ligaId }),
-    ({ ligaId }) => ligaId
+    (ligaId) => ({ kind: 'standings', leagueId: ligaId }),
+    ({ leagueId }) => leagueId
   ),
-  'spiel-info': idRoute(
+  'game-info': idRoute(
     '/api/dbb/spiel/:spielId',
-    (spielId) => ({ kind: 'spiel-info', spielId }),
-    ({ spielId }) => spielId
+    (spielId) => ({ kind: 'game-info', gameId: spielId }),
+    ({ gameId }) => gameId
   ),
-  spielbericht: idRoute(
+  'game-report': idRoute(
     '/api/dbb/spiel/:spielId/bericht',
-    (spielId) => ({ kind: 'spielbericht', spielId }),
-    ({ spielId }) => spielId
+    (spielId) => ({ kind: 'game-report', gameId: spielId }),
+    ({ gameId }) => gameId
   ),
 };
 
@@ -117,19 +117,19 @@ export function proxyUrl(request: DbbRequest): string {
 
 /**
  * The Verein whose Spiele `read` asks for. The route fixes the day range
- * to the adapter's (`VEREINS_SPIELE_TAGE`), so each Verein has one URL to
+ * to the adapter's (`CLUB_GAMES_DAYS`), so each Verein has one URL to
  * cache; a read of another range has none and throws a `RangeError`.
  */
 function vereinMitFesterSpanne({
-  vereinId,
-  tage,
-}: ProxyRead<'vereins-spiele'>): number {
-  if (tage !== VEREINS_SPIELE_TAGE) {
+  clubId,
+  days,
+}: ProxyRead<'club-games'>): number {
+  if (days !== CLUB_GAMES_DAYS) {
     throw new RangeError(
-      `the proxy reads a Verein's Spiele of ${VEREINS_SPIELE_TAGE} days only, not ${tage}`
+      `the proxy reads a Verein's Spiele of ${CLUB_GAMES_DAYS} days only, not ${days}`
     );
   }
-  return vereinId;
+  return clubId;
 }
 
 /**
@@ -157,7 +157,7 @@ function idRoute<K extends ProxyKind>(
 }
 
 /** The kinds of read by a Liga search filter in the query. */
-type FilterKind = 'liga-suche' | 'liga-seite';
+type FilterKind = 'league-search' | 'league-page';
 
 /**
  * A route reading by the Liga search filter in its query, beside the
@@ -168,7 +168,7 @@ type FilterKind = 'liga-suche' | 'liga-seite';
 function filterRoute<K extends FilterKind>(
   pattern: string,
   read: (
-    filter: LigaSucheFilter,
+    filter: LeagueSearchFilter,
     query: URLSearchParams
   ) => ProxyRead<K> | undefined,
   extra: Readonly<Record<string, (read: ProxyRead<K>) => string>> = {}
@@ -191,7 +191,7 @@ function filterRoute<K extends FilterKind>(
   };
 }
 
-function filterOfRead(request: ProxyRead<FilterKind>): LigaSucheFilter {
+function filterOfRead(request: ProxyRead<FilterKind>): LeagueSearchFilter {
   return request.filter;
 }
 
@@ -203,7 +203,7 @@ function filterOfRead(request: ProxyRead<FilterKind>): LigaSucheFilter {
 function filterOf(
   query: URLSearchParams,
   extra: readonly string[]
-): LigaSucheFilter | undefined {
+): LeagueSearchFilter | undefined {
   const known = new Set<string>([...Object.values(FILTER_PARAMS), ...extra]);
   if ([...query.keys()].some((key) => !known.has(key))) {
     return undefined;
@@ -214,9 +214,9 @@ function filterOf(
     return undefined;
   }
   return {
-    verbandIds,
-    altersklasseIds,
-    altersgruppeGeschlechtIds: query.getAll(FILTER_PARAMS.geschlecht),
+    associationIds: verbandIds,
+    ageGroupIds: altersklasseIds,
+    ageGroupGenderIds: query.getAll(FILTER_PARAMS.geschlecht),
   };
 }
 
@@ -245,17 +245,11 @@ function validOrUndefined<R extends DbbRequest>(request: R): R | undefined {
   }
 }
 
-function filterQuery(filter: LigaSucheFilter): URLSearchParams {
+function filterQuery(filter: LeagueSearchFilter): URLSearchParams {
   return new URLSearchParams([
-    ...filter.verbandIds.map((id) => [FILTER_PARAMS.verband, String(id)]),
-    ...filter.altersklasseIds.map((id) => [
-      FILTER_PARAMS.altersklasse,
-      String(id),
-    ]),
-    ...filter.altersgruppeGeschlechtIds.map((id) => [
-      FILTER_PARAMS.geschlecht,
-      id,
-    ]),
+    ...filter.associationIds.map((id) => [FILTER_PARAMS.verband, String(id)]),
+    ...filter.ageGroupIds.map((id) => [FILTER_PARAMS.altersklasse, String(id)]),
+    ...filter.ageGroupGenderIds.map((id) => [FILTER_PARAMS.geschlecht, id]),
   ]);
 }
 

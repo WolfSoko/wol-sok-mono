@@ -9,10 +9,10 @@ import {
   type Signal,
 } from '@angular/core';
 import {
-  naechsterStartIndex,
-  type Liga,
-  type LigaSeite,
-  type LigaSucheFilter,
+  nextStartIndex,
+  type League,
+  type LeaguePage,
+  type LeagueSearchFilter,
 } from '@wolsok/feat-shared-basketball-data';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
 import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
@@ -20,7 +20,7 @@ import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
 /** The Ligen a filter finds, page by page. */
 export interface LigenSeiten {
   /** The Ligen of every page read so far, in the DBB's order. */
-  readonly ligen: Signal<readonly Liga[]>;
+  readonly ligen: Signal<readonly League[]>;
   /** Whether a page is being read. */
   readonly laedt: Signal<boolean>;
   /** Whether a page after the last one read exists. */
@@ -33,7 +33,7 @@ export interface LigenSeiten {
 
 /** What is read of the pages after the first, for one filter. */
 interface FolgeSeiten {
-  readonly seiten: readonly LigaSeite[];
+  readonly seiten: readonly LeaguePage[];
   readonly laedt: boolean;
   readonly fehler: unknown;
 }
@@ -51,23 +51,23 @@ const KEINE_FOLGESEITEN: FolgeSeiten = {
  * page does. Created in an injection context, or on `injector`.
  */
 export function ligenSeiten(
-  filter: () => LigaSucheFilter | undefined,
+  filter: () => LeagueSearchFilter | undefined,
   injector: Injector = inject(Injector)
 ): LigenSeiten {
   const data = injector.get(BASKETBALL_DATA);
   const suche = ligaSucheResource(filter, injector);
   const aktuellerFilter = computed(filter);
-  const folgende = linkedSignal<LigaSucheFilter | undefined, FolgeSeiten>({
+  const folgende = linkedSignal<LeagueSearchFilter | undefined, FolgeSeiten>({
     source: aktuellerFilter,
     computation: () => KEINE_FOLGESEITEN,
   });
 
-  const seiten = computed((): readonly LigaSeite[] =>
-    suche.hasValue() ? [suche.value().ersteSeite, ...folgende().seiten] : []
+  const seiten = computed((): readonly LeaguePage[] =>
+    suche.hasValue() ? [suche.value().firstPage, ...folgende().seiten] : []
   );
   const naechsterStart = computed(() => {
     const letzte = seiten().at(-1);
-    return letzte === undefined ? undefined : naechsterStartIndex(letzte);
+    return letzte === undefined ? undefined : nextStartIndex(letzte);
   });
 
   /** The read of a later page under way, cancelled by a new filter. */
@@ -91,7 +91,7 @@ export function ligenSeiten(
 
   /** Applies `aenderung` while `fuer` is still the filter. */
   const solangeAktuell = (
-    fuer: LigaSucheFilter,
+    fuer: LeagueSearchFilter,
     aenderung: (bisher: FolgeSeiten) => FolgeSeiten
   ): void => {
     if (aktuellerFilter() === fuer) {
@@ -100,7 +100,7 @@ export function ligenSeiten(
   };
 
   return {
-    ligen: computed(() => seiten().flatMap((seite) => seite.ligen)),
+    ligen: computed(() => seiten().flatMap((seite) => seite.leagues)),
     laedt: computed(() => suche.isLoading() || folgende().laedt),
     weitere: computed(() => naechsterStart() !== undefined),
     fehler: computed(() => suche.error() ?? folgende().fehler),
@@ -119,7 +119,7 @@ export function ligenSeiten(
       const abbruch = new AbortController();
       laufend = abbruch;
       try {
-        const seite = await data.ligaSeite(fuer, start, {
+        const seite = await data.leaguePage(fuer, start, {
           signal: abbruch.signal,
         });
         solangeAktuell(fuer, (bisher) => ({

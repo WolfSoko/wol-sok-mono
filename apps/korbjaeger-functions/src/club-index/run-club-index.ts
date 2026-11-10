@@ -1,10 +1,10 @@
 import {
-  angeboten,
+  offered,
   crawlClubs,
-  KEIN_LIGA_FILTER,
+  NO_LEAGUE_FILTER,
   type AssociationClubs,
   type ClubCrawlSource,
-  type VerbandId,
+  type AssociationId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   associationToCrawl,
@@ -19,11 +19,11 @@ export interface ClubIndexState {
   /** Every list the index holds, skipping any it cannot read. */
   readonly lists: readonly AssociationClubs[];
   /** When a crawl of an Association last started, in milliseconds. */
-  readonly attempts: ReadonlyMap<VerbandId, number>;
+  readonly attempts: ReadonlyMap<AssociationId, number>;
   /** The Associations the index holds a document of, list or not. */
-  readonly ids: ReadonlySet<VerbandId>;
+  readonly ids: ReadonlySet<AssociationId>;
   /** Those of `ids` marked as offered (`OFFERED_ASSOCIATION`). */
-  readonly offered: ReadonlySet<VerbandId>;
+  readonly offered: ReadonlySet<AssociationId>;
 }
 
 /** Where the index keeps one list per Association. */
@@ -33,13 +33,13 @@ export interface ClubIndexStore {
    * Marks each of `associations` as offered, keeping a list it has, so the
    * server sees the index is incomplete until each has one (#3005).
    */
-  noteOffered(associations: readonly VerbandId[]): Promise<void>;
+  noteOffered(associations: readonly AssociationId[]): Promise<void>;
   /** Notes that a crawl of `association` starts `at`, keeping its list. */
-  markAttempt(association: VerbandId, at: number): Promise<void>;
+  markAttempt(association: AssociationId, at: number): Promise<void>;
   /** Replaces the list of `list.association`, and its attempt. */
   save(list: AssociationClubs): Promise<void>;
   /** Deletes the document of an Association the DBB no longer offers. */
-  remove(association: VerbandId): Promise<void>;
+  remove(association: AssociationId): Promise<void>;
 }
 
 /** What a run needs. */
@@ -59,7 +59,7 @@ export interface ClubIndexResult {
   /** Offered Associations marked as such (`noteOffered`) by this run. */
   readonly noted: number;
   readonly crawled?: {
-    readonly association: VerbandId;
+    readonly association: AssociationId;
     readonly clubs: number;
     /** Clubs a Team's name stands in for, read again next time. */
     readonly namedByTeam: number;
@@ -79,8 +79,8 @@ export interface ClubIndexResult {
 export async function runClubIndex(
   run: ClubIndexRun
 ): Promise<ClubIndexResult> {
-  const search = await run.data.ligaSuche(KEIN_LIGA_FILTER);
-  const associations = angeboten(search.facetten.verbaende).map(
+  const search = await run.data.leagueSearch(NO_LEAGUE_FILTER);
+  const associations = offered(search.facets.associations).map(
     ({ id, name }) => ({ id, name })
   );
   const state = await run.store.read();
@@ -136,7 +136,7 @@ export async function runClubIndex(
 async function removeUnoffered(
   store: ClubIndexStore,
   state: ClubIndexState,
-  offered: readonly { readonly id: VerbandId }[]
+  offered: readonly { readonly id: AssociationId }[]
 ): Promise<number> {
   if (offered.length === 0) {
     return 0;

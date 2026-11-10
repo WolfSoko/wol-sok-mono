@@ -1,11 +1,11 @@
 import { rejectedError } from '../../testing/caught-error';
 import { BasketballDataError } from '../domain/basketball-data-error';
 import {
-  KEIN_LIGA_FILTER,
-  angeboten,
-  naechsterStartIndex,
-  type LigaSucheFilter,
-} from '../domain/liga-suche';
+  NO_LEAGUE_FILTER,
+  offered,
+  nextStartIndex,
+  type LeagueSearchFilter,
+} from '../domain/league-search';
 import type { ReadOptions } from '../basketball-data';
 import { DbbBasketballData } from './dbb-basketball-data';
 import {
@@ -14,43 +14,43 @@ import {
   type DbbTransport,
 } from './dbb-request';
 import boxscoreNotFound from './fixtures/boxscore-not-found.json';
-import keinBericht from './fixtures/boxscore-2843814.json';
-import mitWerten from './fixtures/boxscore-2911141.json';
+import noReport from './fixtures/boxscore-2843814.json';
+import withStats from './fixtures/boxscore-2911141.json';
 import clubMatches from './fixtures/club-1476-actualmatches.json';
 import clubNotFound from './fixtures/club-not-found.json';
 import unavailable from './fixtures/envelope-unavailable.json';
 import matchInfo from './fixtures/matchinfo-2911141.json';
-import spielplan from './fixtures/spielplan-54379.json';
+import schedule from './fixtures/spielplan-54379.json';
 import table from './fixtures/table-54308.json';
 import tableNotFound from './fixtures/table-not-found.json';
 import teamMatches from './fixtures/team-313036-matches.json';
 import teamNotFound from './fixtures/team-not-found.json';
 import wamData from './fixtures/wam-data-bayern-u14.json';
-import zweiteSeite from './fixtures/wam-liga-list-bayern-u14-10.json';
-import alleLigen from './fixtures/wam-data-alle.json';
+import secondPage from './fixtures/wam-liga-list-bayern-u14-10.json';
+import allLeagues from './fixtures/wam-data-alle.json';
 import niedersachsen from './fixtures/wam-data-niedersachsen.json';
 import niedersachsenU12 from './fixtures/wam-data-niedersachsen-u12.json';
-import vorrundeSpielplan from './fixtures/spielplan-54862.json';
-import nsU12mErste from './fixtures/wam-data-niedersachsen-u12-jugend-maennlich.json';
-import nsU12mZweite from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-10.json';
-import nsU12mDritte from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-20.json';
+import firstRoundSchedule from './fixtures/spielplan-54862.json';
+import nsU12mFirst from './fixtures/wam-data-niedersachsen-u12-jugend-maennlich.json';
+import nsU12mSecond from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-10.json';
+import nsU12mThird from './fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-20.json';
 
-const BAYERN_U14: LigaSucheFilter = {
-  ...KEIN_LIGA_FILTER,
-  verbandIds: [2],
-  altersklasseIds: [14],
+const BAYERN_U14: LeagueSearchFilter = {
+  ...NO_LEAGUE_FILTER,
+  associationIds: [2],
+  ageGroupIds: [14],
 };
 
-const NIEDERSACHSEN_U12_JUGEND_MAENNLICH: LigaSucheFilter = {
-  verbandIds: [7],
-  altersklasseIds: [12],
-  altersgruppeGeschlechtIds: ['2_1'],
+const NIEDERSACHSEN_U12_YOUTH_MALE: LeagueSearchFilter = {
+  associationIds: [7],
+  ageGroupIds: [12],
+  ageGroupGenderIds: ['2_1'],
 };
 
 /** The recorded pages of the male U12 youth Ligen of Niedersachsen. */
-const NS_U12M_SEITEN: ReadonlyMap<number, unknown> = new Map([
-  [10, nsU12mZweite],
-  [20, nsU12mDritte],
+const NS_U12M_PAGES: ReadonlyMap<number, unknown> = new Map([
+  [10, nsU12mSecond],
+  [20, nsU12mThird],
 ]);
 
 /** A transport that answers each kind of read with one recorded response. */
@@ -82,63 +82,63 @@ function dataWith(responses: Partial<Record<DbbRequestKind, unknown>>): {
 describe('DbbBasketballData', () => {
   it('searches Ligen with the filter and pages through the list call', async () => {
     const { data, transport } = dataWith({
-      'liga-suche': wamData,
-      'liga-seite': zweiteSeite,
+      'league-search': wamData,
+      'league-page': secondPage,
     });
 
-    const suche = await data.ligaSuche(BAYERN_U14);
-    const seite = await data.ligaSeite(
+    const search = await data.leagueSearch(BAYERN_U14);
+    const page = await data.leaguePage(
       BAYERN_U14,
-      suche.ersteSeite.ligen.length
+      search.firstPage.leagues.length
     );
 
-    expect(suche.facetten.verbaende.length).toBeGreaterThan(0);
-    expect(seite.startIndex).toBe(10);
+    expect(search.facets.associations.length).toBeGreaterThan(0);
+    expect(page.startIndex).toBe(10);
     expect(transport.requests).toEqual([
-      { kind: 'liga-suche', filter: BAYERN_U14 },
-      { kind: 'liga-seite', filter: BAYERN_U14, startIndex: 10 },
+      { kind: 'league-search', filter: BAYERN_U14 },
+      { kind: 'league-page', filter: BAYERN_U14, startIndex: 10 },
     ]);
   });
 
   it('offers each Verband that has Ligen when nothing is picked yet', async () => {
-    const { data } = dataWith({ 'liga-suche': alleLigen });
+    const { data } = dataWith({ 'league-search': allLeagues });
 
-    const { verbaende } = (await data.ligaSuche(KEIN_LIGA_FILTER)).facetten;
+    const { associations } = (await data.leagueSearch(NO_LEAGUE_FILTER)).facets;
 
-    expect(angeboten(verbaende)).toContainEqual({
+    expect(offered(associations)).toContainEqual({
       id: 7,
       name: 'Niedersachsen',
-      treffer: 252,
+      hits: 252,
     });
-    expect(angeboten(verbaende)).toHaveLength(23);
+    expect(offered(associations)).toHaveLength(23);
   });
 
   it('offers the age groups a Verband has, and none it lacks', async () => {
-    const { data } = dataWith({ 'liga-suche': niedersachsen });
+    const { data } = dataWith({ 'league-search': niedersachsen });
 
-    const { altersklassen } = (
-      await data.ligaSuche({ ...KEIN_LIGA_FILTER, verbandIds: [7] })
-    ).facetten;
+    const { ageGroups } = (
+      await data.leagueSearch({ ...NO_LEAGUE_FILTER, associationIds: [7] })
+    ).facets;
 
-    const namen = angeboten(altersklassen).map((facette) => facette.name);
-    expect(namen).toContain('U12');
-    expect(namen).not.toContain('U19');
+    const names = offered(ageGroups).map((facet) => facet.name);
+    expect(names).toContain('U12');
+    expect(names).not.toContain('U19');
   });
 
   it('offers the genders of the picked age group only', async () => {
-    const { data } = dataWith({ 'liga-suche': niedersachsenU12 });
+    const { data } = dataWith({ 'league-search': niedersachsenU12 });
 
-    const { altersgruppenGeschlechter } = (
-      await data.ligaSuche({
-        ...KEIN_LIGA_FILTER,
-        verbandIds: [7],
-        altersklasseIds: [12],
+    const { ageGroupGenders } = (
+      await data.leagueSearch({
+        ...NO_LEAGUE_FILTER,
+        associationIds: [7],
+        ageGroupIds: [12],
       })
-    ).facetten;
+    ).facets;
 
-    expect(angeboten(altersgruppenGeschlechter)).toEqual([
-      { id: '2_1', name: 'Jugend männlich', treffer: 28 },
-      { id: '2_2', name: 'Jugend weiblich', treffer: 8 },
+    expect(offered(ageGroupGenders)).toEqual([
+      { id: '2_1', name: 'Jugend männlich', hits: 28 },
+      { id: '2_2', name: 'Jugend weiblich', hits: 8 },
     ]);
   });
 
@@ -146,170 +146,171 @@ describe('DbbBasketballData', () => {
     const requests: DbbRequest[] = [];
     const data = new DbbBasketballData(async (request) => {
       requests.push(request);
-      return request.kind === 'liga-seite'
-        ? NS_U12M_SEITEN.get(request.startIndex)
-        : nsU12mErste;
+      return request.kind === 'league-page'
+        ? NS_U12M_PAGES.get(request.startIndex)
+        : nsU12mFirst;
     });
 
-    const filter = NIEDERSACHSEN_U12_JUGEND_MAENNLICH;
-    const seiten = [(await data.ligaSuche(filter)).ersteSeite];
+    const filter = NIEDERSACHSEN_U12_YOUTH_MALE;
+    const pages = [(await data.leagueSearch(filter)).firstPage];
     for (
-      let start = naechsterStartIndex(seiten[0]);
+      let start = nextStartIndex(pages[0]);
       start !== undefined;
-      start = naechsterStartIndex(seiten[seiten.length - 1])
+      start = nextStartIndex(pages[pages.length - 1])
     ) {
-      seiten.push(await data.ligaSeite(filter, start));
+      pages.push(await data.leaguePage(filter, start));
     }
 
-    expect(seiten.map((seite) => seite.startIndex)).toEqual([0, 10, 20]);
-    expect(seiten.flatMap((seite) => seite.ligen)).toHaveLength(28);
-    expect(seiten[1].ligen.map((liga) => liga.id)).toContain(54862);
+    expect(pages.map((page) => page.startIndex)).toEqual([0, 10, 20]);
+    expect(pages.flatMap((page) => page.leagues)).toHaveLength(28);
+    expect(pages[1].leagues.map((league) => league.id)).toContain(54862);
     expect(requests).toEqual([
-      { kind: 'liga-suche', filter },
-      { kind: 'liga-seite', filter, startIndex: 10 },
-      { kind: 'liga-seite', filter, startIndex: 20 },
+      { kind: 'league-search', filter },
+      { kind: 'league-page', filter, startIndex: 10 },
+      { kind: 'league-page', filter, startIndex: 20 },
     ]);
   });
 
   it('reads the Teams of a Liga from its Spielplan', async () => {
-    const { data, transport } = dataWith({ spielplan });
+    const { data, transport } = dataWith({ schedule });
 
-    expect((await data.ligaTeams(54379)).map((team) => team.id)).toEqual([
+    expect((await data.leagueTeams(54379)).map((team) => team.id)).toEqual([
       281627, 234544, 314384, 317492,
     ]);
-    expect(transport.requests).toEqual([{ kind: 'spielplan', ligaId: 54379 }]);
+    expect(transport.requests).toEqual([{ kind: 'schedule', leagueId: 54379 }]);
   });
 
   it('reads every Team of a Liga with its Verein, each once', async () => {
-    const { data } = dataWith({ spielplan: vorrundeSpielplan });
+    const { data } = dataWith({ schedule: firstRoundSchedule });
 
-    expect(await data.ligaTeams(54862)).toEqual([
-      { id: 201500, name: 'MTV Gifhorn', vereinId: 645 },
-      { id: 313036, name: 'MTV Wasbüttel -RST-', vereinId: 1837 },
-      { id: 320898, name: 'SV Groß Oesingen -RST-', vereinId: 5256 },
-      { id: 322695, name: 'SV Groß Schwülper', vereinId: 4332 },
-      { id: 319164, name: 'TuS Müden-Dieckhorst -RST/aK-', vereinId: 3890 },
+    expect(await data.leagueTeams(54862)).toEqual([
+      { id: 201500, name: 'MTV Gifhorn', clubId: 645 },
+      { id: 313036, name: 'MTV Wasbüttel -RST-', clubId: 1837 },
+      { id: 320898, name: 'SV Groß Oesingen -RST-', clubId: 5256 },
+      { id: 322695, name: 'SV Groß Schwülper', clubId: 4332 },
+      { id: 319164, name: 'TuS Müden-Dieckhorst -RST/aK-', clubId: 3890 },
       {
         id: 313040,
         name: 'TV Jahn Wolfsburg Honeybadgers -RST-',
-        vereinId: 2486,
+        clubId: 2486,
       },
     ]);
   });
 
   it('reads a Verein’s Teams from its Spiele of four weeks either way', async () => {
-    const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
+    const { data, transport } = dataWith({ 'club-games': clubMatches });
 
-    expect((await data.vereinsTeams(1476)).verein.name).toBe(
-      'Post SV Nürnberg'
-    );
+    expect((await data.clubTeams(1476)).club.name).toBe('Post SV Nürnberg');
     expect(transport.requests).toEqual([
-      { kind: 'vereins-spiele', vereinId: 1476, tage: 28 },
+      { kind: 'club-games', clubId: 1476, days: 28 },
     ]);
   });
 
   it('reads a Verein alone from its Spiele of the nearest days only', async () => {
-    const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
+    const { data, transport } = dataWith({ 'club-games': clubMatches });
 
     expect(await data.club(1476)).toEqual({
       id: 1476,
       name: 'Post SV Nürnberg',
     });
     expect(transport.requests).toEqual([
-      { kind: 'vereins-spiele', vereinId: 1476, tage: 1 },
+      { kind: 'club-games', clubId: 1476, days: 1 },
     ]);
   });
 
   it('rejects a Verein the DBB does not know as not found', async () => {
-    const { data } = dataWith({ 'vereins-spiele': clubNotFound });
+    const { data } = dataWith({ 'club-games': clubNotFound });
 
     expect((await rejectedError(() => data.club(1))).kind).toBe('not-found');
   });
 
   it('rejects a Verein id the DBB cannot have as not found, without asking it', async () => {
-    const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
+    const { data, transport } = dataWith({ 'club-games': clubMatches });
 
     expect((await rejectedError(() => data.club(0))).kind).toBe('not-found');
     expect(transport.requests).toEqual([]);
   });
 
   it('reads a Team’s Spiele across its Ligen', async () => {
-    const { data } = dataWith({ 'team-spiele': teamMatches });
+    const { data } = dataWith({ 'team-games': teamMatches });
 
-    const saison = await data.teamSpiele(313036);
+    const season = await data.teamGames(313036);
 
-    expect(saison.ligen).toHaveLength(2);
-    expect(saison.spiele).toHaveLength(6);
+    expect(season.leagues).toHaveLength(2);
+    expect(season.games).toHaveLength(6);
   });
 
   it('reads the Tabelle, the Spiel and its Spielbericht', async () => {
     const { data, transport } = dataWith({
-      tabelle: table,
-      'spiel-info': matchInfo,
-      spielbericht: mitWerten,
+      standings: table,
+      'game-info': matchInfo,
+      'game-report': withStats,
     });
 
-    expect((await data.tabelle(54308)).zeilen).toHaveLength(7);
-    expect((await data.spiel(2911141)).halle?.name).toBe('Paul-Moor-Schule');
-    expect((await data.spielbericht(2911141))?.heim.spielerwerteErfasst).toBe(
+    expect((await data.standings(54308)).rows).toHaveLength(7);
+    expect((await data.game(2911141)).venue?.name).toBe('Paul-Moor-Schule');
+    expect((await data.gameReport(2911141))?.home.playerStatsRecorded).toBe(
       true
     );
     expect(transport.requests.map((request) => request.kind)).toEqual([
-      'tabelle',
-      'spiel-info',
-      'spielbericht',
+      'standings',
+      'game-info',
+      'game-report',
     ]);
   });
 
   it('reads a Spiel without Spielbericht as such', async () => {
-    const { data } = dataWith({ spielbericht: keinBericht });
+    const { data } = dataWith({ 'game-report': noReport });
 
-    await expect(data.spielbericht(2843814)).resolves.toBeUndefined();
+    await expect(data.gameReport(2843814)).resolves.toBeUndefined();
   });
 
   it.each([
-    ['a Liga', () => dataWith({ tabelle: tableNotFound }).data.tabelle(1)],
+    ['a Liga', () => dataWith({ standings: tableNotFound }).data.standings(1)],
     [
       'a Team',
-      () => dataWith({ 'team-spiele': teamNotFound }).data.teamSpiele(1),
+      () => dataWith({ 'team-games': teamNotFound }).data.teamGames(1),
     ],
     [
       'a Spiel',
-      () => dataWith({ spielbericht: boxscoreNotFound }).data.spielbericht(1),
+      () => dataWith({ 'game-report': boxscoreNotFound }).data.gameReport(1),
     ],
   ])('rejects %s the DBB does not know as not found', async (_case, read) => {
     expect((await rejectedError(read)).kind).toBe('not-found');
   });
 
   it('rejects an id the DBB cannot have as not found, without asking it', async () => {
-    const { data, transport } = dataWith({ tabelle: table });
+    const { data, transport } = dataWith({ standings: table });
 
-    expect((await rejectedError(() => data.tabelle(-1))).kind).toBe(
+    expect((await rejectedError(() => data.standings(-1))).kind).toBe(
       'not-found'
     );
     expect(transport.requests).toEqual([]);
   });
 
   it.each<[string, (data: DbbBasketballData) => Promise<unknown>]>([
-    ['a negative start index', (data) => data.ligaSeite(KEIN_LIGA_FILTER, -10)],
+    [
+      'a negative start index',
+      (data) => data.leaguePage(NO_LEAGUE_FILTER, -10),
+    ],
     [
       'a malformed age group and gender id',
       (data) =>
-        data.ligaSuche({
-          ...KEIN_LIGA_FILTER,
-          altersgruppeGeschlechtIds: ['x'],
+        data.leagueSearch({
+          ...NO_LEAGUE_FILTER,
+          ageGroupGenderIds: ['x'],
         }),
     ],
     [
       'a Verband id that is no id',
-      (data) => data.ligaSuche({ ...KEIN_LIGA_FILTER, verbandIds: [0] }),
+      (data) => data.leagueSearch({ ...NO_LEAGUE_FILTER, associationIds: [0] }),
     ],
   ])(
     'lets %s, a caller’s bug, throw before asking the DBB',
     async (_case, read) => {
       const { data, transport } = dataWith({
-        'liga-suche': wamData,
-        'liga-seite': zweiteSeite,
+        'league-search': wamData,
+        'league-page': secondPage,
       });
 
       await expect(read(data)).rejects.toBeInstanceOf(RangeError);
@@ -318,9 +319,9 @@ describe('DbbBasketballData', () => {
   );
 
   it('rejects a DBB server error as unavailable', async () => {
-    const { data } = dataWith({ tabelle: unavailable });
+    const { data } = dataWith({ standings: unavailable });
 
-    expect((await rejectedError(() => data.tabelle(54308))).kind).toBe(
+    expect((await rejectedError(() => data.standings(54308))).kind).toBe(
       'unavailable'
     );
   });
@@ -329,7 +330,7 @@ describe('DbbBasketballData', () => {
     const cause = new TypeError('fetch failed');
     const data = new DbbBasketballData(() => Promise.reject(cause));
 
-    const error = await rejectedError(() => data.spiel(2911141));
+    const error = await rejectedError(() => data.game(2911141));
 
     expect(error.kind).toBe('unavailable');
     expect(error.cause).toBe(cause);
@@ -339,7 +340,7 @@ describe('DbbBasketballData', () => {
     const cause = new RangeError('Invalid time value');
     const data = new DbbBasketballData(() => Promise.reject(cause));
 
-    const error = await rejectedError(() => data.spiel(2911141));
+    const error = await rejectedError(() => data.game(2911141));
 
     expect(error.kind).toBe('unavailable');
     expect(error.cause).toBe(cause);
@@ -351,16 +352,16 @@ describe('DbbBasketballData', () => {
       const own = new BasketballDataError(kind, 'proxy: nope');
       const data = new DbbBasketballData(() => Promise.reject(own));
 
-      expect(await rejectedError(() => data.spiel(2911141))).toBe(own);
+      expect(await rejectedError(() => data.game(2911141))).toBe(own);
     }
   );
 
   it('rejects a response of the wrong shape as unexpected', async () => {
     const { data } = dataWith({
-      'spiel-info': { status: '0', data: { matchId: 'x' } },
+      'game-info': { status: '0', data: { matchId: 'x' } },
     });
 
-    expect((await rejectedError(() => data.spiel(2911141))).kind).toBe(
+    expect((await rejectedError(() => data.game(2911141))).kind).toBe(
       'unexpected-shape'
     );
   });
@@ -371,21 +372,21 @@ describe('DbbBasketballData', () => {
         (data: DbbBasketballData, signal: AbortSignal) => Promise<unknown>,
       ]
     > = [
-      ['ligaSuche', (data, signal) => data.ligaSuche(BAYERN_U14, { signal })],
       [
-        'ligaSeite',
-        (data, signal) => data.ligaSeite(BAYERN_U14, 10, { signal }),
+        'leagueSearch',
+        (data, signal) => data.leagueSearch(BAYERN_U14, { signal }),
       ],
-      ['ligaTeams', (data, signal) => data.ligaTeams(54379, { signal })],
-      ['vereinsTeams', (data, signal) => data.vereinsTeams(1476, { signal })],
+      [
+        'leaguePage',
+        (data, signal) => data.leaguePage(BAYERN_U14, 10, { signal }),
+      ],
+      ['leagueTeams', (data, signal) => data.leagueTeams(54379, { signal })],
+      ['clubTeams', (data, signal) => data.clubTeams(1476, { signal })],
       ['club', (data, signal) => data.club(1476, { signal })],
-      ['teamSpiele', (data, signal) => data.teamSpiele(313036, { signal })],
-      ['tabelle', (data, signal) => data.tabelle(54308, { signal })],
-      ['spiel', (data, signal) => data.spiel(2911141, { signal })],
-      [
-        'spielbericht',
-        (data, signal) => data.spielbericht(2911141, { signal }),
-      ],
+      ['teamGames', (data, signal) => data.teamGames(313036, { signal })],
+      ['standings', (data, signal) => data.standings(54308, { signal })],
+      ['game', (data, signal) => data.game(2911141, { signal })],
+      ['gameReport', (data, signal) => data.gameReport(2911141, { signal })],
     ];
 
     it.each(reads)(
@@ -407,22 +408,22 @@ describe('DbbBasketballData', () => {
     );
 
     it("hands the read's options to the transport as they are, typed fields of the transport's own too", async () => {
-      interface EigeneOptions extends ReadOptions {
+      interface OwnOptions extends ReadOptions {
         readonly eigenes: number;
       }
       const transport = jest.fn<
         Promise<unknown>,
-        Parameters<DbbTransport<EigeneOptions>>
+        Parameters<DbbTransport<OwnOptions>>
       >(async () => {
         throw new TypeError('fetch failed');
       });
-      const options: EigeneOptions = {
+      const options: OwnOptions = {
         signal: new AbortController().signal,
         eigenes: 1,
       };
 
-      await new DbbBasketballData<EigeneOptions>(transport)
-        .teamSpiele(313036, options)
+      await new DbbBasketballData<OwnOptions>(transport)
+        .teamGames(313036, options)
         .catch(() => undefined);
 
       expect(transport.mock.calls[0][1]).toBe(options);
@@ -437,7 +438,7 @@ describe('DbbBasketballData', () => {
             reject(new TypeError('aborted fetch'))
           )
         );
-      const read = new DbbBasketballData(transport).teamSpiele(313036, {
+      const read = new DbbBasketballData(transport).teamGames(313036, {
         signal: controller.signal,
       });
 
@@ -459,7 +460,7 @@ describe('DbbBasketballData', () => {
       };
 
       await expect(
-        new DbbBasketballData(async () => teamMatches).teamSpiele(313036, {
+        new DbbBasketballData(async () => teamMatches).teamGames(313036, {
           signal,
         })
       ).rejects.toBe(reason);
@@ -470,7 +471,7 @@ describe('DbbBasketballData', () => {
       const reason = new Error('navigated away');
 
       await expect(
-        new DbbBasketballData(transport).teamSpiele(313036, {
+        new DbbBasketballData(transport).teamGames(313036, {
           signal: AbortSignal.abort(reason),
         })
       ).rejects.toBe(reason);

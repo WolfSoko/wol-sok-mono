@@ -84,7 +84,7 @@ export class ClubPageComponent {
   );
 
   protected readonly title = computed(() =>
-    this.teams.hasValue() ? this.teams.value().verein.name : CLUB_TITLE
+    this.teams.hasValue() ? this.teams.value().club.name : CLUB_TITLE
   );
 
   public constructor() {

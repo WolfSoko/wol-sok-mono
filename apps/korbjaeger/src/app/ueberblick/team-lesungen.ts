@@ -5,17 +5,17 @@ import {
   type Signal,
 } from '@angular/core';
 import {
-  naechstesSpiel,
-  saisonBeendet,
-  teamUeberblick,
-  zuletztGespielt,
-  type KaderFunde,
+  nextGame,
+  seasonOver,
+  teamOverview,
+  lastPlayed,
+  type RosterFinds,
   type PersonId,
-  type SpielDetails,
+  type GameDetails,
   type TeamId,
-  type TeamSaison,
-  type TeamUeberblick,
-  type VereinId,
+  type TeamSeason,
+  type TeamOverview,
+  type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
@@ -34,21 +34,21 @@ import {
  * whose Teams to suggest once its Saison looks over.
  */
 export interface TeamLesungen {
-  readonly saison: DatenResource<TeamSaison | undefined>;
-  /** Its overview (`teamUeberblick`) on `heute`, once its Saison is read. */
-  readonly ueberblick: Signal<TeamUeberblick | undefined>;
-  readonly naechsteDetails: DatenResource<SpielDetails | undefined>;
+  readonly saison: DatenResource<TeamSeason | undefined>;
+  /** Its overview (`teamOverview`) on `heute`, once its Saison is read. */
+  readonly ueberblick: Signal<TeamOverview | undefined>;
+  readonly naechsteDetails: DatenResource<GameDetails | undefined>;
   /** None while no Kind is marked. */
-  readonly kaderSuche: DatenResource<KaderFunde | undefined>;
+  readonly kaderSuche: DatenResource<RosterFinds | undefined>;
   /** Whether its Kader is still searched, or has yet to be. */
   readonly sucht: Signal<boolean>;
   /**
    * What the last search that ended found, kept while it runs again; a run
    * that failed as a whole keeps those too, marked `unvollstaendig`.
    */
-  readonly funde: Signal<KaderFunde | undefined>;
-  /** The Team's Verein once its Saison looks over (`saisonBeendet`). */
-  readonly saisonEndeVerein: Signal<VereinId | undefined>;
+  readonly funde: Signal<RosterFinds | undefined>;
+  /** The Team's Verein once its Saison looks over (`seasonOver`). */
+  readonly saisonEndeVerein: Signal<ClubId | undefined>;
 }
 
 /** What a Team's reads follow beside the Team. */
@@ -73,14 +73,12 @@ export function teamLesungen(
   const saison = teamSaisonResource(() => teamId, injector);
   const naechsteDetails = spielDetailsResource(
     () =>
-      saison.hasValue()
-        ? naechstesSpiel(saison.value(), heute())?.id
-        : undefined,
+      saison.hasValue() ? nextGame(saison.value(), heute())?.id : undefined,
     injector
   );
   const saisonEndeVerein = computed(() =>
-    saison.hasValue() && saisonBeendet(saison.value(), heute())
-      ? saison.value().verein.id
+    saison.hasValue() && seasonOver(saison.value(), heute())
+      ? saison.value().club.id
       : undefined
   );
   const auftrag = computed(
@@ -89,12 +87,8 @@ export function teamLesungen(
       return saison.hasValue() && personen.length > 0
         ? {
             team: teamId,
-            spiele: zuletztGespielt(
-              saison.value(),
-              heute(),
-              KADER_SUCHE_SPIELE
-            ),
-            kinder: personen,
+            games: lastPlayed(saison.value(), heute(), KADER_SUCHE_SPIELE),
+            children: personen,
           }
         : undefined;
     },
@@ -102,12 +96,12 @@ export function teamLesungen(
   );
   const kaderSuche = kaderSucheResource(() => auftrag(), injector);
   // a new order clears the resource's value: the last finds stay shown
-  const funde = linkedSignal<SuchEnde | undefined, KaderFunde | undefined>({
+  const funde = linkedSignal<SuchEnde | undefined, RosterFinds | undefined>({
     source: () => suchEnde(kaderSuche.snapshot()),
     computation: (ende, vorher) => fundeNach(ende, vorher?.value),
   });
   const ueberblick = computed(() =>
-    saison.hasValue() ? teamUeberblick(saison.value(), heute()) : undefined
+    saison.hasValue() ? teamOverview(saison.value(), heute()) : undefined
   );
   return {
     saison,

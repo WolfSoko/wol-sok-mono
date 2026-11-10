@@ -12,7 +12,7 @@ import { JETZT } from '../jetzt';
 import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
 import { ChildStepComponent } from './child-step.component';
 
-type TeamSpieleRead = KorbjaegerData['teamSpiele'];
+type TeamSpieleRead = KorbjaegerData['teamGames'];
 
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 const WASBUETTEL = WASBUETTEL_RST;
@@ -22,9 +22,9 @@ async function render(
   { followed = true }: { followed?: boolean } = {}
 ): Promise<{
   page: HTMLElement;
-  teamSpiele: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  teamGames: ReturnType<typeof vi.fn<TeamSpieleRead>>;
 }> {
-  const teamSpiele = vi.fn<TeamSpieleRead>(read);
+  const teamGames = vi.fn<TeamSpieleRead>(read);
   // in memory: nothing reaches the device's storage
   const auswahl = new LokaleAuswahl(undefined);
   if (followed) {
@@ -33,7 +33,7 @@ async function render(
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
-      { provide: BASKETBALL_DATA, useValue: { teamSpiele } },
+      { provide: BASKETBALL_DATA, useValue: { teamGames } },
       { provide: AUSWAHL, useValue: auswahl },
       { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     ],
@@ -42,7 +42,7 @@ async function render(
   fixture.componentRef.setInput('teamId', WASBUETTEL.id);
   fixture.componentRef.setInput('teamName', WASBUETTEL.name);
   await fixture.whenStable();
-  return { page: fixture.nativeElement as HTMLElement, teamSpiele };
+  return { page: fixture.nativeElement as HTMLElement, teamGames };
 }
 
 function text(element: Element | null | undefined): string {
@@ -51,15 +51,15 @@ function text(element: Element | null | undefined): string {
 
 describe('ChildStepComponent', () => {
   it("links a followed Team's last played Spiel, to mark the Kind there", async () => {
-    const { page, teamSpiele } = await render(async () =>
+    const { page, teamGames } = await render(async () =>
       saisonOf(
         spielOn(2861436, '2026-09-20'),
         spielOn(2861440, '2026-10-04'),
-        spielOn(2861450, '2026-11-15', { art: 'geplant' })
+        spielOn(2861450, '2026-11-15', { kind: 'scheduled' })
       )
     );
 
-    expect(teamSpiele).toHaveBeenCalledWith(WASBUETTEL.id, expect.anything());
+    expect(teamGames).toHaveBeenCalledWith(WASBUETTEL.id, expect.anything());
     const link = page.querySelector('[data-qa="child-step-mark"]');
     expect(link?.getAttribute('href')).toBe('/spiel/2861440');
     expect(link?.getAttribute('aria-label')).toBe(
@@ -69,7 +69,7 @@ describe('ChildStepComponent', () => {
 
   it('says the Kind can be marked after its first Spiel where none was played', async () => {
     const { page } = await render(async () =>
-      saisonOf(spielOn(2861450, '2026-11-15', { art: 'geplant' }))
+      saisonOf(spielOn(2861450, '2026-11-15', { kind: 'scheduled' }))
     );
 
     expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
@@ -108,11 +108,11 @@ describe('ChildStepComponent', () => {
   });
 
   it('shows and reads nothing for a Team not followed', async () => {
-    const { page, teamSpiele } = await render(async () => saisonOf(), {
+    const { page, teamGames } = await render(async () => saisonOf(), {
       followed: false,
     });
 
-    expect(teamSpiele).not.toHaveBeenCalled();
+    expect(teamGames).not.toHaveBeenCalled();
     expect(text(page)).toBe('');
   });
 });

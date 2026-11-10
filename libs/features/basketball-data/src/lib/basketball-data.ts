@@ -1,15 +1,15 @@
-import type { LigaId, SpielId, TeamId, VereinId } from './domain/ids';
+import type { LeagueId, GameId, TeamId, ClubId } from './domain/ids';
 import type {
-  LigaSeite,
-  LigaSuche,
-  LigaSucheFilter,
-} from './domain/liga-suche';
-import type { SpielDetails } from './domain/spiel';
-import type { Spielbericht } from './domain/spielbericht';
-import type { Tabelle } from './domain/tabelle';
+  LeaguePage,
+  LeagueSearch,
+  LeagueSearchFilter,
+} from './domain/league-search';
+import type { GameDetails } from './domain/game';
+import type { GameReport } from './domain/game-report';
+import type { Standings } from './domain/standings';
 import type { Team } from './domain/team';
-import type { TeamSaison, VereinsTeams } from './domain/team-saison';
-import type { Verein } from './domain/verein';
+import type { Club } from './domain/club';
+import type { TeamSeason, ClubTeams } from './domain/team-season';
 
 /**
  * The part of an `AbortSignal` a read uses. A browser's or Node's
@@ -47,24 +47,24 @@ export interface ReadOptions {
  */
 export interface BasketballData<O extends ReadOptions = ReadOptions> {
   /** The search facets and the first page of Ligen for `filter`. */
-  ligaSuche(filter: LigaSucheFilter, options?: O): Promise<LigaSuche>;
+  leagueSearch(filter: LeagueSearchFilter, options?: O): Promise<LeagueSearch>;
   /** A later page of the Ligen for `filter`, from `startIndex` on. */
-  ligaSeite(
-    filter: LigaSucheFilter,
+  leaguePage(
+    filter: LeagueSearchFilter,
     startIndex: number,
     options?: O
-  ): Promise<LigaSeite>;
+  ): Promise<LeaguePage>;
   /** The Teams of a Liga, by name. */
-  ligaTeams(liga: LigaId, options?: O): Promise<readonly Team[]>;
+  leagueTeams(league: LeagueId, options?: O): Promise<readonly Team[]>;
   /** The Teams seen in a Verein's Spiele of the last and next weeks. */
-  vereinsTeams(verein: VereinId, options?: O): Promise<VereinsTeams>;
+  clubTeams(club: ClubId, options?: O): Promise<ClubTeams>;
   /** A Verein alone, by its id: its name without its Spiele. */
-  club(club: VereinId, options?: O): Promise<Verein>;
+  club(club: ClubId, options?: O): Promise<Club>;
   /** All Spiele of a Team in the Saison, across its Ligen, by date. */
-  teamSpiele(team: TeamId, options?: O): Promise<TeamSaison>;
-  tabelle(liga: LigaId, options?: O): Promise<Tabelle>;
+  teamGames(team: TeamId, options?: O): Promise<TeamSeason>;
+  standings(league: LeagueId, options?: O): Promise<Standings>;
   /** A Spiel's result, quarters and Halle. */
-  spiel(spiel: SpielId, options?: O): Promise<SpielDetails>;
+  game(game: GameId, options?: O): Promise<GameDetails>;
   /** Both Kader of a Spiel, or `undefined` while there is no Spielbericht. */
-  spielbericht(spiel: SpielId, options?: O): Promise<Spielbericht | undefined>;
+  gameReport(game: GameId, options?: O): Promise<GameReport | undefined>;
 }

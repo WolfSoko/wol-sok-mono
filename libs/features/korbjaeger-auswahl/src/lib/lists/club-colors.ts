@@ -1,4 +1,4 @@
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import {
   ENTFERNT,
   eintraegeMit,
@@ -37,7 +37,7 @@ export const CLUB_COLORS: ListDescriptor<
     }
     const colors: VereinsfarbenWahl[] = [];
     for (const [key, text] of Object.entries(raw)) {
-      const vereinId: VereinId | undefined = idAus(key);
+      const vereinId: ClubId | undefined = idAus(key);
       const farben = farbenAusText(text);
       if (vereinId !== undefined && farben) {
         colors.push({ vereinId, ...farben });

@@ -131,7 +131,7 @@ describe('anonymiseFixtures', () => {
   });
 
   it('skips the public names of organisations and places', () => {
-    const withHalle = {
+    const withVenue = {
       ...ORIGINAL,
       'halle.json': {
         data: { spielfeld: { bezeichnung: 'Darian-Kabir-Schule' } },
@@ -139,7 +139,7 @@ describe('anonymiseFixtures', () => {
     };
 
     expect(
-      survivingPersonData(withHalle, anonymiseFixtures(withHalle, SEED))
+      survivingPersonData(withVenue, anonymiseFixtures(withVenue, SEED))
     ).toEqual([]);
   });
 

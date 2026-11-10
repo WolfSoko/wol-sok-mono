@@ -62,6 +62,22 @@ export const ANTWORT_INDEX = 'korbjaeger-answers';
 const VERSION = 2;
 const INDEX_VERSION = 1;
 
+/**
+ * The string each kind of read is stored as (`art`): the kinds' names
+ * before #2967, so the answers stored before the rename stay valid and
+ * no read goes to the DBB again for them.
+ */
+const STORED_KINDS: Readonly<Record<DbbRequestKind, string>> = {
+  'league-search': 'liga-suche',
+  'league-page': 'liga-seite',
+  standings: 'tabelle',
+  schedule: 'spielplan',
+  'team-games': 'team-spiele',
+  'club-games': 'vereins-spiele',
+  'game-info': 'spiel-info',
+  'game-report': 'spielbericht',
+};
+
 /** What the index knows of one stored answer, by its key. */
 interface IndexEintrag {
   readonly zeichen: number;
@@ -87,7 +103,7 @@ interface Gespeichert {
  * kind, so a write reads no answer. The transport decides which reads go
  * in (`SPEICHERBARE_ARTEN`: a Team's Spiele, a Tabelle, a Spiel's match
  * info, a Verein's Spiele), each without the persons it names
- * (`dbbOhnePersonen`); never a Spielbericht with its Kader, never the
+ * (`dbbWithoutPersons`); never a Spielbericht with its Kader, never the
  * Liga search (ADR 0019). Nothing of the user.
  * - An answer older than `MAX_ALTER_MS` is not served and is deleted;
  *   `aufraeumen`, at the app's start, deletes those and answers of kinds
@@ -142,16 +158,17 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
     { antwort, gespeichertAm }: LetzteAntwort
   ): void {
     const schluessel = schluesselVon(pfad);
+    const gespeicherteArt = STORED_KINDS[art];
     const text = JSON.stringify({
       v: VERSION,
       am: gespeichertAm,
-      art,
+      art: gespeicherteArt,
       antwort,
     } satisfies Gespeichert);
     const eintrag = {
       zeichen: schluessel.length + text.length,
       am: gespeichertAm,
-      art,
+      art: gespeicherteArt,
     };
     try {
       const index = this.index();
@@ -193,11 +210,12 @@ export class LokaleLetzteAntworten implements LetzteAntworten {
    * Deletes the answers too old at `jetzt`, and those whose kind is none of
    * `arten` (or that cannot be read).
    */
-  public aufraeumen(jetzt: number, arten: ReadonlySet<string>): void {
+  public aufraeumen(jetzt: number, arten: ReadonlySet<DbbRequestKind>): void {
+    const gespeicherteArten = new Set([...arten].map((k) => STORED_KINDS[k]));
     try {
       const index = this.index();
       for (const [schluessel, { am, art }] of index) {
-        if (zuAlt(am, jetzt) || !arten.has(art)) {
+        if (zuAlt(am, jetzt) || !gespeicherteArten.has(art)) {
           this.entfernen(schluessel, index);
         }
       }
