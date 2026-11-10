@@ -48,7 +48,7 @@ export const VEREINS_SPIELE_TAGE = 28;
  * carries the Verein whatever the range, and each day more only adds
  * Spiele that are never read.
  */
-export const CLUB_NAME_DAYS = 1;
+const CLUB_NAME_DAYS = 1;
 
 /**
  * `BasketballData` read from the DBB's JSON API through `transport`, which
