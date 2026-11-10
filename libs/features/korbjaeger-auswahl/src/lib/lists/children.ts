@@ -4,7 +4,7 @@ import {
   istKarte,
   istZahl,
   bySince,
-  type ReadEntry,
+  type EntrySince,
   type RohesDokument,
 } from '../selection-entries';
 import type { ListDescriptor } from '../list-descriptor';
@@ -30,14 +30,13 @@ export type KindFeld =
  */
 export const CHILDREN: ListDescriptor<Kind, KindFeld, 'children'> = {
   field: 'children',
-  orderedBySince: true,
   id: (kind) => kind.personId,
   equals: (a, b) => a.personId === b.personId && a.spitzname === b.spitzname,
   read: (raw) => {
     if (!istKarte(raw)) {
       return [];
     }
-    const entries: ReadEntry<Kind>[] = [];
+    const entries: EntrySince<Kind>[] = [];
     for (const [key, entry] of Object.entries(raw)) {
       const personId = idAus(key);
       if (personId !== undefined && istKindEintrag(entry)) {

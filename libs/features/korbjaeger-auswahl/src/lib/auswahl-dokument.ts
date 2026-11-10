@@ -1,9 +1,6 @@
-import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
   ENTFERNT,
-  idAus,
   istKarte,
-  istZahl,
   type ReadEntry,
   type RohesDokument,
 } from './selection-entries';
@@ -14,12 +11,12 @@ import {
   type AuswahlInhalt,
   type AuswahlListe,
   type SelectionLists,
+  type SinceByList,
   type ListDescriptorOf,
   type ListDocumentField,
   type ListField,
   type ListValue,
 } from './selection-lists';
-import type { KindEintrag } from './lists/children';
 
 /**
  * The version of `AuswahlDokument` this app writes. Bumped only for a
@@ -37,20 +34,16 @@ export const AUSWAHL_VERSION = 3;
  * DBB. Keyed by id, so each change writes its own entries and the server
  * merges them with another device's (a Team followed, a Kind unmarked, a
  * Spitzname changed: none overwrites the other); `since` keeps the order.
- * Each list's field is its descriptor's (`LIST_DESCRIPTORS`).
+ * Each list is a map under its descriptor's field (`LIST_DESCRIPTORS`),
+ * whose descriptor tells what an entry holds (`teams: { [teamId]: since }`,
+ * `children: { [personId]: { since, nickname? } }`,
+ * `clubColors: { [vereinId]: farbenText }`); a missing map holds nothing.
  */
-export interface AuswahlDokument {
+export type AuswahlDokument = {
   readonly version: typeof AUSWAHL_VERSION;
-  /** Each Team's id, since when it is followed (ms since 1970). */
-  readonly teams: Readonly<Record<string, number>>;
-  /** The marked Kinder, by person id. */
-  readonly children: Readonly<Record<string, KindEintrag>>;
-  /**
-   * Each Verein's colours, by its id, as one text (`farbenText`); a Verein
-   * without any has no entry.
-   */
-  readonly clubColors?: Readonly<Record<string, string>>;
-}
+} & {
+  readonly [L in AuswahlListe as ListDocumentField<L>]?: RohesDokument;
+};
 
 /**
  * The place a Team had among Meine Teams, which `Auswahl.entfolgen` hands
@@ -102,24 +95,38 @@ export function auswahlDokumentLesen(gelesen: unknown): GelesenesDokument {
   if (lists === undefined) {
     return KEINS;
   }
+  const since = sinceRead(lists);
   return {
     art: 'aktuell',
     ...everyList<SelectionLists>((list) =>
       lists[list].map(({ value }) => value)
     ),
-    teamsSeit: new Map(lists.teams.map(({ value, since }) => [value, since])),
+    since,
     hoechsterSeit: Math.max(
       0,
-      ...LISTS_BY_SINCE.flatMap((list) => lists[list].map(({ since }) => since))
+      ...Object.values(since).flatMap((known) => [...known.values()])
     ),
     roh: gelesen,
   };
 }
 
-/** The lists whose entries carry a `since` (`ListDescriptor.orderedBySince`). */
-export const LISTS_BY_SINCE: readonly AuswahlListe[] = AUSWAHL_LISTEN.filter(
-  (list) => listDescriptor(list).orderedBySince
-);
+/** Each read entry's `since` by its id, for the lists whose entries carry one. */
+function sinceRead(lists: ReadLists): SinceByList {
+  const since: { [L in AuswahlListe]?: ReadonlyMap<number, number> } = {};
+  for (const list of AUSWAHL_LISTEN) {
+    const { id } = listDescriptor(list);
+    const known = new Map<number, number>();
+    for (const entry of lists[list]) {
+      if (entry.since !== undefined) {
+        known.set(id(entry.value), entry.since);
+      }
+    }
+    if (known.size > 0) {
+      since[list] = known;
+    }
+  }
+  return since;
+}
 
 /** Each list of `document`; `undefined` where one makes it unreadable. */
 function readLists(document: RohesDokument): ReadLists | undefined {
@@ -172,37 +179,72 @@ export function listFields<L extends AuswahlListe>(
 }
 
 /**
- * The entries that take `before` to `after`, list by list in
- * `AUSWAHL_LISTEN`'s order: those gone, the new ones (from `firstSince`, one
- * millisecond each, in their order, unless `after` knows a place for one:
- * a Team followed at its old place) and the ones changed (a Spitzname,
- * colours). Every adapter writes them: the device's merged into its
- * document (`auswahlDokumentMit`), Firestore as fields the server merges.
+ * What a change writes (`selectionWrite`): its entries (`fields`), the
+ * `since` it wrote for each entry that joins a list ordered by since, given
+ * out or known (`since`), and the last one it gave out (`lastSince`, one
+ * before the first where it gave out none), which an adapter's next change
+ * starts after.
+ */
+export interface SelectionWrite {
+  readonly fields: AuswahlFelder;
+  readonly since: SinceByList;
+  readonly lastSince: number;
+}
+
+/**
+ * The entries that take `before` to `after` (`selectionWrite`), for a
+ * writer that needs no more of it.
  */
 export function auswahlFelder(
   before: AuswahlInhalt,
   after: AuswahlInhalt,
   firstSince: number
 ): AuswahlFelder {
-  let since = firstSince;
-  const next = (): number => since++;
+  return selectionWrite(before, after, firstSince).fields;
+}
+
+/**
+ * The entries that take `before` to `after`, list by list in
+ * `AUSWAHL_LISTEN`'s order: those gone, the new ones (at the `since`
+ * `after` knows for one, a Team followed at its old place; else from
+ * `firstSince`, one millisecond each, in their order) and the ones changed
+ * (a Spitzname, colours). Every adapter writes them: the device's merged
+ * into its document (`auswahlDokumentMit`), Firestore as fields the server
+ * merges.
+ */
+export function selectionWrite(
+  before: AuswahlInhalt,
+  after: AuswahlInhalt,
+  firstSince: number
+): SelectionWrite {
+  let next = firstSince;
   const fields: Record<string, unknown> = {};
+  const since: { [L in AuswahlListe]?: ReadonlyMap<number, number> } = {};
   for (const list of AUSWAHL_LISTEN) {
-    const entries = fieldsOf(list, before, after, next);
+    const written = new Map<number, number>();
+    const sinceFor = (id: number) => (): number => {
+      const given = after.since?.[list]?.get(id) ?? next++;
+      written.set(id, given);
+      return given;
+    };
+    const entries = fieldsOf(list, before, after, sinceFor);
     if (Object.keys(entries).length > 0) {
       fields[listDescriptor(list).field] = entries;
     }
+    if (written.size > 0) {
+      since[list] = written;
+    }
   }
   // each list's entries under its own field, as `AuswahlFelder` has them
-  return fields as AuswahlFelder;
+  return { fields: fields as AuswahlFelder, since, lastSince: next - 1 };
 }
 
-/** What `auswahlFelder` writes of `list`. */
+/** What `selectionWrite` writes of `list`; `sinceFor` gives an entry its `since`. */
 function fieldsOf<L extends AuswahlListe>(
   list: L,
   before: AuswahlInhalt,
   after: AuswahlInhalt,
-  next: () => number
+  sinceFor: (id: number) => () => number
 ): ListFields<L> {
   const fields: Record<string, ListField<L> | typeof ENTFERNT> = {};
   if (before[list] === after[list]) {
@@ -219,7 +261,7 @@ function fieldsOf<L extends AuswahlListe>(
     const previous = earlier.get(id);
     gone.delete(id);
     if (previous === undefined) {
-      fields[id] = descriptor.added(value, next, after);
+      fields[id] = descriptor.added(value, sinceFor(id));
     } else if (!descriptor.equals(previous, value) && descriptor.changed) {
       fields[id] = descriptor.changed(previous, value);
     }
@@ -229,38 +271,6 @@ function fieldsOf<L extends AuswahlListe>(
   }
   // every list's `field` type takes `ENTFERNT`
   return fields as ListFields<L>;
-}
-
-/** The `seit` a write of `felder` stores for each Team it follows. */
-export function geschriebeneTeamsSeit(
-  felder: AuswahlFelder
-): ReadonlyMap<TeamId, number> {
-  const seiten = new Map<TeamId, number>();
-  for (const [schluessel, feld] of Object.entries(felder.teams ?? {})) {
-    const team = idAus(schluessel);
-    if (team !== undefined && istZahl(feld)) {
-      seiten.set(team, feld);
-    }
-  }
-  return seiten;
-}
-
-/**
- * `inhalt` with `seiten` (`geschriebeneTeamsSeit`) for the Teams it
- * follows; so a Team just followed has its place before the store
- * answered.
- */
-export function mitTeamsSeit(
-  inhalt: AuswahlInhalt,
-  seiten: ReadonlyMap<TeamId, number>
-): AuswahlInhalt {
-  const teamsSeit = new Map(inhalt.teamsSeit);
-  for (const [team, seit] of seiten) {
-    if (inhalt.teams.includes(team)) {
-      teamsSeit.set(team, seit);
-    }
-  }
-  return { ...inhalt, teamsSeit };
 }
 
 /**

@@ -4,13 +4,14 @@ import type {
   VereinId,
 } from '@wolsok/feat-shared-basketball-data';
 import type { GelesenesDokument, TeamPlatz } from './auswahl-dokument';
-import { vorSeit } from './selection-entries';
 import {
   AUSWAHL_GRENZEN,
   AUSWAHL_LISTEN,
   everyList,
   LEERE_AUSWAHL,
   listWithout,
+  sinceOf,
+  withEntryAt,
   type AuswahlInhalt,
   type SelectionLists,
 } from './selection-lists';
@@ -31,38 +32,18 @@ import { kindMit, type MarkierbarerSpieler } from './kind';
 export type AuswahlAenderung = (inhalt: AuswahlInhalt) => AuswahlInhalt;
 
 /**
- * Follows `team`, unless it is followed: at `platz`, its old place (before
- * the first Team the reader orders after it; one whose `seit` is not known
- * yet comes after), else at the end of Meine Teams, with no `seit` kept
- * for it, so the write gives it a new one. The one place that sets or
- * clears a Team's `teamsSeit`: one kept for a Team no longer followed is
- * never read.
+ * Follows `team`, unless it is followed: at `platz`, its old place, else at
+ * the end of Meine Teams, where the write gives it a new `since`
+ * (`withEntryAt`).
  */
 export function folgenAenderung(
   team: TeamId,
   platz?: TeamPlatz
 ): AuswahlAenderung {
-  return (inhalt) => {
-    if (inhalt.teams.includes(team)) {
-      return inhalt;
-    }
-    const teamsSeit = new Map(inhalt.teamsSeit);
-    if (platz === undefined) {
-      teamsSeit.delete(team);
-      return { ...inhalt, teams: [...inhalt.teams, team], teamsSeit };
-    }
-    const eintrag = { seit: platz.seit, sortierung: team };
-    const danach = inhalt.teams.findIndex(
-      (andere) =>
-        vorSeit(eintrag, {
-          seit: inhalt.teamsSeit?.get(andere) ?? Infinity,
-          sortierung: andere,
-        }) < 0
-    );
-    const teams = [...inhalt.teams];
-    teams.splice(danach === -1 ? teams.length : danach, 0, team);
-    return { ...inhalt, teams, teamsSeit: teamsSeit.set(team, platz.seit) };
-  };
+  return (inhalt) =>
+    inhalt.teams.includes(team)
+      ? inhalt
+      : withEntryAt('teams', inhalt, team, platz?.seit);
 }
 
 /** Unfollows `team`, if it is followed. */
@@ -81,13 +62,14 @@ export function teamPlatz(
   inhalt: AuswahlInhalt,
   team: TeamId
 ): TeamPlatz | undefined {
-  const seit = inhalt.teams.includes(team)
-    ? inhalt.teamsSeit?.get(team)
-    : undefined;
+  const seit = sinceOf('teams', inhalt, team);
   return seit === undefined ? undefined : { seit };
 }
 
-/** Marks `spieler` with `spitzname`, at the end, unless marked already. */
+/**
+ * Marks `spieler` with `spitzname`, at the end, where the write gives it a
+ * new `since`, unless marked already.
+ */
 export function markierenAenderung(
   spieler: MarkierbarerSpieler,
   spitzname?: string
@@ -95,10 +77,7 @@ export function markierenAenderung(
   return (inhalt) =>
     istMarkiert(inhalt, spieler.personId)
       ? inhalt
-      : {
-          ...inhalt,
-          kinder: [...inhalt.kinder, kindMit(spieler.personId, spitzname)],
-        };
+      : withEntryAt('kinder', inhalt, kindMit(spieler.personId, spitzname));
 }
 
 /** Gives the Kind `person` the Spitzname `spitzname`, if it is marked. */
@@ -177,7 +156,7 @@ export function abgebenAenderung(abgegeben: AuswahlInhalt): AuswahlAenderung {
       (list) => left[list].length === selection[list].length
     )
       ? selection
-      : // the Teams that stay keep their places (`teamsSeit`)
+      : // the entries that stay keep their places (`since`)
         { ...selection, ...left };
   };
 }
