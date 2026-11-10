@@ -15,6 +15,7 @@ import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { HEUTE } from '../heute';
 import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
+import { StandComponent } from '../stand/stand.component';
 import { childStep } from './child-step';
 
 /**
@@ -25,7 +26,13 @@ import { childStep } from './child-step';
  */
 @Component({
   selector: 'korb-child-step',
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink],
+  imports: [
+    MatButtonModule,
+    MatIconModule,
+    MatProgressBarModule,
+    RouterLink,
+    StandComponent,
+  ],
   template: `
     @if (followed()) {
       @if (saison.isLoading()) {
@@ -36,6 +43,7 @@ import { childStep } from './child-step';
       } @else if (failure(); as text) {
         <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
       } @else if (step(); as step) {
+        <korb-stand data-qa="child-step-stand" [stand]="saison.stand()" />
         @switch (step.kind) {
           @case ('mark') {
             <a

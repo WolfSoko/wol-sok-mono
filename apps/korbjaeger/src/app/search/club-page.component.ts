@@ -8,6 +8,7 @@ import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
 import { KEIN_VEREIN } from '../fehler/fehler-text';
 import { breadcrumb } from '../navigation/breadcrumb';
+import { VereinsTeamDetailDirective } from '../verein/vereins-team-detail.directive';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { StandComponent } from '../stand/stand.component';
@@ -24,12 +25,17 @@ const CLUB_TITLE = 'Verein';
  */
 @Component({
   selector: 'korb-club-page',
-  imports: [ChildStepComponent, StandComponent, VereinsTeamsComponent],
+  imports: [
+    ChildStepComponent,
+    StandComponent,
+    VereinsTeamDetailDirective,
+    VereinsTeamsComponent,
+  ],
   template: `
     <h1 data-qa="club-name">{{ title() }}</h1>
     @if (stand(); as stand) {
       <korb-stand data-qa="vereins-stand" [stand]="teams.stand()" />
-      @if (forChild()) {
+      @if (forChild() && stand.art === 'gelesen' && stand.teams.length > 0) {
         <p data-qa="child-search-follow-first">
           Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.
         </p>
@@ -39,7 +45,7 @@ const CLUB_TITLE = 'Verein';
         [stand]="stand"
         emptyText="Keine Teams des Vereins in den letzten Wochen."
       >
-        <ng-template let-team>
+        <ng-template korbVereinsTeamDetail let-team>
           @if (forChild()) {
             <korb-child-step [teamId]="team.teamId" [teamName]="team.name" />
           }

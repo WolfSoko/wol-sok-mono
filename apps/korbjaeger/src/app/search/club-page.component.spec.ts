@@ -193,6 +193,20 @@ describe('ClubPageComponent', () => {
       ).toContain('nach seinem ersten Spiel');
     });
 
+    it('asks to follow nothing where the Teams could not be read', async () => {
+      const { page } = await render(
+        async () => {
+          throw new BasketballDataError('unavailable', 'DBB down');
+        },
+        '1837',
+        { forChild: true }
+      );
+
+      expect(
+        page.querySelector('[data-qa="child-search-follow-first"]')
+      ).toBeNull();
+    });
+
     it('offers no step outside it', async () => {
       const { page } = await render(async () => WASBUETTEL);
 

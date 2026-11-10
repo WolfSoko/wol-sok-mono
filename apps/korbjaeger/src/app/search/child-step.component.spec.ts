@@ -107,6 +107,23 @@ describe('ChildStepComponent', () => {
     );
   });
 
+  it('says how old the Spiele are where the last good answer stood in', async () => {
+    const { page } = await render(async (_, options) => {
+      options?.lesung?.ersetzt({
+        gespeichertAm: JETZT_IM_SPEC - 2 * 60 * 60_000,
+        grund: 'keine-verbindung',
+      });
+      return saison(spiel(2861436, '2026-09-20', true));
+    });
+
+    expect(text(page.querySelector('[data-qa="child-step-stand"]'))).toContain(
+      'Stand: vor 2 Std.'
+    );
+    expect(
+      page.querySelector('[data-qa="child-step-mark"]')?.getAttribute('href')
+    ).toBe('/spiel/2861436');
+  });
+
   it('says why the Spiele could not be read', async () => {
     const { page } = await render(async () => {
       throw new BasketballDataError('unavailable', 'DBB down');
