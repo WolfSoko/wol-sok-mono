@@ -115,44 +115,43 @@ jobs:
           fi
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
-      - name: Show affected projects and set triggerRelease
+      # Only the projects whose deploy task (a package: its build) reads a
+      # changed file (#2888): Nx alone counts every target's inputs, so a
+      # lint-only root config would redeploy every app.
+      - name: Select the projects to release and set triggerRelease
         run: |
-          set_trigger_release() {
-            local affected="$1"
-            if [[ -z "$affected" ]]; then
-              echo "triggerRelease=false" >> $GITHUB_ENV
-              echo "Trigger release: false for ${affected}"
-              echo "$2" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "triggerRelease=true" >> $GITHUB_ENV
-              echo "Trigger release: true for ${affected}"
-              echo "$3" >> $GITHUB_STEP_SUMMARY
-            fi
-          }
-
           if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
-            AFFECTED_PROJECTS=$(npx nx show projects --affected --projects='tag:published')
-            set_trigger_release "$AFFECTED_PROJECTS" \
-              "No npm packages affected." \
-              "NPM packages affected. Start publishing!!!"
+            selection=(--target=build --projects='${{ matrix.config.projects-filter }}')
           else
-            AFFECTED_PROJECTS=$(npx nx show projects --affected -t deploy --exclude='${{ matrix.config.exclude-pattern }}')
-            set_trigger_release "$AFFECTED_PROJECTS" \
-              "No deployable projects affected." \
-              "Deployable projects affected. Start deployment!!!"
+            selection=(--target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
+          fi
+          # Apart from the paste: the step's bash has no pipefail, so a failing
+          # selection would otherwise read as an empty one and skip the leg.
+          selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}")
+          RELEASE_PROJECTS=$(paste -sd, - <<< "$selected")
+          echo "Selected: ${RELEASE_PROJECTS:-none}"
+          echo "RELEASE_PROJECTS=$RELEASE_PROJECTS" >> $GITHUB_ENV
+          # An empty list never reaches run-many or publish, where it could
+          # mean every project: the leg skips, and sets no deploy tag.
+          if [[ -z "$RELEASE_PROJECTS" ]]; then
+            echo "triggerRelease=false" >> $GITHUB_ENV
+            echo "No ${{ matrix.config.app-type }} projects to release." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "triggerRelease=true" >> $GITHUB_ENV
+            echo "Releasing ${{ matrix.config.app-type }}: $RELEASE_PROJECTS" >> $GITHUB_STEP_SUMMARY
           fi
 
       - name: Build npm packages
-        if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
-        run: npx nx run-many -t build --projects='${{ matrix.config.projects-filter }}'
+        if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type == 'npm-packages'
+        run: npx nx run-many -t build --projects="$RELEASE_PROJECTS"
 
       - name: Publish npm packages
-        if: success() && env.triggerRelease == 'true' && matrix.config.app-type == 'npm-packages'
-        run: npx nx release publish
+        if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type == 'npm-packages'
+        run: npx nx release publish --projects="$RELEASE_PROJECTS"
 
       - name: Deploy Apps
-        if: success() && env.triggerRelease == 'true' && matrix.config.app-type != 'npm-packages'
-        run: npx nx affected --target=deploy --exclude='${{ matrix.config.exclude-pattern }}' ${{ matrix.config.extra-deploy-args}}
+        if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type != 'npm-packages'
+        run: npx nx run-many --target=deploy --projects="$RELEASE_PROJECTS" ${{ matrix.config.extra-deploy-args}}
         env:
           # The upload key and the Play account only reach the Android leg.
           ANDROID_KEYSTORE_BASE64: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
