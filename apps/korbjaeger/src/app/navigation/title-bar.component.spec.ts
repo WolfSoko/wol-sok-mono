@@ -140,6 +140,14 @@ describe('TitleBarComponent', () => {
     expect(button(bar, 'Vor').disabled).toBe(true);
   });
 
+  it('offers the search', async () => {
+    const { bar } = await setup('/');
+
+    expect(
+      bar.querySelector('[aria-label="Suchen"]')?.getAttribute('href')
+    ).toBe('/suchen');
+  });
+
   it('offers the settings', async () => {
     const { bar } = await setup('/');
 

@@ -1,10 +1,11 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { breadcrumb } from '../navigation/breadcrumb';
+import { SEARCH_LEVEL } from '../search/search-level';
 import { TeamEinrichtenComponent } from '../team-einrichten/team-einrichten.component';
 
 /**
  * `/team-einrichten`: finds a Team without its id, from Verband to Team,
- * and follows it.
+ * and follows it; one of the search's ways in.
  */
 @Component({
   selector: 'korb-team-einrichten-page',
@@ -14,6 +15,6 @@ import { TeamEinrichtenComponent } from '../team-einrichten/team-einrichten.comp
 })
 export default class TeamEinrichtenPage {
   public constructor() {
-    breadcrumb(() => [{ title: 'Team einrichten' }]);
+    breadcrumb(() => [SEARCH_LEVEL, { title: 'Team einrichten' }]);
   }
 }
