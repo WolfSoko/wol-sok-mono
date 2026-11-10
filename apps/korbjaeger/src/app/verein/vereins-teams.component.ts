@@ -29,7 +29,7 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
       }
       @case ('gelesen') {
         @if (vereinsTeams.teams.length === 0) {
-          <p>Keine weiteren Teams des Vereins in den letzten Wochen.</p>
+          <p>{{ emptyText() }}</p>
         } @else {
           <ul>
             @for (team of vereinsTeams.teams; track team.teamId) {
@@ -91,4 +91,8 @@ import type { VereinsTeamsStand } from './vereins-teams-stand';
 })
 export class VereinsTeamsComponent {
   public readonly stand = input.required<VereinsTeamsStand>();
+  /** What it says where the Verein has no Team to list. */
+  public readonly emptyText = input(
+    'Keine weiteren Teams des Vereins in den letzten Wochen.'
+  );
 }
