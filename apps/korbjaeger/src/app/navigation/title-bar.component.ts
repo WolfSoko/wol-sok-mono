@@ -15,7 +15,8 @@ import { Breadcrumb } from './breadcrumb';
 /**
  * The app's navigation above every page: back and forward (an installed
  * app shows no browser buttons), the breadcrumb from the overview to the
- * page, and the actions (settings, room for one more beside it).
+ * page, and the actions (the search, and the settings where the build
+ * offers the sign-in).
  */
 @Component({
   selector: 'korb-title-bar',
@@ -54,6 +55,14 @@ import { Breadcrumb } from './breadcrumb';
         </ol>
       </nav>
       <div class="actions">
+        <a
+          matIconButton
+          routerLink="/suchen"
+          aria-label="Suchen"
+          data-qa="suchen"
+        >
+          <mat-icon>search</mat-icon>
+        </a>
         @if (signInBuilt) {
           <a
             matIconButton

@@ -13,7 +13,8 @@ test.describe('Team einrichten', () => {
     teamPage,
   }) => {
     await startPage.goto();
-    await startPage.teamEinrichten.click();
+    await startPage.teamSuchen.click();
+    await page.getByRole('link', { name: 'Team über die Liga suchen' }).click();
     await expect(wizard.heading).toHaveText('Team einrichten');
 
     await wizard.waehlen('Verband', 'Niedersachsen');
@@ -39,7 +40,7 @@ test.describe('Team einrichten', () => {
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     await expect(startPage.teams).toHaveCount(1);
     await expect(startPage.team('MTV Wasbüttel')).toHaveCount(1);
-    await expect(startPage.teamEinrichten).toHaveCount(0);
+    await expect(startPage.teamSuchen).toHaveCount(0);
   });
 
   test('unfollows a Team from its row in the wizard', async ({

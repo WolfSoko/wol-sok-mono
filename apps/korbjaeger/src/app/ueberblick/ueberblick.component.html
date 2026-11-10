@@ -3,11 +3,10 @@
   @if (ansicht.kinder.length === 0 && ansicht.teams.length === 0) {
     <div class="leer" data-qa="ueberblick-leer">
       <p>
-        Du folgst noch keinem Team. Such das Team deines Kindes Schritt für
-        Schritt über Verband, Altersklasse und Liga, dann steht es hier mit
-        seinem nächsten Spiel.
+        Du folgst noch keinem Team. Such das Team deines Kindes über seinen
+        Verein oder seine Liga, dann steht es hier mit seinem nächsten Spiel.
       </p>
-      <a mat-flat-button routerLink="/team-einrichten">Team einrichten</a>
+      <a mat-flat-button routerLink="/suchen">Team suchen</a>
     </div>
   }
   @switch (ansicht.hinweis) {

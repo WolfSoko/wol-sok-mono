@@ -300,14 +300,14 @@ describe('UeberblickComponent', () => {
     expect(data.teamSpiele).not.toHaveBeenCalled();
   });
 
-  it('offers to set up a first Team while none is followed', async () => {
+  it('offers to search a first Team while none is followed', async () => {
     const { seite } = await render(fakeData([]), []);
 
     const link = seite.querySelector<HTMLAnchorElement>(
       '[data-qa="ueberblick-leer"] a'
     );
-    expect(text(link)).toBe('Team einrichten');
-    expect(link?.getAttribute('href')).toBe('/team-einrichten');
+    expect(text(link)).toBe('Team suchen');
+    expect(link?.getAttribute('href')).toBe('/suchen');
   });
 
   it("labels a card with its Team's last good Spiele and their age", async () => {
@@ -367,12 +367,12 @@ describe('UeberblickComponent', () => {
     );
   });
 
-  it('offers no set-up once a Team is followed', async () => {
+  it('offers no search once a Team is followed', async () => {
     const { seite } = await render(fakeData([saison(WASBUETTEL)]), [
       WASBUETTEL.id,
     ]);
 
-    expect(seite.querySelector('a[href="/team-einrichten"]')).toBeNull();
+    expect(seite.querySelector('a[href="/suchen"]')).toBeNull();
   });
 
   it('shows the next Spiel with day, time, home or away and opponent', async () => {
