@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.164.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.1...v74.164.2) (2026-11-10)
+
+### Bug Fixes
+
+* **korbjaeger:** cache an empty or partial club index for minutes, not a day ([#3021](https://github.com/WolfSoko/wol-sok-mono/issues/3021)) ([e71dfbf](https://github.com/WolfSoko/wol-sok-mono/commit/e71dfbfd5209ced2b0f245ba5cfb42e12cbcc4be)), references [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3004](https://github.com/WolfSoko/wol-sok-mono/issues/3004) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3004](https://github.com/WolfSoko/wol-sok-mono/issues/3004) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005) [#3005](https://github.com/WolfSoko/wol-sok-mono/issues/3005)
+
 ## [74.164.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.0...v74.164.1) (2026-11-10)
 
 ### Documentation
