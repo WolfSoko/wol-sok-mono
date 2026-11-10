@@ -15,7 +15,7 @@ No Elternteil has a DBB Team id at hand. The home page stops asking for one and 
 ## Decisions
 
 1. **Remove the form.** `TeamIdFormComponent` (`src/app/home/team-id-form.component.ts`) and its spec go, and with them the home page's "Team öffnen" heading and the text link "Keine Team-ID zur Hand? Such das Team …". The `home/` folder is then empty and goes too.
-2. **The button lives in the overview.** The overview (`UeberblickComponent`) already offers "Team suchen" as a flat link button (`<a mat-flat-button routerLink="/suchen">`) while no Team is followed. It also knows when Teams are followed, so it offers the search there too, after the lists: "Weiteres Team suchen", a `mat-stroked-button` link, quieter than the empty overview's flat one, so the cards keep the weight. Putting it in the home page would show two buttons to the same place while the overview is empty, or make the page reach into the overview's state.
+2. **The button lives in the overview.** The overview (`UeberblickComponent`) already offers "Team suchen" as a flat link button (`<a matButton="filled" routerLink="/suchen">`) while no Team is followed. It also knows when Teams are followed, so it offers the search there too, after the lists: "Weiteres Team suchen", an outlined link button (`matButton="outlined"`), quieter than the empty overview's filled one, so the cards keep the weight. Putting it in the home page would show two buttons to the same place while the overview is empty, or make the page reach into the overview's state.
 3. **When it shows.** "Team suchen" while the overview has neither Kinder nor Teams (unchanged); "Weiteres Team suchen" once it has a Kind or a Team. Neither while Meine Teams are still read (`undefined`) or cannot be read (`nichtLesbar`): the title bar's search is there in every case.
 4. **Texts.** German, as the app's UI; the home page's lead sentence stays.
 
@@ -25,7 +25,7 @@ No Elternteil has a DBB Team id at hand. The home page stops asking for one and 
 2. While no Team is followed, the overview shows the link button "Team suchen" to `/suchen` (unchanged) and no "Weiteres Team suchen".
 3. Once a Team (or a Kind) is followed, the overview shows the link button "Weiteres Team suchen" to `/suchen`, after the cards, and no "Team suchen".
 4. While Meine Teams are read or cannot be read, neither button shows.
-5. Both are anchors styled as Material buttons (`mat-flat-button`, `mat-stroked-button`), not plain text links.
+5. Both are anchors styled as Material buttons (`matButton="filled"`, `matButton="outlined"`), not plain text links.
 6. `deutsche-texte.spec.ts`, `theme.spec.ts`, the overview's specs and the korbjaeger e2e stay green; `nx affected -t lint,lint-templates,test,build` green.
 
 ## Open questions

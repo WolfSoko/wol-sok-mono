@@ -14,8 +14,9 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
  * cards ("Weitere Teams"); while no Kind is marked, every Team's card and
  * how to mark one. Shows nothing until Meine Teams are read, then offers
  * to search a first Team while there is none, and a further one below
- * the cards once there are some; says so where they cannot be read at all. A Team unfollowed from a card takes its control away, so
- * focus moves to the heading (`NachEntfolgen`).
+ * the cards once there are some; says so where they cannot be read at
+ * all. A Team unfollowed from a card takes its control away, so focus
+ * moves to the heading (`NachEntfolgen`).
  */
 @Component({
   selector: 'korb-ueberblick',

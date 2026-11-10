@@ -310,7 +310,7 @@ describe('UeberblickComponent', () => {
     );
     expect(text(link)).toBe('Team suchen');
     expect(link?.getAttribute('href')).toBe('/suchen');
-    expect(link?.hasAttribute('mat-flat-button')).toBe(true);
+    expect(link?.getAttribute('matButton')).toBe('filled');
     expect(
       seite.querySelector('[data-qa="ueberblick-weiteres-team"]')
     ).toBeNull();
@@ -382,7 +382,7 @@ describe('UeberblickComponent', () => {
       seite.querySelectorAll<HTMLAnchorElement>('a[href="/suchen"]');
     expect([...links].map(text)).toEqual(['Weiteres Team suchen']);
     const [link] = links;
-    expect(link.hasAttribute('mat-stroked-button')).toBe(true);
+    expect(link.getAttribute('matButton')).toBe('outlined');
     expect(link.closest('[data-qa="ueberblick-leer"]')).toBeNull();
     const karte = eintraege(seite)[0];
     expect(
