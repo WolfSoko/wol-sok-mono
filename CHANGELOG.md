@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.163.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.162.1...v74.163.0) (2026-11-10)
+
+### Features
+
+* **korbjaeger:** club index from the DBB's Leagues, served at /api/clubs ([#2988](https://github.com/WolfSoko/wol-sok-mono/issues/2988)) ([#2995](https://github.com/WolfSoko/wol-sok-mono/issues/2995)) ([2b20b11](https://github.com/WolfSoko/wol-sok-mono/commit/2b20b113cf9badc7eddca41b81bc88dd50aa5712))
+
 ## [74.162.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.162.0...v74.162.1) (2026-11-10)
 
 ### Bug Fixes
