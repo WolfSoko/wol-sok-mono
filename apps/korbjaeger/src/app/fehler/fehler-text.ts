@@ -72,3 +72,25 @@ export function fehlerText(
   }
   return DBB_NICHT_ERREICHBAR;
 }
+
+/** What the club search says when the list of Vereine failed to load. */
+export const VEREINSLISTE_NICHT_ERREICHBAR =
+  'Die Liste der Vereine ist gerade nicht erreichbar. Bitte später noch einmal versuchen.';
+
+/**
+ * What the club search says when its list of Vereine failed to load:
+ * nothing while it did not, that the device has no internet or reached no
+ * server, else that the list is not available.
+ */
+export function vereinslisteFehlerText(error: unknown): string | undefined {
+  if (error === undefined) {
+    return undefined;
+  }
+  if (error instanceof KeinInternetError) {
+    return KEIN_INTERNET;
+  }
+  if (isBasketballDataError(error, 'offline')) {
+    return KEINE_VERBINDUNG;
+  }
+  return VEREINSLISTE_NICHT_ERREICHBAR;
+}

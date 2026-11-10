@@ -14,10 +14,18 @@ import type {
 } from '@wolsok/feat-korbjaeger-antworten';
 import { KeinInternetError } from './kein-internet-error';
 import type { KorbReadOptions, Lesung } from './lesung';
+import {
+  browserOnline,
+  callProxy,
+  PROXY_ZEITLIMIT_MS,
+  readJson,
+  unavailable,
+  type ProxyCall,
+  type ProxyFetch,
+} from './proxy-call';
 import type { StandGrund } from './stand';
 
-/** The `fetch` the browser calls the app's proxy with; specs pass a fake. */
-export type ProxyFetch = (url: string, init: RequestInit) => Promise<Response>;
+export { PROXY_ZEITLIMIT_MS, type ProxyFetch } from './proxy-call';
 
 const HTTP_OK = 200;
 const HTTP_NOT_FOUND = 404;
@@ -33,13 +41,6 @@ export interface ProxyTransportOptions {
   /** How long a call to the proxy may take; `PROXY_ZEITLIMIT_MS`. */
   readonly zeitlimitMs?: number;
 }
-
-/**
- * How long a call to the proxy may take before it counts as unreachable:
- * `navigator.onLine` says nothing of a Halle's dead reception, where a
- * call would hang. Above the proxy's own 5 s for the DBB.
- */
-export const PROXY_ZEITLIMIT_MS = 8_000;
 
 /**
  * The reads whose last good answer is kept: public DBB data, kept without
@@ -148,13 +149,10 @@ async function readProxy(
   path: string,
   fetchProxy: ProxyFetch,
   online: () => boolean,
-  aufruf: Aufruf,
+  aufruf: ProxyCall,
   gelesen: (body: unknown) => void
 ): Promise<unknown> {
-  if (!online()) {
-    throw new KeinInternetError(path);
-  }
-  const response = await reach(path, fetchProxy, aufruf);
+  const response = await callProxy(path, fetchProxy, online, aufruf);
   switch (response.status) {
     case HTTP_OK: {
       const body = await readJson(path, response);
@@ -188,69 +186,6 @@ function standGrundVon(error: BasketballDataError): StandGrund {
   return error.kind === 'offline' ? 'keine-verbindung' : 'unavailable';
 }
 
-/** How one call to the proxy goes: cancelled with the read, or timed out. */
-interface Aufruf {
-  readonly signal: ReadSignal | undefined;
-  readonly zeitlimitMs: number;
-}
-
-/**
- * The proxy's response. A call it never answered, or not within
- * `zeitlimitMs`, is `offline` (no server reached); one the read cancelled
- * rejects as `fetch` did, and the adapter rejects with the read's reason.
- */
-async function reach(
-  path: string,
-  fetchProxy: ProxyFetch,
-  { signal, zeitlimitMs }: Aufruf
-): Promise<Response> {
-  const abbruch = abortSignalOf(signal);
-  try {
-    return await fetchProxy(path, {
-      headers: { accept: 'application/json' },
-      signal: AbortSignal.any([
-        ...(abbruch === undefined ? [] : [abbruch]),
-        AbortSignal.timeout(zeitlimitMs),
-      ]),
-    });
-  } catch (error) {
-    if (abbruch?.aborted) {
-      throw error;
-    }
-    throw offline(path, 'proxy not reachable', error);
-  }
-}
-
-/** `navigator.onLine`; where there is no navigator, online. */
-function browserOnline(): boolean {
-  return globalThis.navigator?.onLine !== false;
-}
-
-/** `fetch`'s own `AbortSignal` for a read's signal. */
-function abortSignalOf(
-  signal: ReadSignal | undefined
-): AbortSignal | undefined {
-  if (signal === undefined || signal instanceof AbortSignal) {
-    return signal;
-  }
-  const controller = new AbortController();
-  signal.addEventListener('abort', () => controller.abort(signal.reason), {
-    once: true,
-  });
-  if (signal.aborted) {
-    controller.abort(signal.reason);
-  }
-  return controller.signal;
-}
-
-async function readJson(path: string, response: Response): Promise<unknown> {
-  try {
-    return await response.json();
-  } catch (error) {
-    throw unavailable(path, 'no JSON', error);
-  }
-}
-
 /** The DBB's not-found envelope, or the proxy's own 404 as `not-found`. */
 async function dbbEnvelopeOrNotFound(
   path: string,
@@ -261,20 +196,4 @@ async function dbbEnvelopeOrNotFound(
     throw new BasketballDataError('not-found', `${path}: no such read or id`);
   }
   return body;
-}
-
-function offline(
-  path: string,
-  why: string,
-  cause?: unknown
-): BasketballDataError {
-  return new BasketballDataError('offline', `${path}: ${why}`, { cause });
-}
-
-function unavailable(
-  path: string,
-  why: string,
-  cause?: unknown
-): BasketballDataError {
-  return new BasketballDataError('unavailable', `${path}: ${why}`, { cause });
 }

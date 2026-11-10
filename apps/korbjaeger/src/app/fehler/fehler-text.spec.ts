@@ -1,6 +1,12 @@
 import { BasketballDataError } from '@wolsok/feat-shared-basketball-data';
 import { KeinInternetError } from '../basketball-data/kein-internet-error';
-import { fehlerText } from './fehler-text';
+import {
+  fehlerText,
+  KEIN_INTERNET,
+  KEINE_VERBINDUNG,
+  VEREINSLISTE_NICHT_ERREICHBAR,
+  vereinslisteFehlerText,
+} from './fehler-text';
 
 describe('fehlerText', () => {
   it('says nothing while nothing failed', () => {
@@ -44,4 +50,28 @@ describe('fehlerText', () => {
       'Der DBB ist gerade nicht erreichbar.'
     );
   });
+});
+
+describe('vereinslisteFehlerText', () => {
+  it('says nothing while the list did not fail', () => {
+    expect(vereinslisteFehlerText(undefined)).toBeUndefined();
+  });
+
+  it('tells no internet from no server', () => {
+    expect(vereinslisteFehlerText(new KeinInternetError('/api/clubs'))).toBe(
+      KEIN_INTERNET
+    );
+    expect(
+      vereinslisteFehlerText(new BasketballDataError('offline', 'x'))
+    ).toBe(KEINE_VERBINDUNG);
+  });
+
+  it.each(['unavailable', 'unexpected-shape'] as const)(
+    'blames the list, not the DBB, for %s',
+    (kind) => {
+      expect(vereinslisteFehlerText(new BasketballDataError(kind, 'x'))).toBe(
+        VEREINSLISTE_NICHT_ERREICHBAR
+      );
+    }
+  );
 });
