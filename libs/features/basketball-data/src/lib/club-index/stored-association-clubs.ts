@@ -12,6 +12,21 @@ export const CLUB_INDEX_VERSION = 1;
  */
 export interface StoredAssociationClubs extends AssociationClubs {
   readonly version: typeof CLUB_INDEX_VERSION;
+  /** The crawl knows the Association is offered (`OfferedAssociation`). */
+  readonly offered: true;
+}
+
+/**
+ * The mark of an Association the crawl knows the DBB offers (#3005): on
+ * every list it saves, and alone on a document noted before the first
+ * crawl. A list without it was stored before the crawl noted Verbände, so
+ * the server cannot tell yet whether others are missing.
+ */
+export const OFFERED_ASSOCIATION = { offered: true } as const;
+
+/** Whether a stored document carries `OFFERED_ASSOCIATION`'s mark. */
+export function isOfferedAssociation(data: unknown): boolean {
+  return isJsonObject(data) && data['offered'] === true;
 }
 
 /** `list` as the index stores it. */
@@ -20,6 +35,7 @@ export function storedAssociationClubs(
 ): StoredAssociationClubs {
   return {
     version: CLUB_INDEX_VERSION,
+    ...OFFERED_ASSOCIATION,
     association: { id: list.association.id, name: list.association.name },
     clubs: list.clubs.map(entryOf),
     updatedAt: list.updatedAt,
@@ -63,23 +79,29 @@ export function parseAssociationClubsList(
 }
 
 /** What the server reads from the club index. */
-export interface ClubIndex {
+export interface StoredClubIndex {
   readonly lists: readonly AssociationClubs[];
   /**
    * Whether every Association the crawl noted holds a list: the index has
-   * documents and each one is a list (#3005). A Verband noted before its
-   * first crawl, a first crawl still pending or a document this reader
-   * cannot read leaves it incomplete.
+   * documents and each one is a list with `OFFERED_ASSOCIATION`'s mark
+   * (#3005). A Verband noted before its first crawl, a first crawl still
+   * pending, a list stored before the crawl noted Verbände or a document
+   * this reader cannot read leaves it incomplete.
    */
   readonly complete: boolean;
 }
 
 /** The club index of the stored documents `data`. */
-export function parseClubIndex(data: readonly unknown[]): ClubIndex {
-  const lists = parseAssociationClubsList(data);
+export function parseClubIndex(data: readonly unknown[]): StoredClubIndex {
   return {
-    lists,
-    complete: data.length > 0 && lists.length === data.length,
+    lists: parseAssociationClubsList(data),
+    complete:
+      data.length > 0 &&
+      data.every(
+        (document) =>
+          isOfferedAssociation(document) &&
+          parseAssociationClubs(document) !== undefined
+      ),
   };
 }
 

@@ -1,23 +1,23 @@
 import {
+  isOfferedAssociation,
+  OFFERED_ASSOCIATION,
   parseAssociationClubsList,
   storedAssociationClubs,
 } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
+import type { VerbandId } from '@wolsok/feat-shared-basketball-data';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { ClubIndexStore } from './run-club-index';
 
 /** The field noting when a crawl started; a saved list drops it. */
 const ATTEMPTED_AT = 'attemptedAt';
 
-/** The field noting an offered Verband before its first crawl (#3005). */
-const OFFERED_AT = 'offeredAt';
-
 /**
  * The club index in Firestore: `clubIndex/{associationId}`, one list each,
- * with `attemptedAt` while a crawl started after it left none, and
- * `offeredAt` on an offered Verband not crawled yet. A document holding
- * only those is no list (`parseAssociationClubs` skips it), which tells
- * the server the index is still incomplete (`parseClubIndex`).
+ * with `attemptedAt` while a crawl started after it left none, and the
+ * mark `OFFERED_ASSOCIATION` on every Verband the crawl noted, a list or
+ * not yet. A document without a list is skipped (`parseAssociationClubs`),
+ * and tells the server the index is still incomplete (`parseClubIndex`).
  */
 export function firestoreClubIndex(db: Firestore): ClubIndexStore {
   const lists = db.collection(CLUB_INDEX_COLLECTION);
@@ -37,21 +37,18 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
               : [];
           })
         ),
-        ids: new Set(
-          docs
-            .map((document) => Number(document.id))
-            .filter((id) => Number.isSafeInteger(id))
+        ids: idsOf(docs),
+        offered: idsOf(
+          docs.filter((document) => isOfferedAssociation(document.data()))
         ),
       };
     },
-    noteOffered: async (associations, at) => {
+    noteOffered: async (associations) => {
       const batch = db.batch();
       for (const association of associations) {
-        batch.set(
-          lists.doc(String(association)),
-          { [OFFERED_AT]: at },
-          { merge: true }
-        );
+        batch.set(lists.doc(String(association)), OFFERED_ASSOCIATION, {
+          merge: true,
+        });
       }
       await batch.commit();
     },
@@ -69,4 +66,13 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
       await lists.doc(String(association)).delete();
     },
   };
+}
+
+/** The Association ids of `docs`, skipping an id that is none. */
+function idsOf(docs: readonly { readonly id: string }[]): Set<VerbandId> {
+  return new Set(
+    docs
+      .map((document) => Number(document.id))
+      .filter((id) => Number.isSafeInteger(id))
+  );
 }

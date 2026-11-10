@@ -1,32 +1,29 @@
 import {
   mergeAssociationClubs,
-  type ClubIndex,
+  type StoredClubIndex,
 } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_CACHE_SECONDS } from '../../shared/proxy-cache';
 import {
   errorResponse,
   jsonResponse,
   notFound,
+  publicCacheControl,
   type ProxyResponse,
 } from '../dbb/dbb-proxy-response';
 
 /** Reads the club index: every Association's list, and if it is complete. */
-export type ClubIndexReader = () => Promise<ClubIndex>;
-
-function cacheControl({
-  browser,
-  cdn,
-}: {
-  readonly browser: number;
-  readonly cdn: number;
-}): string {
-  return `public, max-age=${browser}, s-maxage=${cdn}`;
-}
+export type ClubIndexReader = () => Promise<StoredClubIndex>;
 
 /** How long browser and CDN keep the club index, by whether it is complete. */
 export const CLUB_INDEX_CACHE_CONTROL = {
-  complete: cacheControl(CLUB_INDEX_CACHE_SECONDS.complete),
-  filling: cacheControl(CLUB_INDEX_CACHE_SECONDS.filling),
+  complete: publicCacheControl(
+    CLUB_INDEX_CACHE_SECONDS.complete.browser,
+    CLUB_INDEX_CACHE_SECONDS.complete.cdn
+  ),
+  filling: publicCacheControl(
+    CLUB_INDEX_CACHE_SECONDS.filling.browser,
+    CLUB_INDEX_CACHE_SECONDS.filling.cdn
+  ),
 } as const;
 
 /**

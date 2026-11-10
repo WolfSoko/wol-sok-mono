@@ -1,7 +1,7 @@
 // @vitest-environment node
 import type {
   AssociationClubs,
-  ClubIndex,
+  StoredClubIndex,
 } from '@wolsok/feat-shared-basketball-data';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
@@ -33,7 +33,7 @@ const LISTS: readonly AssociationClubs[] = [
   },
 ];
 
-const COMPLETE: ClubIndex = { lists: LISTS, complete: true };
+const COMPLETE: StoredClubIndex = { lists: LISTS, complete: true };
 
 const NO_QUERY = new URLSearchParams();
 

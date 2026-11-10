@@ -30,11 +30,13 @@ crawled again, from the constants that decide it, under an English name.
 - **The index itself says whether it is complete.** The server cannot know
   the Verbände the DBB offers without asking the DBB on every cache miss.
   The crawl does know them (its `ligaSuche` at the start of each run), so
-  each run writes a placeholder `clubIndex/{associationId}` (`offeredAt`, no
-  list) for every offered Verband that has no document yet. The index is
-  complete when it holds at least one document and every document holds a
-  readable list. A crawl that is pending on an existing list (`attemptedAt`
-  beside it) still counts: the list is there.
+  each run marks every offered Verband not marked yet with
+  `OFFERED_ASSOCIATION` (`offered: true`): a placeholder
+  `clubIndex/{associationId}` where it has no document, merged into an
+  existing one; every list it saves carries the mark too. The index is
+  complete when it holds at least one document and every document is a
+  readable list with the mark. A crawl pending on an existing list
+  (`attemptedAt` beside it) still counts: the list is there.
 - **`removeUnoffered` deletes every document of an unoffered Verband**, not
   only those with a list: else a placeholder or a failed attempt of a
   Verband the DBB dropped would keep the index "incomplete" for ever. The
@@ -55,29 +57,32 @@ crawled again, from the constants that decide it, under an English name.
   builds its milliseconds from it, and the privacy policy renders them with
   `germanDays`. The property `vereinsIndex` becomes `clubIndex` (Coding Rule
   10).
-- **Deploy order needs nothing special.** Until the functions' first run
-  with placeholders, the server may see only crawled Verbände and call a
-  partial index complete; the hourly run that follows the release writes
-  the placeholders, and the CDN then drops the long answer at its next
-  miss. The release deploys the app and the functions in the same leg.
+- **Deploy order is safe through the mark.** Lists stored before this
+  change carry no mark, so the server calls the index incomplete (short
+  cache) until the first run after the release has marked every offered
+  Verband; an app deployed before that run cannot call a partial index
+  complete (review finding on PR #3021).
 
 ## Acceptance
 
 1. With no document, `/api/clubs` answers `[]` with
    `Cache-Control: public, max-age=60, s-maxage=300`.
-2. With a placeholder (no list) beside lists, or a document of another
-   version, it answers the lists with the same short cache.
+2. With a placeholder (no list) beside lists, a list without the mark, or a
+   document of another version, it answers the lists with the same short
+   cache.
 3. With a list in every document (an attempt pending beside a list
    included), it answers with `public, max-age=3600, s-maxage=86400`.
 4. A query still answers 404 `no-store`, a failed read 502 `no-store`.
-5. A run writes a placeholder for each offered Verband without a document,
-   and none for one that has a document; the crawl's choice of Verband is
+5. A run marks each offered Verband not marked yet (a placeholder where it
+   has no document, the mark merged into an unmarked list), and none that is
+   marked; the crawl's choice of Verband is
    unchanged (a placeholder is due at once, as a missing list was).
 6. A run deletes the documents of unoffered Verbände, placeholders and
    attempt-only ones included, and still deletes nothing when the DBB
    offers no Verband.
-7. The Firestore store writes and reads placeholders (emulator spec), and
-   `save` replaces one.
+7. The Firestore store writes and reads placeholders and the mark (emulator
+   spec), keeps an unmarked list when marking it, and `save` replaces a
+   placeholder with a marked list.
 8. The privacy policy, section 3, names both cache times and says the list
    is renewed weekly, a failed crawl a day later, rendered from
    `CLUB_INDEX_CACHE_SECONDS` and `CLUB_INDEX_CRAWL_DAYS`; its spec pins the

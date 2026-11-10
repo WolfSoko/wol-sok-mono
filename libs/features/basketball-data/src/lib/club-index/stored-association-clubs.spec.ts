@@ -29,6 +29,7 @@ describe('the stored club index', () => {
 
     expect(storedAssociationClubs(extra)).toEqual({
       version: CLUB_INDEX_VERSION,
+      offered: true,
       association: BAYERN.association,
       clubs: [{ id: 1, name: 'A' }],
       updatedAt: BAYERN.updatedAt,
@@ -97,13 +98,21 @@ describe('parseClubIndex', () => {
   });
 
   it.each([
-    ['a Verband noted before its first crawl', { offeredAt: 42 }],
-    ['a first crawl still pending', { attemptedAt: 42 }],
+    ['a Verband noted before its first crawl', { offered: true }],
+    ['a first crawl still pending', { offered: true, attemptedAt: 42 }],
+    [
+      'a list stored before the crawl noted Verbände',
+      { ...storedAssociationClubs(BERLIN), offered: undefined },
+    ],
     ['a document of another version', { version: 99 }],
-  ])('calls it incomplete beside %s, keeping the lists', (_case, data) => {
-    expect(parseClubIndex([storedAssociationClubs(BAYERN), data])).toEqual({
-      lists: [BAYERN],
+  ])('calls it incomplete beside %s', (_case, data) => {
+    expect(
+      parseClubIndex([storedAssociationClubs(BAYERN), data])
+    ).toMatchObject({
       complete: false,
     });
+    expect(
+      parseClubIndex([storedAssociationClubs(BAYERN), data]).lists
+    ).toContainEqual(BAYERN);
   });
 });

@@ -11,7 +11,10 @@ import {
   type ClubIndexSchedule,
 } from './association-to-crawl';
 
-/** What the index holds: its lists, and crawls that left none yet. */
+/**
+ * What the index holds: its lists, crawls that left none yet, and which
+ * Associations it holds a document of and has noted as offered.
+ */
 export interface ClubIndexState {
   /** Every list the index holds, skipping any it cannot read. */
   readonly lists: readonly AssociationClubs[];
@@ -19,16 +22,18 @@ export interface ClubIndexState {
   readonly attempts: ReadonlyMap<VerbandId, number>;
   /** The Associations the index holds a document of, list or not. */
   readonly ids: ReadonlySet<VerbandId>;
+  /** Those of `ids` marked as offered (`OFFERED_ASSOCIATION`). */
+  readonly offered: ReadonlySet<VerbandId>;
 }
 
 /** Where the index keeps one list per Association. */
 export interface ClubIndexStore {
   read(): Promise<ClubIndexState>;
   /**
-   * Notes each of `associations` as offered `at`, with no list yet, so the
+   * Marks each of `associations` as offered, keeping a list it has, so the
    * server sees the index is incomplete until each has one (#3005).
    */
-  noteOffered(associations: readonly VerbandId[], at: number): Promise<void>;
+  noteOffered(associations: readonly VerbandId[]): Promise<void>;
   /** Notes that a crawl of `association` starts `at`, keeping its list. */
   markAttempt(association: VerbandId, at: number): Promise<void>;
   /** Replaces the list of `list.association`, and its attempt. */
@@ -51,7 +56,7 @@ export interface ClubIndexRun {
 export interface ClubIndexResult {
   /** Documents of Associations the DBB no longer offers, deleted. */
   readonly removed: number;
-  /** Offered Associations noted without a list, before their first crawl. */
+  /** Offered Associations marked as such (`noteOffered`) by this run. */
   readonly noted: number;
   readonly crawled?: {
     readonly association: VerbandId;
@@ -63,8 +68,8 @@ export interface ClubIndexResult {
 
 /**
  * One run of the club index (#2988): deletes the documents of Associations
- * the DBB no longer offers, notes each offered one the index has no
- * document of (so the server can tell the index is complete, #3005), then
+ * the DBB no longer offers, marks each offered one not marked yet (so the
+ * server can tell the index is complete, #3005), then
  * crawls the Association due first
  * (`associationToCrawl`) and replaces its list. It notes the crawl's start
  * first, so a crawl that fails or runs out of time holds up no other
@@ -83,9 +88,9 @@ export async function runClubIndex(
   const start = run.now();
   const unnoted = associations
     .map(({ id }) => id)
-    .filter((id) => !state.ids.has(id));
+    .filter((id) => !state.offered.has(id));
   if (unnoted.length > 0) {
-    await run.store.noteOffered(unnoted, start);
+    await run.store.noteOffered(unnoted);
   }
   const noted = unnoted.length;
   const association = associationToCrawl(

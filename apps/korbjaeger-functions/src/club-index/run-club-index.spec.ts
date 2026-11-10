@@ -67,7 +67,8 @@ function fakeData(
 function fakeStore(
   lists: AssociationClubs[],
   attempts = new Map<number, number>(),
-  noted: readonly number[] = []
+  noted: readonly number[] = [],
+  unmarked: readonly number[] = []
 ): ClubIndexStore & { log: string[]; saved: AssociationClubs[] } {
   const log: string[] = [];
   const saved: AssociationClubs[] = [];
@@ -76,12 +77,17 @@ function fakeStore(
     ...attempts.keys(),
     ...noted,
   ]);
+  const offered = new Set(
+    [...lists.map(({ association }) => association.id), ...noted].filter(
+      (id) => !unmarked.includes(id)
+    )
+  );
   return {
     log,
     saved,
-    read: async () => ({ lists, attempts, ids }),
-    noteOffered: async (associations, at) => {
-      log.push(`note ${associations.join(',')} ${at}`);
+    read: async () => ({ lists, attempts, ids, offered }),
+    noteOffered: async (associations) => {
+      log.push(`note ${associations.join(',')}`);
     },
     markAttempt: async (id, at) => {
       log.push(`attempt ${id} ${at}`);
@@ -128,7 +134,7 @@ describe('runClubIndex', () => {
       noted: 1,
       crawled: { association: 3, clubs: 2, namedByTeam: 0 },
     });
-    expect(store.log).toEqual([`note 3 ${NOW}`, `attempt 3 ${NOW}`, 'save 3']);
+    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`, 'save 3']);
     expect(store.saved).toEqual([
       {
         association: BERLIN,
@@ -198,7 +204,7 @@ describe('runClubIndex', () => {
         )
       )
     ).rejects.toMatchObject({ kind: 'unavailable' });
-    expect(store.log).toEqual([`note 3 ${NOW}`, `attempt 3 ${NOW}`]);
+    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`]);
   });
 
   it('deletes the lists of Associations the DBB no longer offers', async () => {
@@ -238,10 +244,28 @@ describe('runClubIndex', () => {
     const result = await runClubIndex(runWith(store));
 
     expect(result).toMatchObject({ noted: 2, crawled: { association: 2 } });
-    expect(store.log[0]).toBe(`note 2,3 ${NOW}`);
+    expect(store.log[0]).toBe('note 2,3');
   });
 
-  it('notes no Association again that it noted or tried before', async () => {
+  it('marks the lists stored before it noted Verbände, so the server waits for them', async () => {
+    const store = fakeStore(
+      [
+        { association: BAYERN, clubs: [], updatedAt: NOW },
+        { association: BERLIN, clubs: [], updatedAt: NOW },
+      ],
+      new Map(),
+      [],
+      [2, 3]
+    );
+
+    expect(await runClubIndex(runWith(store))).toEqual({
+      removed: 0,
+      noted: 2,
+    });
+    expect(store.log).toEqual(['note 2,3']);
+  });
+
+  it('notes no Association again that it noted before', async () => {
     const store = fakeStore(
       [{ association: BAYERN, clubs: [], updatedAt: NOW }],
       new Map(),
