@@ -96,6 +96,7 @@ function workspaceFederation(config) {
       // The game's engine is the game's too: shared, the shell's copy would
       // win the same way.
       '@wolsok/feat-shared-bacteria-engine',
+      '@wolsok/feat-shared-bacteria-engine/balance',
       '@wolsok/feat-shared-bacteria-engine/testing',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),

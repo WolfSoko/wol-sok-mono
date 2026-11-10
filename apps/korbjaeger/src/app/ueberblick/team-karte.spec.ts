@@ -6,6 +6,7 @@ describe('kartenName', () => {
       art: 'geladen',
       teamId: 313036,
       name: 'MTV Wasbüttel',
+      verein: { id: 4242, name: 'MTV Wasbüttel' },
       ausfaelle: [],
       saisonBeendet: false,
     } as const satisfies TeamKarte;

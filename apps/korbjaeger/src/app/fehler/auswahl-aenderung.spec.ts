@@ -1,4 +1,4 @@
-import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
+import { AuswahlZuNeuError } from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlAenderung } from './auswahl-aenderung';
 
 describe('auswahlAenderung', () => {

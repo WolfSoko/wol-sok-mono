@@ -49,7 +49,7 @@
     Kader mit den Namen der Spielerinnen und Spieler. Die App fragt sie nicht
     direkt beim DBB an, sondern über eine Funktion auf unserem Server (Cloud
     Functions for Firebase, Anbieter wie in Abschnitt 2, Region
-    {{ regionen.funktion.id }} ({{ regionen.funktion.ort }})). Diese Funktion
+    {{ regions.function.id }} ({{ regions.function.place }})). Diese Funktion
     ruft beim DBB nur die Seite ab, die du gerade öffnest, unter ihrem eigenen
     Namen und ohne deine IP-Adresse, Cookies oder sonstigen Angaben
     weiterzugeben; der DBB erfährt von dir also nichts. Damit er nicht für jeden
@@ -125,7 +125,19 @@
       <code>{{ schluessel.installationAbgelehnt }}</code
       >: dass du den Hinweis zum Installieren der App ausgeblendet hast.
     </li>
+    <li>
+      <code>{{ schluessel.darstellung }}</code
+      >: ob die App hell oder dunkel erscheint, wenn du das in den Einstellungen
+      festgelegt hast; folgt sie deinem Gerät, steht hier nichts.
+    </li>
   </ul>
+  <p>
+    Frühere Versionen der App speicherten dasselbe unter deutschen Namen (etwa
+    <code>{{ alteSchluessel.selection }}</code
+    >). Beim ersten Start dieser Version übernimmt die App diese Einträge unter
+    die oben genannten Namen und löscht die alten; zwischengespeicherte
+    Antworten des DBB löscht sie dabei, ohne sie zu übernehmen.
+  </p>
   <p>
     Außerdem legt der Browser die Dateien der App in seinem Speicher für Service
     Worker ab, damit sie schnell und auch ohne Internet startet; Daten über dich
@@ -180,10 +192,12 @@
     mit der Kennung des Vereins, sonst nichts; höchstens
     {{ grenzen.teams }} Teams, {{ grenzen.kinder }} Kinder und die Farben von
     {{ grenzen.vereinsfarben }} Vereinen. Lesen und ändern kann es nur dein
-    Konto. Die Datenbank liegt in Googles Region {{ regionen.firestore.id }} ({{
-      regionen.firestore.ort
+    Konto. Die Datenbank liegt in Googles Region {{ regions.firestore.id }} ({{
+      regions.firestore.place
     }}). Den Spitznamen siehst nur du; den vollen Namen eines Kindes brauchst du
-    dafür nicht.
+    dafür nicht. Hat eine frühere Version der App dein Konto noch in einem
+    Dokument mit deutschen Feldnamen gespeichert, überträgt die App es beim
+    nächsten Öffnen deines Kontos in das neue und löscht das alte.
   </p>
   <p>
     Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO: Du meldest dich an, damit
@@ -198,10 +212,18 @@
     noch einmal nach deiner Anmeldung, dann löscht die App das Dokument mit
     Meine Teams und deinen Kindern, wartet, bis der Server das bestätigt, und
     löscht danach dein Konto bei Firebase Authentication. Ohne Internet geht das
-    nicht. Ist dein Konto zur selben Zeit auf einem anderen Gerät geöffnet, kann
-    die App dort deine Auswahl kurz danach noch einmal speichern; schreib mir in
-    dem Fall eine E-Mail an die Adresse in Abschnitt 1, dann lösche ich das
-    Dokument. Das gilt auch, wenn du dein Konto nicht selbst löschen kannst. Was
+    nicht. Ein Dokument einer früheren Version der App (Abschnitt 5) löscht sie
+    dabei mit. Sobald das Konto gelöscht ist, löscht unser Server (eine Cloud
+    Function in Googles Region {{ regions.firestore.id }}, wo auch die Datenbank
+    liegt) das Dokument noch einmal, für den Fall, dass ein anderes Gerät, auf
+    dem dein Konto zur selben Zeit geöffnet war, deine Auswahl inzwischen wieder
+    gespeichert hat. Schlägt das fehl, versucht er es bis zu
+    {{ deletion.retry }} lang erneut. Damit dieses Gerät danach nichts mehr
+    speichern kann, behält er nur die Kennung deines Kontos noch
+    {{ deletion.tombstone }} lang, ohne deine Auswahl; danach löscht die
+    Datenbank sie von selbst, spätestens {{ deletion.ttl }} später. Seine
+    Protokolle nennen dein Konto nicht. Kannst du dein Konto nicht selbst
+    löschen, schreib mir an die Adresse in Abschnitt 1, dann lösche ich es. Was
     nur auf deinem Gerät liegt, löschst du wie in Abschnitt 4 beschrieben.
   </p>
 

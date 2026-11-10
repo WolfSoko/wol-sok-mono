@@ -6,8 +6,8 @@ recorded on 2026-11-08 (the Tabellen of Team 313036's Ligen and its Spiel 286143
 `tools/korbjaeger/anonymise-fixtures.ts`:
 
 ```sh
-NODE_USE_ENV_PROXY=1 npx tsx tools/korbjaeger/record-fixtures.ts <raw-dir>
-npx tsx tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
+NODE_USE_ENV_PROXY=1 npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/record-fixtures.ts <raw-dir>
+npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
 ```
 
 To add a fixture, give it a row in `fixture-requests.ts` and record only it

@@ -1,4 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
+import { linienfarbe } from './linienfarbe';
 
 /** `/spiel/{id}`: a Spiel's result, quarters, Halle and both Kader. */
 export class SpielPage {
@@ -7,6 +8,7 @@ export class SpielPage {
   /** Why the Spiel could not be read. */
   public readonly fehler: Locator;
   public readonly ergebnis: Locator;
+  public readonly vorlaeufig: Locator;
   public readonly status: Locator;
   /** The quarter scores' lines, home first. */
   public readonly viertel: Locator;
@@ -22,12 +24,18 @@ export class SpielPage {
     this.heading = page.getByRole('heading', { level: 1 });
     this.fehler = page.getByTestId('spiel-fehler');
     this.ergebnis = page.getByTestId('spiel-ergebnis');
+    this.vorlaeufig = page.getByTestId('spiel-vorlaeufig');
     this.status = page.getByTestId('spiel-status');
     this.viertel = page.getByTestId('viertel-zeile');
     this.halle = page.getByTestId('halle');
     this.navigation = page.getByTestId('halle-navigation');
     this.kader = page.getByTestId('kader');
     this.berichtFehlt = page.getByTestId('spielbericht-fehlt');
+  }
+
+  /** The colour of the heading's court line, as the browser computes it. */
+  public linienfarbe(): Promise<string> {
+    return linienfarbe(this.heading);
   }
 
   public async goto(spielId: number): Promise<void> {

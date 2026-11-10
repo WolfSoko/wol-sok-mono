@@ -1,0 +1,5 @@
+{
+  // Type-aware oxlint takes the nearest tsconfig.json of a file; without this
+  // one the scripts' @wolsok/* imports resolve to nothing there.
+  "extends": "./tsconfig.tools.json"
+}

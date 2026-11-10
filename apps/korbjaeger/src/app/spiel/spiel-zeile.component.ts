@@ -6,12 +6,14 @@ import {
 } from '@angular/core';
 import { MatChipsModule } from '@angular/material/chips';
 import type { SpielAusgang } from '@wolsok/feat-shared-basketball-data';
+import { VORLAEUFIG } from './spiel-format';
 import type { SpielZeile } from './spiel-zeile';
 
 /**
  * One Spiel as a line, on the Team page and the overview alike: home or
  * away and the opponent, day and time, the Liga where asked, and the
- * result and whether it was cancelled or forfeited.
+ * result (vorläufig while `ergebnisVorlaeufig` says so) and whether it was
+ * cancelled or forfeited.
  */
 @Component({
   selector: 'korb-spiel-zeile',
@@ -47,12 +49,17 @@ import type { SpielZeile } from './spiel-zeile';
           >
         }
         @if (spiel.ergebnis) {
-          <span class="ergebnis" data-qa="spiel-ergebnis">{{
+          &ngsp;<span class="ergebnis" data-qa="spiel-ergebnis">{{
             spiel.ergebnis
           }}</span>
         }
+        @if (spiel.vorlaeufig) {
+          &ngsp;<span class="vorlaeufig" data-qa="spiel-vorlaeufig">{{
+            vorlaeufigText
+          }}</span>
+        }
         @if (spiel.markierung) {
-          <mat-chip class="markierung" data-qa="spiel-markierung">{{
+          &ngsp;<mat-chip class="markierung" data-qa="spiel-markierung">{{
             spiel.markierung
           }}</mat-chip>
         }
@@ -97,6 +104,10 @@ import type { SpielZeile } from './spiel-zeile';
       font-weight: var(--mat-sys-title-large-weight);
       font-variant-numeric: tabular-nums;
     }
+    .vorlaeufig {
+      font: var(--mat-sys-label-medium);
+      color: var(--mat-sys-on-surface-variant);
+    }
     .ausgang-marke {
       padding: 0.125rem 0.5rem;
       border-radius: var(--mat-sys-corner-extra-small);
@@ -125,6 +136,8 @@ export class SpielZeileComponent {
   public readonly titel = input<string>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
+
+  protected readonly vorlaeufigText = VORLAEUFIG;
 
   /** How a result reads: in words, never by colour alone. */
   protected readonly ausgangText: Record<SpielAusgang, string> = {

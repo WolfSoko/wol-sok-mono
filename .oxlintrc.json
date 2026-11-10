@@ -70,6 +70,15 @@
             ]
           },
           {
+            "sourceTag": "tools",
+            "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "tools"
+            ]
+          },
+          {
             "sourceTag": "infra",
             "onlyDependOnLibsWithTags": ["infra-shared"]
           },
@@ -171,6 +180,12 @@
       }
     },
     {
+      "files": ["apps/*/src/**", "libs/**/src/**"],
+      "rules": {
+        "wolsok/no-testing-import": "error"
+      }
+    },
+    {
       "files": ["libs/features/bacteria-engine/src/**/*.ts"],
       "rules": {
         "no-restricted-imports": [
@@ -197,7 +212,10 @@
       }
     },
     {
-      "files": ["libs/features/basketball-data/src/**/*.ts"],
+      "files": [
+        "libs/features/basketball-data/src/**/*.ts",
+        "libs/features/korbjaeger-account/src/**/*.ts"
+      ],
       "rules": {
         "no-restricted-imports": [
           "error",
@@ -214,7 +232,7 @@
                   "firebase-admin",
                   "firebase-admin/*"
                 ],
-                "message": "The basketball data lib (feat-shared-basketball-data) runs in the app's server routes too (ADR 0018): no Angular, NgRx, RxJS or Firebase imports."
+                "message": "Korbjäger's feat-shared libs run on Node too, the basketball data in the app's server routes (ADR 0018), the account lib in korbjaeger-functions' bundle: no Angular, NgRx, RxJS or Firebase imports."
               }
             ]
           }

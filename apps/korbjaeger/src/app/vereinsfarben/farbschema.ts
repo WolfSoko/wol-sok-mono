@@ -6,7 +6,10 @@ import {
   TonalPalette,
   Variant,
 } from '@material/material-color-utilities';
-import { vereinsfarbenAus, type Vereinsfarben } from './vereinsfarben';
+import {
+  vereinsfarbenAus,
+  type Vereinsfarben,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * Every Material system colour the theme in `styles.scss` emits as
@@ -92,10 +95,12 @@ export type FarbschemaTokens = Readonly<
 
 /**
  * A little above Material's standard contrast (0), so every text on its
- * ground reaches 4.5:1 and every outline 3:1 (WCAG AA) for any colour, by
- * shifting its tone: at 0, rounding to `#rrggbb` leaves some just below
- * (`#33ffdd` dark: on-primary-container 4.47:1); at 0.1 a grid of every
- * eighth value per channel stays at 4.53:1 or more.
+ * ground reaches 4.5:1 and every outline 3:1 (WCAG AA), by shifting the
+ * colour's tone: at 0, rounding to `#rrggbb` leaves some just below
+ * (`#33ffdd` dark: on-primary-container 4.47:1). At 0.1, a one-off probe of
+ * every eighth value per channel (32,768 colours) stayed at 4.53:1 or more;
+ * `farbschema.spec.ts` checks 216 of them, and the hard cases, on every run.
+ * A sample, not a proof for all 16.7 million.
  */
 const KONTRAST_STUFE = 0.1;
 

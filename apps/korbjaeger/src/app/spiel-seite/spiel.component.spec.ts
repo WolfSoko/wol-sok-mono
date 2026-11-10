@@ -10,11 +10,14 @@ import {
   type Spielbericht,
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { AuswahlZuNeuError } from '../auswahl/auswahl-fehler';
-import type { Kind } from '../auswahl/kind';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import {
+  type Auswahl,
+  AuswahlZuNeuError,
+  type Kind,
+  LokaleAuswahl,
+} from '@wolsok/feat-korbjaeger-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -23,6 +26,7 @@ import type { KorbReadOptions } from '../basketball-data/lesung';
 import type { Stand } from '../basketball-data/stand';
 import { JETZT } from '../jetzt';
 import { SpielComponent } from './spiel.component';
+import { Breadcrumb } from '../navigation/breadcrumb';
 
 /** Noon on the day of the Spiel, in Germany. */
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
@@ -232,6 +236,40 @@ describe('SpielComponent', () => {
       );
 
       expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+    });
+  });
+
+  describe('the breadcrumb', () => {
+    async function levelsWith(teams: readonly number[]) {
+      const auswahl = new LokaleAuswahl(undefined);
+      for (const team of teams) {
+        await auswahl.folgen(team);
+      }
+      await renderMit(
+        fakeData(
+          async () => GESPIELT,
+          async () => undefined
+        ),
+        auswahl
+      );
+      return TestBed.inject(Breadcrumb).levels().slice(1);
+    }
+
+    it("leads up to the followed side's Team", async () => {
+      expect(await levelsWith([201500])).toEqual([
+        { title: 'MTV Gifhorn', link: ['/team', '201500'] },
+        { title: 'Spiel' },
+      ]);
+    });
+
+    it('takes the home side where both are followed', async () => {
+      expect((await levelsWith([201500, 313036]))[0]?.title).toBe(
+        'MTV Wasbüttel'
+      );
+    });
+
+    it('names the Spiel right below the overview where no side is followed', async () => {
+      expect(await levelsWith([])).toEqual([{ title: 'Spiel' }]);
     });
   });
 
@@ -484,7 +522,7 @@ describe('SpielComponent', () => {
       expect(text(teil(seite, 'spiel-status'))).toBe(anzeige);
     });
 
-    it('shows no status line for a confirmed result', async () => {
+    it('shows no status line and no vorläufig for a confirmed result', async () => {
       const seite = await render(
         fakeData(
           async () => GESPIELT,
@@ -493,6 +531,89 @@ describe('SpielComponent', () => {
       );
 
       expect(teil(seite, 'spiel-status')).toBeNull();
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
+    });
+
+    it('marks a result not confirmed yet as vorläufig beside the score', async () => {
+      const seite = await render(
+        fakeData(
+          async () => ({
+            ...GESPIELT,
+            spiel: {
+              ...GESPIELT.spiel,
+              status: {
+                art: 'gespielt',
+                ergebnis: { heim: 78, gast: 47 },
+                bestaetigt: false,
+              },
+            },
+          }),
+          async () => undefined
+        )
+      );
+
+      expect(text(teil(seite, 'spiel-ergebnis'))).toBe('78:47');
+      expect(text(teil(seite, 'spiel-vorlaeufig'))).toBe('vorläufig');
+      expect(
+        seite
+          .querySelector('.ergebnis')
+          ?.textContent?.replace(/\s+/g, ' ')
+          .trim()
+      ).toBe('78:47 vorläufig');
+      expect(text(teil(seite, 'spiel-status'))).toBe(
+        'Ergebnis noch nicht bestätigt'
+      );
+    });
+
+    it('shows a result the DBB never confirms (BBL, ProA, ProB) as final', async () => {
+      const seite = await render(
+        fakeData(
+          async () => ({
+            ...GESPIELT,
+            spiel: {
+              ...GESPIELT.spiel,
+              status: {
+                art: 'gespielt',
+                ergebnis: { heim: 78, gast: 47 },
+                bestaetigt: false,
+              },
+            },
+            liga: {
+              ...GESPIELT.liga,
+              name: '1. Bundesliga (easyCredit BBL)',
+              verband: { id: 100, name: 'Bundesligen' },
+              ohneSpielberichte: true,
+              resultsNeverConfirmed: true,
+            },
+          }),
+          async () => undefined
+        )
+      );
+
+      expect(text(teil(seite, 'spiel-ergebnis'))).toBe('78:47');
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
+      expect(teil(seite, 'spiel-status')).toBeNull();
+    });
+
+    it.each([
+      ['a planned Spiel', { art: 'geplant' }],
+      [
+        'a forfeit',
+        {
+          art: 'kampflos',
+          verzichtet: ['gast'],
+          ergebnis: { heim: 20, gast: 0 },
+        },
+      ],
+    ] as const)('does not mark %s as vorläufig', async (_case, status) => {
+      const seite = await render(
+        fakeData(
+          async () => ({ ...GESPIELT, spiel: { ...GESPIELT.spiel, status } }),
+          async () => undefined
+        )
+      );
+
+      expect(teil(seite, 'spiel-vorlaeufig')).toBeNull();
     });
   });
 
@@ -626,8 +747,8 @@ describe('SpielComponent', () => {
       );
 
       expect(kader(seite)).toEqual([]);
-      expect(text(teil(seite, 'spielbericht-fehlt'))).toMatch(
-        /noch kein Spielbericht/i
+      expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+        'Noch kein Spielbericht. Schau später noch einmal vorbei.'
       );
     });
 
@@ -645,6 +766,54 @@ describe('SpielComponent', () => {
       expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
         'Das Spiel fällt aus, einen Spielbericht gibt es nicht.'
       );
+    });
+
+    describe('in a Liga the DBB keeps no Spielberichte for', () => {
+      const OHNE_BERICHTE: SpielDetails = {
+        ...GESPIELT,
+        liga: { ...GESPIELT.liga, ohneSpielberichte: true },
+      };
+
+      it('says so instead of asking to come back later', async () => {
+        const seite = await render(
+          fakeData(
+            async () => OHNE_BERICHTE,
+            async () => undefined
+          )
+        );
+
+        expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+          'Für diese Liga führt der DBB keine Spielberichte, Kader und Viertel gibt es hier nicht.'
+        );
+      });
+
+      it('still says a cancelled Spiel has no Spielbericht', async () => {
+        const seite = await render(
+          fakeData(
+            async () => ({
+              ...OHNE_BERICHTE,
+              spiel: { ...OHNE_BERICHTE.spiel, status: { art: 'abgesagt' } },
+            }),
+            async () => undefined
+          )
+        );
+
+        expect(text(teil(seite, 'spielbericht-fehlt'))).toBe(
+          'Das Spiel fällt aus, einen Spielbericht gibt es nicht.'
+        );
+      });
+
+      it('shows a Spielbericht that comes all the same', async () => {
+        const seite = await render(
+          fakeData(
+            async () => OHNE_BERICHTE,
+            async () => bericht(MIT_WERTEN, OHNE_WERTE)
+          )
+        );
+
+        expect(kader(seite)).toHaveLength(2);
+        expect(teil(seite, 'spielbericht-fehlt')).toBeNull();
+      });
     });
 
     it('shows an Anonymer Spieler as anonymous: no link, no number, no id', async () => {

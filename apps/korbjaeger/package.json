@@ -2,6 +2,7 @@
   "name": "@wolsok/korbjaeger",
   "version": "0.0.1",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "peerDependencies": {
     "@analogjs/platform": "2.9.1",
@@ -14,6 +15,7 @@
     "@angular/platform-browser": "22.2.5",
     "@angular/router": "22.2.5",
     "@angular/service-worker": "22.2.5",
+    "@axe-core/playwright": "4.14.0",
     "@fontsource/roboto": "5.3.0",
     "@material/material-color-utilities": "0.4.0",
     "@nx/vite": "23.3.1",

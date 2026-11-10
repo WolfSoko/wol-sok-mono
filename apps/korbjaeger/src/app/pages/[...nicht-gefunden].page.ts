@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { breadcrumb } from '../navigation/breadcrumb';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 
@@ -17,4 +18,8 @@ import { RouterLink } from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class NichtGefundenPage {}
+export default class NichtGefundenPage {
+  public constructor() {
+    breadcrumb(() => [{ title: 'Seite nicht gefunden' }]);
+  }
+}

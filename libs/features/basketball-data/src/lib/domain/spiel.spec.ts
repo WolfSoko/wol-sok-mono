@@ -1,8 +1,10 @@
+import type { Liga } from './liga';
 import type { SpielPartei } from './partei';
 import {
   ausgangVon,
   datumInDeutschland,
   ergebnisVon,
+  ergebnisVorlaeufig,
   gegnerVon,
   seiteVon,
   istEntschieden,
@@ -177,6 +179,64 @@ describe('vergleicheAnwurf', () => {
     expect(vergleicheAnwurf(anwurf('2026-11-14'), anwurf('2026-11-14'))).toBe(
       0
     );
+  });
+});
+
+describe('ergebnisVorlaeufig', () => {
+  const KREISLIGA: Liga = {
+    id: 54862,
+    name: 'U12 Kreisliga',
+    verband: { id: 7, name: 'Niedersachsen' },
+    altersklasse: 'U12',
+    geschlecht: 'mix',
+    spielklasse: 'Kreisliga',
+  };
+  const BBL: Liga = {
+    ...KREISLIGA,
+    name: '1. Bundesliga (easyCredit BBL)',
+    verband: { id: 100, name: 'Bundesligen' },
+    ohneSpielberichte: true,
+    resultsNeverConfirmed: true,
+  };
+  const UNBESTAETIGT = spiel({
+    status: {
+      art: 'gespielt',
+      ergebnis: { heim: 78, gast: 47 },
+      bestaetigt: false,
+    },
+  });
+
+  it.each([
+    ['its Liga', KREISLIGA],
+    ['a Liga the Saison does not list', undefined],
+  ])(
+    'holds for a played Spiel the Verband has not confirmed yet, with %s',
+    (_case, liga) => {
+      expect(ergebnisVorlaeufig(UNBESTAETIGT, liga)).toBe(true);
+    }
+  );
+
+  it('does not hold in a Liga whose results the DBB never confirms', () => {
+    expect(ergebnisVorlaeufig(UNBESTAETIGT, BBL)).toBe(false);
+  });
+
+  it.each([
+    [
+      'a confirmed result',
+      { art: 'gespielt', ergebnis: { heim: 78, gast: 47 }, bestaetigt: true },
+    ],
+    ['a planned Spiel', { art: 'geplant' }],
+    ['a cancelled Spiel', { art: 'abgesagt' }],
+    [
+      'a forfeit',
+      {
+        art: 'kampflos',
+        verzichtet: ['gast'],
+        ergebnis: { heim: 20, gast: 0 },
+      },
+    ],
+  ] as const)('does not hold for %s', (_case, status) => {
+    expect(ergebnisVorlaeufig(spiel({ status }), KREISLIGA)).toBe(false);
   });
 });
 

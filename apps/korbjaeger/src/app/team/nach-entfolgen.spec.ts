@@ -4,9 +4,9 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { LokaleAuswahl, type Auswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 import { FokusNachEntfolgenDirective } from './fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from './nach-entfolgen';
 
@@ -59,6 +59,16 @@ describe('NachEntfolgen', () => {
     nachEntfolgen.entfolgt(201500, 'MTV Gifhorn');
 
     expect(document.activeElement?.textContent).toBe('Meine Teams');
+  });
+
+  it('follows the Team again at the place it had', async () => {
+    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const { nachEntfolgen, leisten } = await render(fakeAuswahl({ folgen }));
+
+    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel', { seit: 5 });
+    await (await leisten.getHarness(MatSnackBarHarness)).dismissWithAction();
+
+    expect(folgen).toHaveBeenCalledWith(313036, { seit: 5 });
   });
 
   it('takes the undo back once another store holds the choices (signed in or out elsewhere)', async () => {

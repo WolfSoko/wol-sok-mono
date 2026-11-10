@@ -136,3 +136,7 @@ for Node, not the browser) is denied there, so node-gyp never runs. CI installs 
 ## Contributors
 
 [![contributors](https://contrib.rocks/image?repo=WolfSoko/wol-sok-mono)](https://github.com/WolfSoko/wol-sok-mono/graphs/contributors)
+
+## License
+
+The repository is under the [MIT License](LICENSE), except RollaPolla and Korbjäger: their directories, listed at the top of [`LICENSE`](LICENSE), are proprietary for every version released after #2956 added those files (all rights reserved, use only with the owner's written permission) and each hold their own `LICENSE`. Earlier versions stay under MIT. Third-party code keeps its own licence.

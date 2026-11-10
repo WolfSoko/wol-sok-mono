@@ -1,0 +1,11 @@
+# Plan: Korbjäger — BBL/ProA/ProB results stay „vorläufig" forever, since the DBB never confirms them
+
+Spec: [`docs/specs/2953-korbjaeger-bbl-proa-prob-results-stay-vorlaeufig-forever-since-the-dbb-never-confirms-them.md`](../specs/2953-korbjaeger-bbl-proa-prob-results-stay-vorlaeufig-forever-since-the-dbb-never-confirms-them.md). Test first, each task red before green.
+
+1. **Liga flag in the adapter.** `libs/features/basketball-data/src/lib/domain/liga.ts`: optional `resultsNeverConfirmed?: true` with its doc. `libs/features/basketball-data/src/lib/dbb/map-liga.ts`: set it where `statisticType` is 0, `verbandId` is the Verband „Bundesligen" (constant `BUNDESLIGEN_VERBAND = 100`) and `geschlecht` is „männlich", derived from the mapped Liga. Tests: `map-spiel-details.spec.ts` (0 with 100 and männlich sets it; 0 of another Verband, a women's Liga of 100, 1 with 100, `null` and a missing field leave it out); `map-team-spiele.spec.ts` one case that the Team's Saison carries it.
+   Commit: `feat(feat-shared-basketball-data): mark Ligen whose results the DBB never confirms`.
+2. **Domain question.** `libs/features/basketball-data/src/lib/domain/spiel.ts`: `ergebnisVorlaeufig(spiel, liga: Liga | undefined)`, false where `liga?.resultsNeverConfirmed`. Tests: `spiel.spec.ts`, the new case and `undefined` Liga keeping today's answers. The two app callers pass the Liga in the same commit, so it compiles: `apps/korbjaeger/src/app/spiel/spiel-zeile.ts` (`ligaVon(saison, spiel.ligaId)`, computed once for `liga` and the mark) and `apps/korbjaeger/src/app/spiel-seite/spiel-kopf.ts` (`details.liga`, in `vorlaeufig` and `statusText`).
+   Tests: `team/team.component.spec.ts` (no „vorläufig" for a BBL Spiel, still for another Liga; the Team page builds its lines through `spielZeile`, which `spiel-zeile.component.spec.ts` skips by taking a finished `SpielZeile`), `spiel-seite/spiel.component.spec.ts` (neither „vorläufig" nor „Ergebnis noch nicht bestätigt" for a BBL Spiel).
+   Commit: `fix(korbjaeger): show results the DBB never confirms as final`.
+3. **Checks.** `npx nx test feat-shared-basketball-data`, `npx nx test korbjaeger`, `npx nx affected -t lint,lint-templates`, `npx nx format:write`, `npx nx build korbjaeger`.
+4. **PR** to `main` with spec, plan and code, `Closes #2953`, acceptance results in the description.

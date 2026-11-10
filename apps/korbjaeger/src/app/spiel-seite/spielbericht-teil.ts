@@ -1,6 +1,5 @@
 import type { Resource } from '@angular/core';
 import {
-  istTeam,
   parteiName,
   type Kader,
   type SpielDetails,
@@ -8,6 +7,7 @@ import {
   type Spielbericht,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
+import { istGefolgt } from './gefolgter-verein';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 
 /** One Kader with what heads it on the page. */
@@ -85,14 +85,19 @@ function teil(
     seite,
     titel: partei ? parteiName(partei) : SEITE[seite],
     kader: bericht[seite],
-    gefolgt:
-      partei !== undefined && gefolgt.some((team) => istTeam(partei, team)),
+    gefolgt: partei !== undefined && istGefolgt(partei, gefolgt),
   };
 }
 
-/** Why there is no Spielbericht: one to come, or none for a Spiel off. */
+/**
+ * Why there is no Spielbericht: none for a Spiel off, none in a Liga the
+ * DBB keeps none for, else one to come.
+ */
 function fehltText(details: SpielDetails | undefined): string {
-  return details?.spiel.status.art === 'abgesagt'
-    ? 'Das Spiel fällt aus, einen Spielbericht gibt es nicht.'
+  if (details?.spiel.status.art === 'abgesagt') {
+    return 'Das Spiel fällt aus, einen Spielbericht gibt es nicht.';
+  }
+  return details?.liga.ohneSpielberichte
+    ? 'Für diese Liga führt der DBB keine Spielberichte, Kader und Viertel gibt es hier nicht.'
     : 'Noch kein Spielbericht. Schau später noch einmal vorbei.';
 }

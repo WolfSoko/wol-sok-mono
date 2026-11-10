@@ -1,0 +1,32 @@
+{
+  "name": "tools",
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "tags": ["tools"],
+  "targets": {
+    "typecheck-tools": {
+      "command": "tsc -p tools/tsconfig.tools.json --noEmit",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/tools/**/*.ts",
+        "{workspaceRoot}/tools/tsconfig.tools.json",
+        "{workspaceRoot}/tsconfig.base.json",
+        {
+          "fileset": "{projectRoot}/**/*.{ts,json}",
+          "dependencies": true
+        }
+      ]
+    },
+    "test": {
+      "command": "node --test \"tools/ci/*.test.mjs\"",
+      "cache": true,
+      "inputs": [
+        "{workspaceRoot}/tools/ci/**/*",
+        "{workspaceRoot}/.nx/workflows/workers.yml",
+        "{workspaceRoot}/.nx/ci-config.yaml",
+        "{workspaceRoot}/.github/workflows/ci-cd.yml",
+        "{workspaceRoot}/**/*.json"
+      ]
+    }
+  }
+}

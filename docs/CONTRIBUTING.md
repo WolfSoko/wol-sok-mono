@@ -524,7 +524,7 @@ Thank you for contributing! 🎉
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the MIT License.
+By contributing, you agree that your contributions will be licensed under the MIT License, except contributions to the proprietary directories the root [`LICENSE`](../LICENSE) lists (RollaPolla and Korbjäger): those you license to the owner under the proprietary `LICENSE` of their directory.
 
 ## Questions?
 

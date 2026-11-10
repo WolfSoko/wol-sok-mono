@@ -2,6 +2,148 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.162.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.1...v74.162.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger-functions:** one-off cleanup of orphaned selections of deleted accounts ([#2993](https://github.com/WolfSoko/wol-sok-mono/issues/2993)) ([81ed951](https://github.com/WolfSoko/wol-sok-mono/commit/81ed951b4e6d06f4583d443f25f2e1cde5c4ab2d)), references [#2986](https://github.com/WolfSoko/wol-sok-mono/issues/2986)
+
+### Bug Fixes
+
+* **tools:** name each app's Firebase config literally in its deploy inputs ([#2992](https://github.com/WolfSoko/wol-sok-mono/issues/2992)) ([65eec4e](https://github.com/WolfSoko/wol-sok-mono/commit/65eec4e9b7def190fdd4ced4d35a00cc01840beb)), closes [#2904](https://github.com/WolfSoko/wol-sok-mono/issues/2904), references [#2904](https://github.com/WolfSoko/wol-sok-mono/issues/2904)
+
+## [74.161.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.161.0...v74.161.1) (2026-11-09)
+
+## [74.161.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.3...v74.161.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** English Firestore fields and storage keys, with a migration ([#2982](https://github.com/WolfSoko/wol-sok-mono/issues/2982)) ([825051a](https://github.com/WolfSoko/wol-sok-mono/commit/825051a29e838b05b7cbb384b5fd844780f3c244)), closes [#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966), references [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980) [#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945)
+
+## [74.160.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.2...v74.160.3) (2026-11-09)
+
+### Refactorings
+
+* **korbjaeger:** one shared place for account constants and emulator helpers ([#2980](https://github.com/WolfSoko/wol-sok-mono/issues/2980)) ([2416079](https://github.com/WolfSoko/wol-sok-mono/commit/2416079a76b62c9f9ba356f03b0f40b5e170956a)), references [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945) [#2945](https://github.com/WolfSoko/wol-sok-mono/issues/2945)
+
+### Documentation
+
+* **korbjaeger:** spike on DBB.Scores terms and NBN23 access ([#2978](https://github.com/WolfSoko/wol-sok-mono/issues/2978)) ([d9acee2](https://github.com/WolfSoko/wol-sok-mono/commit/d9acee2c50b29f2c2e7cfeaa213ec5af85c545e2)), references [#2977](https://github.com/WolfSoko/wol-sok-mono/issues/2977)
+
+## [74.160.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.1...v74.160.2) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** show BBL, ProA and ProB results as final, since the DBB never confirms them ([#2979](https://github.com/WolfSoko/wol-sok-mono/issues/2979)) ([b23fd71](https://github.com/WolfSoko/wol-sok-mono/commit/b23fd7181916ad7c30ae98102736ba810eaf479d)), closes [#2953](https://github.com/WolfSoko/wol-sok-mono/issues/2953), references [#2953](https://github.com/WolfSoko/wol-sok-mono/issues/2953)
+
+## [74.160.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.160.0...v74.160.1) (2026-11-09)
+
+### Bug Fixes
+
+* **tools:** download the Firebase emulators on the Nx Cloud workers before any task ([#2973](https://github.com/WolfSoko/wol-sok-mono/issues/2973)) ([b184df1](https://github.com/WolfSoko/wol-sok-mono/commit/b184df1121d8c48a2d65fe516627a84d20c64a8b)), closes [#2960](https://github.com/WolfSoko/wol-sok-mono/issues/2960)
+
+### Refactorings
+
+* **tools:** import the engine and basketball data lib through their public entries ([#2972](https://github.com/WolfSoko/wol-sok-mono/issues/2972)) ([c60ca07](https://github.com/WolfSoko/wol-sok-mono/commit/c60ca07a763974a908ecf2db8236eb73e667c26b))
+
+### Chore
+
+* **release:** make RollaPolla and Korbjäger proprietary ([#2965](https://github.com/WolfSoko/wol-sok-mono/issues/2965)) ([85ec982](https://github.com/WolfSoko/wol-sok-mono/commit/85ec9826b54c93ff3397e3f74dd55e0ab0b39014)), references [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956) [#2956](https://github.com/WolfSoko/wol-sok-mono/issues/2956)
+
+## [74.160.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.159.0...v74.160.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** back, forward and breadcrumb in the title bar ([#2970](https://github.com/WolfSoko/wol-sok-mono/issues/2970)) ([9ce5277](https://github.com/WolfSoko/wol-sok-mono/commit/9ce5277eed4718d9379017cf90797b29f7988aa7)), references [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957) [#2957](https://github.com/WolfSoko/wol-sok-mono/issues/2957)
+
+### Documentation
+
+* English in code, rule and glossary code names ([#2971](https://github.com/WolfSoko/wol-sok-mono/issues/2971)) ([6e348bc](https://github.com/WolfSoko/wol-sok-mono/commit/6e348bc84ea4a42f05b1e9fd7888a7f99746b797)), references [#2961](https://github.com/WolfSoko/wol-sok-mono/issues/2961)
+
+## [74.159.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.1...v74.159.0) (2026-11-09)
+
+### Features
+
+* **tools:** lint and typecheck the scripts under tools/ ([#2951](https://github.com/WolfSoko/wol-sok-mono/issues/2951)) ([7d8fa07](https://github.com/WolfSoko/wol-sok-mono/commit/7d8fa077c3ce21f5228b0c2da450ac90d4f23adc)), closes [#2935](https://github.com/WolfSoko/wol-sok-mono/issues/2935)
+
+### Refactorings
+
+* **korbjaeger:** split the overview's orchestration, Kader search into the lib ([#2954](https://github.com/WolfSoko/wol-sok-mono/issues/2954)) ([db07b47](https://github.com/WolfSoko/wol-sok-mono/commit/db07b47f56994cf31ddfc0f946780016a2ca1d75)), references [#2931](https://github.com/WolfSoko/wol-sok-mono/issues/2931) [#2931](https://github.com/WolfSoko/wol-sok-mono/issues/2931) [#2937](https://github.com/WolfSoko/wol-sok-mono/issues/2937)
+
+### Chore
+
+* **release:** publish ([75fbec0](https://github.com/WolfSoko/wol-sok-mono/commit/75fbec0419b6f08d91290721e3126dbf1e7f1035))
+
+### Documentation
+
+* **korbjaeger:** spike findings on a live DBB data source ([#2962](https://github.com/WolfSoko/wol-sok-mono/issues/2962)) ([3b85009](https://github.com/WolfSoko/wol-sok-mono/commit/3b85009c6c23c3f7fa9f57a1063a770510d7bb50)), references [#2947](https://github.com/WolfSoko/wol-sok-mono/issues/2947)
+
+## [74.158.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.158.0...v74.158.1) (2026-11-09)
+
+### Bug Fixes
+
+* **korbjaeger:** say when the DBB keeps no Spielberichte for a Liga ([#2952](https://github.com/WolfSoko/wol-sok-mono/issues/2952)) ([7405a92](https://github.com/WolfSoko/wol-sok-mono/commit/7405a92f1def41d4339c99b1f6a49e87d62630a0)), closes [#2948](https://github.com/WolfSoko/wol-sok-mono/issues/2948)
+
+### Refactorings
+
+* **feat-korbjaeger-auswahl:** move the Auswahl port out of korbjaeger ([#2937](https://github.com/WolfSoko/wol-sok-mono/issues/2937)) ([d733b51](https://github.com/WolfSoko/wol-sok-mono/commit/d733b517c32888df91ed5b1c0fb586d469a5cd68)), references [#2917](https://github.com/WolfSoko/wol-sok-mono/issues/2917) [#2939](https://github.com/WolfSoko/wol-sok-mono/issues/2939)
+
+## [74.158.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.157.0...v74.158.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** light/dark switch: System, Hell, Dunkel ([#2944](https://github.com/WolfSoko/wol-sok-mono/issues/2944)) ([4f199cd](https://github.com/WolfSoko/wol-sok-mono/commit/4f199cd4de142cca36f49d9b8020aba0e1baca5b)), references [#2925](https://github.com/WolfSoko/wol-sok-mono/issues/2925)
+
+### Chore
+
+* **release:** publish ([eb1313e](https://github.com/WolfSoko/wol-sok-mono/commit/eb1313eb5a25735e875cc14c8a4af3072d02482d))
+
+## [74.157.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.156.0...v74.157.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger-functions:** delete auswahl/{uid} server-side when the Auth user is deleted ([#2943](https://github.com/WolfSoko/wol-sok-mono/issues/2943)) ([931aae8](https://github.com/WolfSoko/wol-sok-mono/commit/931aae8ed67930b47a5a25d4c8f042faf63a88ca)), references [#2912](https://github.com/WolfSoko/wol-sok-mono/issues/2912)
+* **korbjaeger:** "Rückgängig" restores the Team's place in Meine Teams ([#2939](https://github.com/WolfSoko/wol-sok-mono/issues/2939)) ([8fb68f4](https://github.com/WolfSoko/wol-sok-mono/commit/8fb68f475dc73f6d64af59d5b8c9034ef25277b3))
+* **korbjaeger:** overview cards and the Spiel page wear the Vereinsfarben, axe checks ([#2940](https://github.com/WolfSoko/wol-sok-mono/issues/2940)) ([7972217](https://github.com/WolfSoko/wol-sok-mono/commit/79722172b9c3bed872f7d8ff6c6ffc37391c2fd7))
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** read a player colour's alpha through one shared helper ([#2938](https://github.com/WolfSoko/wol-sok-mono/issues/2938)) ([d37e347](https://github.com/WolfSoko/wol-sok-mono/commit/d37e34711159ce5d0e4ad63a9c09bd68f905a896)), closes [#2883](https://github.com/WolfSoko/wol-sok-mono/issues/2883), references [#2883](https://github.com/WolfSoko/wol-sok-mono/issues/2883)
+* **nx:** only wait for Nx-started web servers in every app's e2e ([#2941](https://github.com/WolfSoko/wol-sok-mono/issues/2941)) ([693f5c6](https://github.com/WolfSoko/wol-sok-mono/commit/693f5c66e703139349cc07637603df6d767472c4)), closes [#2915](https://github.com/WolfSoko/wol-sok-mono/issues/2915), references [#2915](https://github.com/WolfSoko/wol-sok-mono/issues/2915)
+
+### Refactorings
+
+* **tools:** drop the direct version.json reads in version-handling and deploy-android ([#2933](https://github.com/WolfSoko/wol-sok-mono/issues/2933)) ([ec48a7b](https://github.com/WolfSoko/wol-sok-mono/commit/ec48a7b267c1f96e75da48da72dd350989163741)), references [#2882](https://github.com/WolfSoko/wol-sok-mono/issues/2882)
+
+### Chore
+
+* **release:** publish ([953b944](https://github.com/WolfSoko/wol-sok-mono/commit/953b944312a5b4b5c20caee6bc535e33a77cf251))
+
+### Testing
+
+* **feat-lazy-bacteria-game:** wait for the replay viewer in My matches instead of a fixed number of turns ([#2942](https://github.com/WolfSoko/wol-sok-mono/issues/2942)) ([0b23b4a](https://github.com/WolfSoko/wol-sok-mono/commit/0b23b4a07576d2c588df32ca433299089a5bc733)), references [#2858](https://github.com/WolfSoko/wol-sok-mono/issues/2858)
+
+## [74.156.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.155.0...v74.156.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** mark unconfirmed results as vorläufig ([#2934](https://github.com/WolfSoko/wol-sok-mono/issues/2934)) ([4ca027f](https://github.com/WolfSoko/wol-sok-mono/commit/4ca027f7392ae14ec56cda6c978f4f7d37494eff)), closes [#2923](https://github.com/WolfSoko/wol-sok-mono/issues/2923)
+
+## [74.155.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.154.0...v74.155.0) (2026-11-09)
+
+### Features
+
+* **korbjaeger:** Vereinsfarben bottom sheet, worn by the Team page ([#2929](https://github.com/WolfSoko/wol-sok-mono/issues/2929)) ([d4252af](https://github.com/WolfSoko/wol-sok-mono/commit/d4252afec2685d2a8afb22249187784d514086b4)), references [#2918](https://github.com/WolfSoko/wol-sok-mono/issues/2918) [#rrggbb](https://github.com/WolfSoko/wol-sok-mono/issues/rrggbb)
+
+### Bug Fixes
+
+* **github:** stand down the release before versioning when main moved on ([#2932](https://github.com/WolfSoko/wol-sok-mono/issues/2932)) ([1e6354f](https://github.com/WolfSoko/wol-sok-mono/commit/1e6354ff60ee1d3569f301d775239c50baf724b8)), closes [#2891](https://github.com/WolfSoko/wol-sok-mono/issues/2891), references [#2891](https://github.com/WolfSoko/wol-sok-mono/issues/2891)
+
+### Documentation
+
+* add glossary for the basketball parents app ([#2860](https://github.com/WolfSoko/wol-sok-mono/issues/2860)) ([8fec1de](https://github.com/WolfSoko/wol-sok-mono/commit/8fec1de00daca1036cde8bb2696a426a5c1420c7))
+* sync CLAUDE.md stack versions with package.json ([#2914](https://github.com/WolfSoko/wol-sok-mono/issues/2914)) ([44ff192](https://github.com/WolfSoko/wol-sok-mono/commit/44ff192105e44f5cdab7e87ce6566795d992ec39))
+
 ## [74.154.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.153.0...v74.154.0) (2026-11-09)
 
 ### Features

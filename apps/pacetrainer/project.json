@@ -92,7 +92,7 @@
       "inputs": [
         "production",
         "^production",
-        "{workspaceRoot}/firebase.{projectName}.json",
+        "{workspaceRoot}/firebase.pacetrainer.json",
         "{workspaceRoot}/.firebaserc"
       ],
       "dependsOn": ["build"],

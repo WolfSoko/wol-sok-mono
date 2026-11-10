@@ -11,7 +11,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { AUSWAHL } from '../auswahl/auswahl';
-import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
+import type {
+  Kind,
+  MarkierbarerSpieler,
+} from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { KIND_AENDERUNG } from './kind-aenderung';
 import {

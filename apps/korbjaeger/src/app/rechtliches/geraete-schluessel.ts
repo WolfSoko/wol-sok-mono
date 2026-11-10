@@ -1,10 +1,11 @@
-import { AUSWAHL_SCHLUESSEL } from '../auswahl/lokale-auswahl';
+import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   ANTWORT_INDEX,
   ANTWORT_PRAEFIX,
 } from '../basketball-data/letzte-antworten';
 import {
   ANGEMELDET_SCHLUESSEL,
+  DARSTELLUNG_SCHLUESSEL,
   INSTALLATION_ABGELEHNT_SCHLUESSEL,
   ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
 } from '../geraete-speicher';
@@ -22,4 +23,5 @@ export const GERAETE_SCHLUESSEL = {
   angemeldet: ANGEMELDET_SCHLUESSEL,
   zwischenspeicherLeeren: ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
   installationAbgelehnt: INSTALLATION_ABGELEHNT_SCHLUESSEL,
+  darstellung: DARSTELLUNG_SCHLUESSEL,
 } as const;

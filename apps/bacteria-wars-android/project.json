@@ -34,7 +34,7 @@
       "executor": "nx:run-commands",
       "dependsOn": [],
       "options": {
-        "command": "tsx ./tools/bacteria-game/deploy-android.ts"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/deploy-android.ts"
       }
     },
     "store-assets": {

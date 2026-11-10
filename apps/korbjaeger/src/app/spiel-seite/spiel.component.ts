@@ -4,21 +4,31 @@ import {
   computed,
   inject,
   input,
+  linkedSignal,
 } from '@angular/core';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTableModule } from '@angular/material/table';
 import { RouterLink } from '@angular/router';
-import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
+import {
+  parseDbbId,
+  type Spiel,
+  type Team,
+  type TeamId,
+} from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
 import { spielberichtResource } from '../basketball-data/spielbericht-resource';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 import { HalleComponent } from '../halle/halle.component';
 import { KIND_AENDERUNG, provideKindAenderung } from '../kind/kind-aenderung';
+import { VORLAEUFIG } from '../spiel/spiel-format';
 import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
 import { StandComponent } from '../stand/stand.component';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { breadcrumb } from '../navigation/breadcrumb';
+import { followedSide } from './gefolgter-verein';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
@@ -51,6 +61,7 @@ export class SpielComponent {
 
   /** What the page says when marking a Kind failed. */
   protected readonly kindFehler = inject(KIND_AENDERUNG).fehler;
+  protected readonly vorlaeufigText = VORLAEUFIG;
 
   protected readonly details = spielDetailsResource(() => this.spiel());
 
@@ -78,4 +89,35 @@ export class SpielComponent {
       ? undefined
       : spielberichtTeil(this.bericht, this.details, this.gefolgt())
   );
+
+  /**
+   * The followed side's Team, whose colours the page wears (#2918) and
+   * which its breadcrumb leads up to. While Meine Teams are read again (a
+   * sign-in or sign-out switches stores), the last one stays, so the page
+   * neither flashes the app's own colours nor loses its way up.
+   */
+  private readonly followedTeam = linkedSignal<
+    { spiel: Spiel | undefined; gefolgt: readonly TeamId[] | undefined },
+    Team | undefined
+  >({
+    source: () => ({
+      spiel: this.details.hasValue() ? this.details.value().spiel : undefined,
+      gefolgt: this.gefolgt(),
+    }),
+    computation: ({ spiel, gefolgt }, vorher) =>
+      gefolgt === undefined
+        ? vorher?.value
+        : spiel && followedSide(spiel, gefolgt),
+  });
+
+  public constructor() {
+    vereinsfarbenAnwenden(() => this.followedTeam()?.vereinId);
+    breadcrumb(() => {
+      const team = this.followedTeam();
+      const spiel = { title: 'Spiel' };
+      return team
+        ? [{ title: team.name, link: ['/team', String(team.id)] }, spiel]
+        : [spiel];
+    });
+  }
 }

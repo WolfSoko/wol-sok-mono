@@ -34,6 +34,9 @@ import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { aeltesterStand } from '../basketball-data/stand';
 import { StandComponent } from '../stand/stand.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
+import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { breadcrumb } from '../navigation/breadcrumb';
+import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
@@ -41,7 +44,8 @@ import { TeamTabelleComponent } from './team-tabelle.component';
  * Tabelle of each of those Ligen, the current one first, and the
  * Verein's other Teams; with a control to follow the Team and each of
  * those. Once the Team's Saison looks over (`saisonBeendet`), a hint asks
- * whether it is and offers the Verein's Teams first.
+ * whether it is and offers the Verein's Teams first. The page wears the
+ * colours an Elternteil gave the Verein ("Vereinsfarben", a bottom sheet).
  */
 @Component({
   selector: 'korb-team',
@@ -55,6 +59,7 @@ import { TeamTabelleComponent } from './team-tabelle.component';
     StandComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
+    VereinsfarbenKnopfComponent,
     VereinsTeamsComponent,
   ],
   templateUrl: './team.component.html',
@@ -162,4 +167,16 @@ export class TeamComponent {
     }
     return fehlerText(this.saison.error(), KEIN_TEAM);
   });
+
+  public constructor() {
+    // this Team's Verein only: `vereinId` keeps the last one while the next loads
+    vereinsfarbenAnwenden(() =>
+      this.saison.hasValue() ? this.saison.value().verein.id : undefined
+    );
+    breadcrumb(() => [
+      {
+        title: this.saison.hasValue() ? this.saison.value().team.name : 'Team',
+      },
+    ]);
+  }
 }

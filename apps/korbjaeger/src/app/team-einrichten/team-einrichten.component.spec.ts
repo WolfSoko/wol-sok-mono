@@ -18,14 +18,14 @@ import {
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
-import { AUSWAHL, type Auswahl } from '../auswahl/auswahl';
-import { LokaleAuswahl } from '../auswahl/lokale-auswahl';
+import { AUSWAHL } from '../auswahl/auswahl';
+import { type Auswahl, LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { TeamEinrichtenComponent } from './team-einrichten.component';
-import { fakeAuswahl } from '../auswahl/testing/fake-auswahl';
+import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
 
 /** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
 const recordedDbb: DbbTransport = async (request) => {

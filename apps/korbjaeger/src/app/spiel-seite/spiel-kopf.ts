@@ -1,5 +1,6 @@
 import {
   ergebnisVon,
+  ergebnisVorlaeufig,
   parteiName,
   type Spiel,
   type SpielDetails,
@@ -54,6 +55,8 @@ export interface SpielKopf {
   readonly liga: string;
   /** The points, home first (`78:47`), once there are any. */
   readonly ergebnis?: string;
+  /** Whether `ergebnis` awaits the Verband's confirmation. */
+  readonly vorlaeufig: boolean;
   /** What became of the Spiel where it is no confirmed result. */
   readonly status?: string;
   /** Absent where the Verband records no quarters. */
@@ -65,13 +68,15 @@ export function spielKopf(details: SpielDetails): SpielKopf {
   const { spiel } = details;
   const ergebnis = ergebnisVon(spiel);
   const perioden = periodenVon(details, ergebnis);
-  const status = statusText(spiel);
+  const vorlaeufig = ergebnisVorlaeufig(spiel, details.liga);
+  const status = statusText(spiel, vorlaeufig);
   return {
     heim: partner(spiel.heim),
     gast: partner(spiel.gast),
     wann: spielTagUndUhrzeit(spiel.datum, spiel.uhrzeit),
     liga: details.liga.name,
     ...(ergebnis && { ergebnis: ergebnisText(ergebnis) }),
+    vorlaeufig,
     ...(status && { status }),
     ...(perioden && { perioden }),
   };
@@ -83,7 +88,7 @@ function partner(partei: SpielPartei): SpielPartner {
     : { name: partei.bezeichnung };
 }
 
-function statusText(spiel: Spiel): string | undefined {
+function statusText(spiel: Spiel, vorlaeufig: boolean): string | undefined {
   switch (spiel.status.art) {
     case 'geplant':
       return 'Noch kein Ergebnis';
@@ -94,9 +99,7 @@ function statusText(spiel: Spiel): string | undefined {
       return verzicht === undefined ? 'kampflos' : `kampflos · ${verzicht}`;
     }
     case 'gespielt':
-      return spiel.status.bestaetigt
-        ? undefined
-        : 'Ergebnis noch nicht bestätigt';
+      return vorlaeufig ? 'Ergebnis noch nicht bestätigt' : undefined;
   }
 }
 

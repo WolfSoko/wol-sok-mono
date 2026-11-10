@@ -69,6 +69,28 @@ describe('mapTeamSpiele', () => {
     );
   });
 
+  it('marks a Liga whose results the DBB never confirms', () => {
+    const bundesliga = {
+      ...DATA,
+      matches: DATA.matches.map((match) => {
+        const { ligaData } = match as { ligaData: object };
+        return {
+          ...match,
+          ligaData: {
+            ...ligaData,
+            verbandId: 100,
+            statisticType: 0,
+            geschlecht: 'männlich',
+          },
+        };
+      }),
+    };
+
+    expect(
+      mapTeamSpiele(bundesliga).ligen.map((liga) => liga.resultsNeverConfirmed)
+    ).toEqual([true, true]);
+  });
+
   it('refuses a response without its Team', () => {
     expect(
       caughtError(() => mapTeamSpiele({ ...DATA, team: null })).message

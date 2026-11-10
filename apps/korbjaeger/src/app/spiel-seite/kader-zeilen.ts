@@ -4,7 +4,10 @@ import {
   type KaderEintrag,
   type Spielerwerte,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Kind, MarkierbarerSpieler } from '../auswahl/kind';
+import type {
+  Kind,
+  MarkierbarerSpieler,
+} from '@wolsok/feat-korbjaeger-auswahl';
 
 /** What the Kader table shows of a player's Spielerwerte. */
 export interface SpielerwerteZeile {

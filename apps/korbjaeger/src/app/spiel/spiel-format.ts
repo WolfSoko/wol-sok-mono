@@ -23,3 +23,9 @@ export function spielTagUndUhrzeit(datum: string, uhrzeit?: string): string {
 export function ergebnisText(stand: Spielstand): string {
   return `${stand.heim}:${stand.gast}`;
 }
+
+/**
+ * The word beside a score a correction may still change
+ * (`ergebnisVorlaeufig`), the same on every screen.
+ */
+export const VORLAEUFIG = 'vorläufig';

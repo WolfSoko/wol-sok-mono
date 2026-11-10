@@ -62,8 +62,20 @@
       "@wolsok/feat-shared-bacteria-engine": [
         "./libs/features/bacteria-engine/src/index.ts"
       ],
+      "@wolsok/feat-shared-bacteria-engine/balance": [
+        "./libs/features/bacteria-engine/src/balance.ts"
+      ],
       "@wolsok/feat-shared-bacteria-engine/testing": [
         "./libs/features/bacteria-engine/src/testing.ts"
+      ],
+      "@wolsok/feat-korbjaeger-auswahl": [
+        "./libs/features/korbjaeger-auswahl/src/index.ts"
+      ],
+      "@wolsok/feat-korbjaeger-auswahl/testing": [
+        "./libs/features/korbjaeger-auswahl/src/testing.ts"
+      ],
+      "@wolsok/feat-shared-korbjaeger-account": [
+        "./libs/features/korbjaeger-account/src/index.ts"
       ],
       "@wolsok/feat-shared-basketball-data": [
         "./libs/features/basketball-data/src/index.ts"
@@ -81,7 +93,15 @@
       ],
       "@wolsok/nx-aws-cdk-v2": ["./libs/public/nx-aws-cdk-v2/src/index.ts"],
       "@wolsok/shared-analytics": ["./libs/shared/analytics/src/index.ts"],
+      "@wolsok/shared-e2e-server": ["./libs/shared/e2e-server/src/index.ts"],
+      "@wolsok/shared-firebase-emulator": [
+        "./libs/shared/firebase-emulator/src/index.ts"
+      ],
+      "@wolsok/shared-firebase-emulator/rules": [
+        "./libs/shared/firebase-emulator/src/rules.ts"
+      ],
       "@wolsok/shared-legal": ["./libs/shared/legal/src/index.ts"],
+      "@wolsok/shared-theme": ["./libs/shared/theme/src/index.ts"],
       "@wolsok/shared-analytics/testing": [
         "./libs/shared/analytics/src/testing.ts"
       ],

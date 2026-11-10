@@ -21,6 +21,17 @@ export class StartPage {
     });
   }
 
+  /** Whether the card `team` wears a Verein's colours (its own `--mat-sys-*` tokens). */
+  public traegtVereinsfarben(team: Locator): Promise<boolean> {
+    return team.evaluate(
+      (karte) =>
+        // the card's host, korb-ueberblick-team, holds the tokens
+        (karte.closest('korb-ueberblick-team') as HTMLElement | null)?.style
+          .getPropertyValue('--mat-sys-primary')
+          .startsWith('light-dark(') ?? false
+    );
+  }
+
   public async goto(): Promise<void> {
     await this.page.goto('/');
   }

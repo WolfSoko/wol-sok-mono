@@ -1,5 +1,5 @@
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
-import { istSpeicherVoll } from '../geraete-speicher';
+import { istSpeicherVoll } from '@wolsok/feat-korbjaeger-auswahl';
 
 /** The last good answer of the proxy at one path, and when it came. */
 export interface LetzteAntwort {
@@ -54,10 +54,10 @@ export const MAX_ALTER_TAGE = 7;
 export const MAX_ALTER_MS = MAX_ALTER_TAGE * 24 * 60 * 60_000;
 
 /** The prefix of every answer's key; the store touches no other key but its index. */
-export const ANTWORT_PRAEFIX = 'korbjaeger-antwort:';
+export const ANTWORT_PRAEFIX = 'korbjaeger-answer:';
 
 /** The key of the index: per answer its size, time and kind. */
-export const ANTWORT_INDEX = 'korbjaeger-antworten';
+export const ANTWORT_INDEX = 'korbjaeger-answers';
 
 const VERSION = 2;
 const INDEX_VERSION = 1;
@@ -82,8 +82,8 @@ interface Gespeichert {
 
 /**
  * `LetzteAntworten` in the device's `localStorage`, one key per path
- * (`korbjaeger-antwort:/api/dbb/...`, as `{ v: 2, am, art, antwort }`),
- * with an index (`korbjaeger-antworten`) of each answer's size, time and
+ * (`korbjaeger-answer:/api/dbb/...`, as `{ v: 2, am, art, antwort }`),
+ * with an index (`korbjaeger-answers`) of each answer's size, time and
  * kind, so a write reads no answer. The transport decides which reads go
  * in (`SPEICHERBARE_ARTEN`: a Team's Spiele, a Tabelle, a Spiel's match
  * info, a Verein's Spiele), each without the persons it names

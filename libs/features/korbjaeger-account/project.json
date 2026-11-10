@@ -1,0 +1,17 @@
+{
+  "name": "feat-shared-korbjaeger-account",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/features/korbjaeger-account/src",
+  "projectType": "library",
+  "tags": ["feat-shared"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/features/korbjaeger-account"],
+      "options": {
+        "jestConfig": "libs/features/korbjaeger-account/jest.config.ts"
+      }
+    },
+    "typecheck-specs": {}
+  }
+}

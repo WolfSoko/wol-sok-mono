@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { AUSWAHL } from './auswahl';
-import { AUSWAHL_SCHLUESSEL } from './lokale-auswahl';
+import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
 
 describe('AUSWAHL', () => {
   afterEach(() => localStorage.clear());
@@ -18,7 +18,7 @@ describe('AUSWAHL', () => {
 
     localStorage.setItem(
       AUSWAHL_SCHLUESSEL,
-      JSON.stringify({ version: 1, teams: [201500] })
+      JSON.stringify({ version: 3, teams: { 201500: 1 } })
     );
     window.dispatchEvent(
       new StorageEvent('storage', { key: AUSWAHL_SCHLUESSEL })

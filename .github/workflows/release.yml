@@ -41,10 +41,30 @@ jobs:
           fetch-depth: 0
           filter: tree:0
 
+      # Release runs wait for each other but don't keep their order: when the
+      # run of a newer commit released first, this checkout still holds the old
+      # package versions, so versioning it again would re-create tags that
+      # already exist. The newer run released this commit's changes too.
+      - name: Stand down when the branch moved on
+        id: branch
+        env:
+          BRANCH: ${{ github.ref }}
+          VALIDATED_SHA: ${{ github.sha }}
+        run: |
+          if tools/release/branch-moved-on.sh "$BRANCH" "$VALIDATED_SHA"; then
+            echo "moved_on=true" >> "$GITHUB_OUTPUT"
+          elif [[ $? -eq 1 ]]; then
+            echo "moved_on=false" >> "$GITHUB_OUTPUT"
+          else
+            exit 1
+          fi
+
       - name: Install Deps
+        if: steps.branch.outputs.moved_on == 'false'
         uses: $/.github/actions/install-deps
 
       - name: Version
+        if: steps.branch.outputs.moved_on == 'false'
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -64,6 +84,7 @@ jobs:
       # runs on a tag push, the release is created below.
       - name: Push the release commit and its tags
         id: push
+        if: steps.branch.outputs.moved_on == 'false'
         env:
           BRANCH: ${{ github.ref }}
           VALIDATED_SHA: ${{ github.sha }}
@@ -78,16 +99,10 @@ jobs:
             exit 0
           fi
 
-          # Rejected because the branch moved on while CI ran: nothing is released
-          # from this run. The newer commit's run picks up these changes too, as
-          # ci-cd.yml counts the changes since the last release tag.
-          git fetch origin "$BRANCH"
-          if [[ "$(git rev-parse FETCH_HEAD)" != "$VALIDATED_SHA" ]]; then
-            echo "::notice::$BRANCH moved on since this run started, the run for its newest commit releases instead."
-            echo "No release: \`$BRANCH\` moved on since this run started, the run for its newest commit releases instead." >> $GITHUB_STEP_SUMMARY
-            exit 0
-          fi
-          exit 1
+          # Rejected because the branch moved on since the check above: nothing
+          # is released from this run. The newer commit's run picks up these
+          # changes too, as ci-cd.yml counts the changes since the last release tag.
+          tools/release/branch-moved-on.sh "$BRANCH" "$VALIDATED_SHA"
 
   # Builds the apps at the tag and publishes the GitHub release and the Sentry
   # release. Skipped when the version job stood down.

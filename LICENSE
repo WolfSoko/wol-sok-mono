@@ -1,3 +1,27 @@
+Scope
+
+The MIT License below covers this repository except the following
+directories, each of which holds its own proprietary LICENSE (all rights
+reserved, use only with the owner's written permission) for every version
+released after that LICENSE was added; earlier versions stay under MIT:
+
+- apps/rollapolla-analog
+- apps/korbjaeger
+- apps/korbjaeger-functions
+- apps/korbjaeger-cdk
+- libs/features/basketball-data
+- libs/features/korbjaeger-account
+- libs/features/korbjaeger-auswahl
+- tools/korbjaeger
+
+The root files firebase.rollapolla-analog.json (RollaPolla) and
+firebase.korbjaeger.json (Korbjäger) fall under the proprietary LICENSE of
+their app.
+
+Third-party code keeps its own licence and notices.
+
+---
+
 MIT License
 
 Copyright (c) 2022 Wolfram Sokollek

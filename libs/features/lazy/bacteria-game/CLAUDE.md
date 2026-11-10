@@ -387,7 +387,7 @@ play each other.
   to the balance, the levels, the bots or the curve re-checks it:
   `nx run feat-shared-bacteria-engine:balance-check` (short, against the
   committed `state/balance/balance-report.json`); a new baseline with
-  `tsx tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
+  `tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts full --update` (hours; nightly on
   GitHub, `.github/workflows/bacteria-balance.yml`).
 
 ## The deterministic simulation (ADR 0015)

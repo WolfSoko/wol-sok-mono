@@ -68,6 +68,7 @@ export {
   ausgangVon,
   datumInDeutschland,
   ergebnisVon,
+  ergebnisVorlaeufig,
   gegnerVon,
   seiteVon,
   sonderfallVon,
@@ -82,6 +83,12 @@ export type {
   Spielstand,
 } from './lib/domain/spiel';
 export { kaderDesTeams, kinderImKader } from './lib/domain/kinder-im-kader';
+export { kaderSuchen } from './lib/domain/kader-suche';
+export type {
+  KaderFunde,
+  KaderSucheAuftrag,
+  KinderImKader,
+} from './lib/domain/kader-suche';
 export {
   feldkoerbe,
   istBenannt,

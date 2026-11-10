@@ -2,6 +2,7 @@ import { effect, inject, Injectable, Injector } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import type { TeamPlatz } from '@wolsok/feat-korbjaeger-auswahl';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 
 /** How long the offer to undo stays, long enough to read and tap it. */
@@ -20,8 +21,8 @@ export interface FokusZiel {
  * control unfollowed a Team (`entfolgt`), focus moves to what stays: the
  * element marked `korbFokusNachEntfolgen` for that Team, else the one for
  * the screen; and a snackbar, which outlives the control, offers
- * "Rückgängig" to follow the Team again, saying why where that fails, as
- * long as the same store holds the choices.
+ * "Rückgängig" to follow the Team again at the place it had, saying why
+ * where that fails, as long as the same store holds the choices.
  */
 @Injectable()
 export class NachEntfolgen {
@@ -36,14 +37,17 @@ export class NachEntfolgen {
     return () => this.ziele.delete(ziel);
   }
 
-  /** A control unfollowed `team`, called `name`, and goes with it. */
-  public entfolgt(team: TeamId, name: string): void {
+  /**
+   * A control unfollowed `team`, called `name`, and goes with it; `platz`
+   * is the place it had (`Auswahl.entfolgen`), where the undo puts it back.
+   */
+  public entfolgt(team: TeamId, name: string, platz?: TeamPlatz): void {
     const ziele = [...this.ziele];
     const ziel =
       ziele.find((kandidat) => kandidat.team() === team) ??
       ziele.find((kandidat) => kandidat.team() === undefined);
     ziel?.element.focus();
-    this.rueckgaengigAnbieten(team, name);
+    this.rueckgaengigAnbieten(team, name, platz);
   }
 
   /**
@@ -51,7 +55,11 @@ export class NachEntfolgen {
    * in only: it goes once another holds the choices (`Auswahl.quelle`), so
    * the undo never follows in the wrong one.
    */
-  private rueckgaengigAnbieten(team: TeamId, name: string): void {
+  private rueckgaengigAnbieten(
+    team: TeamId,
+    name: string,
+    platz: TeamPlatz | undefined
+  ): void {
     const quelle = this.auswahl.quelle();
     const leiste = this.snackBar.open(
       `${name} steht nicht mehr in Meine Teams.`,
@@ -73,7 +81,7 @@ export class NachEntfolgen {
       if (this.auswahl.quelle() !== quelle) {
         return;
       }
-      this.auswahl.folgen(team).catch((grund: unknown) => {
+      this.auswahl.folgen(team, platz).catch((grund: unknown) => {
         this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
           duration: RUECKGAENGIG_MS,
         });

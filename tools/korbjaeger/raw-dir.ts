@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { isOutsideFolder } from '../../libs/features/basketball-data/src/testing/outside-folder';
+import { isOutsideFolder } from '@wolsok/feat-shared-basketball-data/testing';
 
 const WORKSPACE_ROOT = resolve(__dirname, '../..');
 

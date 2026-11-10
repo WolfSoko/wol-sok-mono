@@ -1,26 +1,21 @@
 import {
-  initializeTestEnvironment,
   type RulesTestContext,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
-import {
-  type Firestore,
-  getDoc,
-  setDoc,
-  setLogLevel,
-} from 'firebase/firestore';
+import { type Firestore, getDoc, setDoc } from 'firebase/firestore';
 import { readFileSync } from 'node:fs';
-import { auswahlDokumentVon } from '../app/auswahl/firestore-auswahl';
+import {
+  type FirestoreEmulator,
+  rulesTestEnvironment,
+} from '@wolsok/shared-firebase-emulator/rules';
+import { auswahlDokumentVon } from '@wolsok/feat-korbjaeger-auswahl';
 
 /**
  * Where the specs' Firestore emulator runs (`test-emulator`): as
  * `emulator/firebase.test.json` sets it, on ports of their own, apart from
  * the e2e's emulators and the other apps'.
  */
-export const FIRESTORE_EMULATOR: {
-  readonly host: string;
-  readonly port: number;
-} = (
+export const FIRESTORE_EMULATOR: FirestoreEmulator = (
   JSON.parse(
     readFileSync(
       new URL('../../emulator/firebase.test.json', import.meta.url),
@@ -42,18 +37,14 @@ export const OFFENE_REGELN = `rules_version = '2';
   }`;
 
 /**
- * A project of its own on the emulator, under `regeln`; the denials the
- * specs expect are not logged.
+ * A project of its own on the specs' emulator, under `regeln`; the denials
+ * the specs expect are not logged.
  */
 export function emulatorProjekt(
   projectId: string,
   regeln: string
 ): Promise<RulesTestEnvironment> {
-  setLogLevel('silent');
-  return initializeTestEnvironment({
-    projectId,
-    firestore: { ...FIRESTORE_EMULATOR, rules: regeln },
-  });
+  return rulesTestEnvironment(projectId, regeln, FIRESTORE_EMULATOR);
 }
 
 /** A device signed in as `uid`: a Firestore instance of its own. */

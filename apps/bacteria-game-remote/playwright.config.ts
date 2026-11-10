@@ -1,6 +1,7 @@
 import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 // For CI, you may want to set BASE_URL to the deployed application.
 // serve-e2e has a port of its own, so a running dev or production server is
@@ -27,23 +28,22 @@ export default defineConfig({
    * depend on them and wait for both, so every spec file on a CI agent shares
    * them. The game is the production build pointed at the emulators
    * (environment.e2e.ts), so no test touches the real Firebase project.
+   * Inside such a task Playwright only waits for them (`nxServer`).
    */
   webServer: [
-    {
-      command: 'npx nx run bacteria-game-remote:serve-e2e',
-      url: 'http://localhost:4222',
-      reuseExistingServer: true,
+    nxServer('bacteria-game-remote:serve-e2e', 'http://localhost:4222', {
       cwd: workspaceRoot,
       timeout: process.env['CI'] ? 360_000 : 120_000,
-    },
-    {
-      // Auth and Firestore; Firestore is up last (it needs a JVM).
-      command: 'npx nx run bacteria-game-remote:firebase-emulators',
-      url: 'http://127.0.0.1:8380',
-      reuseExistingServer: true,
-      cwd: workspaceRoot,
-      timeout: 180_000,
-    },
+    }),
+    // Auth and Firestore; Firestore is up last (it needs a JVM).
+    nxServer(
+      'bacteria-game-remote:firebase-emulators',
+      'http://127.0.0.1:8380',
+      {
+        cwd: workspaceRoot,
+        timeout: 180_000,
+      }
+    ),
   ],
   projects: [
     {

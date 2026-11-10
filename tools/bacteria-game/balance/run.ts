@@ -3,14 +3,14 @@
  * human against the computer on every level, difficulty and loadout of the
  * matrix on the CPU engine, and writes `balance-report.json`.
  *
- *   tsx tools/bacteria-game/balance/run.ts check [--levels a,b]
+ *   tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts check [--levels a,b]
  *     The short check: the expected loadout on normal, a few seeds, the
  *     first 90 s - compared with the committed baseline. Fails on drift.
- *   tsx tools/bacteria-game/balance/run.ts full [--levels a,b] [--update]
+ *   tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts full [--levels a,b] [--update]
  *     The full matrix, summed up, checked and compared with the baseline:
  *     writes the report, `summary.md` and `status.json` to `--out-dir`
  *     (`dist/balance`), and with `--update` the report over the baseline.
- *   tsx tools/bacteria-game/balance/run.ts full --shard 2/6 --raw part.json
+ *   tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/balance/run.ts full --shard 2/6 --raw part.json
  *     A share of the full matrix, its matches unsummed - for the nightly
  *     workflow's jobs; `merge part-*.json` sums them up as `full` does.
  *
@@ -28,9 +28,8 @@ import {
 } from 'node:fs';
 import { availableParallelism } from 'node:os';
 import { dirname, resolve } from 'node:path';
-import type { LabMatch } from '../../../libs/features/bacteria-engine/src/lib/state/balance/lab-match';
 import {
-  BalanceReport,
+  type BalanceReport,
   checkDrift,
   checkMatrix,
   curveTable,
@@ -39,17 +38,18 @@ import {
   FULL_RUN,
   fullMatrix,
   gainsOf,
-  LabConfig,
+  type LabConfig,
   medalTable,
-  NamedCell,
+  type LabMatch,
+  type NamedCell,
   summarize,
   versionDrift,
-} from '../../../libs/features/bacteria-engine/src/lib/state/balance/report';
+} from '@wolsok/feat-shared-bacteria-engine/balance';
 import {
   isBigMap,
   isLadderLevel,
   LEVELS,
-} from '../../../libs/features/bacteria-engine/src/lib/state/levels';
+} from '@wolsok/feat-shared-bacteria-engine';
 import type { WorkerResult } from './worker';
 
 /** The workspace, where Nx runs the targets from. */

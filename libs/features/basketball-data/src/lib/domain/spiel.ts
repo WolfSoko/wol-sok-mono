@@ -153,6 +153,25 @@ export function ausgangVon(
   return ergebnis[seite] > ergebnis[andereSeite(seite)] ? 'sieg' : 'niederlage';
 }
 
+/**
+ * Whether the score of `spiel` is provisional: played, but not confirmed by
+ * the Verband yet, so a correction may still change it (and the Sieg or
+ * Niederlage read from it). A forfeit carries no confirmation and counts as
+ * none, and neither does a Spiel of a `liga` whose results the DBB never
+ * confirms (`resultsNeverConfirmed`). Without its Liga (`undefined`) only the
+ * Spiel decides.
+ */
+export function ergebnisVorlaeufig(
+  spiel: Spiel,
+  liga: Liga | undefined
+): boolean {
+  return (
+    spiel.status.art === 'gespielt' &&
+    !spiel.status.bestaetigt &&
+    !liga?.resultsNeverConfirmed
+  );
+}
+
 /** Whether `spiel` is decided: played with a result, or forfeited. */
 export function istEntschieden(spiel: Spiel): boolean {
   return spiel.status.art === 'gespielt' || spiel.status.art === 'kampflos';

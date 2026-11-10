@@ -13,19 +13,23 @@ export function geraeteSpeicher(): Storage | undefined {
 }
 
 /** Tells, on the device, that an Elternteil is signed in. */
-export const ANGEMELDET_SCHLUESSEL = 'korbjaeger-angemeldet';
+export const ANGEMELDET_SCHLUESSEL = 'korbjaeger-signed-in';
 
 /**
  * Set where signing out could not clear Firestore's copy on the device
  * (another tab held it, or clearing failed): the next start clears it,
  * signed in or not, without loading Firebase to read this.
  */
-export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL =
-  'korbjaeger-zwischenspeicher-leeren';
+export const ZWISCHENSPEICHER_LEEREN_SCHLUESSEL = 'korbjaeger-clear-cache';
 
 /** Set once the install hint was dismissed, for good. */
-export const INSTALLATION_ABGELEHNT_SCHLUESSEL =
-  'korbjaeger-installation-abgelehnt';
+export const INSTALLATION_ABGELEHNT_SCHLUESSEL = 'korbjaeger-install-dismissed';
+
+/**
+ * The look the Elternteil chose (`light` or `dark`; none for following the
+ * device), read by the pre-paint script in `index.html` too.
+ */
+export const DARSTELLUNG_SCHLUESSEL = 'korbjaeger-theme';
 
 /** Whether the flag `schluessel` is set (`'1'`); not where storage is withheld. */
 export function flagGesetzt(
@@ -57,18 +61,6 @@ export function flagSetzen(
   } catch {
     // full or blocked: the flag lasts no longer than this visit's state
   }
-}
-
-/**
- * Whether `error` says the device's storage is full (Firefox names it its
- * own way).
- */
-export function istSpeicherVoll(error: unknown): boolean {
-  return (
-    error instanceof DOMException &&
-    (error.name === 'QuotaExceededError' ||
-      error.name === 'NS_ERROR_DOM_QUOTA_REACHED')
-  );
 }
 
 /**

@@ -2,10 +2,10 @@ import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { ThemeService } from '@wolsok/shared-theme';
 import { I18nService } from './i18n/i18n.service';
 import { LANGUAGES } from './i18n/language';
 import { SeoService } from './seo.service';
-import { ThemeService } from './theme/theme.service';
 
 @Component({
   imports: [
