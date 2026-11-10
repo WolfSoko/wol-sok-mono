@@ -3,7 +3,7 @@ import {
   crawlClubs,
   KEIN_LIGA_FILTER,
   type AssociationClubs,
-  type BasketballData,
+  type ClubCrawlSource,
   type VerbandId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
@@ -32,7 +32,7 @@ export interface ClubIndexStore {
 
 /** What a run needs. */
 export interface ClubIndexRun {
-  readonly data: BasketballData;
+  readonly data: ClubCrawlSource;
   readonly store: ClubIndexStore;
   readonly now: () => number;
   /** Waits before each read of `data` but the run's first. */

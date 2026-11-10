@@ -17,6 +17,7 @@ import boxscoreNotFound from './fixtures/boxscore-not-found.json';
 import keinBericht from './fixtures/boxscore-2843814.json';
 import mitWerten from './fixtures/boxscore-2911141.json';
 import clubMatches from './fixtures/club-1476-actualmatches.json';
+import clubNotFound from './fixtures/club-not-found.json';
 import unavailable from './fixtures/envelope-unavailable.json';
 import matchInfo from './fixtures/matchinfo-2911141.json';
 import spielplan from './fixtures/spielplan-54379.json';
@@ -207,6 +208,31 @@ describe('DbbBasketballData', () => {
     ]);
   });
 
+  it('reads a Verein alone from its Spiele of the nearest days only', async () => {
+    const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
+
+    expect(await data.club(1476)).toEqual({
+      id: 1476,
+      name: 'Post SV Nürnberg',
+    });
+    expect(transport.requests).toEqual([
+      { kind: 'vereins-spiele', vereinId: 1476, tage: 1 },
+    ]);
+  });
+
+  it('rejects a Verein the DBB does not know as not found', async () => {
+    const { data } = dataWith({ 'vereins-spiele': clubNotFound });
+
+    expect((await rejectedError(() => data.club(1))).kind).toBe('not-found');
+  });
+
+  it('rejects a Verein id the DBB cannot have as not found, without asking it', async () => {
+    const { data, transport } = dataWith({ 'vereins-spiele': clubMatches });
+
+    expect((await rejectedError(() => data.club(0))).kind).toBe('not-found');
+    expect(transport.requests).toEqual([]);
+  });
+
   it('reads a Team’s Spiele across its Ligen', async () => {
     const { data } = dataWith({ 'team-spiele': teamMatches });
 
@@ -352,6 +378,7 @@ describe('DbbBasketballData', () => {
       ],
       ['ligaTeams', (data, signal) => data.ligaTeams(54379, { signal })],
       ['vereinsTeams', (data, signal) => data.vereinsTeams(1476, { signal })],
+      ['club', (data, signal) => data.club(1476, { signal })],
       ['teamSpiele', (data, signal) => data.teamSpiele(313036, { signal })],
       ['tabelle', (data, signal) => data.tabelle(54308, { signal })],
       ['spiel', (data, signal) => data.spiel(2911141, { signal })],

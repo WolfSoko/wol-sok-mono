@@ -1,7 +1,7 @@
 import {
   BasketballDataError,
   type AssociationClubs,
-  type BasketballData,
+  type ClubCrawlSource,
   type LigaSeite,
   type Team,
 } from '@wolsok/feat-shared-basketball-data';
@@ -44,7 +44,7 @@ function fakeData(
     { ...BERLIN, treffer: 101 },
     { id: 99, name: 'Ohne Ligen', treffer: 0 },
   ]
-): BasketballData {
+): ClubCrawlSource {
   const unused = () => Promise.reject(new Error('not read'));
   return {
     ligaSuche: async (filter) => ({
@@ -60,14 +60,7 @@ function fakeData(
     }),
     ligaSeite: unused,
     ligaTeams: teams,
-    vereinsTeams: async (verein) => ({
-      verein: { id: verein, name: `Verein ${verein}` },
-      teams: [],
-    }),
-    teamSpiele: unused,
-    tabelle: unused,
-    spiel: unused,
-    spielbericht: unused,
+    club: async (verein) => ({ id: verein, name: `Verein ${verein}` }),
   };
 }
 
