@@ -104,10 +104,11 @@ jobs:
         run: |
           last_release="v$(node -p "require('./version.json').version")"
           echo "Last release: $last_release"
-          # What deploy.yml deploys: every project with a deploy target, plus the published packages.
+          # What deploy.yml would release: the projects whose deploy task reads a
+          # changed file, plus the published packages whose build does (#2888).
           projects=$(
-            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --withTarget deploy
-            npx nx show projects --affected --base="$last_release" --head="$NX_HEAD" --projects='tag:published'
+            node tools/ci/release-affected.mjs --base="$last_release" --head="$NX_HEAD" --target=deploy &&
+            node tools/ci/release-affected.mjs --base="$last_release" --head="$NX_HEAD" --target=build --projects='tag:published'
           )
           echo "Affected releasable projects: $projects"
           if [[ -z "$projects" ]]; then
