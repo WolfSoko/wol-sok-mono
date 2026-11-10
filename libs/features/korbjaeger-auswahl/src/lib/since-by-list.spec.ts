@@ -8,7 +8,6 @@ import {
   LEERE_AUSWAHL,
   sinceOf,
   withEntryAt,
-  withSince,
   type AuswahlInhalt,
 } from './selection-lists';
 
@@ -99,21 +98,6 @@ describe('selectionWrite', () => {
     expect(write.fields).toEqual({ clubColors: { 100: '#ff0000' } });
     expect(write.since).toEqual({});
     expect(write.lastSince).toBe(99);
-  });
-});
-
-describe('withSince', () => {
-  it('gives the entries it holds the since a write stored for them', () => {
-    const held: AuswahlInhalt = { ...LEERE_AUSWAHL, teams: [313036, 201500] };
-
-    const shown = withSince(held, {
-      teams: new Map([
-        [201500, 42],
-        [201765, 43],
-      ]),
-    });
-
-    expect(shown.since?.teams).toEqual(new Map([[201500, 42]]));
   });
 });
 

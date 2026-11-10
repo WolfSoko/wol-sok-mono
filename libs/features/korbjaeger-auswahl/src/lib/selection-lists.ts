@@ -11,14 +11,14 @@ import { vorSeit } from './selection-entries';
  * here (`ListValue`, `ListField`, `ListDocumentField`). A new list gets its
  * descriptor here, its cap in `AUSWAHL_GRENZEN` and its rules.
  */
-export const LIST_DESCRIPTORS = {
+const DESCRIPTORS = {
   teams: TEAMS,
   kinder: CHILDREN,
   vereinsfarben: CLUB_COLORS,
 } as const;
 
 /** The lists of an `Auswahl`. */
-export type AuswahlListe = keyof typeof LIST_DESCRIPTORS;
+export type AuswahlListe = keyof typeof DESCRIPTORS;
 
 /**
  * The types of a descriptor: what an entry is, what a change writes of one
@@ -34,7 +34,7 @@ type DescriptorTypes<T> =
  * list's types stay indexed (`ListValue<L>`) rather than conditional.
  */
 type TypesByList = {
-  readonly [L in AuswahlListe]: DescriptorTypes<(typeof LIST_DESCRIPTORS)[L]>;
+  readonly [L in AuswahlListe]: DescriptorTypes<(typeof DESCRIPTORS)[L]>;
 };
 
 /** An entry of the list `L`. */
@@ -53,6 +53,14 @@ export type ListDescriptorOf<L extends AuswahlListe> = ListDescriptor<
   ListField<L>,
   ListDocumentField<L>
 >;
+
+/**
+ * The table with each list's descriptor typed for it: checked list by list
+ * against the types read off it, so a descriptor they misread fails here.
+ */
+export const LIST_DESCRIPTORS: {
+  readonly [L in AuswahlListe]: ListDescriptorOf<L>;
+} = DESCRIPTORS;
 
 /**
  * How many Teams, Kinder and Vereine with colours an `Auswahl` holds at
@@ -78,8 +86,7 @@ export const AUSWAHL_LISTEN = Object.keys(
 export function listDescriptor<L extends AuswahlListe>(
   list: L
 ): ListDescriptorOf<L> {
-  // each entry of the table is the descriptor its types are taken from
-  return LIST_DESCRIPTORS[list] as unknown as ListDescriptorOf<L>;
+  return LIST_DESCRIPTORS[list];
 }
 
 /** Every list's entries. */
@@ -262,6 +269,11 @@ export function withSince(
   return { ...selection, since: merged };
 }
 
+/**
+ * `selection` with `entries` as its `list` and `known` as that list's
+ * `since`; typed by `L`, as the computed key alone would not check that
+ * `entries` are the list's own.
+ */
 function withList<L extends AuswahlListe>(
   list: L,
   selection: AuswahlInhalt,
