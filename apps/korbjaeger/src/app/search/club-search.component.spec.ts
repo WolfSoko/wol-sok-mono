@@ -57,7 +57,10 @@ async function setup(
     fixture.componentRef.setInput('clubLink', clubLink);
   }
   const page = fixture.nativeElement as HTMLElement;
+  // change detection first: it runs the effect that starts the debounce's
+  // timer, so the pause cannot end before the timer on a slow machine
   const settle = async () => {
+    await fixture.whenStable();
     await pause(SEARCH_DEBOUNCE_MS + 20);
     await fixture.whenStable();
   };
