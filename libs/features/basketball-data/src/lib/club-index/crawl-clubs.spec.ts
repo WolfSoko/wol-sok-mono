@@ -1,11 +1,10 @@
-import type { BasketballData } from '../basketball-data';
 import { BasketballDataError } from '../domain/basketball-data-error';
 import type { LigaId, VereinId } from '../domain/ids';
 import type { Liga } from '../domain/liga';
 import type { LigaSeite, LigaSucheFilter } from '../domain/liga-suche';
 import type { Team } from '../domain/team';
-import type { VereinsTeams } from '../domain/team-saison';
-import { crawlClubs } from './crawl-clubs';
+import type { Verein } from '../domain/verein';
+import { crawlClubs, type ClubCrawlSource } from './crawl-clubs';
 
 const NIEDERSACHSEN = { id: 7, name: 'Niedersachsen' };
 
@@ -45,12 +44,11 @@ const CLUB_NAMES: Record<VereinId, string> = {
 
 /** A source with the pages, Teams and Clubs above, logging every read. */
 function fakeData(teams = TEAMS): {
-  data: BasketballData;
+  data: ClubCrawlSource;
   reads: string[];
 } {
   const reads: string[] = [];
-  const unused = () => Promise.reject(new Error('not read by a crawl'));
-  const data: BasketballData = {
+  const data: ClubCrawlSource = {
     ligaSuche: async (filter: LigaSucheFilter) => {
       reads.push(`ligaSuche ${filter.verbandIds.join()}`);
       return {
@@ -74,18 +72,14 @@ function fakeData(teams = TEAMS): {
       }
       return answer;
     },
-    vereinsTeams: async (verein: VereinId): Promise<VereinsTeams> => {
-      reads.push(`vereinsTeams ${verein}`);
+    club: async (verein: VereinId): Promise<Verein> => {
+      reads.push(`club ${verein}`);
       const name = CLUB_NAMES[verein];
       if (name === undefined) {
         throw new BasketballDataError('not-found', `Verein ${verein}`);
       }
-      return { verein: { id: verein, name }, teams: [] };
+      return { id: verein, name };
     },
-    teamSpiele: unused,
-    tabelle: unused,
-    spiel: unused,
-    spielbericht: unused,
   };
   return { data, reads };
 }
@@ -116,7 +110,7 @@ describe('crawlClubs', () => {
       timeForNames: () => false,
     });
 
-    expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([]);
+    expect(reads.filter((read) => read.startsWith('club '))).toEqual([]);
     expect(clubs).toEqual([
       { id: 200, name: 'MTV Gifhorn 2', nameFromTeam: true },
       { id: 100, name: 'MTV Wasbüttel' },
@@ -138,7 +132,7 @@ describe('crawlClubs', () => {
 
   it('rejects an empty page that promises more, rather than reading it forever', async () => {
     const { data } = fakeData();
-    const stuck: BasketballData = {
+    const stuck: ClubCrawlSource = {
       ...data,
       ligaSeite: async (_filter, startIndex) => ({
         startIndex,
@@ -186,8 +180,8 @@ describe('crawlClubs', () => {
       timeForNames: () => true,
     });
 
-    expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([
-      'vereinsTeams 300',
+    expect(reads.filter((read) => read.startsWith('club '))).toEqual([
+      'club 300',
     ]);
     expect(clubs[1]).toEqual({ id: 100, name: 'MTV Wasbüttel e.V.' });
   });

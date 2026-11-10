@@ -60,10 +60,8 @@ function fakeData(
     }),
     ligaSeite: unused,
     ligaTeams: teams,
-    vereinsTeams: async (verein) => ({
-      verein: { id: verein, name: `Verein ${verein}` },
-      teams: [],
-    }),
+    vereinsTeams: unused,
+    club: async (verein) => ({ id: verein, name: `Verein ${verein}` }),
     teamSpiele: unused,
     tabelle: unused,
     spiel: unused,

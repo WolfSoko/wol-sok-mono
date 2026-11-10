@@ -13,6 +13,12 @@ import {
 import type { Team } from '../domain/team';
 import { byClubName, type ClubIndexEntry } from './club-index';
 
+/** The reads a crawl makes: the Leagues, their Teams and Clubs' names. */
+export type ClubCrawlSource = Pick<
+  BasketballData,
+  'ligaSuche' | 'ligaSeite' | 'ligaTeams' | 'club'
+>;
+
 /** What a crawl takes beside the source and the Association. */
 export interface ClubCrawlOptions {
   /** Clubs' own names an earlier crawl read; these are not read again. */
@@ -36,7 +42,7 @@ export interface ClubCrawlOptions {
  * Waits `pause` before every read.
  */
 export async function crawlClubs(
-  data: BasketballData,
+  data: ClubCrawlSource,
   association: VerbandId,
   options: ClubCrawlOptions
 ): Promise<readonly ClubIndexEntry[]> {
@@ -70,7 +76,7 @@ export async function crawlClubs(
 type PacedRead = <T>(read: () => Promise<T>) => Promise<T>;
 
 async function leaguesOf(
-  data: BasketballData,
+  data: ClubCrawlSource,
   association: VerbandId,
   read: PacedRead
 ): Promise<readonly Liga[]> {
@@ -97,7 +103,7 @@ async function leaguesOf(
 }
 
 async function teamsOf(
-  data: BasketballData,
+  data: ClubCrawlSource,
   league: LigaId,
   read: PacedRead
 ): Promise<readonly Team[]> {
@@ -116,12 +122,12 @@ async function teamsOf(
 
 /** The Club's own name, or `undefined` where the source does not give it. */
 async function clubName(
-  data: BasketballData,
+  data: ClubCrawlSource,
   club: VereinId,
   read: PacedRead
 ): Promise<string | undefined> {
   try {
-    return (await read(() => data.vereinsTeams(club))).verein.name;
+    return (await read(() => data.club(club))).name;
   } catch (error) {
     if (isBasketballDataError(error)) {
       return undefined;
