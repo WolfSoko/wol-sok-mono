@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.164.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.164.0...v74.164.1) (2026-11-10)
+
+### Documentation
+
+* **korbjaeger:** permission letters to the DBB and NBN23 before going public ([#3013](https://github.com/WolfSoko/wol-sok-mono/issues/3013)) ([5b717ef](https://github.com/WolfSoko/wol-sok-mono/commit/5b717eff61a1a8ff8dc9bf9f14ae5e6d62879056)), references [#2963](https://github.com/WolfSoko/wol-sok-mono/issues/2963) [#2997](https://github.com/WolfSoko/wol-sok-mono/issues/2997)
+
+### Performance
+
+* **feat-shared-basketball-data:** read a Verein's name with a one-day read in the club index ([#3014](https://github.com/WolfSoko/wol-sok-mono/issues/3014)) ([a800b1e](https://github.com/WolfSoko/wol-sok-mono/commit/a800b1e633ee3581cf10aa963345c10e895c8d38)), closes [#2997](https://github.com/WolfSoko/wol-sok-mono/issues/2997), references [#2997](https://github.com/WolfSoko/wol-sok-mono/issues/2997) [#2997](https://github.com/WolfSoko/wol-sok-mono/issues/2997)
+
 ## [74.164.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.163.1...v74.164.0) (2026-11-10)
 
 ### Features
