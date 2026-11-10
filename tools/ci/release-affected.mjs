@@ -243,8 +243,20 @@ async function jsonAt(ref, file) {
   return JSON.parse(stdout);
 }
 
-/** A changed file as the files that count, from both sides of the diff. */
-async function refineChange({ status, file }, { base, head, target }) {
+/**
+ * A changed file as the files that count, from both sides of the diff; the
+ * file itself where either side can't be read as JSON.
+ */
+async function refineChange(change, refs) {
+  try {
+    return await refinedFiles(change, refs);
+  } catch (error) {
+    console.error(`${change.file}: counted as changed: ${error.message}`);
+    return [change.file];
+  }
+}
+
+async function refinedFiles({ status, file }, { base, head, target }) {
   if (status !== 'M') return [file];
   if (file === TSCONFIG_BASE) {
     return tsconfigBaseChanges(
