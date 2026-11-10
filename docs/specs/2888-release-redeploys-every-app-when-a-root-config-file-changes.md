@@ -52,6 +52,18 @@ them.
   `nx.json`; the filter only drops projects whose deploy reads none of the
   changed files. Reason: the smallest change that removes the false positives
   without re-implementing Nx's diff analysis.
+- **The inputs are those of the whole task closure.** Nx folds no `dependsOn`
+  task's inputs into a task's, so `korbjaeger:deploy` alone misses
+  `.browserslistrc`, which its `build-app` reads. The script takes the tasks
+  `nx run <p>:<target> --graph=<file>` resolves and unions their
+  `nx show target inputs`, each task read once, four at a time (about 45 s for
+  all legs without the daemon).
+- **A root `tsconfig*.json` other than the base keeps Nx's verdict.** Project
+  tsconfigs extend them (`tsconfig.cdk.json`), which no task declares.
+- **Fail closed.** A candidate whose task graph or inputs can't be read, or
+  come back in an unexpected shape, is kept and named on stderr; a failure to
+  read the candidates or the diff fails the step. `deploy.yml` runs the script
+  outside a pipe, since its bash has no `pipefail`.
 - **Changes to the lockfile or root `package.json` keep Nx's verdict.** The
   deploy task's inputs list npm packages, not those files; Nx already maps a
   lockfile change to the projects using the changed packages.

@@ -15,7 +15,7 @@
 //
 // Prints the selected projects, one a line; why each candidate was kept or
 // dropped goes to stderr.
-import { execFileSync } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
 import {
   closeSync,
   existsSync,
@@ -26,12 +26,23 @@ import {
 } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { parseArgs } from 'node:util';
-
-/** Root files whose effect Nx resolves to npm packages, not to files. */
-export const NX_VERDICT_FILES = ['package.json', 'package-lock.json'];
+import { parseArgs, promisify } from 'node:util';
 
 const TSCONFIG_BASE = 'tsconfig.base.json';
+
+/**
+ * Root files that keep Nx's verdict: Nx resolves the lockfile and root
+ * `package.json` to npm packages, not to files, and a root `tsconfig*.json`
+ * other than the base reaches a task through a project tsconfig extending it,
+ * which no task declares.
+ */
+export function keepsNxVerdict(file) {
+  return (
+    file === 'package.json' ||
+    file === 'package-lock.json' ||
+    (file !== TSCONFIG_BASE && /^tsconfig(\.[^/]+)?\.json$/.test(file))
+  );
+}
 
 /**
  * What a change to `tsconfig.base.json` touches. Nx hashes the file into
@@ -94,7 +105,8 @@ function sameJson(a, b) {
  * @param {string[]} release.changedFiles files changed and present at the head
  * @param {string[]} release.deletedFiles files gone at the head
  * @param {(project: string) => Set<string> | undefined} release.inputsOf the
- *   files the project's task reads, `undefined` where they could not be read
+ *   files the project's task and the tasks it depends on read, `undefined`
+ *   where they could not be read
  * @returns {{ selected: string[], reasons: Record<string, string> }}
  */
 export function selectReleaseAffected({
@@ -117,8 +129,8 @@ export function selectReleaseAffected({
 const DROPPED = 'reads none of the changed files';
 
 function nxVerdictReason(changedFiles, deletedFiles) {
-  const npmFile = changedFiles.find((file) => NX_VERDICT_FILES.includes(file));
-  if (npmFile) return `Nx's verdict: ${npmFile} changed`;
+  const rootFile = changedFiles.find(keepsNxVerdict);
+  if (rootFile) return `Nx's verdict: ${rootFile} changed`;
   if (deletedFiles.length > 0) {
     return `Nx's verdict: ${deletedFiles[0]} was deleted`;
   }
@@ -134,6 +146,9 @@ function inputReason(inputs, changedFiles) {
 // --- CLI --------------------------------------------------------------------
 
 const ROOT = join(import.meta.dirname, '..', '..');
+const execFileAsync = promisify(execFile);
+/** How many `nx show target inputs` run at once. */
+const PARALLEL_READS = 4;
 
 function readOptions() {
   const { values } = parseArgs({
@@ -156,23 +171,49 @@ function readOptions() {
 /**
  * Runs Nx with its stdout in a file: piped, `nx show` cuts it off at 64 KiB.
  */
-function nxJson(args) {
+async function nxJson(args) {
   const dir = mkdtempSync(join(tmpdir(), 'release-affected-'));
   const file = join(dir, 'out.json');
-  const out = openSync(file, 'w');
   try {
-    execFileSync('npx', ['nx', ...args, '--json'], {
-      cwd: ROOT,
-      stdio: ['ignore', out, 'inherit'],
-    });
+    await runNx([...args, '--json'], file);
     return JSON.parse(readFileSync(file, 'utf8'));
   } finally {
-    closeSync(out);
     rmSync(dir, { recursive: true, force: true });
   }
 }
 
-function changesOf({ base, head, files, target }) {
+function runNx(args, outFile) {
+  const out = openSync(outFile, 'w');
+  return new Promise((resolve, reject) => {
+    const child = spawn('npx', ['nx', ...args], {
+      cwd: ROOT,
+      stdio: ['ignore', out, 'inherit'],
+    });
+    child.on('error', reject);
+    child.on('close', (code) => {
+      closeSync(out);
+      if (code === 0) resolve();
+      else reject(new Error(`nx ${args.join(' ')} exited with ${code}`));
+    });
+  });
+}
+
+/** The file list of `git diff`, NUL-separated so no path comes quoted. */
+async function gitChanges(base, head) {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['diff', '-z', '--name-status', '--no-renames', base, head],
+    { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 }
+  );
+  const fields = stdout.split('\0').filter((field) => field !== '');
+  const changes = [];
+  for (let i = 0; i < fields.length; i += 2) {
+    changes.push({ status: fields[i], file: fields[i + 1] });
+  }
+  return changes;
+}
+
+async function changesOf({ base, head, files, target }) {
   if (files) {
     const listed = files.split(',').filter((file) => file !== '');
     return {
@@ -180,62 +221,52 @@ function changesOf({ base, head, files, target }) {
       deletedFiles: listed.filter((file) => !existsSync(join(ROOT, file))),
     };
   }
-  const lines = execFileSync(
-    'git',
-    ['diff', '--name-status', '--no-renames', base, head],
-    { cwd: ROOT, encoding: 'utf8' }
-  )
-    .split('\n')
-    .filter((line) => line !== '')
-    .map((line) => line.split('\t'));
-  const changed = lines
-    .filter(([status]) => status !== 'D')
-    .map(([, file]) => file);
+  const changes = await gitChanges(base, head);
+  const modified = changes.filter(({ status }) => status !== 'D');
   return {
-    changedFiles: refineChanges(changed, { base, head, target }),
-    deletedFiles: lines
-      .filter(([status]) => status === 'D')
-      .map(([, file]) => file),
+    changedFiles: (
+      await Promise.all(
+        modified.map((change) => refineChange(change, { base, head, target }))
+      )
+    ).flat(),
+    deletedFiles: changes
+      .filter(({ status }) => status === 'D')
+      .map(({ file }) => file),
   };
 }
 
-function refineChanges(changed, { base, head, target }) {
-  const jsonAt = (ref, file) =>
-    JSON.parse(
-      execFileSync('git', ['show', `${ref}:${file}`], {
-        cwd: ROOT,
-        encoding: 'utf8',
-      })
-    );
-  const existedAtBase = (file) => {
-    try {
-      execFileSync('git', ['cat-file', '-e', `${base}:${file}`], {
-        cwd: ROOT,
-        stdio: 'ignore',
-      });
-      return true;
-    } catch {
-      return false;
-    }
-  };
-  return changed.flatMap((file) => {
-    if (!existedAtBase(file)) return [file];
-    if (file === TSCONFIG_BASE) {
-      return tsconfigBaseChanges(jsonAt(base, file), jsonAt(head, file));
-    }
-    const projectPackage =
-      target === 'deploy' &&
-      file.endsWith('/package.json') &&
-      isVersionBumpOnly(jsonAt(base, file), jsonAt(head, file));
-    return projectPackage ? [] : [file];
+async function jsonAt(ref, file) {
+  const { stdout } = await execFileAsync('git', ['show', `${ref}:${file}`], {
+    cwd: ROOT,
+    maxBuffer: 16 * 1024 * 1024,
   });
+  return JSON.parse(stdout);
 }
 
-function candidatesOf({ base, head, files, target, exclude, projects }) {
+/** A changed file as the files that count, from both sides of the diff. */
+async function refineChange({ status, file }, { base, head, target }) {
+  if (status !== 'M') return [file];
+  if (file === TSCONFIG_BASE) {
+    return tsconfigBaseChanges(
+      await jsonAt(base, file),
+      await jsonAt(head, file)
+    );
+  }
+  if (target === 'deploy' && file.endsWith('/package.json')) {
+    const bumpOnly = isVersionBumpOnly(
+      await jsonAt(base, file),
+      await jsonAt(head, file)
+    );
+    return bumpOnly ? [] : [file];
+  }
+  return [file];
+}
+
+async function candidatesOf({ base, head, files, target, exclude, projects }) {
   const range = files
     ? [`--files=${files}`]
     : [`--base=${base}`, `--head=${head}`];
-  return nxJson([
+  const candidates = await nxJson([
     'show',
     'projects',
     '--affected',
@@ -244,29 +275,108 @@ function candidatesOf({ base, head, files, target, exclude, projects }) {
     ...(exclude ? [`--exclude=${exclude}`] : []),
     ...(projects ? [`--projects=${projects}`] : []),
   ]);
+  if (
+    !Array.isArray(candidates) ||
+    !candidates.every((project) => typeof project === 'string')
+  ) {
+    throw new Error('unexpected output of nx show projects');
+  }
+  return candidates;
 }
 
-function inputsReader(target) {
-  return (project) => {
+/**
+ * The tasks `<project>:<target>` runs, itself included, as `nx run --graph`
+ * resolves its `dependsOn`: Nx folds no dependency's inputs into a task's,
+ * so `korbjaeger:deploy` alone misses what its `build-app` reads.
+ */
+async function tasksOf(project, target) {
+  const dir = mkdtempSync(join(tmpdir(), 'release-affected-graph-'));
+  const file = join(dir, 'graph.json');
+  try {
+    await runNx(
+      [`run`, `${project}:${target}`, `--graph=${file}`],
+      '/dev/null'
+    );
+    const tasks = Object.values(
+      JSON.parse(readFileSync(file, 'utf8')).tasks.tasks
+    );
+    if (tasks.length === 0) throw new Error('empty task graph');
+    return tasks.map(({ target: { project, target, configuration } }) => ({
+      id: [project, target, configuration].filter(Boolean).join(':'),
+      args: [
+        'show',
+        'target',
+        'inputs',
+        `${project}:${target}`,
+        ...(configuration ? [`--configuration=${configuration}`] : []),
+      ],
+    }));
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+async function taskInputs(args) {
+  const { files } = await nxJson(args);
+  if (!Array.isArray(files)) {
+    throw new Error('unexpected output of nx show target inputs');
+  }
+  return files;
+}
+
+/** Runs `work` on each item, at most `limit` at once. */
+async function inPool(items, limit, work) {
+  const queue = [...items];
+  const workers = Array.from({ length: limit }, async () => {
+    while (queue.length > 0) await work(queue.shift());
+  });
+  await Promise.all(workers);
+}
+
+/**
+ * Reads the inputs of every candidate's task closure, each task once. A
+ * candidate any of whose reads fails gets `undefined`, which keeps it.
+ */
+async function readInputs(candidates, target) {
+  const closures = new Map();
+  const failed = new Set();
+  await inPool(candidates, PARALLEL_READS, async (project) => {
     try {
-      return new Set(
-        nxJson(['show', 'target', 'inputs', `${project}:${target}`]).files
-      );
+      closures.set(project, await tasksOf(project, target));
     } catch (error) {
       console.error(
-        `${project}: could not read the inputs of ${target}: ${error.message}`
+        `${project}: could not read its ${target} tasks: ${error.message}`
       );
+      failed.add(project);
+    }
+  });
+  const tasks = new Map(
+    [...closures.values()].flat().map((task) => [task.id, task])
+  );
+  const inputs = new Map();
+  await inPool([...tasks.values()], PARALLEL_READS, async (task) => {
+    try {
+      inputs.set(task.id, await taskInputs(task.args));
+    } catch (error) {
+      console.error(`${task.id}: could not read its inputs: ${error.message}`);
+    }
+  });
+  return (project) => {
+    const closure = closures.get(project);
+    if (failed.has(project) || closure.some(({ id }) => !inputs.has(id))) {
       return undefined;
     }
+    return new Set(closure.flatMap(({ id }) => inputs.get(id)));
   };
 }
 
-function main() {
+async function main() {
   const options = readOptions();
+  const candidates = await candidatesOf(options);
   const { selected, reasons } = selectReleaseAffected({
-    candidates: candidatesOf(options),
-    ...changesOf(options),
-    inputsOf: inputsReader(options.target),
+    candidates,
+    ...(await changesOf(options)),
+    inputsOf: await readInputs(candidates, options.target),
   });
   for (const [project, reason] of Object.entries(reasons)) {
     const verdict = selected.includes(project) ? 'kept' : 'dropped';
@@ -275,4 +385,9 @@ function main() {
   for (const project of selected) console.log(project);
 }
 
-if (import.meta.filename === process.argv[1]) main();
+if (import.meta.filename === process.argv[1]) {
+  main().catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
+}

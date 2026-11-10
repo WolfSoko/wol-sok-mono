@@ -10,6 +10,7 @@ import { describe, it } from 'node:test';
 
 import {
   isVersionBumpOnly,
+  keepsNxVerdict,
   selectReleaseAffected,
   tsconfigBaseChanges,
 } from './release-affected.mjs';
@@ -48,6 +49,10 @@ describe('selectReleaseAffected', () => {
   it("keeps Nx's verdict for a lockfile or root package.json change", () => {
     assert.deepEqual(select(['package-lock.json']), Object.keys(INPUTS));
     assert.deepEqual(select(['package.json']), Object.keys(INPUTS));
+  });
+
+  it("keeps Nx's verdict for a root tsconfig projects extend", () => {
+    assert.deepEqual(select(['tsconfig.cdk.json']), Object.keys(INPUTS));
   });
 
   it("keeps Nx's verdict for a deleted file, which no input set lists", () => {
@@ -124,6 +129,26 @@ describe('tsconfigBaseChanges', () => {
   });
 });
 
+describe('keepsNxVerdict', () => {
+  it('holds for the npm files and the root tsconfigs but the base', () => {
+    for (const file of [
+      'package.json',
+      'package-lock.json',
+      'tsconfig.cdk.json',
+    ]) {
+      assert.equal(keepsNxVerdict(file), true, file);
+    }
+    for (const file of [
+      'tsconfig.base.json',
+      'apps/x/tsconfig.json',
+      'apps/x/package.json',
+      '.oxlintrc.json',
+    ]) {
+      assert.equal(keepsNxVerdict(file), false, file);
+    }
+  });
+});
+
 describe('isVersionBumpOnly', () => {
   const before = { name: '@wolsok/thanos', version: '1.0.0', dependencies: {} };
 
@@ -183,6 +208,16 @@ describe('release-affected on the workspace', () => {
     );
   });
 
+  // .browserslistrc is an input of korbjaeger:build-app, which deploy runs
+  // through build: inputs of the tasks a deploy depends on count too.
+  it('deploys an app whose build step reads the changed file', () => {
+    assert.ok(
+      runScript('--files=.browserslistrc', '--target=deploy', NON_CDK).includes(
+        'korbjaeger'
+      )
+    );
+  });
+
   it('deploys an app whose own source changed, and only it', () => {
     assert.deepEqual(
       runScript(
@@ -213,6 +248,14 @@ describe('deploy.yml', () => {
       assert.match(step, /--projects="\$RELEASE_PROJECTS"/);
     }
     assert.ok(steps.every((step) => !/nx affected/.test(step)));
+  });
+
+  // Without pipefail, a pipe would turn a failing selection into an empty one.
+  it('never pipes the selection, which would hide its failure', () => {
+    const piped = steps.filter((step) =>
+      /release-affected\.mjs[^\n]*\|/.test(step)
+    );
+    assert.deepEqual(piped, []);
   });
 
   // An empty --projects can mean every project; such a leg skips instead.

@@ -125,7 +125,10 @@ jobs:
           else
             selection=(--target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
           fi
-          RELEASE_PROJECTS=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}" | paste -sd, -)
+          # Apart from the paste: the step's bash has no pipefail, so a failing
+          # selection would otherwise read as an empty one and skip the leg.
+          selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}")
+          RELEASE_PROJECTS=$(paste -sd, - <<< "$selected")
           echo "Selected: ${RELEASE_PROJECTS:-none}"
           echo "RELEASE_PROJECTS=$RELEASE_PROJECTS" >> $GITHUB_ENV
           # An empty list never reaches run-many or publish, where it could
