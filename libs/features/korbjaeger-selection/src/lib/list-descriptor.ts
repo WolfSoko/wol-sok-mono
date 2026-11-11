@@ -1,13 +1,13 @@
 import type { REMOVED, ReadEntry, RawDocument } from './selection-entries';
 
 /**
- * What tells one list of an `Auswahl` from the others (`LIST_DESCRIPTORS`):
+ * What tells one list of a `Selection` from the others (`LIST_DESCRIPTORS`):
  * how it is stored, read and changed. Everything else that handles a list
  * (diff, merge, joining, takeover, signals) is the same for each, and loops
  * over the table.
  *
- * @typeParam W an entry as the `Auswahl` holds it
- * @typeParam F what a change writes of an entry, `ENTFERNT` where it goes
+ * @typeParam W an entry as the `Selection` holds it
+ * @typeParam F what a change writes of an entry, `REMOVED` where it goes
  * @typeParam D the document's field that stores the list
  */
 export interface ListDescriptor<W, F, D extends string> {
@@ -43,7 +43,7 @@ export interface ListDescriptor<W, F, D extends string> {
   ) => RawDocument;
   /**
    * An entry both account and device hold, as the account keeps it once
-   * they join (`zusammenfuehren`); the account's as it is where absent.
+   * they join (`mergeSelections`); the account's as it is where absent.
    */
   readonly complete?: (account: W, device: W) => W;
   /**

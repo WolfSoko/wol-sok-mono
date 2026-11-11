@@ -39,17 +39,17 @@ function charactersOf(text: string): readonly string[] {
 }
 
 /**
- * How many characters of `eingabe` count towards `SPITZNAME_LAENGE`: the
- * trimmed text's, an emoji as one, as `spitznameAus` counts them.
+ * How many characters of `input` count towards `NICKNAME_LENGTH`: the
+ * trimmed text's, an emoji as one, as `nicknameOf` counts them.
  */
 export function nicknameCharacterCount(input: string): number {
   return charactersOf(input.trim()).length;
 }
 
 /**
- * The Spitzname to keep of `eingabe`: trimmed and cut to
- * `SPITZNAME_LAENGE` characters (`spitznameZeichen`), and to whole
- * characters within `SPITZNAME_CODEPUNKTE`; none where nothing is left.
+ * The Spitzname to keep of `input`: trimmed and cut to
+ * `NICKNAME_LENGTH` characters (`nicknameCharacterCount`), and to whole
+ * characters within `NICKNAME_CODE_POINTS`; none where nothing is left.
  */
 export function nicknameOf(input: string | undefined): string | undefined {
   let codePoints = 0;
@@ -70,7 +70,7 @@ export function nicknameOf(input: string | undefined): string | undefined {
 
 /**
  * How many code points `text` has, as the Firestore rules count it (an
- * emoji of a family is several): unlike its characters (`spitznameZeichen`).
+ * emoji of a family is several): unlike its characters (`nicknameCharacterCount`).
  */
 export function codePointsOf(text: string): number {
   let count = 0;
@@ -80,7 +80,7 @@ export function codePointsOf(text: string): number {
   return count;
 }
 
-/** `personId` as a Kind with `spitzname`, the field left out where none. */
+/** `personId` as a Kind with `nickname`, the field left out where none. */
 export function childWith(personId: PersonId, nickname?: string): Child {
   const name = nicknameOf(nickname);
   return name === undefined ? { personId } : { personId, nickname: name };

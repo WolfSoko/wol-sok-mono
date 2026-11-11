@@ -24,14 +24,14 @@ vi.mock('firebase/firestore', () => ({
   setDoc: vi.fn(() => new Promise(() => undefined)),
 }));
 
-/** A snapshot of `daten`, as the server tells it. */
+/** A snapshot of `data`, as the server tells it. */
 const state = (data: unknown) => ({
   exists: () => data !== undefined,
   data: () => data,
   metadata: { fromCache: false },
 });
 
-describe('FirestoreAuswahl', () => {
+describe('FirestoreSelection', () => {
   const oeffnen = () => new FirestoreSelection({} as Firestore, 'uid-1');
 
   it('shows nothing and takes no change once its listener failed after a read', async () => {

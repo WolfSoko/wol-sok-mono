@@ -3,7 +3,7 @@ import { mergeSelections } from './merge-selections';
 
 const EMPTY: SelectionContent = { teams: [], children: [], clubColors: [] };
 
-describe('zusammenfuehren', () => {
+describe('mergeSelections', () => {
   it("takes the device's choices into an empty account", () => {
     const device: SelectionContent = {
       teams: [313036, 201500],

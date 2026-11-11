@@ -24,7 +24,7 @@ import {
  * Marks a named player of a followed Team's Kader as the Elternteil's
  * Kind, asking for an optional Spitzname first; a marked one offers to
  * change its Spitzname or to take the mark away. Takes only a
- * `MarkierbarerSpieler`, so an Anonymer Spieler gets none. A failed change
+ * `MarkablePlayer`, so an Anonymer Spieler gets none. A failed change
  * shows on the page where it provides `KIND_AENDERUNG`, which outlives
  * the control, else in the control itself; a
  * dialog still open when the control goes (the Team unfollowed in another

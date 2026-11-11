@@ -1,6 +1,6 @@
 /**
  * Whether `a` and `b` hold equal entries in the same order, each pair
- * compared by `gleich` (by identity unless told otherwise). For a signal's
+ * compared by `equal` (by identity unless told otherwise). For a signal's
  * `equal`, so an equal list read anew changes nothing downstream.
  */
 export function sameSequence<T>(

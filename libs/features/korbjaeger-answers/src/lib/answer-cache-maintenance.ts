@@ -10,7 +10,7 @@ export type MaintenancePage = Pick<
   'visibilityState' | 'addEventListener' | 'removeEventListener'
 >;
 
-/** What `antwortenPflegen` keeps clear, and where it listens. */
+/** What `maintainAnswerCache` keeps clear, and where it listens. */
 export interface MaintenanceOptions {
   /** The page whose return into view clears too. */
   readonly document: MaintenancePage;
@@ -19,9 +19,9 @@ export interface MaintenanceOptions {
 }
 
 /**
- * Keeps `antworten` clear of answers too old and of kinds no longer kept
- * (`aufraeumen`): at once, whenever the page comes back into view, and
- * every `PFLEGE_TAKT_MS` while it stays open. Returns what stops it.
+ * Keeps `cache` clear of answers too old and of kinds no longer kept
+ * (`cleanUp`): at once, whenever the page comes back into view, and
+ * every `MAINTENANCE_INTERVAL_MS` while it stays open. Returns what stops it.
  */
 export function maintainAnswerCache(
   cache: Pick<LocalAnswerCache, 'cleanUp'>,

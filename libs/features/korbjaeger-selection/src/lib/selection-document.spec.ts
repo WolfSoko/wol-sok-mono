@@ -9,8 +9,8 @@ import {
   type SelectionContent,
 } from './selection-lists';
 
-describe('auswahlDokumentLesen', () => {
-  it("reads each Team's seit", () => {
+describe('readSelectionDocument', () => {
+  it("reads each Team's since", () => {
     const read = readSelectionDocument({
       version: 3,
       teams: { 201500: 20, 313036: 10 },
@@ -32,8 +32,8 @@ describe('auswahlDokumentLesen', () => {
   });
 });
 
-describe('auswahlFelder', () => {
-  it("writes a new Team's known seit, the next one for the others", () => {
+describe('selectionFields', () => {
+  it("writes a new Team's known since, the next one for the others", () => {
     const before: SelectionContent = { ...EMPTY_SELECTION, teams: [313036] };
     const after: SelectionContent = {
       ...EMPTY_SELECTION,
@@ -52,7 +52,7 @@ describe('auswahlFelder', () => {
   });
 });
 
-describe('auswahlFelder with an entry twice', () => {
+describe('selectionFields with an entry twice', () => {
   it('writes nothing for an entry it held already', () => {
     const before: SelectionContent = {
       ...EMPTY_SELECTION,
@@ -70,7 +70,7 @@ describe('auswahlFelder with an entry twice', () => {
 });
 
 describe('withSince', () => {
-  it('gives the Teams it holds the seit a write stores for them', () => {
+  it('gives the Teams it holds the since a write stores for them', () => {
     const content: SelectionContent = {
       ...EMPTY_SELECTION,
       teams: [313036, 201500],

@@ -309,7 +309,7 @@ describe('proxyTransport', () => {
   describe('the last good answer', () => {
     const TEAM_SPIELE = '/api/dbb/team/313036/spiele';
 
-    /** `LetzteAntworten` in memory, with what was stored and its kind. */
+    /** `AnswerCache` in memory, with what was stored and its kind. */
     class GemerkteAntworten implements AnswerCache {
       public readonly gemerkt = new Map<
         string,

@@ -23,21 +23,21 @@ const read: SelectionContent = {
   },
 };
 
-describe('teamPlatz', () => {
+describe('teamPlace', () => {
   it("is the Team's place among Meine Teams", () => {
     expect(teamPlace(read, B)).toEqual({ since: 20 });
   });
 
-  it('is none for a Team not followed, or one whose seit is not known yet', () => {
+  it('is none for a Team not followed, or one whose since is not known yet', () => {
     expect(teamPlace(read, D)).toBeUndefined();
     expect(teamPlace({ ...EMPTY_SELECTION, teams: [D] }, D)).toBeUndefined();
   });
 });
 
-describe('folgenAenderung', () => {
+describe('followChange', () => {
   const withoutB = unfollowChange(B)(read);
 
-  it('follows a Team at its place, before the first Team with a later seit', () => {
+  it('follows a Team at its place, before the first Team with a later since', () => {
     const place = teamPlace(read, B);
 
     const after = followChange(B, place)(withoutB);
@@ -46,13 +46,13 @@ describe('folgenAenderung', () => {
     expect(after.since?.teams?.get(B)).toBe(20);
   });
 
-  it('puts a Team at its place before Teams whose seit is not known yet', () => {
+  it('puts a Team at its place before Teams whose since is not known yet', () => {
     const withD = followChange(D)(withoutB);
 
     expect(followChange(B, { since: 20 })(withD).teams).toEqual([A, B, C, D]);
   });
 
-  it('puts a Team before one with the same seit and a larger id, as the reader orders', () => {
+  it('puts a Team before one with the same since and a larger id, as the reader orders', () => {
     const equal: SelectionContent = {
       ...EMPTY_SELECTION,
       teams: [B],
@@ -73,14 +73,14 @@ describe('folgenAenderung', () => {
 });
 
 describe('a plain follow after an unfollow', () => {
-  it('keeps no old seit for the Team, so the write gives it a new one', () => {
+  it('keeps no old since for the Team, so the write gives it a new one', () => {
     const again = followChange(B)(unfollowChange(B)(read));
 
     expect(again.since?.teams?.has(B)).toBe(false);
   });
 });
 
-describe('abgebenAenderung', () => {
+describe('handOverChange', () => {
   it('keeps the places of the Teams that stay', () => {
     const after = handOverChange({ ...EMPTY_SELECTION, teams: [B] })(read);
 

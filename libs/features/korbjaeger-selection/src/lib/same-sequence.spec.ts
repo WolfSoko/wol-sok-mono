@@ -1,6 +1,6 @@
 import { sameSequence } from './same-sequence';
 
-describe('gleicheFolge', () => {
+describe('sameSequence', () => {
   it('takes two lists of the same values in the same order as equal', () => {
     expect(sameSequence([1, 2, 3], [1, 2, 3])).toBe(true);
     expect(sameSequence([], [])).toBe(true);

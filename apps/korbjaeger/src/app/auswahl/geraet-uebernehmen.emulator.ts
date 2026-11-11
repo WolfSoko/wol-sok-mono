@@ -149,7 +149,7 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
     const kinder = Array.from({ length: 20 }, (_, i) => ({
       personId: i + 1,
-      spitzname: 'x'.repeat(30),
+      nickname: 'x'.repeat(30),
     }));
     const teams = Array.from({ length: 50 }, (_, i) => i + 1);
 

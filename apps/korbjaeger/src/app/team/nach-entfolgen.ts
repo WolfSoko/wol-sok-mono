@@ -39,7 +39,7 @@ export class NachEntfolgen {
 
   /**
    * A control unfollowed `team`, called `name`, and goes with it; `platz`
-   * is the place it had (`Auswahl.entfolgen`), where the undo puts it back.
+   * is the place it had (`Selection.unfollow`), where the undo puts it back.
    */
   public entfolgt(team: TeamId, name: string, platz?: TeamPlace): void {
     const ziele = [...this.ziele];
@@ -52,7 +52,7 @@ export class NachEntfolgen {
 
   /**
    * The snackbar with "Rückgängig", for the store the Team was unfollowed
-   * in only: it goes once another holds the choices (`Auswahl.quelle`), so
+   * in only: it goes once another holds the choices (`Selection.source`), so
    * the undo never follows in the wrong one.
    */
   private rueckgaengigAnbieten(

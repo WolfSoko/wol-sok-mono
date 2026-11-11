@@ -18,7 +18,7 @@ class FakePage extends EventTarget {
   }
 }
 
-describe('antwortenPflegen', () => {
+describe('maintainAnswerCache', () => {
   let page: FakePage;
   let runs: { now: number; kinds: ReadonlySet<string> }[];
   let stopMaintenance: () => void;

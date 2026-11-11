@@ -22,14 +22,14 @@ import { selectionDocumentOf, firestoreFields } from './firestore-selection';
 import { type NotTakenOver, mergeSelections } from './merge-selections';
 
 /**
- * Takes `geraet`, the choices made on the device, into the account `uid`
- * at sign-in, as `zusammenfuehren` joins them: on every sign-in, since a
+ * Takes `device`, the choices made on the device, into the account `uid`
+ * at sign-in, as `mergeSelections` joins them: on every sign-in, since a
  * second one with the same choices changes nothing. Written as every
- * change is (`auswahlFelder`): only the entries the device adds, by id. One
+ * change is (`selectionFields`): only the entries the device adds, by id. One
  * transaction a map; a map the device adds nothing to is not written. Only what fits under the caps joins; resolves
  * with the device's Teams, Kinder and Vereinsfarben that did not; a list
  * the device holds nothing of is not read. Rejects with
- * `AuswahlZuNeuError` where a newer version of the app stored the
+ * `SelectionTooNewError` where a newer version of the app stored the
  * account's selection, which it leaves alone.
  */
 export async function takeOverDevice(
@@ -51,7 +51,7 @@ export async function takeOverDevice(
 }
 
 /**
- * Takes the map `liste` of `geraet` into the account, in a transaction of
+ * Takes the map `list` of `device` into the account, in a transaction of
  * its own, as the rules check one full map a write.
  */
 function takeOverList(

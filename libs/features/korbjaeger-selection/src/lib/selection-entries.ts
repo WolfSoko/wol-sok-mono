@@ -34,7 +34,7 @@ export function compareBySince(
 }
 
 /**
- * `entries` in the reader's order (as `vorSeit`: by `since`, the id a tie),
+ * `entries` in the reader's order (as `compareBySince`: by `since`, the id a tie),
  * `id` giving each its id; sorts the list it is given.
  */
 export function bySince<W>(
@@ -44,7 +44,7 @@ export function bySince<W>(
   return entries.sort((a, b) => a.since - b.since || id(a.value) - id(b.value));
 }
 
-/** `eintraege` with each of `felder` set, or deleted where it goes. */
+/** `entries` with each of `fields` set, or deleted where it goes. */
 export function entriesWith(
   entries: RawDocument,
   fields: Readonly<Record<string, unknown>>
@@ -66,17 +66,17 @@ export function idOfKey(key: string): number | undefined {
   return isId(id) && String(id) === key ? id : undefined;
 }
 
-/** Whether `wert` is a DBB id. */
+/** Whether `value` is a DBB id. */
 export function isId(value: unknown): value is number {
   return typeof value === 'number' && isDbbId(value);
 }
 
-/** Whether `wert` is a finite number. */
+/** Whether `value` is a finite number. */
 export function isNumber(value: unknown): value is number {
   return typeof value === 'number' && Number.isFinite(value);
 }
 
-/** Whether `wert` is a map: an object that is no list. */
+/** Whether `value` is a map: an object that is no list. */
 export function isMap(value: unknown): value is RawDocument {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

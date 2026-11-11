@@ -132,7 +132,7 @@ export function farbschemaTokens(farben: ClubColors): FarbschemaTokens {
 }
 
 function schemaVon(farben: ClubColors, dunkel: boolean): DynamicScheme {
-  // checked as stored: what is no #rrggbb throws `KeineFarbeError`
+  // checked as stored: what is no #rrggbb throws `NotAColorError`
   const { primary: primaer, secondary: zweite } = clubColorsOf(
     farben.primary,
     farben.secondary

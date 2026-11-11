@@ -1,12 +1,12 @@
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { isColor, type ClubColors } from './club-colors';
 
-/** A Verein's colours, as the `Auswahl` holds them: by the Verein's DBB id. */
+/** A Verein's colours, as the `Selection` holds them: by the Verein's DBB id. */
 export interface ClubColorsChoice extends ClubColors {
   readonly clubId: ClubId;
 }
 
-/** The colours `liste` holds for `verein`; `undefined` for none. */
+/** The colours `list` holds for `club`; `undefined` for none. */
 export function clubColorsFor(
   list: readonly ClubColorsChoice[] | undefined,
   club: ClubId
@@ -14,7 +14,7 @@ export function clubColorsFor(
   return list?.find(({ clubId }) => clubId === club);
 }
 
-/** The order the `Auswahl` keeps its Vereinsfarben in: by the Verein's id. */
+/** The order the `Selection` keeps its Vereinsfarben in: by the Verein's id. */
 export function byClub(
   list: readonly ClubColorsChoice[]
 ): readonly ClubColorsChoice[] {
@@ -22,7 +22,7 @@ export function byClub(
 }
 
 /**
- * How the `AuswahlDokument` stores a Verein's colours: as one text,
+ * How the `SelectionDocument` stores a Verein's colours: as one text,
  * `#rrggbb` or `#rrggbb,#rrggbb` with the second, so the Firestore rules
  * check every Verein's at once with one regular expression (a check per
  * entry would take more expressions than a request may evaluate).
@@ -31,7 +31,7 @@ export function colorsText({ primary, secondary }: ClubColors): string {
   return secondary === undefined ? primary : `${primary},${secondary}`;
 }
 
-/** The colours `farbenText` stored in `text`; `undefined` where it is none. */
+/** The colours `colorsText` stored in `text`; `undefined` where it is none. */
 export function colorsFromText(text: unknown): ClubColors | undefined {
   if (typeof text !== 'string') {
     return undefined;

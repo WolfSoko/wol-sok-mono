@@ -29,7 +29,7 @@ export interface SpitznameFrage {
 
 /** What the dialog closes with once confirmed; cancelled, it gives none. */
 export interface SpitznameAntwort {
-  /** As typed: the `Auswahl` trims it, empty means none. */
+  /** As typed: the `Selection` trims it, empty means none. */
   readonly spitzname: string;
 }
 
@@ -45,8 +45,8 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
 
 /**
  * Asks for the optional Spitzname of a Kind, when marking it or later.
- * Counts its characters as the `Auswahl` does (`spitznameZeichen`, an
- * emoji as one) and takes none over `SPITZNAME_LAENGE`. Opened with a
+ * Counts its characters as the `Selection` does (`nicknameCharacterCount`, an
+ * emoji as one) and takes none over `NICKNAME_LENGTH`. Opened with a
  * `SpitznameFrage`; closes with a `SpitznameAntwort`, or with none where
  * cancelled.
  */

@@ -15,7 +15,7 @@ export interface CachedAnswer {
  * never an error.
  */
 export interface AnswerCache {
-  /** The answer at `pfad`, unless none is kept or it is too old at `jetzt`. */
+  /** The answer at `path`, unless none is kept or it is too old at `now`. */
   read(path: string, now: number): CachedAnswer | undefined;
   store(path: string, kind: DbbRequestKind, answer: CachedAnswer): void;
 }
@@ -50,7 +50,7 @@ export const ANSWER_LIMITS: AnswerLimits = {
  */
 export const MAX_AGE_DAYS = 7;
 
-/** `MAX_ALTER_TAGE` in milliseconds, as the store compares ages. */
+/** `MAX_AGE_DAYS` in milliseconds, as the store compares ages. */
 export const MAX_AGE_MS = MAX_AGE_DAYS * 24 * 60 * 60_000;
 
 /** The prefix of every answer's key; the store touches no other key but its index. */
@@ -97,7 +97,7 @@ interface StoredAnswer {
 }
 
 /**
- * `LetzteAntworten` in the device's `localStorage`, one key per path
+ * `AnswerCache` in the device's `localStorage`, one key per path
  * (`korbjaeger-answer:/api/dbb/...`, as `{ v: 2, am, art, antwort }`),
  * with an index (`korbjaeger-answers`) of each answer's size, time and
  * kind, so a write reads no answer. The transport decides which reads go
@@ -105,10 +105,10 @@ interface StoredAnswer {
  * info, a Verein's Spiele), each without the persons it names
  * (`dbbWithoutPersons`); never a Spielbericht with its Kader, never the
  * Liga search (ADR 0019). Nothing of the user.
- * - An answer older than `MAX_ALTER_MS` is not served and is deleted;
- *   `aufraeumen`, at the app's start, deletes those and answers of kinds
+ * - An answer older than `MAX_AGE_MS` is not served and is deleted;
+ *   `cleanUp`, at the app's start, deletes those and answers of kinds
  *   no longer kept.
- * - Capped by `grenzen`: a write beyond them evicts the oldest answers
+ * - Capped by `limits`: a write beyond them evicts the oldest answers
  *   first (one that cannot be read before all others); an answer larger
  *   than all may be is not kept, and neither is the older one of its path.
  * - A full storage (`QuotaExceededError`) evicts the oldest answers until
@@ -207,8 +207,8 @@ export class LocalAnswerCache implements AnswerCache {
   }
 
   /**
-   * Deletes the answers too old at `jetzt`, and those whose kind is none of
-   * `arten` (or that cannot be read).
+   * Deletes the answers too old at `now`, and those whose kind is none of
+   * `kinds` (or that cannot be read).
    */
   public cleanUp(now: number, kinds: ReadonlySet<DbbRequestKind>): void {
     const storedKinds = new Set([...kinds].map((k) => STORED_KINDS[k]));
@@ -226,7 +226,7 @@ export class LocalAnswerCache implements AnswerCache {
   }
 
   /**
-   * Evicts the oldest of `index` until a new answer of `zeichen`, stored
+   * Evicts the oldest of `index` until a new answer of `characters`, stored
    * beside them, keeps the limits.
    */
   private keepWithinLimits(
@@ -340,7 +340,7 @@ class Oldest {
   }
 }
 
-/** Whether `index` names exactly the answers `schluessel` lists. */
+/** Whether `index` names exactly the answers `keys` lists. */
 function sameKeys(index: Index, key: readonly string[]): boolean {
   return index.size === key.length && key.every((key) => index.has(key));
 }
@@ -353,7 +353,7 @@ function tooOld(am: number, now: number): boolean {
   return now - am > MAX_AGE_MS;
 }
 
-/** Every answer's key in `speicher`; reads no value. */
+/** Every answer's key in `storage`; reads no value. */
 function answerKeys(storage: AnswerStorage): string[] {
   return Array.from({ length: storage.length }, (_, i) =>
     storage.key(i)

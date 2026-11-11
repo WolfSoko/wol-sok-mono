@@ -1,6 +1,6 @@
 import { NotAColorError, clubColorsOf } from './club-colors';
 
-describe('vereinsfarbenAus', () => {
+describe('clubColorsOf', () => {
   it('stores colours in lower case, a second one only where given', () => {
     expect(clubColorsOf('#C8102E')).toEqual({ primary: '#c8102e' });
     expect(clubColorsOf('#c8102e', '#1D4ED8')).toEqual({

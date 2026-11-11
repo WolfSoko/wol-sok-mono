@@ -9,18 +9,18 @@ import {
 import { NotAColorError } from '../lib/club-colors';
 
 /**
- * Where one adapter of `Auswahl` keeps its data, for `auswahlVertrag`: the
+ * Where one adapter of `Selection` keeps its data, for `selectionContract`: the
  * device's storage for the local adapter, one account's document for the
  * Firestore adapter (#2873).
  */
 export interface SelectionStore {
   /**
    * A new adapter on this store, as after a reload. Resolves once the
-   * adapter has read what is stored (`teams()` and `kinder()` are
+   * adapter has read what is stored (`teams()` and `children()` are
    * defined).
    */
   open(): Promise<Selection>;
-  /** Stores `dokument` as it is, as another app version or a fault might. */
+  /** Stores `document` as it is, as another app version or a fault might. */
   writeRaw(raw: unknown): Promise<void>;
   /** What is stored now, as it is. */
   readRaw(): Promise<unknown>;
@@ -66,8 +66,8 @@ const MORVO: MarkablePlayer = { kind: 'named', personId: 4712 };
 const NELKA: MarkablePlayer = { kind: 'named', personId: 4713 };
 
 /**
- * The behaviour every adapter of `Auswahl` shares. Each adapter's spec
- * runs it, with a fresh, empty store per test from `neuerSpeicher`.
+ * The behaviour every adapter of `Selection` shares. Each adapter's spec
+ * runs it, with a fresh, empty store per test from `newStore`.
  */
 export function selectionContract(
   adapter: string,

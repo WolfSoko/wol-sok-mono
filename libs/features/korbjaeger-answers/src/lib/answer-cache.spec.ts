@@ -10,38 +10,38 @@ import {
 /** A key the app keeps beside the answers (Meine Teams); the store never touches it. */
 const OTHER_KEY = 'meine-teams';
 
-/** A `localStorage` that takes at most `zeichen` characters, keys and values. */
+/** A `localStorage` that takes at most `characters` characters, keys and values. */
 class SmallStorage implements AnswerStorage {
-  public readonly eintraege = new Map<string, string>();
+  public readonly items = new Map<string, string>();
 
   public constructor(private readonly characters = Number.POSITIVE_INFINITY) {}
 
   public get length(): number {
-    return this.eintraege.size;
+    return this.items.size;
   }
 
   public key(index: number): string | null {
-    return [...this.eintraege.keys()][index] ?? null;
+    return [...this.items.keys()][index] ?? null;
   }
 
   public getItem(key: string): string | null {
-    return this.eintraege.get(key) ?? null;
+    return this.items.get(key) ?? null;
   }
 
   public setItem(key: string, value: string): void {
-    const ohne = [...this.eintraege].filter(([k]) => k !== key);
-    const used = ohne.reduce((sum, [k, v]) => sum + k.length + v.length, 0);
+    const without = [...this.items].filter(([k]) => k !== key);
+    const used = without.reduce((sum, [k, v]) => sum + k.length + v.length, 0);
     if (used + key.length + value.length > this.characters) {
       throw new DOMException(
         'The quota has been exceeded.',
         'QuotaExceededError'
       );
     }
-    this.eintraege.set(key, value);
+    this.items.set(key, value);
   }
 
   public removeItem(key: string): void {
-    this.eintraege.delete(key);
+    this.items.delete(key);
   }
 }
 
@@ -60,12 +60,12 @@ function answer(
   return { answer: data, storedAt };
 }
 
-/** The paths `antworten` still has a last good answer for. */
+/** The paths `cache` still has a last good answer for. */
 function kept(cache: LocalAnswerCache, paths: readonly string[]): string[] {
   return paths.filter((path) => cache.read(path, NOW) !== undefined);
 }
 
-describe('LokaleLetzteAntworten', () => {
+describe('LocalAnswerCache', () => {
   it('gives back the last good answer of a path, with when it was stored', () => {
     const cache = new LocalAnswerCache(new SmallStorage());
 
@@ -115,9 +115,7 @@ describe('LokaleLetzteAntworten', () => {
       cache.cleanUp(MAX_AGE_MS + MINUTE, new Set(['standings']));
 
       expect(
-        [...storage.eintraege.keys()].filter((key) =>
-          key.startsWith(ANSWER_PREFIX)
-        )
+        [...storage.items.keys()].filter((key) => key.startsWith(ANSWER_PREFIX))
       ).toEqual([`${ANSWER_PREFIX}${STANDINGS}`]);
     });
   });
@@ -246,7 +244,7 @@ describe('LokaleLetzteAntworten', () => {
 
     cache.clear();
 
-    expect([...storage.eintraege.keys()]).toEqual([OTHER_KEY]);
+    expect([...storage.items.keys()]).toEqual([OTHER_KEY]);
     expect(kept(cache, [TEAM, STANDINGS])).toEqual([]);
     cache.store(GAME, 'game-info', answer(3000));
     expect(kept(cache, [GAME])).toEqual([GAME]);
@@ -281,14 +279,14 @@ describe('LokaleLetzteAntworten', () => {
       const storage = new SmallStorage();
       const cache = new LocalAnswerCache(storage);
       cache.store(TEAM, 'team-games', answer(1000));
-      const gelesen = vi.spyOn(storage, 'getItem');
+      const reads = vi.spyOn(storage, 'getItem');
 
       cache.store(STANDINGS, 'standings', answer(2000));
       cache.store(GAME, 'game-info', answer(3000));
 
-      expect(
-        gelesen.mock.calls.filter(([key]) => key !== ANSWER_INDEX)
-      ).toEqual([]);
+      expect(reads.mock.calls.filter(([key]) => key !== ANSWER_INDEX)).toEqual(
+        []
+      );
     });
 
     it('counts no answer deleted behind its back', () => {
@@ -393,5 +391,51 @@ describe('LokaleLetzteAntworten', () => {
       cache.cleanUp(NOW, new Set());
     }).not.toThrow();
     expect(cache.read(TEAM, NOW)).toBeUndefined();
+  });
+});
+
+describe('an answer cache written before #3010', () => {
+  // the entry and the index byte for byte as the store wrote them before
+  // its identifiers became English: the stored spellings stay
+  const ENTRY =
+    '{"v":2,"am":1000,"art":"team-spiele","antwort":{"status":"0"}}';
+  const INDEX = `{"v":1,"eintraege":{"${ANSWER_PREFIX}${TEAM}":{"zeichen":${
+    `${ANSWER_PREFIX}${TEAM}`.length + ENTRY.length
+  },"am":1000,"art":"team-spiele"}}}`;
+
+  function storedBefore(): SmallStorage {
+    const storage = new SmallStorage();
+    storage.setItem(`${ANSWER_PREFIX}${TEAM}`, ENTRY);
+    storage.setItem(ANSWER_INDEX, INDEX);
+    return storage;
+  }
+
+  it('serves the entry and keeps it through a clean-up', () => {
+    const storage = storedBefore();
+    const cache = new LocalAnswerCache(storage);
+
+    cache.cleanUp(NOW, new Set(['team-games']));
+
+    expect(cache.read(TEAM, NOW)).toEqual(answer(1000));
+    expect(storage.getItem(`${ANSWER_PREFIX}${TEAM}`)).toBe(ENTRY);
+  });
+
+  it('writes the index with the same spellings it read', () => {
+    const storage = storedBefore();
+
+    new LocalAnswerCache(storage).store(STANDINGS, 'standings', answer(2000));
+
+    expect(JSON.parse(storage.getItem(ANSWER_INDEX) ?? '{}')).toEqual({
+      v: 1,
+      eintraege: {
+        [`${ANSWER_PREFIX}${TEAM}`]:
+          JSON.parse(INDEX).eintraege[`${ANSWER_PREFIX}${TEAM}`],
+        [`${ANSWER_PREFIX}${STANDINGS}`]: {
+          zeichen: expect.any(Number),
+          am: 2000,
+          art: 'tabelle',
+        },
+      },
+    });
   });
 });

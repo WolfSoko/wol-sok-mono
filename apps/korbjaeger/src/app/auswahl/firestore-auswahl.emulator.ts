@@ -25,8 +25,8 @@ import {
 import { selectionContract } from '@wolsok/feat-korbjaeger-selection/testing';
 
 /**
- * `FirestoreAuswahl` on the emulator: the shared contract of every
- * `Auswahl` adapter, on rules that let everything through (the contract
+ * `FirestoreSelection` on the emulator: the shared contract of every
+ * `Selection` adapter, on rules that let everything through (the contract
  * stores documents the rules would refuse, as a later version or a fault
  * might), and the adapter's own behaviour under the app's rules.
  */
@@ -85,7 +85,7 @@ selectionContract('Firestore', () => {
   };
 });
 
-describe('FirestoreAuswahl', () => {
+describe('FirestoreSelection', () => {
   const MIMI = { kind: 'named', personId: 4711 } as const;
   const OTTO = { kind: 'named', personId: 4712 } as const;
   const offen: FirestoreSelection[] = [];

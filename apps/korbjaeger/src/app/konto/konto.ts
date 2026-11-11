@@ -54,7 +54,7 @@ export function geraeteMerker(
   };
 }
 
-/** The Elternteil's account, and with it the `Auswahl` the screens use (`AUSWAHL`). */
+/** The Elternteil's account, and with it the `Selection` the screens use (`AUSWAHL`). */
 export const KONTO_SITZUNG = new InjectionToken<KontoSitzung>('KontoSitzung', {
   providedIn: 'root',
   factory: () => {

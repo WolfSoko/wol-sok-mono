@@ -19,7 +19,7 @@ import {
 } from './selection-lists';
 
 /**
- * The version of `AuswahlDokument` this app writes. Bumped only for a
+ * The version of `SelectionDocument` this app writes. Bumped only for a
  * change an older app would misread; a new field is none, since every
  * write keeps the fields it does not know. Version 3 (#2966) names the
  * fields in English and lives under new names (`selections/{uid}`,
@@ -30,7 +30,7 @@ import {
 export const SELECTION_VERSION = 3;
 
 /**
- * What an adapter stores of an `Auswahl`: ids only, never names from the
+ * What an adapter stores of a `Selection`: ids only, never names from the
  * DBB. Keyed by id, so each change writes its own entries and the server
  * merges them with another device's (a Team followed, a Kind unmarked, a
  * Spitzname changed: none overwrites the other); `since` keeps the order.
@@ -46,20 +46,20 @@ export type SelectionDocument = {
 };
 
 /**
- * The place a Team had among Meine Teams, which `Auswahl.entfolgen` hands
+ * The place a Team had among Meine Teams, which `Selection.unfollow` hands
  * out so an undo can follow it there again; only an adapter makes one.
  */
 export interface TeamPlace {
-  /** The Team's `seit`, which orders Meine Teams. */
+  /** The Team's `since`, which orders Meine Teams. */
   readonly since: number;
 }
 
 /**
  * What a stored document turned out to be:
- * - `aktuell`: this version's, with its fields as read (`roh`), which a
- *   write keeps, and the latest `seit` it holds.
- * - `neuer`: a newer version's, which this version leaves alone.
- * - `keins`: nothing, or something that is no `AuswahlDokument`.
+ * - `current`: this version's, with its fields as read (`raw`), which a
+ *   write keeps, and the latest `since` it holds.
+ * - `newer`: a newer version's, which this version leaves alone.
+ * - `none`: nothing, or something that is no `SelectionDocument`.
  */
 export type ReadDocument =
   | ({
@@ -72,16 +72,16 @@ export type ReadDocument =
 
 const NONE: ReadDocument = { kind: 'none' };
 
-/** Every list's entries as read, with their `seit`. */
+/** Every list's entries as read, with their `since`. */
 type ReadLists = {
   readonly [L in SelectionList]: readonly ReadEntry<ListValue<L>>[];
 };
 
 /**
- * Tells what `gelesen`, a stored document, is: each list as its
+ * Tells what `read`, a stored document, is: each list as its
  * descriptor reads it (Teams that are not all ids make it none; an entry of
  * the other lists it cannot read is left out, the rest kept). A document of
- * another version than this one is none, of a newer one `neuer`.
+ * another version than this one is none, of a newer one `newer`.
  */
 export function readSelectionDocument(read: unknown): ReadDocument {
   if (!isMap(read)) {
@@ -143,8 +143,8 @@ function readLists(document: RawDocument): ReadLists | undefined {
 }
 
 /**
- * The `seit` a change gives its new entries: now, but always after every
- * entry it knows and every one it gave before (`letzter`), so the order of
+ * The `since` a change gives its new entries: now, but always after every
+ * entry it knows and every one it gave before (`last`), so the order of
  * two changes within a millisecond holds.
  */
 export function nextSince(read: ReadDocument, last = 0): number {
@@ -205,11 +205,11 @@ export function selectionFields(
 
 /**
  * The entries that take `before` to `after`, list by list in
- * `AUSWAHL_LISTEN`'s order: those gone, the new ones (at the `since`
+ * `SELECTION_LISTS`'s order: those gone, the new ones (at the `since`
  * `after` knows for one, a Team followed at its old place; else from
  * `firstSince`, one millisecond each, in their order) and the ones changed
  * (a Spitzname, colours). Every adapter writes them: the device's merged
- * into its document (`auswahlDokumentMit`), Firestore as fields the server
+ * into its document (`selectionDocumentWith`), Firestore as fields the server
  * merges.
  */
 export function selectionWrite(
@@ -235,7 +235,7 @@ export function selectionWrite(
       since[list] = written;
     }
   }
-  // each list's entries under its own field, as `AuswahlFelder` has them
+  // each list's entries under its own field, as `SelectionFields` has them
   return { fields: fields as SelectionFields, since, lastSince: next - 1 };
 }
 
@@ -269,12 +269,12 @@ function fieldsOf<L extends SelectionList>(
   for (const id of gone) {
     fields[id] = REMOVED;
   }
-  // every list's `field` type takes `ENTFERNT`
+  // every list's `field` type takes `REMOVED`
   return fields as ListFields<L>;
 }
 
 /**
- * The document to store: `gelesen`'s fields with this version and `felder`
+ * The document to store: `read`'s fields with this version and `fields`
  * merged into its maps, each by its list's descriptor, as Firestore merges
  * them. A map a change leaves out stays as read.
  */

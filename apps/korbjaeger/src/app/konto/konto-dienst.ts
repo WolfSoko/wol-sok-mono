@@ -11,7 +11,7 @@ export interface Benutzer {
   readonly name: string | null;
 }
 
-/** An account's `Auswahl` (`FirestoreAuswahl`), open until `beenden`. */
+/** An account's `Selection` (`FirestoreSelection`), open until `stop`. */
 export interface KontoAuswahl extends Selection {
   /** Resolves once the account's selection was read the first time. */
   loaded(): Promise<void>;

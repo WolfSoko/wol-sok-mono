@@ -7,7 +7,7 @@ import {
   nicknameCharacterCount,
 } from './child';
 
-describe('spitznameAus', () => {
+describe('nicknameOf', () => {
   it('trims the Spitzname', () => {
     expect(nicknameOf('  Mimi ')).toBe('Mimi');
   });
@@ -44,7 +44,7 @@ describe('spitznameAus', () => {
   });
 });
 
-describe('kindMit', () => {
+describe('childWith', () => {
   it('leaves out a Spitzname that is none', () => {
     expect(childWith(4711, ' ')).toEqual({ personId: 4711 });
     expect(childWith(4711, ' Mimi')).toEqual({
@@ -54,7 +54,7 @@ describe('kindMit', () => {
   });
 });
 
-describe('spitznameZeichen', () => {
+describe('nicknameCharacterCount', () => {
   it('counts the trimmed characters, an emoji as one', () => {
     expect(nicknameCharacterCount(' 🏀👨‍👧 Lu ')).toBe(5);
     expect(nicknameCharacterCount('   ')).toBe(0);

@@ -11,18 +11,18 @@ const COLOR = /^#[0-9a-f]{6}$/;
 export class NotAColorError extends Error {
   public constructor(public readonly value: string) {
     super(`Keine Farbe im Format #rrggbb: ${value}`);
-    this.name = 'KeineFarbeError';
+    this.name = 'NotAColorError';
   }
 }
 
-/** Whether `wert` is a colour as stored: `#rrggbb`, in lower case. */
+/** Whether `value` is a colour as stored: `#rrggbb`, in lower case. */
 export function isColor(value: unknown): value is string {
   return typeof value === 'string' && COLOR.test(value);
 }
 
 /**
- * `primaer` and `zweite` as stored: in lower case, `zweite` left out where
- * none is given. Throws `KeineFarbeError` for anything that is no
+ * `primary` and `secondary` as stored: in lower case, `secondary` left out where
+ * none is given. Throws `NotAColorError` for anything that is no
  * `#rrggbb`.
  */
 export function clubColorsOf(primary: string, secondary?: string): ClubColors {

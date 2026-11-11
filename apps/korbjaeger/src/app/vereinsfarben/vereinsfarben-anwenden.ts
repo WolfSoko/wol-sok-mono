@@ -71,7 +71,7 @@ function farbenAnwenden(farben: () => ClubColors | undefined): void {
 
 /**
  * Gives the element being created (a component's host) the colours an
- * Elternteil picked for the Verein `verein()` (`Auswahl.vereinsfarben`);
+ * Elternteil picked for the Verein `verein()` (`Selection.clubColors`);
  * without any, or without a Verein, the app's own apply. While the colours
  * are not read (at start, and while a sign-in or sign-out switches
  * stores), the last ones stay, so the page does not flash the app's own.

@@ -4,7 +4,7 @@ import type { SelectionContent } from './selection-lists';
 import { SELECTION_KEY, LocalSelection } from './local-selection';
 import { selectionContract } from '../testing/selection-contract';
 
-/** What `geraet` stores, as the app reads it. */
+/** What `device` stores, as the app reads it. */
 function stored(device: Pick<Storage, 'getItem'>): SelectionContent {
   const { teams, children, clubColors } = contentOf(
     readSelectionDocument(JSON.parse(device.getItem(SELECTION_KEY) ?? 'null'))
@@ -14,50 +14,50 @@ function stored(device: Pick<Storage, 'getItem'>): SelectionContent {
 
 /**
  * The device's storage, as the adapter uses it, in memory. Like a browser
- * it tells the tabs on `fenster` of every write; this one tells the
+ * it tells the tabs on `events` of every write; this one tells the
  * writing tab too, which reads what it wrote again.
  */
 class SpecStorage {
-  public readonly fenster = new EventTarget();
-  public schreibvorgaenge = 0;
-  private readonly eintraege = new Map<string, string>();
+  public readonly events = new EventTarget();
+  public writeCount = 0;
+  private readonly items = new Map<string, string>();
 
   public getItem(key: string): string | null {
-    return this.eintraege.get(key) ?? null;
+    return this.items.get(key) ?? null;
   }
 
   public setItem(key: string, value: string): void {
-    this.schreibvorgaenge++;
+    this.writeCount++;
     this.setzeLeise(key, value);
-    this.fenster.dispatchEvent(new StorageEvent('storage', { key }));
+    this.events.dispatchEvent(new StorageEvent('storage', { key }));
   }
 
   /** Stores `value` without telling any tab. */
   public setzeLeise(key: string, value: string): void {
-    this.eintraege.set(key, value);
+    this.items.set(key, value);
   }
 
   public removeItem(key: string): void {
-    this.eintraege.delete(key);
-    this.fenster.dispatchEvent(new StorageEvent('storage', { key }));
+    this.items.delete(key);
+    this.events.dispatchEvent(new StorageEvent('storage', { key }));
   }
 }
 
 selectionContract('local', () => {
   const device = new SpecStorage();
   return {
-    open: async () => new LocalSelection(device, device.fenster),
+    open: async () => new LocalSelection(device, device.events),
     writeRaw: async (raw) => device.setItem(SELECTION_KEY, JSON.stringify(raw)),
     readRaw: async () => JSON.parse(device.getItem(SELECTION_KEY) ?? 'null'),
     untilSettled: async () => undefined,
   };
 });
 
-describe('LokaleAuswahl', () => {
-  describe('neuGelesen', () => {
+describe('LocalSelection', () => {
+  describe('reread', () => {
     it('reads what another tab stored, before its storage event came', () => {
       const device = new SpecStorage();
-      const selection = new LocalSelection(device, device.fenster);
+      const selection = new LocalSelection(device, device.events);
       device.setzeLeise(
         SELECTION_KEY,
         JSON.stringify({ version: 3, teams: { 201500: 1 } })
@@ -79,7 +79,7 @@ describe('LokaleAuswahl', () => {
     });
   });
 
-  describe('abgeben', () => {
+  describe('handOver', () => {
     const MIMI = { kind: 'named', personId: 4711 } as const;
 
     it('takes off what an account took over, leaving what joined meanwhile', async () => {
@@ -118,14 +118,14 @@ describe('LokaleAuswahl', () => {
       const device = new SpecStorage();
       const selection = new LocalSelection(device);
       await selection.follow(313036);
-      const writes = device.schreibvorgaenge;
+      const writes = device.writeCount;
 
       expect(selection.handOver(selection.reread())).toEqual({
         teams: [],
         children: [],
         clubColors: [],
       });
-      expect(device.schreibvorgaenge).toBe(writes + 1);
+      expect(device.writeCount).toBe(writes + 1);
       expect(JSON.parse(device.getItem(SELECTION_KEY) ?? '')).toEqual({
         version: 3,
         teams: {},
@@ -163,18 +163,18 @@ describe('LokaleAuswahl', () => {
     const device = new SpecStorage();
     const selection = new LocalSelection(device);
     await selection.mark({ kind: 'named', personId: 4711 }, 'Mimi');
-    const before = device.schreibvorgaenge;
+    const before = device.writeCount;
 
     await selection.mark({ kind: 'named', personId: 4711 });
     await selection.setNickname(4711, ' Mimi ');
     await selection.unmark(4799);
 
-    expect(device.schreibvorgaenge).toBe(before);
+    expect(device.writeCount).toBe(before);
   });
 
   it('keeps its Kinder as they are where another tab stored the same', async () => {
     const device = new SpecStorage();
-    const selection = new LocalSelection(device, device.fenster);
+    const selection = new LocalSelection(device, device.events);
     await selection.mark({ kind: 'named', personId: 4711 }, 'Mimi');
     const before = selection.children();
 
@@ -207,10 +207,10 @@ describe('LokaleAuswahl', () => {
   });
 
   describe('a full storage', () => {
-    /** Storage that is full until `platzSchaffen` freed it. */
+    /** Storage that is full until `makeRoom` freed it. */
     function fullStorage(): {
-      geraet: SpecStorage;
-      platzSchaffen: ReturnType<typeof vi.fn<() => void>>;
+      storage: SpecStorage;
+      makeRoom: ReturnType<typeof vi.fn<() => void>>;
     } {
       const device = new SpecStorage();
       let full = true;
@@ -224,16 +224,16 @@ describe('LokaleAuswahl', () => {
       const makeRoom = vi.fn(() => {
         full = false;
       });
-      return { geraet: device, platzSchaffen: makeRoom };
+      return { storage: device, makeRoom };
     }
 
     it('has the cached data give way to Meine Teams, and stores them then', async () => {
-      const { geraet, platzSchaffen } = fullStorage();
+      const { storage, makeRoom } = fullStorage();
 
-      await new LocalSelection(geraet, undefined, platzSchaffen).follow(313036);
+      await new LocalSelection(storage, undefined, makeRoom).follow(313036);
 
-      expect(platzSchaffen).toHaveBeenCalledTimes(1);
-      expect(stored(geraet)).toEqual({
+      expect(makeRoom).toHaveBeenCalledTimes(1);
+      expect(stored(storage)).toEqual({
         teams: [313036],
         children: [],
         clubColors: [],
@@ -260,17 +260,17 @@ describe('LokaleAuswahl', () => {
     const device = new SpecStorage();
     const selection = new LocalSelection(device);
     await selection.follow(313036);
-    const before = device.schreibvorgaenge;
+    const before = device.writeCount;
 
     await selection.unfollow(201500);
 
-    expect(device.schreibvorgaenge).toBe(before);
+    expect(device.writeCount).toBe(before);
   });
 
   describe('two tabs on one storage', () => {
     it('shows no Team once the storage was cleared', async () => {
       const device = new SpecStorage();
-      const selection = new LocalSelection(device, device.fenster);
+      const selection = new LocalSelection(device, device.events);
       await selection.follow(313036);
 
       device.removeItem(SELECTION_KEY);
@@ -280,7 +280,7 @@ describe('LokaleAuswahl', () => {
 
     it('keeps its Teams as they are where another tab stored the same', async () => {
       const device = new SpecStorage();
-      const tabA = new LocalSelection(device, device.fenster);
+      const tabA = new LocalSelection(device, device.events);
       await tabA.follow(313036);
       const before = tabA.teams();
 
@@ -294,19 +294,19 @@ describe('LokaleAuswahl', () => {
 
     it('passes over changes to other keys', async () => {
       const device = new SpecStorage();
-      const selection = new LocalSelection(device, device.fenster);
+      const selection = new LocalSelection(device, device.events);
       await selection.follow(313036);
       device.setzeLeise(
         SELECTION_KEY,
         JSON.stringify({ version: 3, teams: { 201500: 1 } })
       );
 
-      device.fenster.dispatchEvent(
+      device.events.dispatchEvent(
         new StorageEvent('storage', { key: 'etwas-anderes' })
       );
       expect(selection.teams()).toEqual([313036]);
 
-      device.fenster.dispatchEvent(
+      device.events.dispatchEvent(
         new StorageEvent('storage', { key: SELECTION_KEY })
       );
       expect(selection.teams()).toEqual([201500]);
@@ -314,7 +314,7 @@ describe('LokaleAuswahl', () => {
 
     it('listens no longer once ended', async () => {
       const device = new SpecStorage();
-      const tabA = new LocalSelection(device, device.fenster);
+      const tabA = new LocalSelection(device, device.events);
       const tabB = new LocalSelection(device);
 
       tabA.stop();
@@ -350,39 +350,39 @@ describe('LokaleAuswahl', () => {
   });
 
   describe('a change that could not be stored', () => {
-    /** Storage that takes no write while `voll`, as a full one. */
+    /** Storage that takes no write while `full`, as a full one. */
     function fullAtTimes(): {
-      geraet: SpecStorage;
-      voll: { an: boolean };
+      storage: SpecStorage;
+      full: { on: boolean };
     } {
       const device = new SpecStorage();
-      const full = { an: false };
+      const full = { on: false };
       const schreiben = device.setItem.bind(device);
       vi.spyOn(device, 'setItem').mockImplementation((key, value) => {
-        if (full.an) {
+        if (full.on) {
           throw new DOMException('full', 'QuotaExceededError');
         }
         schreiben(key, value);
       });
-      return { geraet: device, voll: full };
+      return { storage: device, full };
     }
 
     const LUMI = { kind: 'named', personId: 4711 } as const;
 
     it('is kept for the next change, and stored with it once there is room', async () => {
-      const { geraet, voll } = fullAtTimes();
-      const selection = new LocalSelection(geraet, geraet.fenster);
+      const { storage, full } = fullAtTimes();
+      const selection = new LocalSelection(storage, storage.events);
       await selection.follow(313036);
-      voll.an = true;
+      full.on = true;
 
       await selection.mark(LUMI, 'Lu');
-      voll.an = false;
+      full.on = false;
       await selection.follow(201500);
 
       expect(selection.children()).toEqual([
         { personId: 4711, nickname: 'Lu' },
       ]);
-      expect(stored(geraet)).toEqual({
+      expect(stored(storage)).toEqual({
         teams: [313036, 201500],
         children: [{ personId: 4711, nickname: 'Lu' }],
         clubColors: [],
@@ -390,30 +390,30 @@ describe('LokaleAuswahl', () => {
     });
 
     it('restores a Team at its place while nothing can be stored', async () => {
-      const { geraet, voll } = fullAtTimes();
-      const selection = new LocalSelection(geraet, geraet.fenster);
+      const { storage, full } = fullAtTimes();
+      const selection = new LocalSelection(storage, storage.events);
       await selection.follow(313036);
       await selection.follow(201765);
       await selection.follow(201500);
-      voll.an = true;
+      full.on = true;
 
       const place = await selection.unfollow(201765);
       await selection.follow(201765, place);
 
       expect(selection.teams()).toEqual([313036, 201765, 201500]);
-      voll.an = false;
+      full.on = false;
       await selection.mark(LUMI);
-      expect(stored(geraet).teams).toEqual([313036, 201765, 201500]);
+      expect(stored(storage).teams).toEqual([313036, 201765, 201500]);
     });
 
     it('is dropped once another tab stored a newer version, which shows nothing', async () => {
-      const { geraet, voll } = fullAtTimes();
-      const selection = new LocalSelection(geraet, geraet.fenster);
-      voll.an = true;
+      const { storage, full } = fullAtTimes();
+      const selection = new LocalSelection(storage, storage.events);
+      full.on = true;
       await selection.mark(LUMI);
-      voll.an = false;
+      full.on = false;
 
-      geraet.setItem(
+      storage.setItem(
         SELECTION_KEY,
         JSON.stringify({ version: 99, teams: [201500] })
       );
@@ -423,12 +423,12 @@ describe('LokaleAuswahl', () => {
     });
 
     it("keeps what another tab stored meanwhile, with this tab's change", async () => {
-      const { geraet, voll } = fullAtTimes();
-      const tabA = new LocalSelection(geraet, geraet.fenster);
-      const tabB = new LocalSelection(geraet);
-      voll.an = true;
+      const { storage, full } = fullAtTimes();
+      const tabA = new LocalSelection(storage, storage.events);
+      const tabB = new LocalSelection(storage);
+      full.on = true;
       await tabA.mark(LUMI);
-      voll.an = false;
+      full.on = false;
 
       await tabB.follow(201500);
 
@@ -437,7 +437,7 @@ describe('LokaleAuswahl', () => {
       expect(tabA.children()).toEqual([{ personId: 4711 }]);
 
       await tabA.follow(313036);
-      expect(stored(geraet)).toEqual({
+      expect(stored(storage)).toEqual({
         teams: [201500, 313036],
         children: [{ personId: 4711 }],
         clubColors: [],
@@ -452,5 +452,44 @@ describe('LokaleAuswahl', () => {
     await selection.follow(201500);
 
     expect(selection.teams()).toEqual([313036, 201500]);
+  });
+});
+
+describe('a selection stored before #3010', () => {
+  // byte for byte as the adapter wrote it before its identifiers became
+  // English: version 3's fields stay as stored
+  const STORED =
+    '{"version":3,"teams":{"313036":1000,"201500":2000},"children":{"4711":{"since":1500,"nickname":"Mimi"},"4712":{"since":1600}},"clubColors":{"4242":"#c8102e,#1d4ed8"}}';
+
+  it('reads every list as it was stored', () => {
+    const device = new SpecStorage();
+    device.setItem(SELECTION_KEY, STORED);
+    const selection = new LocalSelection(device);
+
+    expect(selection.teams()).toEqual([313036, 201500]);
+    expect(selection.children()).toEqual([
+      { personId: 4711, nickname: 'Mimi' },
+      { personId: 4712 },
+    ]);
+    expect(selection.clubColors()).toEqual([
+      { clubId: 4242, primary: '#c8102e', secondary: '#1d4ed8' },
+    ]);
+  });
+
+  it('keeps the stored spellings when it writes a change', async () => {
+    const device = new SpecStorage();
+    device.setItem(SELECTION_KEY, STORED);
+
+    await new LocalSelection(device).unfollow(201500);
+
+    expect(JSON.parse(device.getItem(SELECTION_KEY) ?? 'null')).toEqual({
+      version: 3,
+      teams: { 313036: 1000 },
+      children: {
+        4711: { since: 1500, nickname: 'Mimi' },
+        4712: { since: 1600 },
+      },
+      clubColors: { 4242: '#c8102e,#1d4ed8' },
+    });
   });
 });

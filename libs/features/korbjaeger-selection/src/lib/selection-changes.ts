@@ -21,14 +21,14 @@ import { SelectionFullError } from './selection-errors';
 import { childWith, type MarkablePlayer } from './child';
 
 /**
- * A change of an `Auswahl`, as every adapter applies it to what it read:
- * the same `inhalt` back where it changes nothing, so an adapter can tell
+ * A change of a `Selection`, as every adapter applies it to what it read:
+ * the same `content` back where it changes nothing, so an adapter can tell
  * that nothing is to be stored.
  */
 export type SelectionChange = (content: SelectionContent) => SelectionContent;
 
 /**
- * Follows `team`, unless it is followed: at `platz`, its old place, else at
+ * Follows `team`, unless it is followed: at `place`, its old place, else at
  * the end of Meine Teams, where the write gives it a new `since`
  * (`withEntryAt`).
  */
@@ -48,8 +48,8 @@ export function unfollowChange(team: TeamId): SelectionChange {
 }
 
 /**
- * The place `team` has in `inhalt`; none where it is not followed, or its
- * `seit` is not known yet.
+ * The place `team` has in `content`; none where it is not followed, or its
+ * `since` is not known yet.
  */
 export function teamPlace(
   content: SelectionContent,
@@ -60,7 +60,7 @@ export function teamPlace(
 }
 
 /**
- * Marks `spieler` with `spitzname`, at the end, where the write gives it a
+ * Marks `player` with `nickname`, at the end, where the write gives it a
  * new `since`, unless marked already.
  */
 export function markChange(
@@ -73,7 +73,7 @@ export function markChange(
       : withEntryAt('children', content, childWith(player.personId, nickname));
 }
 
-/** Gives the Kind `person` the Spitzname `spitzname`, if it is marked. */
+/** Gives the Kind `person` the Spitzname `nickname`, if it is marked. */
 export function nicknameChange(
   person: PersonId,
   nickname: string | undefined
@@ -94,8 +94,8 @@ export function nicknameChange(
 }
 
 /**
- * Sets the colours of `verein` to `farben` (as stored: `vereinsfarbenAus`,
- * which throws `KeineFarbeError` for what is no colour), in place of any
+ * Sets the colours of `club` to `colors` (as stored: `clubColorsOf`,
+ * which throws `NotAColorError` for what is no colour), in place of any
  * it has.
  */
 export function clubColorsChange(
@@ -118,7 +118,7 @@ export function clubColorsChange(
   };
 }
 
-/** Takes the colours of `verein` away, so the app's own apply again. */
+/** Takes the colours of `club` away, so the app's own apply again. */
 export function resetClubColorsChange(club: ClubId): SelectionChange {
   return (content) => {
     const others = content.clubColors.filter(({ clubId }) => clubId !== club);
@@ -129,7 +129,7 @@ export function resetClubColorsChange(club: ClubId): SelectionChange {
 }
 
 /**
- * Takes what `abgegeben` holds out: each list's entries as they were (one
+ * Takes what `handedOver` holds out: each list's entries as they were (one
  * changed since, a Kind's Spitzname or a Verein's colours, stays). What
  * joined since stays too.
  */
@@ -161,8 +161,8 @@ export function unmarkChange(person: PersonId): SelectionChange {
 }
 
 /**
- * Refuses `nachher` where a change made a list longer than its cap
- * (`AUSWAHL_GRENZEN`), with `AuswahlVollError`. A list already over it (as
+ * Refuses `after` where a change made a list longer than its cap
+ * (`SELECTION_LIMITS`), with `SelectionFullError`. A list already over it (as
  * read) may still shrink.
  */
 export function checkLimits(
@@ -179,7 +179,7 @@ export function checkLimits(
   }
 }
 
-/** What `gelesen` holds; nothing for no document or a newer version's. */
+/** What `read` holds; nothing for no document or a newer version's. */
 export function contentOf(read: ReadDocument): SelectionContent {
   return read.kind === 'current' ? read : EMPTY_SELECTION;
 }

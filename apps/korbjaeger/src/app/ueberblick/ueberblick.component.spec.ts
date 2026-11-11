@@ -175,7 +175,7 @@ function fakeData(
 
 /**
  * Renders the overview on `data`, following `gefolgt` (or with that
- * `Auswahl`), once the reads that settle have settled.
+ * `Selection`), once the reads that settle have settled.
  */
 async function render(
   data: Pick<KorbjaegerData, 'teamGames' | 'game' | 'clubTeams' | 'gameReport'>,

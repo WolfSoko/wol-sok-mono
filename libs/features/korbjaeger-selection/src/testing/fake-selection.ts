@@ -2,8 +2,8 @@ import { signal } from '@angular/core';
 import type { Selection } from '../lib/selection';
 
 /**
- * An `Auswahl` for a spec that needs one to behave in a way no adapter
- * does (a change failing, nothing read yet): `teile` as given, the rest
+ * A `Selection` for a spec that needs one to behave in a way no adapter
+ * does (a change failing, nothing read yet): `parts` as given, the rest
  * with nothing followed or marked and every change resolving.
  */
 export function fakeSelection(parts: Partial<Selection> = {}): Selection {

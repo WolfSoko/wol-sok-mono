@@ -54,7 +54,7 @@ import type { Child, MarkablePlayer } from './child';
 
 /**
  * The document of the Elternteil `uid` in `firestore`, in the collection of
- * the signed-in Elternteile's `AuswahlDokument`s.
+ * the signed-in Elternteile's `SelectionDocument`s.
  */
 export function selectionDocumentOf(
   firestore: Firestore,
@@ -64,7 +64,7 @@ export function selectionDocumentOf(
 }
 
 /**
- * What a write of `felder` sets, merged (`{ merge: true }`) into the
+ * What a write of `fields` sets, merged (`{ merge: true }`) into the
  * document: the version and each entry by its id, `deleteField()` for one
  * that goes. The server merges it with whatever another device wrote.
  */
@@ -97,24 +97,24 @@ const NO_DOCUMENT: ReadDocument & { readonly kind: 'current' } = {
   latestSince: 0,
 };
 
-/** What `FirestoreAuswahl` takes beside its document. */
+/** What `FirestoreSelection` takes beside its document. */
 export interface FirestoreSelectionOptions {
   /** Hears of the listener's failure, a refusal of the rules among them. */
   readonly onError?: (error: unknown) => void;
 }
 
 /**
- * The `Auswahl` of a signed-in Elternteil: their `AuswahlDokument` in
+ * The `Selection` of a signed-in Elternteil: their `SelectionDocument` in
  * Firestore, `selections/{uid}`, the same on every device signed in with the
  * account.
  * - It shows what the document holds, as Firestore tells it (other devices'
- *   changes too, until `beenden`), with this device's changes on top until
- *   the server took or refused them; `teams` and `kinder` are `undefined`
- *   until the first answer (`geladen`). Where the listener fails, they are
- *   `undefined` again (what was read may be stale), `nichtLesbar` is set,
- *   `beiFehler` hears of it and every change is refused, as after
- *   `beenden`.
- * - A change writes only the entries it changes, by id (`auswahlFelder`),
+ *   changes too, until `stop`), with this device's changes on top until
+ *   the server took or refused them; `teams` and `children` are `undefined`
+ *   until the first answer (`loaded`). Where the listener fails, they are
+ *   `undefined` again (what was read may be stale), `unreadable` is set,
+ *   `onError` hears of it and every change is refused, as after
+ *   `stop`.
+ * - A change writes only the entries it changes, by id (`selectionFields`),
  *   merged by the server into the document as it is then: online or
  *   offline (sent once online) alike, so no device's change overwrites
  *   another's, and no network check is needed. It resolves once written to
@@ -122,8 +122,8 @@ export interface FirestoreSelectionOptions {
  *   meanwhile), Firestore takes it back and the listener shows the
  *   account's.
  * - A document that is none counts as empty; a newer version's is left
- *   alone, every change rejected with `AuswahlZuNeuError`; a change over a
- *   cap, as far as the device knows, is refused with `AuswahlVollError`.
+ *   alone, every change rejected with `SelectionTooNewError`; a change over a
+ *   cap, as far as the device knows, is refused with `SelectionFullError`.
  */
 export class FirestoreSelection implements Selection {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
@@ -249,14 +249,14 @@ export class FirestoreSelection implements Selection {
   }
 
   /**
-   * Applies `aenderung` to what the device shows, once read, and writes the
+   * Applies `change` to what the device shows, once read, and writes the
    * entries it changes; shown at once, until the server answered.
    */
   private change(change: SelectionChange): Promise<void> {
     return this.run(change, () => undefined);
   }
 
-  /** As `aendern`, resolving with `ergebnis` of the state it applied to. */
+  /** As `change`, resolving with `result` of the state it applied to. */
   private run<T>(
     change: SelectionChange,
     result: (before: SelectionContent) => T
@@ -274,7 +274,7 @@ export class FirestoreSelection implements Selection {
     }
   }
 
-  /** Writes what `aenderung` changes; returns the state it applied to. */
+  /** Writes what `change` changes; returns the state it applied to. */
   private write(change: SelectionChange): SelectionContent {
     const read = this.readDocument();
     if (read?.kind !== 'current') {

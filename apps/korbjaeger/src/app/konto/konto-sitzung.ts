@@ -89,8 +89,8 @@ const NICHT_ERLAUBT = 'permission-denied';
 const UEBERNAHMEN_HOECHSTENS = 3;
 
 /**
- * The account of an Elternteil and the `Auswahl` that goes with it: the
- * device's (`LokaleAuswahl`) signed out, the account's (`KontoAuswahl`)
+ * The account of an Elternteil and the `Selection` that goes with it: the
+ * device's (`LocalSelection`) signed out, the account's (`KontoAuswahl`)
  * signed in. Firebase is loaded (`laden`) only to sign in (`vorbereiten`,
  * once the settings open) or to open the account of an Elternteil signed
  * in before (`merker`), so a visitor without an account never contacts
@@ -105,7 +105,7 @@ const UEBERNAHMEN_HOECHSTENS = 3;
  */
 export class KontoSitzung {
   public readonly stand: Signal<KontoStand>;
-  /** The screens' `Auswahl`: whichever holds Meine Teams and Kinder now. */
+  /** The screens' `Selection`: whichever holds Meine Teams and Kinder now. */
   public readonly auswahl: Selection;
   /**
    * Whether Firebase is loaded, so a click opens Google's popup at once:
@@ -572,7 +572,7 @@ export class KontoSitzung {
   }
 }
 
-/** The `Auswahl` that holds the choices now; nothing while none does yet. */
+/** The `Selection` that holds the choices now; nothing while none does yet. */
 class AktuelleAuswahl implements Selection {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
   public readonly children: Signal<readonly Child[] | undefined>;
@@ -630,7 +630,7 @@ class AktuelleAuswahl implements Selection {
     return this.mit((auswahl) => auswahl.resetClubColors(verein));
   }
 
-  /** Changes only once `teams` is read, as `Auswahl` asks. */
+  /** Changes only once `teams` is read, as `Selection` asks. */
   private mit<T>(aendern: (auswahl: Selection) => Promise<T>): Promise<T> {
     const auswahl = this.aktuell();
     return auswahl === undefined || this.teams() === undefined

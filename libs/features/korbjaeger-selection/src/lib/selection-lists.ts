@@ -9,7 +9,7 @@ import { compareBySince } from './selection-entries';
  * Every list's descriptor, by the list: what an entry is, what a change
  * writes of one and the document's field that stores it, each taken from
  * here (`ListValue`, `ListField`, `ListDocumentField`). A new list gets its
- * descriptor here, its cap in `AUSWAHL_GRENZEN` and its rules.
+ * descriptor here, its cap in `SELECTION_LIMITS` and its rules.
  */
 const DESCRIPTORS = {
   teams: TEAMS,
@@ -17,7 +17,7 @@ const DESCRIPTORS = {
   clubColors: CLUB_COLORS,
 } as const;
 
-/** The lists of an `Auswahl`. */
+/** The lists of a `Selection`. */
 export type SelectionList = keyof typeof DESCRIPTORS;
 
 /**
@@ -63,7 +63,7 @@ export const LIST_DESCRIPTORS: {
 } = DESCRIPTORS;
 
 /**
- * How many Teams, Kinder and Vereine with colours an `Auswahl` holds at
+ * How many Teams, Kinder and Vereine with colours a `Selection` holds at
  * most: the Firestore rules (`firestore.rules`) refuse more, and their spec
  * checks these numbers.
  */
@@ -74,7 +74,7 @@ export const SELECTION_LIMITS = {
 } as const satisfies Record<SelectionList, number>;
 
 /**
- * Every list of an `Auswahl`, in `LIST_DESCRIPTORS`' order, which is the
+ * Every list of a `Selection`, in `LIST_DESCRIPTORS`' order, which is the
  * order a change gives out `since` values; taken from the table, so a list
  * it holds is never left out of a loop.
  */
@@ -95,7 +95,7 @@ export type SelectionLists = {
 };
 
 /**
- * What an `Auswahl` holds: Meine Teams and the marked Kinder, each once,
+ * What a `Selection` holds: Meine Teams and the marked Kinder, each once,
  * and the Vereine's colours, one entry a Verein, by its id.
  */
 export interface SelectionContent extends SelectionLists {
@@ -114,7 +114,7 @@ export type SinceByList = {
   readonly [L in SelectionList]?: ReadonlyMap<number, number>;
 };
 
-/** An `Auswahl` that holds nothing. */
+/** A `Selection` that holds nothing. */
 export const EMPTY_SELECTION: SelectionContent = everyList<SelectionLists>(
   () => []
 );

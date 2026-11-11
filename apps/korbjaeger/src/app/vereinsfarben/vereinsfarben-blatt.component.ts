@@ -31,7 +31,7 @@ export interface VereinsfarbenBlattDaten {
 /**
  * The bottom sheet "Vereinsfarben" (#2918): a Verein's colour and an
  * optional second one, from presets or the colour picker, with a preview
- * of how the app looks in them; "Übernehmen" stores them in the `Auswahl`,
+ * of how the app looks in them; "Übernehmen" stores them in the `Selection`,
  * "Zurücksetzen" takes them away, so the app's own apply again. A failed
  * change says why and keeps the sheet open.
  */

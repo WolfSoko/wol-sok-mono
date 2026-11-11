@@ -6,13 +6,13 @@ import {
   type ListValue,
 } from './selection-lists';
 
-/** A signal of each list of an `Auswahl`, `U` where it has none to tell. */
+/** A signal of each list of a `Selection`, `U` where it has none to tell. */
 export type ListSignals<U = never> = {
   readonly [L in SelectionList]: Signal<readonly ListValue<L>[] | U>;
 };
 
 /**
- * A signal of each list, read by `lesen`, which tells only when the list
+ * A signal of each list, read by `read`, which tells only when the list
  * changed by its descriptor's equality: an equal list read anew changes
  * nothing downstream.
  */

@@ -40,7 +40,7 @@ import type { Child, MarkablePlayer } from './child';
 import { isStorageFull } from '@wolsok/utils-browser-storage';
 import { SelectionTooNewError } from './selection-errors';
 
-/** The key of the `AuswahlDokument` in the device's storage. */
+/** The key of the `SelectionDocument` in the device's storage. */
 export const SELECTION_KEY = 'korbjaeger-selection';
 
 /** The part of the device's storage (`localStorage`) the adapter uses. */
@@ -53,21 +53,21 @@ export type WindowEvents = Pick<
 >;
 
 /**
- * The `Auswahl` on the device, for Elternteile without an account.
- * - It reads the stored `AuswahlDokument` at start, whenever another tab
- *   changed it (the `storage` event on `fenster`, until `beenden`), and
+ * The `Selection` on the device, for Elternteile without an account.
+ * - It reads the stored `SelectionDocument` at start, whenever another tab
+ *   changed it (the `storage` event on `events`, until `stop`), and
  *   again before each write, so two tabs keep each other's changes.
  * - A document that cannot be read or is none counts as empty; fields it
  *   does not know are kept on a write.
  * - A document of a newer version is left alone: no Team is followed, no
- *   Kind marked, and every change rejects with `AuswahlZuNeuError`.
- * - A change over a list's cap (`AUSWAHL_GRENZEN`) rejects with
- *   `AuswahlVollError`, nothing stored.
+ *   Kind marked, and every change rejects with `SelectionTooNewError`.
+ * - A change over a list's cap (`SELECTION_LIMITS`) rejects with
+ *   `SelectionFullError`, nothing stored.
  * - Each change reads and writes at once, in the call: stored before it
  *   returns, so leaving the page right after keeps it.
- * - Where the storage is full, it has `platzSchaffen` free it (of the
+ * - Where the storage is full, it has `makeRoom` free it (of the
  *   cached DBB answers) and tries once more. A change it still could not
- *   store (private mode, full, no storage) is kept as `offen`: applied on
+ *   store (private mode, full, no storage) is kept as `pending`: applied on
  *   top of what is read (another tab's changes too) until a write takes
  *   it, so it lasts at least for this visit.
  */
@@ -103,7 +103,7 @@ export class LocalSelection implements Selection {
     private readonly events?: WindowEvents,
     private readonly makeRoom: () => void = () => undefined
   ) {
-    // read at once, so `teams` and `kinder` are never undefined here
+    // read at once, so `teams` and `children` are never undefined here
     this.show(this.read());
     const signals = listSignals((list) => this.content()[list]);
     this.teams = signals.teams;
@@ -145,7 +145,7 @@ export class LocalSelection implements Selection {
 
   /**
    * Reads the stored selection now, not waiting for another tab's `storage`
-   * event, with the changes still `offen`: what a sign-in takes over.
+   * event, with the changes still `pending`: what a sign-in takes over.
    */
   public reread(): SelectionContent {
     this.show(this.read());
@@ -154,7 +154,7 @@ export class LocalSelection implements Selection {
   }
 
   /**
-   * Takes `uebernommen` off the device, once an account holds it, and
+   * Takes `takenOver` off the device, once an account holds it, and
    * returns what stays: what joined since it was read (here or in another
    * tab) is left. One read and write, as every change is, which leaves an
    * empty document where nothing stays: it shrinks what is stored, so a
@@ -170,13 +170,13 @@ export class LocalSelection implements Selection {
     this.events?.removeEventListener('storage', this.onStorageChange);
   }
 
-  /** Runs `aenderung` now (`aendernJetzt`), its failure as the rejection. */
+  /** Runs `change` now (`changeNow`), its failure as the rejection. */
   private change(change: SelectionChange): Promise<void> {
     return this.run(change, () => undefined);
   }
 
   /**
-   * Runs `aenderung` now, resolving with `ergebnis` of the state it applied
+   * Runs `change` now, resolving with `result` of the state it applied
    * to; its failure as the rejection.
    */
   private run<T>(
@@ -191,9 +191,9 @@ export class LocalSelection implements Selection {
   }
 
   /**
-   * Applies `aenderung` to what is stored now, with the changes still
-   * `offen`, and stores the result where it changed anything or something
-   * was still to be stored. Returns the state it applied `aenderung` to:
+   * Applies `change` to what is stored now, with the changes still
+   * `pending`, and stores the result where it changed anything or something
+   * was still to be stored. Returns the state it applied `change` to:
    * read from storage at once, so it has the `since` of every stored entry.
    */
   private changeNow(change: SelectionChange): SelectionContent {
@@ -219,7 +219,7 @@ export class LocalSelection implements Selection {
   }
 
   /**
-   * Shows what `gelesen` holds, with the changes still `offen`; a newer
+   * Shows what `read` holds, with the changes still `pending`; a newer
    * version's document shows nothing, and those changes are dropped, as
    * they could never be stored over it.
    */
@@ -230,7 +230,7 @@ export class LocalSelection implements Selection {
     this.content.set(this.withPending(contentOf(read)));
   }
 
-  /** `inhalt` with the changes still `offen` applied, in their order. */
+  /** `content` with the changes still `pending` applied, in their order. */
   private withPending(content: SelectionContent): SelectionContent {
     return this.pending.reduce((state, change) => change(state), content);
   }
@@ -244,7 +244,7 @@ export class LocalSelection implements Selection {
     }
   }
 
-  /** Stores `dokument`; whether the device took it. */
+  /** Stores `toStore`; whether the device took it. */
   private write(toStore: unknown): boolean {
     if (this.storage === undefined) {
       return false;

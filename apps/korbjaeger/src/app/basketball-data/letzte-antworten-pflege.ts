@@ -7,8 +7,8 @@ import { geraeteSpeicher } from '../geraete-speicher';
 import { SPEICHERBARE_ARTEN } from './proxy-transport';
 
 /**
- * The device's last good answers (`LokaleLetzteAntworten`), kept clear of
- * answers too old and of kinds no longer kept (`antwortenPflegen`: at the
+ * The device's last good answers (`LocalAnswerCache`), kept clear of
+ * answers too old and of kinds no longer kept (`maintainAnswerCache`: at the
  * start, whenever the page comes back into view, and hourly while it stays
  * open); until the app ends.
  */

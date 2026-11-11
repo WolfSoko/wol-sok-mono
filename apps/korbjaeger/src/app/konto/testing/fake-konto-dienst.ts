@@ -20,7 +20,7 @@ export const MIMI_ELTERN: Benutzer = { uid: 'uid-1', name: 'Familie Muster' };
 
 /**
  * A `KontoDienst` for specs: it logs its calls in order (`aufrufe`) and has
- * switches for its faults; the account's selection is a `fakeAuswahl`, and
+ * switches for its faults; the account's selection is a `fakeSelection`, and
  * `authMeldet` plays Auth telling of another tab's sign-in or sign-out.
  */
 export class FakeKontoDienst implements KontoDienst {
@@ -163,7 +163,7 @@ export class FakeKontoDienst implements KontoDienst {
     await this.zwischenspeicherBereit;
   }
 
-  /** An account's selection: Teams followed stay; the rest as `fakeAuswahl`. */
+  /** An account's selection: Teams followed stay; the rest as `fakeSelection`. */
   private neueAuswahl(): KontoAuswahl {
     const teams = signal<readonly TeamId[]>([]);
     return {

@@ -14,13 +14,13 @@ import {
 /** The device's Teams, Kinder and Vereinsfarben that did not fit into the account. */
 export type NotTakenOver = SelectionContent;
 
-/** What `zusammenfuehren` gives: the account's choices, and what was left out. */
+/** What `mergeSelections` gives: the account's choices, and what was left out. */
 export interface SelectionMerge {
   readonly content: SelectionContent;
   readonly left: NotTakenOver;
 }
 
-/** One list of a `Zusammenfuehrung`. */
+/** One list of a `SelectionMerge`. */
 interface JoinedList<W> {
   readonly list: readonly W[];
   readonly left: readonly W[];
@@ -30,9 +30,9 @@ interface JoinedList<W> {
  * What an account holds once the device's choices joined it at sign-in,
  * list by list: the account's entries, each completed from the device's
  * where its descriptor does (a missing Spitzname), then the device's
- * others, only up to the caps (`AUSWAHL_GRENZEN`), in their order (or the
- * list's own: Vereinsfarben by Verein), the ones left out in `uebrig`.
- * Each list, and `konto` itself, comes back as it was where the device adds
+ * others, only up to the caps (`SELECTION_LIMITS`), in their order (or the
+ * list's own: Vereinsfarben by Verein), the ones left out in `left`.
+ * Each list, and `account` itself, comes back as it was where the device adds
  * nothing, so a second sign-in with the same choices changes nothing
  * (idempotent).
  */

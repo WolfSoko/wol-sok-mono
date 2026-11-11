@@ -23,7 +23,7 @@ describe('the colours as stored text', () => {
   });
 });
 
-describe('nachVerein', () => {
+describe('byClub', () => {
   it('orders by the Verein id, leaving the list as it was', () => {
     const list = [
       { clubId: 4343, primary: '#1d4ed8' },

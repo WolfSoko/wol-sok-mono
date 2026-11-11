@@ -37,8 +37,8 @@ import {
 /**
  * The app's Firestore rules (`../firestore.rules`) on the emulator: one
  * `selections/{uid}` per signed-in Elternteil, only theirs, with only the
- * fields the `Auswahl` stores (ADR 0019) and maps capped as the app caps
- * them (`AUSWAHL_GRENZEN`).
+ * fields the `Selection` stores (ADR 0019) and maps capped as the app caps
+ * them (`SELECTION_LIMITS`).
  */
 let env: RulesTestEnvironment;
 
