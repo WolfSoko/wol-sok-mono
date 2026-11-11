@@ -50,13 +50,6 @@ export function googleUser(uid: string, name: string): FakeUser {
   };
 }
 
-/** The token a user holds unless a spec gives them another: plain Google. */
-export const PLAIN_GOOGLE_TOKEN: FakeToken = Object.freeze({
-  claims: { email_verified: true },
-  signInProvider: 'google.com',
-  authTime: new Date(FAKE_AUTH_TIME).toUTCString(),
-});
-
 /**
  * A token with these claims, signed in with Google at
  * {@link FAKE_AUTH_TIME} unless `signInProvider` or `authTime` (ms since
@@ -65,7 +58,7 @@ export const PLAIN_GOOGLE_TOKEN: FakeToken = Object.freeze({
 export function fakeToken(
   claims: Record<string, unknown>,
   {
-    signInProvider = PLAIN_GOOGLE_TOKEN.signInProvider,
+    signInProvider = 'google.com',
     authTime = FAKE_AUTH_TIME,
   }: { signInProvider?: string | null; authTime?: number } = {}
 ): FakeToken {
@@ -75,6 +68,11 @@ export function fakeToken(
     authTime: new Date(authTime).toUTCString(),
   };
 }
+
+/** The token a user holds unless a spec gives them another: plain Google. */
+export const PLAIN_GOOGLE_TOKEN: FakeToken = Object.freeze(
+  fakeToken({ email_verified: true })
+);
 
 type UserListener = (user: FakeUser | null) => void;
 

@@ -19,4 +19,4 @@ export {
   googleUser,
   guestUser,
 } from './testing/fake-firebase-auth';
-export type { FakeToken, FakeUser } from './testing/fake-firebase-auth';
+export type { FakeUser } from './testing/fake-firebase-auth';

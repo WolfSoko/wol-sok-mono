@@ -72,13 +72,11 @@ describe('FakeFirebaseAuth', () => {
     await expect(auth.authStateReady()).resolves.toBeUndefined();
   });
 
-  it('dates a plain Google token an hour before the server time', () => {
+  it('dates a token an hour before the server time by default', () => {
     expect(FAKE_SERVER_TIME - FAKE_AUTH_TIME).toBe(3_600_000);
-    expect(PLAIN_GOOGLE_TOKEN).toEqual({
-      claims: { email_verified: true },
-      signInProvider: 'google.com',
-      authTime: new Date(FAKE_AUTH_TIME).toUTCString(),
-    });
+    expect(PLAIN_GOOGLE_TOKEN.authTime).toBe(
+      new Date(FAKE_AUTH_TIME).toUTCString()
+    );
   });
 
   it('builds a token with the plain Google defaults, overridden where given', () => {

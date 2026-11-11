@@ -1,5 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import {
+  FAKE_AUTH_TIME,
   FakeFirebase,
   type FakeUser,
   fakeToken,
@@ -9,17 +10,18 @@ import {
 } from '@wolsok/feat-lazy-bac-game/testing';
 import { AdminAccessService } from './admin-access.service';
 
-const NOW = Date.UTC(2026, 9, 25, 12);
+/** A minute after the fake's sign-in. */
+const NOW = FAKE_AUTH_TIME + 60_000;
 
 /** Auth with one user, whose token carries `claims`. */
 function connect(
   user: FakeUser | null,
   claims: Record<string, unknown> = {},
-  { provider = 'google.com', authTime = NOW - 60_000 } = {}
+  tokenOptions: Parameters<typeof fakeToken>[1] = {}
 ) {
   const fake = new FakeFirebase();
   const auth = fake.auth;
-  const token = fakeToken(claims, { signInProvider: provider, authTime });
+  const token = fakeToken(claims, tokenOptions);
   auth.become(user);
   // The token a Google sign-in as the owner brings, too.
   auth.tokens.set('owner', token);
@@ -59,7 +61,9 @@ describe('AdminAccessService', () => {
     ['an unverified email', { admin: true }, 'google.com'],
     ['another sign-in provider', OWNER, 'password'],
   ])('refuses %s', async (_, claims, provider) => {
-    connect(googleUser('someone', 'Someone'), claims, { provider });
+    connect(googleUser('someone', 'Someone'), claims, {
+      signInProvider: provider,
+    });
     const access = TestBed.inject(AdminAccessService);
 
     expect(await access.check()).toBe('no-access');
