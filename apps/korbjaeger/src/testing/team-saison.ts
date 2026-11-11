@@ -1,6 +1,7 @@
 import type {
   Game,
   GameStatus,
+  League,
   TeamSeason,
 } from '@wolsok/feat-shared-basketball-data';
 
@@ -11,6 +12,16 @@ export const WASBUETTEL_RST = {
   clubId: 1837,
 };
 const GIFHORN = { id: 201500, name: 'MTV Gifhorn', clubId: 201500 };
+
+/** The Liga of every `spielOn`. */
+const LIGA: League = {
+  id: 54862,
+  name: 'Regionsvorrunde Nord',
+  association: { id: 7, name: 'Niedersachsen' },
+  ageGroup: 'U12',
+  gender: 'mixed',
+  division: 'Kreisliga',
+};
 
 /** A result, confirmed. */
 export const PLAYED: GameStatus = {
@@ -27,7 +38,7 @@ export function spielOn(
 ): Game {
   return {
     id,
-    leagueId: 54862,
+    leagueId: LIGA.id,
     matchday: 1,
     date: datum,
     home: { kind: 'team', team: WASBUETTEL_RST },
@@ -44,4 +55,16 @@ export function saisonOf(...spiele: Game[]): TeamSeason {
     leagues: [],
     games: spiele,
   };
+}
+
+/**
+ * `saison` listing the Liga `ligaId` (by default that of `spielOn`) as one
+ * the DBB keeps no Spielberichte for.
+ */
+export function inLigaWithoutGameReports(
+  saison: TeamSeason,
+  ligaId: number = LIGA.id
+): TeamSeason {
+  const liga: League = { ...LIGA, id: ligaId, withoutGameReports: true };
+  return { ...saison, leagues: [liga] };
 }
