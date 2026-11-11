@@ -13,7 +13,10 @@ describe('detectLanguage', () => {
 });
 
 describe('I18nService', () => {
-  afterEach(() => localStorage.clear());
+  afterEach(() => {
+    localStorage.clear();
+    jest.restoreAllMocks();
+  });
 
   function create(): I18nService {
     TestBed.configureTestingModule({});
@@ -40,6 +43,26 @@ describe('I18nService', () => {
     expect(localStorage.getItem(LANGUAGE_STORAGE_KEY)).toBe('de');
     expect(document.documentElement.lang).toBe('de');
     expect(i18n.pick({ en: 'cat', de: 'Katze' })).toBe('Katze');
+  });
+
+  it.each(['SecurityError', 'QuotaExceededError'])(
+    'speaks a choice for the visit where storage refuses it (%s)',
+    (name) => {
+      jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('refused', name);
+      });
+      const i18n = create();
+      i18n.setLanguage('de');
+      expect(i18n.language()).toBe('de');
+    }
+  );
+
+  it('starts without a choice where reading the storage is blocked', () => {
+    localStorage.setItem(LANGUAGE_STORAGE_KEY, 'de');
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+    expect(create().language()).toBe(detectLanguage(navigator.languages));
   });
 
   it('fills placeholders formatted for the locale', () => {

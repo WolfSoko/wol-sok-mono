@@ -3,7 +3,7 @@ import {
   maintainAnswerCache,
   LocalAnswerCache,
 } from '@wolsok/feat-korbjaeger-answers';
-import { geraeteSpeicher } from '../geraete-speicher';
+import { deviceStorage } from '@wolsok/utils-browser-storage';
 import { SPEICHERBARE_ARTEN } from './proxy-transport';
 
 /**
@@ -17,7 +17,7 @@ export const LETZTE_ANTWORTEN = new InjectionToken<LocalAnswerCache>(
   {
     providedIn: 'root',
     factory: () => {
-      const antworten = new LocalAnswerCache(geraeteSpeicher());
+      const antworten = new LocalAnswerCache(deviceStorage());
       const stoppen = maintainAnswerCache(antworten, {
         document: inject(DOCUMENT),
         kinds: SPEICHERBARE_ARTEN,

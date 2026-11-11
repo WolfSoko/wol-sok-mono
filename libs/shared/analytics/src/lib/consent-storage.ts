@@ -1,20 +1,19 @@
+import {
+  deviceStorage,
+  readStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
 import { ConsentChoice } from './consent';
 
+/** The stored choice; null where none is stored or storage is withheld. */
 export function loadChoice(storageKey: string): ConsentChoice | null {
-  try {
-    const stored = localStorage.getItem(storageKey);
-    return stored === 'granted' || stored === 'denied' ? stored : null;
-  } catch {
-    return null;
-  }
+  const stored = readStored(storageKey, deviceStorage());
+  return stored === 'granted' || stored === 'denied' ? stored : null;
 }
 
+/** Keeps `choice`; where storage is withheld it is asked again next visit. */
 export function saveChoice(storageKey: string, choice: ConsentChoice): void {
-  try {
-    localStorage.setItem(storageKey, choice);
-  } catch {
-    // storage unavailable (private mode, quota): asked again on the next visit
-  }
+  writeStored(storageKey, choice, deviceStorage());
 }
 
 /** The client ids gtag.js stores: `_ga`, `_ga_<container>`. */

@@ -31,4 +31,14 @@ describe('the device flags', () => {
     ).not.toThrow();
     expect(flagGesetzt(undefined, ANGEMELDET_SCHLUESSEL)).toBe(false);
   });
+
+  it('stores no flag and fails nothing where the storage is full', () => {
+    const full = mapSpeicher();
+    full.setItem = () => {
+      throw new DOMException('full', 'QuotaExceededError');
+    };
+
+    expect(() => flagSetzen(full, ANGEMELDET_SCHLUESSEL, true)).not.toThrow();
+    expect(flagGesetzt(full, ANGEMELDET_SCHLUESSEL)).toBe(false);
+  });
 });

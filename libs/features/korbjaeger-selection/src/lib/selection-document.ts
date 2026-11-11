@@ -101,10 +101,7 @@ export function readSelectionDocument(read: unknown): ReadDocument {
       lists[list].map(({ value }) => value)
     ),
     since,
-    latestSince: Math.max(
-      0,
-      ...Object.values(since).flatMap((known) => [...known.values()])
-    ),
+    latestSince: highestSince(since),
     raw: read,
   };
 }
@@ -298,4 +295,18 @@ export function selectionDocumentWith(
     }
   }
   return document;
+}
+
+/**
+ * The highest `since` of all lists, 0 for none; a loop, not a spread: a
+ * foreign document's many entries would overflow `Math.max(...)`'s stack.
+ */
+function highestSince(since: SinceByList): number {
+  let highest = 0;
+  for (const known of Object.values(since)) {
+    for (const value of known.values()) {
+      highest = Math.max(highest, value);
+    }
+  }
+  return highest;
 }

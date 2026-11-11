@@ -33,10 +33,10 @@ import {
   takeOverDevice,
   type NotTakenOver,
 } from '@wolsok/feat-korbjaeger-selection';
+import { deviceStorage } from '@wolsok/utils-browser-storage';
 import {
   flagGesetzt,
   flagSetzen,
-  geraeteSpeicher,
   ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
 } from '../geraete-speicher';
 import {
@@ -263,12 +263,12 @@ async function mitPopup<T>(popup: () => Promise<T>): Promise<T> {
 
 /** Whether a sign-out left Firestore's copy on the device to clear. */
 function leerenAusstehend(): boolean {
-  return flagGesetzt(geraeteSpeicher(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
+  return flagGesetzt(deviceStorage(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
 }
 
 /** Marks the copy as left to clear, or cleared; blocked: the next sign-out tries again. */
 function leerenAusstehendSetzen(offen: boolean): void {
-  flagSetzen(geraeteSpeicher(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, offen);
+  flagSetzen(deviceStorage(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, offen);
 }
 
 function benutzerAus(user: User | null): Benutzer | null {

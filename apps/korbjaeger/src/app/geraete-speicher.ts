@@ -1,16 +1,9 @@
 import { InjectionToken } from '@angular/core';
-
-/**
- * The device's `localStorage`, or `undefined` where the browser withholds
- * it (blocked site data may throw on the mere access).
- */
-export function geraeteSpeicher(): Storage | undefined {
-  try {
-    return globalThis.localStorage ?? undefined;
-  } catch {
-    return undefined;
-  }
-}
+import {
+  KeyValueStorage,
+  readStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
 
 /** Tells, on the device, that an Elternteil is signed in. */
 export const ANGEMELDET_SCHLUESSEL = 'korbjaeger-signed-in';
@@ -33,14 +26,10 @@ export const DARSTELLUNG_SCHLUESSEL = 'korbjaeger-theme';
 
 /** Whether the flag `schluessel` is set (`'1'`); not where storage is withheld. */
 export function flagGesetzt(
-  speicher: Pick<Storage, 'getItem'> | undefined,
+  speicher: KeyValueStorage | undefined,
   schluessel: string
 ): boolean {
-  try {
-    return speicher?.getItem(schluessel) === '1';
-  } catch {
-    return false;
-  }
+  return readStored(schluessel, speicher) === '1';
 }
 
 /**
@@ -48,19 +37,11 @@ export function flagGesetzt(
  * or withheld, nothing is kept and the caller carries on.
  */
 export function flagSetzen(
-  speicher: Pick<Storage, 'setItem' | 'removeItem'> | undefined,
+  speicher: KeyValueStorage | undefined,
   schluessel: string,
   gesetzt: boolean
 ): void {
-  try {
-    if (gesetzt) {
-      speicher?.setItem(schluessel, '1');
-    } else {
-      speicher?.removeItem(schluessel);
-    }
-  } catch {
-    // full or blocked: the flag lasts no longer than this visit's state
-  }
+  writeStored(schluessel, gesetzt ? '1' : null, speicher);
 }
 
 /**

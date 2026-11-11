@@ -25,6 +25,16 @@ describe('readSelectionDocument', () => {
     );
   });
 
+  it('reads a document with more entries than a call takes arguments', () => {
+    const teams = Object.fromEntries(
+      Array.from({ length: 200_000 }, (_, i) => [100_000 + i, i + 1])
+    );
+
+    const read = readSelectionDocument({ version: 3, teams, children: {} });
+
+    expect(read.kind === 'current' && read.latestSince).toBe(200_000);
+  });
+
   it('reads a document of an earlier version as none', () => {
     expect(
       readSelectionDocument({ version: 2, teams: { 313036: 1 }, kinder: {} })

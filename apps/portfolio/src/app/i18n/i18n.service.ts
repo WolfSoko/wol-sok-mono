@@ -9,7 +9,11 @@ import {
   Signal,
   signal,
 } from '@angular/core';
-import { readStored, writeStored } from '../stored-choice';
+import {
+  deviceStorage,
+  readStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
 import {
   detectLanguage,
   isLanguage,
@@ -66,7 +70,7 @@ export class I18nService {
   /** Speaks a language from now on, on this device. */
   public setLanguage(language: Language): void {
     this.chosen.set(language);
-    writeStored(LANGUAGE_STORAGE_KEY, language);
+    writeStored(LANGUAGE_STORAGE_KEY, language, deviceStorage());
   }
 
   /** The entry of a localized value in the active language. */
@@ -80,7 +84,7 @@ export class I18nService {
   }
 
   private stored(): Language | null {
-    const value = readStored(LANGUAGE_STORAGE_KEY);
+    const value = readStored(LANGUAGE_STORAGE_KEY, deviceStorage());
     return isLanguage(value) ? value : null;
   }
 }

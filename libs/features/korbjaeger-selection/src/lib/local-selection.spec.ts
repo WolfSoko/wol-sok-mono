@@ -330,6 +330,7 @@ describe('LocalSelection', () => {
         throw new DOMException('blocked', 'SecurityError');
       },
       setItem: () => undefined,
+      removeItem: () => undefined,
     });
 
     expect(selection.teams()).toEqual([]);
@@ -341,6 +342,7 @@ describe('LocalSelection', () => {
       setItem: () => {
         throw new DOMException('full', 'QuotaExceededError');
       },
+      removeItem: () => undefined,
     });
 
     await selection.follow(313036);
