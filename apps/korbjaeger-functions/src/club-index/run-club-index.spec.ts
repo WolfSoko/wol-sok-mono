@@ -6,6 +6,8 @@ import {
   type Team,
 } from '@wolsok/feat-shared-basketball-data';
 import {
+  LAST_ERROR_LENGTH,
+  NO_ERROR_RECORDED,
   runClubIndex,
   type ClubIndexRun,
   type ClubIndexStore,
@@ -373,7 +375,10 @@ describe('runClubIndex', () => {
 
       expect(await run).toMatchObject({ withoutList: 1 });
       expect(warnings).toEqual([
-        expect.objectContaining({ association: 3, lastError: 'none recorded' }),
+        expect.objectContaining({
+          association: 3,
+          lastError: NO_ERROR_RECORDED,
+        }),
       ]);
     });
 
@@ -443,7 +448,7 @@ describe('runClubIndex', () => {
       ).rejects.toBeInstanceOf(TypeError);
       const failure = store.log.at(-1) ?? '';
       expect(failure).toMatch(/^failure 3 TypeError: x+$/);
-      expect(failure.length).toBe('failure 3 '.length + 200);
+      expect(failure.length).toBe('failure 3 '.length + LAST_ERROR_LENGTH);
     });
   });
 });

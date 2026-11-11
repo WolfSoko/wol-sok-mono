@@ -21,8 +21,8 @@ const LAST_ERROR = 'lastError';
 /**
  * The club index in Firestore: `clubIndex/{associationId}`, one list each,
  * with `attemptedAt` while a crawl started after it left none, `lastError`
- * once one failed (for a Verband without a list, only its latest
- * attempt's) and, for a Verband without a list, `listlessSince`, and the
+ * where that crawl failed and, for a Verband without a list,
+ * `listlessSince`, and the
  * mark `OFFERED_ASSOCIATION` on every Verband the crawl noted, a list or
  * not yet. A document without a list is skipped (`parseAssociationClubs`),
  * and tells the server the index is still incomplete (`parseClubIndex`).
@@ -109,7 +109,7 @@ function fieldOf<T>(
 }
 
 function isNumber(value: unknown): value is number {
-  return typeof value === 'number';
+  return typeof value === 'number' && Number.isFinite(value);
 }
 
 function isString(value: unknown): value is string {

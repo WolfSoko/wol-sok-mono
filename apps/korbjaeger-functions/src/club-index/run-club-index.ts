@@ -3,6 +3,7 @@ import {
   offered,
   crawlClubs,
   NO_LEAGUE_FILTER,
+  type Association,
   type AssociationClubs,
   type ClubCrawlSource,
   type AssociationId,
@@ -10,6 +11,7 @@ import {
 import {
   associationToCrawl,
   overdueListless,
+  withoutList,
   type ClubIndexSchedule,
 } from './association-to-crawl';
 
@@ -38,8 +40,8 @@ export interface ClubIndexState {
    */
   readonly listlessSince: ReadonlyMap<AssociationId, number>;
   /**
-   * The error of an Association's last failed crawl, until a list is saved;
-   * for one without a list only its latest attempt's (none after a timeout).
+   * The error of an Association's latest attempt, where it failed (none
+   * after a timeout); a saved list drops it.
    */
   readonly lastErrors: ReadonlyMap<AssociationId, string>;
 }
@@ -54,8 +56,8 @@ export interface ClubIndexStore {
   noteOffered(associations: readonly AssociationId[]): Promise<void>;
   /**
    * Notes that a crawl of `association` starts `at`, keeping its list; for
-   * one without a list also since when it has had none (`listlessSince`),
-   * and drops its last error, so a timeout leaves none recorded.
+   * one without a list also since when it has had none (`listlessSince`).
+   * Drops the last error, so an attempt that times out leaves none.
    */
   markAttempt(
     association: AssociationId,
@@ -139,9 +141,8 @@ export async function runClubIndex(
     await run.store.noteOffered(unnoted);
   }
   const noted = unnoted.length;
-  const listed = new Set(state.lists.map((list) => list.association.id));
-  const withoutList = associations.filter(({ id }) => !listed.has(id)).length;
-  warnOfOverdue(run, associations, state, start);
+  const listless = withoutList(associations, state.lists);
+  warnOfOverdue(run, listless, state, start);
   const association = associationToCrawl(
     associations,
     state.lists,
@@ -150,14 +151,14 @@ export async function runClubIndex(
     start
   );
   if (association === undefined) {
-    return { removed, noted, withoutList };
+    return { removed, noted, withoutList: listless.length };
   }
   await run.store.markAttempt(
     association.id,
     start,
-    listed.has(association.id)
-      ? undefined
-      : (state.listlessSince.get(association.id) ?? start)
+    listless.includes(association)
+      ? (state.listlessSince.get(association.id) ?? start)
+      : undefined
   );
   const knownNames = new Map(
     state.lists.flatMap(({ clubs }) =>
@@ -173,7 +174,7 @@ export async function runClubIndex(
   }).catch(async (error: unknown) => {
     // the crawl's own error matters more than one noting it
     await run.store
-      .markFailure(association.id, errorText(error))
+      .markFailure(association.id, storedErrorText(error))
       .catch(() => undefined);
     throw error;
   });
@@ -181,7 +182,7 @@ export async function runClubIndex(
   return {
     removed,
     noted,
-    withoutList,
+    withoutList: listless.length,
     crawled: {
       association: association.id,
       clubs: clubs.length,
@@ -211,19 +212,15 @@ async function removeUnoffered(
   return gone.length;
 }
 
-/** Warns of each offered Association without a list for too long. */
+/** Warns of each of `listless` without a list for too long. */
 function warnOfOverdue(
   run: ClubIndexRun,
-  associations: readonly {
-    readonly id: AssociationId;
-    readonly name: string;
-  }[],
+  listless: readonly Association[],
   state: ClubIndexState,
   now: number
 ): void {
   for (const { association, listlessSince } of overdueListless(
-    associations,
-    state.lists,
+    listless,
     state.listlessSince,
     run.schedule,
     now
@@ -239,15 +236,16 @@ function warnOfOverdue(
 /**
  * A failed crawl's error as the index keeps it: its kind (or name) and
  * message, cut to `LAST_ERROR_LENGTH`; they name paths and statuses, no
- * Club or person.
+ * Club or person. A thrown non-`Error` is not printed: it could hold
+ * anything (as `cleanup-cli.ts`'s `errorText` holds too).
  */
-function errorText(error: unknown): string {
+function storedErrorText(error: unknown): string {
   const label =
     error instanceof BasketballDataError
       ? error.kind
       : error instanceof Error
         ? error.name
         : 'unknown';
-  const message = error instanceof Error ? error.message : String(error);
+  const message = error instanceof Error ? error.message : 'not an Error';
   return `${label}: ${message}`.slice(0, LAST_ERROR_LENGTH);
 }

@@ -68,25 +68,30 @@ export function associationToCrawl(
   return first?.association;
 }
 
+/** The Associations of `associations` the index holds no list of. */
+export function withoutList(
+  associations: readonly Association[],
+  lists: readonly AssociationClubs[]
+): readonly Association[] {
+  const listed = new Set(lists.map((list) => list.association.id));
+  return associations.filter(({ id }) => !listed.has(id));
+}
+
 /**
- * The offered Associations without a list whose first attempt that found
- * none (`listlessSince`) lies more than `warnListlessAfterMs` back (#3022),
- * in the order of `associations`. One no attempt has dated yet is not
- * overdue: it is due at once, so dated within a day.
+ * Those of `listless` (`withoutList`) whose first attempt that found no list
+ * (`listlessSince`) lies more than `warnListlessAfterMs` back (#3022), in
+ * their order. One no attempt has dated yet is not overdue: it is due at
+ * once, so dated within a day.
  */
 export function overdueListless(
-  associations: readonly Association[],
-  lists: readonly AssociationClubs[],
+  listless: readonly Association[],
   listlessSince: ReadonlyMap<AssociationId, number>,
   schedule: ClubIndexSchedule,
   now: number
 ): readonly ListlessAssociation[] {
-  const listed = new Set(lists.map((list) => list.association.id));
-  return associations.flatMap(({ id }) => {
+  return listless.flatMap(({ id }) => {
     const since = listlessSince.get(id);
-    return !listed.has(id) &&
-      since !== undefined &&
-      now - since > schedule.warnListlessAfterMs
+    return since !== undefined && now - since > schedule.warnListlessAfterMs
       ? [{ association: id, listlessSince: since }]
       : [];
   });

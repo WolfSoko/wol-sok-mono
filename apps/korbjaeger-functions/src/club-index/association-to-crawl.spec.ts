@@ -1,6 +1,7 @@
 import {
   associationToCrawl,
   overdueListless,
+  withoutList,
   type ClubIndexSchedule,
 } from './association-to-crawl';
 
@@ -130,12 +131,20 @@ describe('associationToCrawl', () => {
   });
 });
 
+describe('withoutList', () => {
+  it('takes the Associations the index holds no list of, in their order', () => {
+    expect(withoutList([BAYERN, BERLIN, HESSEN], [list(BERLIN, NOW)])).toEqual([
+      BAYERN,
+      HESSEN,
+    ]);
+  });
+});
+
 describe('overdueListless', () => {
-  it('names an offered Association without a list for longer than the warning time', () => {
+  it('names an Association without a list for longer than the warning time', () => {
     expect(
       overdueListless(
-        [BAYERN, BERLIN, HESSEN],
-        [list(BAYERN, NOW)],
+        [BERLIN, HESSEN],
         new Map([
           [3, NOW - WEEK - 1],
           [6, NOW - WEEK],
@@ -146,31 +155,13 @@ describe('overdueListless', () => {
     ).toEqual([{ association: 3, listlessSince: NOW - WEEK - 1 }]);
   });
 
-  it('names none while every offered Association has a list', () => {
-    expect(
-      overdueListless(
-        [BAYERN, BERLIN],
-        [list(BAYERN, NOW - 2 * WEEK), list(BERLIN, NOW)],
-        new Map([[2, NOW - 3 * WEEK]]),
-        SCHEDULE,
-        NOW
-      )
-    ).toEqual([]);
-  });
-
   it('names none without a list that no attempt has dated yet', () => {
-    expect(overdueListless([BAYERN], [], new Map(), SCHEDULE, NOW)).toEqual([]);
+    expect(overdueListless([BAYERN], new Map(), SCHEDULE, NOW)).toEqual([]);
   });
 
-  it('names no Association the DBB no longer offers', () => {
+  it('names only Associations without a list it is given', () => {
     expect(
-      overdueListless(
-        [BAYERN],
-        [list(BAYERN, NOW)],
-        new Map([[40, NOW - 2 * WEEK]]),
-        SCHEDULE,
-        NOW
-      )
+      overdueListless([BAYERN], new Map([[40, NOW - 2 * WEEK]]), SCHEDULE, NOW)
     ).toEqual([]);
   });
 });
