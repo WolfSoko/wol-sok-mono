@@ -9,9 +9,9 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { proxyUrl } from '../../shared/dbb-proxy-routes';
 import type {
-  LetzteAntwort,
-  LetzteAntworten,
-} from '@wolsok/feat-korbjaeger-antworten';
+  CachedAnswer,
+  AnswerCache,
+} from '@wolsok/feat-korbjaeger-answers';
 import { KeinInternetError } from './kein-internet-error';
 import type { KorbReadOptions, Lesung } from './lesung';
 import {
@@ -33,7 +33,7 @@ export interface ProxyTransportOptions {
   /** Whether the browser believes it is online (`navigator.onLine`). */
   readonly online?: () => boolean;
   /** Where the last good answer of each path is kept; none by default. */
-  readonly antworten?: LetzteAntworten;
+  readonly antworten?: AnswerCache;
   /** The time an answer is stored with, in ms since the epoch. */
   readonly jetzt?: () => number;
   /** How long a call to the proxy may take; `PROXY_ZEITLIMIT_MS`. */
@@ -54,9 +54,9 @@ export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
 ]);
 
 /** Keeps nothing: a read that fails has no answer to fall back on. */
-const KEINE_ANTWORTEN: LetzteAntworten = {
-  lesen: () => undefined,
-  merken: () => undefined,
+const KEINE_ANTWORTEN: AnswerCache = {
+  read: () => undefined,
+  store: () => undefined,
 };
 
 /**
@@ -97,9 +97,9 @@ export function proxyTransport(
         (body) => {
           const gespeichertAm = jetzt();
           lesung?.vormerken(() =>
-            antworten.merken(path, request.kind, {
-              antwort: dbbWithoutPersons(body),
-              gespeichertAm,
+            antworten.store(path, request.kind, {
+              answer: dbbWithoutPersons(body),
+              storedAt: gespeichertAm,
             })
           );
         }
@@ -110,7 +110,7 @@ export function proxyTransport(
       }
       return letzteAntwortStatt(
         error,
-        antworten.lesen(path, jetzt()),
+        antworten.read(path, jetzt()),
         lesung,
         options?.signal
       );
@@ -124,7 +124,7 @@ export function proxyTransport(
  */
 function letzteAntwortStatt(
   error: unknown,
-  letzte: LetzteAntwort | undefined,
+  letzte: CachedAnswer | undefined,
   lesung: Lesung,
   signal: ReadSignal | undefined
 ): unknown {
@@ -132,10 +132,10 @@ function letzteAntwortStatt(
     throw error;
   }
   lesung.ersetzt({
-    gespeichertAm: letzte.gespeichertAm,
+    gespeichertAm: letzte.storedAt,
     grund: standGrundVon(error),
   });
-  return letzte.antwort;
+  return letzte.answer;
 }
 
 /**

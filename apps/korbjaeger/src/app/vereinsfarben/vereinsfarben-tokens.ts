@@ -1,5 +1,5 @@
 import type { FarbschemaTokens } from './farbschema';
-import type { Vereinsfarben } from '@wolsok/feat-korbjaeger-auswahl';
+import type { ClubColors } from '@wolsok/feat-korbjaeger-selection';
 
 let farbschemaModul: Promise<typeof import('./farbschema')> | undefined;
 
@@ -10,7 +10,7 @@ let farbschemaModul: Promise<typeof import('./farbschema')> | undefined;
  * is tried again next time.
  */
 export async function vereinsfarbenTokens(
-  farben: Vereinsfarben
+  farben: ClubColors
 ): Promise<FarbschemaTokens> {
   farbschemaModul ??= import('./farbschema').catch((fehler: unknown) => {
     farbschemaModul = undefined;

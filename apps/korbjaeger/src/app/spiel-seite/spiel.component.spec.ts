@@ -10,14 +10,15 @@ import {
   type GameReport,
   type PlayerStats,
 } from '@wolsok/feat-shared-basketball-data';
+import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  type Auswahl,
-  AuswahlZuNeuError,
-  type Kind,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  type Selection,
+  SelectionTooNewError,
+  type Child,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -78,14 +79,31 @@ const GESPIELT: GameDetails = {
 };
 
 function werte(punkte: number, fouls = 2): PlayerStats {
-  return {
+  return playerStatsOf({
     points: punkte,
-    twoPointers: 4,
-    threePointers: 1,
+    twoPointers: { made: 4, attempted: 0 },
+    threePointers: { made: 1, attempted: 0 },
     freeThrows: { made: 3, attempted: 5 },
     fouls,
-  };
+  });
 }
+
+/** A starter of the 1. Regionalliga, every value recorded. */
+const ALLE_WERTE = playerStatsOf({
+  playingTimeSeconds: 1724,
+  points: 16,
+  twoPointers: { made: 8, attempted: 12 },
+  threePointers: { made: 0, attempted: 2 },
+  freeThrows: { made: 0, attempted: 2 },
+  rebounds: 7,
+  assists: 1,
+  steals: 2,
+  turnovers: 1,
+  blocks: 1,
+  fouls: 2,
+  efficiency: 18,
+  startingFive: true,
+});
 
 const MIT_WERTEN: Roster = {
   playerStatsRecorded: true,
@@ -142,13 +160,13 @@ async function render(
   data: ReturnType<typeof fakeData>,
   spielId = '2861436'
 ): Promise<HTMLElement> {
-  return (await renderMit(data, new LokaleAuswahl(undefined), spielId)).seite;
+  return (await renderMit(data, new LocalSelection(undefined), spielId)).seite;
 }
 
 /** Renders the page of `spielId` on `data` with `auswahl`. */
 async function renderMit(
   data: ReturnType<typeof fakeData>,
-  auswahl: Auswahl,
+  auswahl: Selection,
   spielId = '2861436'
 ): Promise<{
   readonly seite: HTMLElement;
@@ -241,9 +259,9 @@ describe('SpielComponent', () => {
 
   describe('the breadcrumb', () => {
     async function levelsWith(teams: readonly number[]) {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
       await renderMit(
         fakeData(
@@ -688,14 +706,78 @@ describe('SpielComponent', () => {
         'Name',
         'Punkte',
         'Feldkörbe',
+        'Dreier',
         'Freiwürfe getroffen von versucht',
         'Fouls',
       ]);
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['7', 'Ilvio Mistelgrund', '14', '5', '3/5', '2'],
-        ['', 'Anonymer Spieler', '10', '5', '3/5', '4'],
+        ['7', 'Ilvio Mistelgrund', '14', '5', '1', '3/5', '2'],
+        ['', 'Anonymer Spieler', '10', '5', '1', '3/5', '4'],
       ]);
       expect(teil(heim, 'kader-ohne-werte')).toBeNull();
+      expect(teil(heim, 'kader-start')).toBeNull();
+    });
+
+    it('shows every Spielerwert the Verband records, and the starting five', async () => {
+      const alleWerte: Roster = {
+        playerStatsRecorded: true,
+        entries: [
+          {
+            kind: 'named',
+            personId: 96606327,
+            firstName: 'Rilla',
+            lastName: 'Schlehenau',
+            shirtNumber: '1',
+            playerStats: ALLE_WERTE,
+          },
+          {
+            kind: 'anonymous',
+            playerStats: { ...ALLE_WERTE, startingFive: false },
+          },
+        ],
+      };
+      const seite = await render(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(alleWerte, OHNE_WERTE)
+        )
+      );
+
+      const [heim] = kader(seite);
+      expect(kopfzellen(heim)).toEqual([
+        'Trikotnummer',
+        'Name',
+        'Spielzeit in Minuten',
+        'Punkte',
+        'Feldkörbe getroffen von versucht',
+        'Dreier getroffen von versucht',
+        'Freiwürfe getroffen von versucht',
+        'Rebounds',
+        'Assists',
+        'Ballgewinne',
+        'Ballverluste',
+        'Blocks',
+        'Fouls',
+        'Effizienz',
+      ]);
+      const [starter, anonym] = zellen(heim, 'kader-zeile');
+      expect(starter.slice(2)).toEqual([
+        '28:44',
+        '16',
+        '8/14',
+        '0/2',
+        '0/2',
+        '7',
+        '1',
+        '2',
+        '1',
+        '1',
+        '2',
+        '18',
+      ]);
+      expect(alle(heim, 'kader-start')).toHaveLength(1);
+      expect(text(teil(heim, 'kader-start'))).toContain('In der Startfünf');
+      expect(anonym[1]).toBe('Anonymer Spieler');
     });
 
     it('says "keine Spielerwerte erfasst" for a Kader without, never zeros', async () => {
@@ -733,7 +815,7 @@ describe('SpielComponent', () => {
       const [heim, gast] = kader(seite);
       expect(kopfzellen(heim)[0]).toBe('Name');
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['Anonymer Spieler', '10', '5', '3/5', '2'],
+        ['Anonymer Spieler', '10', '5', '1', '3/5', '2'],
       ]);
       expect(kopfzellen(gast)[0]).toBe('Trikotnummer');
     });
@@ -859,19 +941,19 @@ describe('SpielComponent', () => {
 
     async function mitAuswahl(
       teams: readonly number[],
-      kinder: readonly Kind[] = [],
+      kinder: readonly Child[] = [],
       gameReport: GameReport = bericht(MIT_WERTEN, OHNE_WERTE)
     ): Promise<{
       readonly seite: HTMLElement;
-      readonly auswahl: LokaleAuswahl;
+      readonly auswahl: LocalSelection;
       readonly stabil: () => Promise<void>;
     }> {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
-      for (const { personId, spitzname } of kinder) {
-        await auswahl.markieren({ kind: 'named', personId }, spitzname);
+      for (const { personId, nickname: spitzname } of kinder) {
+        await auswahl.mark({ kind: 'named', personId }, spitzname);
       }
       const gerendert = await renderMit(
         fakeData(
@@ -984,8 +1066,8 @@ describe('SpielComponent', () => {
       expect(text(dialog())).toContain('Ilvio Mistelgrund');
       await spitznameEingeben('  Ilvi ', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvi' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvi' },
       ]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(zeile.hasAttribute('data-kind')).toBe(true);
@@ -1002,7 +1084,7 @@ describe('SpielComponent', () => {
       await stabil();
       await spitznameEingeben('', stabil);
 
-      expect(auswahl.kinder()).toEqual([{ personId: ILVIO }]);
+      expect(auswahl.children()).toEqual([{ personId: ILVIO }]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(teil(zeile, 'kader-spitzname')).toBeNull();
     });
@@ -1015,13 +1097,13 @@ describe('SpielComponent', () => {
       knopf(dialog(), 'Abbrechen').click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it("highlights a marked Kind only in a followed Team's Kader", async () => {
       const { seite } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: DELON, spitzname: 'Del' }]
+        [{ personId: DELON, nickname: 'Del' }]
       );
 
       // Delon plays for the opponent here: not one of Meine Teams
@@ -1051,7 +1133,7 @@ describe('SpielComponent', () => {
     it("changes a marked Kind's Spitzname from its menu", async () => {
       const { seite, auswahl, stabil } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }]
+        [{ personId: ILVIO, nickname: 'Ilvi' }]
       );
 
       const menue = zeileVon(
@@ -1071,8 +1153,8 @@ describe('SpielComponent', () => {
       expect(dialog()?.querySelector('input')?.value).toBe('Ilvi');
       await spitznameEingeben('Ilvo', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvo' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvo' },
       ]);
       expect(
         text(teil(kaderVon(seite, 'MTV Wasbüttel'), 'kader-spitzname'))
@@ -1095,13 +1177,13 @@ describe('SpielComponent', () => {
       ).click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
       expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toHaveLength(1);
     });
 
     it('says so where the mark could not be stored', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      vi.spyOn(auswahl, 'markieren').mockRejectedValue(new Error('voll'));
+      vi.spyOn(auswahl, 'mark').mockRejectedValue(new Error('voll'));
 
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
@@ -1119,12 +1201,12 @@ describe('SpielComponent', () => {
           async () => GESPIELT,
           async () => bericht(MIT_WERTEN, OHNE_WERTE)
         ),
-        fakeAuswahl({
+        fakeSelection({
           teams,
-          markieren: async () => {
-            // as LokaleAuswahl does: it shows nothing of a newer version
+          mark: async () => {
+            // as LocalSelection does: it shows nothing of a newer version
             teams.set([]);
-            throw new AuswahlZuNeuError();
+            throw new SelectionTooNewError();
           },
         })
       );
@@ -1142,25 +1224,25 @@ describe('SpielComponent', () => {
 
     it('closes the Spitzname dialog where the Team was unfollowed meanwhile, and marks nobody', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      const markieren = vi.spyOn(auswahl, 'markieren');
+      const markieren = vi.spyOn(auswahl, 'mark');
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
       expect(dialog()).not.toBeNull();
 
       // another tab unfollows the Team: its Kader offers no mark any more
-      await auswahl.entfolgen(WASBUETTEL);
+      await auswahl.unfollow(WASBUETTEL);
       await stabil();
 
       expect(dialog()).toBeNull();
       expect(markieren).not.toHaveBeenCalled();
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it('highlights a Kind in both Kader where both Teams are followed and it is in each', async () => {
       const ilvio = MIT_WERTEN.entries[0];
       const { seite } = await mitAuswahl(
         [WASBUETTEL, GIFHORN],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }],
+        [{ personId: ILVIO, nickname: 'Ilvi' }],
         bericht(MIT_WERTEN, { ...OHNE_WERTE, entries: [ilvio] })
       );
 

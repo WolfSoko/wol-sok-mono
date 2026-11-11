@@ -7,7 +7,7 @@ import {
   type TeamSeason,
   type ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   BASKETBALL_DATA,
@@ -67,7 +67,7 @@ async function render(
         useValue: { clubTeams, teamGames: async () => NO_GAMES_YET },
       },
       // in memory: nothing reaches the device's storage
-      { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
+      { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
       { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     ],
   });

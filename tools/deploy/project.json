@@ -1,0 +1,14 @@
+{
+  "name": "tools-deploy",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["tools"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "tools/deploy/jest.config.ts"
+      }
+    }
+  }
+}

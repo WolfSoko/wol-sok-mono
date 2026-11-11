@@ -61,7 +61,7 @@ export function provideBasketballData(): Provider[] {
       provide: SPEICHER_FREIGEBEN,
       useFactory: (): (() => void) => {
         const antworten = inject(LETZTE_ANTWORTEN);
-        return () => antworten.leeren();
+        return () => antworten.clear();
       },
     },
   ];

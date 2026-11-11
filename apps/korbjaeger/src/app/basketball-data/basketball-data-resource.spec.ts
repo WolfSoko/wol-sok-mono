@@ -6,7 +6,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { BASKETBALL_DATA } from './basketball-data.provider';
-import { LokaleLetzteAntworten } from '@wolsok/feat-korbjaeger-antworten';
+import { LocalAnswerCache } from '@wolsok/feat-korbjaeger-answers';
 import type { KorbReadOptions } from './lesung';
 import type { ProxyFetch } from './proxy-fetch';
 import { proxyTransport } from './proxy-transport';
@@ -46,7 +46,7 @@ const FALSCHE_FORM: ProxyFetch = async () =>
 
 function lesen(proxy: ProxyFetch) {
   let jetzt = 1_000;
-  const antworten = new LokaleLetzteAntworten(localStorage);
+  const antworten = new LocalAnswerCache(localStorage);
   TestBed.configureTestingModule({
     providers: [
       {
@@ -128,6 +128,6 @@ describe('basketballDataResource', () => {
     expect(isBasketballDataError(saison.error(), 'unexpected-shape')).toBe(
       true
     );
-    expect(antworten.lesen(TEAM_SPIELE, 61_000)?.gespeichertAm).toBe(1_000);
+    expect(antworten.read(TEAM_SPIELE, 61_000)?.storedAt).toBe(1_000);
   });
 });

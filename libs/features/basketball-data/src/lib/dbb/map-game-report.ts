@@ -3,7 +3,9 @@ import type {
   RosterEntry,
   GameReport,
   PlayerStats,
+  Shots,
 } from '../domain/game-report';
+import { hasAnyStat } from '../domain/recorded-stats';
 import { DbbObject } from './dbb-object';
 import { optionalField } from './optional-field';
 
@@ -47,7 +49,7 @@ function mapRoster(playerStats: readonly DbbObject[]): Roster {
   const numbers = numbersRecorded(playerStats);
   const entries = playerStats.map((stats) => mapEntry(stats, numbers));
   const playerStatsRecorded = entries.some(
-    (entry) => entry.playerStats !== undefined && hasStats(entry.playerStats)
+    (entry) => entry.playerStats !== undefined && hasAnyStat(entry.playerStats)
   );
   return {
     playerStatsRecorded,
@@ -107,32 +109,27 @@ function isAnonymous(player: DbbObject, person: DbbObject): boolean {
 }
 
 function mapPlayerStats(stats: DbbObject): PlayerStats {
-  const freeThrows = stats.optionalObject('onePoints');
   return {
+    playingTimeSeconds: count(stats, 'esz'),
     points: count(stats, 'pts'),
-    twoPointers: madeOf(stats.optionalObject('twoPoints')),
-    threePointers: madeOf(stats.optionalObject('threePoints')),
-    freeThrows: {
-      made: madeOf(freeThrows),
-      attempted: freeThrows === undefined ? 0 : count(freeThrows, 'attempted'),
-    },
+    twoPointers: shotsOf(stats.optionalObject('twoPoints')),
+    threePointers: shotsOf(stats.optionalObject('threePoints')),
+    freeThrows: shotsOf(stats.optionalObject('onePoints')),
+    rebounds: count(stats, 'rt'),
+    assists: count(stats, 'as'),
+    steals: count(stats, 'st'),
+    turnovers: count(stats, 'to'),
+    blocks: count(stats, 'bs'),
     fouls: count(stats, 'fouls'),
+    efficiency: count(stats, 'eff'),
+    startingFive: stats.optionalBoolean('isf'),
   };
 }
 
-function hasStats(stats: PlayerStats): boolean {
-  return [
-    stats.points,
-    stats.twoPointers,
-    stats.threePointers,
-    stats.freeThrows.made,
-    stats.freeThrows.attempted,
-    stats.fouls,
-  ].some((value) => value !== 0);
-}
-
-function madeOf(shot: DbbObject | undefined): number {
-  return shot === undefined ? 0 : count(shot, 'made');
+function shotsOf(shot: DbbObject | undefined): Shots {
+  return shot === undefined
+    ? { made: 0, attempted: 0 }
+    : { made: count(shot, 'made'), attempted: count(shot, 'attempted') };
 }
 
 function count(object: DbbObject, key: string): number {

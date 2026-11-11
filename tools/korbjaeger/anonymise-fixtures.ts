@@ -1,10 +1,13 @@
 /**
  * Turns the raw DBB responses `record-fixtures.ts` recorded into the basketball
- * data lib's fixtures: cut down where `FIXTURE_REQUESTS` says, every person
+ * data lib's fixtures: cut down where its `FIXTURE_REQUESTS` entry says, every person
  * replaced by an invented one (`anonymiseFixtures`), and written only if no
  * original name or person id survives.
  *
- *   npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/anonymise-fixtures.ts <raw-dir>
+ *   npx tsx --tsconfig tools/tsconfig.tools.json tools/korbjaeger/anonymise-fixtures.ts <raw-dir> [name...]
+ *
+ * With names, it reads and writes only those fixtures, so adding one leaves
+ * the others as they were where their raw recordings are not at hand.
  */
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
@@ -13,8 +16,8 @@ import {
   survivingPersonData,
 } from '@wolsok/feat-shared-basketball-data/testing';
 import {
-  FIXTURE_REQUESTS,
   FIXTURES_DIR,
+  selectedFixtures,
   type FixtureTrim,
 } from './fixture-requests';
 import { rawDirOutsideWorkspace } from './raw-dir';
@@ -25,7 +28,7 @@ const SEED = 'korbjaeger-fixtures';
 function main(): void {
   const rawDir = rawDirOutsideWorkspace(process.argv[2]);
   const original = Object.fromEntries(
-    FIXTURE_REQUESTS.map((fixture) => [
+    selectedFixtures(process.argv.slice(3)).map((fixture) => [
       fixture.name,
       trimmed(
         readJson(join(rawDir, `${fixture.name}.json`)),

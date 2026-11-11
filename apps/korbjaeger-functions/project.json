@@ -64,8 +64,8 @@
       ],
       "options": {
         "commands": [
-          "firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=europe-west3 --days=1 --force",
-          "firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive"
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=europe-west3 --days=1 --force",
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive"
         ],
         "parallel": false
       }

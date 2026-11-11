@@ -2,6 +2,44 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.166.0...v74.167.0) (2026-11-11)
+
+### Features
+
+* **korbjaeger:** show every Spielerwert the DBB records for a Kader ([#3050](https://github.com/WolfSoko/wol-sok-mono/issues/3050)) ([6939853](https://github.com/WolfSoko/wol-sok-mono/commit/6939853540aa63b3b76b48c9a6c8e2ea99ec0428)), closes [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975), references [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975) [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975)
+
+### Bug Fixes
+
+* **tools:** version only the npm packages whose build reads a change ([#3044](https://github.com/WolfSoko/wol-sok-mono/issues/3044)) ([4da9414](https://github.com/WolfSoko/wol-sok-mono/commit/4da9414cc1633b17b897ecd1c42ac7e86293fbe0)), closes [#3020](https://github.com/WolfSoko/wol-sok-mono/issues/3020)
+
+## [74.166.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.2...v74.166.0) (2026-11-11)
+
+### Features
+
+* **korbjaeger-functions:** warn when a Verband has had no club list for a week ([#3042](https://github.com/WolfSoko/wol-sok-mono/issues/3042)) ([45557cf](https://github.com/WolfSoko/wol-sok-mono/commit/45557cfc27eacdb1ec1104ef7fef0c0a3a00c4c0)), closes [#3022](https://github.com/WolfSoko/wol-sok-mono/issues/3022), references [#3022](https://github.com/WolfSoko/wol-sok-mono/issues/3022)
+
+### Bug Fixes
+
+* **korbjaeger:** no marking link to a Spiel in a Liga without Spielberichte ([#3032](https://github.com/WolfSoko/wol-sok-mono/issues/3032)) ([9fdd5f2](https://github.com/WolfSoko/wol-sok-mono/commit/9fdd5f290b3843144c875aac544e84473921d7ad)), references [#3026](https://github.com/WolfSoko/wol-sok-mono/issues/3026)
+* **nx-aws-cdk-v2:** remove runCommandProcess process listeners and keep test helpers out of the build ([#3029](https://github.com/WolfSoko/wol-sok-mono/issues/3029)) ([95f38a8](https://github.com/WolfSoko/wol-sok-mono/commit/95f38a81ecda36300b210e800089c69feb173c65)), closes [#2895](https://github.com/WolfSoko/wol-sok-mono/issues/2895), references [#2895](https://github.com/WolfSoko/wol-sok-mono/issues/2895)
+* **tools:** keep Nx's verdict for nx.json and wildcard aliases in release selection ([#3030](https://github.com/WolfSoko/wol-sok-mono/issues/3030)) ([b1f5319](https://github.com/WolfSoko/wol-sok-mono/commit/b1f5319a7063d3a0bbdcb0963b91dd5d703b5466)), closes [#3024](https://github.com/WolfSoko/wol-sok-mono/issues/3024)
+
+### Refactorings
+
+* **pacetrainer:** English identifiers for Summary, Interval and LeadIn ([#3033](https://github.com/WolfSoko/wol-sok-mono/issues/3033)) ([eaae503](https://github.com/WolfSoko/wol-sok-mono/commit/eaae5033255aa74ba612175ede811b3f02cf01e7)), references [#2968](https://github.com/WolfSoko/wol-sok-mono/issues/2968) [#2968](https://github.com/WolfSoko/wol-sok-mono/issues/2968)
+
+### Chore
+
+* **release:** publish ([774990f](https://github.com/WolfSoko/wol-sok-mono/commit/774990fcd73cde23f3ac98db94d94d3a8c18bee5))
+
+### Documentation
+
+* **korbjaeger:** ADR 0019 describes the Kader the Spiel page shows ([#3031](https://github.com/WolfSoko/wol-sok-mono/issues/3031)) ([26ac545](https://github.com/WolfSoko/wol-sok-mono/commit/26ac54568c4db517dadc8bdbf17b64a71cef7867)), references [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025) [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025) [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025)
+
+### Testing
+
+* **feat-lazy-bacteria-wars-admin:** run the access spec on the shared fake Auth ([#3035](https://github.com/WolfSoko/wol-sok-mono/issues/3035)) ([44581a4](https://github.com/WolfSoko/wol-sok-mono/commit/44581a43c58ab5fd61afaae1b970aec4310afe67)), closes [#2900](https://github.com/WolfSoko/wol-sok-mono/issues/2900), references [#2900](https://github.com/WolfSoko/wol-sok-mono/issues/2900) [#2900](https://github.com/WolfSoko/wol-sok-mono/issues/2900)
+
 ## [74.165.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.1...v74.165.2) (2026-11-10)
 
 ### Bug Fixes

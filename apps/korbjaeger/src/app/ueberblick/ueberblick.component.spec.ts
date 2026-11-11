@@ -20,7 +20,10 @@ import {
   type ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { type Auswahl, LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import {
+  type Selection,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -30,7 +33,7 @@ import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
 import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { KontoSitzung } from '../konto/konto-sitzung';
 import {
   FakeKontoDienst,
@@ -172,14 +175,14 @@ function fakeData(
 
 /**
  * Renders the overview on `data`, following `gefolgt` (or with that
- * `Auswahl`), once the reads that settle have settled.
+ * `Selection`), once the reads that settle have settled.
  */
 async function render(
   data: Pick<KorbjaegerData, 'teamGames' | 'game' | 'clubTeams' | 'gameReport'>,
-  gefolgt: readonly TeamId[] | Auswahl
+  gefolgt: readonly TeamId[] | Selection
 ): Promise<{
   readonly seite: HTMLElement;
-  readonly auswahl: Auswahl;
+  readonly auswahl: Selection;
   /** Waits for the reads that settle and the page. */
   readonly stabil: () => Promise<void>;
   /** The snackbars, open over the page (`document`'s root). */
@@ -215,10 +218,10 @@ async function render(
   };
 }
 
-async function folgend(teams: readonly TeamId[]): Promise<LokaleAuswahl> {
-  const auswahl = new LokaleAuswahl(undefined);
+async function folgend(teams: readonly TeamId[]): Promise<LocalSelection> {
+  const auswahl = new LocalSelection(undefined);
   for (const teamId of teams) {
-    await auswahl.folgen(teamId);
+    await auswahl.follow(teamId);
   }
   return auswahl;
 }
@@ -247,9 +250,9 @@ describe('UeberblickComponent', () => {
 
     const { seite } = await render(
       data,
-      fakeAuswahl({
+      fakeSelection({
         teams: signal(undefined),
-        kinder: signal(undefined),
+        children: signal(undefined),
       })
     );
 
@@ -261,13 +264,13 @@ describe('UeberblickComponent', () => {
   it('says the account cannot be read, rather than show what it read before', async () => {
     const dienst = new FakeKontoDienst();
     const sitzung = new KontoSitzung(
-      new LokaleAuswahl(undefined),
+      new LocalSelection(undefined),
       async () => dienst,
       new MerkerImSpec()
     );
     await sitzung.starten();
     await sitzung.anmelden();
-    await dienst.kontoAuswahl.folgen(WASBUETTEL.id);
+    await dienst.kontoAuswahl.follow(WASBUETTEL.id);
     const { seite, stabil } = await render(
       fakeData([saison(WASBUETTEL)]),
       sitzung.auswahl
@@ -687,9 +690,9 @@ describe('UeberblickComponent', () => {
         OESINGEN.id,
       ]);
 
-      await auswahl.folgen(GIFHORN.id);
+      await auswahl.follow(GIFHORN.id);
       await stabil();
-      await auswahl.entfolgen(OESINGEN.id);
+      await auswahl.unfollow(OESINGEN.id);
       await stabil();
 
       expect(teamNamen(seite)).toEqual(['MTV Wasbüttel', 'MTV Gifhorn']);
@@ -706,7 +709,7 @@ describe('UeberblickComponent', () => {
       const { auswahl, stabil } = await render(data, [GIFHORN.id]);
       const lesung = data.teamGames.mock.calls[0][1]?.signal;
 
-      await auswahl.entfolgen(GIFHORN.id);
+      await auswahl.unfollow(GIFHORN.id);
       await stabil();
 
       expect(lesung?.aborted).toBe(true);
@@ -722,7 +725,7 @@ describe('UeberblickComponent', () => {
       const lesung = data.game.mock.calls[0][1]?.signal;
       expect(lesung?.aborted).toBe(false);
 
-      await auswahl.entfolgen(GIFHORN.id);
+      await auswahl.unfollow(GIFHORN.id);
       await stabil();
 
       expect(lesung?.aborted).toBe(true);
@@ -1030,10 +1033,10 @@ describe('UeberblickComponent', () => {
     async function mitKindern(
       teams: readonly TeamId[],
       kinder: readonly (readonly [NamedPlayer, string?])[]
-    ): Promise<LokaleAuswahl> {
+    ): Promise<LocalSelection> {
       const auswahl = await folgend(teams);
       for (const [spieler, spitzname] of kinder) {
-        await auswahl.markieren(spieler, spitzname);
+        await auswahl.mark(spieler, spitzname);
       }
       return auswahl;
     }
@@ -1463,7 +1466,7 @@ describe('UeberblickComponent', () => {
         const { data, seite, auswahl, stabil } = await mitLumiGefunden();
         data.gameReport.mockImplementation(() => NIE_BERICHT);
 
-        await auswahl.markieren(MORVO);
+        await auswahl.mark(MORVO);
         await stabil();
 
         zeigtLumi(seite);
@@ -1480,7 +1483,7 @@ describe('UeberblickComponent', () => {
           away: {},
         } as unknown as GameReport);
 
-        await auswahl.markieren(MORVO);
+        await auswahl.mark(MORVO);
         await stabil();
 
         zeigtLumi(seite);
@@ -1489,11 +1492,11 @@ describe('UeberblickComponent', () => {
 
       it('reads nothing again when a Kind is unmarked', async () => {
         const { data, seite, auswahl, stabil } = await mitLumiGefunden();
-        await auswahl.markieren(MORVO);
+        await auswahl.mark(MORVO);
         await stabil();
         const gelesen = data.gameReport.mock.calls.length;
 
-        await auswahl.entmarkieren(MORVO.personId);
+        await auswahl.unmark(MORVO.personId);
         await stabil();
 
         expect(data.gameReport).toHaveBeenCalledTimes(gelesen);
@@ -1650,7 +1653,7 @@ describe('UeberblickComponent', () => {
       );
       const { seite, auswahl, stabil } = await render(data, [WASBUETTEL.id]);
 
-      await auswahl.markieren(LUMI, 'Lu');
+      await auswahl.mark(LUMI, 'Lu');
       await stabil();
 
       expect(kindNamen(seite)).toEqual(['Lu']);

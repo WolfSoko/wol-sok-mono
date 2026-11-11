@@ -2,7 +2,7 @@ import { effect, inject, Injectable, Injector } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import type { TeamPlatz } from '@wolsok/feat-korbjaeger-auswahl';
+import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
 import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
 
 /** How long the offer to undo stays, long enough to read and tap it. */
@@ -39,9 +39,9 @@ export class NachEntfolgen {
 
   /**
    * A control unfollowed `team`, called `name`, and goes with it; `platz`
-   * is the place it had (`Auswahl.entfolgen`), where the undo puts it back.
+   * is the place it had (`Selection.unfollow`), where the undo puts it back.
    */
-  public entfolgt(team: TeamId, name: string, platz?: TeamPlatz): void {
+  public entfolgt(team: TeamId, name: string, platz?: TeamPlace): void {
     const ziele = [...this.ziele];
     const ziel =
       ziele.find((kandidat) => kandidat.team() === team) ??
@@ -52,15 +52,15 @@ export class NachEntfolgen {
 
   /**
    * The snackbar with "Rückgängig", for the store the Team was unfollowed
-   * in only: it goes once another holds the choices (`Auswahl.quelle`), so
+   * in only: it goes once another holds the choices (`Selection.source`), so
    * the undo never follows in the wrong one.
    */
   private rueckgaengigAnbieten(
     team: TeamId,
     name: string,
-    platz: TeamPlatz | undefined
+    platz: TeamPlace | undefined
   ): void {
-    const quelle = this.auswahl.quelle();
+    const quelle = this.auswahl.source();
     const leiste = this.snackBar.open(
       `${name} steht nicht mehr in Meine Teams.`,
       'Rückgängig',
@@ -68,7 +68,7 @@ export class NachEntfolgen {
     );
     const wache = effect(
       () => {
-        if (this.auswahl.quelle() !== quelle) {
+        if (this.auswahl.source() !== quelle) {
           leiste.dismiss();
         }
       },
@@ -78,10 +78,10 @@ export class NachEntfolgen {
     leiste.onAction().subscribe(() => {
       // the effect runs later: a tap right after a switch must not follow
       // in the other store
-      if (this.auswahl.quelle() !== quelle) {
+      if (this.auswahl.source() !== quelle) {
         return;
       }
-      this.auswahl.folgen(team, platz).catch((grund: unknown) => {
+      this.auswahl.follow(team, platz).catch((grund: unknown) => {
         this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
           duration: RUECKGAENGIG_MS,
         });

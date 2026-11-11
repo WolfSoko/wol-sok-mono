@@ -1,17 +1,40 @@
 import type { PersonId, GameId } from './ids';
 
-/** One player's numbers in one Spiel. */
+/** Shots of one kind: those made, of those attempted. */
+export interface Shots {
+  readonly made: number;
+  /** 0 where the Verband records only the hits. */
+  readonly attempted: number;
+}
+
+/**
+ * One player's numbers in one Spiel. A value the Verband does not record
+ * is 0: which ones a Kader records, `recordedStats` says.
+ */
 export interface PlayerStats {
+  /** Time on the court, in seconds. */
+  readonly playingTimeSeconds: number;
   readonly points: number;
-  /** Two-point field goals made. */
-  readonly twoPointers: number;
-  /** Three-point field goals made. */
-  readonly threePointers: number;
-  readonly freeThrows: {
-    readonly made: number;
-    readonly attempted: number;
-  };
+  /** Two-point field goals. */
+  readonly twoPointers: Shots;
+  /** Three-point field goals. */
+  readonly threePointers: Shots;
+  readonly freeThrows: Shots;
+  /** Offensive and defensive rebounds together. */
+  readonly rebounds: number;
+  readonly assists: number;
+  readonly steals: number;
+  readonly turnovers: number;
+  readonly blocks: number;
   readonly fouls: number;
+  /**
+   * The DBB's efficiency: points, rebounds, assists, steals and blocks,
+   * less missed shots and turnovers. Meaningless where shot attempts are
+   * not recorded, since the DBB then counts every hit as a negative miss.
+   */
+  readonly efficiency: number;
+  /** Whether the player was in the starting five. */
+  readonly startingFive: boolean;
 }
 
 /** A player on a Kader with a name: the only kind that can become a Kind. */
@@ -63,12 +86,12 @@ export function playerStatsRecorded(report: GameReport): boolean {
   return report.home.playerStatsRecorded || report.away.playerStatsRecorded;
 }
 
-/**
- * A player's field goals (Feldkörbe): the twos and threes made. Only the
- * hits: the Spielberichte seen list no attempts for them (all 0).
- */
-export function fieldGoals(stats: PlayerStats): number {
-  return stats.twoPointers + stats.threePointers;
+/** A player's field goals (Feldkörbe): the twos and threes, no free throws. */
+export function fieldGoals(stats: PlayerStats): Shots {
+  return {
+    made: stats.twoPointers.made + stats.threePointers.made,
+    attempted: stats.twoPointers.attempted + stats.threePointers.attempted,
+  };
 }
 
 /** Whether a Kader entry is a named player, so it can be marked as a Kind. */

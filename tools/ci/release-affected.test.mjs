@@ -319,3 +319,34 @@ describe('deploy.yml', () => {
     assert.deepEqual(unguarded, []);
   });
 });
+
+// nx release counts every target's inputs too, so on its own it bumped, and
+// the npm leg published, every package on a lint-only commit (#3020).
+describe('release.yml', () => {
+  const version = stepsOf('release.yml').find((step) =>
+    step.includes('name: Version')
+  );
+
+  it('versions only the packages whose build reads a change of this release', () => {
+    assert.match(
+      version,
+      /release-affected\.mjs --base="v\$\(node -p "require\('\.\/version\.json'\)\.version"\)" --head=HEAD --target=build --projects='tag:published'/
+    );
+    assert.match(version, /npx nx release version --projects="\$packages"/);
+    assert.doesNotMatch(version, /npx nx release version\s*\n/);
+  });
+
+  // Up to the substitution's end, so a pipe on a continuation line counts.
+  it('never pipes the selection, which would hide its failure', () => {
+    assert.doesNotMatch(version, /release-affected\.mjs[^)]*\|/);
+    assert.match(version, /packages=\$\(paste -sd, - <<< "\$selected"\)/);
+  });
+
+  // An empty --projects can mean every package.
+  it('skips nx release version when the selection is empty', () => {
+    assert.match(
+      version,
+      /if \[\[ -n "\$packages" \]\]; then\s+npx nx release version --projects="\$packages"/
+    );
+  });
+});

@@ -1,5 +1,6 @@
 // Long names wrap; should the numbers still not fit a narrow phone, the
-// Kader scrolls on its own rather than the page.
+// Kader scrolls on its own rather than the page, number and name sticking
+// (Material's cells take their row's background, so the numbers pass under).
 .tabelle {
   overflow-x: auto;
 }
@@ -56,4 +57,12 @@
 
 .spitzname {
   font-weight: 400;
+}
+
+.start {
+  padding-inline: 0.25rem;
+  border-radius: 0.25rem;
+  background: var(--mat-sys-surface-container-highest);
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-small);
 }

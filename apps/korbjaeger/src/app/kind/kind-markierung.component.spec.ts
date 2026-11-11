@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { KindMarkierungComponent } from './kind-markierung.component';
 
 describe('KindMarkierungComponent', () => {
@@ -14,8 +14,8 @@ describe('KindMarkierungComponent', () => {
       providers: [
         {
           provide: AUSWAHL,
-          useValue: fakeAuswahl({
-            markieren: () => Promise.reject(new Error('voll')),
+          useValue: fakeSelection({
+            mark: () => Promise.reject(new Error('voll')),
           }),
         },
         {

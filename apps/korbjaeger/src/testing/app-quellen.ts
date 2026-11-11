@@ -11,12 +11,12 @@ export const APP_ORDNER = fileURLToPath(new URL('../app', import.meta.url));
 
 /**
  * The libs only the app uses, whose code is the app's as much as `src/app/`
- * (`LokaleAuswahl`'s and `LokaleLetzteAntworten`'s device keys): walked
+ * (`LocalSelection`'s and `LocalAnswerCache`'s device keys): walked
  * with it, so no check misses them.
  */
 export const EIGENE_LIB_ORDNER: readonly string[] = [
-  'korbjaeger-auswahl',
-  'korbjaeger-antworten',
+  'korbjaeger-selection',
+  'korbjaeger-answers',
 ].map((lib) =>
   fileURLToPath(
     new URL(`../../../../libs/features/${lib}/src`, import.meta.url)

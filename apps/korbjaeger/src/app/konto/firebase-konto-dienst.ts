@@ -27,14 +27,14 @@ import {
 } from 'firebase/firestore';
 import type { Environment } from '../../environments/environment.type';
 import {
-  type AuswahlInhalt,
-  auswahlDokumentVon,
-  FirestoreAuswahl,
-  geraetUebernehmen,
+  type SelectionContent,
+  selectionDocumentOf,
+  FirestoreSelection,
+  takeOverDevice,
   legacyAccountMigration,
   legacySelectionDocument,
-  type NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  type NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   flagGesetzt,
   flagSetzen,
@@ -151,16 +151,16 @@ class FirebaseKontoDienst implements KontoDienst {
     // the listener shows the moved choices once written; the cache shows
     // the account at once, offline too
     void this.legacyMigrated(uid);
-    return new FirestoreAuswahl(await this.db(), uid, { beiFehler });
+    return new FirestoreSelection(await this.db(), uid, { onError: beiFehler });
   }
 
   public async geraetUebernehmen(
     uid: string,
-    geraet: AuswahlInhalt
-  ): Promise<NichtUebernommen> {
+    geraet: SelectionContent
+  ): Promise<NotTakenOver> {
     // the account's older choices first, then the device's
     await this.legacyMigrated(uid);
-    return geraetUebernehmen(await this.db(), uid, geraet);
+    return takeOverDevice(await this.db(), uid, geraet);
   }
 
   /**
@@ -174,7 +174,7 @@ class FirebaseKontoDienst implements KontoDienst {
     await this.legacyMigrations.get(uid);
     const db = await this.db();
     await Promise.all([
-      deleteDoc(auswahlDokumentVon(db, uid)),
+      deleteDoc(selectionDocumentOf(db, uid)),
       deleteDoc(legacySelectionDocument(db, uid)),
     ]);
   }
