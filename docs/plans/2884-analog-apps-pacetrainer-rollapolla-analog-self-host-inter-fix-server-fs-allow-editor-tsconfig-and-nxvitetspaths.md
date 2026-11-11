@@ -4,7 +4,7 @@ Spec: [docs/specs/2884-…](../specs/2884-analog-apps-pacetrainer-rollapolla-ana
 Each task ends with `npx nx format:write`, `npx nx affected -t lint,lint-templates`
 and the tests named, then one commit.
 
-1. **Pacetrainer's fonts guard (red).** Add `apps/pacetrainer/src/index-html.spec.ts`
+1. **Pacetrainer's fonts guard (red).** Add `apps/pacetrainer/src/self-hosted-fonts.spec.ts`
    (no Google Fonts host in `index.html`, `styles.scss` imports
    `@fontsource/inter`); run `nx test pacetrainer`, see it fail.
 2. **Self-host Inter (green).** `npm install @fontsource/inter@5.3.0`; import

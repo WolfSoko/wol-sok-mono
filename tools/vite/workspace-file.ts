@@ -1,4 +1,7 @@
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+const WORKSPACE_ROOT = fileURLToPath(new URL('../..', import.meta.url));
 
 /**
  * The absolute path of a file or folder in the workspace, for Vite configs,
@@ -8,5 +11,5 @@ import { fileURLToPath } from 'node:url';
  * files in `node_modules`, which lie outside the app's root.
  */
 export function workspaceFile(path: string): string {
-  return fileURLToPath(new URL(`../../${path}`, import.meta.url));
+  return resolve(WORKSPACE_ROOT, path);
 }

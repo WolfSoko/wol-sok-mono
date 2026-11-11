@@ -58,7 +58,7 @@ the Vitest libs are set up alike and ready for Nx 24:
   at the top of `apps/pacetrainer/src/styles.scss` like rollapolla's; the
   Google `<link>`s and preconnects leave `index.html`. Pacetrainer has no
   privacy policy, so no text changes with it.
-- **A spec keeps it**: `apps/pacetrainer/src/index-html.spec.ts` fails when
+- **A spec keeps it**: `apps/pacetrainer/src/self-hosted-fonts.spec.ts` fails when
   `index.html` names `fonts.googleapis.com` or `fonts.gstatic.com`, and when
   `styles.scss` no longer imports `@fontsource/inter`.
 - **One helper for the workspace root**: `tools/vite/workspace-file.ts`
