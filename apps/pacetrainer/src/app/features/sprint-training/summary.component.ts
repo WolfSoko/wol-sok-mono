@@ -1,13 +1,13 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatCardModule } from '@angular/material/card';
-import { Zusammenfassung } from '../../shared/training-run/training-run';
+import { Summary } from '../../shared/training-run/training-run';
 import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
 
 @Component({
-  selector: 'pace-zusammenfassung',
+  selector: 'pace-summary',
   template: `
-    @let s = zusammenfassung();
-    <div class="zusammenfassung" data-qa="zusammenfassung">
+    @let s = summary();
+    <div class="summary" data-qa="summary">
       <span
         class="badge"
         aria-hidden="true"
@@ -37,7 +37,7 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
     </div>
   `,
   styles: `
-    .zusammenfassung {
+    .summary {
       display: flex;
       flex-flow: column;
       align-items: center;
@@ -68,6 +68,6 @@ import { TrainingTimePipe } from '../../shared/ui/training-time.pipe';
   imports: [MatCardModule, TrainingTimePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ZusammenfassungComponent {
-  public readonly zusammenfassung = input.required<Zusammenfassung>();
+export class SummaryComponent {
+  public readonly summary = input.required<Summary>();
 }

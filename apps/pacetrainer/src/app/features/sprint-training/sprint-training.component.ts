@@ -15,10 +15,10 @@ import { SprintTrainingDataService } from '../training-configuration/data/sprint
 import { SprintFormComponent } from '../training-configuration/sprint-training-form.component';
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
 import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
-import { ZusammenfassungComponent } from './zusammenfassung.component';
+import { SummaryComponent } from './summary.component';
 
 /** Ansagen start at most this long before the next Intervall */
-const ANSAGE_WINDOW = milliseconds(5000);
+const ANNOUNCEMENT_WINDOW = milliseconds(5000);
 
 @Component({
   selector: 'pace-sprint-training',
@@ -30,7 +30,7 @@ const ANSAGE_WINDOW = milliseconds(5000);
     SprintFormComponent,
     CountDownCircleComponent,
     TrainingLiveStateComponent,
-    ZusammenfassungComponent,
+    SummaryComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -67,7 +67,7 @@ export class SprintTrainingComponent {
         case 'running':
         case 'paused':
           this.countdownService.updateCountdown(
-            milliseconds(Math.min(ANSAGE_WINDOW, run.current.duration)),
+            milliseconds(Math.min(ANNOUNCEMENT_WINDOW, run.current.duration)),
             run.current.left,
             run.next
           );
