@@ -1,8 +1,10 @@
 import {
-  JSONCompatible,
-  safeJsonParse,
-  safeJsonStringify,
-} from '@wolsok/utils-json';
+  deviceStorage,
+  readStoredJson,
+  writeStored,
+  writeStoredJson,
+} from '@wolsok/utils-browser-storage';
+import { JSONCompatible } from '@wolsok/utils-json';
 
 export const LOCAL_STORAGE_KEY_PREFIX = 'PACETRAINER@V0.9';
 
@@ -16,38 +18,24 @@ export class Repository<T extends JSONCompatible<T>> {
     this.localStorageKey = LOCAL_STORAGE_KEY_PREFIX + localStorageKey;
   }
 
+  /** Stores `data`; where storage is refused the app keeps working unsaved. */
   public save(data: T): void {
-    if (!this.saveToLocalStorage) {
-      return;
-    }
-    try {
-      localStorage?.setItem(this.localStorageKey, safeJsonStringify(data));
-    } catch {
-      // quota exceeded or site data blocked: the app keeps working unsaved
+    if (this.saveToLocalStorage) {
+      writeStoredJson(this.localStorageKey, data, deviceStorage());
     }
   }
 
   public clear(): void {
-    if (!this.saveToLocalStorage) {
-      return;
-    }
-    try {
-      localStorage?.removeItem(this.localStorageKey);
-    } catch {
-      // site data blocked: nothing was stored either
+    if (this.saveToLocalStorage) {
+      writeStored(this.localStorageKey, null, deviceStorage());
     }
   }
 
+  /** The stored data; null where none, unreadable or storage is withheld. */
   public load(): T | null {
     if (!this.saveToLocalStorage) {
       return null;
     }
-    try {
-      const data = localStorage?.getItem(this.localStorageKey);
-      return data ? (safeJsonParse(data) as T) : null;
-    } catch {
-      // site data blocked or not written by this app: start without it
-      return null;
-    }
+    return readStoredJson(this.localStorageKey, deviceStorage()) as T | null;
   }
 }

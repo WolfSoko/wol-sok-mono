@@ -133,15 +133,35 @@ describe('LocalGameStorage', () => {
     }
   });
 
-  it('shrugs off a browser that refuses storage', () => {
-    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-      throw new DOMException('quota', 'QuotaExceededError');
-    });
-    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
-      throw new DOMException('denied', 'SecurityError');
-    });
-    expect(() => storage.write('key', 1)).not.toThrow();
-    expect(() => void storage.update('key', () => 1)).not.toThrow();
-    expect(watched('key')).toEqual([null]);
+  it('stops hearing other tabs once unsubscribed', () => {
+    const values: unknown[] = [];
+    storage
+      .watch('key')
+      .subscribe((value) => values.push(value))
+      .unsubscribe();
+
+    changeInAnotherTab('key', 2);
+
+    expect(values).toEqual([null]);
   });
+
+  it('reads the JSON an earlier version stored as it is', () => {
+    localStorage.setItem('key', '{"wins":3,"modes":["duel"]}');
+    expect(watched('key')).toEqual([{ wins: 3, modes: ['duel'] }]);
+  });
+
+  it.each(['QuotaExceededError', 'SecurityError'])(
+    'shrugs off a browser that refuses storage (%s)',
+    async (name) => {
+      jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('refused', name);
+      });
+      jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+        throw new DOMException('denied', 'SecurityError');
+      });
+      expect(() => storage.write('key', 1)).not.toThrow();
+      await expect(storage.update('key', () => 1)).resolves.toBe(false);
+      expect(watched('key')).toEqual([null]);
+    }
+  );
 });

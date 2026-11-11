@@ -5,6 +5,16 @@
   "projectType": "library",
   "tags": ["utils"],
   "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/utils/browser-storage",
+        "main": "libs/utils/browser-storage/src/index.ts",
+        "tsConfig": "libs/utils/browser-storage/tsconfig.lib.json",
+        "assets": ["libs/utils/browser-storage/*.md"]
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],

@@ -25,11 +25,3 @@ export type JSONCompatible<T> = unknown extends T
 export function toJsonValue<T>(value: JSONCompatible<T>): JSONValue {
   return value;
 }
-
-export function safeJsonStringify<T>(data: JSONCompatible<T>) {
-  return JSON.stringify(data);
-}
-
-export function safeJsonParse(text: string): unknown {
-  return JSON.parse(text);
-}

@@ -98,14 +98,25 @@ describe('ThemeService', () => {
     expect(() => TestBed.inject(ThemeService)).toThrow(/provideTheme/);
   });
 
-  it('keeps the choice for the visit where storage is blocked', () => {
-    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+  it.each(['SecurityError', 'QuotaExceededError'])(
+    'keeps the choice for the visit where storage refuses it (%s)',
+    (name) => {
+      jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('refused', name);
+      });
+      const theme = create();
+      theme.choose('light');
+      TestBed.tick();
+      expect(theme.choice()).toBe('light');
+      expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    }
+  );
+
+  it('follows the system where reading the storage is blocked', () => {
+    localStorage.setItem(KEY, 'dark');
+    jest.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
       throw new DOMException('blocked', 'SecurityError');
     });
-    const theme = create();
-    theme.choose('light');
-    TestBed.tick();
-    expect(theme.choice()).toBe('light');
-    expect(document.documentElement.getAttribute('data-theme')).toBe('light');
+    expect(create().choice()).toBe('system');
   });
 });

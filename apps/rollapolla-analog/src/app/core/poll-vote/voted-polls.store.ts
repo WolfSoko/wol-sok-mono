@@ -1,5 +1,9 @@
-import { isPlatformBrowser } from '@angular/common';
-import { inject, Injectable, PLATFORM_ID, signal } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
+import {
+  deviceStorage,
+  readStoredJson,
+  writeStoredJson,
+} from '@wolsok/utils-browser-storage';
 import { Poll } from '../../../shared/poll';
 
 const STORAGE_KEY = 'rap-voted-polls';
@@ -12,7 +16,6 @@ type PollRound = Pick<Poll, 'id' | 'round'>;
  */
 @Injectable({ providedIn: 'root' })
 export class VotedPollsStore {
-  private readonly isBrowser: boolean = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly votes = signal<Record<string, number>>(this.load());
 
   public votedOption(poll: PollRound): number | undefined {
@@ -32,31 +35,17 @@ export class VotedPollsStore {
     this.save();
   }
 
+  /** What this browser keeps; nothing on the server or where storage is withheld. */
   private load(): Record<string, number> {
-    if (!this.isBrowser) {
-      return {};
-    }
-    try {
-      const stored: unknown = JSON.parse(
-        localStorage.getItem(STORAGE_KEY) ?? '{}'
-      );
-      return stored !== null && typeof stored === 'object'
-        ? (stored as Record<string, number>)
-        : {};
-    } catch {
-      return {};
-    }
+    const stored = readStoredJson(STORAGE_KEY, deviceStorage());
+    return stored !== null && typeof stored === 'object'
+      ? (stored as Record<string, number>)
+      : {};
   }
 
+  /** Keeps the votes; where storage is refused they stay in memory only. */
   private save(): void {
-    if (!this.isBrowser) {
-      return;
-    }
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(this.votes()));
-    } catch {
-      // storage unavailable (private mode, quota): vote stays in memory only
-    }
+    writeStoredJson(STORAGE_KEY, this.votes(), deviceStorage());
   }
 }
 

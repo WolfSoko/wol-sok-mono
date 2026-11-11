@@ -1,7 +1,13 @@
 import { Injectable } from '@angular/core';
-import { filter, fromEvent, map, Observable, startWith } from 'rxjs';
+import {
+  deviceStorage,
+  readStoredJson,
+  readStored,
+  watchStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
+import { Observable } from 'rxjs';
 import type { GameStorage } from './game-storage';
-import { parseStoredJson } from './stored-json';
 
 /**
  * The game's storage in the browser's local storage, one JSON value per key.
@@ -12,14 +18,14 @@ import { parseStoredJson } from './stored-json';
 @Injectable()
 export class LocalGameStorage implements GameStorage {
   public watch(key: string): Observable<unknown> {
-    return fromEvent<StorageEvent>(window, 'storage').pipe(
-      // A null key means another tab cleared the storage.
-      filter((event) => event.key === key || event.key === null),
-      startWith(null),
-      map(() => readStoredJson(key))
-    );
+    return new Observable<unknown>((subscriber) => {
+      const emit = () => subscriber.next(readStoredJson(key, deviceStorage()));
+      emit();
+      return watchStored(key, emit, window);
+    });
   }
 
+  /** Stores `value`; where storage is refused it lasts for this visit only. */
   public write(key: string, value: unknown): void {
     this.store(key, value);
   }
@@ -35,7 +41,7 @@ export class LocalGameStorage implements GameStorage {
   ): Promise<boolean> {
     const apply = () => {
       try {
-        return this.store(key, change(readStoredJson(key)));
+        return this.store(key, change(readStoredJson(key, deviceStorage())));
       } catch (error) {
         console.error(`Could not store ${key}`, error);
         return false;
@@ -51,28 +57,14 @@ export class LocalGameStorage implements GameStorage {
 
   /** Writes the value unless it is stored already: false when refused. */
   private store(key: string, value: unknown): boolean {
-    try {
-      const json = JSON.stringify(value);
-      if (localStorage.getItem(key) !== json) {
-        localStorage.setItem(key, json);
-      }
-      return true;
-    } catch {
-      // Storage refused - the value lasts for this visit only.
-      return false;
-    }
+    const storage = deviceStorage();
+    const json = JSON.stringify(value);
+    return (
+      readStored(key, storage) === json ||
+      writeStored(key, json, storage) === 'stored'
+    );
   }
 }
 
 /** Names the Web Lock that guards a key, apart from other locks of the origin. */
 const LOCK_PREFIX = 'bacteria-game-storage:';
-
-/** The JSON stored under a key, null when there is none or it is unreadable. */
-function readStoredJson(key: string): unknown {
-  try {
-    return parseStoredJson(localStorage.getItem(key));
-  } catch {
-    // Storage refused.
-    return null;
-  }
-}

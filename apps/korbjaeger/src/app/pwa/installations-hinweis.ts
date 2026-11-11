@@ -10,10 +10,10 @@ import {
   type EnvironmentProviders,
   type Signal,
 } from '@angular/core';
+import { deviceStorage } from '@wolsok/utils-browser-storage';
 import {
   flagGesetzt,
   flagSetzen,
-  geraeteSpeicher,
   INSTALLATION_ABGELEHNT_SCHLUESSEL,
 } from '../geraete-speicher';
 
@@ -137,7 +137,7 @@ export const INSTALLATIONS_UMGEBUNG = new InjectionToken<
   factory: () =>
     typeof window === 'undefined'
       ? undefined
-      : { fenster: window, navigator, speicher: geraeteSpeicher },
+      : { fenster: window, navigator, speicher: deviceStorage },
 });
 
 /**

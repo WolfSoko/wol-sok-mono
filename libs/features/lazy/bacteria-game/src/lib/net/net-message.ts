@@ -8,7 +8,7 @@ import {
   TICKS_PER_SEC,
   validColorPair,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { parseStoredJson } from '../storage/stored-json';
+import { parseJson } from '@wolsok/utils-json';
 
 /**
  * The version of what two devices say to each other - a new one for every
@@ -93,7 +93,7 @@ const MAX_UINT32 = 2 ** 32 - 1;
  * checked, and what reaches the match is on the input grid.
  */
 export function parseNetMessage(data: unknown): NetMessage | null {
-  const value = typeof data === 'string' ? parseStoredJson(data) : null;
+  const value = typeof data === 'string' ? parseJson(data) : null;
   if (!isObject(value)) {
     return null;
   }

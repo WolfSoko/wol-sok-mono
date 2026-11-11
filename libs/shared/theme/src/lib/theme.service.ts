@@ -7,7 +7,11 @@ import {
   signal,
 } from '@angular/core';
 import { THEME_SETTINGS } from './provide-theme';
-import { readStored, writeStored } from './stored-choice';
+import {
+  deviceStorage,
+  readStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
 
 /** The visitor's choice of theme: a fixed one, or whatever the system uses. */
 export type ThemeChoice = 'system' | 'light' | 'dark';
@@ -49,7 +53,11 @@ export class ThemeService {
   /** Takes `choice` and keeps it on the device (none kept for `system`). */
   public choose(choice: ThemeChoice): void {
     this.chosen.set(choice);
-    writeStored(this.settings.storageKey, choice === 'system' ? null : choice);
+    writeStored(
+      this.settings.storageKey,
+      choice === 'system' ? null : choice,
+      deviceStorage()
+    );
   }
 
   /** The next choice in the cycle system → light → dark → system. */
@@ -84,7 +92,7 @@ export class ThemeService {
   }
 
   private stored(): ThemeChoice {
-    const value = readStored(this.settings.storageKey);
+    const value = readStored(this.settings.storageKey, deviceStorage());
     return isThemeChoice(value) ? value : 'system';
   }
 }

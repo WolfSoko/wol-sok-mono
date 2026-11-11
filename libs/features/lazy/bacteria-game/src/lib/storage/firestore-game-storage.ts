@@ -3,7 +3,7 @@ import { EMPTY, filter, firstValueFrom, Observable, of, switchMap } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameStorage } from './game-storage';
 import { beforeRetry, errorCode } from './retry';
-import { parseStoredJson } from './stored-json';
+import { parseJson } from '@wolsok/utils-json';
 
 /**
  * Errors after which trying again cannot help: the rules refuse the write -
@@ -75,7 +75,7 @@ export class FirestoreGameStorage implements GameStorage {
         try {
           await dbSdk.runTransaction(db, async (transaction) => {
             const before = jsonOf(await transaction.get(ref));
-            const after = JSON.stringify(change(parseStoredJson(before)));
+            const after = JSON.stringify(change(parseJson(before)));
             if (after !== undefined && after !== before) {
               transaction.set(ref, stored(dbSdk, after));
             }
@@ -132,7 +132,7 @@ export class FirestoreGameStorage implements GameStorage {
         (snapshot) => {
           const json = jsonOf(snapshot);
           this.seen.set(ref.path, json);
-          subscriber.next(parseStoredJson(json));
+          subscriber.next(parseJson(json));
         },
         (error) => {
           console.error(`Could not read ${key}`, error);

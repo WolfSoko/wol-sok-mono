@@ -37,20 +37,17 @@ import {
 } from './selection-lists';
 import { listSignals } from './list-signals';
 import type { Child, MarkablePlayer } from './child';
-import { isStorageFull } from '@wolsok/utils-browser-storage';
+import {
+  KeyValueStorage,
+  readStoredJson,
+  StorageEventTarget,
+  watchStored,
+  writeStored,
+} from '@wolsok/utils-browser-storage';
 import { SelectionTooNewError } from './selection-errors';
 
 /** The key of the `SelectionDocument` in the device's storage. */
 export const SELECTION_KEY = 'korbjaeger-selection';
-
-/** The part of the device's storage (`localStorage`) the adapter uses. */
-export type DeviceStorage = Pick<Storage, 'getItem' | 'setItem'>;
-
-/** Where the browser tells of changes other tabs made (`window`). */
-export type WindowEvents = Pick<
-  EventTarget,
-  'addEventListener' | 'removeEventListener'
->;
 
 /**
  * The `Selection` on the device, for Elternteile without an account.
@@ -85,22 +82,16 @@ export class LocalSelection implements Selection {
   /** This visit's changes no write has stored yet, in their order. */
   private pending: readonly SelectionChange[] = [];
 
-  private readonly onStorageChange = (event: Event): void => {
-    if (
-      event instanceof StorageEvent &&
-      (event.key === null || event.key === SELECTION_KEY)
-    ) {
-      this.show(this.read());
-    }
-  };
+  /** Stops listening to other tabs' changes. */
+  private readonly stopWatching: () => void;
 
   /**
    * @param makeRoom frees the device's storage of what may give way
    *   (the cached DBB answers) when it is full; the selection always wins.
    */
   public constructor(
-    private readonly storage: DeviceStorage | undefined,
-    private readonly events?: WindowEvents,
+    private readonly storage: KeyValueStorage | undefined,
+    events?: StorageEventTarget,
     private readonly makeRoom: () => void = () => undefined
   ) {
     // read at once, so `teams` and `children` are never undefined here
@@ -109,7 +100,11 @@ export class LocalSelection implements Selection {
     this.teams = signals.teams;
     this.children = signals.children;
     this.clubColors = signals.clubColors;
-    events?.addEventListener('storage', this.onStorageChange);
+    this.stopWatching = watchStored(
+      SELECTION_KEY,
+      () => this.show(this.read()),
+      events
+    );
   }
 
   public follow(team: TeamId, place?: TeamPlace): Promise<void> {
@@ -167,7 +162,7 @@ export class LocalSelection implements Selection {
 
   /** Stops listening to other tabs. */
   public stop(): void {
-    this.events?.removeEventListener('storage', this.onStorageChange);
+    this.stopWatching();
   }
 
   /** Runs `change` now (`changeNow`), its failure as the rejection. */
@@ -236,37 +231,24 @@ export class LocalSelection implements Selection {
   }
 
   private read(): ReadDocument {
-    try {
-      const text = this.storage?.getItem(SELECTION_KEY);
-      return readSelectionDocument(text ? JSON.parse(text) : undefined);
-    } catch {
-      return { kind: 'none' };
-    }
+    return readSelectionDocument(readStoredJson(SELECTION_KEY, this.storage));
   }
 
-  /** Stores `toStore`; whether the device took it. */
+  /**
+   * Stores `toStore`; whether the device took it. Where the storage is
+   * full, it has the cached data give way and tries once more.
+   */
   private write(toStore: unknown): boolean {
-    if (this.storage === undefined) {
-      return false;
-    }
     const text = JSON.stringify(toStore);
-    try {
-      this.storage.setItem(SELECTION_KEY, text);
-      return true;
-    } catch (error) {
-      // blocked: no room to make
-      return isStorageFull(error) && this.writeAfterMakingRoom(text);
+    const outcome = writeStored(SELECTION_KEY, text, this.storage);
+    if (outcome !== 'full') {
+      return outcome === 'stored';
     }
-  }
-
-  /** Has the cached data give way, then tries once more. */
-  private writeAfterMakingRoom(text: string): boolean {
     try {
       this.makeRoom();
-      this.storage?.setItem(SELECTION_KEY, text);
-      return true;
     } catch {
       return false;
     }
+    return writeStored(SELECTION_KEY, text, this.storage) === 'stored';
   }
 }

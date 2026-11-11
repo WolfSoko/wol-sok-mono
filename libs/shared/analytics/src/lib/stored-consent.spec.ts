@@ -11,6 +11,10 @@ describe('StoredConsent', () => {
     applied = [];
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   function create(): StoredConsent {
     return new StoredConsent(KEY, (choice) => applied.push(choice));
   }
@@ -47,6 +51,34 @@ describe('StoredConsent', () => {
     expect(consent.asking()).toBe(false);
     expect(applied).toEqual(['denied', 'granted']);
     expect(localStorage.getItem(KEY)).toBe('granted');
+  });
+
+  it.each(['SecurityError', 'QuotaExceededError'])(
+    'applies a choice the storage refuses for the visit (%s)',
+    (name) => {
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new DOMException('refused', name);
+      });
+      const consent = create();
+      consent.restore();
+
+      consent.decide('granted');
+
+      expect(consent.asking()).toBe(false);
+      expect(applied).toEqual(['granted']);
+    }
+  );
+
+  it('asks where reading the storage is blocked', () => {
+    localStorage.setItem(KEY, 'granted');
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+    const consent = create();
+
+    consent.restore();
+
+    expect(consent.asking()).toBe(true);
   });
 
   it('ignores a stored value it does not know', () => {

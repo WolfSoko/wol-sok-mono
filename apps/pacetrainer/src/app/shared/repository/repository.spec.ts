@@ -69,14 +69,17 @@ describe('Repository', () => {
   describe('when the browser refuses storage access', () => {
     afterEach(() => vi.restoreAllMocks());
 
-    it('should keep working without saving', () => {
-      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
-        throw new DOMException('quota exceeded', 'QuotaExceededError');
-      });
-      const service = initRepository(true);
+    it.each(['QuotaExceededError', 'SecurityError'])(
+      'should keep working without saving (%s)',
+      (name) => {
+        vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+          throw new DOMException('refused', name);
+        });
+        const service = initRepository(true);
 
-      expect(() => service.save({ foo: 'bar' })).not.toThrow();
-    });
+        expect(() => service.save({ foo: 'bar' })).not.toThrow();
+      }
+    );
 
     it('should clear without failing', () => {
       vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {
