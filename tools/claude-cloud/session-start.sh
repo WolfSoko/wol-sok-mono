@@ -32,8 +32,15 @@ if [ -n "${GCP_SA_KEY_B64:-}" ]; then
   mkdir -p "$(dirname "$key_file")"
   (umask 077 && printf '%s' "$GCP_SA_KEY_B64" | base64 -d > "$key_file")
   echo "export GOOGLE_APPLICATION_CREDENTIALS=\"$key_file\"" >> "$env_file"
-  gcloud auth activate-service-account --key-file "$key_file" --quiet > /dev/null 2>&1 \
-    || echo "gcloud could not activate the service account (is gcloud installed?)." >&2
+  if gcloud auth activate-service-account --key-file "$key_file" --quiet > /dev/null 2>&1; then
+    # The cloud environment sets CLOUDSDK_AUTH_ACCESS_TOKEN to a placeholder its
+    # proxy swaps only for the hosts saved as network secrets. gcloud prefers
+    # that variable over the active account, so every other Google API got the
+    # placeholder (UNAUTHENTICATED, CREDENTIALS_MISSING). Drop it so the key counts.
+    echo "unset CLOUDSDK_AUTH_ACCESS_TOKEN" >> "$env_file"
+  else
+    echo "gcloud could not activate the service account (is gcloud installed?)." >&2
+  fi
 fi
 
 if [ ! -d node_modules ]; then
