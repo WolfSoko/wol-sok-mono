@@ -34,9 +34,27 @@ export function mockExecutorContext(
 }
 
 /** Stands in for the cdk process a mocked `child_process.exec` spawns. */
-class FakeChildProcess extends EventEmitter {
+export class FakeChildProcess extends EventEmitter {
   public readonly stdout = new EventEmitter();
   public readonly stderr = new EventEmitter();
+  /** What reached the process' stdin, and whether it was closed. */
+  public readonly stdinWritten: unknown[] = [];
+  public stdinEnded = false;
+  public killed = false;
+  public readonly stdin = {
+    write: (data: unknown): boolean => {
+      this.stdinWritten.push(data);
+      return true;
+    },
+    end: (): void => {
+      this.stdinEnded = true;
+    },
+  };
+
+  public kill(): boolean {
+    this.killed = true;
+    return true;
+  }
 }
 
 /** A mock implementation for `exec` that hands out a new `FakeChildProcess`. */
@@ -60,11 +78,17 @@ export async function runExecutorToExit<T>(
   exitCode = 0
 ): Promise<T> {
   const result = run();
-  const spawned = exec.mock.results.at(-1)?.value;
-  if (!(spawned instanceof FakeChildProcess)) {
+  const spawned = lastSpawned(exec);
+  if (!spawned) {
     await result;
     throw new Error('The executor spawned no FakeChildProcess through exec.');
   }
   spawned.emit('close', exitCode);
   return result;
+}
+
+/** The `FakeChildProcess` the mocked `exec` returned last, if any. */
+export function lastSpawned(exec: SpawningMock): FakeChildProcess | undefined {
+  const spawned = exec.mock.results.at(-1)?.value;
+  return spawned instanceof FakeChildProcess ? spawned : undefined;
 }

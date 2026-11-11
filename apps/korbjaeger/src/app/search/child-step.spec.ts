@@ -1,5 +1,11 @@
 import { childStep } from './child-step';
-import { PLAYED, saisonOf, spielOn } from '../../testing/team-saison';
+import {
+  HAUPTRUNDE_ID,
+  inLigaWithoutGameReports,
+  PLAYED,
+  saisonOf,
+  spielOn,
+} from '../../testing/team-saison';
 
 describe('childStep', () => {
   it('leads to the last played Spiel', () => {
@@ -41,5 +47,48 @@ describe('childStep', () => {
     expect(childStep(saisonOf(), '2026-11-08')).toEqual({
       kind: 'after-first-game',
     });
+  });
+
+  it('offers no link where every Spiel is in a Liga without Spielberichte', () => {
+    const step = childStep(
+      inLigaWithoutGameReports(
+        saisonOf(
+          spielOn(1, '2026-09-20', PLAYED),
+          spielOn(2, '2026-10-04', PLAYED)
+        )
+      ),
+      '2026-11-08'
+    );
+
+    expect(step).toEqual({ kind: 'no-game-reports' });
+  });
+
+  it('leads to the last Spiel of a Liga with Spielberichte, passing over newer ones without', () => {
+    const step = childStep(
+      inLigaWithoutGameReports(
+        saisonOf(
+          spielOn(1, '2026-09-20', PLAYED),
+          spielOn(2, '2026-10-04', PLAYED, HAUPTRUNDE_ID)
+        ),
+        HAUPTRUNDE_ID
+      ),
+      '2026-11-08'
+    );
+
+    expect(step).toEqual({ kind: 'mark', spielId: 1 });
+  });
+
+  it('waits for a Spiel to come in a Liga with Spielberichte', () => {
+    const step = childStep(
+      inLigaWithoutGameReports(
+        saisonOf(
+          spielOn(1, '2026-09-20', PLAYED),
+          spielOn(2, '2026-11-15', { kind: 'scheduled' }, HAUPTRUNDE_ID)
+        )
+      ),
+      '2026-11-08'
+    );
+
+    expect(step).toEqual({ kind: 'after-first-game' });
   });
 });
