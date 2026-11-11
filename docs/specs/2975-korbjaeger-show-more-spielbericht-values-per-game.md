@@ -66,8 +66,9 @@ Per player the boxscore carries `esz`, `pts`, `twoPoints`, `threePoints`,
   `startingFive`), each true where any player of the Kader has a non-zero
   value (`startingFive`: any `true`). A Kader without Spielerwerte records
   none. The app only maps it to columns.
-- **Efficiency only where shot attempts are recorded** (`efficiency` =
-  `shotAttempts`, any field goal attempt non-zero): without attempts the
+- **Efficiency only where shot attempts are recorded** (`efficiency`:
+  `shotAttempts`, any field goal attempt non-zero, and any player's
+  efficiency non-zero): without attempts the
   DBB's value is wrong (above), and showing it would mislead.
 - **Points, field goals, free throws and fouls stay as they are**: shown
   whenever the Kader's Spielerwerte are recorded (`playerStatsRecorded`),
@@ -113,12 +114,13 @@ Per player the boxscore carries `esz`, `pts`, `twoPoints`, `threePoints`,
    named and anonymous players), and `boxscore-2911141.json` still maps
    with zeros for the unrecorded ones.
 2. `recordedStats` is true for every value on the Regionalliga fixture's
-   Kader, false for all on the youth one (efficiency included, although
-   its `eff` is non-zero), and false for all on a Kader without
+   Kader, only `threePointers` on the youth one (efficiency false,
+   although its `eff` is non-zero), and false for all on a Kader without
    Spielerwerte.
-3. On a Kader like the youth fixture the Spiel page shows exactly the
-   columns it shows today (Nr., Name, Pkt., FK, FW, F) with the same
-   values, and no "Start" label.
+3. On a Kader like the youth fixture the Spiel page shows the columns it
+   shows today (Nr., Name, Pkt., FK, FW, F) with the same values, plus 3P
+   with the threes made where any were (the Bavarian Verband records
+   them; a Kader without a three gets no 3P), and no "Start" label.
 4. On a Kader like the Regionalliga fixture it shows every column in the
    order above, FK and 3P as made/attempted, Min. as `m:ss`, and "Start"
    for the five starters.

@@ -7,20 +7,23 @@ import {
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import type { Roster } from '@wolsok/feat-shared-basketball-data';
+import {
+  recordedStats,
+  type Roster,
+} from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { KindMarkierungComponent } from '../kind/kind-markierung.component';
+import { statsColumns } from './kader-spalten';
 import { kaderZeilen } from './kader-zeilen';
-
-/** The columns of a Kader whose Spielerwerte the Verband records. */
-const WERTE_SPALTEN = ['punkte', 'feldkoerbe', 'freiwuerfe', 'fouls'] as const;
 
 /**
  * One Team's Kader of a Spielbericht: each player as the DBB shows them
  * (shirt number, name), an Anonymer Spieler as such; the shirt numbers
  * only where the Kader lists any. The Spielerwerte
- * columns appear only where the Verband records them; a Kader without
- * says so instead of showing zeros. In a followed Team's Kader (`gefolgt`)
+ * columns appear only where the Verband records them (`statsColumns`),
+ * the starting five only where the DBB names it; a Kader without
+ * Spielerwerte says so instead of showing zeros. On a narrow phone the
+ * table scrolls sideways, number and name staying in place. In a followed Team's Kader (`gefolgt`)
  * each named player can be marked as the Elternteil's Kind, and a marked
  * Kind is highlighted: a star and its Spitzname, not colour alone.
  */
@@ -49,12 +52,16 @@ export class KaderComponent {
       this.gefolgt() && kinder !== undefined ? kinder : undefined
     );
   });
+  protected readonly statsColumns = computed(() => {
+    const kader = this.kader();
+    return statsColumns(kader.playerStatsRecorded, recordedStats(kader));
+  });
   protected readonly spalten = computed(() => [
     ...(this.zeilen().some((zeile) => zeile.nummer !== undefined)
       ? ['nummer']
       : []),
     'name',
-    ...(this.kader().playerStatsRecorded ? WERTE_SPALTEN : []),
+    ...this.statsColumns().map((column) => column.id),
   ]);
   protected readonly ueberschriftId = computed(() => `kader-${this.seite()}`);
 }
