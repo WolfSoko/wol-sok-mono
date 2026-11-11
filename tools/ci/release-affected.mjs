@@ -161,6 +161,10 @@ function readOptions() {
       projects: { type: 'string' },
     },
   });
+  if (!values.target) throw new Error('--target is required');
+  if (!values.files && !(values.base && values.head)) {
+    throw new Error('--files or both --base and --head are required');
+  }
   return values;
 }
 
@@ -378,45 +382,19 @@ async function readInputs(candidates, target) {
   };
 }
 
-/**
- * The projects a release selects between two refs (or for a file list), as
- * the CLI prints them; `tools/ci/release-version-projects.mjs` calls it per
- * published package.
- *
- * @param {object} options
- * @param {string} options.target the task whose inputs count (`deploy`, `build`)
- * @param {string} [options.base] with `head`: the range's start
- * @param {string} [options.head] with `base`: the range's end
- * @param {string} [options.files] in place of a range: a comma-separated list
- * @param {string} [options.exclude] Nx's `--exclude` pattern
- * @param {string} [options.projects] Nx's `--projects` pattern
- * @returns {Promise<{ selected: string[], reasons: Record<string, string> }>}
- */
-export async function releaseAffected(options) {
-  if (!options.target) throw new Error('--target is required');
-  if (!options.files && !(options.base && options.head)) {
-    throw new Error('--files or both --base and --head are required');
-  }
+async function main() {
+  const options = readOptions();
   const candidates = await candidatesOf(options);
-  return selectReleaseAffected({
+  const { selected, reasons } = selectReleaseAffected({
     candidates,
     ...(await changesOf(options)),
     inputsOf: await readInputs(candidates, options.target),
   });
-}
-
-/** Prints why each candidate was kept or dropped, to stderr. */
-export function logReasons({ selected, reasons }) {
   for (const [project, reason] of Object.entries(reasons)) {
     const verdict = selected.includes(project) ? 'kept' : 'dropped';
     console.error(`${verdict} ${project}: ${reason}`);
   }
-}
-
-async function main() {
-  const selection = await releaseAffected(readOptions());
-  logReasons(selection);
-  for (const project of selection.selected) console.log(project);
+  for (const project of selected) console.log(project);
 }
 
 if (import.meta.filename === process.argv[1]) {

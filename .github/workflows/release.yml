@@ -68,13 +68,16 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.no-reply.github.com"
           git config --local user.name "github-actions[bot]"
-          # Only the packages whose build reads a change since their last tag
+          # Only the packages whose build reads a file this release changes
           # (#3020): nx release alone counts every target's inputs, so a
           # lint-only commit bumped, and the npm leg published, every package.
-          # An empty list skips the call, where it could mean every package.
-          # Apart from the paste: the step's bash has no pipefail, so a failing
-          # selection would otherwise read as an empty one.
-          selected=$(node tools/ci/release-version-projects.mjs)
+          # The range is the release, as ci-cd.yml's trigger takes it: a
+          # package's own tag can lag far behind, and a deletion or root
+          # package.json change in that long range keeps Nx's verdict.
+          # No pipe: the step's bash has no pipefail, so a failing selection
+          # would read as an empty one. An empty --projects could mean every
+          # package, so an empty list skips the call.
+          selected=$(node tools/ci/release-affected.mjs --base="v$(node -p "require('./version.json').version")" --head=HEAD --target=build --projects='tag:published')
           packages=$(paste -sd, - <<< "$selected")
           if [[ -n "$packages" ]]; then
             npx nx release version --projects="$packages"
