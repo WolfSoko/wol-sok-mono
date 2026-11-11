@@ -1,6 +1,13 @@
 @use '@angular/material' as mat;
 
 @import 'normalize.css/normalize.css';
+// Inter comes from npm (Fontsource) and is served with the app: nothing loads
+// from Google Fonts, which would get every visitor's IP address. Latin only:
+// the UI is German.
+@import '@fontsource/inter/latin-400.css';
+@import '@fontsource/inter/latin-600.css';
+@import '@fontsource/inter/latin-700.css';
+@import '@fontsource/inter/latin-800.css';
 
 html {
   // One Material 3 theme for light and dark: every system color is emitted
