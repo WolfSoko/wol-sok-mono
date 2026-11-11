@@ -9,7 +9,12 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { JETZT } from '../jetzt';
-import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
+import {
+  inLigaWithoutGameReports,
+  saisonOf,
+  spielOn,
+  WASBUETTEL_RST,
+} from '../../testing/team-saison';
 import { ChildStepComponent } from './child-step.component';
 
 type TeamSpieleRead = KorbjaegerData['teamGames'];
@@ -77,6 +82,19 @@ describe('ChildStepComponent', () => {
       text(page.querySelector('[data-qa="child-step-after-first-game"]'))
     ).toBe(
       'Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in einem Spielbericht steht.'
+    );
+  });
+
+  it('says the Kind cannot be marked where the Liga keeps no Spielberichte', async () => {
+    const { page } = await render(async () =>
+      inLigaWithoutGameReports(saisonOf(spielOn(2970229, '2026-10-04')))
+    );
+
+    expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
+    expect(
+      text(page.querySelector('[data-qa="child-step-no-game-reports"]'))
+    ).toBe(
+      'Für die Liga dieses Teams führt der DBB keine Spielberichte. Dein Kind kannst du hier deshalb nicht markieren.'
     );
   });
 

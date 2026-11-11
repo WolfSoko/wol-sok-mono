@@ -8,7 +8,7 @@ import {
   mockExecutorContext,
   runExecutorToExit,
   spawnFakeChildProcess,
-} from '../../utils/testing';
+} from '../../testing/executor';
 
 jest.mock('child_process', () => ({
   ...jest.requireActual('child_process'),
