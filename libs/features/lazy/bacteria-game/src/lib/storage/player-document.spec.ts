@@ -503,6 +503,27 @@ describe('playerDocument', () => {
       expect(unsavedOn()).toEqual({ guest: [['gold', 'silver']] });
     });
 
+    it('keep the page entry while a dropped change waits to be kept apart', async () => {
+      const document = createAnswering([false, true]);
+      add(document, 'silver');
+      await answerDevice();
+      let refuse: (keptApart: boolean) => void = () => undefined;
+      jest
+        .spyOn(device, 'update')
+        .mockImplementationOnce(
+          () => new Promise<boolean>((resolve) => (refuse = resolve))
+        );
+      account.flush(); // silver is dropped; keeping it apart waits
+      await settle();
+      add(document, 'gold');
+      account.flush(); // gold is stored meanwhile
+      await settle();
+      refuse(false);
+      await answerAll();
+
+      expect(unsavedOn()).toEqual({ guest: [['gold', 'silver']] });
+    });
+
     it('are not kept without the cloud', async () => {
       const document = create({ cloud: false });
       add(document, 'silver');

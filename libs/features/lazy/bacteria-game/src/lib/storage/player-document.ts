@@ -225,10 +225,11 @@ function unsavedChanges<T>(
   /** Numbers the entries of changes the storage dropped. */
   let drops = 0;
   /**
-   * The players whose dropped change the device refused to keep apart:
-   * their page entry is the only copy left, so the page never clears it.
+   * Per player, the dropped changes not yet kept apart - Infinity once the
+   * device refused one: while any is, the page entry may be the only copy
+   * left, so the page does not clear it (never again after a refusal).
    */
-  const pinned = new Set<string>();
+  const pinned = new Map<string, number>();
   const change = (
     edit: (changes: UnsavedChanges) => UnsavedChanges
   ): Promise<boolean> =>
@@ -252,11 +253,18 @@ function unsavedChanges<T>(
           // A later change that is stored carries only its own part, so the
           // dropped one moves to an entry this page never clears.
           const dropped = droppedEntry(entry, ++drops);
+          // Pinned at once, so a later change stored before this write ran
+          // does not clear the page entry meanwhile; unpinned only once every
+          // dropped change of the player is kept apart.
+          pinned.set(player, (pinned.get(player) ?? 0) + 1);
           void change((changes) =>
             withUnsaved(changes, dropped, { player, value: held.value })
           ).then((keptApart) => {
-            if (!keptApart) {
-              pinned.add(player);
+            const left = keptApart ? (pinned.get(player) ?? 1) - 1 : Infinity;
+            if (left === 0) {
+              pinned.delete(player);
+            } else {
+              pinned.set(player, left);
             }
           });
         } else if (kept.get(player) === held && !pinned.has(player)) {
