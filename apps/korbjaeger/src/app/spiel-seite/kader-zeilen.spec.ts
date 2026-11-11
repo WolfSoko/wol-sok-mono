@@ -1,7 +1,4 @@
-import {
-  recordedStats,
-  type Roster,
-} from '@wolsok/feat-shared-basketball-data';
+import type { Roster } from '@wolsok/feat-shared-basketball-data';
 import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { kaderZeilen, playingTime } from './kader-zeilen';
 
@@ -58,7 +55,7 @@ describe('kaderZeilen', () => {
       entries: [{ kind: 'anonymous', playerStats: WERTE }],
     };
 
-    expect(kaderZeilen(kader, undefined, recordedStats(kader))).toEqual([
+    expect(kaderZeilen(kader)).toEqual([
       {
         name: 'Anonymer Spieler',
         anonym: true,
@@ -87,7 +84,7 @@ describe('kaderZeilen', () => {
       entries: [{ kind: 'anonymous', playerStats: ALLE_WERTE }],
     };
 
-    expect(kaderZeilen(kader, undefined, recordedStats(kader))[0]).toEqual({
+    expect(kaderZeilen(kader)[0]).toEqual({
       name: 'Anonymer Spieler',
       anonym: true,
       werte: {

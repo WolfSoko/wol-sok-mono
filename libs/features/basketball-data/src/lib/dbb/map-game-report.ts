@@ -5,6 +5,7 @@ import type {
   PlayerStats,
   Shots,
 } from '../domain/game-report';
+import { hasAnyStat } from '../domain/recorded-stats';
 import { DbbObject } from './dbb-object';
 import { optionalField } from './optional-field';
 
@@ -48,7 +49,7 @@ function mapRoster(playerStats: readonly DbbObject[]): Roster {
   const numbers = numbersRecorded(playerStats);
   const entries = playerStats.map((stats) => mapEntry(stats, numbers));
   const playerStatsRecorded = entries.some(
-    (entry) => entry.playerStats !== undefined && hasStats(entry.playerStats)
+    (entry) => entry.playerStats !== undefined && hasAnyStat(entry.playerStats)
   );
   return {
     playerStatsRecorded,
@@ -123,27 +124,6 @@ function mapPlayerStats(stats: DbbObject): PlayerStats {
     efficiency: count(stats, 'eff'),
     startingFive: stats.optionalBoolean('isf'),
   };
-}
-
-/**
- * Whether any number of `stats` is not 0. The starting five alone does not
- * count: a Kader with only its starters marked records no Spielerwerte.
- */
-function hasStats(stats: PlayerStats): boolean {
-  return [
-    stats.playingTimeSeconds,
-    stats.points,
-    ...[stats.twoPointers, stats.threePointers, stats.freeThrows].flatMap(
-      (shots) => [shots.made, shots.attempted]
-    ),
-    stats.rebounds,
-    stats.assists,
-    stats.steals,
-    stats.turnovers,
-    stats.blocks,
-    stats.fouls,
-    stats.efficiency,
-  ].some((value) => value !== 0);
 }
 
 function shotsOf(shot: DbbObject | undefined): Shots {

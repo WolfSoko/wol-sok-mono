@@ -1,12 +1,12 @@
 import {
   fieldGoals,
-  NONE_RECORDED,
+  recordedStats,
   type PlayerStats,
-  type RecordedStats,
   type Roster,
   type RosterEntry,
   type Shots,
 } from '@wolsok/feat-shared-basketball-data';
+import { SECONDS_IN_MINUTE } from '@wolsok/utils-time';
 import type {
   Kind,
   MarkierbarerSpieler,
@@ -44,7 +44,7 @@ export interface KaderZeile {
   readonly anonym: boolean;
   /** Absent where the Verband records no Spielerwerte. */
   readonly werte?: PlayerStatsRow;
-  /** Whether the player was in the starting five, where the Kader records it. */
+  /** Whether the player was in the starting five, where the DBB says so. */
   readonly starter: boolean;
   /**
    * The player to mark as a Kind: a named one of a followed Team's Kader
@@ -66,11 +66,11 @@ export const ANONYMER_SPIELER = 'Anonymer Spieler';
  */
 export function kaderZeilen(
   kader: Roster,
-  kinder?: readonly Kind[],
-  recorded: RecordedStats = NONE_RECORDED
+  kinder?: readonly Kind[]
 ): readonly KaderZeile[] {
+  const { shotAttempts } = recordedStats(kader);
   return kader.entries.map((eintrag) => {
-    const zeile = kaderZeile(eintrag, recorded);
+    const zeile = kaderZeile(eintrag, shotAttempts);
     if (kinder === undefined || eintrag.kind === 'anonymous') {
       return zeile;
     }
@@ -84,11 +84,11 @@ export function kaderZeilen(
   });
 }
 
-function kaderZeile(eintrag: RosterEntry, recorded: RecordedStats): KaderZeile {
+function kaderZeile(eintrag: RosterEntry, shotAttempts: boolean): KaderZeile {
   const stats = eintrag.playerStats;
   const mitWerten = {
-    ...(stats && { werte: statsRow(stats, recorded.shotAttempts) }),
-    starter: recorded.startingFive && (stats?.startingFive ?? false),
+    ...(stats && { werte: statsRow(stats, shotAttempts) }),
+    starter: stats?.startingFive ?? false,
   };
   if (eintrag.kind === 'anonymous') {
     return { name: ANONYMER_SPIELER, anonym: true, ...mitWerten };
@@ -126,12 +126,10 @@ function madeOfAttempted({ made, attempted }: Shots): string {
   return `${made}/${attempted}`;
 }
 
-const SECONDS_PER_MINUTE = 60;
-
 /** A playing time as minutes and seconds: 1724 → `28:44`. */
 export function playingTime(seconds: number): string {
   const whole = Math.max(0, Math.round(seconds));
-  const minutes = Math.floor(whole / SECONDS_PER_MINUTE);
-  const rest = whole % SECONDS_PER_MINUTE;
+  const minutes = Math.floor(whole / SECONDS_IN_MINUTE);
+  const rest = whole % SECONDS_IN_MINUTE;
   return `${minutes}:${String(rest).padStart(2, '0')}`;
 }

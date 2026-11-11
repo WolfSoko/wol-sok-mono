@@ -9,4 +9,4 @@ export {
 } from './testing/anonymise-fixtures';
 export { fakeDbbAnswer } from './testing/fake-dbb';
 export { isOutsideFolder } from './testing/outside-folder';
-export { NO_PLAYER_STATS, playerStatsOf } from './testing/player-stats';
+export { playerStatsOf } from './testing/player-stats';

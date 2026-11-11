@@ -1,4 +1,8 @@
-import type { RecordedStats } from '@wolsok/feat-shared-basketball-data';
+import {
+  recordedStats,
+  type RecordedStats,
+  type Roster,
+} from '@wolsok/feat-shared-basketball-data';
 import type { PlayerStatsRow } from './kader-zeilen';
 
 /** A column of a player's Spielerwerte: a field of `PlayerStatsRow`. */
@@ -16,8 +20,8 @@ export interface StatsColumn {
 interface ColumnDefinition extends StatsColumn {
   /** The label where shots read made of attempted. */
   readonly labelWithAttempts?: string;
-  /** Whether the Kader records it; absent: whenever it has Spielerwerte. */
-  readonly shown?: (recorded: RecordedStats) => boolean;
+  /** The value whose recording shows it; absent: whenever it has Spielerwerte. */
+  readonly recordedAs?: keyof RecordedStats;
 }
 
 /** Every Spielerwerte column, in the DBB's order. */
@@ -26,7 +30,7 @@ const COLUMNS: readonly ColumnDefinition[] = [
     id: 'playingTime',
     abbreviation: 'Min.',
     label: 'Spielzeit in Minuten',
-    shown: (recorded) => recorded.playingTime,
+    recordedAs: 'playingTime',
   },
   { id: 'points', abbreviation: 'Pkt.', label: 'Punkte' },
   {
@@ -40,7 +44,7 @@ const COLUMNS: readonly ColumnDefinition[] = [
     abbreviation: '3P',
     label: 'Dreier',
     labelWithAttempts: 'Dreier getroffen von versucht',
-    shown: (recorded) => recorded.threePointers,
+    recordedAs: 'threePointers',
   },
   {
     id: 'freeThrows',
@@ -51,59 +55,57 @@ const COLUMNS: readonly ColumnDefinition[] = [
     id: 'rebounds',
     abbreviation: 'Reb.',
     label: 'Rebounds',
-    shown: (recorded) => recorded.rebounds,
+    recordedAs: 'rebounds',
   },
   {
     id: 'assists',
     abbreviation: 'Ass.',
     label: 'Assists',
-    shown: (recorded) => recorded.assists,
+    recordedAs: 'assists',
   },
   {
     id: 'steals',
     abbreviation: 'BG',
     label: 'Ballgewinne',
-    shown: (recorded) => recorded.steals,
+    recordedAs: 'steals',
   },
   {
     id: 'turnovers',
     abbreviation: 'BV',
     label: 'Ballverluste',
-    shown: (recorded) => recorded.turnovers,
+    recordedAs: 'turnovers',
   },
   {
     id: 'blocks',
     abbreviation: 'Bl.',
     label: 'Blocks',
-    shown: (recorded) => recorded.blocks,
+    recordedAs: 'blocks',
   },
   { id: 'fouls', abbreviation: 'F', label: 'Fouls' },
   {
     id: 'efficiency',
     abbreviation: 'Eff.',
     label: 'Effizienz',
-    shown: (recorded) => recorded.efficiency,
+    recordedAs: 'efficiency',
   },
 ];
 
 /**
- * The Spielerwerte columns of a Kader that records `recorded`: points,
- * field goals, free throws and fouls always, every other only where the
- * DBB recorded it. A Kader without Spielerwerte gets none.
+ * The Spielerwerte columns of `kader`: points, field goals, free throws
+ * and fouls always, every other only where the DBB recorded it. A Kader
+ * without Spielerwerte gets none.
  */
-export function statsColumns(
-  playerStatsRecorded: boolean,
-  recorded: RecordedStats
-): readonly StatsColumn[] {
-  if (!playerStatsRecorded) {
+export function statsColumns(kader: Roster): readonly StatsColumn[] {
+  if (!kader.playerStatsRecorded) {
     return [];
   }
-  return COLUMNS.filter(({ shown }) => shown?.(recorded) ?? true).map(
-    ({ id, abbreviation, label, labelWithAttempts }) => ({
-      id,
-      abbreviation,
-      label:
-        recorded.shotAttempts && labelWithAttempts ? labelWithAttempts : label,
-    })
-  );
+  const recorded = recordedStats(kader);
+  return COLUMNS.filter(
+    ({ recordedAs }) => recordedAs === undefined || recorded[recordedAs]
+  ).map(({ id, abbreviation, label, labelWithAttempts }) => ({
+    id,
+    abbreviation,
+    label:
+      recorded.shotAttempts && labelWithAttempts ? labelWithAttempts : label,
+  }));
 }

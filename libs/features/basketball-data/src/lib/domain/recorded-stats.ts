@@ -59,3 +59,25 @@ export function recordedStats(roster: Roster): RecordedStats {
     startingFive: any((player) => player.startingFive),
   };
 }
+
+/**
+ * Whether any number of `stats` is not 0, so the Verband recorded them.
+ * The starting five alone does not count: a Kader with only its starters
+ * marked records no Spielerwerte.
+ */
+export function hasAnyStat(stats: PlayerStats): boolean {
+  return [
+    stats.playingTimeSeconds,
+    stats.points,
+    ...[stats.twoPointers, stats.threePointers, stats.freeThrows].flatMap(
+      (shots) => [shots.made, shots.attempted]
+    ),
+    stats.rebounds,
+    stats.assists,
+    stats.steals,
+    stats.turnovers,
+    stats.blocks,
+    stats.fouls,
+    stats.efficiency,
+  ].some((value) => value !== 0);
+}

@@ -1,29 +1,46 @@
-import {
-  NONE_RECORDED,
-  type RecordedStats,
-} from '@wolsok/feat-shared-basketball-data';
+import type { PlayerStats, Roster } from '@wolsok/feat-shared-basketball-data';
+import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { statsColumns } from './kader-spalten';
 
-const EVERY_VALUE: RecordedStats = {
-  playingTime: true,
-  shotAttempts: true,
-  threePointers: true,
-  rebounds: true,
-  assists: true,
-  steals: true,
-  turnovers: true,
-  blocks: true,
-  efficiency: true,
+function kaderOf(...players: Partial<PlayerStats>[]): Roster {
+  return {
+    playerStatsRecorded: true,
+    entries: players.map((player) => ({
+      kind: 'anonymous',
+      playerStats: playerStatsOf(player),
+    })),
+  };
+}
+
+/** A starter of the 1. Regionalliga: every value recorded. */
+const EVERY_VALUE = kaderOf({
+  playingTimeSeconds: 1724,
+  points: 16,
+  twoPointers: { made: 8, attempted: 12 },
+  threePointers: { made: 0, attempted: 2 },
+  rebounds: 7,
+  assists: 1,
+  steals: 2,
+  turnovers: 1,
+  blocks: 1,
+  fouls: 2,
+  efficiency: 18,
   startingFive: true,
-};
+});
 
 describe('statsColumns', () => {
   it('gives a Kader without Spielerwerte none', () => {
-    expect(statsColumns(false, EVERY_VALUE)).toEqual([]);
+    expect(statsColumns({ playerStatsRecorded: false, entries: [] })).toEqual(
+      []
+    );
   });
 
   it('gives a youth Kader the columns it always had', () => {
-    expect(statsColumns(true, NONE_RECORDED)).toEqual([
+    expect(
+      statsColumns(
+        kaderOf({ points: 2, twoPointers: { made: 1, attempted: 0 } })
+      )
+    ).toEqual([
       { id: 'points', abbreviation: 'Pkt.', label: 'Punkte' },
       { id: 'fieldGoals', abbreviation: 'FK', label: 'Feldkörbe' },
       {
@@ -37,7 +54,7 @@ describe('statsColumns', () => {
 
   it('adds every recorded value, in the DBB order, shots made of attempted', () => {
     expect(
-      statsColumns(true, EVERY_VALUE).map(
+      statsColumns(EVERY_VALUE).map(
         ({ abbreviation, label }) => `${abbreviation} ${label}`
       )
     ).toEqual([
@@ -58,9 +75,9 @@ describe('statsColumns', () => {
 
   it('adds only what is recorded', () => {
     expect(
-      statsColumns(true, { ...NONE_RECORDED, threePointers: true }).map(
-        ({ id, label }) => `${id} ${label}`
-      )
+      statsColumns(
+        kaderOf({ points: 3 }, { threePointers: { made: 1, attempted: 0 } })
+      ).map(({ id, label }) => `${id} ${label}`)
     ).toEqual([
       'points Punkte',
       'fieldGoals Feldkörbe',

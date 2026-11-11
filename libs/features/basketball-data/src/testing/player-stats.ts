@@ -1,7 +1,7 @@
 import type { PlayerStats } from '../lib/domain/game-report';
 
 /** A player's Spielerwerte with every value 0, as the DBB sends what it lacks. */
-export const NO_PLAYER_STATS: PlayerStats = {
+const NO_PLAYER_STATS: PlayerStats = {
   playingTimeSeconds: 0,
   points: 0,
   twoPointers: { made: 0, attempted: 0 },
