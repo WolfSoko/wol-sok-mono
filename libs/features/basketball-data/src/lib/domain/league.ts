@@ -21,7 +21,8 @@ export interface League {
    * Set where the DBB keeps no Spielberichte for the Liga: no Kader, no
    * quarters, only results (the BBL, ProA and ProB keep theirs in their own
    * systems, some youth Ligen enter none). Absent where it does or does not
-   * say, as in the Liga search.
+   * say, as in the Liga search and a Team's Spiele (`teamGames`), whose
+   * Ligen never say: ask a Spiel's details (`game`) for it.
    */
   readonly withoutGameReports?: true;
   /**
