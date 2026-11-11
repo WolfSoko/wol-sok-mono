@@ -68,7 +68,7 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "tsx apps/bacteria-wars-functions/deploy/retry-once.ts firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase deploy --config=firebase.bacteria-game-remote.json --project=bacteria-game-remote --only functions:bacteria --force --non-interactive"
       }
     }
   }
