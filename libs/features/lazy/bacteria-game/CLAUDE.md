@@ -277,7 +277,9 @@ storage until then. Settings stay with the device either way.
 - Treat the ports as asynchronous, even though local storage answers at once:
   - `watch` may emit later than the subscription, and again when another tab
     or device changes the value.
-  - `write` and `update` are fire and forget.
+  - `write` is fire and forget; `update` resolves true once its change is
+    stored and false once dropped (never rejecting), which callers may
+    ignore (`void`).
   - Services keep their state in signals, and the game never waits on storage
     during a match.
 - Stored values are JSON-plain data with a parser per key (`parseProgress`,
@@ -296,8 +298,15 @@ storage until then. Settings stay with the device either way.
     from memory, which misses what the storage has not told yet. An adding
     change must land exactly once, so `FirestoreGameStorage` runs `update` as
     a transaction, queued per key. Offline, the change waits to be online and
-    runs then. The queue lives in memory: a change made offline is lost when
-    the page closes before the device is online again.
+    runs then. The queue lives in memory, and a transaction never reaches
+    Firestore's persistent cache: a change not committed when the page
+    closes is lost there, online too. So `playerDocument` keeps what the
+    page held after each change in `DeviceStorage` under `<key>.unsaved`
+    (`storage/unsaved-changes.ts`: an entry per page and player) until the
+    change settled, and the player's next start on the device merges what
+    is left in and stores it (#2820). That is safe only because `merge` can
+    only gain; a document whose changes cannot be merged that way must not
+    go through `playerDocument`.
 - A late answer must not undo the player. A setting the storage does not
   hold and one the player changed before it answered keep their value. A
   match under way keeps its setup; the stored setup waits for the menu and is
@@ -336,7 +345,9 @@ storage until then. Settings stay with the device either way.
   the player is null; the storage holds back what is stored meanwhile for
   that guest.
 - The first cloud player adopts what this device kept in local storage
-  under the document's key before the cloud (`playerDocument`), once.
+  under the document's key before the cloud (`playerDocument`), once; the
+  device's copy is cleared only once the cloud stored the adoption, so a
+  page closed before that adopts it again on the next visit.
 - Specs for a service that stores data also run it against `LateGameStorage`
   (`src/testing/`, kept out of the lib build), an asynchronous fake, so a
   service that depends on local storage answering synchronously fails a test.

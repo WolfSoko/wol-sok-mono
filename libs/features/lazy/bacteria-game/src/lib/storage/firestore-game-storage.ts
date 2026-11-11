@@ -21,9 +21,11 @@ const FINAL_ERRORS = new Set(['permission-denied', 'invalid-argument']);
  * Changes queue per key and run as transactions in turn, each on the latest
  * stored value, so a count lands exactly once. A change that fails offline
  * waits to be online and runs then; one queued as a player signs out is
- * refused by the rules and dropped. The queue lives as long as the page:
- * a change made offline is lost when the page closes before it is online
- * again. While a ban holds (ADR 0012), whose writes the rules refuse, the
+ * refused by the rules and dropped; `update` resolves once its change is
+ * stored or dropped. The queue lives as long as the page: a change not
+ * stored when the page closes is lost here - `playerDocument` keeps what
+ * its changes held on the device until then and lands it on the next
+ * visit (#2820). While a ban holds (ADR 0012), whose writes the rules refuse, the
  * queue waits as it does offline - rather than have the cache roll every
  * save back - and runs once the ban ends, if the page is still open.
  */

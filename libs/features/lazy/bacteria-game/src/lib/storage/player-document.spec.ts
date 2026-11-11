@@ -67,6 +67,48 @@ describe('playerDocument', () => {
     );
   }
 
+  /** Lets the promises the storages resolved run on. */
+  async function settle(): Promise<void> {
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+  }
+
+  /** Answers the device until it has nothing left, the cloud left waiting. */
+  async function answerDevice(): Promise<void> {
+    for (let round = 0; round < 3; round++) {
+      device.flush();
+      await settle();
+    }
+  }
+
+  /** Answers the cloud and the device until neither has anything left. */
+  async function answerAll(onDevice = device): Promise<void> {
+    for (let round = 0; round < 5; round++) {
+      account.flush();
+      onDevice.flush();
+      await settle();
+    }
+  }
+
+  /** A second page on the same device and account: the next visit, or another tab. */
+  function createOn(
+    onDevice: LateGameStorage,
+    options: Partial<PlayerDocumentOptions<Badges>> = {}
+  ): PlayerDocument<Badges> {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: GameAccount, useValue: account },
+        { provide: GameStorage, useValue: account.storage },
+        { provide: DeviceStorage, useValue: onDevice },
+      ],
+    });
+    return TestBed.runInInjectionContext(() =>
+      playerDocument({ ...BADGES, ...options })
+    );
+  }
+
   function add(document: PlayerDocument<Badges>, badge: string): void {
     const next = union(document.value(), [badge]);
     document.apply(next, (stored) => union(stored, next));
@@ -181,15 +223,45 @@ describe('playerDocument', () => {
   });
 
   describe('the copy this device kept before the cloud', () => {
-    it('goes to the first player, once, and leaves the device', () => {
+    it('stays on the device until the cloud stored it', async () => {
+      create({ onDevice: { [KEY]: ['gold'] } });
+      device.flush();
+      await settle();
+      device.flush();
+
+      expect(device.stored(KEY)).toEqual(['gold']);
+
+      account.flush();
+      await answerAll();
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
+      expect(device.stored(KEY)).toBeNull();
+    });
+
+    it('goes to the player again on the next visit when the cloud never stored it', async () => {
+      create({ onDevice: { [KEY]: ['gold'] } });
+      device.flush();
+      await settle();
+
+      // The page closes before the cloud answered; the next visit starts.
+      const next = new LateGameStorage({ [KEY]: ['gold'] });
+      account.seed('guest', {});
+      createOn(next);
+      next.flush();
+      await answerAll(next);
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
+      expect(next.stored(KEY)).toBeNull();
+    });
+
+    it('goes to the first player, once, and leaves the device', async () => {
       const document = create({
         stored: { [KEY]: ['silver'] },
         onDevice: { [KEY]: ['gold'] },
       });
 
       device.flush();
-      account.flush();
-      device.flush();
+      await answerAll();
 
       expect(document.value()).toEqual(['gold', 'silver']);
       expect(account.storageOf('guest').stored(KEY)).toEqual([
@@ -226,6 +298,131 @@ describe('playerDocument', () => {
 
       expect(document.value()).toEqual([]);
       expect(device.stored(KEY)).toEqual(['gold']);
+    });
+  });
+
+  describe('changes the cloud has not stored yet', () => {
+    const UNSAVED = `${KEY}.unsaved`;
+
+    /** The unsaved changes on a device, as values by player. */
+    function unsavedOn(onDevice = device): Record<string, unknown[]> {
+      const changes = (onDevice.stored(UNSAVED) ?? {}) as Record<
+        string,
+        { player: string; value: unknown }
+      >;
+      const byPlayer: Record<string, unknown[]> = {};
+      for (const { player, value } of Object.values(changes)) {
+        (byPlayer[player] ??= []).push(value);
+      }
+      return byPlayer;
+    }
+
+    it('are kept on the device with what the page held', async () => {
+      const document = create({ stored: { [KEY]: ['gold'] } });
+      add(document, 'silver');
+      await answerDevice();
+
+      expect(unsavedOn()).toEqual({ guest: [['silver']] });
+    });
+
+    it('leave the device once the cloud stored the latest of them', async () => {
+      const document = create();
+      add(document, 'silver');
+      device.flush();
+      await settle();
+      account.flush();
+      await answerAll();
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['silver']);
+      expect(device.stored(UNSAVED)).toBeNull();
+    });
+
+    it('stay while a later change still waits for the cloud', async () => {
+      const document = create();
+      add(document, 'silver');
+      account.flush(); // the first change is stored ...
+      add(document, 'gold'); // ... while the next one waits
+      await answerDevice();
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['silver']);
+      expect(unsavedOn()).toEqual({ guest: [['gold', 'silver']] });
+    });
+
+    it('go to the same player on the next visit, and leave the device then', async () => {
+      const document = create({ stored: { [KEY]: ['gold'] } });
+      add(document, 'silver');
+      device.flush();
+      await settle();
+      const left = device.stored(UNSAVED);
+
+      // The page closes before the cloud answered; the next visit starts.
+      account.seed('guest', { [KEY]: ['gold'] });
+      const next = new LateGameStorage({ [UNSAVED]: left });
+      const visit = createOn(next);
+      next.flush();
+      await settle();
+
+      expect(visit.value()).toEqual(['silver']);
+      await answerAll(next);
+
+      expect(visit.value()).toEqual(['gold', 'silver']);
+      expect(account.storageOf('guest').stored(KEY)).toEqual([
+        'gold',
+        'silver',
+      ]);
+      expect(next.stored(UNSAVED)).toBeNull();
+    });
+
+    it('change nothing when they are replayed once more', async () => {
+      const merge = jest.fn(union);
+      account = new FakeGameAccount('guest');
+      account.seed('guest', { [KEY]: ['gold', 'silver'] });
+      const next = new LateGameStorage({
+        [UNSAVED]: { 'closed:guest': { player: 'guest', value: ['silver'] } },
+      });
+      createOn(next, { merge });
+      await answerAll(next);
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual([
+        'gold',
+        'silver',
+      ]);
+      expect(next.stored(UNSAVED)).toBeNull();
+    });
+
+    it("leave another player's changes alone", async () => {
+      account = new FakeGameAccount('guest');
+      const theirs = { 'closed:ada': { player: 'ada', value: ['gold'] } };
+      const next = new LateGameStorage({ [UNSAVED]: theirs });
+      const visit = createOn(next);
+      await answerAll(next);
+
+      expect(visit.value()).toEqual([]);
+      expect(account.storageOf('guest').stored(KEY)).toBeNull();
+      expect(next.stored(UNSAVED)).toEqual(theirs);
+    });
+
+    it('are applied when their player takes over again', async () => {
+      account = new FakeGameAccount('guest');
+      const next = new LateGameStorage({
+        [UNSAVED]: { 'closed:ada': { player: 'ada', value: ['gold'] } },
+      });
+      createOn(next);
+      await answerAll(next);
+
+      account.switchTo('ada');
+      await answerAll(next);
+
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold']);
+      expect(next.stored(UNSAVED)).toBeNull();
+    });
+
+    it('are not kept without the cloud', async () => {
+      const document = create({ cloud: false });
+      add(document, 'silver');
+      await answerAll();
+
+      expect(device.stored(UNSAVED)).toBeNull();
     });
   });
 
