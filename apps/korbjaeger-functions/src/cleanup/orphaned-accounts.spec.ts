@@ -4,11 +4,15 @@ import { cleanUpOrphanedAccounts } from './orphaned-accounts';
 
 jest.mock('../konto-geloescht', () => ({ kontoGeloescht: jest.fn() }));
 
-/** A Firestore that only lists the given ids in every collection. */
+/**
+ * A Firestore that lists the given ids in every collection and deletes
+ * whatever it is asked to (the legacy document after `kontoGeloescht`).
+ */
 const listing = (ids: readonly string[]) =>
   ({
     collection: () => ({
       listDocuments: async () => ids.map((id) => ({ id })),
+      doc: () => ({ delete: async () => undefined }),
     }),
   }) as unknown as Firestore;
 

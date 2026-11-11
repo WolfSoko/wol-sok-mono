@@ -21,8 +21,8 @@ import {
   NICKNAME_LENGTH,
 } from '@wolsok/feat-korbjaeger-selection';
 import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
+import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DbbLinkComponent } from './dbb-link.component';
-import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { germanDays } from './german-days';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 
@@ -64,11 +64,12 @@ export class DatenschutzComponent {
     tage: MAX_AGE_DAYS,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
+  /** The key before #2966 the policy names as an example of what the start removes. */
+  protected readonly oldSelectionKey = KEYS_BEFORE_ENGLISH_NAMES.selection;
   /** How long section 6 says the server retries and keeps a tombstone. */
   protected readonly deletion = {
     retry: germanDays(DELETION_RETRY_DAYS),
     tombstone: germanDays(TOMBSTONE_DAYS),
     ttl: germanDays(TTL_DELETION_DAYS, { further: true }),
   } as const;
-  protected readonly alteSchluessel = LEGACY_DEVICE_KEYS;
 }

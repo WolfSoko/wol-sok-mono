@@ -15,8 +15,8 @@ import {
   NICKNAME_LENGTH,
 } from '@wolsok/feat-korbjaeger-selection';
 import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
+import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DatenschutzComponent } from './datenschutz.component';
-import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
 import { germanDays } from './german-days';
 
@@ -60,12 +60,12 @@ describe('DatenschutzComponent', () => {
     );
   });
 
-  // #2966: the keys before it are moved at the first start
-  it('says the keys of an earlier version are taken over and removed', () => {
+  // #2983: the keys of before #2966 are removed at start
+  it('says the keys of an earlier version are removed', () => {
     const geraet = abschnitt(zeigen(DatenschutzComponent), 'geraet');
 
-    expect(geraet).toContain(LEGACY_DEVICE_KEYS.selection);
-    expect(geraet).toContain('übernimmt die App diese Einträge');
+    expect(geraet).toContain(KEYS_BEFORE_ENGLISH_NAMES.selection);
+    expect(geraet).toContain('löscht die App beim Start');
   });
 
   it('names the entries Firebase keeps in localStorage while signed in', () => {

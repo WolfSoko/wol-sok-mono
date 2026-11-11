@@ -24,19 +24,9 @@ service cloud.firestore {
     // device's token stays valid for up to an hour. The tombstone is closed to
     // clients (no rule matches it) and expires after a day (TTL on
     // `expireAt`, firestore.indexes.json), longer than any token lives.
-    // geloeschteKonten/{uid} holds the tombstones written before #2966, until
-    // they expired.
     function isOwner(uid) {
       return request.auth != null && request.auth.uid == uid
-        && !exists(/databases/$(database)/documents/deletedAccounts/$(uid))
-        && !exists(/databases/$(database)/documents/geloeschteKonten/$(uid));
-    }
-
-    // The selection of versions 1 and 2, with German fields: the app moves it
-    // into selections/{uid} when the account is opened, then deletes it
-    // (legacy-account-migration.ts, #2966). No app writes it any more.
-    match /auswahl/{uid} {
-      allow get, delete: if isOwner(uid);
+        && !exists(/databases/$(database)/documents/deletedAccounts/$(uid));
     }
 
     match /selections/{uid} {

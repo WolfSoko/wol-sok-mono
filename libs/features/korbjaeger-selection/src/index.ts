@@ -28,14 +28,6 @@ export {
 export { takeOverDevice } from './lib/take-over-device';
 export { sameSequence } from './lib/same-sequence';
 export {
-  legacyAccountMigration,
-  legacySelectionDocument,
-} from './lib/legacy-account-migration';
-export {
-  LEGACY_SELECTION_KEY,
-  moveLegacyDeviceSelection,
-} from './lib/legacy-device-selection';
-export {
   type Child,
   type MarkablePlayer,
   NICKNAME_CODE_POINTS,
