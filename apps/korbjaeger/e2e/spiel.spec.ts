@@ -79,6 +79,7 @@ test.describe('Spiel page', () => {
       'Ilvio Mistelgrund',
       '29',
       '12',
+      '3',
       '2/7',
       '3',
     ]);
