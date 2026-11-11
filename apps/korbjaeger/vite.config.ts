@@ -1,7 +1,7 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-import { fileURLToPath } from 'node:url';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
+import { workspaceFile } from '../../tools/vite/workspace-file';
 import browserslist from 'browserslist';
 import { buildKonfigurationMerken } from './deploy/build-configuration';
 import { cssZiele } from './deploy/css-ziele';
@@ -97,7 +97,3 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     },
   };
 });
-
-function workspaceFile(path: string): string {
-  return fileURLToPath(new URL(`../../${path}`, import.meta.url));
-}

@@ -1,7 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-
-const WORKSPACE_ROOT = resolve(import.meta.dirname, '../..');
+import { workspaceFile } from './workspace-file';
 
 /**
  * Nitro aliases for the workspace's `@wolsok/*` path aliases of
@@ -11,7 +9,7 @@ const WORKSPACE_ROOT = resolve(import.meta.dirname, '../..');
  */
 export function nitroTsPathAliases(): Record<string, string> {
   const tsconfig = JSON.parse(
-    readFileSync(resolve(WORKSPACE_ROOT, 'tsconfig.base.json'), 'utf8')
+    readFileSync(workspaceFile('tsconfig.base.json'), 'utf8')
   ) as {
     readonly compilerOptions: {
       readonly paths: Readonly<Record<string, readonly string[]>>;
@@ -20,6 +18,6 @@ export function nitroTsPathAliases(): Record<string, string> {
   return Object.fromEntries(
     Object.entries(tsconfig.compilerOptions.paths)
       .filter(([alias]) => alias.startsWith('@wolsok/') && !alias.includes('*'))
-      .map(([alias, [target]]) => [alias, resolve(WORKSPACE_ROOT, target)])
+      .map(([alias, [target]]) => [alias, workspaceFile(target)])
   );
 }

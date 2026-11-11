@@ -1,5 +1,6 @@
 import analog from '@analogjs/platform';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
+import { workspaceFile } from '../../tools/vite/workspace-file';
 import { ConfigEnv, defineConfig, Plugin } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
@@ -25,7 +26,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
     },
     server: {
       fs: {
-        allow: ['.'],
+        // the workspace: the app, its libs and the Fontsource files
+        allow: [workspaceFile('.')],
       },
     },
     ssr: {
