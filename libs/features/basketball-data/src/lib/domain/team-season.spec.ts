@@ -9,6 +9,7 @@ import {
   lastPlayed,
   keepsGameReports,
   lastWithGameReport,
+  withoutAnyGameReports,
   type TeamSeason,
 } from './team-season';
 
@@ -28,6 +29,16 @@ function league(id: number, name: string): League {
 const FRIENDLIES = league(54689, 'Testspiele Braunschweig u12');
 const FIRST_ROUND = league(54862, 'Regionsvorrunde Nord');
 const MAIN_ROUND = league(54900, 'Regionsliga');
+const MAIN_ROUND_WITHOUT_REPORTS: League = {
+  ...MAIN_ROUND,
+  withoutGameReports: true,
+};
+
+const PLAYED: Game['status'] = {
+  kind: 'played',
+  result: { home: 78, away: 47 },
+  confirmed: true,
+};
 
 function game(
   id: number,
@@ -275,12 +286,6 @@ describe('nextGame', () => {
 });
 
 describe('seasonOver', () => {
-  const PLAYED: Game['status'] = {
-    kind: 'played',
-    result: { home: 78, away: 47 },
-    confirmed: true,
-  };
-
   it('holds once the last Spiel is more than two weeks past, none to come', () => {
     expect(
       seasonOver(
@@ -350,11 +355,6 @@ describe('leagueOf', () => {
 });
 
 describe('lastPlayed', () => {
-  const PLAYED: Game['status'] = {
-    kind: 'played',
-    result: { home: 78, away: 47 },
-    confirmed: false,
-  };
   const TODAY = '2026-11-08';
 
   it("lists the Spiele played up to today, today's too, newest first", () => {
@@ -417,11 +417,10 @@ describe('lastPlayed', () => {
 
 describe('keepsGameReports', () => {
   it('is false for a Spiel of a Liga the DBB keeps no Spielberichte for', () => {
-    const withoutReports: League = { ...MAIN_ROUND, withoutGameReports: true };
     const spiel = game(1, MAIN_ROUND.id, '2026-10-03');
     const saison: TeamSeason = {
       ...season(spiel),
-      leagues: [withoutReports],
+      leagues: [MAIN_ROUND_WITHOUT_REPORTS],
     };
 
     expect(keepsGameReports(saison, spiel)).toBe(false);
@@ -441,18 +440,12 @@ describe('keepsGameReports', () => {
 });
 
 describe('lastWithGameReport', () => {
-  const PLAYED: Game['status'] = {
-    kind: 'played',
-    result: { home: 78, away: 47 },
-    confirmed: true,
-  };
   const TODAY = '2026-11-08';
-  const withoutReports: League = { ...MAIN_ROUND, withoutGameReports: true };
 
   it('is the last Spiel played up to today in a Liga with Spielberichte', () => {
     const saison: TeamSeason = {
       ...season(),
-      leagues: [FIRST_ROUND, withoutReports],
+      leagues: [FIRST_ROUND, MAIN_ROUND_WITHOUT_REPORTS],
       games: [
         game(1, FIRST_ROUND.id, '2026-10-03', PLAYED),
         game(2, FIRST_ROUND.id, '2026-10-10', PLAYED),
@@ -467,7 +460,7 @@ describe('lastWithGameReport', () => {
   it('is none where nothing was played in such a Liga', () => {
     const saison: TeamSeason = {
       ...season(),
-      leagues: [FIRST_ROUND, withoutReports],
+      leagues: [FIRST_ROUND, MAIN_ROUND_WITHOUT_REPORTS],
       games: [
         game(1, FIRST_ROUND.id, '2026-10-03', { kind: 'cancelled' }),
         game(2, MAIN_ROUND.id, '2026-10-24', PLAYED),
@@ -475,5 +468,34 @@ describe('lastWithGameReport', () => {
     };
 
     expect(lastWithGameReport(saison, TODAY)).toBeUndefined();
+  });
+});
+
+describe('withoutAnyGameReports', () => {
+  it('holds where every Spiel is in a Liga without Spielberichte', () => {
+    const saison: TeamSeason = {
+      ...season(),
+      leagues: [MAIN_ROUND_WITHOUT_REPORTS],
+      games: [game(1, MAIN_ROUND.id, '2026-10-24', PLAYED)],
+    };
+
+    expect(withoutAnyGameReports(saison)).toBe(true);
+  });
+
+  it('does not hold where a Spiel, even one to come, is in a Liga with them', () => {
+    const saison: TeamSeason = {
+      ...season(),
+      leagues: [FIRST_ROUND, MAIN_ROUND_WITHOUT_REPORTS],
+      games: [
+        game(1, MAIN_ROUND.id, '2026-10-24', PLAYED),
+        game(2, FIRST_ROUND.id, '2026-11-21'),
+      ],
+    };
+
+    expect(withoutAnyGameReports(saison)).toBe(false);
+  });
+
+  it('does not hold for a Saison without Spiele', () => {
+    expect(withoutAnyGameReports(season())).toBe(false);
   });
 });

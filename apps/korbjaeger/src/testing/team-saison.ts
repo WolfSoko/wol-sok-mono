@@ -13,7 +13,10 @@ export const WASBUETTEL_RST = {
 };
 const GIFHORN = { id: 201500, name: 'MTV Gifhorn', clubId: 201500 };
 
-/** The Liga of every `spielOn`. */
+/** A Hauptrunde, for a Spiel of a second Liga (`leagueId` of `spielOn`). */
+export const HAUPTRUNDE_ID = 54900;
+
+/** The Liga of every `spielOn` by default. */
 const LIGA: League = {
   id: 54862,
   name: 'Regionsvorrunde Nord',
@@ -34,11 +37,12 @@ export const PLAYED: GameStatus = {
 export function spielOn(
   id: number,
   datum: string,
-  status: GameStatus = PLAYED
+  status: GameStatus = PLAYED,
+  leagueId: number = LIGA.id
 ): Game {
   return {
     id,
-    leagueId: LIGA.id,
+    leagueId,
     matchday: 1,
     date: datum,
     home: { kind: 'team', team: WASBUETTEL_RST },

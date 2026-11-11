@@ -1,5 +1,6 @@
 import { childStep } from './child-step';
 import {
+  HAUPTRUNDE_ID,
   inLigaWithoutGameReports,
   PLAYED,
   saisonOf,
@@ -63,14 +64,13 @@ describe('childStep', () => {
   });
 
   it('leads to the last Spiel of a Liga with Spielberichte, passing over newer ones without', () => {
-    const HAUPTRUNDE = 54900;
     const step = childStep(
       inLigaWithoutGameReports(
-        saisonOf(spielOn(1, '2026-09-20', PLAYED), {
-          ...spielOn(2, '2026-10-04', PLAYED),
-          leagueId: HAUPTRUNDE,
-        }),
-        HAUPTRUNDE
+        saisonOf(
+          spielOn(1, '2026-09-20', PLAYED),
+          spielOn(2, '2026-10-04', PLAYED, HAUPTRUNDE_ID)
+        ),
+        HAUPTRUNDE_ID
       ),
       '2026-11-08'
     );
@@ -79,14 +79,12 @@ describe('childStep', () => {
   });
 
   it('waits for a Spiel to come in a Liga with Spielberichte', () => {
-    const VORRUNDE = 54862;
     const step = childStep(
       inLigaWithoutGameReports(
-        saisonOf(spielOn(1, '2026-09-20', PLAYED), {
-          ...spielOn(2, '2026-11-15', { kind: 'scheduled' }),
-          leagueId: 54900,
-        }),
-        VORRUNDE
+        saisonOf(
+          spielOn(1, '2026-09-20', PLAYED),
+          spielOn(2, '2026-11-15', { kind: 'scheduled' }, HAUPTRUNDE_ID)
+        )
       ),
       '2026-11-08'
     );

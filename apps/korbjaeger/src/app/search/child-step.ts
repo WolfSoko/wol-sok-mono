@@ -1,6 +1,6 @@
 import {
-  keepsGameReports,
   lastWithGameReport,
+  withoutAnyGameReports,
   type GameId,
   type TeamSeason,
 } from '@wolsok/feat-shared-basketball-data';
@@ -27,15 +27,7 @@ export function childStep(saison: TeamSeason, heute: string): ChildStep {
   if (last) {
     return { kind: 'mark', spielId: last.id };
   }
-  return onlyWithoutGameReports(saison)
+  return withoutAnyGameReports(saison)
     ? { kind: 'no-game-reports' }
     : { kind: 'after-first-game' };
-}
-
-/** Whether `saison` has Spiele, none of them in a Liga with Spielberichte. */
-function onlyWithoutGameReports(saison: TeamSeason): boolean {
-  return (
-    saison.games.length > 0 &&
-    !saison.games.some((game) => keepsGameReports(saison, game))
-  );
 }

@@ -51,7 +51,7 @@ for its Liga, so the Kind cannot be marked there, instead of a link.
    older one is not gives `mark` with the older Spiel.
 3. Ligen with Spielberichte behave as today (existing specs stay green).
 4. `ChildStepComponent` shows the hint and no link for such a Team.
-5. The lib's `keepsGameReports` and `lastWithGameReport` have specs of
+5. The lib's `keepsGameReports`, `lastWithGameReport` and `withoutAnyGameReports` have specs of
    their own.
 6. A Team with a Spiel to come in a Liga with Spielberichte still gets
    `after-first-game`.

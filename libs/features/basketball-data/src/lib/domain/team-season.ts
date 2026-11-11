@@ -59,8 +59,9 @@ export function nextGameIndex(season: TeamSeason, today: string): number {
 
 /**
  * The Spiele of `season` played up to `today` (today's included), newest
- * first, at most `atMost`: those with a Spielbericht to look into.
- * Cancelled and forfeited Spiele have none; a result the DBB lists ahead of
+ * first, at most `atMost`. Cancelled and forfeited Spiele are passed
+ * over, as they have no Spielbericht; a Spiel of a Liga the DBB keeps none
+ * for is not (`lastWithGameReport` passes it over too); a result listed ahead of
  * its day is passed over, as `teamOverview` does. Relies on the date
  * order of `season.games`.
  *
@@ -72,7 +73,7 @@ export function lastPlayed(
   atMost: number
 ): readonly Game[] {
   return season.games
-    .filter(({ date, status }) => date <= today && status.kind === 'played')
+    .filter((game) => playedBy(game, today))
     .reverse()
     .slice(0, atMost);
 }
@@ -100,11 +101,25 @@ export function lastWithGameReport(
   today: string
 ): Game | undefined {
   return season.games.findLast(
-    (game) =>
-      game.date <= today &&
-      game.status.kind === 'played' &&
-      keepsGameReports(season, game)
+    (game) => playedBy(game, today) && keepsGameReports(season, game)
   );
+}
+
+/**
+ * Whether `season` has Spiele, none of them in a Liga the DBB keeps
+ * Spielberichte for (`keepsGameReports`): no Kader of it will ever name a
+ * player.
+ */
+export function withoutAnyGameReports(season: TeamSeason): boolean {
+  return (
+    season.games.length > 0 &&
+    !season.games.some((game) => keepsGameReports(season, game))
+  );
+}
+
+/** Whether `game` was played up to `today`, today's included. */
+function playedBy(game: Game, today: string): boolean {
+  return game.date <= today && game.status.kind === 'played';
 }
 
 /** How many days after its last Spiel a Team's Saison counts as over. */
