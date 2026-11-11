@@ -33,7 +33,7 @@ keeps a German word; the texts the runner sees stay German.
   becomes `summary.component.ts`, `ZusammenfassungComponent` is
   `SummaryComponent` with selector `pace-summary`, input `summary`, host CSS
   class `summary` and test id `summary` (the e2e page object's locator and
-  `expectSummary` follow).
+  `expectSummary` follow, as do its Vorlauf helpers `abortLeadIn` and `expectLeadInAnnounced`).
 - **The renames in `training-run.ts`**: `Zusammenfassung` → `Summary`, the
   view's and run's field `zusammenfassung` → `summary`, `PlannedIntervall` →
   `PlannedInterval`, `intervalle` → `intervals`, `toIntervalle` →
