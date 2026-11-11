@@ -1,4 +1,4 @@
-import { exec } from 'child_process';
+import { type ChildProcess, exec } from 'child_process';
 
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
@@ -127,16 +127,7 @@ export function runCommandProcess(
       env: process.env,
       cwd: cwd,
     });
-
-    // Ensure the child process is killed when the parent exits
-    const processExitListener = () => childProcess.kill();
-    process.on('exit', processExitListener);
-    process.on('SIGTERM', processExitListener);
-
-    process.stdin.on('data', (data) => {
-      childProcess.stdin?.write(data);
-      childProcess.stdin?.end();
-    });
+    const unbindFromParentProcess = bindToParentProcess(childProcess);
 
     childProcess.stdout?.on('data', (data) => {
       process.stdout.write(data);
@@ -147,18 +138,38 @@ export function runCommandProcess(
     });
 
     childProcess.on('close', (code) => {
-      if (code === 0) {
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-
-      process.removeListener('exit', processExitListener);
-
-      if (process.stdin.isTTY) {
-        process.stdin.end();
-      }
-      process.stdin.removeListener('data', processExitListener);
+      unbindFromParentProcess();
+      resolve(code === 0);
     });
   });
+}
+
+/**
+ * Ties the child to the parent process: the child is killed when the parent
+ * exits or gets SIGTERM, and the parent's stdin is forwarded to it once.
+ * Returns the function that removes every listener this added and pauses
+ * stdin again once no other `data` listener is left (Node keeps a stream
+ * flowing after its last `data` listener goes, which keeps the process alive).
+ */
+function bindToParentProcess(childProcess: ChildProcess): () => void {
+  const killChild = () => childProcess.kill();
+  const forwardStdin = (data: unknown) => {
+    childProcess.stdin?.write(data);
+    childProcess.stdin?.end();
+  };
+
+  process.on('exit', killChild);
+  process.on('SIGTERM', killChild);
+  // Resumed explicitly: a stream paused by an earlier run's cleanup stays
+  // paused when a `data` listener is added.
+  process.stdin.on('data', forwardStdin).resume();
+
+  return () => {
+    process.removeListener('exit', killChild);
+    process.removeListener('SIGTERM', killChild);
+    process.stdin.removeListener('data', forwardStdin);
+    if (process.stdin.listenerCount('data') === 0) {
+      process.stdin.pause();
+    }
+  };
 }
