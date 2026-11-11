@@ -35,8 +35,8 @@ const TSCONFIG_BASE = 'tsconfig.base.json';
  * Root files that keep Nx's verdict: Nx resolves the lockfile and root
  * `package.json` to npm packages, not to files; `nx.json` configures every
  * task; and a root `tsconfig*.json` reaches a task through a project tsconfig
- * extending it, which no task declares. The base is among them only as
- * itself: a change `tsconfigBaseChanges` could not narrow to files.
+ * extending it, which no task declares. `tsconfig.base.json` reaches here
+ * only where `tsconfigBaseChanges` could not narrow its change to files.
  */
 export function keepsNxVerdict(file) {
   return (
@@ -76,7 +76,9 @@ export function tsconfigBaseChanges(before, after) {
     ...(pathsBefore[alias] ?? []),
     ...(pathsAfter[alias] ?? []),
   ]);
-  if ([...changed, ...targets].some(isWildcard)) return [TSCONFIG_BASE];
+  if (changed.some(isWildcard) || targets.some(isWildcard)) {
+    return [TSCONFIG_BASE];
+  }
   return [...new Set(targets.map((target) => target.replace(/^\.\//, '')))];
 }
 

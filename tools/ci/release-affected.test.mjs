@@ -46,20 +46,18 @@ describe('selectReleaseAffected', () => {
     ]);
   });
 
-  it("keeps Nx's verdict for a lockfile or root package.json change", () => {
-    assert.deepEqual(select(['package-lock.json']), Object.keys(INPUTS));
-    assert.deepEqual(select(['package.json']), Object.keys(INPUTS));
-  });
-
-  it("keeps Nx's verdict for a root tsconfig projects extend", () => {
-    assert.deepEqual(select(['tsconfig.cdk.json']), Object.keys(INPUTS));
-  });
-
-  // The candidates' inputs list neither file: the rule, not Nx's hashing,
+  // No candidate's inputs list these files: the rule, not Nx's hashing,
   // keeps them.
-  it("keeps Nx's verdict for nx.json and an unrefined tsconfig.base.json", () => {
-    assert.deepEqual(select(['nx.json']), Object.keys(INPUTS));
-    assert.deepEqual(select(['tsconfig.base.json']), Object.keys(INPUTS));
+  it("keeps Nx's verdict for the root files it cannot judge", () => {
+    for (const file of [
+      'package.json',
+      'package-lock.json',
+      'nx.json',
+      'tsconfig.cdk.json',
+      'tsconfig.base.json',
+    ]) {
+      assert.deepEqual(select([file]), Object.keys(INPUTS), file);
+    }
   });
 
   it("keeps a candidate whose inputs could not be read, with Nx's verdict", () => {
@@ -146,26 +144,31 @@ describe('tsconfigBaseChanges', () => {
   // A wildcard target matches no input file literally, so the change counts
   // as the base itself, which keeps Nx's verdict.
   it('counts a changed wildcard alias or target as the file itself', () => {
-    const wildcard = { '@wolsok/*': ['./libs/*/src/index.ts'] };
     const withWildcard = withPaths({
       ...TSCONFIG.compilerOptions.paths,
-      ...wildcard,
+      '@wolsok/*': ['./libs/*/src/index.ts'],
     });
-    for (const [before, after] of [
-      [TSCONFIG, withWildcard],
-      [withWildcard, TSCONFIG],
-      [
+    const cases = {
+      'wildcard alias added': [TSCONFIG, withWildcard],
+      'wildcard alias removed': [withWildcard, TSCONFIG],
+      'wildcard alias retargeted': [
         withWildcard,
         withPaths({
-          ...withWildcard.compilerOptions.paths,
+          ...TSCONFIG.compilerOptions.paths,
           '@wolsok/*': ['./libs/*/index.ts'],
         }),
       ],
-      [TSCONFIG, withPaths({ '@wolsok/a': ['./libs/a/src/*'] })],
-    ]) {
-      assert.deepEqual(tsconfigBaseChanges(before, after), [
-        'tsconfig.base.json',
-      ]);
+      'literal alias retargeted to a wildcard': [
+        TSCONFIG,
+        withPaths({ '@wolsok/a': ['./libs/a/src/*'] }),
+      ],
+    };
+    for (const [name, [before, after]] of Object.entries(cases)) {
+      assert.deepEqual(
+        tsconfigBaseChanges(before, after),
+        ['tsconfig.base.json'],
+        name
+      );
     }
   });
 
