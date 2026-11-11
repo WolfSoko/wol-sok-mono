@@ -6,8 +6,9 @@
 // `eslint.config.mjs` for `lint-templates`) made every app affected. Nx's list
 // stays the start: it maps the lockfile, root `package.json`,
 // `tsconfig.base.json` and `nx.json` to the projects they touch, which a file
-// list cannot. The filter only drops a candidate whose task reads none of the
-// changed files, and keeps every candidate where it cannot judge.
+// list cannot, so a change to one of them keeps its verdict. The filter only
+// drops a candidate whose task reads none of the changed files, and keeps
+// every candidate where it cannot judge.
 //
 //   node tools/ci/release-affected.mjs --base=<ref> --head=<ref> \
 //     --target=deploy [--exclude=<pattern>] [--projects=<pattern>]
@@ -32,15 +33,17 @@ const TSCONFIG_BASE = 'tsconfig.base.json';
 
 /**
  * Root files that keep Nx's verdict: Nx resolves the lockfile and root
- * `package.json` to npm packages, not to files, and a root `tsconfig*.json`
- * other than the base reaches a task through a project tsconfig extending it,
- * which no task declares.
+ * `package.json` to npm packages, not to files; `nx.json` configures every
+ * task; and a root `tsconfig*.json` reaches a task through a project tsconfig
+ * extending it, which no task declares. The base is among them only as
+ * itself: a change `tsconfigBaseChanges` could not narrow to files.
  */
 export function keepsNxVerdict(file) {
   return (
     file === 'package.json' ||
     file === 'package-lock.json' ||
-    (file !== TSCONFIG_BASE && /^tsconfig(\.[^/]+)?\.json$/.test(file))
+    file === 'nx.json' ||
+    /^tsconfig(\.[^/]+)?\.json$/.test(file)
   );
 }
 
@@ -48,7 +51,9 @@ export function keepsNxVerdict(file) {
  * What a change to `tsconfig.base.json` touches. Nx hashes the file into
  * every task, but a change to `compilerOptions.paths` alone matters only
  * through the files its aliases point to: those of every alias added, removed
- * or retargeted, old and new. Any other change touches the file itself.
+ * or retargeted, old and new. Any other change touches the file itself, as
+ * does one of a wildcard alias or target (holding a `*`), which names no
+ * file literally.
  *
  * @param {object} before the file's JSON at the base
  * @param {object} after the file's JSON at the head
@@ -64,14 +69,19 @@ export function tsconfigBaseChanges(before, after) {
     ...Object.keys(pathsBefore),
     ...Object.keys(pathsAfter),
   ]);
-  const targets = [...aliases]
-    .filter((alias) => !sameJson(pathsBefore[alias], pathsAfter[alias]))
-    .flatMap((alias) => [
-      ...(pathsBefore[alias] ?? []),
-      ...(pathsAfter[alias] ?? []),
-    ])
-    .map((target) => target.replace(/^\.\//, ''));
-  return [...new Set(targets)];
+  const changed = [...aliases].filter(
+    (alias) => !sameJson(pathsBefore[alias], pathsAfter[alias])
+  );
+  const targets = changed.flatMap((alias) => [
+    ...(pathsBefore[alias] ?? []),
+    ...(pathsAfter[alias] ?? []),
+  ]);
+  if ([...changed, ...targets].some(isWildcard)) return [TSCONFIG_BASE];
+  return [...new Set(targets.map((target) => target.replace(/^\.\//, '')))];
+}
+
+function isWildcard(aliasOrTarget) {
+  return aliasOrTarget.includes('*');
 }
 
 function withoutPaths(tsconfig) {
