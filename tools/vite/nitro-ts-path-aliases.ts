@@ -4,7 +4,7 @@ import { workspaceFile } from './workspace-file';
 /**
  * Nitro aliases for the workspace's `@wolsok/*` path aliases of
  * `tsconfig.base.json`, absolute. Nitro bundles an Analog app's server
- * routes without the tsconfig paths Vite gets from `nxViteTsPaths`, so a
+ * routes without the tsconfig paths Vite resolves (`resolve.tsconfigPaths`), so a
  * lib a route imports needs one. Wildcard entries are left out.
  */
 export function nitroTsPathAliases(): Record<string, string> {

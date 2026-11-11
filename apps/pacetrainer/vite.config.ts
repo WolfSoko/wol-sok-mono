@@ -1,5 +1,4 @@
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { workspaceFile } from '../../tools/vite/workspace-file';
 import { ConfigEnv, defineConfig } from 'vite';
 
@@ -16,6 +15,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       target: ['es2020'],
     },
     resolve: {
+      // the workspace's @wolsok/* aliases (tsconfig.base.json)
+      tsconfigPaths: true,
       mainFields: ['module', 'main'],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
@@ -59,7 +60,6 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
           },
         },
       }),
-      nxViteTsPaths(),
     ],
     test: {
       globals: true,

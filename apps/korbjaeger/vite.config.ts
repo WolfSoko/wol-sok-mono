@@ -1,5 +1,4 @@
 import analog from '@analogjs/platform';
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
 import { workspaceFile } from '../../tools/vite/workspace-file';
 import browserslist from 'browserslist';
@@ -27,6 +26,8 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       cssTarget: cssZiele(browserslist()),
     },
     resolve: {
+      // the workspace's @wolsok/* aliases (tsconfig.base.json)
+      tsconfigPaths: true,
       mainFields: ['module', 'main'],
       extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json'],
     },
@@ -77,7 +78,6 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
           },
         },
       }),
-      nxViteTsPaths(),
       // the deploy refuses a build of any other mode than production
       buildKonfigurationMerken(workspaceFile('dist/apps/korbjaeger')),
     ],
