@@ -1,8 +1,8 @@
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import {
-  antwortenPflegen,
-  LokaleLetzteAntworten,
-} from '@wolsok/feat-korbjaeger-antworten';
+  maintainAnswerCache,
+  LocalAnswerCache,
+} from '@wolsok/feat-korbjaeger-answers';
 import { geraeteSpeicher } from '../geraete-speicher';
 import { SPEICHERBARE_ARTEN } from './proxy-transport';
 
@@ -12,15 +12,15 @@ import { SPEICHERBARE_ARTEN } from './proxy-transport';
  * start, whenever the page comes back into view, and hourly while it stays
  * open); until the app ends.
  */
-export const LETZTE_ANTWORTEN = new InjectionToken<LokaleLetzteAntworten>(
+export const LETZTE_ANTWORTEN = new InjectionToken<LocalAnswerCache>(
   'LETZTE_ANTWORTEN',
   {
     providedIn: 'root',
     factory: () => {
-      const antworten = new LokaleLetzteAntworten(geraeteSpeicher());
-      const stoppen = antwortenPflegen(antworten, {
+      const antworten = new LocalAnswerCache(geraeteSpeicher());
+      const stoppen = maintainAnswerCache(antworten, {
         document: inject(DOCUMENT),
-        arten: SPEICHERBARE_ARTEN,
+        kinds: SPEICHERBARE_ARTEN,
       });
       inject(DestroyRef).onDestroy(stoppen);
       return antworten;

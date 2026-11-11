@@ -8,7 +8,7 @@ import {
   basketballDataResource,
   type DatenResource,
 } from '../basketball-data/basketball-data-resource';
-import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
+import { sameSequence } from '@wolsok/feat-korbjaeger-selection';
 
 /**
  * How many of a Team's last played Spiele the overview looks into for the
@@ -44,7 +44,7 @@ export function gleicherAuftrag(
   }
   return (
     a.team === b.team &&
-    gleicheFolge(
+    sameSequence(
       a.games.map(({ id }) => id),
       b.games.map(({ id }) => id)
     ) &&

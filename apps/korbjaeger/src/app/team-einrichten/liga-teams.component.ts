@@ -133,7 +133,7 @@ export class LigaTeamsComponent {
     }
     this.folgtGerade.set(true);
     try {
-      if (await this.aenderung.ausfuehren(() => this.auswahl.folgen(team.id))) {
+      if (await this.aenderung.ausfuehren(() => this.auswahl.follow(team.id))) {
         await this.router.navigate(['/team', team.id]);
       }
     } finally {

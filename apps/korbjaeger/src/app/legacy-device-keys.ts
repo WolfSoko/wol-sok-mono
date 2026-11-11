@@ -1,7 +1,7 @@
 import {
   LEGACY_SELECTION_KEY,
   moveLegacyDeviceSelection,
-} from '@wolsok/feat-korbjaeger-auswahl';
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   ANGEMELDET_SCHLUESSEL,
   DARSTELLUNG_SCHLUESSEL,

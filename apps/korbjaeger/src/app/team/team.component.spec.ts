@@ -17,7 +17,7 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import type { KorbReadOptions } from '../basketball-data/lesung';
 import { HEUTE } from '../heute';
 import { JETZT } from '../jetzt';
@@ -169,7 +169,7 @@ function providers(
     { provide: HEUTE, useValue: heute },
     { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
     // in memory: nothing reaches the device's storage
-    { provide: AUSWAHL, useFactory: () => new LokaleAuswahl(undefined) },
+    { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
   ];
 }
 
@@ -660,8 +660,8 @@ describe('TeamComponent', () => {
   });
 
   it('offers to unfollow a followed Team whose read fails', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
-    await auswahl.folgen(313036);
+    const auswahl = new LocalSelection(undefined);
+    await auswahl.follow(313036);
     TestBed.configureTestingModule({
       providers: [
         ...providers(
@@ -962,7 +962,7 @@ describe('TeamComponent', () => {
     });
 
     it('follows another Team of the Verein from its line', async () => {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       TestBed.configureTestingModule({
         providers: [
           ...providers(MIT_VEREIN([])),

@@ -17,7 +17,7 @@ import type {
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { DatenResource } from '../basketball-data/basketball-data-resource';
 import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
-import { gleicheFolge } from '@wolsok/feat-korbjaeger-auswahl';
+import { sameSequence } from '@wolsok/feat-korbjaeger-selection';
 import { HEUTE } from '../heute';
 import { abgleichen } from '../abgleichen';
 import { teamImUeberblick } from './team-im-ueberblick';
@@ -42,11 +42,11 @@ import {
 export class MeineTeamsUeberblick {
   private readonly auswahl = inject(AUSWAHL);
   /** Whether Meine Teams and the Kinder cannot be read: no overview then. */
-  public readonly nichtLesbar = this.auswahl.nichtLesbar;
+  public readonly nichtLesbar = this.auswahl.unreadable;
   /** The marked Kinder's persons: a new Spitzname starts no search. */
   private readonly kinderPersonen = computed<readonly PersonId[]>(
-    () => (this.auswahl.kinder() ?? []).map(({ personId }) => personId),
-    { equal: gleicheFolge }
+    () => (this.auswahl.children() ?? []).map(({ personId }) => personId),
+    { equal: sameSequence }
   );
   private readonly heute = inject(HEUTE);
   private readonly injector = inject(Injector);
@@ -74,7 +74,7 @@ export class MeineTeamsUeberblick {
    */
   public readonly ansicht = computed<UeberblickAnsicht | undefined>(() => {
     const teams = this.auswahl.teams();
-    const kinder = this.auswahl.kinder();
+    const kinder = this.auswahl.children();
     if (teams === undefined || kinder === undefined) {
       return undefined;
     }

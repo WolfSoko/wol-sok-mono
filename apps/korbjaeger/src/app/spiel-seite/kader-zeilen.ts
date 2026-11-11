@@ -8,9 +8,9 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { SECONDS_IN_MINUTE } from '@wolsok/utils-time';
 import type {
-  Kind,
-  MarkierbarerSpieler,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  Child,
+  MarkablePlayer,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /**
  * What the Kader table shows of a player's Spielerwerte, one field a
@@ -50,9 +50,9 @@ export interface KaderZeile {
    * The player to mark as a Kind: a named one of a followed Team's Kader
    * only (ADR 0019).
    */
-  readonly spieler?: MarkierbarerSpieler;
+  readonly spieler?: MarkablePlayer;
   /** The player as a marked Kind, shown highlighted; only where `spieler` is. */
-  readonly kind?: Kind;
+  readonly kind?: Child;
 }
 
 /** What the page calls a player the DBB hides (ADR 0019). */
@@ -66,7 +66,7 @@ export const ANONYMER_SPIELER = 'Anonymer Spieler';
  */
 export function kaderZeilen(
   kader: Roster,
-  kinder?: readonly Kind[]
+  kinder?: readonly Child[]
 ): readonly KaderZeile[] {
   const { shotAttempts } = recordedStats(kader);
   return kader.entries.map((eintrag) => {

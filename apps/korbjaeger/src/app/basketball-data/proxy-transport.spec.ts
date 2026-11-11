@@ -11,9 +11,9 @@ import type { DbbUpstream } from '../../server/dbb/dbb-upstream';
 import { PROXY_ROUTES } from '../../shared/dbb-proxy-routes';
 import type { DbbRequestKind } from '@wolsok/feat-shared-basketball-data';
 import type {
-  LetzteAntwort,
-  LetzteAntworten,
-} from '@wolsok/feat-korbjaeger-antworten';
+  CachedAnswer,
+  AnswerCache,
+} from '@wolsok/feat-korbjaeger-answers';
 import { Lesung, type KorbReadOptions } from './lesung';
 import { KeinInternetError } from './kein-internet-error';
 import { proxyTransport, SPEICHERBARE_ARTEN } from './proxy-transport';
@@ -310,20 +310,20 @@ describe('proxyTransport', () => {
     const TEAM_SPIELE = '/api/dbb/team/313036/spiele';
 
     /** `LetzteAntworten` in memory, with what was stored and its kind. */
-    class GemerkteAntworten implements LetzteAntworten {
+    class GemerkteAntworten implements AnswerCache {
       public readonly gemerkt = new Map<
         string,
-        LetzteAntwort & { art: DbbRequestKind }
+        CachedAnswer & { art: DbbRequestKind }
       >();
 
-      public lesen(pfad: string): LetzteAntwort | undefined {
+      public read(pfad: string): CachedAnswer | undefined {
         return this.gemerkt.get(pfad);
       }
 
-      public merken(
+      public store(
         pfad: string,
         art: DbbRequestKind,
-        antwort: LetzteAntwort
+        antwort: CachedAnswer
       ): void {
         this.gemerkt.set(pfad, { ...antwort, art });
       }
@@ -347,7 +347,7 @@ describe('proxyTransport', () => {
       throw new TypeError('Failed to fetch');
     };
 
-    function transportMit(proxy: ProxyFetch, antworten: LetzteAntworten) {
+    function transportMit(proxy: ProxyFetch, antworten: AnswerCache) {
       let jetzt = 1_000;
       const data = new DbbBasketballData<KorbReadOptions>(
         proxyTransport(proxy, {
@@ -486,7 +486,7 @@ describe('proxyTransport', () => {
       await lesen((o) => data.game(2861436, o));
 
       const gespeichert = JSON.stringify(
-        antworten.gemerkt.get('/api/dbb/spiel/2861436')?.antwort
+        antworten.gemerkt.get('/api/dbb/spiel/2861436')?.answer
       );
       expect(gespeichert).toContain('Schulsporthalle');
       expect(gespeichert).not.toMatch(
@@ -533,7 +533,7 @@ describe('proxyTransport', () => {
       await lesen((o) => data.teamGames(313036, o));
 
       expect([...antworten.gemerkt.keys()]).toEqual([TEAM_SPIELE]);
-      expect(antworten.gemerkt.get(TEAM_SPIELE)?.gespeichertAm).toBe(1_000);
+      expect(antworten.gemerkt.get(TEAM_SPIELE)?.storedAt).toBe(1_000);
     });
 
     it('answers a 404 as not found, whatever answer it had before', async () => {

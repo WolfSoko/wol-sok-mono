@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { BasketballDataError } from '@wolsok/feat-shared-basketball-data';
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   BASKETBALL_DATA,
@@ -31,9 +31,9 @@ async function render(
 }> {
   const teamGames = vi.fn<TeamSpieleRead>(read);
   // in memory: nothing reaches the device's storage
-  const auswahl = new LokaleAuswahl(undefined);
+  const auswahl = new LocalSelection(undefined);
   if (followed) {
-    await auswahl.folgen(WASBUETTEL.id);
+    await auswahl.follow(WASBUETTEL.id);
   }
   TestBed.configureTestingModule({
     providers: [

@@ -13,12 +13,12 @@ import {
 import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  type Auswahl,
-  AuswahlZuNeuError,
-  type Kind,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  type Selection,
+  SelectionTooNewError,
+  type Child,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -160,13 +160,13 @@ async function render(
   data: ReturnType<typeof fakeData>,
   spielId = '2861436'
 ): Promise<HTMLElement> {
-  return (await renderMit(data, new LokaleAuswahl(undefined), spielId)).seite;
+  return (await renderMit(data, new LocalSelection(undefined), spielId)).seite;
 }
 
 /** Renders the page of `spielId` on `data` with `auswahl`. */
 async function renderMit(
   data: ReturnType<typeof fakeData>,
-  auswahl: Auswahl,
+  auswahl: Selection,
   spielId = '2861436'
 ): Promise<{
   readonly seite: HTMLElement;
@@ -259,9 +259,9 @@ describe('SpielComponent', () => {
 
   describe('the breadcrumb', () => {
     async function levelsWith(teams: readonly number[]) {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
       await renderMit(
         fakeData(
@@ -941,19 +941,19 @@ describe('SpielComponent', () => {
 
     async function mitAuswahl(
       teams: readonly number[],
-      kinder: readonly Kind[] = [],
+      kinder: readonly Child[] = [],
       gameReport: GameReport = bericht(MIT_WERTEN, OHNE_WERTE)
     ): Promise<{
       readonly seite: HTMLElement;
-      readonly auswahl: LokaleAuswahl;
+      readonly auswahl: LocalSelection;
       readonly stabil: () => Promise<void>;
     }> {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
-      for (const { personId, spitzname } of kinder) {
-        await auswahl.markieren({ kind: 'named', personId }, spitzname);
+      for (const { personId, nickname: spitzname } of kinder) {
+        await auswahl.mark({ kind: 'named', personId }, spitzname);
       }
       const gerendert = await renderMit(
         fakeData(
@@ -1066,8 +1066,8 @@ describe('SpielComponent', () => {
       expect(text(dialog())).toContain('Ilvio Mistelgrund');
       await spitznameEingeben('  Ilvi ', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvi' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvi' },
       ]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(zeile.hasAttribute('data-kind')).toBe(true);
@@ -1084,7 +1084,7 @@ describe('SpielComponent', () => {
       await stabil();
       await spitznameEingeben('', stabil);
 
-      expect(auswahl.kinder()).toEqual([{ personId: ILVIO }]);
+      expect(auswahl.children()).toEqual([{ personId: ILVIO }]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(teil(zeile, 'kader-spitzname')).toBeNull();
     });
@@ -1097,13 +1097,13 @@ describe('SpielComponent', () => {
       knopf(dialog(), 'Abbrechen').click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it("highlights a marked Kind only in a followed Team's Kader", async () => {
       const { seite } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: DELON, spitzname: 'Del' }]
+        [{ personId: DELON, nickname: 'Del' }]
       );
 
       // Delon plays for the opponent here: not one of Meine Teams
@@ -1133,7 +1133,7 @@ describe('SpielComponent', () => {
     it("changes a marked Kind's Spitzname from its menu", async () => {
       const { seite, auswahl, stabil } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }]
+        [{ personId: ILVIO, nickname: 'Ilvi' }]
       );
 
       const menue = zeileVon(
@@ -1153,8 +1153,8 @@ describe('SpielComponent', () => {
       expect(dialog()?.querySelector('input')?.value).toBe('Ilvi');
       await spitznameEingeben('Ilvo', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvo' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvo' },
       ]);
       expect(
         text(teil(kaderVon(seite, 'MTV Wasbüttel'), 'kader-spitzname'))
@@ -1177,13 +1177,13 @@ describe('SpielComponent', () => {
       ).click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
       expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toHaveLength(1);
     });
 
     it('says so where the mark could not be stored', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      vi.spyOn(auswahl, 'markieren').mockRejectedValue(new Error('voll'));
+      vi.spyOn(auswahl, 'mark').mockRejectedValue(new Error('voll'));
 
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
@@ -1201,12 +1201,12 @@ describe('SpielComponent', () => {
           async () => GESPIELT,
           async () => bericht(MIT_WERTEN, OHNE_WERTE)
         ),
-        fakeAuswahl({
+        fakeSelection({
           teams,
-          markieren: async () => {
+          mark: async () => {
             // as LokaleAuswahl does: it shows nothing of a newer version
             teams.set([]);
-            throw new AuswahlZuNeuError();
+            throw new SelectionTooNewError();
           },
         })
       );
@@ -1224,25 +1224,25 @@ describe('SpielComponent', () => {
 
     it('closes the Spitzname dialog where the Team was unfollowed meanwhile, and marks nobody', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      const markieren = vi.spyOn(auswahl, 'markieren');
+      const markieren = vi.spyOn(auswahl, 'mark');
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
       expect(dialog()).not.toBeNull();
 
       // another tab unfollows the Team: its Kader offers no mark any more
-      await auswahl.entfolgen(WASBUETTEL);
+      await auswahl.unfollow(WASBUETTEL);
       await stabil();
 
       expect(dialog()).toBeNull();
       expect(markieren).not.toHaveBeenCalled();
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it('highlights a Kind in both Kader where both Teams are followed and it is in each', async () => {
       const ilvio = MIT_WERTEN.entries[0];
       const { seite } = await mitAuswahl(
         [WASBUETTEL, GIFHORN],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }],
+        [{ personId: ILVIO, nickname: 'Ilvi' }],
         bericht(MIT_WERTEN, { ...OHNE_WERTE, entries: [ilvio] })
       );
 

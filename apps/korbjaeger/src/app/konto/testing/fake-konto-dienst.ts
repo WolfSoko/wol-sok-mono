@@ -1,11 +1,11 @@
 import { signal } from '@angular/core';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import {
-  LEERE_AUSWAHL,
-  type AuswahlInhalt,
-  type NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  EMPTY_SELECTION,
+  type SelectionContent,
+  type NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
@@ -34,7 +34,7 @@ export class FakeKontoDienst implements KontoDienst {
   public abmeldenScheitert = false;
   /** Holds the server's confirmation of the deleted document back until it resolves. */
   public loeschenBestaetigt?: Promise<void>;
-  public uebrig: NichtUebernommen = LEERE_AUSWAHL;
+  public uebrig: NotTakenOver = EMPTY_SELECTION;
   /** Opening an account's selection fails. */
   public auswahlScheitert = false;
   /** Auth refuses to delete the account (an old sign-in). */
@@ -51,7 +51,7 @@ export class FakeKontoDienst implements KontoDienst {
   public waehrendPopup?: () => void;
   /** Holds `auswahl` back until it resolves. */
   public auswahlBereit?: Promise<void>;
-  public uebernommen?: AuswahlInhalt;
+  public uebernommen?: SelectionContent;
   /** What the account's selection told of its failure (`auswahl`'s `beiFehler`). */
   public lesefehler?: (fehler: unknown) => void;
   /** The selection of `MIMI_ELTERN`'s account; others get their own (`auswahlVon`). */
@@ -134,8 +134,8 @@ export class FakeKontoDienst implements KontoDienst {
 
   public async geraetUebernehmen(
     uid: string,
-    geraet: AuswahlInhalt
-  ): Promise<NichtUebernommen> {
+    geraet: SelectionContent
+  ): Promise<NotTakenOver> {
     this.aufrufe.push(`geraetUebernehmen ${uid}`);
     if (this.uebernahmeScheitert) {
       throw new Error('offline');
@@ -167,13 +167,13 @@ export class FakeKontoDienst implements KontoDienst {
   private neueAuswahl(): KontoAuswahl {
     const teams = signal<readonly TeamId[]>([]);
     return {
-      ...fakeAuswahl({
+      ...fakeSelection({
         teams,
-        folgen: async (team) => teams.update((alle) => [...alle, team]),
+        follow: async (team) => teams.update((alle) => [...alle, team]),
       }),
-      nichtLesbar: signal(false),
-      geladen: () => Promise.resolve(),
-      beenden: () => this.aufrufe.push('beenden'),
+      unreadable: signal(false),
+      loaded: () => Promise.resolve(),
+      stop: () => this.aufrufe.push('beenden'),
     };
   }
 

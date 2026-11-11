@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { SPEICHER_FREIGEBEN } from '../geraete-speicher';
 import { provideBasketballData } from './basketball-data.provider';
 import {
-  ANTWORT_PRAEFIX,
-  MAX_ALTER_MS,
-  PFLEGE_TAKT_MS,
-} from '@wolsok/feat-korbjaeger-antworten';
+  ANSWER_PREFIX,
+  MAX_AGE_MS,
+  MAINTENANCE_INTERVAL_MS,
+} from '@wolsok/feat-korbjaeger-answers';
 import { LETZTE_ANTWORTEN } from './letzte-antworten-pflege';
 
 const TEAM = '/api/dbb/team/313036/spiele';
@@ -14,14 +14,14 @@ const MINUTE = 60_000;
 
 /** Whether the device still keeps an answer at `TEAM`. */
 function gemerkt(): boolean {
-  return localStorage.getItem(`${ANTWORT_PRAEFIX}${TEAM}`) !== null;
+  return localStorage.getItem(`${ANSWER_PREFIX}${TEAM}`) !== null;
 }
 
 /** An answer at `TEAM`, stored now; too old a week and a minute later. */
 function merken(): void {
-  TestBed.inject(LETZTE_ANTWORTEN).merken(TEAM, 'team-games', {
-    antwort: { status: '0' },
-    gespeichertAm: Date.now(),
+  TestBed.inject(LETZTE_ANTWORTEN).store(TEAM, 'team-games', {
+    answer: { status: '0' },
+    storedAt: Date.now(),
   });
 }
 
@@ -42,10 +42,10 @@ describe('LETZTE_ANTWORTEN', () => {
 
   it('deletes answers too old as soon as it is first taken', () => {
     localStorage.setItem(
-      `${ANTWORT_PRAEFIX}${TEAM}`,
+      `${ANSWER_PREFIX}${TEAM}`,
       JSON.stringify({ v: 2, am: START, art: 'team-spiele', antwort: {} })
     );
-    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
+    vi.setSystemTime(START + MAX_AGE_MS + MINUTE);
 
     TestBed.inject(LETZTE_ANTWORTEN);
 
@@ -54,7 +54,7 @@ describe('LETZTE_ANTWORTEN', () => {
 
   it('deletes answers too old once the page comes back into view', () => {
     merken();
-    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
+    vi.setSystemTime(START + MAX_AGE_MS + MINUTE);
 
     sichtbarWerden();
 
@@ -64,10 +64,10 @@ describe('LETZTE_ANTWORTEN', () => {
   it('stops with the app', () => {
     merken();
     TestBed.resetTestingModule();
-    vi.setSystemTime(START + MAX_ALTER_MS + MINUTE);
+    vi.setSystemTime(START + MAX_AGE_MS + MINUTE);
 
     sichtbarWerden();
-    vi.advanceTimersByTime(PFLEGE_TAKT_MS);
+    vi.advanceTimersByTime(MAINTENANCE_INTERVAL_MS);
 
     expect(gemerkt()).toBe(true);
   });

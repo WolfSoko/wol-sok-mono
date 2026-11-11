@@ -15,10 +15,10 @@ import {
   updateDoc,
 } from 'firebase/firestore';
 import {
-  AUSWAHL_GRENZEN,
-  SPITZNAME_CODEPUNKTE,
-  SPITZNAME_LAENGE,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  SELECTION_LIMITS,
+  NICKNAME_CODE_POINTS,
+  NICKNAME_LENGTH,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   DELETED_ACCOUNTS_COLLECTION,
   LEGACY_DELETED_ACCOUNTS_COLLECTION,
@@ -44,9 +44,9 @@ let env: RulesTestEnvironment;
 
 const {
   teams: TEAMS_HOECHSTENS,
-  kinder: KINDER_HOECHSTENS,
-  vereinsfarben: VEREINE_HOECHSTENS,
-} = AUSWAHL_GRENZEN;
+  children: KINDER_HOECHSTENS,
+  clubColors: VEREINE_HOECHSTENS,
+} = SELECTION_LIMITS;
 
 const ELTERNTEIL = 'elternteil-a';
 const ANDERES = 'elternteil-b';
@@ -96,7 +96,7 @@ const volleKinder = (anzahl: number) =>
   Object.fromEntries(
     zahlen(anzahl).map((id, seit) => [
       id,
-      { since: seit, nickname: 'x'.repeat(SPITZNAME_CODEPUNKTE) },
+      { since: seit, nickname: 'x'.repeat(NICKNAME_CODE_POINTS) },
     ])
   );
 
@@ -180,7 +180,7 @@ const UNGUELTIG: ReadonlyArray<readonly [string, object]> = [
     {
       version: 3,
       children: {
-        4711: { since: 1, nickname: 'x'.repeat(SPITZNAME_CODEPUNKTE + 1) },
+        4711: { since: 1, nickname: 'x'.repeat(NICKNAME_CODE_POINTS + 1) },
       },
     },
   ],
@@ -374,7 +374,7 @@ describe('the Auswahl document', () => {
         speichern({
           version: 3,
           children: {
-            4711: { since: 1, nickname: familie.repeat(SPITZNAME_LAENGE) },
+            4711: { since: 1, nickname: familie.repeat(NICKNAME_LENGTH) },
           },
         })
       );

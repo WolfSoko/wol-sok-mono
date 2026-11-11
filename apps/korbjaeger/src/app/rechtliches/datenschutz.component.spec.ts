@@ -11,13 +11,10 @@ import {
   TTL_DELETION_DAYS,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
-  AUSWAHL_GRENZEN,
-  SPITZNAME_LAENGE,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import {
-  ANTWORT_GRENZEN,
-  MAX_ALTER_TAGE,
-} from '@wolsok/feat-korbjaeger-antworten';
+  SELECTION_LIMITS,
+  NICKNAME_LENGTH,
+} from '@wolsok/feat-korbjaeger-selection';
+import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
 import { DatenschutzComponent } from './datenschutz.component';
 import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
@@ -56,10 +53,10 @@ describe('DatenschutzComponent', () => {
       expect(geraet).toContain(schluessel);
     }
     const zeichen = new Intl.NumberFormat('de-DE').format(
-      ANTWORT_GRENZEN.zeichen
+      ANSWER_LIMITS.characters
     );
     expect(geraet).toContain(
-      `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_ALTER_TAGE} Tage lang`
+      `Höchstens ${ANSWER_LIMITS.entries} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_AGE_DAYS} Tage lang`
     );
   });
 
@@ -83,12 +80,12 @@ describe('DatenschutzComponent', () => {
   it('says what the account’s document holds, its caps and where it lies', () => {
     const konto = abschnitt(zeigen(DatenschutzComponent), 'konto');
 
-    expect(konto).toContain(`${AUSWAHL_GRENZEN.teams} Teams`);
-    expect(konto).toContain(`${AUSWAHL_GRENZEN.kinder} Kinder`);
+    expect(konto).toContain(`${SELECTION_LIMITS.teams} Teams`);
+    expect(konto).toContain(`${SELECTION_LIMITS.children} Kinder`);
     expect(konto).toContain(
-      `die Farben von ${AUSWAHL_GRENZEN.vereinsfarben} Vereinen`
+      `die Farben von ${SELECTION_LIMITS.clubColors} Vereinen`
     );
-    expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
+    expect(konto).toContain(`${NICKNAME_LENGTH} Zeichen`);
     const { firestore } = REGIONS;
     expect(konto).toContain(`${firestore.id} (${firestore.place})`);
     expect(konto).toContain('Google');

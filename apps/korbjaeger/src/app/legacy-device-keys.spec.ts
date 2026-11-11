@@ -1,8 +1,8 @@
 import {
-  AUSWAHL_SCHLUESSEL,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { ANTWORT_INDEX } from '@wolsok/feat-korbjaeger-antworten';
+  SELECTION_KEY,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
+import { ANSWER_INDEX } from '@wolsok/feat-korbjaeger-answers';
 import {
   ANGEMELDET_SCHLUESSEL,
   DARSTELLUNG_SCHLUESSEL,
@@ -45,9 +45,9 @@ describe('moveLegacyDeviceKeys', () => {
     expect(localStorage.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL)).toBe('1');
     expect(localStorage.getItem(INSTALLATION_ABGELEHNT_SCHLUESSEL)).toBe('1');
     expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBe('dark');
-    const auswahl = new LokaleAuswahl(localStorage);
+    const auswahl = new LocalSelection(localStorage);
     expect(auswahl.teams()).toEqual([313036, 201500]);
-    expect(auswahl.kinder()).toEqual([{ personId: 4711, spitzname: 'Mimi' }]);
+    expect(auswahl.children()).toEqual([{ personId: 4711, nickname: 'Mimi' }]);
   });
 
   it('removes every legacy key and the cached answers of before', () => {
@@ -57,14 +57,14 @@ describe('moveLegacyDeviceKeys', () => {
 
     expect(Object.keys(localStorage).sort()).toEqual(
       [
-        AUSWAHL_SCHLUESSEL,
+        SELECTION_KEY,
         ANGEMELDET_SCHLUESSEL,
         ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
         INSTALLATION_ABGELEHNT_SCHLUESSEL,
         DARSTELLUNG_SCHLUESSEL,
       ].sort()
     );
-    expect(localStorage.getItem(ANTWORT_INDEX)).toBeNull();
+    expect(localStorage.getItem(ANSWER_INDEX)).toBeNull();
   });
 
   it('keeps a value stored under the new key already', () => {

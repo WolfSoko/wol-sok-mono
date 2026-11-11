@@ -11,10 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { AUSWAHL } from '../auswahl/auswahl';
-import type {
-  Kind,
-  MarkierbarerSpieler,
-} from '@wolsok/feat-korbjaeger-auswahl';
+import type { Child, MarkablePlayer } from '@wolsok/feat-korbjaeger-selection';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { KIND_AENDERUNG } from './kind-aenderung';
 import {
@@ -87,11 +84,11 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class KindMarkierungComponent {
-  public readonly spieler = input.required<MarkierbarerSpieler>();
+  public readonly spieler = input.required<MarkablePlayer>();
   /** The player's name as the Kader shows it, for the labels and the dialog. */
   public readonly name = input.required<string>();
   /** The player as a marked Kind; none while unmarked. */
-  public readonly kind = input<Kind>();
+  public readonly kind = input<Child>();
 
   private readonly auswahl = inject(AUSWAHL);
   private readonly dialog = inject(MatDialog);
@@ -124,7 +121,7 @@ export class KindMarkierungComponent {
     if (antwort) {
       const spieler = this.spieler();
       await this.aenderung.ausfuehren(() =>
-        this.auswahl.markieren(spieler, antwort.spitzname)
+        this.auswahl.mark(spieler, antwort.spitzname)
       );
     }
   }
@@ -132,20 +129,20 @@ export class KindMarkierungComponent {
   protected async spitznameAendern(): Promise<void> {
     const antwort = await this.fragen({
       name: this.name(),
-      spitzname: this.kind()?.spitzname,
+      spitzname: this.kind()?.nickname,
       aktion: 'aendern',
     });
     if (antwort) {
       const person = this.spieler().personId;
       await this.aenderung.ausfuehren(() =>
-        this.auswahl.spitznameSetzen(person, antwort.spitzname)
+        this.auswahl.setNickname(person, antwort.spitzname)
       );
     }
   }
 
   protected entmarkieren(): Promise<boolean> {
     const person = this.spieler().personId;
-    return this.aenderung.ausfuehren(() => this.auswahl.entmarkieren(person));
+    return this.aenderung.ausfuehren(() => this.auswahl.unmark(person));
   }
 
   /**

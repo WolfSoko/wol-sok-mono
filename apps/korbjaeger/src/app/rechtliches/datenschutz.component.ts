@@ -17,13 +17,10 @@ import {
   TTL_DELETION_DAYS,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
-  AUSWAHL_GRENZEN,
-  SPITZNAME_LAENGE,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import {
-  ANTWORT_GRENZEN,
-  MAX_ALTER_TAGE,
-} from '@wolsok/feat-korbjaeger-antworten';
+  SELECTION_LIMITS,
+  NICKNAME_LENGTH,
+} from '@wolsok/feat-korbjaeger-selection';
+import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
 import { DbbLinkComponent } from './dbb-link.component';
 import { LEGACY_DEVICE_KEYS } from '../legacy-device-keys';
 import { germanDays } from './german-days';
@@ -59,12 +56,12 @@ export class DatenschutzComponent {
       retryAfter: germanDays(CLUB_INDEX_CRAWL_DAYS.retryAfter),
     },
   } as const;
-  protected readonly grenzen = AUSWAHL_GRENZEN;
-  protected readonly spitznameLaenge = SPITZNAME_LAENGE;
+  protected readonly grenzen = SELECTION_LIMITS;
+  protected readonly spitznameLaenge = NICKNAME_LENGTH;
   protected readonly antworten = {
-    grenzen: ANTWORT_GRENZEN,
-    zeichen: new Intl.NumberFormat('de-DE').format(ANTWORT_GRENZEN.zeichen),
-    tage: MAX_ALTER_TAGE,
+    grenzen: ANSWER_LIMITS,
+    zeichen: new Intl.NumberFormat('de-DE').format(ANSWER_LIMITS.characters),
+    tage: MAX_AGE_DAYS,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
   /** How long section 6 says the server retries and keeps a tombstone. */

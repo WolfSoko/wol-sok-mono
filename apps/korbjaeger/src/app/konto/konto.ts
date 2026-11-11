@@ -1,6 +1,6 @@
 import { DestroyRef, DOCUMENT, inject, InjectionToken } from '@angular/core';
 import { environment } from '../../environments/environment';
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import {
   ANGEMELDET_SCHLUESSEL,
   flagGesetzt,
@@ -60,12 +60,12 @@ export const KONTO_SITZUNG = new InjectionToken<KontoSitzung>('KontoSitzung', {
   factory: () => {
     const speicher = geraeteSpeicher();
     const fenster = inject(DOCUMENT).defaultView ?? undefined;
-    const lokal = new LokaleAuswahl(
+    const lokal = new LocalSelection(
       speicher,
       fenster,
       inject(SPEICHER_FREIGEBEN)
     );
-    inject(DestroyRef).onDestroy(() => lokal.beenden());
+    inject(DestroyRef).onDestroy(() => lokal.stop());
     const sitzung = new KontoSitzung(
       lokal,
       environment.anmeldung ? kontoDienstLaden : undefined,

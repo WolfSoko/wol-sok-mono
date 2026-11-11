@@ -14,9 +14,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
-  SPITZNAME_LAENGE,
-  spitznameZeichen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  NICKNAME_LENGTH,
+  nicknameCharacterCount,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /** What the dialog asks about: whom, and whether to mark or rename. */
 export interface SpitznameFrage {
@@ -106,14 +106,14 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
 })
 export class SpitznameDialogComponent {
   protected readonly frage = inject<SpitznameFrage>(MAT_DIALOG_DATA);
-  protected readonly laenge = SPITZNAME_LAENGE;
+  protected readonly laenge = NICKNAME_LENGTH;
   protected readonly titel = TITEL[this.frage.aktion];
   protected readonly bestaetigenText = BESTAETIGEN[this.frage.aktion];
   protected readonly eingegeben = signal(this.frage.spitzname ?? '');
   protected readonly zeichen = computed(() =>
-    spitznameZeichen(this.eingegeben())
+    nicknameCharacterCount(this.eingegeben())
   );
-  protected readonly zuLang = computed(() => this.zeichen() > SPITZNAME_LAENGE);
+  protected readonly zuLang = computed(() => this.zeichen() > NICKNAME_LENGTH);
 
   private readonly dialog =
     inject<MatDialogRef<SpitznameDialogComponent, SpitznameAntwort>>(

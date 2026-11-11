@@ -8,7 +8,7 @@ import {
   type FirestoreEmulator,
   rulesTestEnvironment,
 } from '@wolsok/shared-firebase-emulator/rules';
-import { auswahlDokumentVon } from '@wolsok/feat-korbjaeger-auswahl';
+import { selectionDocumentOf } from '@wolsok/feat-korbjaeger-selection';
 
 /**
  * Where the specs' Firestore emulator runs (`test-emulator`): as
@@ -71,7 +71,7 @@ export function vorhanden(
   daten: unknown
 ): Promise<void> {
   return ohneRegeln(env, (firestore) =>
-    setDoc(auswahlDokumentVon(firestore, uid), daten as object)
+    setDoc(selectionDocumentOf(firestore, uid), daten as object)
   );
 }
 
@@ -81,7 +81,7 @@ export function gespeichert(
   uid: string
 ): Promise<unknown> {
   return ohneRegeln(env, async (firestore) => {
-    const stand = await getDoc(auswahlDokumentVon(firestore, uid));
+    const stand = await getDoc(selectionDocumentOf(firestore, uid));
     return stand.exists() ? stand.data() : null;
   });
 }

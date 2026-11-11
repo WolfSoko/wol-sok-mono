@@ -1,4 +1,4 @@
-import { AuswahlZuNeuError } from '@wolsok/feat-korbjaeger-auswahl';
+import { SelectionTooNewError } from '@wolsok/feat-korbjaeger-selection';
 import { auswahlAenderung } from './auswahl-aenderung';
 
 describe('auswahlAenderung', () => {
@@ -33,7 +33,9 @@ describe('auswahlAenderung', () => {
   it('asks to reload where a newer version stored Meine Teams', async () => {
     const aenderung = auswahlAenderung();
 
-    await aenderung.ausfuehren(() => Promise.reject(new AuswahlZuNeuError()));
+    await aenderung.ausfuehren(() =>
+      Promise.reject(new SelectionTooNewError())
+    );
 
     expect(aenderung.fehler()).toContain('Bitte die App neu laden.');
   });
