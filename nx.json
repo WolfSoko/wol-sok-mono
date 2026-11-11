@@ -104,7 +104,7 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
       ],
@@ -148,7 +148,7 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml"
       ],

@@ -40,7 +40,7 @@
       "inputs": [
         "default",
         "^production",
-        "{workspaceRoot}/jest.preset.js",
+        "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/jest.config.ts",
         "{workspaceRoot}/.codecov.yml",
         "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",

@@ -1,7 +1,8 @@
 // Keeps each app's root Firebase config among its deploy inputs (#2904), so a
 // change to the config makes the app affected and the next release redeploys
 // it. Nx interpolates `{projectName}` in commands, not in inputs: such an input
-// matches no file at all, and nothing reports it.
+// matches no file at all, and nothing reports it (checked for every target in
+// target-inputs.test.mjs).
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -59,19 +60,6 @@ function rootFirebaseConfigsOf(project) {
 }
 
 const PROJECTS = readProjects();
-
-describe('target inputs', () => {
-  it('never use {projectName}, which Nx leaves unresolved in inputs', () => {
-    const unresolved = PROJECTS.flatMap((project) =>
-      targetsOf(project).flatMap(([targetName, target]) =>
-        stringInputs(target)
-          .filter((input) => input.includes(PROJECT_NAME))
-          .map((input) => `${project.path} ${targetName}: ${input}`)
-      )
-    );
-    assert.deepEqual(unresolved, []);
-  });
-});
 
 describe('deploy inputs', () => {
   it('name every root Firebase config the project passes to the CLI', () => {
