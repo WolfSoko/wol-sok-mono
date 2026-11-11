@@ -39,7 +39,7 @@ describe('ScreenWakeLockService', () => {
     resolve(sentinel);
   }
 
-  function startPastVorlauf(): void {
+  function startPastLeadIn(): void {
     run.start(
       createTrainingWithDuration([
         createIntervalWithDuration(
@@ -84,7 +84,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('releases every lock after a quick pause and resume', async () => {
-    startPastVorlauf(); // after the Vorlauf: first request pending
+    startPastLeadIn(); // after the Vorlauf: first request pending
     await settle();
     run.toggle(); // paused
     await settle();
@@ -104,7 +104,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('asks again when the page came back while a request was pending', async () => {
-    startPastVorlauf(); // after the Vorlauf: request pending
+    startPastLeadIn(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();
@@ -117,7 +117,7 @@ describe('ScreenWakeLockService', () => {
   });
 
   it('does not ask again once the training was paused meanwhile', async () => {
-    startPastVorlauf(); // after the Vorlauf: request pending
+    startPastLeadIn(); // after the Vorlauf: request pending
     await settle();
     document.dispatchEvent(new Event('visibilitychange'));
     await settle();

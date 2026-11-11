@@ -8,7 +8,7 @@ export class SprintTrainingPage {
   readonly sprintTraining: Locator;
   readonly toggleTrainingCta: Locator;
   readonly stopTrainingCta: Locator;
-  readonly zusammenfassung: Locator;
+  readonly summary: Locator;
   private countdownTimer: Locator;
 
   constructor(page: Page) {
@@ -18,7 +18,7 @@ export class SprintTrainingPage {
     this.toggleTrainingCta = this.sprintTraining.getByTestId('toggle-training');
     this.stopTrainingCta = this.sprintTraining.getByTestId('stop-training');
     this.countdownTimer = this.sprintTraining.getByTestId('countdown-timer');
-    this.zusammenfassung = this.sprintTraining.getByTestId('zusammenfassung');
+    this.summary = this.sprintTraining.getByTestId('summary');
   }
 
   async goto(): Promise<void> {
@@ -132,18 +132,18 @@ export class SprintTrainingPage {
     });
     await this.expectTrainingStateStoppable();
     await this.stopTrainingCta.click();
-    await expect(this.zusammenfassung).toBeVisible();
+    await expect(this.summary).toBeVisible();
     await expect(this.toggleTrainingCta).toContainText('Neues Training');
   }
 
   /** ends the training during the 5 s Vorlauf */
-  async abortVorlauf(): Promise<void> {
+  async abortLeadIn(): Promise<void> {
     await expect(this.toggleTrainingCta).toBeDisabled();
     // the Vorlauf lasts 5 s: the button has to be there well before it ends
     await expect(this.stopTrainingCta).toBeVisible({ timeout: 1000 });
     await this.stopTrainingCta.click();
     await this.expectTrainingStateStartable();
-    await expect(this.zusammenfassung).toBeHidden();
+    await expect(this.summary).toBeHidden();
   }
 
   async startNewTraining(): Promise<void> {
@@ -151,7 +151,7 @@ export class SprintTrainingPage {
     await this.expectTrainingStateStartable();
   }
 
-  async expectZusammenfassung({
+  async expectSummary({
     sprintsCompleted,
     sprintsTotal,
     completion,
@@ -160,10 +160,10 @@ export class SprintTrainingPage {
     sprintsTotal: number;
     completion: string;
   }): Promise<void> {
-    await expect(this.zusammenfassung).toContainText(
+    await expect(this.summary).toContainText(
       `${sprintsCompleted} von ${sprintsTotal} Sprints`
     );
-    await expect(this.zusammenfassung).toContainText(completion);
+    await expect(this.summary).toContainText(completion);
   }
 
   async reload(): Promise<void> {
@@ -183,7 +183,7 @@ export class SprintTrainingPage {
     await this.toggleTrainingCta.click();
   }
 
-  async expectVorlaufAnnounced(): Promise<void> {
+  async expectLeadInAnnounced(): Promise<void> {
     await expect(this.sprintTraining).toContainText('als Nächstes: Bereit');
   }
 
