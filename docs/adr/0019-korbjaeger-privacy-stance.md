@@ -5,8 +5,8 @@
 - Changed: 2026-11-11 by
   [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025): the
   stance describes the Spiel page as built, which shows both sides' Kader
-  and limits only the marking of a Kind to a followed side (the owner's
-  decision: reword the ADR, keep the page)
+  and limits only the marking and highlighting of a Kind to a followed
+  side (the owner's decision: reword the ADR, keep the page)
 - Scope: `libs/features/basketball-data` (`feat-shared-basketball-data`),
   the coming Korbjäger app, its proxy, storage and fixtures
 - Issue: [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861);
@@ -76,7 +76,8 @@ that is not from the invented lists.
 ## Consequences
 
 - An Elternteil cannot find a child by name; they find the Team through
-  Verband, age group and Liga, and mark the child in a Kader.
+  Verband, age group and Liga, or through its Verein, and mark the child in
+  a Kader.
 - A Kind can only be marked once they appeared in a Spielbericht; the app
   explains this to Elternteile whose child has not played yet.
 - The privacy policy (`/privacy`, #2874) covers the Google sign-in, the
