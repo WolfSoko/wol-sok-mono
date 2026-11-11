@@ -21,7 +21,8 @@ import { childStep } from './child-step';
 /**
  * The next step of the search "Über mein Kind" for one of a Verein's
  * Teams, once it is followed: the link to its last played Spiel, whose
- * Kader offers to mark the Kind, or why there is none yet. Shows nothing
+ * Kader offers to mark the Kind, or why there is none: no Spiel yet, or
+ * none in a Liga the DBB keeps Spielberichte for. Shows nothing
  * for a Team not followed, and reads its Saison only once it is.
  */
 @Component({
@@ -55,7 +56,16 @@ import { childStep } from './child-step';
               <mat-icon aria-hidden="true">star_outline</mat-icon>
               Kind im Kader markieren
             </a>
-            <p>Im Kader seines letzten Spiels markierst du dein Kind.</p>
+            <p>
+              Im Kader seines letzten Spiels mit Spielbericht markierst du dein
+              Kind.
+            </p>
+          }
+          @case ('no-game-reports') {
+            <p data-qa="child-step-no-game-reports">
+              Für die Liga dieses Teams führt der DBB keine Spielberichte. Dein
+              Kind kannst du hier deshalb nicht markieren.
+            </p>
           }
           @case ('after-first-game') {
             <p data-qa="child-step-after-first-game">{{ afterFirstGame }}</p>
