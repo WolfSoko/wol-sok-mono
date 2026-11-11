@@ -5,12 +5,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const RUNNER = join(__dirname, 'retry-once.ts');
+const TOOLS_TSCONFIG = join(__dirname, '..', 'tsconfig.tools.json');
 
 /** Runs the runner as the deploy target does, without the 30 s pause. */
 function runner(...command: string[]) {
   return spawnSync(process.execPath, ['--import', 'tsx', RUNNER, ...command], {
     encoding: 'utf8',
-    env: { ...process.env, RETRY_PAUSE_MS: '0' },
+    // as `tsx --tsconfig tools/tsconfig.tools.json` in the deploy targets
+    env: {
+      ...process.env,
+      RETRY_PAUSE_MS: '0',
+      TSX_TSCONFIG_PATH: TOOLS_TSCONFIG,
+    },
   });
 }
 
