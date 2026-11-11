@@ -79,6 +79,7 @@ jobs:
           # package, so an empty list skips the call.
           selected=$(node tools/ci/release-affected.mjs --base="v$(node -p "require('./version.json').version")" --head=HEAD --target=build --projects='tag:published')
           packages=$(paste -sd, - <<< "$selected")
+          echo "Versioning npm packages: ${packages:-none}" | tee -a "$GITHUB_STEP_SUMMARY"
           if [[ -n "$packages" ]]; then
             npx nx release version --projects="$packages"
           else

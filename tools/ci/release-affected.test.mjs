@@ -283,8 +283,10 @@ describe('release.yml', () => {
     assert.doesNotMatch(version, /npx nx release version\s*\n/);
   });
 
+  // Up to the substitution's end, so a pipe on a continuation line counts.
   it('never pipes the selection, which would hide its failure', () => {
-    assert.doesNotMatch(version, /release-affected\.mjs[^\n]*\|/);
+    assert.doesNotMatch(version, /release-affected\.mjs[^)]*\|/);
+    assert.match(version, /packages=\$\(paste -sd, - <<< "\$selected"\)/);
   });
 
   // An empty --projects can mean every package.
