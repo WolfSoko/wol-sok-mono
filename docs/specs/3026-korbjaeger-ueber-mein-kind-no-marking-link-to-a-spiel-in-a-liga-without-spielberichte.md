@@ -59,3 +59,46 @@ for its Liga, so the Kind cannot be marked there, instead of a link.
 ## Open questions
 
 None.
+
+## Revision after the live check (2026-11-11)
+
+[PR #3032](https://github.com/WolfSoko/wol-sok-mono/pull/3032) shipped the
+decisions above, and the live page still linked the BBL Spiel: the DBB's
+Team Spiele (`team/{id}/matches`, `teamGames`) send `statisticType: null`
+for every Liga, so a `TeamSeason`'s Ligen never carry `withoutGameReports`.
+Only a Spiel's details (`matchInfo`, `game`), its Spielbericht, Spielplan
+and Tabelle say it. The specs had built their Ligen by hand.
+
+Revised decisions (approved by the manager):
+
+- **The step asks the Spiel's details.** `childStep` again leads to the
+  last played Spiel; `ChildStepComponent` reads that Spiel's details
+  (`spielDetailsResource`, as the Spiel page does), and the pure
+  `checkedChildStep(step, details)` turns the link into `no-game-reports`
+  where the details' Liga is `withoutGameReports`. Details not read (yet,
+  failed, or of another Spiel) leave the link: the Spiel page says why it
+  has no Kader.
+- **The lib helpers go again** (`keepsGameReports`, `lastWithGameReport`,
+  `withoutAnyGameReports`): on a `TeamSeason` they can never be false.
+  `League.withoutGameReports` says that a Team's Spiele leave it out.
+- **Dropped:** the link to an older Spiel of another Liga with
+  Spielberichte, and waiting for a Spiel to come in such a Liga; both would
+  need every Liga's details. Youth Teams, which this flow is for, rarely
+  mix.
+- **Cost:** one more `matchInfo` read per followed Team on the page (cached
+  by the proxy), while the step shows its progress bar.
+
+Revised acceptance:
+
+1. A `checkedChildStep` spec: details of the Spiel in a Liga without
+   Spielberichte give `no-game-reports`; with them, or none read, or of
+   another Spiel, the link stays.
+2. A component spec on the recorded DBB answers: the Team's real Spiele
+   (`team-313036-matches.json`) carry no `withoutGameReports`; with a
+   Spiel's details from a recorded Liga without Spielberichte
+   (`matchinfo-2930311.json`, `statisticType` 0) the step shows the hint
+   and no link; with one with them (`matchinfo-2861436.json`) it links the
+   last played Spiel.
+3. Details that fail to load leave the link.
+4. Live: korb.wolsok.de/suchen/kind/verein/1968, ALBA BERLIN followed,
+   shows the hint instead of the link to /spiel/2970229.

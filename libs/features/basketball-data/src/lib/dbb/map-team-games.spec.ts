@@ -94,6 +94,13 @@ describe('mapTeamGames', () => {
     ).toEqual([true, true]);
   });
 
+  it("leaves out whether a Liga keeps Spielberichte, as the recorded Ligen don't say", () => {
+    expect(season.leagues.map((league) => league.withoutGameReports)).toEqual([
+      undefined,
+      undefined,
+    ]);
+  });
+
   it('refuses a response without its Team', () => {
     expect(
       caughtError(() => mapTeamGames({ ...DATA, team: null })).message

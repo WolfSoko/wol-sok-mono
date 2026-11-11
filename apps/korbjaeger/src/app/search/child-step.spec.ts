@@ -1,11 +1,6 @@
-import { childStep } from './child-step';
-import {
-  HAUPTRUNDE_ID,
-  inLigaWithoutGameReports,
-  PLAYED,
-  saisonOf,
-  spielOn,
-} from '../../testing/team-saison';
+import type { GameDetails, League } from '@wolsok/feat-shared-basketball-data';
+import { checkedChildStep, childStep } from './child-step';
+import { PLAYED, saisonOf, spielOn } from '../../testing/team-saison';
 
 describe('childStep', () => {
   it('leads to the last played Spiel', () => {
@@ -48,47 +43,58 @@ describe('childStep', () => {
       kind: 'after-first-game',
     });
   });
+});
 
-  it('offers no link where every Spiel is in a Liga without Spielberichte', () => {
-    const step = childStep(
-      inLigaWithoutGameReports(
-        saisonOf(
-          spielOn(1, '2026-09-20', PLAYED),
-          spielOn(2, '2026-10-04', PLAYED)
-        )
-      ),
-      '2026-11-08'
-    );
+describe('checkedChildStep', () => {
+  const LIGA: League = {
+    id: 54862,
+    name: 'Regionsvorrunde Nord',
+    association: { id: 7, name: 'Niedersachsen' },
+    ageGroup: 'U12',
+    gender: 'mixed',
+    division: 'Kreisliga',
+  };
 
-    expect(step).toEqual({ kind: 'no-game-reports' });
+  function detailsOf(spielId: number, league: League): GameDetails {
+    return {
+      game: spielOn(spielId, '2026-10-04'),
+      league,
+      quarters: [],
+      overtimes: [],
+    };
+  }
+
+  it("offers no link where the Spiel's Liga keeps no Spielberichte", () => {
+    expect(
+      checkedChildStep(
+        { kind: 'mark', spielId: 2 },
+        detailsOf(2, { ...LIGA, withoutGameReports: true })
+      )
+    ).toEqual({ kind: 'no-game-reports' });
   });
 
-  it('leads to the last Spiel of a Liga with Spielberichte, passing over newer ones without', () => {
-    const step = childStep(
-      inLigaWithoutGameReports(
-        saisonOf(
-          spielOn(1, '2026-09-20', PLAYED),
-          spielOn(2, '2026-10-04', PLAYED, HAUPTRUNDE_ID)
-        ),
-        HAUPTRUNDE_ID
-      ),
-      '2026-11-08'
-    );
-
-    expect(step).toEqual({ kind: 'mark', spielId: 1 });
+  it('keeps the link where the Liga keeps them', () => {
+    expect(
+      checkedChildStep({ kind: 'mark', spielId: 2 }, detailsOf(2, LIGA))
+    ).toEqual({ kind: 'mark', spielId: 2 });
   });
 
-  it('waits for a Spiel to come in a Liga with Spielberichte', () => {
-    const step = childStep(
-      inLigaWithoutGameReports(
-        saisonOf(
-          spielOn(1, '2026-09-20', PLAYED),
-          spielOn(2, '2026-11-15', { kind: 'scheduled' }, HAUPTRUNDE_ID)
-        )
-      ),
-      '2026-11-08'
-    );
+  it('keeps the link while the details are not read, or are of another Spiel', () => {
+    const without = detailsOf(1, { ...LIGA, withoutGameReports: true });
 
-    expect(step).toEqual({ kind: 'after-first-game' });
+    expect(checkedChildStep({ kind: 'mark', spielId: 2 }, undefined)).toEqual({
+      kind: 'mark',
+      spielId: 2,
+    });
+    expect(checkedChildStep({ kind: 'mark', spielId: 2 }, without)).toEqual({
+      kind: 'mark',
+      spielId: 2,
+    });
+  });
+
+  it('leaves waiting for the first Spiel as it is', () => {
+    expect(checkedChildStep({ kind: 'after-first-game' }, undefined)).toEqual({
+      kind: 'after-first-game',
+    });
   });
 });

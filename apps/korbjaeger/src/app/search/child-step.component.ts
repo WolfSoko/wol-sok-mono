@@ -11,19 +11,22 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
+import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
+import { aeltesterStand } from '../basketball-data/stand';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { HEUTE } from '../heute';
 import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
 import { StandComponent } from '../stand/stand.component';
-import { childStep } from './child-step';
+import { checkedChildStep, childStep } from './child-step';
 
 /**
  * The next step of the search "Über mein Kind" for one of a Verein's
  * Teams, once it is followed: the link to its last played Spiel, whose
  * Kader offers to mark the Kind, or why there is none: no Spiel yet, or
- * none in a Liga the DBB keeps Spielberichte for. Shows nothing
- * for a Team not followed, and reads its Saison only once it is.
+ * a Liga the DBB keeps no Spielberichte for, which only the Spiel's details
+ * tell. Shows nothing for a Team not followed, and reads its Saison only
+ * once it is.
  */
 @Component({
   selector: 'korb-child-step',
@@ -36,15 +39,15 @@ import { childStep } from './child-step';
   ],
   template: `
     @if (followed()) {
-      @if (saison.isLoading()) {
+      @if (saison.isLoading() || waitingForDetails()) {
         <mat-progress-bar
           mode="indeterminate"
           [attr.aria-label]="'Spiele von ' + teamName() + ' werden geladen'"
         />
       } @else if (failure(); as text) {
         <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
-      } @else if (step(); as step) {
-        <korb-stand data-qa="child-step-stand" [stand]="saison.stand()" />
+      } @else if (shown(); as step) {
+        <korb-stand data-qa="child-step-stand" [stand]="stand()" />
         @switch (step.kind) {
           @case ('mark') {
             <a
@@ -56,10 +59,7 @@ import { childStep } from './child-step';
               <mat-icon aria-hidden="true">star_outline</mat-icon>
               Kind im Kader markieren
             </a>
-            <p>
-              Im Kader seines letzten Spiels mit Spielbericht markierst du dein
-              Kind.
-            </p>
+            <p>Im Kader seines letzten Spiels markierst du dein Kind.</p>
           }
           @case ('no-game-reports') {
             <p data-qa="child-step-no-game-reports">
@@ -115,9 +115,31 @@ export class ChildStepComponent {
     fehlerText(this.saison.error(), KEIN_TEAM)
   );
 
-  protected readonly step = computed(() =>
+  private readonly step = computed(() =>
     this.saison.hasValue()
       ? childStep(this.saison.value(), this.today())
       : undefined
   );
+
+  /** The details of the Spiel the step leads to, for its Liga. */
+  protected readonly details = spielDetailsResource(() => {
+    const step = this.step();
+    return step?.kind === 'mark' ? step.spielId : undefined;
+  });
+
+  /** Only until the first details came: a reload keeps the step shown. */
+  protected readonly waitingForDetails = computed(
+    () => this.details.isLoading() && !this.details.hasValue()
+  );
+
+  /** The oldest of the reads the step stands on. */
+  protected readonly stand = computed(() =>
+    aeltesterStand(this.saison.stand(), this.details.stand())
+  );
+
+  protected readonly shown = computed(() => {
+    const step = this.step();
+    const details = this.details.hasValue() ? this.details.value() : undefined;
+    return step && checkedChildStep(step, details);
+  });
 }

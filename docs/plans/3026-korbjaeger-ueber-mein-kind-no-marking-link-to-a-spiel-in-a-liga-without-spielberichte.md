@@ -19,3 +19,15 @@ Spec: [docs/specs/3026-…](../specs/3026-korbjaeger-ueber-mein-kind-no-marking-
    - Test first: a Team whose Liga keeps no Spielberichte shows the hint
      and no link.
 4. **Checks**: `nx format:write`, `nx affected -t lint,lint-templates,test,typecheck-specs`.
+
+## Revision after the live check
+
+1. **Lib back to before PR #3032**: drop `keepsGameReports`,
+   `lastWithGameReport`, `withoutAnyGameReports` and their specs; correct
+   the docs of `lastPlayed` and `League.withoutGameReports`.
+2. **`checkedChildStep`** in `search/child-step.ts`, with specs.
+3. **`ChildStepComponent`** reads the Spiel's details
+   (`spielDetailsResource`), shows the hint through `checkedChildStep`;
+   specs on the recorded DBB answers (`fakeDbbAnswer`).
+4. Commit: `fix(korbjaeger): ask the Spiel's details whether its Liga keeps Spielberichte`.
+5. After the deploy, the live check of acceptance 4.
