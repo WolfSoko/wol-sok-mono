@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.2...v74.167.3) (2026-11-11)
+
+### Bug Fixes
+
+* **korbjaeger:** ask the Spiel's details whether its Liga keeps Spielberichte ([#3055](https://github.com/WolfSoko/wol-sok-mono/issues/3055)) ([49a702e](https://github.com/WolfSoko/wol-sok-mono/commit/49a702e0413dec0f0635ddfd1509f4f15857a6b6)), references [#3032](https://github.com/WolfSoko/wol-sok-mono/issues/3032) [#3026](https://github.com/WolfSoko/wol-sok-mono/issues/3026)
+* **tools:** let the cloud sessions' gcloud use the service-account key ([7de8db3](https://github.com/WolfSoko/wol-sok-mono/commit/7de8db3d800e18fbd2b3c5f291be669aab3889c1))
+
+### Refactorings
+
+* **utils-browser-storage:** one localStorage helper for the hand-written wrappers ([#3045](https://github.com/WolfSoko/wol-sok-mono/issues/3045)) ([466b130](https://github.com/WolfSoko/wol-sok-mono/commit/466b130505ccbd9e5119e8c4b801b4192b621bfe)), closes [#2899](https://github.com/WolfSoko/wol-sok-mono/issues/2899)
+
 ## [74.167.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.1...v74.167.2) (2026-11-11)
 
 ### Bug Fixes
