@@ -47,7 +47,9 @@ export const auswahlLoeschen = v1
  * day, so it holds up no other) from the DBB's public Leagues,
  * one request a second, and stores its Clubs' ids and names in `clubIndex`,
  * which the app's `/api/clubs` serves. Not retried: the next hour picks the
- * same Association again. Its log names no Club. Off with `CLUB_INDEX_ON`.
+ * same Association again. Its log names no Club; it counts the Associations
+ * without a list (`withoutList`) and warns of one that has had none for a
+ * week (#3022). Off with `CLUB_INDEX_ON`.
  */
 export const clubIndex = CLUB_INDEX_ON
   ? onSchedule(
@@ -77,6 +79,11 @@ export const clubIndex = CLUB_INDEX_ON
               setTimeout(resolve, CLUB_INDEX_DBB.pauseMs)
             ),
           schedule: CLUB_INDEX_SCHEDULE,
+          // #3022: a Verband stuck without a list keeps /api/clubs short-cached
+          warn: (warning) =>
+            logger.warn('Club index: a Verband has had no list for a week', {
+              ...warning,
+            }),
         });
         logger.info('Club index run', result);
       }

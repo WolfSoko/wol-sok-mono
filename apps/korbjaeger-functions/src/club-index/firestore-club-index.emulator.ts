@@ -115,4 +115,25 @@ describe('the club index in Firestore', () => {
       device.firestore().collection(CLUB_INDEX_COLLECTION).doc('2').get()
     );
   });
+
+  it('dates a Verband without a list and keeps its last error, both dropped by the next save (#3022)', async () => {
+    const store = firestoreClubIndex(project().admin);
+
+    await store.markAttempt(2, 50, 40);
+    await store.markFailure(2, 'unavailable: DBB down');
+    await store.markAttempt(3, 51);
+
+    const marked = await store.read();
+    expect([...marked.attempts]).toEqual([
+      [2, 50],
+      [3, 51],
+    ]);
+    expect([...marked.listlessSince]).toEqual([[2, 40]]);
+    expect([...marked.lastErrors]).toEqual([[2, 'unavailable: DBB down']]);
+
+    await store.save(BAYERN);
+    const saved = await store.read();
+    expect([...saved.listlessSince]).toEqual([]);
+    expect([...saved.lastErrors]).toEqual([]);
+  });
 });

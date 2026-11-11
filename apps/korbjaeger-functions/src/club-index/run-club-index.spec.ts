@@ -9,6 +9,7 @@ import {
   runClubIndex,
   type ClubIndexRun,
   type ClubIndexStore,
+  type ListlessWarning,
 } from './run-club-index';
 
 const DAY = 86_400_000;
@@ -68,7 +69,8 @@ function fakeStore(
   lists: AssociationClubs[],
   attempts = new Map<number, number>(),
   noted: readonly number[] = [],
-  unmarked: readonly number[] = []
+  unmarked: readonly number[] = [],
+  listless: { since?: Map<number, number>; errors?: Map<number, string> } = {}
 ): ClubIndexStore & { log: string[]; saved: AssociationClubs[] } {
   const log: string[] = [];
   const saved: AssociationClubs[] = [];
@@ -85,12 +87,25 @@ function fakeStore(
   return {
     log,
     saved,
-    read: async () => ({ lists, attempts, ids, offered }),
+    read: async () => ({
+      lists,
+      attempts,
+      ids,
+      offered,
+      listlessSince: listless.since ?? new Map(),
+      lastErrors: listless.errors ?? new Map(),
+    }),
     noteOffered: async (associations) => {
       log.push(`note ${associations.join(',')}`);
     },
-    markAttempt: async (id, at) => {
-      log.push(`attempt ${id} ${at}`);
+    markAttempt: async (id, at, listlessSince) => {
+      log.push(
+        `attempt ${id} ${at}` +
+          (listlessSince === undefined ? '' : ` listless ${listlessSince}`)
+      );
+    },
+    markFailure: async (id, error) => {
+      log.push(`failure ${id} ${error}`);
     },
     save: async (list) => {
       log.push(`save ${list.association.id}`);
@@ -112,7 +127,13 @@ function runWith(
     store,
     now: () => NOW,
     pause: async () => undefined,
-    schedule: { maxAgeMs: WEEK, retryAfterMs: DAY, namesForMs: 20 * 60_000 },
+    schedule: {
+      maxAgeMs: WEEK,
+      retryAfterMs: DAY,
+      namesForMs: 20 * 60_000,
+      warnListlessAfterMs: WEEK,
+    },
+    warn: () => undefined,
     ...more,
   };
 }
@@ -132,9 +153,14 @@ describe('runClubIndex', () => {
     expect(result).toEqual({
       removed: 0,
       noted: 1,
+      withoutList: 1,
       crawled: { association: 3, clubs: 2, namedByTeam: 0 },
     });
-    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`, 'save 3']);
+    expect(store.log).toEqual([
+      'note 3',
+      `attempt 3 ${NOW} listless ${NOW}`,
+      'save 3',
+    ]);
     expect(store.saved).toEqual([
       {
         association: BERLIN,
@@ -185,7 +211,7 @@ describe('runClubIndex', () => {
 
     const result = await runClubIndex(runWith(store));
 
-    expect(result).toEqual({ removed: 0, noted: 0 });
+    expect(result).toEqual({ removed: 0, noted: 0, withoutList: 0 });
     expect(store.log).toEqual([]);
   });
 
@@ -204,7 +230,11 @@ describe('runClubIndex', () => {
         )
       )
     ).rejects.toMatchObject({ kind: 'unavailable' });
-    expect(store.log).toEqual(['note 3', `attempt 3 ${NOW}`]);
+    expect(store.log).toEqual([
+      'note 3',
+      `attempt 3 ${NOW} listless ${NOW}`,
+      'failure 3 unavailable: DBB down',
+    ]);
   });
 
   it('deletes the lists of Associations the DBB no longer offers', async () => {
@@ -217,6 +247,7 @@ describe('runClubIndex', () => {
     expect(await runClubIndex(runWith(store))).toEqual({
       removed: 1,
       noted: 0,
+      withoutList: 0,
     });
     expect(store.log).toEqual(['remove 40']);
   });
@@ -234,6 +265,7 @@ describe('runClubIndex', () => {
     expect(await runClubIndex(runWith(store))).toEqual({
       removed: 2,
       noted: 0,
+      withoutList: 0,
     });
     expect(store.log).toEqual(['remove 41', 'remove 42']);
   });
@@ -261,6 +293,7 @@ describe('runClubIndex', () => {
     expect(await runClubIndex(runWith(store))).toEqual({
       removed: 0,
       noted: 2,
+      withoutList: 0,
     });
     expect(store.log).toEqual(['note 2,3']);
   });
@@ -275,7 +308,7 @@ describe('runClubIndex', () => {
     const result = await runClubIndex(runWith(store));
 
     expect(result).toMatchObject({ noted: 0, crawled: { association: 3 } });
-    expect(store.log).toEqual([`attempt 3 ${NOW}`, 'save 3']);
+    expect(store.log).toEqual([`attempt 3 ${NOW} listless ${NOW}`, 'save 3']);
   });
 
   it('deletes nothing when the DBB offers no Association at all', async () => {
@@ -286,5 +319,113 @@ describe('runClubIndex', () => {
     await runClubIndex(runWith(store, fakeData(BERLIN_TEAMS, [])));
 
     expect(store.log).toEqual([]);
+  });
+
+  describe('Verbände without a list (#3022)', () => {
+    const BAYERN_LIST = { association: BAYERN, clubs: [], updatedAt: NOW };
+
+    function warningsOf(store: ClubIndexStore, data = fakeData()) {
+      const warnings: ListlessWarning[] = [];
+      const run = runClubIndex(
+        runWith(store, data, { warn: (warning) => warnings.push(warning) })
+      );
+      return { warnings, run };
+    }
+
+    it('warns of a Verband without a list for over a week, with its last error, before it crawls', async () => {
+      const since = NOW - WEEK - 1;
+      const store = fakeStore(
+        [BAYERN_LIST],
+        new Map([[3, NOW - DAY]]),
+        [3],
+        [],
+        {
+          since: new Map([[3, since]]),
+          errors: new Map([[3, 'unavailable: DBB down']]),
+        }
+      );
+      const { warnings, run } = warningsOf(
+        store,
+        fakeData(() =>
+          Promise.reject(new BasketballDataError('unavailable', 'DBB down'))
+        )
+      );
+
+      await expect(run).rejects.toMatchObject({ kind: 'unavailable' });
+      expect(warnings).toEqual([
+        {
+          association: 3,
+          listlessSince: new Date(since).toISOString(),
+          lastError: 'unavailable: DBB down',
+        },
+      ]);
+      expect(store.log).toEqual([
+        `attempt 3 ${NOW} listless ${since}`,
+        'failure 3 unavailable: DBB down',
+      ]);
+    });
+
+    it('says when no error was recorded, as after a timeout', async () => {
+      const store = fakeStore([BAYERN_LIST], new Map(), [3], [], {
+        since: new Map([[3, NOW - 2 * WEEK]]),
+      });
+      const { warnings, run } = warningsOf(store);
+
+      expect(await run).toMatchObject({ withoutList: 1 });
+      expect(warnings).toEqual([
+        expect.objectContaining({ association: 3, lastError: 'none recorded' }),
+      ]);
+    });
+
+    it('warns of none while every list is there', async () => {
+      const store = fakeStore(
+        [BAYERN_LIST, { association: BERLIN, clubs: [], updatedAt: NOW }],
+        new Map(),
+        [],
+        [],
+        { since: new Map([[3, NOW - 2 * WEEK]]) }
+      );
+      const { warnings, run } = warningsOf(store);
+
+      expect(await run).toMatchObject({ withoutList: 0 });
+      expect(warnings).toEqual([]);
+    });
+
+    it('warns of none without a list for less than a week', async () => {
+      const store = fakeStore([BAYERN_LIST], new Map(), [3], [], {
+        since: new Map([[3, NOW - WEEK]]),
+      });
+      const { warnings, run } = warningsOf(store);
+
+      expect(await run).toMatchObject({ withoutList: 1 });
+      expect(warnings).toEqual([]);
+    });
+
+    it('dates no attempt of a Verband that has a list', async () => {
+      const store = fakeStore([
+        { association: BAYERN, clubs: [], updatedAt: NOW - 2 * WEEK },
+        { association: BERLIN, clubs: [], updatedAt: NOW },
+      ]);
+
+      await runClubIndex(runWith(store));
+
+      expect(store.log).toEqual([`attempt 2 ${NOW}`, 'save 2']);
+    });
+
+    it('stores at most 200 characters of an unexpected error, by its name', async () => {
+      const store = fakeStore([BAYERN_LIST], new Map(), [3]);
+
+      await expect(
+        runClubIndex(
+          runWith(
+            store,
+            fakeData(() => Promise.reject(new TypeError('x'.repeat(300))))
+          )
+        )
+      ).rejects.toBeInstanceOf(TypeError);
+      const failure = store.log.at(-1) ?? '';
+      expect(failure).toMatch(/^failure 3 TypeError: x+$/);
+      expect(failure.length).toBe('failure 3 '.length + 200);
+    });
   });
 });
