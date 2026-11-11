@@ -1,7 +1,12 @@
-# 19. Korbjäger shows children's data only to those who follow their Team
+# 19. Korbjäger shows children only inside a Spiel's Kader
 
 - Status: accepted
 - Date: 2026-11-08
+- Changed: 2026-11-11 by
+  [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025): the
+  stance describes the Spiel page as built, which shows both sides' Kader
+  and limits only the marking of a Kind to a followed side (the owner's
+  decision: reword the ADR, keep the page)
 - Scope: `libs/features/basketball-data` (`feat-shared-basketball-data`),
   the coming Korbjäger app, its proxy, storage and fixtures
 - Issue: [#2861](https://github.com/WolfSoko/wol-sok-mono/issues/2861);
@@ -26,8 +31,12 @@ DBB responses to test against, and those name real children.
 **No way to find a child the DBB's own pages don't offer.**
 
 - No player search, no player pages, no season statistics or leader boards
-  across players. Children appear only inside the Kader of a Spiel of a
-  Team someone follows.
+  across players. Children appear only inside the Kader of a Spiel, as the
+  DBB publishes it: a Spiel page shows both sides' Kader, whether or not
+  someone follows either Team, and the app leads to a Spiel only from its
+  Teams, found by Verband, Liga or Verein. Marking a Kind ("Als mein Kind
+  markieren") and highlighting a marked one work only in the Kader of a
+  followed Team's side.
 - The app never searches Spielberichte for a person: a marked Kind is
   highlighted where their person id appears in a followed Team's Kader,
   nowhere else. To group the overview by Kind, it looks only into the
