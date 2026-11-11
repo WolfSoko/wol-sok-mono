@@ -18,7 +18,15 @@ export interface FakeUser {
 export interface FakeToken {
   claims: Record<string, unknown>;
   signInProvider: string | null;
+  /** When the user signed in, as the SDK gives it: `Date#toUTCString`. */
+  authTime: string;
 }
+
+/**
+ * When a token's user signed in unless a spec says otherwise: an hour
+ * before the fake server's time (`FAKE_SERVER_TIME`), so a while ago.
+ */
+export const FAKE_AUTH_TIME = Date.UTC(2026, 9, 26, 11);
 
 /** A guest: an anonymous account. */
 export function guestUser(uid: string): FakeUser {
@@ -46,7 +54,27 @@ export function googleUser(uid: string, name: string): FakeUser {
 export const PLAIN_GOOGLE_TOKEN: FakeToken = Object.freeze({
   claims: { email_verified: true },
   signInProvider: 'google.com',
+  authTime: new Date(FAKE_AUTH_TIME).toUTCString(),
 });
+
+/**
+ * A token with these claims, signed in with Google at
+ * {@link FAKE_AUTH_TIME} unless `signInProvider` or `authTime` (ms since
+ * the epoch) say otherwise.
+ */
+export function fakeToken(
+  claims: Record<string, unknown>,
+  {
+    signInProvider = PLAIN_GOOGLE_TOKEN.signInProvider,
+    authTime = FAKE_AUTH_TIME,
+  }: { signInProvider?: string | null; authTime?: number } = {}
+): FakeToken {
+  return {
+    claims,
+    signInProvider,
+    authTime: new Date(authTime).toUTCString(),
+  };
+}
 
 type UserListener = (user: FakeUser | null) => void;
 
@@ -107,6 +135,11 @@ export class FakeFirebaseAuth {
         error.credential ?? null,
     }),
   };
+
+  /** Auth's state is settled at once: the fake knows its user all along. */
+  public authStateReady(): Promise<void> {
+    return Promise.resolve();
+  }
 
   /** Another user signs in, or nobody: both listeners are told at once. */
   public become(user: FakeUser | null): void {
