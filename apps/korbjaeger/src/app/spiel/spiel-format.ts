@@ -1,4 +1,4 @@
-import type { Spielstand } from '@wolsok/feat-shared-basketball-data';
+import type { Score } from '@wolsok/feat-shared-basketball-data';
 
 const TAG = new Intl.DateTimeFormat('de-DE', {
   weekday: 'short',
@@ -20,12 +20,12 @@ export function spielTagUndUhrzeit(datum: string, uhrzeit?: string): string {
 }
 
 /** A Spiel's points, home first: `78:47`. */
-export function ergebnisText(stand: Spielstand): string {
-  return `${stand.heim}:${stand.gast}`;
+export function ergebnisText(stand: Score): string {
+  return `${stand.home}:${stand.away}`;
 }
 
 /**
  * The word beside a score a correction may still change
- * (`ergebnisVorlaeufig`), the same on every screen.
+ * (`resultProvisional`), the same on every screen.
  */
 export const VORLAEUFIG = 'vorläufig';

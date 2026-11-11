@@ -68,14 +68,14 @@
       "@wolsok/feat-shared-bacteria-engine/testing": [
         "./libs/features/bacteria-engine/src/testing.ts"
       ],
-      "@wolsok/feat-korbjaeger-antworten": [
-        "./libs/features/korbjaeger-antworten/src/index.ts"
+      "@wolsok/feat-korbjaeger-answers": [
+        "./libs/features/korbjaeger-answers/src/index.ts"
       ],
-      "@wolsok/feat-korbjaeger-auswahl": [
-        "./libs/features/korbjaeger-auswahl/src/index.ts"
+      "@wolsok/feat-korbjaeger-selection": [
+        "./libs/features/korbjaeger-selection/src/index.ts"
       ],
-      "@wolsok/feat-korbjaeger-auswahl/testing": [
-        "./libs/features/korbjaeger-auswahl/src/testing.ts"
+      "@wolsok/feat-korbjaeger-selection/testing": [
+        "./libs/features/korbjaeger-selection/src/testing.ts"
       ],
       "@wolsok/feat-shared-korbjaeger-account": [
         "./libs/features/korbjaeger-account/src/index.ts"

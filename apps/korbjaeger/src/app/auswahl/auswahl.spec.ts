@@ -1,12 +1,12 @@
 import { TestBed } from '@angular/core/testing';
 import { AUSWAHL } from './auswahl';
-import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
+import { SELECTION_KEY } from '@wolsok/feat-korbjaeger-selection';
 
 describe('AUSWAHL', () => {
   afterEach(() => localStorage.clear());
 
   it("keeps Meine Teams in the device's storage, across a reload", async () => {
-    await TestBed.inject(AUSWAHL).folgen(313036);
+    await TestBed.inject(AUSWAHL).follow(313036);
 
     TestBed.resetTestingModule();
 
@@ -17,12 +17,10 @@ describe('AUSWAHL', () => {
     const auswahl = TestBed.inject(AUSWAHL);
 
     localStorage.setItem(
-      AUSWAHL_SCHLUESSEL,
+      SELECTION_KEY,
       JSON.stringify({ version: 3, teams: { 201500: 1 } })
     );
-    window.dispatchEvent(
-      new StorageEvent('storage', { key: AUSWAHL_SCHLUESSEL })
-    );
+    window.dispatchEvent(new StorageEvent('storage', { key: SELECTION_KEY }));
 
     expect(auswahl.teams()).toEqual([201500]);
   });

@@ -21,7 +21,7 @@ describe('directDbbTransport', () => {
     );
 
     await expect(
-      transport({ kind: 'spielplan', ligaId: 54862 })
+      transport({ kind: 'schedule', leagueId: 54862 })
     ).resolves.toEqual({
       status: '0',
     });
@@ -39,7 +39,7 @@ describe('directDbbTransport', () => {
   it('throws on any other status', async () => {
     const { transport } = transportAnswering(new Response('', { status: 503 }));
 
-    await expect(transport({ kind: 'tabelle', ligaId: 1 })).rejects.toThrow(
+    await expect(transport({ kind: 'standings', leagueId: 1 })).rejects.toThrow(
       'HTTP 503'
     );
   });
@@ -47,9 +47,9 @@ describe('directDbbTransport', () => {
   it('builds no call for a read the allowlist refuses', async () => {
     const { transport, calls } = transportAnswering(new Response('{}'));
 
-    await expect(transport({ kind: 'tabelle', ligaId: -1 })).rejects.toThrow(
-      RangeError
-    );
+    await expect(
+      transport({ kind: 'standings', leagueId: -1 })
+    ).rejects.toThrow(RangeError);
     expect(calls).toEqual([]);
   });
 });

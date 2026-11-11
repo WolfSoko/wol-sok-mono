@@ -68,8 +68,15 @@ const codebase = (name: string) => {
   return found;
 };
 
-const DEPLOY =
-  'nx run korbjaeger:firebase deploy --only functions:default,hosting,firestore:rules,firestore:indexes';
+/** The Firebase CLI on the app's root config and project. */
+const FIREBASE =
+  'firebase --config=firebase.korbjaeger.json --project=korbjaeger';
+/**
+ * Every call to Google's API runs through the shared one-retry helper, so a
+ * single transient error does not fail the release (#2946).
+ */
+const RETRIED = `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts ${FIREBASE}`;
+const DEPLOY = `${RETRIED} deploy --only functions:default,hosting,firestore:rules,firestore:indexes --non-interactive`;
 
 describe('the Firebase deploy', () => {
   // a development or e2e build offers the sign-in and talks to the local
@@ -212,9 +219,7 @@ describe('the Firebase deploy', () => {
     // apps/korbjaeger/firebase.json is Nitro's, with a placeholder site
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
 
-    expect(project.targets['firebase'].options.command).toBe(
-      'firebase --config=firebase.korbjaeger.json --project=korbjaeger'
-    );
+    expect(project.targets['firebase'].options.command).toBe(FIREBASE);
     expect(project.targets['deploy'].options.commands?.at(-1)).toBe(DEPLOY);
   });
 
@@ -234,7 +239,7 @@ describe('the Firebase deploy', () => {
     ).toContain('region: FUNCTION_REGION.id');
     expect(parallel).toBe(false);
     expect(commands?.slice(1)).toEqual([
-      `nx run korbjaeger:firebase functions:artifacts:setpolicy --location=${region} --days=1 --force`,
+      `${RETRIED} functions:artifacts:setpolicy --location=${region} --days=1 --force`,
       DEPLOY,
     ]);
   });

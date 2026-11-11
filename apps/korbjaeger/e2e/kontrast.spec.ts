@@ -81,6 +81,16 @@ for (const schema of ['light', 'dark'] as const) {
       await searchPage.clubSearch.fill('wasbuttel');
       await expect(searchPage.clubs).toHaveCount(1);
       expect(await kontrastFehler(page)).toEqual([]);
+
+      // the followed Team's way on to marking the Kind
+      await searchPage.gotoChildClub(1837);
+      await expect(
+        searchPage.markChild(
+          teamPage.vereinsTeam('Regionsliga Braunschweig mu12'),
+          'MTV Wasbüttel -RST-'
+        )
+      ).toBeVisible();
+      expect(await kontrastFehler(page)).toEqual([]);
     });
 
     for (const farbe of ['Gelb', 'Marine', 'Weiß']) {

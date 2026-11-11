@@ -1,14 +1,15 @@
-import { VEREINS_SPIELE_TAGE } from '../lib/dbb/dbb-basketball-data';
+import { CLUB_GAMES_DAYS } from '../lib/dbb/dbb-basketball-data';
 import {
   dbbHttpRequest,
   type DbbHttpRequest,
   type DbbRequest,
 } from '../lib/dbb/dbb-request';
-import { KEIN_LIGA_FILTER } from '../lib/domain/liga-suche';
+import { NO_LEAGUE_FILTER } from '../lib/domain/league-search';
 import boxscore2843811 from '../lib/dbb/fixtures/boxscore-2843811.json';
 import boxscore2843814 from '../lib/dbb/fixtures/boxscore-2843814.json';
 import boxscore2861436 from '../lib/dbb/fixtures/boxscore-2861436.json';
 import boxscore2911141 from '../lib/dbb/fixtures/boxscore-2911141.json';
+import boxscore2861555 from '../lib/dbb/fixtures/boxscore-2861555.json';
 import club1837Actualmatches from '../lib/dbb/fixtures/club-1837-actualmatches.json';
 import clubNotFound from '../lib/dbb/fixtures/club-not-found.json';
 import boxscoreNotFound from '../lib/dbb/fixtures/boxscore-not-found.json';
@@ -33,11 +34,11 @@ import wamListNiedersachsenU12m10 from '../lib/dbb/fixtures/wam-liga-list-nieder
 import wamListNiedersachsenU12m20 from '../lib/dbb/fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-20.json';
 
 /** The Team wizard's steps to Team 313036's Vorrunde, as the e2e takes them. */
-const NIEDERSACHSEN = { ...KEIN_LIGA_FILTER, verbandIds: [7] };
-const NIEDERSACHSEN_U12 = { ...NIEDERSACHSEN, altersklasseIds: [12] };
-const NIEDERSACHSEN_U12_JUGEND_MAENNLICH = {
+const NIEDERSACHSEN = { ...NO_LEAGUE_FILTER, associationIds: [7] };
+const NIEDERSACHSEN_U12 = { ...NIEDERSACHSEN, ageGroupIds: [12] };
+const NIEDERSACHSEN_U12_YOUTH_MALE = {
   ...NIEDERSACHSEN_U12,
-  altersgruppeGeschlechtIds: ['2_1'],
+  ageGroupGenderIds: ['2_1'],
 };
 
 /**
@@ -51,46 +52,50 @@ const NIEDERSACHSEN_U12_JUGEND_MAENNLICH = {
  * cancelled, forfeited).
  */
 const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
-  [{ kind: 'liga-suche', filter: KEIN_LIGA_FILTER }, wamDataAlle],
-  [{ kind: 'liga-suche', filter: NIEDERSACHSEN }, wamDataNiedersachsen],
-  [{ kind: 'liga-suche', filter: NIEDERSACHSEN_U12 }, wamDataNiedersachsenU12],
+  [{ kind: 'league-search', filter: NO_LEAGUE_FILTER }, wamDataAlle],
+  [{ kind: 'league-search', filter: NIEDERSACHSEN }, wamDataNiedersachsen],
   [
-    { kind: 'liga-suche', filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH },
+    { kind: 'league-search', filter: NIEDERSACHSEN_U12 },
+    wamDataNiedersachsenU12,
+  ],
+  [
+    { kind: 'league-search', filter: NIEDERSACHSEN_U12_YOUTH_MALE },
     wamDataNiedersachsenU12m,
   ],
   [
     {
-      kind: 'liga-seite',
-      filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+      kind: 'league-page',
+      filter: NIEDERSACHSEN_U12_YOUTH_MALE,
       startIndex: 10,
     },
     wamListNiedersachsenU12m10,
   ],
   [
     {
-      kind: 'liga-seite',
-      filter: NIEDERSACHSEN_U12_JUGEND_MAENNLICH,
+      kind: 'league-page',
+      filter: NIEDERSACHSEN_U12_YOUTH_MALE,
       startIndex: 20,
     },
     wamListNiedersachsenU12m20,
   ],
-  [{ kind: 'spielplan', ligaId: 54862 }, spielplan54862],
-  [{ kind: 'team-spiele', teamId: 313036 }, team313036Matches],
+  [{ kind: 'schedule', leagueId: 54862 }, spielplan54862],
+  [{ kind: 'team-games', teamId: 313036 }, team313036Matches],
   [
-    { kind: 'vereins-spiele', vereinId: 1837, tage: VEREINS_SPIELE_TAGE },
+    { kind: 'club-games', clubId: 1837, days: CLUB_GAMES_DAYS },
     club1837Actualmatches,
   ],
-  [{ kind: 'tabelle', ligaId: 54689 }, table54689],
-  [{ kind: 'tabelle', ligaId: 54862 }, table54862],
-  [{ kind: 'spiel-info', spielId: 2861436 }, matchinfo2861436],
-  [{ kind: 'spiel-info', spielId: 2911141 }, matchinfo2911141],
-  [{ kind: 'spiel-info', spielId: 2843814 }, matchinfo2843814],
-  [{ kind: 'spiel-info', spielId: 2930311 }, matchinfo2930311],
-  [{ kind: 'spiel-info', spielId: 2930414 }, matchinfo2930414],
-  [{ kind: 'spielbericht', spielId: 2861436 }, boxscore2861436],
-  [{ kind: 'spielbericht', spielId: 2911141 }, boxscore2911141],
-  [{ kind: 'spielbericht', spielId: 2843811 }, boxscore2843811],
-  [{ kind: 'spielbericht', spielId: 2843814 }, boxscore2843814],
+  [{ kind: 'standings', leagueId: 54689 }, table54689],
+  [{ kind: 'standings', leagueId: 54862 }, table54862],
+  [{ kind: 'game-info', gameId: 2861436 }, matchinfo2861436],
+  [{ kind: 'game-info', gameId: 2911141 }, matchinfo2911141],
+  [{ kind: 'game-info', gameId: 2843814 }, matchinfo2843814],
+  [{ kind: 'game-info', gameId: 2930311 }, matchinfo2930311],
+  [{ kind: 'game-info', gameId: 2930414 }, matchinfo2930414],
+  [{ kind: 'game-report', gameId: 2861436 }, boxscore2861436],
+  [{ kind: 'game-report', gameId: 2911141 }, boxscore2911141],
+  [{ kind: 'game-report', gameId: 2843811 }, boxscore2843811],
+  [{ kind: 'game-report', gameId: 2843814 }, boxscore2843814],
+  [{ kind: 'game-report', gameId: 2861555 }, boxscore2861555],
 ];
 
 /** The recorded answers, by the call `dbbHttpRequest` builds for them. */
@@ -145,7 +150,7 @@ export function fakeDbbAnswer(
 function callKey(method: string, path: string, body?: unknown): string {
   return body === undefined
     ? `${method} ${path}`
-    : `${method} ${path} ${kanonisch(body)}`;
+    : `${method} ${path} ${canonical(body)}`;
 }
 
 /** The key of the call `dbbHttpRequest` builds. */
@@ -156,7 +161,7 @@ function callKeyOf(call: DbbHttpRequest): string {
 }
 
 /** `value` as JSON with every object's keys sorted: equal content, equal text. */
-function kanonisch(value: unknown): string {
+function canonical(value: unknown): string {
   return JSON.stringify(value, (_key, inner: unknown) =>
     inner !== null && typeof inner === 'object' && !Array.isArray(inner)
       ? Object.fromEntries(

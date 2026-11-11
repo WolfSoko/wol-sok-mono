@@ -3,17 +3,18 @@ import {
   BasketballDataError,
   isBasketballDataError,
 } from '../domain/basketball-data-error';
-import type { LigaId, SpielId, TeamId, VereinId } from '../domain/ids';
+import type { LeagueId, GameId, TeamId, ClubId } from '../domain/ids';
 import type {
-  LigaSeite,
-  LigaSuche,
-  LigaSucheFilter,
-} from '../domain/liga-suche';
-import type { SpielDetails } from '../domain/spiel';
-import type { Spielbericht } from '../domain/spielbericht';
-import type { Tabelle } from '../domain/tabelle';
+  LeaguePage,
+  LeagueSearch,
+  LeagueSearchFilter,
+} from '../domain/league-search';
+import type { GameDetails } from '../domain/game';
+import type { GameReport } from '../domain/game-report';
+import type { Standings } from '../domain/standings';
 import type { Team } from '../domain/team';
-import type { TeamSaison, VereinsTeams } from '../domain/team-saison';
+import type { Club } from '../domain/club';
+import type { TeamSeason, ClubTeams } from '../domain/team-season';
 import {
   assertValidDbbRequest,
   dbbIdOf,
@@ -22,23 +23,32 @@ import {
   type DbbTransport,
 } from './dbb-request';
 import { readEnvelope } from './envelope';
-import { mapLigaSeite, mapLigaSuche } from './map-liga-suche';
-import { mapLigaTeams } from './map-liga-teams';
-import { mapSpielDetails } from './map-spiel-details';
-import { mapSpielbericht } from './map-spielbericht';
-import { mapTabelle } from './map-tabelle';
-import { mapTeamSpiele } from './map-team-spiele';
-import { mapVereinsTeams } from './map-vereins-teams';
+import { mapClubOfGames } from './map-club-of-games';
+import { mapLeaguePage, mapLeagueSearch } from './map-league-search';
+import { mapLeagueTeams } from './map-league-teams';
+import { mapGameDetails } from './map-game-details';
+import { mapGameReport } from './map-game-report';
+import { mapStandings } from './map-standings';
+import { mapTeamGames } from './map-team-games';
+import { mapClubTeams } from './map-club-teams';
 
 /**
  * How far either way a Verein's Spiele are looked at for its Teams: four
  * weeks, so a Team pausing over the holidays still shows, and a Team whose
- * Saison ended (two weeks after its last Spiel, `saisonBeendet`) still
+ * Saison ended (two weeks after its last Spiel, `seasonOver`) still
  * finds the Verein's Teams that ended about when it did; ahead, the next
  * Saison's Teams show once their first Spiele are set. Wider would cost
  * every read a longer list for little gain.
  */
-export const VEREINS_SPIELE_TAGE = 28;
+export const CLUB_GAMES_DAYS = 28;
+
+/**
+ * How far either way a Verein's Spiele are asked for when only the Verein
+ * is read (`club`): the least the DBB's day range takes, as its answer
+ * carries the Verein whatever the range, and each day more only adds
+ * Spiele that are never read.
+ */
+const CLUB_NAME_DAYS = 1;
 
 /**
  * `BasketballData` read from the DBB's JSON API through `transport`, which
@@ -51,65 +61,84 @@ export class DbbBasketballData<
 > implements BasketballData<O> {
   public constructor(private readonly transport: DbbTransport<O>) {}
 
-  public ligaSuche(filter: LigaSucheFilter, options?: O): Promise<LigaSuche> {
-    return this.read({ kind: 'liga-suche', filter }, mapLigaSuche, options);
+  public leagueSearch(
+    filter: LeagueSearchFilter,
+    options?: O
+  ): Promise<LeagueSearch> {
+    return this.read(
+      { kind: 'league-search', filter },
+      mapLeagueSearch,
+      options
+    );
   }
 
-  public ligaSeite(
-    filter: LigaSucheFilter,
+  public leaguePage(
+    filter: LeagueSearchFilter,
     startIndex: number,
     options?: O
-  ): Promise<LigaSeite> {
+  ): Promise<LeaguePage> {
     return this.read(
-      { kind: 'liga-seite', filter, startIndex },
-      mapLigaSeite,
+      { kind: 'league-page', filter, startIndex },
+      mapLeaguePage,
       options
     );
   }
 
-  public ligaTeams(liga: LigaId, options?: O): Promise<readonly Team[]> {
+  public leagueTeams(league: LeagueId, options?: O): Promise<readonly Team[]> {
     return this.read(
-      { kind: 'spielplan', ligaId: liga },
-      mapLigaTeams,
+      { kind: 'schedule', leagueId: league },
+      mapLeagueTeams,
       options
     );
   }
 
-  public vereinsTeams(verein: VereinId, options?: O): Promise<VereinsTeams> {
+  public clubTeams(club: ClubId, options?: O): Promise<ClubTeams> {
     return this.read(
-      { kind: 'vereins-spiele', vereinId: verein, tage: VEREINS_SPIELE_TAGE },
-      mapVereinsTeams,
+      { kind: 'club-games', clubId: club, days: CLUB_GAMES_DAYS },
+      mapClubTeams,
       options
     );
   }
 
-  public teamSpiele(team: TeamId, options?: O): Promise<TeamSaison> {
+  public club(club: ClubId, options?: O): Promise<Club> {
     return this.read(
-      { kind: 'team-spiele', teamId: team },
-      mapTeamSpiele,
+      { kind: 'club-games', clubId: club, days: CLUB_NAME_DAYS },
+      mapClubOfGames,
       options
     );
   }
 
-  public tabelle(liga: LigaId, options?: O): Promise<Tabelle> {
-    return this.read({ kind: 'tabelle', ligaId: liga }, mapTabelle, options);
-  }
-
-  public spiel(spiel: SpielId, options?: O): Promise<SpielDetails> {
+  public teamGames(team: TeamId, options?: O): Promise<TeamSeason> {
     return this.read(
-      { kind: 'spiel-info', spielId: spiel },
-      mapSpielDetails,
+      { kind: 'team-games', teamId: team },
+      mapTeamGames,
       options
     );
   }
 
-  public spielbericht(
-    spiel: SpielId,
+  public standings(league: LeagueId, options?: O): Promise<Standings> {
+    return this.read(
+      { kind: 'standings', leagueId: league },
+      mapStandings,
+      options
+    );
+  }
+
+  public game(game: GameId, options?: O): Promise<GameDetails> {
+    return this.read(
+      { kind: 'game-info', gameId: game },
+      mapGameDetails,
+      options
+    );
+  }
+
+  public gameReport(
+    game: GameId,
     options?: O
-  ): Promise<Spielbericht | undefined> {
+  ): Promise<GameReport | undefined> {
     return this.read(
-      { kind: 'spielbericht', spielId: spiel },
-      mapSpielbericht,
+      { kind: 'game-report', gameId: game },
+      mapGameReport,
       options
     );
   }

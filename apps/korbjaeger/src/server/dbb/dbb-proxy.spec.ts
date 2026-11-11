@@ -47,15 +47,14 @@ function dbbAnswering(body: string, status = 200): UpstreamFetch {
 const ROUTE_FILES: {
   readonly [K in ProxyKind]: () => Promise<{ readonly default: EventHandler }>;
 } = {
-  'liga-suche': () => import('../routes/api/dbb/ligen.get'),
-  'liga-seite': () => import('../routes/api/dbb/ligen/seite.get'),
-  spielplan: () => import('../routes/api/dbb/liga/[ligaId]/spielplan.get'),
-  'team-spiele': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
-  'vereins-spiele': () =>
-    import('../routes/api/dbb/verein/[vereinId]/spiele.get'),
-  tabelle: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
-  'spiel-info': () => import('../routes/api/dbb/spiel/[spielId].get'),
-  spielbericht: () => import('../routes/api/dbb/spiel/[spielId]/bericht.get'),
+  'league-search': () => import('../routes/api/dbb/ligen.get'),
+  'league-page': () => import('../routes/api/dbb/ligen/seite.get'),
+  schedule: () => import('../routes/api/dbb/liga/[ligaId]/spielplan.get'),
+  'team-games': () => import('../routes/api/dbb/team/[teamId]/spiele.get'),
+  'club-games': () => import('../routes/api/dbb/verein/[vereinId]/spiele.get'),
+  standings: () => import('../routes/api/dbb/liga/[ligaId]/tabelle.get'),
+  'game-info': () => import('../routes/api/dbb/spiel/[spielId].get'),
+  'game-report': () => import('../routes/api/dbb/spiel/[spielId]/bericht.get'),
 };
 
 const KINDS = Object.keys(PROXY_ROUTES) as ProxyKind[];
@@ -93,23 +92,23 @@ async function proxyRoutes(): Promise<(request: Request) => Promise<Response>> {
 
 /** Each route by an id, with one the fake DBB has a recording of. */
 const ROUTES = [
-  { name: "a Liga's Spielplan", route: PROXY_ROUTES.spielplan, id: 54862 },
-  { name: "a Team's Spiele", route: PROXY_ROUTES['team-spiele'], id: 313036 },
+  { name: "a Liga's Spielplan", route: PROXY_ROUTES.schedule, id: 54862 },
+  { name: "a Team's Spiele", route: PROXY_ROUTES['team-games'], id: 313036 },
   {
     name: "a Verein's Spiele",
-    route: PROXY_ROUTES['vereins-spiele'],
+    route: PROXY_ROUTES['club-games'],
     id: 1837,
   },
-  { name: "a Liga's Tabelle", route: PROXY_ROUTES.tabelle, id: 54862 },
+  { name: "a Liga's Tabelle", route: PROXY_ROUTES.standings, id: 54862 },
   {
     name: "a Spiel's match info",
-    route: PROXY_ROUTES['spiel-info'],
+    route: PROXY_ROUTES['game-info'],
     id: 2911141,
   },
   {
     // planned, so no Spielbericht yet: cached as any other read
     name: "a Spiel's Spielbericht",
-    route: PROXY_ROUTES.spielbericht,
+    route: PROXY_ROUTES['game-report'],
     id: 2843814,
   },
 ] as const;

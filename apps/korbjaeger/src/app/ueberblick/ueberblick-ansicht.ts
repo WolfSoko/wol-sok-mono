@@ -1,14 +1,14 @@
 import {
-  gemeinsamerUeberblick,
-  nachNaechstemSpiel,
-  zuletztGespielt,
-  type KaderFunde,
+  combinedOverview,
+  byNextGame,
+  lastPlayed,
+  type RosterFinds,
   type PersonId,
-  type SaisonMitUeberblick,
-  type SaisonSpiel,
-  type Spiel,
+  type SeasonWithOverview,
+  type SeasonGame,
+  type Game,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Kind } from '@wolsok/feat-korbjaeger-auswahl';
+import type { Child } from '@wolsok/feat-korbjaeger-selection';
 import { aeltesterStand, type Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
@@ -17,8 +17,8 @@ import { kartenName, type TeamKarte } from './team-karte';
 /** A followed Team as the overview holds it: its card and its reads. */
 export interface TeamImUeberblick {
   readonly karte: TeamKarte;
-  /** Its Saison with its overview (`teamUeberblick`), once read. */
-  readonly saison?: SaisonMitUeberblick;
+  /** Its Saison with its overview (`teamOverview`), once read. */
+  readonly saison?: SeasonWithOverview;
   /** The read of its next Spiel's Halle, once it started. */
   readonly halle?: HallenStand;
   /** The oldest Stand of its Saison and next Spiel. */
@@ -27,7 +27,7 @@ export interface TeamImUeberblick {
    * What its Kader told of the marked Kinder, the last finds kept while it
    * is searched again; none before the first search ended.
    */
-  readonly funde?: KaderFunde;
+  readonly funde?: RosterFinds;
   /** Whether its Kader is still searched, its Saison read before. */
   readonly sucht: boolean;
 }
@@ -55,7 +55,7 @@ export interface KindAbschnitt {
   /** Whether a Team's Kader is still read, which may add a Team. */
   readonly sucht: boolean;
   /** The first next Spiel of its Teams, by which the overview orders them. */
-  readonly naechstesSpiel?: Spiel;
+  readonly naechstesSpiel?: Game;
   readonly naechstes?: SpielZeile;
   /** The heading of `naechstes`, naming its Team where the Kind has several. */
   readonly naechstesTitel: string;
@@ -114,10 +114,10 @@ export const MEIN_KIND = 'Mein Kind';
  * is marked. Without a followed Team it is empty, Kinder or not: no Kader
  * can name them.
  *
- * @param heute a German calendar day, `YYYY-MM-DD` (`datumInDeutschland`)
+ * @param heute a German calendar day, `YYYY-MM-DD` (`dateInGermany`)
  */
 export function ueberblickAnsicht(
-  kinder: readonly Kind[],
+  kinder: readonly Child[],
   teams: readonly TeamImUeberblick[],
   heute: string
 ): UeberblickAnsicht {
@@ -130,35 +130,37 @@ export function ueberblickAnsicht(
   }
   const abschnitte = kinder.map((kind) => kindAbschnitt(kind, teams));
   return {
-    kinder: nachNaechstemSpiel(abschnitte, (a) => a.naechstesSpiel),
+    kinder: byNextGame(abschnitte, (a) => a.naechstesSpiel),
     teams: nachSpiel(teams.filter((team) => ohneKind(team, kinder))),
   };
 }
 
 function kindAbschnitt(
-  kind: Kind,
+  kind: Child,
   teams: readonly TeamImUeberblick[]
 ): KindAbschnitt {
   const seine = teams.filter(
     (team) => vorname(team, kind.personId) !== undefined
   );
   const sucht = teams.some((team) => team.sucht);
-  const { naechstes, ausfaelle, spaetereAusfaelle, letztes } =
-    gemeinsamerUeberblick(
-      seine.flatMap(({ saison }) => (saison ? [saison] : []))
-    );
-  const vonTeam = (spiel: SaisonSpiel | undefined) =>
-    spiel && seine.find(({ saison }) => saison?.saison === spiel.saison);
-  const imKader = letztes && imKaderVon(vonTeam(letztes), letztes.spiel, kind);
+  const {
+    next: naechstes,
+    cancellations: ausfaelle,
+    laterCancellations: spaetereAusfaelle,
+    last: letztes,
+  } = combinedOverview(seine.flatMap(({ saison }) => (saison ? [saison] : [])));
+  const vonTeam = (spiel: SeasonGame | undefined) =>
+    spiel && seine.find(({ saison }) => saison?.season === spiel.season);
+  const imKader = letztes && imKaderVon(vonTeam(letztes), letztes.game, kind);
   const nichtGefunden =
     seine.length === 0 && !sucht ? warumNicht(teams) : undefined;
   // a Kind with several Teams: which of them plays
-  const titel = (text: string, spiel: SaisonSpiel | undefined) =>
-    spiel && seine.length > 1 ? `${text} · ${spiel.saison.team.name}` : text;
+  const titel = (text: string, spiel: SeasonGame | undefined) =>
+    spiel && seine.length > 1 ? `${text} · ${spiel.season.team.name}` : text;
   return {
     personId: kind.personId,
     titel:
-      kind.spitzname ??
+      kind.nickname ??
       seine.map((team) => vorname(team, kind.personId)).find(Boolean) ??
       MEIN_KIND,
     teams: seine.map(({ karte }) => ({ ...karte, name: kartenName(karte) })),
@@ -168,7 +170,7 @@ function kindAbschnitt(
     naechstesTitel: titel('Nächstes Spiel', naechstes),
     letztesTitel: titel('Letztes Ergebnis', letztes),
     ...(naechstes && {
-      naechstesSpiel: naechstes.spiel,
+      naechstesSpiel: naechstes.game,
       naechstes: zeile(naechstes),
       halle: vonTeam(naechstes)?.halle,
     }),
@@ -179,18 +181,18 @@ function kindAbschnitt(
     vielleichtMehrTeams:
       seine.length > 0 &&
       teams.some(
-        (team) => !seine.includes(team) && team.funde?.unvollstaendig === true
+        (team) => !seine.includes(team) && team.funde?.incomplete === true
       ),
   };
 }
 
-function zeile({ saison, spiel }: SaisonSpiel): SpielZeile {
+function zeile({ season: saison, game: spiel }: SeasonGame): SpielZeile {
   return spielZeile(saison, spiel);
 }
 
 /** The first name the Team's Kader gave the Kind `person`, if it named them. */
 function vorname(team: TeamImUeberblick, person: PersonId): string | undefined {
-  for (const kinder of team.funde?.spiele.values() ?? []) {
+  for (const kinder of team.funde?.games.values() ?? []) {
     const name = kinder?.get(person);
     if (name !== undefined) {
       return name;
@@ -202,14 +204,14 @@ function vorname(team: TeamImUeberblick, person: PersonId): string | undefined {
 /** Whether `kind` was on `team`'s Kader of `spiel`, where it was read. */
 function imKaderVon(
   team: TeamImUeberblick | undefined,
-  spiel: Spiel,
-  kind: Kind
+  spiel: Game,
+  kind: Child
 ): boolean | undefined {
-  return team?.funde?.spiele.get(spiel.id)?.has(kind.personId);
+  return team?.funde?.games.get(spiel.id)?.has(kind.personId);
 }
 
 function warumNicht(teams: readonly TeamImUeberblick[]): NichtGefunden {
-  return teams.some(({ funde }) => funde?.unvollstaendig)
+  return teams.some(({ funde }) => funde?.incomplete)
     ? 'nicht-lesbar'
     : 'nicht-im-kader';
 }
@@ -219,7 +221,7 @@ function warumNicht(teams: readonly TeamImUeberblick[]): NichtGefunden {
  * failed): a Team whose search still runs shows among the others until a
  * Kind is found in it.
  */
-function ohneKind(team: TeamImUeberblick, kinder: readonly Kind[]): boolean {
+function ohneKind(team: TeamImUeberblick, kinder: readonly Child[]): boolean {
   return (
     team.karte.art === 'fehler' ||
     kinder.every(({ personId }) => vorname(team, personId) === undefined)
@@ -227,7 +229,7 @@ function ohneKind(team: TeamImUeberblick, kinder: readonly Kind[]): boolean {
 }
 
 function nachSpiel(teams: readonly TeamImUeberblick[]): readonly TeamKarte[] {
-  return nachNaechstemSpiel(
+  return byNextGame(
     teams.map(({ karte }) => karte),
     (karte) => (karte.art === 'geladen' ? karte.naechstesSpiel : undefined)
   );
@@ -244,11 +246,11 @@ function kindHinweis(
 ): KindHinweis | undefined {
   const saisons = teams
     .filter(({ karte }) => karte.art !== 'fehler')
-    .map(({ saison }) => saison?.saison);
+    .map(({ saison }) => saison?.season);
   if (saisons.length === 0) {
     return undefined;
   }
-  if (saisons.some((s) => s && zuletztGespielt(s, heute, 1).length > 0)) {
+  if (saisons.some((s) => s && lastPlayed(s, heute, 1).length > 0)) {
     return 'spiel-oeffnen';
   }
   return saisons.every((s) => s !== undefined)

@@ -3,6 +3,7 @@ import {
   Component,
   computed,
   inject,
+  input,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -19,6 +20,7 @@ import {
 } from './club-search-result';
 import { ClubSearchTerm } from './club-search-term';
 import { debounced } from './debounced';
+import { CLUB_LINK } from './search-level';
 
 /** How long typing pauses before the search runs. */
 export const SEARCH_DEBOUNCE_MS = 300;
@@ -90,11 +92,7 @@ export const SEARCH_DEBOUNCE_MS = 300;
     @if (shown?.kind === 'hits') {
       <mat-nav-list data-qa="clubs">
         @for (club of shown.clubs; track club.id) {
-          <a
-            mat-list-item
-            data-qa="club"
-            [routerLink]="['/suchen/verein', club.id]"
-          >
+          <a mat-list-item data-qa="club" [routerLink]="[clubLink(), club.id]">
             <span matListItemTitle>{{ club.name }}</span>
             <span matListItemLine>{{ associationNames(club) }}</span>
           </a>
@@ -130,6 +128,8 @@ export const SEARCH_DEBOUNCE_MS = 300;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ClubSearchComponent {
+  /** Where a hit leads, followed by the Verein's id. */
+  public readonly clubLink = input(CLUB_LINK);
   protected readonly clubIndex = inject(ClubIndex);
   protected readonly term = inject(ClubSearchTerm);
   protected readonly maxHits = MAX_HITS;

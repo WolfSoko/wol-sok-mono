@@ -2,23 +2,23 @@ import { computed, signal, type Signal } from '@angular/core';
 import type {
   PersonId,
   TeamId,
-  VereinId,
+  ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
-  type Vereinsfarben,
-  type VereinsfarbenWahl,
-  type Auswahl,
-  type TeamPlatz,
-  LEERE_AUSWAHL,
+  type ClubColors,
+  type ClubColorsChoice,
+  type Selection,
+  type TeamPlace,
+  EMPTY_SELECTION,
   selectionIsEmpty,
   selectionWithout,
   selectionJoined,
   listSignals,
-  type Kind,
-  type MarkierbarerSpieler,
-  type LokaleAuswahl,
-  type NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  type Child,
+  type MarkablePlayer,
+  type LocalSelection,
+  type NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   KontoGewechselt,
   KontoNichtGeloescht,
@@ -57,7 +57,7 @@ export interface Fehlschlag {
 /** What the last takeover into the account shown left on the device. */
 export interface UebernahmeHinweis {
   /** The device's Teams and Kinder that did not fit; they stay on it. */
-  readonly uebrig: NichtUebernommen;
+  readonly uebrig: NotTakenOver;
   /**
    * Whether other choices of the device are not in the account yet: they
    * changed while it took them over, or it failed at a start. The next
@@ -66,7 +66,7 @@ export interface UebernahmeHinweis {
   readonly behalten: boolean;
 }
 
-const NICHTS: NichtUebernommen = LEERE_AUSWAHL;
+const NICHTS: NotTakenOver = EMPTY_SELECTION;
 
 /** Remembers on the device that an Elternteil is signed in. */
 export interface AnmeldeMerker {
@@ -89,8 +89,8 @@ const NICHT_ERLAUBT = 'permission-denied';
 const UEBERNAHMEN_HOECHSTENS = 3;
 
 /**
- * The account of an Elternteil and the `Auswahl` that goes with it: the
- * device's (`LokaleAuswahl`) signed out, the account's (`KontoAuswahl`)
+ * The account of an Elternteil and the `Selection` that goes with it: the
+ * device's (`LocalSelection`) signed out, the account's (`KontoAuswahl`)
  * signed in. Firebase is loaded (`laden`) only to sign in (`vorbereiten`,
  * once the settings open) or to open the account of an Elternteil signed
  * in before (`merker`), so a visitor without an account never contacts
@@ -105,8 +105,8 @@ const UEBERNAHMEN_HOECHSTENS = 3;
  */
 export class KontoSitzung {
   public readonly stand: Signal<KontoStand>;
-  /** The screens' `Auswahl`: whichever holds Meine Teams and Kinder now. */
-  public readonly auswahl: Auswahl;
+  /** The screens' `Selection`: whichever holds Meine Teams and Kinder now. */
+  public readonly auswahl: Selection;
   /**
    * Whether Firebase is loaded, so a click opens Google's popup at once:
    * the settings offer the sign-in only then.
@@ -121,7 +121,7 @@ export class KontoSitzung {
 
   private readonly zustand = signal<KontoStand>({ art: 'aus' });
   private readonly geladen = signal(false);
-  private readonly aktuell = signal<Auswahl | undefined>(undefined);
+  private readonly aktuell = signal<Selection | undefined>(undefined);
   private readonly hinweis = signal<
     { readonly uid: string; readonly hinweis: UebernahmeHinweis } | undefined
   >(undefined);
@@ -152,7 +152,7 @@ export class KontoSitzung {
    * @param istOnline whether the device has a network (`navigator.onLine`).
    */
   public constructor(
-    private readonly lokal: LokaleAuswahl,
+    private readonly lokal: LocalSelection,
     private readonly laden: (() => Promise<KontoDienst>) | undefined,
     private readonly merker: AnmeldeMerker,
     private readonly istOnline: () => boolean = () =>
@@ -222,11 +222,11 @@ export class KontoSitzung {
    * not be taken over, it signs out again and rejects with that failure,
    * the device's choices kept.
    */
-  public anmelden(): Promise<NichtUebernommen> {
+  public anmelden(): Promise<NotTakenOver> {
     return this.einzeln('anmelden', async () => {
       const dienst = this.dienst ?? (await this.dienstHolen());
       const benutzer = await dienst.mitGoogleAnmelden();
-      let uebrig: NichtUebernommen;
+      let uebrig: NotTakenOver;
       try {
         uebrig = await this.uebernehmen(dienst, benutzer);
       } catch (fehler) {
@@ -338,14 +338,14 @@ export class KontoSitzung {
   private async uebernehmen(
     dienst: KontoDienst,
     benutzer: Benutzer
-  ): Promise<NichtUebernommen> {
+  ): Promise<NotTakenOver> {
     let uebrig = NICHTS;
-    let neu = this.lokal.neuGelesen();
+    let neu = this.lokal.reread();
     for (let mal = 0; mal < UEBERNAHMEN_HOECHSTENS; mal++) {
       const passtNicht = await dienst.geraetUebernehmen(benutzer.uid, neu);
       uebrig = selectionJoined(uebrig, passtNicht);
       neu = selectionWithout(
-        this.lokal.abgeben(selectionWithout(neu, passtNicht)),
+        this.lokal.handOver(selectionWithout(neu, passtNicht)),
         uebrig
       );
       if (selectionIsEmpty(neu)) {
@@ -418,7 +418,7 @@ export class KontoSitzung {
    */
   private async behalteneUebernehmen(benutzer: Benutzer): Promise<void> {
     const dienst = this.dienst;
-    if (dienst === undefined || selectionIsEmpty(this.lokal.neuGelesen())) {
+    if (dienst === undefined || selectionIsEmpty(this.lokal.reread())) {
       return;
     }
     try {
@@ -511,7 +511,7 @@ export class KontoSitzung {
       throw fehler;
     }
     if (nummer !== this.oeffnung || dienst.jetzt()?.uid !== benutzer.uid) {
-      auswahl.beenden();
+      auswahl.stop();
       if (nummer === this.oeffnung) {
         this.abgleichen();
       }
@@ -559,7 +559,7 @@ export class KontoSitzung {
    * running; returns the number of the next opening.
    */
   private schliessen(): number {
-    this.konto?.auswahl.beenden();
+    this.konto?.auswahl.stop();
     this.konto = undefined;
     this.kontoUid.set(undefined);
     this.geoeffnetFuer = undefined;
@@ -572,20 +572,18 @@ export class KontoSitzung {
   }
 }
 
-/** The `Auswahl` that holds the choices now; nothing while none does yet. */
-class AktuelleAuswahl implements Auswahl {
+/** The `Selection` that holds the choices now; nothing while none does yet. */
+class AktuelleAuswahl implements Selection {
   public readonly teams: Signal<readonly TeamId[] | undefined>;
-  public readonly kinder: Signal<readonly Kind[] | undefined>;
-  public readonly vereinsfarben: Signal<
-    readonly VereinsfarbenWahl[] | undefined
-  >;
-  public readonly nichtLesbar: Signal<boolean>;
+  public readonly children: Signal<readonly Child[] | undefined>;
+  public readonly clubColors: Signal<readonly ClubColorsChoice[] | undefined>;
+  public readonly unreadable: Signal<boolean>;
   /** The store behind it: the device's, an account's, or none while it switches. */
-  public readonly quelle: Signal<unknown>;
+  public readonly source: Signal<unknown>;
 
   /** @param kontoNichtLesbar whether the account could not be opened at all. */
   public constructor(
-    private readonly aktuell: Signal<Auswahl | undefined>,
+    private readonly aktuell: Signal<Selection | undefined>,
     kontoNichtLesbar: Signal<boolean>
   ) {
     // an account that cannot be read shows none of what it read before
@@ -593,53 +591,47 @@ class AktuelleAuswahl implements Auswahl {
       kontoNichtLesbar() ? undefined : aktuell()?.[list]()
     );
     this.teams = signals.teams;
-    this.kinder = signals.kinder;
-    this.vereinsfarben = signals.vereinsfarben;
-    this.nichtLesbar = computed(
-      () => kontoNichtLesbar() || (aktuell()?.nichtLesbar() ?? false)
+    this.children = signals.children;
+    this.clubColors = signals.clubColors;
+    this.unreadable = computed(
+      () => kontoNichtLesbar() || (aktuell()?.unreadable() ?? false)
     );
-    this.quelle = computed(() => aktuell()?.quelle());
+    this.source = computed(() => aktuell()?.source());
   }
 
-  public folgen(team: TeamId, platz?: TeamPlatz): Promise<void> {
-    return this.mit((auswahl) => auswahl.folgen(team, platz));
+  public follow(team: TeamId, platz?: TeamPlace): Promise<void> {
+    return this.mit((auswahl) => auswahl.follow(team, platz));
   }
 
-  public entfolgen(team: TeamId): Promise<TeamPlatz | undefined> {
-    return this.mit((auswahl) => auswahl.entfolgen(team));
+  public unfollow(team: TeamId): Promise<TeamPlace | undefined> {
+    return this.mit((auswahl) => auswahl.unfollow(team));
   }
 
-  public markieren(
-    spieler: MarkierbarerSpieler,
-    spitzname?: string
-  ): Promise<void> {
-    return this.mit((auswahl) => auswahl.markieren(spieler, spitzname));
+  public mark(spieler: MarkablePlayer, spitzname?: string): Promise<void> {
+    return this.mit((auswahl) => auswahl.mark(spieler, spitzname));
   }
 
-  public spitznameSetzen(
+  public setNickname(
     person: PersonId,
     spitzname: string | undefined
   ): Promise<void> {
-    return this.mit((auswahl) => auswahl.spitznameSetzen(person, spitzname));
+    return this.mit((auswahl) => auswahl.setNickname(person, spitzname));
   }
 
-  public entmarkieren(person: PersonId): Promise<void> {
-    return this.mit((auswahl) => auswahl.entmarkieren(person));
+  public unmark(person: PersonId): Promise<void> {
+    return this.mit((auswahl) => auswahl.unmark(person));
   }
 
-  public vereinsfarbenSetzen(
-    verein: VereinId,
-    farben: Vereinsfarben
-  ): Promise<void> {
-    return this.mit((auswahl) => auswahl.vereinsfarbenSetzen(verein, farben));
+  public setClubColors(verein: ClubId, farben: ClubColors): Promise<void> {
+    return this.mit((auswahl) => auswahl.setClubColors(verein, farben));
   }
 
-  public vereinsfarbenZuruecksetzen(verein: VereinId): Promise<void> {
-    return this.mit((auswahl) => auswahl.vereinsfarbenZuruecksetzen(verein));
+  public resetClubColors(verein: ClubId): Promise<void> {
+    return this.mit((auswahl) => auswahl.resetClubColors(verein));
   }
 
-  /** Changes only once `teams` is read, as `Auswahl` asks. */
-  private mit<T>(aendern: (auswahl: Auswahl) => Promise<T>): Promise<T> {
+  /** Changes only once `teams` is read, as `Selection` asks. */
+  private mit<T>(aendern: (auswahl: Selection) => Promise<T>): Promise<T> {
     const auswahl = this.aktuell();
     return auswahl === undefined || this.teams() === undefined
       ? Promise.reject(new Error('Meine Teams sind nicht gelesen.'))

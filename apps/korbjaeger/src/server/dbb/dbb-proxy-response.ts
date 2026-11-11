@@ -21,6 +21,11 @@ const JSON_CONTENT_TYPE = 'application/json; charset=utf-8';
  */
 export const PROXY_ERROR_CACHE_CONTROL = 'no-store';
 
+/** A `Cache-Control` letting the browser keep an answer `browser` seconds, the CDN `cdn`. */
+export function publicCacheControl(browser: number, cdn: number): string {
+  return `public, max-age=${browser}, s-maxage=${cdn}`;
+}
+
 /** A JSON body as it is, a DBB body passed on or an error of the proxy. */
 export function jsonResponse(
   status: number,

@@ -15,14 +15,14 @@ import { proxyTransport } from './proxy-transport';
  * with each screen.
  */
 const READS = {
-  ligaSuche: 'liga-suche',
-  ligaSeite: 'liga-seite',
-  ligaTeams: 'spielplan',
-  teamSpiele: 'team-spiele',
-  vereinsTeams: 'vereins-spiele',
-  tabelle: 'tabelle',
-  spiel: 'spiel-info',
-  spielbericht: 'spielbericht',
+  leagueSearch: 'league-search',
+  leaguePage: 'league-page',
+  leagueTeams: 'schedule',
+  teamGames: 'team-games',
+  clubTeams: 'club-games',
+  standings: 'standings',
+  game: 'game-info',
+  gameReport: 'game-report',
 } as const satisfies Partial<Record<keyof BasketballData, ProxyKind>>;
 
 /**
@@ -61,7 +61,7 @@ export function provideBasketballData(): Provider[] {
       provide: SPEICHER_FREIGEBEN,
       useFactory: (): (() => void) => {
         const antworten = inject(LETZTE_ANTWORTEN);
-        return () => antworten.leeren();
+        return () => antworten.clear();
       },
     },
   ];

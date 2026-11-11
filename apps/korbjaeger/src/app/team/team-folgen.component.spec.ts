@@ -7,13 +7,13 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  type Auswahl,
-  AuswahlZuNeuError,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  type Selection,
+  SelectionTooNewError,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
 import { NachEntfolgen } from './nach-entfolgen';
 import { TeamFolgenComponent } from './team-folgen.component';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 
 const MTV_WASBUETTEL: TeamId = 313036;
 
@@ -35,7 +35,7 @@ interface Optionen {
 }
 
 async function render(
-  auswahl: Auswahl,
+  auswahl: Selection,
   { teamName, nachEntfolgen, verschwindet }: Optionen = {}
 ): Promise<Gerendert> {
   TestBed.configureTestingModule({
@@ -83,14 +83,14 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('offers to follow a Team not followed yet', async () => {
-    const { knopf } = await render(new LokaleAuswahl(undefined));
+    const { knopf } = await render(new LocalSelection(undefined));
 
     expect(knopf.textContent).toContain('Team folgen');
     expect(knopf.hasAttribute('aria-pressed')).toBe(false);
   });
 
   it('follows the Team, then says so and offers to unfollow it', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
+    const auswahl = new LocalSelection(undefined);
     const { knopf, seite, klicken } = await render(auswahl);
 
     await klicken();
@@ -103,7 +103,7 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('names the Team in its label in a list, without the hint', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
+    const auswahl = new LocalSelection(undefined);
     const { knopf, seite, klicken } = await render(auswahl, {
       teamName: 'MTV Wasbüttel',
     });
@@ -118,9 +118,9 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('unfollows a followed Team, then offers to follow it again', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
-    await auswahl.folgen(201500);
-    await auswahl.folgen(MTV_WASBUETTEL);
+    const auswahl = new LocalSelection(undefined);
+    await auswahl.follow(201500);
+    await auswahl.follow(MTV_WASBUETTEL);
     const { knopf, seite, leisten, klicken } = await render(auswahl);
     expect(knopf.textContent).toContain('Nicht mehr folgen');
 
@@ -134,8 +134,8 @@ describe('TeamFolgenComponent', () => {
 
   describe('where the control disappears with the Team (NachEntfolgen)', () => {
     it('offers to undo the unfollowing, and follows the Team again', async () => {
-      const auswahl = new LokaleAuswahl(undefined);
-      await auswahl.folgen(MTV_WASBUETTEL);
+      const auswahl = new LocalSelection(undefined);
+      await auswahl.follow(MTV_WASBUETTEL);
       const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
@@ -159,12 +159,12 @@ describe('TeamFolgenComponent', () => {
     it('puts the Team back at its place in Meine Teams, not at the end', async () => {
       const MTV_GIFHORN = 201500;
       const geraet = new Map<string, string>();
-      const auswahl = new LokaleAuswahl({
+      const auswahl = new LocalSelection({
         getItem: (key) => geraet.get(key) ?? null,
         setItem: (key, value) => void geraet.set(key, value),
       });
-      await auswahl.folgen(MTV_WASBUETTEL);
-      await auswahl.folgen(MTV_GIFHORN);
+      await auswahl.follow(MTV_WASBUETTEL);
+      await auswahl.follow(MTV_GIFHORN);
       const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
@@ -179,9 +179,9 @@ describe('TeamFolgenComponent', () => {
     });
 
     it('says so where the undo could not be stored', async () => {
-      const auswahl: Auswahl = fakeAuswahl({
+      const auswahl: Selection = fakeSelection({
         teams: signal([MTV_WASBUETTEL]),
-        folgen: () => Promise.reject(new Error('offline')),
+        follow: () => Promise.reject(new Error('offline')),
       });
       const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
@@ -199,8 +199,8 @@ describe('TeamFolgenComponent', () => {
     });
 
     it('hands the screen the Team unfollowed, to move focus', async () => {
-      const auswahl = new LokaleAuswahl(undefined);
-      await auswahl.folgen(MTV_WASBUETTEL);
+      const auswahl = new LocalSelection(undefined);
+      await auswahl.follow(MTV_WASBUETTEL);
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         verschwindet: true,
@@ -217,10 +217,10 @@ describe('TeamFolgenComponent', () => {
     });
 
     it('hands the screen the place the Team had, for the undo', async () => {
-      const platz = { seit: 7 };
-      const auswahl: Auswahl = fakeAuswahl({
+      const platz = { since: 7 };
+      const auswahl: Selection = fakeSelection({
         teams: signal([MTV_WASBUETTEL]),
-        entfolgen: () => Promise.resolve(platz),
+        unfollow: () => Promise.resolve(platz),
       });
       const { klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
@@ -238,8 +238,8 @@ describe('TeamFolgenComponent', () => {
     });
 
     it('leaves focus and offers no undo for a control that stays (a Verein list on the screen)', async () => {
-      const auswahl = new LokaleAuswahl(undefined);
-      await auswahl.folgen(MTV_WASBUETTEL);
+      const auswahl = new LocalSelection(undefined);
+      await auswahl.follow(MTV_WASBUETTEL);
       const { leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
         nachEntfolgen: true,
@@ -254,9 +254,9 @@ describe('TeamFolgenComponent', () => {
     });
 
     it('offers no undo where the unfollowing failed', async () => {
-      const auswahl: Auswahl = fakeAuswahl({
+      const auswahl: Selection = fakeSelection({
         teams: signal([MTV_WASBUETTEL]),
-        entfolgen: () => Promise.reject(new Error('offline')),
+        unfollow: () => Promise.reject(new Error('offline')),
       });
       const { seite, leisten, klicken } = await render(auswahl, {
         teamName: 'MTV Wasbüttel',
@@ -275,7 +275,9 @@ describe('TeamFolgenComponent', () => {
   });
   it('takes whether the Team is followed from the screen, where it knows', async () => {
     TestBed.configureTestingModule({
-      providers: [{ provide: AUSWAHL, useValue: new LokaleAuswahl(undefined) }],
+      providers: [
+        { provide: AUSWAHL, useValue: new LocalSelection(undefined) },
+      ],
     });
     const fixture = TestBed.createComponent(TeamFolgenComponent);
     fixture.componentRef.setInput('teamId', MTV_WASBUETTEL);
@@ -290,9 +292,9 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('says so when the choice could not be stored', async () => {
-    const auswahl: Auswahl = fakeAuswahl({
+    const auswahl: Selection = fakeSelection({
       teams: signal([]),
-      folgen: () => Promise.reject(new Error('offline')),
+      follow: () => Promise.reject(new Error('offline')),
     });
     const { knopf, seite, klicken } = await render(auswahl);
 
@@ -305,9 +307,9 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('asks to reload where a newer version of the app stored Meine Teams', async () => {
-    const auswahl: Auswahl = fakeAuswahl({
+    const auswahl: Selection = fakeSelection({
       teams: signal([]),
-      folgen: () => Promise.reject(new AuswahlZuNeuError()),
+      follow: () => Promise.reject(new SelectionTooNewError()),
     });
     const { seite, klicken } = await render(auswahl);
 
@@ -319,9 +321,9 @@ describe('TeamFolgenComponent', () => {
   });
 
   it('offers nothing to press before Meine Teams are read', async () => {
-    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const folgen = vi.fn<Selection['follow']>(() => Promise.resolve());
     const { knopf, seite, klicken } = await render(
-      fakeAuswahl({ teams: signal(undefined), folgen })
+      fakeSelection({ teams: signal(undefined), follow: folgen })
     );
 
     await klicken();

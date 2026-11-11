@@ -1,8 +1,5 @@
 import { inject, Injector } from '@angular/core';
-import type {
-  SpielId,
-  Spielbericht,
-} from '@wolsok/feat-shared-basketball-data';
+import type { GameId, GameReport } from '@wolsok/feat-shared-basketball-data';
 import {
   basketballDataResource,
   type DatenResource,
@@ -15,12 +12,12 @@ import {
  * injection context, or on `injector`.
  */
 export function spielberichtResource(
-  spielId: () => SpielId | undefined,
+  spielId: () => GameId | undefined,
   injector: Injector = inject(Injector)
-): DatenResource<Spielbericht | undefined> {
+): DatenResource<GameReport | undefined> {
   return basketballDataResource(
     spielId,
-    (data, spiel, options) => data.spielbericht(spiel, options),
+    (data, spiel, options) => data.gameReport(spiel, options),
     injector
   );
 }

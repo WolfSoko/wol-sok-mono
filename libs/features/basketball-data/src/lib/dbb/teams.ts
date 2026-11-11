@@ -1,16 +1,16 @@
-import type { SpielPartei } from '../domain/partei';
+import type { Participant } from '../domain/participant';
 import type { Team } from '../domain/team';
 
 const BY_NAME = new Intl.Collator('de');
 
-/** Each Team among `parteien` once, by name; open slots are left out. */
+/** Each Team among `participants` once, by name; open slots are left out. */
 export function distinctTeams(
-  parteien: readonly SpielPartei[]
+  participants: readonly Participant[]
 ): readonly Team[] {
   const teams = new Map<number, Team>();
-  for (const partei of parteien) {
-    if (partei.art === 'team' && !teams.has(partei.team.id)) {
-      teams.set(partei.team.id, partei.team);
+  for (const participant of participants) {
+    if (participant.kind === 'team' && !teams.has(participant.team.id)) {
+      teams.set(participant.team.id, participant.team);
     }
   }
   return [...teams.values()].sort(byName);

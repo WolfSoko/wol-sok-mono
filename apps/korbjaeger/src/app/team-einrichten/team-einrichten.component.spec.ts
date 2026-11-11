@@ -11,21 +11,24 @@ import {
   DbbBasketballData,
   dbbHttpRequest,
   type DbbTransport,
-  type LigaSeite,
-  type LigaSuche,
-  type LigaSucheFilter,
+  type LeaguePage,
+  type LeagueSearch,
+  type LeagueSearchFilter,
   type ReadOptions,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { type Auswahl, LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import {
+  type Selection,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { TeamEinrichtenComponent } from './team-einrichten.component';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 
 /** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
 const recordedDbb: DbbTransport = async (request) => {
@@ -53,11 +56,11 @@ class HaengendeSeiten extends DbbBasketballData {
     super(recordedDbb);
   }
 
-  public override ligaSeite(
-    _filter: LigaSucheFilter,
+  public override leaguePage(
+    _filter: LeagueSearchFilter,
     _startIndex: number,
     options?: ReadOptions
-  ): Promise<LigaSeite> {
+  ): Promise<LeaguePage> {
     if (options?.signal !== undefined) {
       this.signale.push(options.signal);
     }
@@ -68,25 +71,25 @@ class HaengendeSeiten extends DbbBasketballData {
 /** The recorded DBB, whose search finds nothing where `leer` holds. */
 class OhneFacetten extends DbbBasketballData {
   public constructor(
-    private readonly leer: (filter: LigaSucheFilter) => boolean
+    private readonly leer: (filter: LeagueSearchFilter) => boolean
   ) {
     super(recordedDbb);
   }
 
-  public override ligaSuche(
-    filter: LigaSucheFilter,
+  public override leagueSearch(
+    filter: LeagueSearchFilter,
     options?: ReadOptions
-  ): Promise<LigaSuche> {
+  ): Promise<LeagueSearch> {
     return this.leer(filter)
       ? Promise.resolve({
-          facetten: {
-            verbaende: [],
-            altersklassen: [],
-            altersgruppenGeschlechter: [],
+          facets: {
+            associations: [],
+            ageGroups: [],
+            ageGroupGenders: [],
           },
-          ersteSeite: { startIndex: 0, ligen: [], weitere: false },
+          firstPage: { startIndex: 0, leagues: [], more: false },
         })
-      : super.ligaSuche(filter, options);
+      : super.leagueSearch(filter, options);
   }
 }
 
@@ -100,7 +103,7 @@ function alarme(seite: HTMLElement, qa: string): string[] {
 interface Assistent {
   readonly fixture: ComponentFixture<TeamEinrichtenComponent>;
   readonly seite: HTMLElement;
-  readonly auswahl: Auswahl;
+  readonly auswahl: Selection;
   /** The choices of the select `name` (`verband`, `altersklasse`, ...). */
   optionen(name: string): Promise<string[]>;
   /** Picks the choice `text` of the select `name`. */
@@ -119,7 +122,7 @@ interface Assistent {
 
 async function render(
   data: KorbjaegerData = new DbbBasketballData(recordedDbb),
-  auswahl: Auswahl = new LokaleAuswahl(undefined)
+  auswahl: Selection = new LocalSelection(undefined)
 ): Promise<Assistent> {
   TestBed.configureTestingModule({
     providers: [
@@ -317,8 +320,8 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('opens a Team already followed without following it twice', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
-    await auswahl.folgen(313036);
+    const auswahl = new LocalSelection(undefined);
+    await auswahl.follow(313036);
     const assistent = await render(undefined, auswahl);
     await bisZumTeam(assistent);
 
@@ -332,8 +335,8 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('unfollows a followed Team from its row, staying in the list', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
-    await auswahl.folgen(313036);
+    const auswahl = new LocalSelection(undefined);
+    await auswahl.follow(313036);
     const assistent = await render(undefined, auswahl);
     await bisZumTeam(assistent);
     const knopf = assistent.seite.querySelector<HTMLButtonElement>(
@@ -367,8 +370,8 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('offers to unfollow only the Teams followed', async () => {
-    const auswahl = new LokaleAuswahl(undefined);
-    await auswahl.folgen(201500);
+    const auswahl = new LocalSelection(undefined);
+    await auswahl.follow(201500);
     const assistent = await render(undefined, auswahl);
     await bisZumTeam(assistent);
 
@@ -379,9 +382,9 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('stays and says so when the Team could not be followed', async () => {
-    const auswahl: Auswahl = fakeAuswahl({
+    const auswahl: Selection = fakeSelection({
       teams: signal([]),
-      folgen: () => Promise.reject(new Error('offline')),
+      follow: () => Promise.reject(new Error('offline')),
     });
     const assistent = await render(undefined, auswahl);
     await bisZumTeam(assistent);
@@ -395,7 +398,7 @@ describe('TeamEinrichtenComponent', () => {
   });
 
   it('offers no Team before Meine Teams are read', async () => {
-    const auswahl: Auswahl = fakeAuswahl({
+    const auswahl: Selection = fakeSelection({
       teams: signal(undefined),
     });
     const assistent = await render(undefined, auswahl);
@@ -505,7 +508,7 @@ describe('TeamEinrichtenComponent', () => {
 
   it('says so when a Verband has no age group', async () => {
     const assistent = await render(
-      new OhneFacetten((filter) => filter.verbandIds.length > 0)
+      new OhneFacetten((filter) => filter.associationIds.length > 0)
     );
 
     await assistent.waehlen('verband', 'Niedersachsen');

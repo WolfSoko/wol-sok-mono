@@ -16,17 +16,17 @@ import {
   vorhanden,
 } from '../../testing/firestore-emulator';
 import {
-  inhaltAus,
-  auswahlDokumentLesen,
-  type AuswahlInhalt,
-  auswahlDokumentVon,
-  FirestoreAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { auswahlVertrag } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  contentOf,
+  readSelectionDocument,
+  type SelectionContent,
+  selectionDocumentOf,
+  FirestoreSelection,
+} from '@wolsok/feat-korbjaeger-selection';
+import { selectionContract } from '@wolsok/feat-korbjaeger-selection/testing';
 
 /**
- * `FirestoreAuswahl` on the emulator: the shared contract of every
- * `Auswahl` adapter, on rules that let everything through (the contract
+ * `FirestoreSelection` on the emulator: the shared contract of every
+ * `Selection` adapter, on rules that let everything through (the contract
  * stores documents the rules would refuse, as a later version or a fault
  * might), and the adapter's own behaviour under the app's rules.
  */
@@ -53,60 +53,60 @@ afterAll(async () => {
 
 const zuhoeren = () => new Promise((weiter) => setTimeout(weiter, ZUHOEREN_MS));
 
-auswahlVertrag('Firestore', () => {
+selectionContract('Firestore', () => {
   // a fresh account per test: its document is the store
   const uid = `vertrag-${naechsteUid++}`;
   const geraete: Firestore[] = [];
-  const offen: FirestoreAuswahl[] = [];
-  afterEach(() => offen.forEach((auswahl) => auswahl.beenden()));
+  const offen: FirestoreSelection[] = [];
+  afterEach(() => offen.forEach((auswahl) => auswahl.stop()));
   const allesGesendet = () =>
     Promise.all(geraete.map((firestore) => waitForPendingWrites(firestore)));
   return {
-    oeffnen: async () => {
+    open: async () => {
       await allesGesendet();
       const firestore = alsGeraet(vertragsProjekt, uid);
       geraete.push(firestore);
-      const auswahl = new FirestoreAuswahl(firestore, uid);
+      const auswahl = new FirestoreSelection(firestore, uid);
       offen.push(auswahl);
-      await auswahl.geladen();
+      await auswahl.loaded();
       return auswahl;
     },
-    schreibeRoh: (dokument) => vorhanden(vertragsProjekt, uid, dokument),
+    writeRaw: (dokument) => vorhanden(vertragsProjekt, uid, dokument),
     // a change resolves once on the device: what it sent is on the server
     // once every device's writes are
-    liesRoh: async () => {
+    readRaw: async () => {
       await allesGesendet();
       return gespeichert(vertragsProjekt, uid);
     },
-    bisStabil: async () => {
+    untilSettled: async () => {
       await allesGesendet();
       await zuhoeren();
     },
   };
 });
 
-describe('FirestoreAuswahl', () => {
-  const MIMI = { art: 'benannt', personId: 4711 } as const;
-  const OTTO = { art: 'benannt', personId: 4712 } as const;
-  const offen: FirestoreAuswahl[] = [];
-  afterEach(() => offen.splice(0).forEach((auswahl) => auswahl.beenden()));
+describe('FirestoreSelection', () => {
+  const MIMI = { kind: 'named', personId: 4711 } as const;
+  const OTTO = { kind: 'named', personId: 4712 } as const;
+  const offen: FirestoreSelection[] = [];
+  afterEach(() => offen.splice(0).forEach((auswahl) => auswahl.stop()));
 
   async function oeffnen(
     uid: string,
     firestore = alsGeraet(regelProjekt, uid)
-  ): Promise<FirestoreAuswahl> {
-    const auswahl = new FirestoreAuswahl(firestore, uid);
+  ): Promise<FirestoreSelection> {
+    const auswahl = new FirestoreSelection(firestore, uid);
     offen.push(auswahl);
-    await auswahl.geladen();
+    await auswahl.loaded();
     return auswahl;
   }
 
   /** What the account's stored document holds, as the app reads it. */
-  async function gespeicherterInhalt(uid: string): Promise<AuswahlInhalt> {
-    const { teams, kinder, vereinsfarben } = inhaltAus(
-      auswahlDokumentLesen(await gespeichert(regelProjekt, uid))
+  async function gespeicherterInhalt(uid: string): Promise<SelectionContent> {
+    const { teams, children, clubColors } = contentOf(
+      readSelectionDocument(await gespeichert(regelProjekt, uid))
     );
-    return { teams, kinder, vereinsfarben };
+    return { teams, children, clubColors };
   }
 
   it("writes what the app's rules take, entry by entry", async () => {
@@ -114,22 +114,22 @@ describe('FirestoreAuswahl', () => {
     const firestore = alsGeraet(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
 
-    await auswahl.folgen(313036);
-    await auswahl.markieren(MIMI, 'Mimi');
-    await auswahl.spitznameSetzen(MIMI.personId, 'Mi');
+    await auswahl.follow(313036);
+    await auswahl.mark(MIMI, 'Mimi');
+    await auswahl.setNickname(MIMI.personId, 'Mi');
     await waitForPendingWrites(firestore);
-    expect((await gespeicherterInhalt(uid)).kinder).toEqual([
-      { personId: MIMI.personId, spitzname: 'Mi' },
+    expect((await gespeicherterInhalt(uid)).children).toEqual([
+      { personId: MIMI.personId, nickname: 'Mi' },
     ]);
-    await auswahl.spitznameSetzen(MIMI.personId, undefined);
+    await auswahl.setNickname(MIMI.personId, undefined);
     await waitForPendingWrites(firestore);
-    expect((await gespeicherterInhalt(uid)).kinder).toEqual([
+    expect((await gespeicherterInhalt(uid)).children).toEqual([
       { personId: MIMI.personId },
     ]);
-    await auswahl.folgen(201500);
-    await auswahl.entfolgen(313036);
-    await auswahl.markieren(OTTO);
-    await auswahl.entmarkieren(MIMI.personId);
+    await auswahl.follow(201500);
+    await auswahl.unfollow(313036);
+    await auswahl.mark(OTTO);
+    await auswahl.unmark(MIMI.personId);
     // every write was taken: a refused one would be gone again
     await waitForPendingWrites(firestore);
 
@@ -146,17 +146,17 @@ describe('FirestoreAuswahl', () => {
     const auswahl = await oeffnen(uid, firestore);
 
     await Promise.all([
-      auswahl.folgen(313036),
-      auswahl.folgen(201500),
-      auswahl.markieren(MIMI),
+      auswahl.follow(313036),
+      auswahl.follow(201500),
+      auswahl.mark(MIMI),
     ]);
     await waitForPendingWrites(firestore);
 
     expect(auswahl.teams()).toEqual([313036, 201500]);
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
   });
 
@@ -164,25 +164,25 @@ describe('FirestoreAuswahl', () => {
     const uid = 'offline';
     const firestore = alsGeraet(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
-    await auswahl.folgen(313036);
+    await auswahl.follow(313036);
     await waitForPendingWrites(firestore);
     await disableNetwork(firestore);
 
-    await auswahl.folgen(201500);
-    await auswahl.markieren(MIMI);
+    await auswahl.follow(201500);
+    await auswahl.mark(MIMI);
     expect(auswahl.teams()).toEqual([313036, 201500]);
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036],
-      kinder: [],
-      vereinsfarben: [],
+      children: [],
+      clubColors: [],
     });
 
     await enableNetwork(firestore);
     await waitForPendingWrites(firestore);
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
   });
 
@@ -214,17 +214,17 @@ describe('FirestoreAuswahl', () => {
     it('keeps the Team each of them follows', async () => {
       const uid = 'offline-zwei-teams';
       const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
-      await a.folgen(313036);
+      await a.follow(313036);
       await offline();
 
-      await a.folgen(201500);
-      await b.folgen(201765);
+      await a.follow(201500);
+      await b.follow(201765);
       await wiederOnline();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [313036, 201500, 201765],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       });
       expect(a.teams()).toEqual([313036, 201500, 201765]);
     });
@@ -232,74 +232,74 @@ describe('FirestoreAuswahl', () => {
     it('keeps the Kind each of them marks, and a Spitzname changed offline in its place', async () => {
       const uid = 'offline-zwei-kinder';
       const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
-      await a.markieren(MIMI, 'Mimi');
+      await a.mark(MIMI, 'Mimi');
       await offline();
 
-      await a.spitznameSetzen(MIMI.personId, 'Mi');
-      await b.markieren(OTTO);
+      await a.setNickname(MIMI.personId, 'Mi');
+      await b.mark(OTTO);
       await wiederOnline();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [],
-        kinder: [{ personId: 4711, spitzname: 'Mi' }, { personId: 4712 }],
-        vereinsfarben: [],
+        children: [{ personId: 4711, nickname: 'Mi' }, { personId: 4712 }],
+        clubColors: [],
       });
     });
 
     it('keeps what the other adds when one removes offline', async () => {
       const uid = 'offline-entfernen';
       const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
-      await a.folgen(313036);
-      await a.markieren(MIMI);
+      await a.follow(313036);
+      await a.mark(MIMI);
       await offline();
 
-      await a.entfolgen(313036);
-      await a.entmarkieren(MIMI.personId);
-      await b.folgen(201765);
-      await b.markieren(OTTO);
+      await a.unfollow(313036);
+      await a.unmark(MIMI.personId);
+      await b.follow(201765);
+      await b.mark(OTTO);
       await wiederOnline();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [201765],
-        kinder: [{ personId: 4712 }],
-        vereinsfarben: [],
+        children: [{ personId: 4712 }],
+        clubColors: [],
       });
     });
 
     it('unmarks a Kind offline whose Spitzname the other changes meanwhile', async () => {
       const uid = 'offline-entmarkieren-spitzname';
       const { a, b, offline, bGesendet, wiederOnline } = await zweiGeraete(uid);
-      await a.markieren(MIMI, 'Mimi');
+      await a.mark(MIMI, 'Mimi');
       await offline();
 
-      await a.entmarkieren(MIMI.personId);
-      await b.spitznameSetzen(MIMI.personId, 'Mi');
+      await a.unmark(MIMI.personId);
+      await b.setNickname(MIMI.personId, 'Mi');
       await bGesendet();
       await wiederOnline();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       });
     });
 
     it("refuses the other's Spitzname for a Kind unmarked offline and sent first", async () => {
       const uid = 'offline-zuerst-entmarkiert';
       const { a, b, offline, bGesendet, wiederOnline } = await zweiGeraete(uid);
-      await a.markieren(MIMI, 'Mimi');
+      await a.mark(MIMI, 'Mimi');
       await offline();
-      await a.entmarkieren(MIMI.personId);
+      await a.unmark(MIMI.personId);
       await wiederOnline();
 
       // B still shows the Kind, as its listener may not have heard yet
-      await b.spitznameSetzen(MIMI.personId, 'Mi').catch(() => undefined);
+      await b.setNickname(MIMI.personId, 'Mi').catch(() => undefined);
       await bGesendet();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       });
     });
 
@@ -313,14 +313,14 @@ describe('FirestoreAuswahl', () => {
       const { a, b, offline, wiederOnline } = await zweiGeraete(uid);
       await offline();
 
-      await a.folgen(201500);
-      await b.folgen(201765);
+      await a.follow(201500);
+      await b.follow(201765);
       await wiederOnline();
 
       expect(await gespeicherterInhalt(uid)).toEqual({
         teams: [...vorher, 201765],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       });
       expect(a.teams()).toEqual([...vorher, 201765]);
     });
@@ -336,10 +336,10 @@ describe('FirestoreAuswahl', () => {
     const zweites = await oeffnen(uid, geraete[1]);
 
     await Promise.all([
-      erstes.folgen(313036),
-      zweites.folgen(201500),
-      erstes.markieren(MIMI),
-      zweites.folgen(201765),
+      erstes.follow(313036),
+      zweites.follow(201500),
+      erstes.mark(MIMI),
+      zweites.follow(201765),
     ]);
     await Promise.all(geraete.map((geraet) => waitForPendingWrites(geraet)));
 
@@ -350,9 +350,9 @@ describe('FirestoreAuswahl', () => {
   it('shows a change at once, before the server confirms it', async () => {
     const uid = 'sofort';
     const auswahl = await oeffnen(uid);
-    await auswahl.folgen(313036);
+    await auswahl.follow(313036);
 
-    const gefolgt = auswahl.folgen(201500);
+    const gefolgt = auswahl.follow(201500);
 
     expect(auswahl.teams()).toEqual([313036, 201500]);
     await gefolgt;
@@ -365,30 +365,30 @@ describe('FirestoreAuswahl', () => {
     await disableNetwork(firestore);
     const auswahl = await oeffnen(uid, firestore);
 
-    await auswahl.folgen(201500);
+    await auswahl.follow(201500);
     await enableNetwork(firestore);
     await waitForPendingWrites(firestore);
 
     expect(await gespeicherterInhalt(uid)).toEqual({
       teams: [313036, 201500],
-      kinder: [],
-      vereinsfarben: [],
+      children: [],
+      clubColors: [],
     });
   });
 
   it("can't be read, and says so, where the rules refuse it", async () => {
     let gehoert: unknown;
-    const auswahl = new FirestoreAuswahl(
+    const auswahl = new FirestoreSelection(
       alsGeraet(regelProjekt, 'regeln-fremd'),
       'regeln-andere',
-      { beiFehler: (fehler) => (gehoert = fehler) }
+      { onError: (fehler) => (gehoert = fehler) }
     );
     offen.push(auswahl);
 
-    await expect(auswahl.geladen()).rejects.toMatchObject({
+    await expect(auswahl.loaded()).rejects.toMatchObject({
       code: 'permission-denied',
     });
-    expect(auswahl.nichtLesbar()).toBe(true);
+    expect(auswahl.unreadable()).toBe(true);
     expect(auswahl.teams()).toBeUndefined();
     expect(gehoert).toMatchObject({ code: 'permission-denied' });
   });
@@ -397,11 +397,11 @@ describe('FirestoreAuswahl', () => {
     const uid = 'regeln-geloescht';
     const firestore = alsGeraet(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
-    await auswahl.folgen(313036);
+    await auswahl.follow(313036);
     await waitForPendingWrites(firestore);
 
     await ohneRegeln(regelProjekt, (firestore) =>
-      deleteDoc(auswahlDokumentVon(firestore, uid))
+      deleteDoc(selectionDocumentOf(firestore, uid))
     );
     await zuhoeren();
 

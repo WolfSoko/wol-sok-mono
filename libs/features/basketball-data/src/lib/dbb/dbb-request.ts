@@ -1,6 +1,6 @@
-import type { LigaId, SpielId, TeamId, VereinId } from '../domain/ids';
+import type { LeagueId, GameId, TeamId, ClubId } from '../domain/ids';
 import type { ReadOptions } from '../basketball-data';
-import type { LigaSucheFilter } from '../domain/liga-suche';
+import type { LeagueSearchFilter } from '../domain/league-search';
 
 /** The DBB's public site, which shows the data the app reads. */
 export const DBB_WEBSITE_URL = 'https://www.basketball-bund.net';
@@ -9,7 +9,7 @@ export const DBB_WEBSITE_URL = 'https://www.basketball-bund.net';
 export const DBB_BASE_URL = `${DBB_WEBSITE_URL}/rest`;
 
 /** The widest window a Verein's Spiele are asked for, in days either way. */
-export const MAX_VEREINS_SPIELE_TAGE = 60;
+export const MAX_CLUB_GAMES_DAYS = 60;
 
 /**
  * One read of the DBB this lib makes: the whole allowlist. A transport (a
@@ -17,28 +17,28 @@ export const MAX_VEREINS_SPIELE_TAGE = 60;
  * into HTTP; `dbbHttpRequest` says how.
  */
 export type DbbRequest =
-  | { readonly kind: 'liga-suche'; readonly filter: LigaSucheFilter }
+  | { readonly kind: 'league-search'; readonly filter: LeagueSearchFilter }
   | {
-      readonly kind: 'liga-seite';
-      readonly filter: LigaSucheFilter;
+      readonly kind: 'league-page';
+      readonly filter: LeagueSearchFilter;
       readonly startIndex: number;
     }
-  | { readonly kind: 'tabelle'; readonly ligaId: LigaId }
-  | { readonly kind: 'spielplan'; readonly ligaId: LigaId }
-  | { readonly kind: 'team-spiele'; readonly teamId: TeamId }
+  | { readonly kind: 'standings'; readonly leagueId: LeagueId }
+  | { readonly kind: 'schedule'; readonly leagueId: LeagueId }
+  | { readonly kind: 'team-games'; readonly teamId: TeamId }
   | {
-      readonly kind: 'vereins-spiele';
-      readonly vereinId: VereinId;
-      readonly tage: number;
+      readonly kind: 'club-games';
+      readonly clubId: ClubId;
+      readonly days: number;
     }
-  | { readonly kind: 'spiel-info'; readonly spielId: SpielId }
-  | { readonly kind: 'spielbericht'; readonly spielId: SpielId };
+  | { readonly kind: 'game-info'; readonly gameId: GameId }
+  | { readonly kind: 'game-report'; readonly gameId: GameId };
 
 /** The kinds of read the allowlist holds. */
 export type DbbRequestKind = DbbRequest['kind'];
 
 /** The body of the DBB's Liga search, as its own site sends it. */
-export interface DbbLigaFilterBody {
+export interface DbbLeagueFilterBody {
   readonly token: 0;
   readonly verbandIds: readonly number[];
   readonly gebietIds: readonly string[];
@@ -55,7 +55,7 @@ export type DbbHttpRequest =
   | {
       readonly method: 'POST';
       readonly path: string;
-      readonly body: DbbLigaFilterBody;
+      readonly body: DbbLeagueFilterBody;
     };
 
 /**
@@ -78,7 +78,7 @@ export interface DbbFetchInput {
   readonly body: string | undefined;
 }
 
-const AKG_GESCHLECHT_ID = /^\d+_\d+$/;
+const AGE_GROUP_GENDER_ID = /^\d+_\d+$/;
 const DIGITS = /^\d+$/;
 
 /** Whether `value` can be a DBB id at all: a positive integer. */
@@ -104,19 +104,19 @@ export function parseDbbId(text: string | undefined): number | undefined {
  */
 export function dbbIdOf(request: DbbRequest): number | undefined {
   switch (request.kind) {
-    case 'liga-suche':
-    case 'liga-seite':
+    case 'league-search':
+    case 'league-page':
       return undefined;
-    case 'tabelle':
-    case 'spielplan':
-      return request.ligaId;
-    case 'team-spiele':
+    case 'standings':
+    case 'schedule':
+      return request.leagueId;
+    case 'team-games':
       return request.teamId;
-    case 'vereins-spiele':
-      return request.vereinId;
-    case 'spiel-info':
-    case 'spielbericht':
-      return request.spielId;
+    case 'club-games':
+      return request.clubId;
+    case 'game-info':
+    case 'game-report':
+      return request.gameId;
   }
 }
 
@@ -128,14 +128,14 @@ export function dbbIdOf(request: DbbRequest): number | undefined {
  */
 export function assertValidDbbRequest(request: DbbRequest): void {
   switch (request.kind) {
-    case 'liga-suche':
+    case 'league-search':
       return assertValidFilter(request.filter);
-    case 'liga-seite':
+    case 'league-page':
       assertValidFilter(request.filter);
       return assertIndex(request.startIndex);
-    case 'vereins-spiele':
-      assertId(request.vereinId);
-      return assertTage(request.tage);
+    case 'club-games':
+      assertId(request.clubId);
+      return assertDays(request.days);
     default: {
       const id = dbbIdOf(request);
       if (id !== undefined) {
@@ -153,32 +153,32 @@ export function assertValidDbbRequest(request: DbbRequest): void {
 export function dbbHttpRequest(request: DbbRequest): DbbHttpRequest {
   assertValidDbbRequest(request);
   switch (request.kind) {
-    case 'liga-suche':
+    case 'league-search':
       return {
         method: 'POST',
         path: 'wam/data',
         body: filterBody(request.filter),
       };
-    case 'liga-seite':
+    case 'league-page':
       return {
         method: 'POST',
         path: `wam/liga/list?startAtIndex=${request.startIndex}`,
         body: filterBody(request.filter),
       };
-    case 'tabelle':
-      return get(`competition/table/id/${request.ligaId}`);
-    case 'spielplan':
-      return get(`competition/spielplan/id/${request.ligaId}`);
-    case 'team-spiele':
+    case 'standings':
+      return get(`competition/table/id/${request.leagueId}`);
+    case 'schedule':
+      return get(`competition/spielplan/id/${request.leagueId}`);
+    case 'team-games':
       return get(`team/id/${request.teamId}/matches`);
-    case 'vereins-spiele':
+    case 'club-games':
       return get(
-        `club/id/${request.vereinId}/actualmatches?rangeDays=${request.tage}`
+        `club/id/${request.clubId}/actualmatches?rangeDays=${request.days}`
       );
-    case 'spiel-info':
-      return get(`match/id/${request.spielId}/matchInfo`);
-    case 'spielbericht':
-      return get(`match/id/${request.spielId}/boxscore`);
+    case 'game-info':
+      return get(`match/id/${request.gameId}/matchInfo`);
+    case 'game-report':
+      return get(`match/id/${request.gameId}/boxscore`);
   }
 }
 
@@ -216,23 +216,23 @@ function get(path: string): DbbHttpRequest {
   return { method: 'GET', path };
 }
 
-function filterBody(filter: LigaSucheFilter): DbbLigaFilterBody {
+function filterBody(filter: LeagueSearchFilter): DbbLeagueFilterBody {
   return {
     token: 0,
-    verbandIds: filter.verbandIds,
+    verbandIds: filter.associationIds,
     gebietIds: [],
     ligatypIds: [],
-    akgGeschlechtIds: filter.altersgruppeGeschlechtIds,
-    altersklasseIds: filter.altersklasseIds,
+    akgGeschlechtIds: filter.ageGroupGenderIds,
+    altersklasseIds: filter.ageGroupIds,
     spielklasseIds: [],
     sortBy: 0,
   };
 }
 
-function assertValidFilter(filter: LigaSucheFilter): void {
-  filter.verbandIds.forEach(assertId);
-  filter.altersklasseIds.forEach(assertId);
-  filter.altersgruppeGeschlechtIds.forEach(assertAkgGeschlechtId);
+function assertValidFilter(filter: LeagueSearchFilter): void {
+  filter.associationIds.forEach(assertId);
+  filter.ageGroupIds.forEach(assertId);
+  filter.ageGroupGenderIds.forEach(assertAgeGroupGenderId);
 }
 
 function assertId(value: number): void {
@@ -247,20 +247,20 @@ function assertIndex(value: number): void {
   }
 }
 
-function assertTage(value: number): void {
+function assertDays(value: number): void {
   if (
     !Number.isSafeInteger(value) ||
     value < 1 ||
-    value > MAX_VEREINS_SPIELE_TAGE
+    value > MAX_CLUB_GAMES_DAYS
   ) {
     throw new RangeError(
-      `not a day range of 1 to ${MAX_VEREINS_SPIELE_TAGE}: ${value}`
+      `not a day range of 1 to ${MAX_CLUB_GAMES_DAYS}: ${value}`
     );
   }
 }
 
-function assertAkgGeschlechtId(value: string): void {
-  if (!AKG_GESCHLECHT_ID.test(value)) {
+function assertAgeGroupGenderId(value: string): void {
+  if (!AGE_GROUP_GENDER_ID.test(value)) {
     throw new RangeError(`not an age group and gender id: ${value}`);
   }
 }

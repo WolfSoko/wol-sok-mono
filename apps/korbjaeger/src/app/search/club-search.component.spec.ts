@@ -35,11 +35,14 @@ interface Setup {
   settle(): Promise<void>;
 }
 
-/** Renders the search; the field is focused (the index loads) unless `used` is false. */
+/**
+ * Renders the search; the field is focused (the index loads) unless `used`
+ * is false; its hits lead to `clubLink` where given.
+ */
 async function setup(
   fetchProxy: ProxyFetch,
   term = '',
-  { used = true }: { used?: boolean } = {}
+  { used = true, clubLink }: { used?: boolean; clubLink?: string } = {}
 ): Promise<Setup> {
   const recorded = vi.fn<ProxyFetch>(fetchProxy);
   TestBed.configureTestingModule({
@@ -50,8 +53,14 @@ async function setup(
   });
   TestBed.inject(ClubSearchTerm).value.set(term);
   const fixture = TestBed.createComponent(ClubSearchComponent);
+  if (clubLink !== undefined) {
+    fixture.componentRef.setInput('clubLink', clubLink);
+  }
   const page = fixture.nativeElement as HTMLElement;
+  // change detection first: it runs the effect that starts the debounce's
+  // timer, so the pause cannot end before the timer on a slow machine
   const settle = async () => {
+    await fixture.whenStable();
     await pause(SEARCH_DEBOUNCE_MS + 20);
     await fixture.whenStable();
   };
@@ -110,6 +119,16 @@ describe('ClubSearchComponent', () => {
 
     expect(hits(page).map(hitText)).toEqual(['MTV Wasbüttel / Niedersachsen']);
     expect(hits(page)[0].getAttribute('href')).toBe('/suchen/verein/1837');
+  });
+
+  it('links its hits where the screen holding it says', async () => {
+    const { page, type } = await setup(answering(200, [WASBUETTEL]), '', {
+      clubLink: '/suchen/kind/verein',
+    });
+
+    await type('wasbuttel');
+
+    expect(hits(page)[0].getAttribute('href')).toBe('/suchen/kind/verein/1837');
   });
 
   it("names every Verband a Verein's Teams play in", async () => {

@@ -1,13 +1,13 @@
 import { dbbBoxscoreFinished } from './boxscore-finished';
-import keinBericht from './fixtures/boxscore-2843814.json';
-import nurKaderBestaetigt from './fixtures/boxscore-2843811.json';
-import nurKaderUnbestaetigt from './fixtures/boxscore-2861436.json';
-import mitWerten from './fixtures/boxscore-2911141.json';
+import noReport from './fixtures/boxscore-2843814.json';
+import rosterOnlyConfirmed from './fixtures/boxscore-2843811.json';
+import rosterOnlyUnconfirmed from './fixtures/boxscore-2861436.json';
+import withStats from './fixtures/boxscore-2911141.json';
 import notFound from './fixtures/boxscore-not-found.json';
 
 /** `response` with its `data` fields replaced by `fields`. */
-function mit(
-  response: typeof mitWerten,
+function withFields(
+  response: typeof withStats,
   fields: Record<string, unknown>
 ): unknown {
   return { ...response, data: { ...response.data, ...fields } };
@@ -15,26 +15,26 @@ function mit(
 
 describe('dbbBoxscoreFinished', () => {
   it.each([
-    ['with Spielerwerte', mitWerten],
-    ['with the Kader only', nurKaderBestaetigt],
+    ['with Spielerwerte', withStats],
+    ['with the Kader only', rosterOnlyConfirmed],
   ])('holds for a confirmed Spiel’s Spielbericht %s', (_case, response) => {
     expect(dbbBoxscoreFinished(response)).toBe(true);
   });
 
   it('holds for no Spielbericht whose result is not confirmed yet', () => {
-    expect(dbbBoxscoreFinished(nurKaderUnbestaetigt)).toBe(false);
+    expect(dbbBoxscoreFinished(rosterOnlyUnconfirmed)).toBe(false);
   });
 
   it('holds for no Spiel without a Spielbericht yet', () => {
-    expect(dbbBoxscoreFinished(keinBericht)).toBe(false);
+    expect(dbbBoxscoreFinished(noReport)).toBe(false);
   });
 
   it('holds for no Spielbericht with one side’s Kader missing', () => {
     expect(
       dbbBoxscoreFinished(
-        mit(mitWerten, {
+        withFields(withStats, {
           matchBoxscore: {
-            ...mitWerten.data.matchBoxscore,
+            ...withStats.data.matchBoxscore,
             guestPlayerStats: [],
           },
         })
@@ -52,15 +52,15 @@ describe('dbbBoxscoreFinished', () => {
         player: { anonym: false, person: { vorname: 'A', nachname: 'B' } },
       },
     ],
-  ])('holds for no Spielbericht with %s in a Kader', (_case, eintrag) => {
-    const { homePlayerStats } = mitWerten.data.matchBoxscore;
+  ])('holds for no Spielbericht with %s in a Kader', (_case, entry) => {
+    const { homePlayerStats } = withStats.data.matchBoxscore;
 
     expect(
       dbbBoxscoreFinished(
-        mit(mitWerten, {
+        withFields(withStats, {
           matchBoxscore: {
-            ...mitWerten.data.matchBoxscore,
-            homePlayerStats: [...homePlayerStats, eintrag],
+            ...withStats.data.matchBoxscore,
+            homePlayerStats: [...homePlayerStats, entry],
           },
         })
       )
@@ -78,7 +78,7 @@ describe('dbbBoxscoreFinished', () => {
       { matchBoxscore: { homePlayerStats: {} } },
     ],
   ])('holds for no Spielbericht with %s', (_case, fields) => {
-    expect(dbbBoxscoreFinished(mit(mitWerten, fields))).toBe(false);
+    expect(dbbBoxscoreFinished(withFields(withStats, fields))).toBe(false);
   });
 
   it.each([

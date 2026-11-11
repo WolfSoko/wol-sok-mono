@@ -16,7 +16,7 @@ import { RepositoryFactoryMock } from '../repository/repository.factory.mock';
 import { TrainingRun } from './training-run';
 
 /** 2 × (10 s sprint + 5 s recovery) = 30 s */
-function konfiguration(
+function trainingConfig(
   repetitions = 2,
   sprintSeconds = 10,
   recoverySeconds = 5
@@ -70,7 +70,7 @@ describe('TrainingRun', () => {
     });
 
     it('restores a running Trainingslauf as paused', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 12_000);
 
       const restored = reload();
@@ -84,7 +84,7 @@ describe('TrainingRun', () => {
     });
 
     it('restores a paused Trainingslauf at the exact time it was paused', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 12_300);
       run.toggle();
 
@@ -95,7 +95,7 @@ describe('TrainingRun', () => {
     });
 
     it('does not bring back a finished Trainingslauf', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 12_000);
       run.end();
 
@@ -103,7 +103,7 @@ describe('TrainingRun', () => {
     });
 
     it('does not bring back a Vorlauf', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(2000);
 
       expect(reload().state()).toEqual({ phase: 'ready' });
@@ -111,10 +111,10 @@ describe('TrainingRun', () => {
 
     it.each([
       ['garbage', { config: 'kaputt', elapsed: 'x' }],
-      ['elapsed beyond the end', { config: konfiguration(), elapsed: 31_000 }],
-      ['negative elapsed', { config: konfiguration(), elapsed: -1 }],
-      ['missing elapsed', { config: konfiguration(), elapsed: null }],
-      ['no Intervalle', { config: konfiguration(0), elapsed: 0 }],
+      ['elapsed beyond the end', { config: trainingConfig(), elapsed: 31_000 }],
+      ['negative elapsed', { config: trainingConfig(), elapsed: -1 }],
+      ['missing elapsed', { config: trainingConfig(), elapsed: null }],
+      ['no Intervalle', { config: trainingConfig(0), elapsed: 0 }],
     ])('starts ready when the stored run is unusable (%s)', (_, stored) => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
@@ -139,7 +139,7 @@ describe('TrainingRun', () => {
       });
       const setItem = vi.spyOn(Storage.prototype, 'setItem');
       run = createRun();
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000);
       setItem.mockClear();
 
@@ -165,7 +165,7 @@ describe('TrainingRun', () => {
     afterEach(() => vi.restoreAllMocks());
 
     it('keeps running after a pause', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 2000);
       run.toggle();
       run.toggle();
@@ -183,7 +183,7 @@ describe('TrainingRun', () => {
     it('starts with a 5 s Vorlauf, then runs the first Intervall', () => {
       expect(run.state()).toEqual({ phase: 'ready' });
 
-      run.start(konfiguration());
+      run.start(trainingConfig());
       expect(run.state()).toMatchObject({
         phase: 'leadIn',
         left: milliseconds(5000),
@@ -202,7 +202,7 @@ describe('TrainingRun', () => {
     });
 
     it('moves to the next Intervall exactly when the current one is over', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 10_000);
 
       expect(run.state()).toMatchObject({
@@ -212,11 +212,11 @@ describe('TrainingRun', () => {
     });
 
     it('keeps no timer running unless the clock is needed', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       run.end();
       expect(vi.getTimerCount()).toBe(0);
 
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 1000);
       run.toggle();
       expect(vi.getTimerCount()).toBe(0);
@@ -228,7 +228,7 @@ describe('TrainingRun', () => {
     });
 
     it('does not run backwards when the system clock is set back', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 3000);
 
       vi.setSystemTime(Date.now() - 60_000);
@@ -238,7 +238,7 @@ describe('TrainingRun', () => {
     });
 
     it('counts a late first tick after the Vorlauf as training time', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(4950);
 
       // e.g. the tab was in the background when the Vorlauf ended
@@ -252,7 +252,7 @@ describe('TrainingRun', () => {
     });
 
     it('finishes right away when the Vorlauf ended long ago', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(4950);
 
       vi.setSystemTime(Date.now() + 60_000);
@@ -260,12 +260,12 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toMatchObject({
         phase: 'finished',
-        zusammenfassung: { elapsed: 30_000, completion: 'complete' },
+        summary: { elapsed: 30_000, completion: 'complete' },
       });
     });
 
     it('ends at the total time even after a long gap between ticks', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 1000);
 
       // e.g. the phone locked the screen and the browser paused the timer
@@ -274,12 +274,12 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toMatchObject({
         phase: 'finished',
-        zusammenfassung: { elapsed: 30_000, completion: 'complete' },
+        summary: { elapsed: 30_000, completion: 'complete' },
       });
     });
 
     it('aborts back to ready when ended during the Vorlauf', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(2000);
 
       run.end();
@@ -289,7 +289,7 @@ describe('TrainingRun', () => {
     });
 
     it('stands still while paused and resumes at once', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 3000);
       expect(run.state()).toMatchObject({ current: { elapsed: 3000 } });
 
@@ -309,12 +309,12 @@ describe('TrainingRun', () => {
     });
 
     it('finishes by itself after the last Intervall', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 30_000 + 1000);
 
       expect(run.state()).toEqual({
         phase: 'finished',
-        zusammenfassung: {
+        summary: {
           elapsed: 30_000,
           sprintsCompleted: 2,
           sprintsTotal: 2,
@@ -324,7 +324,7 @@ describe('TrainingRun', () => {
     });
 
     it('ends early with the sprints completed so far', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       // first sprint and recovery done, second sprint started
       advance(5000 + 16_000);
 
@@ -332,7 +332,7 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toEqual({
         phase: 'finished',
-        zusammenfassung: {
+        summary: {
           elapsed: 16_000,
           sprintsCompleted: 1,
           sprintsTotal: 2,
@@ -342,7 +342,7 @@ describe('TrainingRun', () => {
     });
 
     it('ends early from a pause', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 12_000);
       run.toggle();
 
@@ -350,18 +350,18 @@ describe('TrainingRun', () => {
 
       expect(run.state()).toMatchObject({
         phase: 'finished',
-        zusammenfassung: { elapsed: 12_000, completion: 'endedEarly' },
+        summary: { elapsed: 12_000, completion: 'endedEarly' },
       });
     });
 
     it('starts a fresh run after "Neues Training"', () => {
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 30_000 + 1000);
 
       run.reset();
       expect(run.state()).toEqual({ phase: 'ready' });
 
-      run.start(konfiguration());
+      run.start(trainingConfig());
       advance(5000 + 2000);
       expect(run.state()).toMatchObject({
         phase: 'running',
@@ -387,7 +387,7 @@ describe('TrainingRun', () => {
     });
 
     it('does not start a Konfiguration without Intervalle', () => {
-      run.start(konfiguration(0));
+      run.start(trainingConfig(0));
       advance(6000);
 
       expect(run.state()).toEqual({ phase: 'ready' });
@@ -399,14 +399,14 @@ describe('TrainingRun', () => {
       run.reset();
       expect(run.state()).toEqual({ phase: 'ready' });
 
-      run.start(konfiguration());
+      run.start(trainingConfig());
       run.toggle();
       run.reset();
-      run.start(konfiguration(1, 1, 1));
+      run.start(trainingConfig(1, 1, 1));
       expect(run.state()).toMatchObject({ phase: 'leadIn' });
 
       advance(5000 + 1000);
-      run.start(konfiguration(1, 1, 1));
+      run.start(trainingConfig(1, 1, 1));
       run.reset();
       expect(run.state()).toMatchObject({
         phase: 'running',

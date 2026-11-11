@@ -1,8 +1,8 @@
 import {
   INVENTED_ID_BASE,
   INVENTED_ID_RANGE,
-  INVENTED_NACHNAMEN,
-  INVENTED_VORNAMEN,
+  INVENTED_LAST_NAMES,
+  INVENTED_FIRST_NAMES,
 } from './invented-names';
 import {
   HIDDEN_ID,
@@ -83,7 +83,8 @@ interface InventedName {
   readonly nachname: string;
 }
 
-const NAME_COMBINATIONS = INVENTED_VORNAMEN.length * INVENTED_NACHNAMEN.length;
+const NAME_COMBINATIONS =
+  INVENTED_FIRST_NAMES.length * INVENTED_LAST_NAMES.length;
 
 class Anonymiser {
   private readonly invented = new Map<string, number>();
@@ -162,9 +163,11 @@ class Anonymiser {
     }
     this.namesTaken.add(combination);
     const name = {
-      vorname: INVENTED_VORNAMEN[combination % INVENTED_VORNAMEN.length],
+      vorname: INVENTED_FIRST_NAMES[combination % INVENTED_FIRST_NAMES.length],
       nachname:
-        INVENTED_NACHNAMEN[Math.floor(combination / INVENTED_VORNAMEN.length)],
+        INVENTED_LAST_NAMES[
+          Math.floor(combination / INVENTED_FIRST_NAMES.length)
+        ],
     };
     this.names.set(nameKey, name);
     return name;

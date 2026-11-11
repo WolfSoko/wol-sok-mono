@@ -1,5 +1,5 @@
 import type { Resource } from '@angular/core';
-import type { Halle, SpielDetails } from '@wolsok/feat-shared-basketball-data';
+import type { Venue, GameDetails } from '@wolsok/feat-shared-basketball-data';
 import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 
 /** Where the read of a Spiel's Halle stands, as `SpielHalleComponent` shows it. */
@@ -7,14 +7,14 @@ export type HallenStand =
   | { readonly art: 'laedt' }
   | { readonly art: 'fehler'; readonly text: string }
   /** Read; `halle` absent while the DBB names none. */
-  | { readonly art: 'gelesen'; readonly halle?: Halle };
+  | { readonly art: 'gelesen'; readonly halle?: Venue };
 
 /**
  * The Halle part of a Spiel's details read: `undefined` while it reads
  * nothing (no Spiel to read yet).
  */
 export function hallenStand(
-  details: Resource<SpielDetails | undefined>
+  details: Resource<GameDetails | undefined>
 ): HallenStand | undefined {
   switch (details.status()) {
     case 'idle':
@@ -29,7 +29,7 @@ export function hallenStand(
       };
     case 'resolved':
     case 'local': {
-      const halle = details.value()?.halle;
+      const halle = details.value()?.venue;
       return halle === undefined
         ? { art: 'gelesen' }
         : { art: 'gelesen', halle };

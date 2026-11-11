@@ -7,9 +7,9 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import {
-  halleAdresse,
-  halleNavigationUrl,
-  type Halle,
+  venueAddress,
+  venueNavigationUrl,
+  type Venue,
 } from '@wolsok/feat-shared-basketball-data';
 
 /**
@@ -67,15 +67,15 @@ import {
 })
 export class HalleComponent {
   /** `undefined` while the DBB names no Halle. */
-  public readonly halle = input.required<Halle | undefined>();
+  public readonly halle = input.required<Venue | undefined>();
 
   protected readonly adresse = computed(() => {
     const halle = this.halle();
-    return halle && halleAdresse(halle);
+    return halle && venueAddress(halle);
   });
 
   protected readonly navigationUrl = computed(() => {
     const halle = this.halle();
-    return halle && halleNavigationUrl(halle);
+    return halle && venueNavigationUrl(halle);
   });
 }

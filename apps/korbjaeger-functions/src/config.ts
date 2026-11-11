@@ -1,4 +1,7 @@
-import { FIRESTORE_REGION } from '@wolsok/feat-shared-korbjaeger-account';
+import {
+  CLUB_INDEX_CRAWL_DAYS,
+  FIRESTORE_REGION,
+} from '@wolsok/feat-shared-korbjaeger-account';
 import { days, dToMs, minutes, mToMs } from '@wolsok/utils-time';
 
 /**
@@ -28,14 +31,19 @@ export const CLUB_INDEX_DBB = {
   timeoutMs: 15_000,
 } as const;
 
-/** When the club index crawls an Association (`ClubIndexSchedule`). */
+/**
+ * When the club index crawls an Association (`ClubIndexSchedule`), its
+ * days shared with the privacy policy (`CLUB_INDEX_CRAWL_DAYS`).
+ */
 export const CLUB_INDEX_SCHEDULE = {
-  maxAgeMs: dToMs(days(7)),
-  retryAfterMs: dToMs(days(1)),
+  maxAgeMs: dToMs(days(CLUB_INDEX_CRAWL_DAYS.maxAge)),
+  retryAfterMs: dToMs(days(CLUB_INDEX_CRAWL_DAYS.retryAfter)),
   /**
    * The first fill of a large Association reads one name per Club (Bayern:
    * about 900 requests in all), so after this a Team's name stands in,
    * read again a day later, well inside the run's 30 minutes.
    */
   namesForMs: mToMs(minutes(20)),
+  /** A Verband without a list for a whole weekly cycle is stuck (#3022). */
+  warnListlessAfterMs: dToMs(days(CLUB_INDEX_CRAWL_DAYS.maxAge)),
 } as const;

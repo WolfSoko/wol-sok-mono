@@ -111,7 +111,9 @@ eight reads:
   one Verband a run: every page of its Ligen (`wam/data`,
   `wam/liga/list`), each Liga's Spielplan (`competition/spielplan`) for its
   Teams' `clubId`, and the name of each Verein it does not know yet
-  (`club/.../actualmatches`). It picks the Verband whose list is missing or
+  (`club/.../actualmatches` with `rangeDays=1`, the least it takes, as only
+  the Verein is read: about 5 kB a name instead of 42 kB for four weeks
+  either way). It picks the Verband whose list is missing or
   at least a week old, so each is refreshed weekly; it notes when a crawl
   starts, so a Verband whose crawl fails or runs out of time waits a day
   and holds up no other. It calls the DBB as the proxy does (its own

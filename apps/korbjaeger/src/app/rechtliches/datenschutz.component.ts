@@ -11,18 +11,16 @@ import {
 import { REGIONS } from '../../shared/regions';
 import { SITE_HOST, SITE_URL } from '../../shared/site';
 import {
+  CLUB_INDEX_CRAWL_DAYS,
   DELETION_RETRY_DAYS,
   TOMBSTONE_DAYS,
   TTL_DELETION_DAYS,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
-  AUSWAHL_GRENZEN,
-  SPITZNAME_LAENGE,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import {
-  ANTWORT_GRENZEN,
-  MAX_ALTER_TAGE,
-} from '@wolsok/feat-korbjaeger-antworten';
+  SELECTION_LIMITS,
+  NICKNAME_LENGTH,
+} from '@wolsok/feat-korbjaeger-selection';
+import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
 import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DbbLinkComponent } from './dbb-link.component';
 import { germanDays } from './german-days';
@@ -50,13 +48,20 @@ export class DatenschutzComponent {
   protected readonly host = SITE_HOST;
   protected readonly regions = REGIONS;
   protected readonly cache = PROXY_CACHE_SEKUNDEN;
-  protected readonly vereinsIndex = CLUB_INDEX_CACHE_SECONDS;
-  protected readonly grenzen = AUSWAHL_GRENZEN;
-  protected readonly spitznameLaenge = SPITZNAME_LAENGE;
+  /** How long section 3 says the club index is kept and when it is renewed. */
+  protected readonly clubIndex = {
+    cache: CLUB_INDEX_CACHE_SECONDS,
+    crawl: {
+      maxAge: germanDays(CLUB_INDEX_CRAWL_DAYS.maxAge),
+      retryAfter: germanDays(CLUB_INDEX_CRAWL_DAYS.retryAfter),
+    },
+  } as const;
+  protected readonly grenzen = SELECTION_LIMITS;
+  protected readonly spitznameLaenge = NICKNAME_LENGTH;
   protected readonly antworten = {
-    grenzen: ANTWORT_GRENZEN,
-    zeichen: new Intl.NumberFormat('de-DE').format(ANTWORT_GRENZEN.zeichen),
-    tage: MAX_ALTER_TAGE,
+    grenzen: ANSWER_LIMITS,
+    zeichen: new Intl.NumberFormat('de-DE').format(ANSWER_LIMITS.characters),
+    tage: MAX_AGE_DAYS,
   } as const;
   protected readonly schluessel = GERAETE_SCHLUESSEL;
   /** The key before #2966 the policy names as an example of what the start removes. */

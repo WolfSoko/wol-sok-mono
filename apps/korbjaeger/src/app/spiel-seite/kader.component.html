@@ -3,7 +3,7 @@
   @if (zeilen().length === 0) {
     <p>Im Spielbericht steht kein Kader.</p>
   } @else {
-    @if (!kader().spielerwerteErfasst) {
+    @if (!kader().playerStatsRecorded) {
       <p class="ohne-werte" data-qa="kader-ohne-werte">
         Für dieses Team sind keine Spielerwerte erfasst.
       </p>
@@ -14,7 +14,7 @@
         [dataSource]="zeilen()"
         [attr.aria-labelledby]="ueberschriftId()"
       >
-        <ng-container matColumnDef="nummer">
+        <ng-container matColumnDef="nummer" sticky>
           <th
             mat-header-cell
             *matHeaderCellDef
@@ -25,7 +25,7 @@
           </th>
           <td mat-cell *matCellDef="let zeile">{{ zeile.nummer }}</td>
         </ng-container>
-        <ng-container matColumnDef="name">
+        <ng-container matColumnDef="name" sticky>
           <th mat-header-cell *matHeaderCellDef>Name</th>
           <td mat-cell *matCellDef="let zeile" [class.anonym]="zeile.anonym">
             <span class="spieler">
@@ -35,7 +35,18 @@
                   <span class="cdk-visually-hidden">Mein Kind:</span>
                 }
                 {{ zeile.name }}
-                @if (zeile.kind?.spitzname; as spitzname) {
+                @if (zeile.starter) {
+                  <span
+                    class="start"
+                    data-qa="kader-start"
+                    title="In der Startfünf"
+                    ><span aria-hidden="true">Start</span
+                    ><span class="cdk-visually-hidden"
+                      >In der Startfünf</span
+                    ></span
+                  >
+                }
+                @if (zeile.kind?.nickname; as spitzname) {
                   <span class="spitzname" data-qa="kader-spitzname"
                     >„{{ spitzname }}“</span
                   >
@@ -51,54 +62,21 @@
             </span>
           </td>
         </ng-container>
-        <ng-container matColumnDef="punkte">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            aria-label="Punkte"
-            title="Punkte"
-          >
-            Pkt.
-          </th>
-          <td mat-cell *matCellDef="let zeile">{{ zeile.werte?.punkte }}</td>
-        </ng-container>
-        <ng-container matColumnDef="feldkoerbe">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            aria-label="Feldkörbe"
-            title="Feldkörbe"
-          >
-            FK
-          </th>
-          <td mat-cell *matCellDef="let zeile">
-            {{ zeile.werte?.feldkoerbe }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="freiwuerfe">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            aria-label="Freiwürfe getroffen von versucht"
-            title="Freiwürfe getroffen von versucht"
-          >
-            FW
-          </th>
-          <td mat-cell *matCellDef="let zeile">
-            {{ zeile.werte?.freiwuerfe }}
-          </td>
-        </ng-container>
-        <ng-container matColumnDef="fouls">
-          <th
-            mat-header-cell
-            *matHeaderCellDef
-            aria-label="Fouls"
-            title="Fouls"
-          >
-            F
-          </th>
-          <td mat-cell *matCellDef="let zeile">{{ zeile.werte?.fouls }}</td>
-        </ng-container>
+        @for (column of statsColumns(); track column.id) {
+          <ng-container [matColumnDef]="column.id">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              [attr.aria-label]="column.label"
+              [title]="column.label"
+            >
+              {{ column.abbreviation }}
+            </th>
+            <td mat-cell *matCellDef="let zeile">
+              {{ zeile.werte?.[column.id] }}
+            </td>
+          </ng-container>
+        }
 
         <tr mat-header-row *matHeaderRowDef="spalten()"></tr>
         <tr

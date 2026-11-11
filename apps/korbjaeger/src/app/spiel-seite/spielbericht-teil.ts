@@ -1,10 +1,10 @@
 import type { Resource } from '@angular/core';
 import {
-  parteiName,
-  type Kader,
-  type SpielDetails,
-  type SpielSeite,
-  type Spielbericht,
+  participantName,
+  type Roster,
+  type GameDetails,
+  type GameSide,
+  type GameReport,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import { istGefolgt } from './gefolgter-verein';
@@ -12,10 +12,10 @@ import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
 
 /** One Kader with what heads it on the page. */
 export interface KaderTeil {
-  readonly seite: SpielSeite;
+  readonly seite: GameSide;
   /** The Team's name, or its side while the Spiel cannot be read. */
   readonly titel: string;
-  readonly kader: Kader;
+  readonly kader: Roster;
   /**
    * Whether the Team of this side is one of Meine Teams: only there can a
    * Kind be marked and is it highlighted (ADR 0019).
@@ -31,9 +31,9 @@ export type SpielberichtTeil =
   | { readonly art: 'da'; readonly kader: readonly [KaderTeil, KaderTeil] };
 
 /** What the page calls a Kader's side while the Spiel cannot be read. */
-const SEITE: Readonly<Record<SpielSeite, string>> = {
-  heim: 'Heim',
-  gast: 'Gast',
+const SEITE: Readonly<Record<GameSide, string>> = {
+  home: 'Heim',
+  away: 'Gast',
 };
 
 /**
@@ -43,8 +43,8 @@ const SEITE: Readonly<Record<SpielSeite, string>> = {
  * the Spielbericht failed with the Spiel: the page's alert says why, once.
  */
 export function spielberichtTeil(
-  bericht: Resource<Spielbericht | undefined>,
-  spiel: Resource<SpielDetails | undefined>,
+  bericht: Resource<GameReport | undefined>,
+  spiel: Resource<GameDetails | undefined>,
   gefolgt: readonly TeamId[] = []
 ): SpielberichtTeil | undefined {
   const details = spiel.hasValue() ? spiel.value() : undefined;
@@ -64,8 +64,8 @@ export function spielberichtTeil(
         : {
             art: 'da',
             kader: [
-              teil('heim', gelesen, details, gefolgt),
-              teil('gast', gelesen, details, gefolgt),
+              teil('home', gelesen, details, gefolgt),
+              teil('away', gelesen, details, gefolgt),
             ],
           };
     }
@@ -75,15 +75,15 @@ export function spielberichtTeil(
 }
 
 function teil(
-  seite: SpielSeite,
-  bericht: Spielbericht,
-  details: SpielDetails | undefined,
+  seite: GameSide,
+  bericht: GameReport,
+  details: GameDetails | undefined,
   gefolgt: readonly TeamId[]
 ): KaderTeil {
-  const partei = details?.spiel[seite];
+  const partei = details?.game[seite];
   return {
     seite,
-    titel: partei ? parteiName(partei) : SEITE[seite],
+    titel: partei ? participantName(partei) : SEITE[seite],
     kader: bericht[seite],
     gefolgt: partei !== undefined && istGefolgt(partei, gefolgt),
   };
@@ -93,11 +93,11 @@ function teil(
  * Why there is no Spielbericht: none for a Spiel off, none in a Liga the
  * DBB keeps none for, else one to come.
  */
-function fehltText(details: SpielDetails | undefined): string {
-  if (details?.spiel.status.art === 'abgesagt') {
+function fehltText(details: GameDetails | undefined): string {
+  if (details?.game.status.kind === 'cancelled') {
     return 'Das Spiel fällt aus, einen Spielbericht gibt es nicht.';
   }
-  return details?.liga.ohneSpielberichte
+  return details?.league.withoutGameReports
     ? 'Für diese Liga führt der DBB keine Spielberichte, Kader und Viertel gibt es hier nicht.'
     : 'Noch kein Spielbericht. Schau später noch einmal vorbei.';
 }

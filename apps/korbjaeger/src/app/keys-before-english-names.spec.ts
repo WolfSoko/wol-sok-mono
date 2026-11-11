@@ -1,4 +1,4 @@
-import { AUSWAHL_SCHLUESSEL } from '@wolsok/feat-korbjaeger-auswahl';
+import { SELECTION_KEY } from '@wolsok/feat-korbjaeger-selection';
 import {
   ANGEMELDET_SCHLUESSEL,
   DARSTELLUNG_SCHLUESSEL,
@@ -42,12 +42,12 @@ describe('dropKeysBeforeEnglishNames', () => {
   });
 
   it('leaves the keys of this version alone', () => {
-    localStorage.setItem(AUSWAHL_SCHLUESSEL, '{"version":3}');
+    localStorage.setItem(SELECTION_KEY, '{"version":3}');
     localStorage.setItem(DARSTELLUNG_SCHLUESSEL, 'light');
 
     dropKeysBeforeEnglishNames(localStorage);
 
-    expect(localStorage.getItem(AUSWAHL_SCHLUESSEL)).toBe('{"version":3}');
+    expect(localStorage.getItem(SELECTION_KEY)).toBe('{"version":3}');
     expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBe('light');
     expect(localStorage.getItem(ANGEMELDET_SCHLUESSEL)).toBeNull();
   });

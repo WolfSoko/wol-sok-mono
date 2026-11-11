@@ -5,18 +5,16 @@ import {
 import { REGIONS } from '../../shared/regions';
 import { zeigen } from '../../testing/zeigen';
 import {
+  CLUB_INDEX_CRAWL_DAYS,
   DELETION_RETRY_DAYS,
   TOMBSTONE_DAYS,
   TTL_DELETION_DAYS,
 } from '@wolsok/feat-shared-korbjaeger-account';
 import {
-  AUSWAHL_GRENZEN,
-  SPITZNAME_LAENGE,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import {
-  ANTWORT_GRENZEN,
-  MAX_ALTER_TAGE,
-} from '@wolsok/feat-korbjaeger-antworten';
+  SELECTION_LIMITS,
+  NICKNAME_LENGTH,
+} from '@wolsok/feat-korbjaeger-selection';
+import { ANSWER_LIMITS, MAX_AGE_DAYS } from '@wolsok/feat-korbjaeger-answers';
 import { KEYS_BEFORE_ENGLISH_NAMES } from '../keys-before-english-names';
 import { DatenschutzComponent } from './datenschutz.component';
 import { GERAETE_SCHLUESSEL } from './geraete-schluessel';
@@ -55,10 +53,10 @@ describe('DatenschutzComponent', () => {
       expect(geraet).toContain(schluessel);
     }
     const zeichen = new Intl.NumberFormat('de-DE').format(
-      ANTWORT_GRENZEN.zeichen
+      ANSWER_LIMITS.characters
     );
     expect(geraet).toContain(
-      `Höchstens ${ANTWORT_GRENZEN.eintraege} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_ALTER_TAGE} Tage lang`
+      `Höchstens ${ANSWER_LIMITS.entries} Antworten mit zusammen höchstens ${zeichen} Zeichen, jede höchstens ${MAX_AGE_DAYS} Tage lang`
     );
   });
 
@@ -82,12 +80,12 @@ describe('DatenschutzComponent', () => {
   it('says what the account’s document holds, its caps and where it lies', () => {
     const konto = abschnitt(zeigen(DatenschutzComponent), 'konto');
 
-    expect(konto).toContain(`${AUSWAHL_GRENZEN.teams} Teams`);
-    expect(konto).toContain(`${AUSWAHL_GRENZEN.kinder} Kinder`);
+    expect(konto).toContain(`${SELECTION_LIMITS.teams} Teams`);
+    expect(konto).toContain(`${SELECTION_LIMITS.children} Kinder`);
     expect(konto).toContain(
-      `die Farben von ${AUSWAHL_GRENZEN.vereinsfarben} Vereinen`
+      `die Farben von ${SELECTION_LIMITS.clubColors} Vereinen`
     );
-    expect(konto).toContain(`${SPITZNAME_LAENGE} Zeichen`);
+    expect(konto).toContain(`${NICKNAME_LENGTH} Zeichen`);
     const { firestore } = REGIONS;
     expect(konto).toContain(`${firestore.id} (${firestore.place})`);
     expect(konto).toContain('Google');
@@ -107,7 +105,7 @@ describe('DatenschutzComponent', () => {
     expect(abschnitt(seite, 'hosting')).toContain('Firebase Hosting');
   });
 
-  it('covers the club index: its source, no persons, the search on the device and its cache times', () => {
+  it('covers the club index: its source, no persons, the search on the device, its renewal and its cache times', () => {
     const dbb = abschnitt(zeigen(DatenschutzComponent), 'dbb');
 
     const { firestore } = REGIONS;
@@ -115,8 +113,13 @@ describe('DatenschutzComponent', () => {
     expect(dbb).toContain(`Region ${firestore.id} (${firestore.place})`);
     expect(dbb).toContain('keine Personen');
     expect(dbb).toContain('verlässt dein Gerät nicht');
+    const { complete, filling } = CLUB_INDEX_CACHE_SECONDS;
+    expect(CLUB_INDEX_CRAWL_DAYS).toEqual({ maxAge: 7, retryAfter: 1 });
     expect(dbb).toContain(
-      `bis zu ${CLUB_INDEX_CACHE_SECONDS.cdn / 3600} Stunden vor, dein Browser bis zu ${CLUB_INDEX_CACHE_SECONDS.browser / 60} Minuten`
+      'Sie erneuert die Liste jedes Verbands in der Regel alle 7 Tage, nach einem Fehler schon einen Tag später.'
+    );
+    expect(dbb).toContain(
+      `bis zu ${complete.cdn / 3600} Stunden vor, dein Browser bis zu ${complete.browser / 60} Minuten; solange darin noch Verbände fehlen, nur bis zu ${filling.cdn / 60} Minuten, dein Browser bis zu ${filling.browser} Sekunden.`
     );
   });
 

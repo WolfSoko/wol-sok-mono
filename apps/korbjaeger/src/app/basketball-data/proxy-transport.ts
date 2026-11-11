@@ -1,6 +1,6 @@
 import {
   BasketballDataError,
-  dbbOhnePersonen,
+  dbbWithoutPersons,
   dbbStatusOf,
   isBasketballDataError,
   type DbbRequestKind,
@@ -9,9 +9,9 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { proxyUrl } from '../../shared/dbb-proxy-routes';
 import type {
-  LetzteAntwort,
-  LetzteAntworten,
-} from '@wolsok/feat-korbjaeger-antworten';
+  CachedAnswer,
+  AnswerCache,
+} from '@wolsok/feat-korbjaeger-answers';
 import { KeinInternetError } from './kein-internet-error';
 import type { KorbReadOptions, Lesung } from './lesung';
 import {
@@ -33,7 +33,7 @@ export interface ProxyTransportOptions {
   /** Whether the browser believes it is online (`navigator.onLine`). */
   readonly online?: () => boolean;
   /** Where the last good answer of each path is kept; none by default. */
-  readonly antworten?: LetzteAntworten;
+  readonly antworten?: AnswerCache;
   /** The time an answer is stored with, in ms since the epoch. */
   readonly jetzt?: () => number;
   /** How long a call to the proxy may take; `PROXY_ZEITLIMIT_MS`. */
@@ -47,16 +47,16 @@ export interface ProxyTransportOptions {
  * answer Meine Teams need offline.
  */
 export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
-  'team-spiele',
-  'tabelle',
-  'spiel-info',
-  'vereins-spiele',
+  'team-games',
+  'standings',
+  'game-info',
+  'club-games',
 ]);
 
 /** Keeps nothing: a read that fails has no answer to fall back on. */
-const KEINE_ANTWORTEN: LetzteAntworten = {
-  lesen: () => undefined,
-  merken: () => undefined,
+const KEINE_ANTWORTEN: AnswerCache = {
+  read: () => undefined,
+  store: () => undefined,
 };
 
 /**
@@ -69,7 +69,7 @@ const KEINE_ANTWORTEN: LetzteAntworten = {
  * `unavailable`.
  *
  * The 200 of a read of `SPEICHERBARE_ARTEN` is kept in `antworten` by its
- * proxy path, without the persons in it (`dbbOhnePersonen`), once its `Lesung` (`KorbReadOptions`) says the read mapped
+ * proxy path, without the persons in it (`dbbWithoutPersons`), once its `Lesung` (`KorbReadOptions`) says the read mapped
  * it. A read with a `Lesung` that then fails as `offline` or
  * `unavailable` is answered from it instead, and the `Lesung` hears when
  * it came and why; a 404 (the thing is gone) and a cancelled read never
@@ -97,9 +97,9 @@ export function proxyTransport(
         (body) => {
           const gespeichertAm = jetzt();
           lesung?.vormerken(() =>
-            antworten.merken(path, request.kind, {
-              antwort: dbbOhnePersonen(body),
-              gespeichertAm,
+            antworten.store(path, request.kind, {
+              answer: dbbWithoutPersons(body),
+              storedAt: gespeichertAm,
             })
           );
         }
@@ -110,7 +110,7 @@ export function proxyTransport(
       }
       return letzteAntwortStatt(
         error,
-        antworten.lesen(path, jetzt()),
+        antworten.read(path, jetzt()),
         lesung,
         options?.signal
       );
@@ -124,7 +124,7 @@ export function proxyTransport(
  */
 function letzteAntwortStatt(
   error: unknown,
-  letzte: LetzteAntwort | undefined,
+  letzte: CachedAnswer | undefined,
   lesung: Lesung,
   signal: ReadSignal | undefined
 ): unknown {
@@ -132,10 +132,10 @@ function letzteAntwortStatt(
     throw error;
   }
   lesung.ersetzt({
-    gespeichertAm: letzte.gespeichertAm,
+    gespeichertAm: letzte.storedAt,
     grund: standGrundVon(error),
   });
-  return letzte.antwort;
+  return letzte.answer;
 }
 
 /**

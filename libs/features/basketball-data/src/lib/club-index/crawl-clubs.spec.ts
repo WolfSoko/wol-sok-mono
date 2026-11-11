@@ -1,36 +1,35 @@
-import type { BasketballData } from '../basketball-data';
 import { BasketballDataError } from '../domain/basketball-data-error';
-import type { LigaId, VereinId } from '../domain/ids';
-import type { Liga } from '../domain/liga';
-import type { LigaSeite, LigaSucheFilter } from '../domain/liga-suche';
+import type { LeagueId, ClubId } from '../domain/ids';
+import type { League } from '../domain/league';
+import type { LeaguePage, LeagueSearchFilter } from '../domain/league-search';
 import type { Team } from '../domain/team';
-import type { VereinsTeams } from '../domain/team-saison';
-import { crawlClubs } from './crawl-clubs';
+import type { Club } from '../domain/club';
+import { crawlClubs, type ClubCrawlSource } from './crawl-clubs';
 
 const NIEDERSACHSEN = { id: 7, name: 'Niedersachsen' };
 
-function league(id: LigaId): Liga {
+function league(id: LeagueId): League {
   return {
     id,
     name: `Liga ${id}`,
-    verband: NIEDERSACHSEN,
-    altersklasse: 'U12',
-    geschlecht: 'männlich',
-    spielklasse: 'Bezirksliga',
+    association: NIEDERSACHSEN,
+    ageGroup: 'U12',
+    gender: 'male',
+    division: 'Bezirksliga',
   };
 }
 
-function team(id: number, vereinId: VereinId, name: string): Team {
-  return { id, name, vereinId };
+function team(id: number, clubId: ClubId, name: string): Team {
+  return { id, name, clubId };
 }
 
-const PAGES: Record<number, LigaSeite> = {
-  0: { startIndex: 0, ligen: [league(1), league(2)], weitere: true },
-  2: { startIndex: 2, ligen: [league(3)], weitere: false },
+const PAGES: Record<number, LeaguePage> = {
+  0: { startIndex: 0, leagues: [league(1), league(2)], more: true },
+  2: { startIndex: 2, leagues: [league(3)], more: false },
 };
 
 const TEAMS: Record<
-  LigaId,
+  LeagueId,
   readonly Team[] | 'not-found' | 'unavailable' | 'unexpected-shape'
 > = {
   1: [team(11, 100, 'MTV Wasbüttel'), team(12, 200, 'MTV Gifhorn 2')],
@@ -38,54 +37,49 @@ const TEAMS: Record<
   3: 'not-found',
 };
 
-const CLUB_NAMES: Record<VereinId, string> = {
+const CLUB_NAMES: Record<ClubId, string> = {
   100: 'MTV Wasbüttel',
   200: 'MTV Gifhorn',
 };
 
 /** A source with the pages, Teams and Clubs above, logging every read. */
 function fakeData(teams = TEAMS): {
-  data: BasketballData;
+  data: ClubCrawlSource;
   reads: string[];
 } {
   const reads: string[] = [];
-  const unused = () => Promise.reject(new Error('not read by a crawl'));
-  const data: BasketballData = {
-    ligaSuche: async (filter: LigaSucheFilter) => {
-      reads.push(`ligaSuche ${filter.verbandIds.join()}`);
+  const data: ClubCrawlSource = {
+    leagueSearch: async (filter: LeagueSearchFilter) => {
+      reads.push(`leagueSearch ${filter.associationIds.join()}`);
       return {
-        facetten: {
-          verbaende: [],
-          altersklassen: [],
-          altersgruppenGeschlechter: [],
+        facets: {
+          associations: [],
+          ageGroups: [],
+          ageGroupGenders: [],
         },
-        ersteSeite: PAGES[0],
+        firstPage: PAGES[0],
       };
     },
-    ligaSeite: async (filter: LigaSucheFilter, startIndex: number) => {
-      reads.push(`ligaSeite ${filter.verbandIds.join()} ${startIndex}`);
+    leaguePage: async (filter: LeagueSearchFilter, startIndex: number) => {
+      reads.push(`leaguePage ${filter.associationIds.join()} ${startIndex}`);
       return PAGES[startIndex];
     },
-    ligaTeams: async (liga: LigaId) => {
-      reads.push(`ligaTeams ${liga}`);
-      const answer = teams[liga];
+    leagueTeams: async (leagueId: LeagueId) => {
+      reads.push(`leagueTeams ${leagueId}`);
+      const answer = teams[leagueId];
       if (typeof answer === 'string') {
-        throw new BasketballDataError(answer, `Liga ${liga}`);
+        throw new BasketballDataError(answer, `Liga ${leagueId}`);
       }
       return answer;
     },
-    vereinsTeams: async (verein: VereinId): Promise<VereinsTeams> => {
-      reads.push(`vereinsTeams ${verein}`);
-      const name = CLUB_NAMES[verein];
+    club: async (club: ClubId): Promise<Club> => {
+      reads.push(`club ${club}`);
+      const name = CLUB_NAMES[club];
       if (name === undefined) {
-        throw new BasketballDataError('not-found', `Verein ${verein}`);
+        throw new BasketballDataError('not-found', `Verein ${club}`);
       }
-      return { verein: { id: verein, name }, teams: [] };
+      return { id: club, name };
     },
-    teamSpiele: unused,
-    tabelle: unused,
-    spiel: unused,
-    spielbericht: unused,
   };
   return { data, reads };
 }
@@ -116,7 +110,7 @@ describe('crawlClubs', () => {
       timeForNames: () => false,
     });
 
-    expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([]);
+    expect(reads.filter((read) => read.startsWith('club '))).toEqual([]);
     expect(clubs).toEqual([
       { id: 200, name: 'MTV Gifhorn 2', nameFromTeam: true },
       { id: 100, name: 'MTV Wasbüttel' },
@@ -138,12 +132,12 @@ describe('crawlClubs', () => {
 
   it('rejects an empty page that promises more, rather than reading it forever', async () => {
     const { data } = fakeData();
-    const stuck: BasketballData = {
+    const stuck: ClubCrawlSource = {
       ...data,
-      ligaSeite: async (_filter, startIndex) => ({
+      leaguePage: async (_filter, startIndex) => ({
         startIndex,
-        ligen: [],
-        weitere: true,
+        leagues: [],
+        more: true,
       }),
     };
 
@@ -166,11 +160,11 @@ describe('crawlClubs', () => {
     });
 
     expect(reads.slice(0, 5)).toEqual([
-      'ligaSuche 7',
-      'ligaSeite 7 2',
-      'ligaTeams 1',
-      'ligaTeams 2',
-      'ligaTeams 3',
+      'leagueSearch 7',
+      'leaguePage 7 2',
+      'leagueTeams 1',
+      'leagueTeams 2',
+      'leagueTeams 3',
     ]);
   });
 
@@ -186,8 +180,8 @@ describe('crawlClubs', () => {
       timeForNames: () => true,
     });
 
-    expect(reads.filter((read) => read.startsWith('vereinsTeams'))).toEqual([
-      'vereinsTeams 300',
+    expect(reads.filter((read) => read.startsWith('club '))).toEqual([
+      'club 300',
     ]);
     expect(clubs[1]).toEqual({ id: 100, name: 'MTV Wasbüttel e.V.' });
   });

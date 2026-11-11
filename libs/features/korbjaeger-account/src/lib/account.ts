@@ -39,6 +39,14 @@ export const DELETED_ACCOUNTS_COLLECTION = 'deletedAccounts';
 export const CLUB_INDEX_COLLECTION = 'clubIndex';
 
 /**
+ * How many days apart the functions' `clubIndex` crawls a Verband: its
+ * list once it is `maxAge` old, again `retryAfter` after a crawl that
+ * left none (or a Team's name standing in for a Club's). The privacy
+ * policy names both (#3004).
+ */
+export const CLUB_INDEX_CRAWL_DAYS = { maxAge: 7, retryAfter: 1 } as const;
+
+/**
  * The choices as versions 1 and 2 stored them, with German fields. None is
  * left (#2983) and no rule opens it: the one-off orphan cleanup of
  * `korbjaeger-functions` still lists it, to show it stays empty, and the

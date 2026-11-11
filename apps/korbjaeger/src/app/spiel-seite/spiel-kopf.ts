@@ -1,12 +1,12 @@
 import {
-  ergebnisVon,
-  ergebnisVorlaeufig,
-  parteiName,
-  type Spiel,
-  type SpielDetails,
-  type SpielPartei,
-  type SpielSeite,
-  type Spielstand,
+  resultOf,
+  resultProvisional,
+  participantName,
+  type Game,
+  type GameDetails,
+  type Participant,
+  type GameSide,
+  type Score,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import { ergebnisText, spielTagUndUhrzeit } from '../spiel/spiel-format';
@@ -64,17 +64,17 @@ export interface SpielKopf {
 }
 
 /** The head of the Spiel page for `details`. */
-export function spielKopf(details: SpielDetails): SpielKopf {
-  const { spiel } = details;
-  const ergebnis = ergebnisVon(spiel);
+export function spielKopf(details: GameDetails): SpielKopf {
+  const { game: spiel } = details;
+  const ergebnis = resultOf(spiel);
   const perioden = periodenVon(details, ergebnis);
-  const vorlaeufig = ergebnisVorlaeufig(spiel, details.liga);
+  const vorlaeufig = resultProvisional(spiel, details.league);
   const status = statusText(spiel, vorlaeufig);
   return {
-    heim: partner(spiel.heim),
-    gast: partner(spiel.gast),
-    wann: spielTagUndUhrzeit(spiel.datum, spiel.uhrzeit),
-    liga: details.liga.name,
+    heim: partner(spiel.home),
+    gast: partner(spiel.away),
+    wann: spielTagUndUhrzeit(spiel.date, spiel.time),
+    liga: details.league.name,
     ...(ergebnis && { ergebnis: ergebnisText(ergebnis) }),
     vorlaeufig,
     ...(status && { status }),
@@ -82,32 +82,32 @@ export function spielKopf(details: SpielDetails): SpielKopf {
   };
 }
 
-function partner(partei: SpielPartei): SpielPartner {
-  return partei.art === 'team'
+function partner(partei: Participant): SpielPartner {
+  return partei.kind === 'team'
     ? { name: partei.team.name, teamId: partei.team.id }
-    : { name: partei.bezeichnung };
+    : { name: partei.label };
 }
 
-function statusText(spiel: Spiel, vorlaeufig: boolean): string | undefined {
-  switch (spiel.status.art) {
-    case 'geplant':
+function statusText(spiel: Game, vorlaeufig: boolean): string | undefined {
+  switch (spiel.status.kind) {
+    case 'scheduled':
       return 'Noch kein Ergebnis';
-    case 'abgesagt':
+    case 'cancelled':
       return 'abgesagt';
-    case 'kampflos': {
-      const verzicht = verzichtText(spiel, spiel.status.verzichtet);
+    case 'forfeited': {
+      const verzicht = verzichtText(spiel, spiel.status.forfeitedBy);
       return verzicht === undefined ? 'kampflos' : `kampflos · ${verzicht}`;
     }
-    case 'gespielt':
+    case 'played':
       return vorlaeufig ? 'Ergebnis noch nicht bestätigt' : undefined;
   }
 }
 
 function verzichtText(
-  spiel: Spiel,
-  seiten: readonly SpielSeite[]
+  spiel: Game,
+  seiten: readonly GameSide[]
 ): string | undefined {
-  const namen = seiten.map((seite) => parteiName(spiel[seite]));
+  const namen = seiten.map((seite) => participantName(spiel[seite]));
   if (namen.length === 0) {
     return undefined;
   }
@@ -117,17 +117,17 @@ function verzichtText(
 }
 
 function periodenVon(
-  { spiel, viertel, verlaengerungen }: SpielDetails,
-  ergebnis: Spielstand | undefined
+  { game: spiel, quarters: viertel, overtimes: verlaengerungen }: GameDetails,
+  ergebnis: Score | undefined
 ): Perioden | undefined {
   if (viertel.length === 0) {
     return undefined;
   }
   const alle = [...viertel, ...verlaengerungen];
-  const zeile = (seite: SpielSeite): PeriodenZeile => {
+  const zeile = (seite: GameSide): PeriodenZeile => {
     const punkte = alle.map((stand) => stand[seite]);
     return {
-      team: parteiName(spiel[seite]),
+      team: participantName(spiel[seite]),
       punkte,
       gesamt: ergebnis === undefined ? KEIN_WERT : String(ergebnis[seite]),
     };
@@ -143,6 +143,6 @@ function periodenVon(
         kurz: `V${i + 1}`,
       })),
     ],
-    zeilen: [zeile('heim'), zeile('gast')],
+    zeilen: [zeile('home'), zeile('away')],
   };
 }

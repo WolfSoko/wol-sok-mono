@@ -4,14 +4,14 @@ import {
   MAT_BOTTOM_SHEET_DATA,
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
-import type { VereinId } from '@wolsok/feat-shared-basketball-data';
+import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  AuswahlVollError,
-  type VereinsfarbenWahl,
-  type Vereinsfarben,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  SelectionFullError,
+  type ClubColorsChoice,
+  type ClubColors,
+} from '@wolsok/feat-korbjaeger-selection';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
   VereinsfarbenBlattComponent,
   type VereinsfarbenBlattDaten,
@@ -23,8 +23,8 @@ const VEREIN: VereinsfarbenBlattDaten = {
 };
 
 async function oeffnen(
-  vorhanden: readonly VereinsfarbenWahl[] = [],
-  setzen: (verein: VereinId, farben: Vereinsfarben) => Promise<void> = () =>
+  vorhanden: readonly ClubColorsChoice[] = [],
+  setzen: (verein: ClubId, farben: ClubColors) => Promise<void> = () =>
     Promise.resolve()
 ) {
   const gesetzt = vi.fn(setzen);
@@ -34,10 +34,10 @@ async function oeffnen(
     providers: [
       {
         provide: AUSWAHL,
-        useValue: fakeAuswahl({
-          vereinsfarben: signal(vorhanden),
-          vereinsfarbenSetzen: gesetzt,
-          vereinsfarbenZuruecksetzen: zurueckgesetzt,
+        useValue: fakeSelection({
+          clubColors: signal(vorhanden),
+          setClubColors: gesetzt,
+          resetClubColors: zurueckgesetzt,
         }),
       },
       { provide: MAT_BOTTOM_SHEET_DATA, useValue: VEREIN },
@@ -102,15 +102,15 @@ describe('VereinsfarbenBlattComponent', () => {
     await klicken('Übernehmen');
 
     expect(gesetzt).toHaveBeenCalledWith(4242, {
-      primaer: '#c8102e',
-      zweite: '#ffffff',
+      primary: '#c8102e',
+      secondary: '#ffffff',
     });
     expect(schliessen).toHaveBeenCalled();
   });
 
   it('starts from the colours the Verein has, a second one left out', async () => {
     const { gewaehlt, waehlen, klicken, gesetzt } = await oeffnen([
-      { vereinId: 4242, primaer: '#007a3d', zweite: '#ffd700' },
+      { clubId: 4242, primary: '#007a3d', secondary: '#ffd700' },
     ]);
     expect(gewaehlt('hauptfarbe')).toEqual(['Grün']);
     expect(gewaehlt('zweite-farbe')).toEqual(['Gelb']);
@@ -118,7 +118,7 @@ describe('VereinsfarbenBlattComponent', () => {
     await waehlen('zweite-farbe', 'Keine');
     await klicken('Übernehmen');
 
-    expect(gesetzt).toHaveBeenCalledWith(4242, { primaer: '#007a3d' });
+    expect(gesetzt).toHaveBeenCalledWith(4242, { primary: '#007a3d' });
   });
 
   it('takes an own colour from the colour picker', async () => {
@@ -132,7 +132,7 @@ describe('VereinsfarbenBlattComponent', () => {
     await fixture.whenStable();
     await klicken('Übernehmen');
 
-    expect(gesetzt).toHaveBeenCalledWith(4242, { primaer: '#123456' });
+    expect(gesetzt).toHaveBeenCalledWith(4242, { primary: '#123456' });
   });
 
   it("resets the Verein's colours, offered only where it has some", async () => {
@@ -141,7 +141,7 @@ describe('VereinsfarbenBlattComponent', () => {
     TestBed.resetTestingModule();
 
     const { klicken, zurueckgesetzt, schliessen } = await oeffnen([
-      { vereinId: 4242, primaer: '#c8102e' },
+      { clubId: 4242, primary: '#c8102e' },
     ]);
     await klicken('Zurücksetzen');
 
@@ -151,7 +151,7 @@ describe('VereinsfarbenBlattComponent', () => {
 
   it('says why the colours were not stored, and stays open', async () => {
     const { element, waehlen, klicken, schliessen } = await oeffnen([], () =>
-      Promise.reject(new AuswahlVollError('vereinsfarben'))
+      Promise.reject(new SelectionFullError('clubColors'))
     );
 
     await waehlen('hauptfarbe', 'Rot');

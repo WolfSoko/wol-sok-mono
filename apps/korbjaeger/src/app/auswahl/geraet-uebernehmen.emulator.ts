@@ -7,13 +7,13 @@ import {
   vorhanden as vorhandenIn,
 } from '../../testing/firestore-emulator';
 import {
-  inhaltAus,
-  AUSWAHL_GRENZEN,
-  auswahlDokumentLesen,
-  type AuswahlInhalt,
-  AuswahlZuNeuError,
-  geraetUebernehmen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  contentOf,
+  SELECTION_LIMITS,
+  readSelectionDocument,
+  type SelectionContent,
+  SelectionTooNewError,
+  takeOverDevice,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /** The merge at sign-in on the emulator, under the app's rules. */
 let env: RulesTestEnvironment;
@@ -31,47 +31,47 @@ const vorhanden = (uid: string, daten: object) => vorhandenIn(env, uid, daten);
 const gespeichert = (uid: string) => gespeichertIn(env, uid);
 
 /** What the account's document holds, as the app reads it. */
-async function gelesen(uid: string): Promise<AuswahlInhalt> {
-  const { teams, kinder, vereinsfarben } = inhaltAus(
-    auswahlDokumentLesen(await gespeichert(uid))
+async function gelesen(uid: string): Promise<SelectionContent> {
+  const { teams, children, clubColors } = contentOf(
+    readSelectionDocument(await gespeichert(uid))
   );
-  return { teams, kinder, vereinsfarben };
+  return { teams, children, clubColors };
 }
 
 /** Teams as stored, followed in the order given. */
 const teamsRoh = (...ids: readonly number[]) =>
   Object.fromEntries(ids.map((id, i) => [id, i + 1]));
 
-describe('geraetUebernehmen', () => {
+describe('takeOverDevice', () => {
   it("stores the device's choices in an empty account", async () => {
     const uid = konto();
 
-    await geraetUebernehmen(db(uid), uid, {
+    await takeOverDevice(db(uid), uid, {
       teams: [313036],
-      kinder: [{ personId: 4711, spitzname: 'Mimi' }],
-      vereinsfarben: [],
+      children: [{ personId: 4711, nickname: 'Mimi' }],
+      clubColors: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [313036],
-      kinder: [{ personId: 4711, spitzname: 'Mimi' }],
-      vereinsfarben: [],
+      children: [{ personId: 4711, nickname: 'Mimi' }],
+      clubColors: [],
     });
   });
 
   it('stores a device that holds only Kinder', async () => {
     const uid = konto();
 
-    await geraetUebernehmen(db(uid), uid, {
+    await takeOverDevice(db(uid), uid, {
       teams: [],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
   });
 
@@ -83,16 +83,16 @@ describe('geraetUebernehmen', () => {
       children: { 4711: { since: 1 } },
     });
 
-    await geraetUebernehmen(db(uid), uid, {
+    await takeOverDevice(db(uid), uid, {
       teams: [201500, 313036],
-      kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711, nickname: 'Mimi' }, { personId: 4712 }],
+      clubColors: [],
     });
 
     expect(await gelesen(uid)).toEqual({
       teams: [313036, 201500],
-      kinder: [{ personId: 4711, spitzname: 'Mimi' }, { personId: 4712 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711, nickname: 'Mimi' }, { personId: 4712 }],
+      clubColors: [],
     });
   });
 
@@ -104,22 +104,22 @@ describe('geraetUebernehmen', () => {
       clubColors: { 4343: '#1d4ed8' },
     });
 
-    const uebrig = await geraetUebernehmen(db(uid), uid, {
+    const uebrig = await takeOverDevice(db(uid), uid, {
       teams: [],
-      kinder: [],
-      vereinsfarben: [
-        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
-        { vereinId: 4343, primaer: '#007a3d' },
+      children: [],
+      clubColors: [
+        { clubId: 4242, primary: '#c8102e', secondary: '#ffffff' },
+        { clubId: 4343, primary: '#007a3d' },
       ],
     });
 
-    expect(uebrig.vereinsfarben).toEqual([]);
+    expect(uebrig.clubColors).toEqual([]);
     expect(await gelesen(uid)).toEqual({
       teams: [313036],
-      kinder: [],
-      vereinsfarben: [
-        { vereinId: 4242, primaer: '#c8102e', zweite: '#ffffff' },
-        { vereinId: 4343, primaer: '#1d4ed8' },
+      children: [],
+      clubColors: [
+        { clubId: 4242, primary: '#c8102e', secondary: '#ffffff' },
+        { clubId: 4343, primary: '#1d4ed8' },
       ],
     });
     expect(await gespeichert(uid)).toMatchObject({
@@ -136,10 +136,10 @@ describe('geraetUebernehmen', () => {
     };
     await vorhanden(uid, eingerichtet);
 
-    await geraetUebernehmen(db(uid), uid, {
+    await takeOverDevice(db(uid), uid, {
       teams: [201500],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
 
     expect(await gespeichert(uid)).toEqual(eingerichtet);
@@ -149,13 +149,21 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
     const kinder = Array.from({ length: 20 }, (_, i) => ({
       personId: i + 1,
-      spitzname: 'x'.repeat(30),
+      nickname: 'x'.repeat(30),
     }));
     const teams = Array.from({ length: 50 }, (_, i) => i + 1);
 
-    await geraetUebernehmen(db(uid), uid, { teams, kinder, vereinsfarben: [] });
+    await takeOverDevice(db(uid), uid, {
+      teams,
+      children: kinder,
+      clubColors: [],
+    });
 
-    expect(await gelesen(uid)).toEqual({ teams, kinder, vereinsfarben: [] });
+    expect(await gelesen(uid)).toEqual({
+      teams,
+      children: kinder,
+      clubColors: [],
+    });
   });
 
   it("leaves a newer version's selection alone", async () => {
@@ -164,38 +172,38 @@ describe('geraetUebernehmen', () => {
     await vorhanden(uid, neuer);
 
     await expect(
-      geraetUebernehmen(db(uid), uid, {
+      takeOverDevice(db(uid), uid, {
         teams: [313036],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       })
-    ).rejects.toBeInstanceOf(AuswahlZuNeuError);
+    ).rejects.toBeInstanceOf(SelectionTooNewError);
     expect(await gespeichert(uid)).toEqual(neuer);
   });
 
   it('takes only what fits under the caps and tells the rest', async () => {
     const uid = konto();
     const teams = Array.from(
-      { length: AUSWAHL_GRENZEN.teams - 1 },
+      { length: SELECTION_LIMITS.teams - 1 },
       (_, i) => i + 1
     );
     await vorhanden(uid, { version: 3, teams: teamsRoh(...teams) });
 
-    const uebrig = await geraetUebernehmen(db(uid), uid, {
+    const uebrig = await takeOverDevice(db(uid), uid, {
       teams: [9001, 9002, 9003],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
 
     expect(uebrig).toEqual({
       teams: [9002, 9003],
-      kinder: [],
-      vereinsfarben: [],
+      children: [],
+      clubColors: [],
     });
     expect(await gelesen(uid)).toEqual({
       teams: [...teams, 9001],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     });
   });
 
@@ -203,11 +211,11 @@ describe('geraetUebernehmen', () => {
     const uid = konto();
 
     expect(
-      await geraetUebernehmen(db(uid), uid, {
+      await takeOverDevice(db(uid), uid, {
         teams: [313036],
-        kinder: [],
-        vereinsfarben: [],
+        children: [],
+        clubColors: [],
       })
-    ).toEqual({ teams: [], kinder: [], vereinsfarben: [] });
+    ).toEqual({ teams: [], children: [], clubColors: [] });
   });
 });

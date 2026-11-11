@@ -3,20 +3,26 @@ import {
   BasketballDataError,
   isBasketballDataError,
 } from '../domain/basketball-data-error';
-import type { LigaId, VerbandId, VereinId } from '../domain/ids';
-import type { Liga } from '../domain/liga';
+import type { LeagueId, AssociationId, ClubId } from '../domain/ids';
+import type { League } from '../domain/league';
 import {
-  KEIN_LIGA_FILTER,
-  naechsterStartIndex,
-  type LigaSeite,
-} from '../domain/liga-suche';
+  NO_LEAGUE_FILTER,
+  nextStartIndex,
+  type LeaguePage,
+} from '../domain/league-search';
 import type { Team } from '../domain/team';
 import { byClubName, type ClubIndexEntry } from './club-index';
+
+/** The reads a crawl makes: the Leagues, their Teams and Clubs' names. */
+export type ClubCrawlSource = Pick<
+  BasketballData,
+  'leagueSearch' | 'leaguePage' | 'leagueTeams' | 'club'
+>;
 
 /** What a crawl takes beside the source and the Association. */
 export interface ClubCrawlOptions {
   /** Clubs' own names an earlier crawl read; these are not read again. */
-  readonly knownNames: ReadonlyMap<VereinId, string>;
+  readonly knownNames: ReadonlyMap<ClubId, string>;
   /** Waits before each read, so the source sees one request at a time, spaced. */
   readonly pause: () => Promise<void>;
   /**
@@ -36,8 +42,8 @@ export interface ClubCrawlOptions {
  * Waits `pause` before every read.
  */
 export async function crawlClubs(
-  data: BasketballData,
-  association: VerbandId,
+  data: ClubCrawlSource,
+  association: AssociationId,
   options: ClubCrawlOptions
 ): Promise<readonly ClubIndexEntry[]> {
   const read: PacedRead = async (reading) => {
@@ -45,11 +51,11 @@ export async function crawlClubs(
     return reading();
   };
   const leagues = await leaguesOf(data, association, read);
-  const teamNames = new Map<VereinId, string>();
+  const teamNames = new Map<ClubId, string>();
   for (const league of leagues) {
     for (const team of await teamsOf(data, league.id, read)) {
-      if (!teamNames.has(team.vereinId)) {
-        teamNames.set(team.vereinId, team.name);
+      if (!teamNames.has(team.clubId)) {
+        teamNames.set(team.clubId, team.name);
       }
     }
   }
@@ -70,39 +76,40 @@ export async function crawlClubs(
 type PacedRead = <T>(read: () => Promise<T>) => Promise<T>;
 
 async function leaguesOf(
-  data: BasketballData,
-  association: VerbandId,
+  data: ClubCrawlSource,
+  association: AssociationId,
   read: PacedRead
-): Promise<readonly Liga[]> {
-  const filter = { ...KEIN_LIGA_FILTER, verbandIds: [association] };
-  let page: LigaSeite = (await read(() => data.ligaSuche(filter))).ersteSeite;
-  const leagues = [...page.ligen];
+): Promise<readonly League[]> {
+  const filter = { ...NO_LEAGUE_FILTER, associationIds: [association] };
+  let page: LeaguePage = (await read(() => data.leagueSearch(filter)))
+    .firstPage;
+  const leagues = [...page.leagues];
   for (
-    let start = naechsterStartIndex(page);
+    let start = nextStartIndex(page);
     start !== undefined;
-    start = naechsterStartIndex(page)
+    start = nextStartIndex(page)
   ) {
     const from = start;
-    page = await read(() => data.ligaSeite(filter, from));
-    if (page.ligen.length === 0 && page.weitere) {
+    page = await read(() => data.leaguePage(filter, from));
+    if (page.leagues.length === 0 && page.more) {
       // the same page again would follow, and again
       throw new BasketballDataError(
         'unexpected-shape',
         `League list of ${association}: an empty page at ${from} with more to come`
       );
     }
-    leagues.push(...page.ligen);
+    leagues.push(...page.leagues);
   }
   return leagues;
 }
 
 async function teamsOf(
-  data: BasketballData,
-  league: LigaId,
+  data: ClubCrawlSource,
+  league: LeagueId,
   read: PacedRead
 ): Promise<readonly Team[]> {
   try {
-    return await read(() => data.ligaTeams(league));
+    return await read(() => data.leagueTeams(league));
   } catch (error) {
     if (
       isBasketballDataError(error, 'not-found') ||
@@ -116,12 +123,12 @@ async function teamsOf(
 
 /** The Club's own name, or `undefined` where the source does not give it. */
 async function clubName(
-  data: BasketballData,
-  club: VereinId,
+  data: ClubCrawlSource,
+  club: ClubId,
   read: PacedRead
 ): Promise<string | undefined> {
   try {
-    return (await read(() => data.vereinsTeams(club))).verein.name;
+    return (await read(() => data.club(club))).name;
   } catch (error) {
     if (isBasketballDataError(error)) {
       return undefined;

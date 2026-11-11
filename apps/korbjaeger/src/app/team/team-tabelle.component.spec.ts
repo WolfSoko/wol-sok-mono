@@ -2,9 +2,9 @@ import { signal } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import {
   BasketballDataError,
-  type Liga,
-  type Tabelle,
-  type TabellenZeile,
+  type League,
+  type Standings,
+  type StandingsRow,
 } from '@wolsok/feat-shared-basketball-data';
 import {
   BASKETBALL_DATA,
@@ -17,13 +17,13 @@ import { TeamTabelleComponent } from './team-tabelle.component';
 const UNSER_TEAM_ID = 313036;
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
-const VORRUNDE: Liga = {
+const VORRUNDE: League = {
   id: 54862,
   name: 'Regionsvorrunde Nord Braunschweig mu12',
-  verband: { id: 7, name: 'Niedersachsen' },
-  altersklasse: 'U12',
-  geschlecht: 'mix',
-  spielklasse: 'Regionsliga',
+  association: { id: 7, name: 'Niedersachsen' },
+  ageGroup: 'U12',
+  gender: 'mixed',
+  division: 'Regionsliga',
 };
 
 function zeile(
@@ -31,36 +31,36 @@ function zeile(
   id: number,
   name: string,
   [koerbe, gegenkoerbe]: readonly [number, number]
-): TabellenZeile {
+): StandingsRow {
   return {
-    rang,
-    partei: { art: 'team', team: { id, name, vereinId: id } },
-    spiele: 5,
-    siege: 5 - rang,
-    niederlagen: rang,
-    punkte: 2 * (5 - rang),
-    koerbe,
-    gegenkoerbe,
-    korbdifferenz: koerbe - gegenkoerbe,
+    rank: rang,
+    participant: { kind: 'team', team: { id, name, clubId: id } },
+    games: 5,
+    wins: 5 - rang,
+    losses: rang,
+    points: 2 * (5 - rang),
+    pointsFor: koerbe,
+    pointsAgainst: gegenkoerbe,
+    pointDifference: koerbe - gegenkoerbe,
   };
 }
 
-const TABELLE: Tabelle = {
-  liga: VORRUNDE,
-  zeilen: [
+const TABELLE: Standings = {
+  league: VORRUNDE,
+  rows: [
     zeile(1, 313040, 'TV Jahn Wolfsburg', [510, 191]),
     zeile(2, UNSER_TEAM_ID, 'MTV Wasbüttel', [470, 204]),
     zeile(3, 322695, 'SV Groß Schwülper', [102, 575]),
   ],
 };
 
-type TabelleRead = KorbjaegerData['tabelle'];
+type TabelleRead = KorbjaegerData['standings'];
 
-/** `KorbjaegerData` answering `tabelle` with `read`. */
+/** `KorbjaegerData` answering `standings` with `read`. */
 function fakeData(read: TabelleRead): {
-  readonly tabelle: ReturnType<typeof vi.fn<TabelleRead>>;
+  readonly standings: ReturnType<typeof vi.fn<TabelleRead>>;
 } {
-  return { tabelle: vi.fn<TabelleRead>(read) };
+  return { standings: vi.fn<TabelleRead>(read) };
 }
 
 function create(
@@ -119,7 +119,7 @@ describe('TeamTabelleComponent', () => {
 
     await render(data);
 
-    expect(data.tabelle).toHaveBeenCalledWith(
+    expect(data.standings).toHaveBeenCalledWith(
       54862,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
@@ -183,7 +183,7 @@ describe('TeamTabelleComponent', () => {
 
   it('says so for a Liga the DBB keeps no Tabelle for', async () => {
     const page = await render(
-      fakeData(async () => ({ liga: VORRUNDE, zeilen: [] }))
+      fakeData(async () => ({ league: VORRUNDE, rows: [] }))
     );
 
     expect(page.querySelector('table')).toBeNull();
@@ -194,7 +194,7 @@ describe('TeamTabelleComponent', () => {
 
   it('shows that it is loading', () => {
     const fixture = create(
-      fakeData(() => new Promise<Tabelle>(() => undefined))
+      fakeData(() => new Promise<Standings>(() => undefined))
     );
     fixture.detectChanges();
 

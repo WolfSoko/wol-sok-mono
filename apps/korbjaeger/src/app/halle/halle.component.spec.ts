@@ -1,15 +1,15 @@
 import { TestBed } from '@angular/core/testing';
-import type { Halle } from '@wolsok/feat-shared-basketball-data';
+import type { Venue } from '@wolsok/feat-shared-basketball-data';
 import { HalleComponent } from './halle.component';
 
-const SPORTHALLE: Halle = {
+const SPORTHALLE: Venue = {
   name: 'Sporthalle Wasbüttel',
-  strasse: 'Schulstraße 1',
-  plz: '38553',
-  ort: 'Wasbüttel',
+  street: 'Schulstraße 1',
+  postcode: '38553',
+  town: 'Wasbüttel',
 };
 
-async function render(halle: Halle | undefined): Promise<HTMLElement> {
+async function render(halle: Venue | undefined): Promise<HTMLElement> {
   const fixture = TestBed.createComponent(HalleComponent);
   fixture.componentRef.setInput('halle', halle);
   await fixture.whenStable();

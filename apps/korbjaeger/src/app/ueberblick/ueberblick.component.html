@@ -12,8 +12,7 @@
   @switch (ansicht.hinweis) {
     @case ("nach-erstem-spiel") {
       <p class="hinweis" data-qa="ueberblick-hinweis">
-        Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in
-        einem Spielbericht steht: Öffne dann das Spiel und markiere es im Kader.
+        {{ afterFirstGameHint }} Öffne dann das Spiel und markiere es im Kader.
       </p>
     }
     @case ("spiel-oeffnen") {

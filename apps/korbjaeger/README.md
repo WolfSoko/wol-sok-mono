@@ -17,7 +17,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   with its Halle, the Team's Spiele of the Saison (each opening its Spiel
   page), then one Tabelle per Liga of those Spiele, the Team's own line
   highlighted. The current Liga comes first, by the lib's
-  `ligenAktuellZuerst`: the Liga of the Team's next Spiel from today on
+  `leaguesCurrentFirst`: the Liga of the Team's next Spiel from today on
   (`HEUTE` in `src/app/heute.ts`, read again when the page comes back
   into view; specs replace it), or of its last
   Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
@@ -31,7 +31,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   same follow button; `VereinsTeamsComponent` (`src/app/verein/`) only
   shows the read's stand (it keeps them while a sibling Team of the same
   Verein loads, so that reads the Verein no second time). Once the Team's
-  Saison looks over (the lib's `saisonBeendet`: no Spiel left and the last
+  Saison looks over (the lib's `seasonOver`: no Spiel left and the last
   more than two weeks past) a hint (`SaisonEndeHinweisComponent`, shared
   with the overview) says no Spiel is set and asks whether the Saison is
   over, since a break looks the same, and offers these Teams at the top.
@@ -41,14 +41,14 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   and both Kader of the Spielbericht. Players appear as the DBB shows
   them (shirt number, name), an Anonymer Spieler as "Anonymer Spieler",
   never as a link (ADR 0019). Spielerwerte (points, field goals, free
-  throws, fouls) only for a Kader whose `spielerwerteErfasst` holds,
+  throws, fouls) only for a Kader whose `playerStatsRecorded` holds,
   "keine Spielerwerte erfasst" for one without, "Noch kein Spielbericht"
   while there is none. The Spiel and its Spielbericht load and fail on
   their own; the view models are pure (`spiel-kopf.ts`,
   `kader-zeilen.ts`, `spielbericht-teil.ts`).
 - **Halle** (`src/app/halle/`): `HalleComponent` shows a Halle with a
   link that opens navigation in a tab of its own (the lib's
-  `halleNavigationUrl`); `SpielHalleComponent` shows where a Halle's read
+  `venueNavigationUrl`); `SpielHalleComponent` shows where a Halle's read
   stands (`HallenStand`: loading, failed, read) and reads nothing itself.
   Only the next Spiel's details are read (`spielDetailsResource` in
   `src/app/basketball-data/`, beside `teamSaisonResource`): the Team page
@@ -58,27 +58,27 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
   `entfolgen`. Its local adapter
-  `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-selection`) as
-  `{ version: 3, teams, children, clubColors }` (`auswahl-dokument.ts`: ids
+  `LocalSelection` keeps them in `localStorage` (`korbjaeger-selection`) as
+  `{ version: 3, teams, children, clubColors }` (`selection-document.ts`: ids
   only; English field names since #2966). It reads the document again
   before each write and on the `storage` event, so two tabs keep each
   other's changes, and keeps fields it does not know. Storage that cannot
   be read or holds something else counts as empty, storage that takes
   nothing keeps them for the visit; a document of a newer version is left
-  alone and changes are refused (`AuswahlZuNeuError`, "Bitte die App neu
+  alone and changes are refused (`SelectionTooNewError`, "Bitte die App neu
   laden"). Every adapter runs the shared contract suite
-  `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
+  `selectionContract` (`testing/selection-contract.ts`), the Firestore adapter
   of #2873 too.
 - **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
   next Spiel (day, time, home or away, opponent), the Spiele
-  before it that fall through (cancelled or forfeited) and its last result (the lib's `teamUeberblick`), the Team
+  before it that fall through (cancelled or forfeited) and its last result (the lib's `teamOverview`), the Team
   that plays first first and Teams without a next Spiel last
-  (`nachNaechstemSpiel`), each linking to its Team page.
+  (`byNextGame`), each linking to its Team page.
   `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
   (`teamSaisonResource`, as the Team page) and, once its next Spiel is
   known, that Spiel's details for the Halle (`spielDetailsResource`), both
   ended when the Team is unfollowed. A card whose Team's Saison looks
-  over (`saisonBeendet`) shows the same hint with its Verein's current
+  over (`seasonOver`) shows the same hint with its Verein's current
   Teams; only then is the Verein read (`vereinsTeamsResource`), once per
   Verein however many of its Teams are followed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
@@ -96,8 +96,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   shown by `korb-facetten-select`, which says so when a step offers
   nothing); then a Liga of the paged list (`ligenSeiten`: the first page
   with the search, every later one through the DBB's list call,
-  "Weitere Ligen", the lib's `naechsterStartIndex`); then every Team of
-  that Liga (`ligaTeamsResource`, the lib's `ligaTeams` from its
+  "Weitere Ligen", the lib's `nextStartIndex`); then every Team of
+  that Liga (`ligaTeamsResource`, the lib's `leagueTeams` from its
   Spielplan), by the DBB's Team name, which carries the Verein's team
   number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
   opens its Team page. Changing a pick starts over below it.
@@ -126,10 +126,10 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Last good data** (`src/app/basketball-data/`): the browser transport
   keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
   match info and a Verein's Spiele by its proxy path
-  (`SPEICHERBARE_ARTEN`, `LokaleLetzteAntworten`, `localStorage` keys
+  (`SPEICHERBARE_ARTEN`, `LocalAnswerCache`, `localStorage` keys
   `korbjaeger-answer:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
   an index `korbjaeger-answers` of each one's size, time and kind). Each
-  is kept without the persons it names (the lib's `dbbOhnePersonen`: a
+  is kept without the persons it names (the lib's `dbbWithoutPersons`: a
   match info names top players and referees). Never kept: a Spielbericht
   (its Kader name children, ADR 0019), the wizard's Liga search and Liga
   Teams (browsing them would evict what Meine Teams need), errors, and an
@@ -144,7 +144,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
   longer kept at the start, when the page comes back into view and hourly
   while it stays open. When Meine Teams find the storage full, the
-  answers give way (`SPEICHER_FREIGEBEN`) and `LokaleAuswahl` writes once
+  answers give way (`SPEICHER_FREIGEBEN`) and `LocalSelection` writes once
   more. At most 60 answers and 1,000,000 characters
   (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
   either evicts the oldest answers first, once the new one is stored (a
@@ -173,7 +173,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   its URL and back, for the transport and the proxy. Only the reads the lib's `dbbHttpRequest` allowlists
   get a route, with numeric ids; every other path under `/api/dbb/` is 404.
   A Verein's Spiele (`/api/dbb/verein/{id}/spiele`) are read for the
-  lib's fixed day range (`VEREINS_SPIELE_TAGE`), never one the client
+  lib's fixed day range (`CLUB_GAMES_DAYS`), never one the client
   names, so each Verein caches under one URL.
   The Liga search is a GET too, its filter in the query
   (`/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1`, a later
@@ -267,5 +267,5 @@ npx nx e2e korbjaeger                        # Playwright, on the fake DBB
 The proxy specs mount the real route files in h3 where Nitro's file
 routing puts them, with the DBB faked; `e2e/dbb-proxy.spec.ts` checks that
 routing on the served app. The page specs run against a fake
-`BasketballData` and `LokaleAuswahl` without storage. The e2e starts `fake-dbb`
+`BasketballData` and `LocalSelection` without storage. The e2e starts `fake-dbb`
 and `serve-e2e` as Nx tasks (CLAUDE.md, Testing).

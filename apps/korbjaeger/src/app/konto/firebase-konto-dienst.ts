@@ -27,12 +27,12 @@ import {
 } from 'firebase/firestore';
 import type { Environment } from '../../environments/environment.type';
 import {
-  type AuswahlInhalt,
-  auswahlDokumentVon,
-  FirestoreAuswahl,
-  geraetUebernehmen,
-  type NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  type SelectionContent,
+  selectionDocumentOf,
+  FirestoreSelection,
+  takeOverDevice,
+  type NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   flagGesetzt,
   flagSetzen,
@@ -145,14 +145,14 @@ class FirebaseKontoDienst implements KontoDienst {
     beiFehler: (fehler: unknown) => void
   ): Promise<KontoAuswahl> {
     // the cache shows the account at once, offline too
-    return new FirestoreAuswahl(await this.db(), uid, { beiFehler });
+    return new FirestoreSelection(await this.db(), uid, { onError: beiFehler });
   }
 
   public async geraetUebernehmen(
     uid: string,
-    geraet: AuswahlInhalt
-  ): Promise<NichtUebernommen> {
-    return geraetUebernehmen(await this.db(), uid, geraet);
+    geraet: SelectionContent
+  ): Promise<NotTakenOver> {
+    return takeOverDevice(await this.db(), uid, geraet);
   }
 
   /**
@@ -162,7 +162,7 @@ class FirebaseKontoDienst implements KontoDienst {
    * its choices.
    */
   public async auswahlLoeschen(uid: string): Promise<void> {
-    await deleteDoc(auswahlDokumentVon(await this.db(), uid));
+    await deleteDoc(selectionDocumentOf(await this.db(), uid));
   }
 
   public async allesGesendet(): Promise<boolean> {

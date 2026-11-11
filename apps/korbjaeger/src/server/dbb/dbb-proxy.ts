@@ -11,6 +11,7 @@ import {
   errorResponse,
   jsonResponse,
   notFound,
+  publicCacheControl,
   sendProxyResponse,
   type ProxyResponse,
 } from './dbb-proxy-response';
@@ -24,13 +25,16 @@ const { browser, cdn, cdnFertigerSpielbericht } = PROXY_CACHE_SEKUNDEN;
  * How long a successful read may be reused, in the browser and in Firebase
  * Hosting's CDN. Errors are never stored (`PROXY_ERROR_CACHE_CONTROL`).
  */
-export const DBB_PROXY_CACHE_CONTROL = `public, max-age=${browser}, s-maxage=${cdn}`;
+export const DBB_PROXY_CACHE_CONTROL = publicCacheControl(browser, cdn);
 
 /**
  * How long the CDN may keep a played Spiel's Spielbericht; the browser
  * keeps it as long as every read.
  */
-export const FINISHED_BOXSCORE_CACHE_CONTROL = `public, max-age=${browser}, s-maxage=${cdnFertigerSpielbericht}`;
+export const FINISHED_BOXSCORE_CACHE_CONTROL = publicCacheControl(
+  browser,
+  cdnFertigerSpielbericht
+);
 
 /**
  * Answers one allowlisted read (`undefined`: none, so 404) from the DBB:
@@ -66,7 +70,7 @@ export async function proxyDbbRead(
 
 /** How long a success may be reused: a played Spiel's Spielbericht longer. */
 function cacheControlOf(request: DbbRequest, body: unknown): string {
-  return request.kind === 'spielbericht' && dbbBoxscoreFinished(body)
+  return request.kind === 'game-report' && dbbBoxscoreFinished(body)
     ? FINISHED_BOXSCORE_CACHE_CONTROL
     : DBB_PROXY_CACHE_CONTROL;
 }

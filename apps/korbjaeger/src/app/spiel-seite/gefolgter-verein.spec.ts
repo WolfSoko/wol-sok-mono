@@ -1,10 +1,10 @@
-import type { Spiel } from '@wolsok/feat-shared-basketball-data';
+import type { Game } from '@wolsok/feat-shared-basketball-data';
 import { followedSide, gefolgterVerein } from './gefolgter-verein';
 
 const SPIEL = {
-  heim: { art: 'team', team: { id: 1, name: 'Heim', vereinId: 10 } },
-  gast: { art: 'team', team: { id: 2, name: 'Gast', vereinId: 20 } },
-} as unknown as Spiel;
+  home: { kind: 'team', team: { id: 1, name: 'Heim', clubId: 10 } },
+  away: { kind: 'team', team: { id: 2, name: 'Gast', clubId: 20 } },
+} as unknown as Game;
 
 describe('gefolgterVerein', () => {
   it('names the Verein of the side whose Team is followed', () => {
@@ -24,8 +24,8 @@ describe('gefolgterVerein', () => {
   it('skips a side the Liga fills later', () => {
     const offen = {
       ...SPIEL,
-      heim: { art: 'offen', bezeichnung: 'Nord 1. Platz' },
-    } as unknown as Spiel;
+      home: { kind: 'open', label: 'Nord 1. Platz' },
+    } as unknown as Game;
 
     expect(gefolgterVerein(offen, [1, 2])).toBe(20);
   });

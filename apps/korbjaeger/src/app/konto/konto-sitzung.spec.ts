@@ -1,7 +1,7 @@
 import {
-  AUSWAHL_SCHLUESSEL,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  SELECTION_KEY,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
@@ -19,7 +19,7 @@ import {
 interface Aufbau {
   readonly sitzung: KontoSitzung;
   readonly dienst: FakeKontoDienst;
-  readonly lokal: LokaleAuswahl;
+  readonly lokal: LocalSelection;
   readonly merker: MerkerImSpec;
   readonly geladen: () => number;
   online: boolean;
@@ -30,11 +30,11 @@ async function aufbauen(
     angemeldetGewesen?: boolean;
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
-    lokal?: LokaleAuswahl;
+    lokal?: LocalSelection;
   } = {}
 ): Promise<Aufbau> {
   const dienst = optionen.dienst ?? new FakeKontoDienst();
-  const lokal = optionen.lokal ?? new LokaleAuswahl(undefined);
+  const lokal = optionen.lokal ?? new LocalSelection(undefined);
   const merker = new MerkerImSpec(optionen.angemeldetGewesen);
   let ladevorgaenge = 0;
   const laden = async () => {
@@ -62,8 +62,8 @@ async function aufbauen(
 /** Signed in, with Meine Teams and a Kind chosen on the device before. */
 async function angemeldet(): Promise<Aufbau> {
   const aufbau = await aufbauen();
-  await aufbau.lokal.folgen(313036);
-  await aufbau.lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+  await aufbau.lokal.follow(313036);
+  await aufbau.lokal.mark({ kind: 'named', personId: 4711 }, 'Mimi');
   await aufbau.sitzung.anmelden();
   aufbau.dienst.aufrufe.length = 0;
   return aufbau;
@@ -80,7 +80,7 @@ describe('KontoSitzung', () => {
       const { sitzung, lokal, geladen } = await aufbauen({
         ohneAnmeldung: true,
       });
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
 
       expect(sitzung.stand()).toEqual({ art: 'aus' });
       expect(sitzung.auswahl.teams()).toEqual([313036]);
@@ -89,11 +89,11 @@ describe('KontoSitzung', () => {
 
     it('keeps an Elternteil never signed in on the device, without loading Firebase', async () => {
       const { sitzung, lokal, geladen } = await aufbauen();
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
 
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
       expect(sitzung.auswahl.teams()).toEqual([313036]);
-      expect(sitzung.auswahl.nichtLesbar()).toBe(false);
+      expect(sitzung.auswahl.unreadable()).toBe(false);
       expect(geladen()).toBe(0);
     });
 
@@ -119,7 +119,7 @@ describe('KontoSitzung', () => {
 
     it("says it cannot read, and shows no device's choices, while the account cannot be opened", async () => {
       const sitzung = new KontoSitzung(
-        new LokaleAuswahl(undefined),
+        new LocalSelection(undefined),
         () => Promise.reject(new Error('offline')),
         new MerkerImSpec(true)
       );
@@ -128,21 +128,21 @@ describe('KontoSitzung', () => {
 
       expect(sitzung.stand()).toEqual({ art: 'nicht-erreichbar' });
       expect(sitzung.auswahl.teams()).toBeUndefined();
-      expect(sitzung.auswahl.nichtLesbar()).toBe(true);
+      expect(sitzung.auswahl.unreadable()).toBe(true);
     });
   });
 
   it("names another store once the account's holds the choices, and the device's again after signing out", async () => {
     const { sitzung } = await aufbauen();
-    const geraet = sitzung.auswahl.quelle();
+    const geraet = sitzung.auswahl.source();
 
     await sitzung.anmelden();
-    const konto = sitzung.auswahl.quelle();
+    const konto = sitzung.auswahl.source();
     expect(konto).toBeDefined();
     expect(konto).not.toBe(geraet);
 
     await sitzung.abmelden();
-    expect(sitzung.auswahl.quelle()).toBe(geraet);
+    expect(sitzung.auswahl.source()).toBe(geraet);
   });
 
   describe('getting ready', () => {
@@ -169,8 +169,8 @@ describe('KontoSitzung', () => {
   describe('signing in', () => {
     it("takes the device's choices into the account, then off the device", async () => {
       const { sitzung, dienst, lokal, merker } = await aufbauen();
-      await lokal.folgen(313036);
-      await lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      await lokal.follow(313036);
+      await lokal.mark({ kind: 'named', personId: 4711 }, 'Mimi');
 
       await sitzung.anmelden();
 
@@ -181,8 +181,8 @@ describe('KontoSitzung', () => {
       ]);
       expect(dienst.uebernommen).toEqual({
         teams: [313036],
-        kinder: [{ personId: 4711, spitzname: 'Mimi' }],
-        vereinsfarben: [],
+        children: [{ personId: 4711, nickname: 'Mimi' }],
+        clubColors: [],
       });
       expect(lokal.teams()).toEqual([]);
       expect(merker.gesetzt()).toBe(true);
@@ -193,21 +193,21 @@ describe('KontoSitzung', () => {
       const dienst = new FakeKontoDienst();
       dienst.uebrig = {
         teams: [9001, 9002],
-        kinder: [{ personId: 4711 }],
-        vereinsfarben: [],
+        children: [{ personId: 4711 }],
+        clubColors: [],
       };
       const { sitzung } = await aufbauen({ dienst });
 
       expect(await sitzung.anmelden()).toEqual({
         teams: [9001, 9002],
-        kinder: [{ personId: 4711 }],
-        vereinsfarben: [],
+        children: [{ personId: 4711 }],
+        clubColors: [],
       });
       expect(sitzung.uebernahme()).toEqual({
         uebrig: {
           teams: [9001, 9002],
-          kinder: [{ personId: 4711 }],
-          vereinsfarben: [],
+          children: [{ personId: 4711 }],
+          clubColors: [],
         },
         behalten: false,
       });
@@ -215,10 +215,10 @@ describe('KontoSitzung', () => {
 
     it("keeps the device's choices that did not fit on the device, and tells again at the next start", async () => {
       const dienst = new FakeKontoDienst();
-      const lokal = new LokaleAuswahl(undefined);
-      await lokal.folgen(313036);
-      await lokal.folgen(9001);
-      dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
+      const lokal = new LocalSelection(undefined);
+      await lokal.follow(313036);
+      await lokal.follow(9001);
+      dienst.uebrig = { teams: [9001], children: [], clubColors: [] };
       const { sitzung } = await aufbauen({ dienst, lokal });
 
       await sitzung.anmelden();
@@ -233,7 +233,7 @@ describe('KontoSitzung', () => {
 
     it("drops the takeover's notice once another tab switched to another account", async () => {
       const dienst = new FakeKontoDienst();
-      dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
+      dienst.uebrig = { teams: [9001], children: [], clubColors: [] };
       const { sitzung } = await aufbauen({ dienst });
       await sitzung.anmelden();
 
@@ -251,7 +251,7 @@ describe('KontoSitzung', () => {
 
     it('changes nothing when the popup was closed', async () => {
       const { sitzung, dienst, lokal, merker } = await aufbauen();
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
       dienst.abgebrochen = true;
 
       await expect(sitzung.anmelden()).rejects.toBeInstanceOf(
@@ -266,7 +266,7 @@ describe('KontoSitzung', () => {
 
     it("signs out again, the device's choices kept, where they could not be taken over", async () => {
       const { sitzung, dienst, lokal, merker } = await aufbauen();
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
       dienst.uebernahmeScheitert = true;
 
       await expect(sitzung.anmelden()).rejects.toThrow('offline');
@@ -284,8 +284,8 @@ describe('KontoSitzung', () => {
 
     it('takes over what changed on the device while it took over', async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
-      await lokal.folgen(313036);
-      dienst.waehrendUebernahme = () => lokal.folgen(201500);
+      await lokal.follow(313036);
+      dienst.waehrendUebernahme = () => lokal.follow(201500);
 
       await sitzung.anmelden();
 
@@ -303,7 +303,7 @@ describe('KontoSitzung', () => {
     it("keeps the device's choices where they changed during every takeover", async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
       let team = 900000;
-      dienst.beiJederUebernahme = () => lokal.folgen(team++);
+      dienst.beiJederUebernahme = () => lokal.follow(team++);
 
       await sitzung.anmelden();
 
@@ -315,7 +315,7 @@ describe('KontoSitzung', () => {
     it('keeps choices a takeover kept on the device when signing out before the next start', async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
       let team = 900000;
-      dienst.beiJederUebernahme = () => lokal.folgen(team++);
+      dienst.beiJederUebernahme = () => lokal.follow(team++);
       await sitzung.anmelden();
       dienst.beiJederUebernahme = undefined;
       const behalten = lokal.teams();
@@ -328,13 +328,13 @@ describe('KontoSitzung', () => {
 
     it('takes off the device only what it took over, so a Kind renamed meanwhile goes over next', async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
-      await lokal.folgen(313036);
-      await lokal.markieren({ art: 'benannt', personId: 4711 }, 'Mimi');
+      await lokal.follow(313036);
+      await lokal.mark({ kind: 'named', personId: 4711 }, 'Mimi');
       const uebernommen: unknown[] = [];
       dienst.beiJederUebernahme = async () => {
         uebernommen.push(dienst.uebernommen);
         if (uebernommen.length === 1) {
-          await lokal.spitznameSetzen(4711, 'Mi');
+          await lokal.setNickname(4711, 'Mi');
         }
       };
 
@@ -342,10 +342,10 @@ describe('KontoSitzung', () => {
 
       expect(dienst.uebernommen).toEqual({
         teams: [],
-        kinder: [{ personId: 4711, spitzname: 'Mi' }],
-        vereinsfarben: [],
+        children: [{ personId: 4711, nickname: 'Mi' }],
+        clubColors: [],
       });
-      expect(lokal.kinder()).toEqual([]);
+      expect(lokal.children()).toEqual([]);
       expect(sitzung.uebernahme()?.behalten).toBe(false);
     });
 
@@ -356,14 +356,14 @@ describe('KontoSitzung', () => {
         setItem: (key: string, value: string) => void speicher.set(key, value),
         removeItem: (key: string) => void speicher.delete(key),
       };
-      const lokal = new LokaleAuswahl(geraet);
+      const lokal = new LocalSelection(geraet);
       const dienst = new FakeKontoDienst();
       const { sitzung } = await aufbauen({ dienst, lokal });
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
       dienst.waehrendUebernahme = async () => {
         // another tab, its storage event not here yet
         speicher.set(
-          AUSWAHL_SCHLUESSEL,
+          SELECTION_KEY,
           JSON.stringify({ version: 3, teams: { 313036: 1, 201500: 2 } })
         );
       };
@@ -379,8 +379,8 @@ describe('KontoSitzung', () => {
     it('takes the kept choices over at the next start', async () => {
       const dienst = new FakeKontoDienst();
       dienst.wiederhergestellt = MIMI_ELTERN;
-      const lokal = new LokaleAuswahl(undefined);
-      await lokal.folgen(201500);
+      const lokal = new LocalSelection(undefined);
+      await lokal.follow(201500);
 
       const { sitzung } = await aufbauen({
         angemeldetGewesen: true,
@@ -397,8 +397,8 @@ describe('KontoSitzung', () => {
       const dienst = new FakeKontoDienst();
       dienst.wiederhergestellt = MIMI_ELTERN;
       dienst.uebernahmeScheitert = true;
-      const lokal = new LokaleAuswahl(undefined);
-      await lokal.folgen(201500);
+      const lokal = new LocalSelection(undefined);
+      await lokal.follow(201500);
 
       const { sitzung } = await aufbauen({
         angemeldetGewesen: true,
@@ -407,7 +407,7 @@ describe('KontoSitzung', () => {
       });
 
       expect(sitzung.stand()).toEqual(ANGEMELDET);
-      expect(sitzung.auswahl.nichtLesbar()).toBe(false);
+      expect(sitzung.auswahl.unreadable()).toBe(false);
       expect(sitzung.uebernahme()?.behalten).toBe(true);
       expect(lokal.teams()).toEqual([201500]);
     });
@@ -445,7 +445,7 @@ describe('KontoSitzung', () => {
       ]);
       expect(sitzung.stand()).toEqual({ art: 'abgemeldet' });
       expect(sitzung.auswahl.teams()).toEqual([]);
-      expect(lokal.kinder()).toEqual([]);
+      expect(lokal.children()).toEqual([]);
       expect(merker.gesetzt()).toBe(false);
     });
 
@@ -514,8 +514,8 @@ describe('KontoSitzung', () => {
       dienst.wiederhergestellt = MIMI_ELTERN;
       const uebernahme = Promise.withResolvers<void>();
       dienst.waehrendUebernahme = () => uebernahme.promise;
-      const lokal = new LokaleAuswahl(undefined);
-      await lokal.folgen(201500);
+      const lokal = new LocalSelection(undefined);
+      await lokal.follow(201500);
       const sitzung = new KontoSitzung(
         lokal,
         async () => dienst,
@@ -630,7 +630,7 @@ describe('KontoSitzung', () => {
     it('switches to the account another tab signed in to instead', async () => {
       const { sitzung, dienst } = await angemeldet();
 
-      await dienst.auswahlVon('uid-2').folgen(201765);
+      await dienst.auswahlVon('uid-2').follow(201765);
       dienst.authMeldet({ uid: 'uid-2', name: 'Familie Beispiel' });
       await abwarten();
 
@@ -680,7 +680,7 @@ describe('KontoSitzung', () => {
     it("keeps the device's choices when another tab's sign-in fails and signs out", async () => {
       const { sitzung, dienst, lokal } = await aufbauen();
       await sitzung.vorbereiten();
-      await lokal.folgen(313036);
+      await lokal.follow(313036);
 
       // the other tab signs in, cannot take the choices over, signs out
       dienst.authMeldet(MIMI_ELTERN);
@@ -787,16 +787,16 @@ describe('KontoSitzung', () => {
 
     it('says it cannot read where the account fails otherwise, its choices unshown', async () => {
       const { sitzung, dienst } = await angemeldet();
-      await dienst.kontoAuswahl.folgen(313036);
+      await dienst.kontoAuswahl.follow(313036);
       expect(sitzung.auswahl.teams()).toEqual([313036]);
 
       dienst.lesefehler?.({ code: 'unavailable' });
 
       expect(sitzung.stand()).toEqual({ art: 'nicht-erreichbar' });
-      expect(sitzung.auswahl.nichtLesbar()).toBe(true);
+      expect(sitzung.auswahl.unreadable()).toBe(true);
       expect(sitzung.auswahl.teams()).toBeUndefined();
-      expect(sitzung.auswahl.kinder()).toBeUndefined();
-      await expect(sitzung.auswahl.folgen(201500)).rejects.toThrow();
+      expect(sitzung.auswahl.children()).toBeUndefined();
+      await expect(sitzung.auswahl.follow(201500)).rejects.toThrow();
     });
 
     it("says it cannot open an account another tab signed in to, and tries again on Auth's next word", async () => {
@@ -820,7 +820,7 @@ describe('KontoSitzung', () => {
       dienst.zwischenspeicherBereit = geleert.promise;
       const merker = new MerkerImSpec(true);
       const sitzung = new KontoSitzung(
-        new LokaleAuswahl(undefined),
+        new LocalSelection(undefined),
         async () => dienst,
         merker
       );
@@ -841,7 +841,7 @@ describe('KontoSitzung', () => {
       merker.aufraeumen = true;
       const dienst = new FakeKontoDienst();
       const sitzung = new KontoSitzung(
-        new LokaleAuswahl(undefined),
+        new LocalSelection(undefined),
         async () => dienst,
         merker
       );

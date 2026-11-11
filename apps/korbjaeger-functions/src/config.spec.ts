@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { CLUB_INDEX_CRAWL_DAYS } from '@wolsok/feat-shared-korbjaeger-account';
 import { CLUB_INDEX_DBB, CLUB_INDEX_SCHEDULE, REGION } from './config';
 
 interface ProjectJson {
@@ -37,5 +38,20 @@ describe('the club index', () => {
   it('waits a second between two calls and refreshes weekly', () => {
     expect(CLUB_INDEX_DBB.pauseMs).toBeGreaterThanOrEqual(1000);
     expect(CLUB_INDEX_SCHEDULE.maxAgeMs).toBe(7 * 86_400_000);
+  });
+
+  // #3022: a Verband without a list for a week gets a warning
+  it('warns of a Verband that has had no list for a week', () => {
+    expect(CLUB_INDEX_SCHEDULE.warnListlessAfterMs).toBe(7 * 86_400_000);
+  });
+
+  // the privacy policy renders the same days
+  it('takes its days from the account lib', () => {
+    expect(CLUB_INDEX_SCHEDULE.maxAgeMs).toBe(
+      CLUB_INDEX_CRAWL_DAYS.maxAge * 86_400_000
+    );
+    expect(CLUB_INDEX_SCHEDULE.retryAfterMs).toBe(
+      CLUB_INDEX_CRAWL_DAYS.retryAfter * 86_400_000
+    );
   });
 });

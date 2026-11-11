@@ -2,10 +2,12 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { ClubSearchComponent } from './club-search.component';
+import { CHILD_SEARCH_LEVEL } from './search-level';
 
 /**
- * `/suchen`: the ways to a Team without its id, by its Verein's name or
- * step by step through its Liga (the wizard on `/team-einrichten`).
+ * `/suchen`: the ways to a Team without its id, by its Verein's name, by
+ * the Verein on to marking the Kind (`/suchen/kind`), or step by step
+ * through its Liga (the wizard on `/team-einrichten`).
  */
 @Component({
   selector: 'korb-search-page',
@@ -16,6 +18,15 @@ import { ClubSearchComponent } from './club-search.component';
       <h2 id="ueber-den-verein">Über den Verein</h2>
       <p>Gib den Namen des Vereins ein und folge dann seinem Team.</p>
       <korb-club-search />
+    </section>
+    <section aria-labelledby="ueber-mein-kind">
+      <h2 id="ueber-mein-kind">Über mein Kind</h2>
+      <p>
+        Über seinen Verein zu seinem Team, dann markierst du dein Kind im Kader.
+      </p>
+      <a matButton="outlined" [routerLink]="byChild" data-qa="by-child"
+        >Über mein Kind suchen</a
+      >
     </section>
     <section aria-labelledby="ueber-die-liga">
       <h2 id="ueber-die-liga">Über die Liga</h2>
@@ -45,4 +56,6 @@ import { ClubSearchComponent } from './club-search.component';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class SearchPageComponent {}
+export class SearchPageComponent {
+  protected readonly byChild = CHILD_SEARCH_LEVEL.link;
+}

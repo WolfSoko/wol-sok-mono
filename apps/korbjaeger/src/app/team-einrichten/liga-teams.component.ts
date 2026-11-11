@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
-import type { LigaId, Team } from '@wolsok/feat-shared-basketball-data';
+import type { LeagueId, Team } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { ligaTeamsResource } from '../basketball-data/liga-teams-resource';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
@@ -109,7 +109,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
 })
 export class LigaTeamsComponent {
   /** The Liga to list the Teams of. */
-  public readonly ligaId = input.required<LigaId>();
+  public readonly ligaId = input.required<LeagueId>();
 
   private readonly auswahl = inject(AUSWAHL);
   private readonly router = inject(Router);
@@ -133,7 +133,7 @@ export class LigaTeamsComponent {
     }
     this.folgtGerade.set(true);
     try {
-      if (await this.aenderung.ausfuehren(() => this.auswahl.folgen(team.id))) {
+      if (await this.aenderung.ausfuehren(() => this.auswahl.follow(team.id))) {
         await this.router.navigate(['/team', team.id]);
       }
     } finally {

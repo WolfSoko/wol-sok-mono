@@ -4,20 +4,21 @@ import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
-  type Halle,
-  type Kader,
-  type SpielDetails,
-  type Spielbericht,
-  type Spielerwerte,
+  type Venue,
+  type Roster,
+  type GameDetails,
+  type GameReport,
+  type PlayerStats,
 } from '@wolsok/feat-shared-basketball-data';
+import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  type Auswahl,
-  AuswahlZuNeuError,
-  type Kind,
-  LokaleAuswahl,
-} from '@wolsok/feat-korbjaeger-auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+  type Selection,
+  SelectionTooNewError,
+  type Child,
+  LocalSelection,
+} from '@wolsok/feat-korbjaeger-selection';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -31,108 +32,125 @@ import { Breadcrumb } from '../navigation/breadcrumb';
 /** Noon on the day of the Spiel, in Germany. */
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
-const HALLE: Halle = {
+const HALLE: Venue = {
   name: 'Schulsporthalle',
-  strasse: 'Schulstr. 12',
-  plz: '38553',
-  ort: 'Wasbüttel',
+  street: 'Schulstr. 12',
+  postcode: '38553',
+  town: 'Wasbüttel',
 };
 
-const GESPIELT: SpielDetails = {
-  spiel: {
+const GESPIELT: GameDetails = {
+  game: {
     id: 2861436,
-    ligaId: 54862,
-    spieltag: 3,
-    datum: '2026-09-20',
-    uhrzeit: '09:00',
-    heim: {
-      art: 'team',
-      team: { id: 313036, name: 'MTV Wasbüttel', vereinId: 1837 },
+    leagueId: 54862,
+    matchday: 3,
+    date: '2026-09-20',
+    time: '09:00',
+    home: {
+      kind: 'team',
+      team: { id: 313036, name: 'MTV Wasbüttel', clubId: 1837 },
     },
-    gast: {
-      art: 'team',
-      team: { id: 201500, name: 'MTV Gifhorn', vereinId: 201500 },
+    away: {
+      kind: 'team',
+      team: { id: 201500, name: 'MTV Gifhorn', clubId: 201500 },
     },
     status: {
-      art: 'gespielt',
-      ergebnis: { heim: 78, gast: 47 },
-      bestaetigt: true,
+      kind: 'played',
+      result: { home: 78, away: 47 },
+      confirmed: true,
     },
   },
-  liga: {
+  league: {
     id: 54862,
     name: 'Regionsvorrunde Nord Braunschweig mu12',
-    verband: { id: 7, name: 'Niedersachsen' },
-    altersklasse: 'U12',
-    geschlecht: 'mix',
-    spielklasse: 'Regionsliga',
+    association: { id: 7, name: 'Niedersachsen' },
+    ageGroup: 'U12',
+    gender: 'mixed',
+    division: 'Regionsliga',
   },
-  halle: HALLE,
-  viertel: [
-    { heim: 20, gast: 10 },
-    { heim: 18, gast: 12 },
-    { heim: 22, gast: 9 },
-    { heim: 18, gast: 16 },
+  venue: HALLE,
+  quarters: [
+    { home: 20, away: 10 },
+    { home: 18, away: 12 },
+    { home: 22, away: 9 },
+    { home: 18, away: 16 },
   ],
-  verlaengerungen: [],
+  overtimes: [],
 };
 
-function werte(punkte: number, fouls = 2): Spielerwerte {
-  return {
-    punkte,
-    zweier: 4,
-    dreier: 1,
-    freiwuerfe: { getroffen: 3, versucht: 5 },
+function werte(punkte: number, fouls = 2): PlayerStats {
+  return playerStatsOf({
+    points: punkte,
+    twoPointers: { made: 4, attempted: 0 },
+    threePointers: { made: 1, attempted: 0 },
+    freeThrows: { made: 3, attempted: 5 },
     fouls,
-  };
+  });
 }
 
-const MIT_WERTEN: Kader = {
-  spielerwerteErfasst: true,
-  eintraege: [
+/** A starter of the 1. Regionalliga, every value recorded. */
+const ALLE_WERTE = playerStatsOf({
+  playingTimeSeconds: 1724,
+  points: 16,
+  twoPointers: { made: 8, attempted: 12 },
+  threePointers: { made: 0, attempted: 2 },
+  freeThrows: { made: 0, attempted: 2 },
+  rebounds: 7,
+  assists: 1,
+  steals: 2,
+  turnovers: 1,
+  blocks: 1,
+  fouls: 2,
+  efficiency: 18,
+  startingFive: true,
+});
+
+const MIT_WERTEN: Roster = {
+  playerStatsRecorded: true,
+  entries: [
     {
-      art: 'benannt',
+      kind: 'named',
       personId: 91692638,
-      vorname: 'Ilvio',
-      nachname: 'Mistelgrund',
-      trikotnummer: '7',
-      spielerwerte: werte(14),
+      firstName: 'Ilvio',
+      lastName: 'Mistelgrund',
+      shirtNumber: '7',
+      playerStats: werte(14),
     },
-    { art: 'anonym', spielerwerte: werte(10, 4) },
+    { kind: 'anonymous', playerStats: werte(10, 4) },
   ],
 };
 
-const OHNE_WERTE: Kader = {
-  spielerwerteErfasst: false,
-  eintraege: [
+const OHNE_WERTE: Roster = {
+  playerStatsRecorded: false,
+  entries: [
     {
-      art: 'benannt',
+      kind: 'named',
       personId: 92256481,
-      vorname: 'Delon',
-      nachname: 'Nesselbach',
-      trikotnummer: '30',
+      firstName: 'Delon',
+      lastName: 'Nesselbach',
+      shirtNumber: '30',
     },
-    { art: 'anonym' },
+    { kind: 'anonymous' },
   ],
 };
 
-function bericht(heim: Kader, gast: Kader): Spielbericht {
-  return { spielId: 2861436, heim, gast };
+function bericht(heim: Roster, gast: Roster): GameReport {
+  return { gameId: 2861436, home: heim, away: gast };
 }
 
-type SpielRead = KorbjaegerData['spiel'];
-type BerichtRead = KorbjaegerData['spielbericht'];
+type SpielRead = KorbjaegerData['game'];
+type BerichtRead = KorbjaegerData['gameReport'];
 
 function fakeData(
-  spiel: SpielRead,
-  spielbericht: BerichtRead
+  game: SpielRead,
+  gameReport: BerichtRead
 ): {
-  readonly spiel: ReturnType<typeof vi.fn<SpielRead>>;
-  readonly spielbericht: ReturnType<typeof vi.fn<BerichtRead>>;
+  readonly game: ReturnType<typeof vi.fn<SpielRead>>;
+  readonly gameReport: ReturnType<typeof vi.fn<BerichtRead>>;
 } {
   return {
-    spiel: vi.fn<SpielRead>(spiel),
-    spielbericht: vi.fn<BerichtRead>(spielbericht),
+    game: vi.fn<SpielRead>(game),
+    gameReport: vi.fn<BerichtRead>(gameReport),
   };
 }
 
@@ -142,13 +160,13 @@ async function render(
   data: ReturnType<typeof fakeData>,
   spielId = '2861436'
 ): Promise<HTMLElement> {
-  return (await renderMit(data, new LokaleAuswahl(undefined), spielId)).seite;
+  return (await renderMit(data, new LocalSelection(undefined), spielId)).seite;
 }
 
 /** Renders the page of `spielId` on `data` with `auswahl`. */
 async function renderMit(
   data: ReturnType<typeof fakeData>,
-  auswahl: Auswahl,
+  auswahl: Selection,
   spielId = '2861436'
 ): Promise<{
   readonly seite: HTMLElement;
@@ -241,9 +259,9 @@ describe('SpielComponent', () => {
 
   describe('the breadcrumb', () => {
     async function levelsWith(teams: readonly number[]) {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
       await renderMit(
         fakeData(
@@ -281,11 +299,11 @@ describe('SpielComponent', () => {
 
     await render(data);
 
-    expect(data.spiel).toHaveBeenCalledWith(
+    expect(data.game).toHaveBeenCalledWith(
       2861436,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(data.spielbericht).toHaveBeenCalledWith(
+    expect(data.gameReport).toHaveBeenCalledWith(
       2861436,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
@@ -320,11 +338,11 @@ describe('SpielComponent', () => {
     fixture.componentRef.setInput('spielId', '2911141');
     await stabil();
 
-    expect(data.spiel).toHaveBeenLastCalledWith(
+    expect(data.game).toHaveBeenLastCalledWith(
       2911141,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(data.spielbericht).toHaveBeenLastCalledWith(
+    expect(data.gameReport).toHaveBeenLastCalledWith(
       2911141,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
@@ -374,10 +392,10 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            spiel: {
-              ...GESPIELT.spiel,
-              gast: { art: 'offen', bezeichnung: 'Nord 1. Platz' },
-              status: { art: 'geplant' },
+            game: {
+              ...GESPIELT.game,
+              away: { kind: 'open', label: 'Nord 1. Platz' },
+              status: { kind: 'scheduled' },
             },
           }),
           async () => undefined
@@ -412,10 +430,10 @@ describe('SpielComponent', () => {
       ]);
     });
 
-    it.each<[string, SpielDetails['spiel']['status']]>([
-      ['planned', { art: 'geplant' }],
-      ['cancelled', { art: 'abgesagt' }],
-      ['forfeited without a result', { art: 'kampflos', verzichtet: [] }],
+    it.each<[string, GameDetails['game']['status']]>([
+      ['planned', { kind: 'scheduled' }],
+      ['cancelled', { kind: 'cancelled' }],
+      ['forfeited without a result', { kind: 'forfeited', forfeitedBy: [] }],
     ])(
       'shows no final score for quarters of a Spiel %s',
       async (_case, status) => {
@@ -423,7 +441,7 @@ describe('SpielComponent', () => {
           fakeData(
             async () => ({
               ...GESPIELT,
-              spiel: { ...GESPIELT.spiel, status },
+              game: { ...GESPIELT.game, status },
             }),
             async () => undefined
           )
@@ -452,7 +470,7 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            verlaengerungen: [{ heim: 6, gast: 4 }],
+            overtimes: [{ home: 6, away: 4 }],
           }),
           async () => undefined
         )
@@ -477,7 +495,7 @@ describe('SpielComponent', () => {
     it('shows no quarters where the Verband records none', async () => {
       const seite = await render(
         fakeData(
-          async () => ({ ...GESPIELT, viertel: [] }),
+          async () => ({ ...GESPIELT, quarters: [] }),
           async () => undefined
         )
       );
@@ -489,21 +507,21 @@ describe('SpielComponent', () => {
     it.each([
       [
         'a Spiel without a result yet, planned or not entered',
-        { art: 'geplant' },
+        { kind: 'scheduled' },
         'Noch kein Ergebnis',
       ],
-      ['a cancelled Spiel', { art: 'abgesagt' }, 'abgesagt'],
+      ['a cancelled Spiel', { kind: 'cancelled' }, 'abgesagt'],
       [
         'a forfeited Spiel, with who gave up',
-        { art: 'kampflos', verzichtet: ['gast'] },
+        { kind: 'forfeited', forfeitedBy: ['away'] },
         'kampflos · MTV Gifhorn hat verzichtet',
       ],
       [
         'a result not confirmed yet',
         {
-          art: 'gespielt',
-          ergebnis: { heim: 78, gast: 47 },
-          bestaetigt: false,
+          kind: 'played',
+          result: { home: 78, away: 47 },
+          confirmed: false,
         },
         'Ergebnis noch nicht bestätigt',
       ],
@@ -512,8 +530,8 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            spiel: { ...GESPIELT.spiel, status },
-            viertel: [],
+            game: { ...GESPIELT.game, status },
+            quarters: [],
           }),
           async () => undefined
         )
@@ -539,12 +557,12 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            spiel: {
-              ...GESPIELT.spiel,
+            game: {
+              ...GESPIELT.game,
               status: {
-                art: 'gespielt',
-                ergebnis: { heim: 78, gast: 47 },
-                bestaetigt: false,
+                kind: 'played',
+                result: { home: 78, away: 47 },
+                confirmed: false,
               },
             },
           }),
@@ -570,19 +588,19 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            spiel: {
-              ...GESPIELT.spiel,
+            game: {
+              ...GESPIELT.game,
               status: {
-                art: 'gespielt',
-                ergebnis: { heim: 78, gast: 47 },
-                bestaetigt: false,
+                kind: 'played',
+                result: { home: 78, away: 47 },
+                confirmed: false,
               },
             },
-            liga: {
-              ...GESPIELT.liga,
+            league: {
+              ...GESPIELT.league,
               name: '1. Bundesliga (easyCredit BBL)',
-              verband: { id: 100, name: 'Bundesligen' },
-              ohneSpielberichte: true,
+              association: { id: 100, name: 'Bundesligen' },
+              withoutGameReports: true,
               resultsNeverConfirmed: true,
             },
           }),
@@ -596,19 +614,19 @@ describe('SpielComponent', () => {
     });
 
     it.each([
-      ['a planned Spiel', { art: 'geplant' }],
+      ['a planned Spiel', { kind: 'scheduled' }],
       [
         'a forfeit',
         {
-          art: 'kampflos',
-          verzichtet: ['gast'],
-          ergebnis: { heim: 20, gast: 0 },
+          kind: 'forfeited',
+          forfeitedBy: ['away'],
+          result: { home: 20, away: 0 },
         },
       ],
     ] as const)('does not mark %s as vorläufig', async (_case, status) => {
       const seite = await render(
         fakeData(
-          async () => ({ ...GESPIELT, spiel: { ...GESPIELT.spiel, status } }),
+          async () => ({ ...GESPIELT, game: { ...GESPIELT.game, status } }),
           async () => undefined
         )
       );
@@ -640,7 +658,7 @@ describe('SpielComponent', () => {
     });
 
     it('says so where the DBB names no Halle yet', async () => {
-      const { halle: _keine, ...ohneHalle } = GESPIELT;
+      const { venue: _keine, ...ohneHalle } = GESPIELT;
       const seite = await render(
         fakeData(
           async () => ohneHalle,
@@ -688,14 +706,78 @@ describe('SpielComponent', () => {
         'Name',
         'Punkte',
         'Feldkörbe',
+        'Dreier',
         'Freiwürfe getroffen von versucht',
         'Fouls',
       ]);
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['7', 'Ilvio Mistelgrund', '14', '5', '3/5', '2'],
-        ['', 'Anonymer Spieler', '10', '5', '3/5', '4'],
+        ['7', 'Ilvio Mistelgrund', '14', '5', '1', '3/5', '2'],
+        ['', 'Anonymer Spieler', '10', '5', '1', '3/5', '4'],
       ]);
       expect(teil(heim, 'kader-ohne-werte')).toBeNull();
+      expect(teil(heim, 'kader-start')).toBeNull();
+    });
+
+    it('shows every Spielerwert the Verband records, and the starting five', async () => {
+      const alleWerte: Roster = {
+        playerStatsRecorded: true,
+        entries: [
+          {
+            kind: 'named',
+            personId: 96606327,
+            firstName: 'Rilla',
+            lastName: 'Schlehenau',
+            shirtNumber: '1',
+            playerStats: ALLE_WERTE,
+          },
+          {
+            kind: 'anonymous',
+            playerStats: { ...ALLE_WERTE, startingFive: false },
+          },
+        ],
+      };
+      const seite = await render(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(alleWerte, OHNE_WERTE)
+        )
+      );
+
+      const [heim] = kader(seite);
+      expect(kopfzellen(heim)).toEqual([
+        'Trikotnummer',
+        'Name',
+        'Spielzeit in Minuten',
+        'Punkte',
+        'Feldkörbe getroffen von versucht',
+        'Dreier getroffen von versucht',
+        'Freiwürfe getroffen von versucht',
+        'Rebounds',
+        'Assists',
+        'Ballgewinne',
+        'Ballverluste',
+        'Blocks',
+        'Fouls',
+        'Effizienz',
+      ]);
+      const [starter, anonym] = zellen(heim, 'kader-zeile');
+      expect(starter.slice(2)).toEqual([
+        '28:44',
+        '16',
+        '8/14',
+        '0/2',
+        '0/2',
+        '7',
+        '1',
+        '2',
+        '1',
+        '1',
+        '2',
+        '18',
+      ]);
+      expect(alle(heim, 'kader-start')).toHaveLength(1);
+      expect(text(teil(heim, 'kader-start'))).toContain('In der Startfünf');
+      expect(anonym[1]).toBe('Anonymer Spieler');
     });
 
     it('says "keine Spielerwerte erfasst" for a Kader without, never zeros', async () => {
@@ -719,9 +801,9 @@ describe('SpielComponent', () => {
     });
 
     it('leaves out the shirt numbers where the Kader lists none', async () => {
-      const ohneNummern: Kader = {
-        spielerwerteErfasst: true,
-        eintraege: [{ art: 'anonym', spielerwerte: werte(10) }],
+      const ohneNummern: Roster = {
+        playerStatsRecorded: true,
+        entries: [{ kind: 'anonymous', playerStats: werte(10) }],
       };
       const seite = await render(
         fakeData(
@@ -733,7 +815,7 @@ describe('SpielComponent', () => {
       const [heim, gast] = kader(seite);
       expect(kopfzellen(heim)[0]).toBe('Name');
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['Anonymer Spieler', '10', '5', '3/5', '2'],
+        ['Anonymer Spieler', '10', '5', '1', '3/5', '2'],
       ]);
       expect(kopfzellen(gast)[0]).toBe('Trikotnummer');
     });
@@ -757,7 +839,7 @@ describe('SpielComponent', () => {
         fakeData(
           async () => ({
             ...GESPIELT,
-            spiel: { ...GESPIELT.spiel, status: { art: 'abgesagt' } },
+            game: { ...GESPIELT.game, status: { kind: 'cancelled' } },
           }),
           async () => undefined
         )
@@ -769,9 +851,9 @@ describe('SpielComponent', () => {
     });
 
     describe('in a Liga the DBB keeps no Spielberichte for', () => {
-      const OHNE_BERICHTE: SpielDetails = {
+      const OHNE_BERICHTE: GameDetails = {
         ...GESPIELT,
-        liga: { ...GESPIELT.liga, ohneSpielberichte: true },
+        league: { ...GESPIELT.league, withoutGameReports: true },
       };
 
       it('says so instead of asking to come back later', async () => {
@@ -792,7 +874,7 @@ describe('SpielComponent', () => {
           fakeData(
             async () => ({
               ...OHNE_BERICHTE,
-              spiel: { ...OHNE_BERICHTE.spiel, status: { art: 'abgesagt' } },
+              game: { ...OHNE_BERICHTE.game, status: { kind: 'cancelled' } },
             }),
             async () => undefined
           )
@@ -859,24 +941,24 @@ describe('SpielComponent', () => {
 
     async function mitAuswahl(
       teams: readonly number[],
-      kinder: readonly Kind[] = [],
-      spielbericht: Spielbericht = bericht(MIT_WERTEN, OHNE_WERTE)
+      kinder: readonly Child[] = [],
+      gameReport: GameReport = bericht(MIT_WERTEN, OHNE_WERTE)
     ): Promise<{
       readonly seite: HTMLElement;
-      readonly auswahl: LokaleAuswahl;
+      readonly auswahl: LocalSelection;
       readonly stabil: () => Promise<void>;
     }> {
-      const auswahl = new LokaleAuswahl(undefined);
+      const auswahl = new LocalSelection(undefined);
       for (const team of teams) {
-        await auswahl.folgen(team);
+        await auswahl.follow(team);
       }
-      for (const { personId, spitzname } of kinder) {
-        await auswahl.markieren({ art: 'benannt', personId }, spitzname);
+      for (const { personId, nickname: spitzname } of kinder) {
+        await auswahl.mark({ kind: 'named', personId }, spitzname);
       }
       const gerendert = await renderMit(
         fakeData(
           async () => GESPIELT,
-          async () => spielbericht
+          async () => gameReport
         ),
         auswahl
       );
@@ -984,8 +1066,8 @@ describe('SpielComponent', () => {
       expect(text(dialog())).toContain('Ilvio Mistelgrund');
       await spitznameEingeben('  Ilvi ', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvi' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvi' },
       ]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(zeile.hasAttribute('data-kind')).toBe(true);
@@ -1002,7 +1084,7 @@ describe('SpielComponent', () => {
       await stabil();
       await spitznameEingeben('', stabil);
 
-      expect(auswahl.kinder()).toEqual([{ personId: ILVIO }]);
+      expect(auswahl.children()).toEqual([{ personId: ILVIO }]);
       const zeile = zeileVon(kaderVon(seite, 'MTV Wasbüttel'), 'Ilvio');
       expect(teil(zeile, 'kader-spitzname')).toBeNull();
     });
@@ -1015,13 +1097,13 @@ describe('SpielComponent', () => {
       knopf(dialog(), 'Abbrechen').click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it("highlights a marked Kind only in a followed Team's Kader", async () => {
       const { seite } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: DELON, spitzname: 'Del' }]
+        [{ personId: DELON, nickname: 'Del' }]
       );
 
       // Delon plays for the opponent here: not one of Meine Teams
@@ -1051,7 +1133,7 @@ describe('SpielComponent', () => {
     it("changes a marked Kind's Spitzname from its menu", async () => {
       const { seite, auswahl, stabil } = await mitAuswahl(
         [WASBUETTEL],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }]
+        [{ personId: ILVIO, nickname: 'Ilvi' }]
       );
 
       const menue = zeileVon(
@@ -1071,8 +1153,8 @@ describe('SpielComponent', () => {
       expect(dialog()?.querySelector('input')?.value).toBe('Ilvi');
       await spitznameEingeben('Ilvo', stabil);
 
-      expect(auswahl.kinder()).toEqual([
-        { personId: ILVIO, spitzname: 'Ilvo' },
+      expect(auswahl.children()).toEqual([
+        { personId: ILVIO, nickname: 'Ilvo' },
       ]);
       expect(
         text(teil(kaderVon(seite, 'MTV Wasbüttel'), 'kader-spitzname'))
@@ -1095,13 +1177,13 @@ describe('SpielComponent', () => {
       ).click();
       await stabil();
 
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
       expect(markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))).toHaveLength(1);
     });
 
     it('says so where the mark could not be stored', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      vi.spyOn(auswahl, 'markieren').mockRejectedValue(new Error('voll'));
+      vi.spyOn(auswahl, 'mark').mockRejectedValue(new Error('voll'));
 
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
@@ -1119,12 +1201,12 @@ describe('SpielComponent', () => {
           async () => GESPIELT,
           async () => bericht(MIT_WERTEN, OHNE_WERTE)
         ),
-        fakeAuswahl({
+        fakeSelection({
           teams,
-          markieren: async () => {
-            // as LokaleAuswahl does: it shows nothing of a newer version
+          mark: async () => {
+            // as LocalSelection does: it shows nothing of a newer version
             teams.set([]);
-            throw new AuswahlZuNeuError();
+            throw new SelectionTooNewError();
           },
         })
       );
@@ -1142,26 +1224,26 @@ describe('SpielComponent', () => {
 
     it('closes the Spitzname dialog where the Team was unfollowed meanwhile, and marks nobody', async () => {
       const { seite, auswahl, stabil } = await mitAuswahl([WASBUETTEL]);
-      const markieren = vi.spyOn(auswahl, 'markieren');
+      const markieren = vi.spyOn(auswahl, 'mark');
       markierKnoepfe(kaderVon(seite, 'MTV Wasbüttel'))[0].click();
       await stabil();
       expect(dialog()).not.toBeNull();
 
       // another tab unfollows the Team: its Kader offers no mark any more
-      await auswahl.entfolgen(WASBUETTEL);
+      await auswahl.unfollow(WASBUETTEL);
       await stabil();
 
       expect(dialog()).toBeNull();
       expect(markieren).not.toHaveBeenCalled();
-      expect(auswahl.kinder()).toEqual([]);
+      expect(auswahl.children()).toEqual([]);
     });
 
     it('highlights a Kind in both Kader where both Teams are followed and it is in each', async () => {
-      const ilvio = MIT_WERTEN.eintraege[0];
+      const ilvio = MIT_WERTEN.entries[0];
       const { seite } = await mitAuswahl(
         [WASBUETTEL, GIFHORN],
-        [{ personId: ILVIO, spitzname: 'Ilvi' }],
-        bericht(MIT_WERTEN, { ...OHNE_WERTE, eintraege: [ilvio] })
+        [{ personId: ILVIO, nickname: 'Ilvi' }],
+        bericht(MIT_WERTEN, { ...OHNE_WERTE, entries: [ilvio] })
       );
 
       for (const team of ['MTV Wasbüttel', 'MTV Gifhorn']) {
@@ -1285,8 +1367,8 @@ describe('SpielComponent', () => {
         'Dieses Spiel kennt der DBB nicht.'
       );
       expect(text(seite.querySelector('h1'))).toBe('Spiel');
-      expect(data.spiel).not.toHaveBeenCalled();
-      expect(data.spielbericht).not.toHaveBeenCalled();
+      expect(data.game).not.toHaveBeenCalled();
+      expect(data.gameReport).not.toHaveBeenCalled();
       expect(teil(seite, 'spielbericht-fehlt')).toBeNull();
     }
   );

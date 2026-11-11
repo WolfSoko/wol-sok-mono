@@ -7,7 +7,7 @@ import {
   type Systemfarbe,
 } from './farbschema';
 import { VORGABEN } from './vorgaben';
-import { KeineFarbeError } from '@wolsok/feat-korbjaeger-auswahl';
+import { NotAColorError } from '@wolsok/feat-korbjaeger-selection';
 
 /** WCAG 2.x contrast of two `#rrggbb` colours. */
 function kontrast(a: string, b: string): number {
@@ -127,9 +127,9 @@ describe('farbschema', () => {
     'keeps every text readable for a spread of 216 colours, first and second (dark: %s)',
     (dunkel) => {
       const fehler = STREUUNG.flatMap((farbe) => {
-        const erste = farbschema({ primaer: farbe }, dunkel);
+        const erste = farbschema({ primary: farbe }, dunkel);
         const zweite = farbschema(
-          { primaer: '#c8102e', zweite: farbe },
+          { primary: '#c8102e', secondary: farbe },
           dunkel
         );
         return [
@@ -147,7 +147,7 @@ describe('farbschema', () => {
     it.each([false, true])(
       'keeps every text readable on its ground (dark: %s)',
       (dunkel) => {
-        const schema = farbschema({ primaer }, dunkel);
+        const schema = farbschema({ primary: primaer }, dunkel);
 
         expect(paarePruefen(schema, TEXT_PAARE, 4.5)).toEqual([]);
         expect(paarePruefen(schema, UI_PAARE, 3)).toEqual([]);
@@ -159,7 +159,10 @@ describe('farbschema', () => {
     it.each([false, true])(
       'keeps every text readable on its ground (dark: %s)',
       (dunkel) => {
-        const schema = farbschema({ primaer: '#c8102e', zweite }, dunkel);
+        const schema = farbschema(
+          { primary: '#c8102e', secondary: zweite },
+          dunkel
+        );
 
         expect(paarePruefen(schema, TEXT_PAARE, 4.5)).toEqual([]);
         expect(paarePruefen(schema, UI_PAARE, 3)).toEqual([]);
@@ -168,7 +171,7 @@ describe('farbschema', () => {
   });
 
   it('gives every Material system colour as #rrggbb', () => {
-    const schema = farbschema({ primaer: '#c8102e' }, false);
+    const schema = farbschema({ primary: '#c8102e' }, false);
 
     expect(Object.keys(schema).sort()).toEqual([...SYSTEMFARBEN].sort());
     for (const wert of Object.values(schema)) {
@@ -177,21 +180,21 @@ describe('farbschema', () => {
   });
 
   it('shifts the tone of a colour too light for a light ground', () => {
-    const hell = farbschema({ primaer: '#ffd700' }, false);
+    const hell = farbschema({ primary: '#ffd700' }, false);
 
     // that it still reads on its ground, the contrast check above shows
     expect(hell.primary).not.toBe('#ffd700');
   });
 
   it('keeps the club’s hue', () => {
-    const rot = farbschema({ primaer: '#c8102e' }, false).primary;
+    const rot = farbschema({ primary: '#c8102e' }, false).primary;
 
     expect(farbtonAbstand(rot, '#c8102e')).toBeLessThan(5);
   });
 
   it('takes the second colour for the secondary family', () => {
-    const ohne = farbschema({ primaer: '#c8102e' }, false);
-    const mit = farbschema({ primaer: '#c8102e', zweite: '#1d4ed8' }, false);
+    const ohne = farbschema({ primary: '#c8102e' }, false);
+    const mit = farbschema({ primary: '#c8102e', secondary: '#1d4ed8' }, false);
 
     expect(mit.primary).toBe(ohne.primary);
     expect(mit.secondary).not.toBe(ohne.secondary);
@@ -199,20 +202,18 @@ describe('farbschema', () => {
   });
 
   it('refuses what is no #rrggbb colour', () => {
-    expect(() => farbschema({ primaer: 'red' }, false)).toThrow(
-      KeineFarbeError
-    );
+    expect(() => farbschema({ primary: 'red' }, false)).toThrow(NotAColorError);
     expect(() =>
-      farbschema({ primaer: '#c8102e', zweite: '#12' }, false)
-    ).toThrow(KeineFarbeError);
+      farbschema({ primary: '#c8102e', secondary: '#12' }, false)
+    ).toThrow(NotAColorError);
   });
 });
 
 describe('farbschemaTokens', () => {
   it('sets every system colour for light and dark at once', () => {
-    const tokens = farbschemaTokens({ primaer: '#c8102e' });
-    const hell = farbschema({ primaer: '#c8102e' }, false);
-    const dunkel = farbschema({ primaer: '#c8102e' }, true);
+    const tokens = farbschemaTokens({ primary: '#c8102e' });
+    const hell = farbschema({ primary: '#c8102e' }, false);
+    const dunkel = farbschema({ primary: '#c8102e' }, true);
 
     expect(Object.keys(tokens)).toHaveLength(SYSTEMFARBEN.length);
     expect(tokens['--mat-sys-primary']).toBe(

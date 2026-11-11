@@ -1,4 +1,5 @@
 import { assertFails } from '@firebase/rules-unit-testing';
+import { storedAssociationClubs } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import { useEmulatorProject } from '../testing/emulator';
 import { firestoreClubIndex } from './firestore-club-index';
@@ -43,13 +44,56 @@ describe('the club index in Firestore', () => {
     expect([...(await store.read()).attempts]).toEqual([[6, 43]]);
   });
 
-  it('deletes a list', async () => {
+  it('notes offered Verbände without a list, and replaces a note with the saved list', async () => {
     const store = firestoreClubIndex(project().admin);
     await store.save(BAYERN);
 
-    await store.remove(2);
+    await store.noteOffered([3, 6]);
+    await store.markAttempt(3, 43);
 
-    expect((await store.read()).lists).toEqual([]);
+    const noted = await store.read();
+    expect(noted.lists).toEqual([BAYERN]);
+    expect([...noted.ids]).toEqual([2, 3, 6]);
+    expect([...noted.offered]).toEqual([2, 3, 6]);
+    expect([...noted.attempts]).toEqual([[3, 43]]);
+
+    await store.save({ ...BAYERN, association: { id: 3, name: 'Berlin' } });
+    const saved = await project()
+      .admin.collection(CLUB_INDEX_COLLECTION)
+      .doc('3')
+      .get();
+    expect(saved.get('offered')).toBe(true);
+    expect(saved.get('attemptedAt')).toBeUndefined();
+  });
+
+  it('marks a list stored before it noted Verbände, keeping the list', async () => {
+    const { offered: _offered, ...unmarked } = storedAssociationClubs(BAYERN);
+    await project()
+      .admin.collection(CLUB_INDEX_COLLECTION)
+      .doc('2')
+      .set(unmarked);
+    const store = firestoreClubIndex(project().admin);
+    expect([...(await store.read()).offered]).toEqual([]);
+
+    await store.noteOffered([2]);
+
+    const read = await store.read();
+    expect(read.lists).toEqual([BAYERN]);
+    expect([...read.offered]).toEqual([2]);
+  });
+
+  it('deletes a list and a note', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.save(BAYERN);
+
+    await store.noteOffered([3]);
+
+    await store.remove(2);
+    await store.remove(3);
+
+    const read = await store.read();
+    expect(read.lists).toEqual([]);
+    expect([...read.ids]).toEqual([]);
   });
 
   it('skips a list it cannot read', async () => {
@@ -70,5 +114,38 @@ describe('the club index in Firestore', () => {
     await assertFails(
       device.firestore().collection(CLUB_INDEX_COLLECTION).doc('2').get()
     );
+  });
+
+  it('dates a Verband without a list and keeps its last error, both dropped by the next save (#3022)', async () => {
+    const store = firestoreClubIndex(project().admin);
+
+    await store.markAttempt(2, 50, 40);
+    await store.markFailure(2, 'unavailable: DBB down');
+    await store.markAttempt(3, 51);
+
+    const marked = await store.read();
+    expect([...marked.attempts]).toEqual([
+      [2, 50],
+      [3, 51],
+    ]);
+    expect([...marked.listlessSince]).toEqual([[2, 40]]);
+    expect([...marked.lastErrors]).toEqual([[2, 'unavailable: DBB down']]);
+
+    await store.save(BAYERN);
+    const saved = await store.read();
+    expect([...saved.listlessSince]).toEqual([]);
+    expect([...saved.lastErrors]).toEqual([]);
+  });
+
+  it('drops the last error with the next attempt of a Verband without a list, so a timeout leaves none (#3022)', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.markAttempt(2, 50, 40);
+    await store.markFailure(2, 'unavailable: DBB down');
+
+    await store.markAttempt(2, 60, 40);
+
+    const read = await store.read();
+    expect([...read.lastErrors]).toEqual([]);
+    expect([...read.listlessSince]).toEqual([[2, 40]]);
   });
 });
