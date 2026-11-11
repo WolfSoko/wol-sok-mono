@@ -26,7 +26,13 @@ describe('runCommandProcess', () => {
 
   beforeEach(() => execMock.mockImplementation(spawnFakeChildProcess));
 
-  afterEach(() => jest.clearAllMocks());
+  afterEach(async () => {
+    // Closes a process a failed expectation left running, so its listeners
+    // do not leak into the next spec.
+    lastSpawned(execMock)?.emit('close', 0);
+    await Promise.resolve();
+    jest.clearAllMocks();
+  });
 
   /** Starts the command and hands out the process the mocked exec spawned. */
   function start(): { result: Promise<boolean>; spawned: FakeChildProcess } {

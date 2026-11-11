@@ -1,4 +1,4 @@
-import { ChildProcess, exec } from 'child_process';
+import { type ChildProcess, exec } from 'child_process';
 
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
