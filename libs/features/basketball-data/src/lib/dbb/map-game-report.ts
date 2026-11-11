@@ -125,17 +125,25 @@ function mapPlayerStats(stats: DbbObject): PlayerStats {
   };
 }
 
-/** Whether any value of `stats` is not 0 (or a starter). */
+/**
+ * Whether any number of `stats` is not 0. The starting five alone does not
+ * count: a Kader with only its starters marked records no Spielerwerte.
+ */
 function hasStats(stats: PlayerStats): boolean {
-  const { twoPointers, threePointers, freeThrows, startingFive, ...counts } =
-    stats;
-  return (
-    startingFive ||
-    [twoPointers, threePointers, freeThrows].some(
-      (shots) => shots.made !== 0 || shots.attempted !== 0
-    ) ||
-    Object.values(counts).some((value) => value !== 0)
-  );
+  return [
+    stats.playingTimeSeconds,
+    stats.points,
+    ...[stats.twoPointers, stats.threePointers, stats.freeThrows].flatMap(
+      (shots) => [shots.made, shots.attempted]
+    ),
+    stats.rebounds,
+    stats.assists,
+    stats.steals,
+    stats.turnovers,
+    stats.blocks,
+    stats.fouls,
+    stats.efficiency,
+  ].some((value) => value !== 0);
 }
 
 function shotsOf(shot: DbbObject | undefined): Shots {

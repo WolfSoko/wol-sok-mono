@@ -85,6 +85,49 @@ test.describe('Spiel page', () => {
     ]);
   });
 
+  test('shows every Spielerwert where the Verband records them all, readable on a phone', async ({
+    page,
+    spielPage,
+  }) => {
+    await page.setViewportSize({ width: 360, height: 800 });
+    await spielPage.goto(2861555);
+
+    const heim = spielPage.kader.first();
+    await expect(heim.getByRole('columnheader')).toHaveText([
+      'Nr.',
+      'Name',
+      'Min.',
+      'Pkt.',
+      'FK',
+      '3P',
+      'FW',
+      'Reb.',
+      'Ass.',
+      'BG',
+      'BV',
+      'Bl.',
+      'F',
+      'Eff.',
+    ]);
+    await expect(heim.getByTestId('kader-start')).toHaveCount(5);
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= window.innerWidth
+      )
+    ).toBe(true);
+
+    await heim
+      .locator('.tabelle')
+      .evaluate((tabelle) => (tabelle.scrollLeft = tabelle.scrollWidth));
+    const name = await spielPage
+      .spieler(heim)
+      .first()
+      .locator('td.mat-column-name')
+      .boundingBox();
+    expect(name?.x).toBeGreaterThanOrEqual(0);
+    expect((name?.x ?? 0) + (name?.width ?? 0)).toBeLessThanOrEqual(360);
+  });
+
   test('says when there is no Spielbericht yet', async ({ spielPage }) => {
     await spielPage.goto(2843814);
 

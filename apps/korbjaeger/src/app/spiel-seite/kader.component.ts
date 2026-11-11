@@ -45,17 +45,18 @@ export class KaderComponent {
 
   private readonly kinder = inject(AUSWAHL).kinder;
 
+  private readonly recorded = computed(() => recordedStats(this.kader()));
   protected readonly zeilen = computed(() => {
     const kinder = this.kinder();
     return kaderZeilen(
       this.kader(),
-      this.gefolgt() && kinder !== undefined ? kinder : undefined
+      this.gefolgt() && kinder !== undefined ? kinder : undefined,
+      this.recorded()
     );
   });
-  protected readonly statsColumns = computed(() => {
-    const kader = this.kader();
-    return statsColumns(kader.playerStatsRecorded, recordedStats(kader));
-  });
+  protected readonly statsColumns = computed(() =>
+    statsColumns(this.kader().playerStatsRecorded, this.recorded())
+  );
   protected readonly spalten = computed(() => [
     ...(this.zeilen().some((zeile) => zeile.nummer !== undefined)
       ? ['nummer']

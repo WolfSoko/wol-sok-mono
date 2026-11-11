@@ -224,6 +224,25 @@ describe('mapGameReport', () => {
     });
   });
 
+  describe('where the Kader marks only its starting five', () => {
+    const data = readEnvelope(rosterOnly) as {
+      matchBoxscore: { homePlayerStats: Record<string, unknown>[] };
+    };
+    const startersOnly = {
+      ...data,
+      matchBoxscore: {
+        ...data.matchBoxscore,
+        homePlayerStats: data.matchBoxscore.homePlayerStats.map(
+          (stats, index) => ({ ...stats, isf: index < 5 })
+        ),
+      },
+    };
+
+    it('counts no Spielerwerte recorded', () => {
+      expect(mapGameReport(startersOnly)?.home.playerStatsRecorded).toBe(false);
+    });
+  });
+
   describe('an Anonymer Spieler', () => {
     const data = readEnvelope(rosterOnly) as {
       matchBoxscore: {

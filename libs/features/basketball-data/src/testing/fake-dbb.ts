@@ -9,6 +9,7 @@ import boxscore2843811 from '../lib/dbb/fixtures/boxscore-2843811.json';
 import boxscore2843814 from '../lib/dbb/fixtures/boxscore-2843814.json';
 import boxscore2861436 from '../lib/dbb/fixtures/boxscore-2861436.json';
 import boxscore2911141 from '../lib/dbb/fixtures/boxscore-2911141.json';
+import boxscore2861555 from '../lib/dbb/fixtures/boxscore-2861555.json';
 import club1837Actualmatches from '../lib/dbb/fixtures/club-1837-actualmatches.json';
 import clubNotFound from '../lib/dbb/fixtures/club-not-found.json';
 import boxscoreNotFound from '../lib/dbb/fixtures/boxscore-not-found.json';
@@ -94,6 +95,7 @@ const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
   [{ kind: 'game-report', gameId: 2911141 }, boxscore2911141],
   [{ kind: 'game-report', gameId: 2843811 }, boxscore2843811],
   [{ kind: 'game-report', gameId: 2843814 }, boxscore2843814],
+  [{ kind: 'game-report', gameId: 2861555 }, boxscore2861555],
 ];
 
 /** The recorded answers, by the call `dbbHttpRequest` builds for them. */

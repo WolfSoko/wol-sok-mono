@@ -90,7 +90,7 @@ Per player the boxscore carries `esz`, `pts`, `twoPoints`, `threePoints`,
 - **The starting five is a label in the name cell**, not a column: a small
   "Start" with the title "In der Startfünf" (visually hidden text for
   screen readers says the same), only in a Kader that records it.
-- **The name column sticks** while the wider table scrolls sideways on a
+- **The name column sticks**, with the shirt number before it, while the wider table scrolls sideways on a
   phone (`sticky` on its `matColumnDef`, with the surface's background), so
   a row's numbers stay tied to a name. The Kader still scrolls on its own,
   never the page.
@@ -128,7 +128,7 @@ Per player the boxscore carries `esz`, `pts`, `twoPoints`, `threePoints`,
    every player has at 0 does not.
 6. Every header has its German full name as `aria-label` and `title`; no
    English word of the German-text denylist appears in the template.
-7. On a 360 px wide viewport the name column stays visible while the
+7. On a 360 px wide viewport number and name stay visible while the
    table scrolls sideways, and the page itself does not scroll sideways.
 8. `korbjaeger` and `feat-shared-basketball-data` tests, lint,
    lint-templates and `typecheck-specs` (where present) pass; the existing
