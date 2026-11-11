@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
-import { LokaleAuswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import { provideDarstellung } from '../darstellung/darstellung';
 import { EinstellungenComponent } from './einstellungen.component';
 import { nichtUebernommenText } from './nicht-uebernommen-text';
@@ -23,7 +23,7 @@ async function oeffnen(
     ohneAnmeldung?: boolean;
     dienst?: FakeKontoDienst;
     online?: () => boolean;
-    lokal?: LokaleAuswahl;
+    lokal?: LocalSelection;
     /** Holds Firebase's chunk back until it resolves. */
     ladenWartetAuf?: Promise<void>;
     /** How many loads of Firebase's chunk fail first (offline). */
@@ -33,7 +33,7 @@ async function oeffnen(
   const dienst = optionen.dienst ?? new FakeKontoDienst();
   let ladevorgaenge = 0;
   const sitzung = new KontoSitzung(
-    optionen.lokal ?? new LokaleAuswahl(undefined),
+    optionen.lokal ?? new LocalSelection(undefined),
     optionen.ohneAnmeldung
       ? undefined
       : async () => {
@@ -232,7 +232,7 @@ describe('EinstellungenComponent', () => {
 
   it('drops what did not fit once another tab switched to another account', async () => {
     const dienst = new FakeKontoDienst();
-    dienst.uebrig = { teams: [9001], kinder: [], vereinsfarben: [] };
+    dienst.uebrig = { teams: [9001], children: [], clubColors: [] };
     const { knopf, stabil, element } = await oeffnen({ dienst });
     knopf('anmelden')?.click();
     await stabil();
@@ -276,9 +276,9 @@ describe('EinstellungenComponent', () => {
 
   it('says when choices made during sign-in stay on the device for the next start', async () => {
     const dienst = new FakeKontoDienst();
-    const lokal = new LokaleAuswahl(undefined);
+    const lokal = new LocalSelection(undefined);
     let team = 201500;
-    dienst.beiJederUebernahme = () => lokal.folgen(team++);
+    dienst.beiJederUebernahme = () => lokal.follow(team++);
     const { knopf, stabil, element } = await oeffnen({ dienst, lokal });
 
     knopf('anmelden')?.click();
@@ -295,8 +295,8 @@ describe('EinstellungenComponent', () => {
     const dienst = new FakeKontoDienst();
     dienst.uebrig = {
       teams: [9001, 9002],
-      kinder: [{ personId: 4711 }],
-      vereinsfarben: [],
+      children: [{ personId: 4711 }],
+      clubColors: [],
     };
     const { knopf, stabil, element } = await oeffnen({ dienst });
 
@@ -422,13 +422,13 @@ describe('EinstellungenComponent', () => {
 describe('nichtUebernommenText', () => {
   it('says nothing where all fitted', () => {
     expect(
-      nichtUebernommenText({ teams: [], kinder: [], vereinsfarben: [] })
+      nichtUebernommenText({ teams: [], children: [], clubColors: [] })
     ).toBeUndefined();
   });
 
   it('names one Team in the singular', () => {
     expect(
-      nichtUebernommenText({ teams: [313036], kinder: [], vereinsfarben: [] })
+      nichtUebernommenText({ teams: [313036], children: [], clubColors: [] })
     ).toBe(
       '1 Team dieses Geräts passte nicht mehr in dein Konto: Es hält höchstens 50 Teams.'
     );
@@ -438,8 +438,8 @@ describe('nichtUebernommenText', () => {
     expect(
       nichtUebernommenText({
         teams: [313036],
-        kinder: [],
-        vereinsfarben: [{ vereinId: 4242, primaer: '#c8102e' }],
+        children: [],
+        clubColors: [{ clubId: 4242, primary: '#c8102e' }],
       })
     ).toBe(
       '1 Team und die Farben eines Vereins dieses Geräts passten nicht mehr in dein Konto: Es hält höchstens 50 Teams und die Farben von 50 Vereinen.'
@@ -447,10 +447,10 @@ describe('nichtUebernommenText', () => {
     expect(
       nichtUebernommenText({
         teams: [],
-        kinder: [],
-        vereinsfarben: [
-          { vereinId: 4242, primaer: '#c8102e' },
-          { vereinId: 4343, primaer: '#1d4ed8' },
+        children: [],
+        clubColors: [
+          { clubId: 4242, primary: '#c8102e' },
+          { clubId: 4343, primary: '#1d4ed8' },
         ],
       })
     ).toBe(

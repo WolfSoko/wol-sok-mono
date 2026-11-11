@@ -10,17 +10,17 @@ import {
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  vereinsfarbenVon,
-  type VereinsfarbenWahl,
-  gleicheFarben,
-  type Vereinsfarben,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  clubColorsFor,
+  type ClubColorsChoice,
+  sameColors,
+  type ClubColors,
+} from '@wolsok/feat-korbjaeger-selection';
 import { vereinsfarbenTokens } from './vereinsfarben-tokens';
 
 const gleicheOderKeine = (
-  a: Vereinsfarben | undefined,
-  b: Vereinsfarben | undefined
-): boolean => a === b || (!!a && !!b && gleicheFarben(a, b));
+  a: ClubColors | undefined,
+  b: ClubColors | undefined
+): boolean => a === b || (!!a && !!b && sameColors(a, b));
 
 /**
  * Sets the tokens of `farben()` on the element being created as custom
@@ -30,7 +30,7 @@ const gleicheOderKeine = (
  * then). A newer choice wins over a load still running. Call it in an
  * injection context.
  */
-function farbenAnwenden(farben: () => Vereinsfarben | undefined): void {
+function farbenAnwenden(farben: () => ClubColors | undefined): void {
   const element = inject(ElementRef<HTMLElement>).nativeElement;
   const aktuell = computed(farben, { equal: gleicheOderKeine });
   let gesetzt: readonly string[] = [];
@@ -71,7 +71,7 @@ function farbenAnwenden(farben: () => Vereinsfarben | undefined): void {
 
 /**
  * Gives the element being created (a component's host) the colours an
- * Elternteil picked for the Verein `verein()` (`Auswahl.vereinsfarben`);
+ * Elternteil picked for the Verein `verein()` (`Selection.clubColors`);
  * without any, or without a Verein, the app's own apply. While the colours
  * are not read (at start, and while a sign-in or sign-out switches
  * stores), the last ones stay, so the page does not flash the app's own.
@@ -80,22 +80,22 @@ function farbenAnwenden(farben: () => Vereinsfarben | undefined): void {
 export function vereinsfarbenAnwenden(verein: () => ClubId | undefined): void {
   const auswahl = inject(AUSWAHL);
   const liste = linkedSignal<
-    readonly VereinsfarbenWahl[] | undefined,
-    readonly VereinsfarbenWahl[] | undefined
+    readonly ClubColorsChoice[] | undefined,
+    readonly ClubColorsChoice[] | undefined
   >({
-    source: auswahl.vereinsfarben,
+    source: auswahl.clubColors,
     computation: (gelesen, vorher) => gelesen ?? vorher?.value,
   });
   farbenAnwenden(() => {
     const id = verein();
-    return id === undefined ? undefined : vereinsfarbenVon(liste(), id);
+    return id === undefined ? undefined : clubColorsFor(liste(), id);
   });
 }
 
 /** Gives its element the colours `korbFarbschema`, as a preview does; none, the app's own. */
 @Directive({ selector: '[korbFarbschema]' })
 export class FarbschemaDirective {
-  public readonly korbFarbschema = input<Vereinsfarben | undefined>();
+  public readonly korbFarbschema = input<ClubColors | undefined>();
 
   public constructor() {
     farbenAnwenden(this.korbFarbschema);

@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import type { TeamPlatz } from '@wolsok/feat-korbjaeger-auswahl';
+import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { NachEntfolgen } from './nach-entfolgen';
 
@@ -112,15 +112,15 @@ export class TeamFolgenComponent {
 
   private folgen(): Promise<boolean> {
     const team = this.teamId();
-    return this.aenderung.ausfuehren(() => this.auswahl.folgen(team));
+    return this.aenderung.ausfuehren(() => this.auswahl.follow(team));
   }
 
   private async entfolgen(): Promise<void> {
     const team = this.teamId();
     const name = this.teamName();
-    let platz: TeamPlatz | undefined;
+    let platz: TeamPlace | undefined;
     const entfolgt = await this.aenderung.ausfuehren(async () => {
-      platz = await this.auswahl.entfolgen(team);
+      platz = await this.auswahl.unfollow(team);
     });
     // a control that disappears is one of a list: it has the Team's name
     if (entfolgt && this.verschwindetNachEntfolgen() && name !== undefined) {

@@ -2,11 +2,11 @@ import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import type {
-  VereinsfarbenWahl,
-  Vereinsfarben,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  ClubColorsChoice,
+  ClubColors,
+} from '@wolsok/feat-korbjaeger-selection';
 import { farbschemaTokens } from './farbschema';
 import {
   FarbschemaDirective,
@@ -32,18 +32,16 @@ class ImVerein {
 })
 class Seite {
   public readonly verein = signal<ClubId | undefined>(4242);
-  public readonly farben = signal<Vereinsfarben | undefined>(undefined);
+  public readonly farben = signal<ClubColors | undefined>(undefined);
 }
 
-const ROT: VereinsfarbenWahl = { vereinId: 4242, primaer: '#c8102e' };
+const ROT: ClubColorsChoice = { clubId: 4242, primary: '#c8102e' };
 
-async function oeffnen(vereinsfarben: readonly VereinsfarbenWahl[] = [ROT]) {
-  const farben = signal<readonly VereinsfarbenWahl[] | undefined>(
-    vereinsfarben
-  );
+async function oeffnen(vereinsfarben: readonly ClubColorsChoice[] = [ROT]) {
+  const farben = signal<readonly ClubColorsChoice[] | undefined>(vereinsfarben);
   TestBed.configureTestingModule({
     providers: [
-      { provide: AUSWAHL, useValue: fakeAuswahl({ vereinsfarben: farben }) },
+      { provide: AUSWAHL, useValue: fakeSelection({ clubColors: farben }) },
     ],
   });
   const fixture = TestBed.createComponent(Seite);
@@ -101,12 +99,12 @@ describe('vereinsfarbenAnwenden', () => {
   it('follows another Verein, and a change of the colours', async () => {
     const { fixture, farben, stabil, teil } = await oeffnen();
 
-    farben.set([ROT, { vereinId: 4343, primaer: '#1d4ed8' }]);
+    farben.set([ROT, { clubId: 4343, primary: '#1d4ed8' }]);
     fixture.componentInstance.verein.set(4343);
     await stabil();
 
     expect(teil('verein').style.getPropertyValue(PRIMAER)).toBe(
-      farbschemaTokens({ primaer: '#1d4ed8' })[PRIMAER]
+      farbschemaTokens({ primary: '#1d4ed8' })[PRIMAER]
     );
   });
 });
@@ -116,11 +114,11 @@ describe('FarbschemaDirective', () => {
     const { fixture, stabil, teil } = await oeffnen();
     expect(teil('vorschau').style.length).toBe(0);
 
-    fixture.componentInstance.farben.set({ primaer: '#007a3d' });
+    fixture.componentInstance.farben.set({ primary: '#007a3d' });
     await stabil();
 
     expect(teil('vorschau').style.getPropertyValue(PRIMAER)).toBe(
-      farbschemaTokens({ primaer: '#007a3d' })[PRIMAER]
+      farbschemaTokens({ primary: '#007a3d' })[PRIMAER]
     );
   });
 });

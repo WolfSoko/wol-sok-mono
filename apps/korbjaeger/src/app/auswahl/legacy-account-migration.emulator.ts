@@ -9,11 +9,11 @@ import {
   vorhanden as vorhandenIn,
 } from '../../testing/firestore-emulator';
 import {
-  inhaltAus,
-  auswahlDokumentLesen,
-  type AuswahlInhalt,
+  contentOf,
+  readSelectionDocument,
+  type SelectionContent,
   legacyAccountMigration,
-} from '@wolsok/feat-korbjaeger-auswahl';
+} from '@wolsok/feat-korbjaeger-selection';
 import { LEGACY_CHOICES_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 
 /**
@@ -42,10 +42,10 @@ const VERSION_2 = {
 };
 
 /** What it holds, as the app shows it. */
-const WIE_GEZEIGT: AuswahlInhalt = {
+const WIE_GEZEIGT: SelectionContent = {
   teams: [313036, 201500],
-  kinder: [{ personId: 4712 }, { personId: 4711, spitzname: 'Mimi' }],
-  vereinsfarben: [{ vereinId: 4343, primaer: '#1d4ed8', zweite: '#ffffff' }],
+  children: [{ personId: 4712 }, { personId: 4711, nickname: 'Mimi' }],
+  clubColors: [{ clubId: 4343, primary: '#1d4ed8', secondary: '#ffffff' }],
 };
 
 function legacyVorhanden(uid: string, daten: object = VERSION_2) {
@@ -61,11 +61,11 @@ function legacyGespeichert(uid: string): Promise<boolean> {
 }
 
 /** What the account's document holds, as the app reads it. */
-async function gelesen(uid: string): Promise<AuswahlInhalt> {
-  const { teams, kinder, vereinsfarben } = inhaltAus(
-    auswahlDokumentLesen(await gespeichertIn(env, uid))
+async function gelesen(uid: string): Promise<SelectionContent> {
+  const { teams, children, clubColors } = contentOf(
+    readSelectionDocument(await gespeichertIn(env, uid))
   );
-  return { teams, kinder, vereinsfarben };
+  return { teams, children, clubColors };
 }
 
 describe('legacyAccountMigration', () => {

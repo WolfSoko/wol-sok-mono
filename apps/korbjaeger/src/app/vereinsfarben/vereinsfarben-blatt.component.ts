@@ -14,10 +14,10 @@ import {
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
-  vereinsfarbenVon,
-  vereinsfarbenAus,
-  type Vereinsfarben,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  clubColorsFor,
+  clubColorsOf,
+  type ClubColors,
+} from '@wolsok/feat-korbjaeger-selection';
 import { auswahlAenderung } from '../fehler/auswahl-aenderung';
 import { FarbwahlComponent } from './farbwahl.component';
 import { FarbschemaDirective } from './vereinsfarben-anwenden';
@@ -31,7 +31,7 @@ export interface VereinsfarbenBlattDaten {
 /**
  * The bottom sheet "Vereinsfarben" (#2918): a Verein's colour and an
  * optional second one, from presets or the colour picker, with a preview
- * of how the app looks in them; "Übernehmen" stores them in the `Auswahl`,
+ * of how the app looks in them; "Übernehmen" stores them in the `Selection`,
  * "Zurücksetzen" takes them away, so the app's own apply again. A failed
  * change says why and keeps the sheet open.
  */
@@ -154,20 +154,20 @@ export class VereinsfarbenBlattComponent {
 
   /** The colours the Verein has now; `undefined` for none. */
   protected readonly gesetzt = computed(() =>
-    vereinsfarbenVon(this.auswahl.vereinsfarben(), this.daten.vereinId)
+    clubColorsFor(this.auswahl.clubColors(), this.daten.vereinId)
   );
 
   private readonly anfang = untracked(this.gesetzt);
-  protected readonly primaer = signal(this.anfang?.primaer);
-  protected readonly zweite = signal(this.anfang?.zweite);
+  protected readonly primaer = signal(this.anfang?.primary);
+  protected readonly zweite = signal(this.anfang?.secondary);
 
   /** What the choice looks like; none before a first colour is chosen. */
-  protected readonly vorschau = computed((): Vereinsfarben | undefined => {
+  protected readonly vorschau = computed((): ClubColors | undefined => {
     const primaer = this.primaer();
     // presets and the colour picker both give #rrggbb
     return primaer === undefined
       ? undefined
-      : vereinsfarbenAus(primaer, this.zweite());
+      : clubColorsOf(primaer, this.zweite());
   });
 
   protected readonly aenderung = auswahlAenderung();
@@ -178,14 +178,14 @@ export class VereinsfarbenBlattComponent {
     const farben = this.vorschau();
     if (farben !== undefined) {
       await this.aendern(() =>
-        this.auswahl.vereinsfarbenSetzen(this.daten.vereinId, farben)
+        this.auswahl.setClubColors(this.daten.vereinId, farben)
       );
     }
   }
 
   protected zuruecksetzen(): Promise<void> {
     return this.aendern(() =>
-      this.auswahl.vereinsfarbenZuruecksetzen(this.daten.vereinId)
+      this.auswahl.resetClubColors(this.daten.vereinId)
     );
   }
 

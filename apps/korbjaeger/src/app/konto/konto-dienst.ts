@@ -1,8 +1,8 @@
 import type {
-  Auswahl,
-  AuswahlInhalt,
-  NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  Selection,
+  SelectionContent,
+  NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /** The signed-in Elternteil, as Firebase Auth tells: kept in memory only. */
 export interface Benutzer {
@@ -11,11 +11,11 @@ export interface Benutzer {
   readonly name: string | null;
 }
 
-/** An account's `Auswahl` (`FirestoreAuswahl`), open until `beenden`. */
-export interface KontoAuswahl extends Auswahl {
+/** An account's `Selection` (`FirestoreSelection`), open until `stop`. */
+export interface KontoAuswahl extends Selection {
   /** Resolves once the account's selection was read the first time. */
-  geladen(): Promise<void>;
-  beenden(): void;
+  loaded(): Promise<void>;
+  stop(): void;
 }
 
 /**
@@ -62,8 +62,8 @@ export interface KontoDienst {
    */
   geraetUebernehmen(
     uid: string,
-    geraet: AuswahlInhalt
-  ): Promise<NichtUebernommen>;
+    geraet: SelectionContent
+  ): Promise<NotTakenOver>;
   /**
    * Deletes the account's document, resolving once the server confirmed
    * it, however long that takes: once queued, the deletion runs anyway.

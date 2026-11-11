@@ -7,9 +7,9 @@ import {
   Variant,
 } from '@material/material-color-utilities';
 import {
-  vereinsfarbenAus,
-  type Vereinsfarben,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  clubColorsOf,
+  type ClubColors,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /**
  * Every Material system colour the theme in `styles.scss` emits as
@@ -109,7 +109,7 @@ const KONTRAST_STUFE = 0.1;
  * which keeps the colour's hue and as much of its chroma as the tones allow,
  * with the second colour, where there is one, as the secondary family.
  */
-export function farbschema(farben: Vereinsfarben, dunkel: boolean): Farbschema {
+export function farbschema(farben: ClubColors, dunkel: boolean): Farbschema {
   const schema = schemaVon(farben, dunkel);
   return Object.fromEntries(
     SYSTEMFARBEN.map((farbe) => [farbe, hexFromArgb(schema[GETTER[farbe]])])
@@ -120,7 +120,7 @@ export function farbschema(farben: Vereinsfarben, dunkel: boolean): Farbschema {
  * The `--mat-sys-*` declarations of a Verein's colours for light and dark at
  * once, so a scope's own `color-scheme` (`.anzeigetafel`) still turns them.
  */
-export function farbschemaTokens(farben: Vereinsfarben): FarbschemaTokens {
+export function farbschemaTokens(farben: ClubColors): FarbschemaTokens {
   const hell = farbschema(farben, false);
   const dunkel = farbschema(farben, true);
   return Object.fromEntries(
@@ -131,9 +131,12 @@ export function farbschemaTokens(farben: Vereinsfarben): FarbschemaTokens {
   ) as FarbschemaTokens;
 }
 
-function schemaVon(farben: Vereinsfarben, dunkel: boolean): DynamicScheme {
-  // checked as stored: what is no #rrggbb throws `KeineFarbeError`
-  const { primaer, zweite } = vereinsfarbenAus(farben.primaer, farben.zweite);
+function schemaVon(farben: ClubColors, dunkel: boolean): DynamicScheme {
+  // checked as stored: what is no #rrggbb throws `NotAColorError`
+  const { primary: primaer, secondary: zweite } = clubColorsOf(
+    farben.primary,
+    farben.secondary
+  );
   return new DynamicScheme({
     sourceColorHct: Hct.fromInt(argbFromHex(primaer)),
     variant: Variant.CONTENT,

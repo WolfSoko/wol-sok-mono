@@ -1,24 +1,24 @@
 import {
-  AUSWAHL_GRENZEN,
-  AUSWAHL_LISTEN,
-  type AuswahlListe,
-  type NichtUebernommen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  SELECTION_LIMITS,
+  SELECTION_LISTS,
+  type SelectionList,
+  type NotTakenOver,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /** How the text names `anzahl` entries of a list, and whether that is singular. */
 const WIE_GENANNT: Readonly<
-  Record<AuswahlListe, (anzahl: number) => { text: string; einzahl: boolean }>
+  Record<SelectionList, (anzahl: number) => { text: string; einzahl: boolean }>
 > = {
   teams: (anzahl) => ({
     text: anzahl === 1 ? '1 Team' : `${anzahl} Teams`,
     einzahl: anzahl === 1,
   }),
-  kinder: (anzahl) => ({
+  children: (anzahl) => ({
     text: anzahl === 1 ? '1 Kind' : `${anzahl} Kinder`,
     einzahl: anzahl === 1,
   }),
   // "die Farben" are plural, however many Vereine
-  vereinsfarben: (anzahl) => ({
+  clubColors: (anzahl) => ({
     text:
       anzahl === 1
         ? 'die Farben eines Vereins'
@@ -34,16 +34,14 @@ const AUFZAEHLUNG = new Intl.ListFormat('de', { type: 'conjunction' });
  * What the settings say of the device's choices that did not fit, with the
  * caps of the lists that overflowed; none where all did.
  */
-export function nichtUebernommenText(
-  uebrig: NichtUebernommen
-): string | undefined {
-  const voll = AUSWAHL_LISTEN.filter((liste) => uebrig[liste].length > 0);
+export function nichtUebernommenText(uebrig: NotTakenOver): string | undefined {
+  const voll = SELECTION_LISTS.filter((liste) => uebrig[liste].length > 0);
   if (voll.length === 0) {
     return undefined;
   }
   const was = voll.map((liste) => WIE_GENANNT[liste](uebrig[liste].length));
   const grenzen = voll.map(
-    (liste) => WIE_GENANNT[liste](AUSWAHL_GRENZEN[liste]).text
+    (liste) => WIE_GENANNT[liste](SELECTION_LIMITS[liste]).text
   );
   const satz = AUFZAEHLUNG.format(was.map(({ text }) => text));
   const passte = was.length === 1 && was[0].einzahl ? 'passte' : 'passten';

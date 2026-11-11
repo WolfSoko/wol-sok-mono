@@ -125,13 +125,13 @@ void describe('wolsok/no-testing-import', () => {
     "import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';",
     "import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing/fake-dbb';",
     "export { RecordingAnalytics } from '@wolsok/shared-analytics/testing';",
-    "export * from '@wolsok/feat-korbjaeger-auswahl/testing';",
+    "export * from '@wolsok/feat-korbjaeger-selection/testing';",
     "void import('@wolsok/feat-lazy-bac-game/testing');",
     "require('@wolsok/feat-lazy-bac-game/testing');",
     "export type Fake = import('@wolsok/feat-lazy-bac-game/testing').FakeDoc;",
     "import fake = require('@wolsok/feat-lazy-bac-game/testing');",
     "import { useEmulatorDb } from '../testing/emulator';",
-    "import { fakeAuswahl } from './testing';",
+    "import { fakeSelection } from './testing';",
     "import { zeigen } from '../../testing/zeigen.ts';",
   ];
   for (const source of imports) {
@@ -170,7 +170,7 @@ void describe('wolsok/no-testing-import', () => {
     void it(`allows testing imports in ${name}`, () => {
       deepStrictEqual(
         reportedCodes(
-          "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
+          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
           name
         ),
         []
@@ -183,7 +183,7 @@ void describe('wolsok/no-testing-import', () => {
     // own folder is named so here, which the rule must not take as test code.
     deepStrictEqual(
       reportedCodes(
-        "import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';",
+        "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
         'prod.ts',
         'testing'
       ),

@@ -14,9 +14,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import {
-  SPITZNAME_LAENGE,
-  spitznameZeichen,
-} from '@wolsok/feat-korbjaeger-auswahl';
+  NICKNAME_LENGTH,
+  nicknameCharacterCount,
+} from '@wolsok/feat-korbjaeger-selection';
 
 /** What the dialog asks about: whom, and whether to mark or rename. */
 export interface SpitznameFrage {
@@ -29,7 +29,7 @@ export interface SpitznameFrage {
 
 /** What the dialog closes with once confirmed; cancelled, it gives none. */
 export interface SpitznameAntwort {
-  /** As typed: the `Auswahl` trims it, empty means none. */
+  /** As typed: the `Selection` trims it, empty means none. */
   readonly spitzname: string;
 }
 
@@ -45,8 +45,8 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
 
 /**
  * Asks for the optional Spitzname of a Kind, when marking it or later.
- * Counts its characters as the `Auswahl` does (`spitznameZeichen`, an
- * emoji as one) and takes none over `SPITZNAME_LAENGE`. Opened with a
+ * Counts its characters as the `Selection` does (`nicknameCharacterCount`, an
+ * emoji as one) and takes none over `NICKNAME_LENGTH`. Opened with a
  * `SpitznameFrage`; closes with a `SpitznameAntwort`, or with none where
  * cancelled.
  */
@@ -106,14 +106,14 @@ const BESTAETIGEN: Readonly<Record<SpitznameFrage['aktion'], string>> = {
 })
 export class SpitznameDialogComponent {
   protected readonly frage = inject<SpitznameFrage>(MAT_DIALOG_DATA);
-  protected readonly laenge = SPITZNAME_LAENGE;
+  protected readonly laenge = NICKNAME_LENGTH;
   protected readonly titel = TITEL[this.frage.aktion];
   protected readonly bestaetigenText = BESTAETIGEN[this.frage.aktion];
   protected readonly eingegeben = signal(this.frage.spitzname ?? '');
   protected readonly zeichen = computed(() =>
-    spitznameZeichen(this.eingegeben())
+    nicknameCharacterCount(this.eingegeben())
   );
-  protected readonly zuLang = computed(() => this.zeichen() > SPITZNAME_LAENGE);
+  protected readonly zuLang = computed(() => this.zeichen() > NICKNAME_LENGTH);
 
   private readonly dialog =
     inject<MatDialogRef<SpitznameDialogComponent, SpitznameAntwort>>(

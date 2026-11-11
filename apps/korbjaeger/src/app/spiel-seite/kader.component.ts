@@ -40,7 +40,7 @@ export class KaderComponent {
   /** Whether the Team is one of Meine Teams, so its Kinder can be marked. */
   public readonly gefolgt = input(false);
 
-  private readonly kinder = inject(AUSWAHL).kinder;
+  private readonly kinder = inject(AUSWAHL).children;
 
   protected readonly zeilen = computed(() => {
     const kinder = this.kinder();

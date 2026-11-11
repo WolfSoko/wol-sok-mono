@@ -41,7 +41,7 @@ vi.mock('firebase/firestore', () => ({
 }));
 
 /** A device that holds no choices. */
-const LEER = { teams: [], kinder: [], vereinsfarben: [] };
+const LEER = { teams: [], children: [], clubColors: [] };
 
 const UMGEBUNG = {
   firebase: { projectId: 'korbjaeger' },

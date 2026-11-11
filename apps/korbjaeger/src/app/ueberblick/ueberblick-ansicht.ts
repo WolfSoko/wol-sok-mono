@@ -8,7 +8,7 @@ import {
   type SeasonGame,
   type Game,
 } from '@wolsok/feat-shared-basketball-data';
-import type { Kind } from '@wolsok/feat-korbjaeger-auswahl';
+import type { Child } from '@wolsok/feat-korbjaeger-selection';
 import { aeltesterStand, type Stand } from '../basketball-data/stand';
 import type { HallenStand } from '../halle/hallen-stand';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
@@ -117,7 +117,7 @@ export const MEIN_KIND = 'Mein Kind';
  * @param heute a German calendar day, `YYYY-MM-DD` (`dateInGermany`)
  */
 export function ueberblickAnsicht(
-  kinder: readonly Kind[],
+  kinder: readonly Child[],
   teams: readonly TeamImUeberblick[],
   heute: string
 ): UeberblickAnsicht {
@@ -136,7 +136,7 @@ export function ueberblickAnsicht(
 }
 
 function kindAbschnitt(
-  kind: Kind,
+  kind: Child,
   teams: readonly TeamImUeberblick[]
 ): KindAbschnitt {
   const seine = teams.filter(
@@ -160,7 +160,7 @@ function kindAbschnitt(
   return {
     personId: kind.personId,
     titel:
-      kind.spitzname ??
+      kind.nickname ??
       seine.map((team) => vorname(team, kind.personId)).find(Boolean) ??
       MEIN_KIND,
     teams: seine.map(({ karte }) => ({ ...karte, name: kartenName(karte) })),
@@ -205,7 +205,7 @@ function vorname(team: TeamImUeberblick, person: PersonId): string | undefined {
 function imKaderVon(
   team: TeamImUeberblick | undefined,
   spiel: Game,
-  kind: Kind
+  kind: Child
 ): boolean | undefined {
   return team?.funde?.games.get(spiel.id)?.has(kind.personId);
 }
@@ -221,7 +221,7 @@ function warumNicht(teams: readonly TeamImUeberblick[]): NichtGefunden {
  * failed): a Team whose search still runs shows among the others until a
  * Kind is found in it.
  */
-function ohneKind(team: TeamImUeberblick, kinder: readonly Kind[]): boolean {
+function ohneKind(team: TeamImUeberblick, kinder: readonly Child[]): boolean {
   return (
     team.karte.art === 'fehler' ||
     kinder.every(({ personId }) => vorname(team, personId) === undefined)

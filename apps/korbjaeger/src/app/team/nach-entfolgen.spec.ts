@@ -4,9 +4,12 @@ import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import { TestBed } from '@angular/core/testing';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { LokaleAuswahl, type Auswahl } from '@wolsok/feat-korbjaeger-auswahl';
+import {
+  LocalSelection,
+  type Selection,
+} from '@wolsok/feat-korbjaeger-selection';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { fakeAuswahl } from '@wolsok/feat-korbjaeger-auswahl/testing';
+import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { FokusNachEntfolgenDirective } from './fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from './nach-entfolgen';
 
@@ -28,7 +31,7 @@ interface Aufbau {
 }
 
 async function render(
-  auswahl: Auswahl = new LokaleAuswahl(undefined)
+  auswahl: Selection = new LocalSelection(undefined)
 ): Promise<Aufbau> {
   TestBed.configureTestingModule({
     providers: [{ provide: AUSWAHL, useValue: auswahl }],
@@ -62,20 +65,22 @@ describe('NachEntfolgen', () => {
   });
 
   it('follows the Team again at the place it had', async () => {
-    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
-    const { nachEntfolgen, leisten } = await render(fakeAuswahl({ folgen }));
+    const folgen = vi.fn<Selection['follow']>(() => Promise.resolve());
+    const { nachEntfolgen, leisten } = await render(
+      fakeSelection({ follow: folgen })
+    );
 
-    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel', { seit: 5 });
+    nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel', { since: 5 });
     await (await leisten.getHarness(MatSnackBarHarness)).dismissWithAction();
 
-    expect(folgen).toHaveBeenCalledWith(313036, { seit: 5 });
+    expect(folgen).toHaveBeenCalledWith(313036, { since: 5 });
   });
 
   it('takes the undo back once another store holds the choices (signed in or out elsewhere)', async () => {
     const quelle = signal<object>({ art: 'konto' });
-    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const folgen = vi.fn<Selection['follow']>(() => Promise.resolve());
     const { nachEntfolgen, leisten, stabil } = await render(
-      fakeAuswahl({ quelle, folgen })
+      fakeSelection({ source: quelle, follow: folgen })
     );
     nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel');
     expect(await leisten.getHarnessOrNull(MatSnackBarHarness)).not.toBeNull();
@@ -89,9 +94,9 @@ describe('NachEntfolgen', () => {
 
   it('follows nobody where "Rückgängig" comes after the switch, before the snackbar went', async () => {
     const quelle = signal<object>({ art: 'konto' });
-    const folgen = vi.fn<Auswahl['folgen']>(() => Promise.resolve());
+    const folgen = vi.fn<Selection['follow']>(() => Promise.resolve());
     const { nachEntfolgen, leisten } = await render(
-      fakeAuswahl({ quelle, folgen })
+      fakeSelection({ source: quelle, follow: folgen })
     );
     nachEntfolgen.entfolgt(313036, 'MTV Wasbüttel');
     // queried by hand: a harness would wait for the page, running the effect

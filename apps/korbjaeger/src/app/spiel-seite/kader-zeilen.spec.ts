@@ -155,13 +155,13 @@ describe('kaderZeilen of a followed Team', () => {
 
   it('gives a marked Kind its mark, with its Spitzname', () => {
     const zeilen = kaderZeilen(kader, [
-      { personId: 8, spitzname: 'Lu' },
+      { personId: 8, nickname: 'Lu' },
       { personId: 99 },
     ]);
 
     expect(zeilen.map((zeile) => zeile.kind)).toEqual([
       undefined,
-      { personId: 8, spitzname: 'Lu' },
+      { personId: 8, nickname: 'Lu' },
       undefined,
     ]);
   });
