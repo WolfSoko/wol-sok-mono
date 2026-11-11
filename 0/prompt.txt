@@ -1,0 +1,9 @@
+I have the Gold Account and just need the data not the GUI so I have the permission the curl the data with my auth given. Please check a curl command.
+
+---
+
+Is the app a webview wrapper?
+
+---
+
+yes
