@@ -64,9 +64,12 @@ describe('the deploy', () => {
 
     expect(targets['deploy'].dependsOn).toEqual(['build']);
     expect(targets['deploy'].options.parallel).toBe(false);
+    // each call to Google's API runs through the one-retry helper (#2946)
+    const retried =
+      'tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts';
     expect(targets['deploy'].options.commands).toEqual([
-      `firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=${REGION} --days=1 --force`,
-      'firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive',
+      `${retried} firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=${REGION} --days=1 --force`,
+      `${retried} firebase deploy --config=firebase.korbjaeger.json --project=korbjaeger --only functions:konto --force --non-interactive`,
     ]);
   });
 });

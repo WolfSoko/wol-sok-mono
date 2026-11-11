@@ -125,8 +125,8 @@
       "options": {
         "commands": [
           "tsx ./apps/korbjaeger/deploy/build-configuration.ts check dist/apps/korbjaeger",
-          "nx run korbjaeger:firebase functions:artifacts:setpolicy --location=europe-central2 --days=1 --force",
-          "nx run korbjaeger:firebase deploy --only functions:default,hosting,firestore:rules,firestore:indexes"
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase --config=firebase.korbjaeger.json --project=korbjaeger functions:artifacts:setpolicy --location=europe-central2 --days=1 --force",
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase --config=firebase.korbjaeger.json --project=korbjaeger deploy --only functions:default,hosting,firestore:rules,firestore:indexes --non-interactive"
         ],
         "parallel": false
       }

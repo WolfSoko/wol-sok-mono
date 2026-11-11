@@ -2,7 +2,7 @@
  * Runs a deploy command and retries it once when it fails, so a transient
  * error of the platform does not fail the release (#2838).
  *
- * Usage: tsx apps/bacteria-wars-functions/deploy/retry-once.ts <command> [args...]
+ * Usage: tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts <command> [args...]
  * `RETRY_PAUSE_MS` overrides the pause before the retry (the specs set 0).
  */
 import { ChildProcess, spawn } from 'node:child_process';
@@ -58,4 +58,5 @@ async function main(): Promise<number> {
   });
 }
 
-process.exit(await main());
+// No top-level await: outside a `"type": "module"` package tsx emits CommonJS.
+void main().then((code) => process.exit(code));
