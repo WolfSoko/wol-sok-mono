@@ -223,35 +223,50 @@ describe('playerDocument', () => {
   });
 
   describe('the copy this device kept before the cloud', () => {
-    it('stays on the device until the cloud stored it', async () => {
+    it('leaves the device at once, kept as unsaved until the cloud stored it', async () => {
       create({ onDevice: { [KEY]: ['gold'] } });
       device.flush();
-      await settle();
-      device.flush();
+      await answerDevice();
 
-      expect(device.stored(KEY)).toEqual(['gold']);
+      expect(device.stored(KEY)).toBeNull();
+      expect(Object.values(device.stored(`${KEY}.unsaved`) ?? {})).toEqual([
+        { player: 'guest', value: ['gold'] },
+      ]);
 
-      account.flush();
       await answerAll();
 
       expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
-      expect(device.stored(KEY)).toBeNull();
+      expect(device.stored(`${KEY}.unsaved`)).toBeNull();
     });
 
-    it('goes to the player again on the next visit when the cloud never stored it', async () => {
+    it('goes to no second page that starts meanwhile', async () => {
+      const adopt = jest.fn(union);
+      create({ onDevice: { [KEY]: ['gold'] }, adopt });
+      device.flush();
+      await answerDevice();
+
+      createOn(device, { adopt });
+      await answerAll();
+
+      expect(adopt).toHaveBeenCalledTimes(1);
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
+    });
+
+    it('goes to the player on the next visit when the cloud never stored it', async () => {
       create({ onDevice: { [KEY]: ['gold'] } });
       device.flush();
-      await settle();
+      await answerDevice();
 
       // The page closes before the cloud answered; the next visit starts.
-      const next = new LateGameStorage({ [KEY]: ['gold'] });
+      const next = new LateGameStorage({
+        [`${KEY}.unsaved`]: device.stored(`${KEY}.unsaved`),
+      });
       account.seed('guest', {});
       createOn(next);
-      next.flush();
       await answerAll(next);
 
       expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
-      expect(next.stored(KEY)).toBeNull();
+      expect(next.stored(`${KEY}.unsaved`)).toBeNull();
     });
 
     it('goes to the first player, once, and leaves the device', async () => {
@@ -415,6 +430,31 @@ describe('playerDocument', () => {
 
       expect(account.storageOf('ada').stored(KEY)).toEqual(['gold']);
       expect(next.stored(UNSAVED)).toBeNull();
+    });
+
+    it('stay for the next start when the storage dropped the change', async () => {
+      account = new FakeGameAccount('guest');
+      const cloud = account.storage;
+      const dropping: GameStorage = {
+        watch: (key) => cloud.watch(key),
+        write: (key, value) => cloud.write(key, value),
+        update: () => Promise.resolve(false),
+      };
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameAccount, useValue: account },
+          { provide: GameStorage, useValue: dropping },
+          { provide: DeviceStorage, useValue: device },
+        ],
+      });
+      const document = TestBed.runInInjectionContext(() =>
+        playerDocument(BADGES)
+      );
+      add(document, 'silver');
+      await answerAll();
+
+      expect(unsavedOn()).toEqual({ guest: [['silver']] });
     });
 
     it('are not kept without the cloud', async () => {

@@ -83,6 +83,15 @@ describe('LocalGameStorage', () => {
     await expect(storage.update('count', () => 1)).resolves.toBe(false);
   });
 
+  it('says a change that threw was dropped, without throwing itself', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const failing = () => {
+      throw new Error('broken change');
+    };
+
+    await expect(storage.update('count', failing)).resolves.toBe(false);
+  });
+
   it('changes the value under a lock all tabs share, where there is one', async () => {
     const held: string[] = [];
     // As the browser's, it resolves with what the callback returns.

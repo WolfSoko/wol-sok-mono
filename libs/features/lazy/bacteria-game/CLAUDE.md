@@ -303,7 +303,7 @@ storage until then. Settings stay with the device either way.
     closes is lost there, online too. So `playerDocument` keeps what the
     page held after each change in `DeviceStorage` under `<key>.unsaved`
     (`storage/unsaved-changes.ts`: an entry per page and player) until the
-    change settled, and the player's next start on the device merges what
+    change was stored (a dropped one stays), and the player's next start on the device merges what
     is left in and stores it (#2820). That is safe only because `merge` can
     only gain; a document whose changes cannot be merged that way must not
     go through `playerDocument`.
@@ -345,9 +345,10 @@ storage until then. Settings stay with the device either way.
   the player is null; the storage holds back what is stored meanwhile for
   that guest.
 - The first cloud player adopts what this device kept in local storage
-  under the document's key before the cloud (`playerDocument`), once; the
-  device's copy is cleared only once the cloud stored the adoption, so a
-  page closed before that adopts it again on the next visit.
+  under the document's key before the cloud (`playerDocument`), once: the
+  copy is kept as an unsaved change first and then cleared, so a second
+  page never adopts it too and a page closed before the cloud stored it
+  lands it on the next visit (through `merge`, so never counted twice).
 - Specs for a service that stores data also run it against `LateGameStorage`
   (`src/testing/`, kept out of the lib build), an asynchronous fake, so a
   service that depends on local storage answering synchronously fails a test.

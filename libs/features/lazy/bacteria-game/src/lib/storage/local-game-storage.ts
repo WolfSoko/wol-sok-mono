@@ -33,7 +33,14 @@ export class LocalGameStorage implements GameStorage {
     key: string,
     change: (stored: unknown) => unknown
   ): Promise<boolean> {
-    const apply = () => this.store(key, change(readStoredJson(key)));
+    const apply = () => {
+      try {
+        return this.store(key, change(readStoredJson(key)));
+      } catch (error) {
+        console.error(`Could not store ${key}`, error);
+        return false;
+      }
+    };
     const locks = globalThis.navigator?.locks;
     if (locks == null) {
       return Promise.resolve(apply());

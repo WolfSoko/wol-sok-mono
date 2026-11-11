@@ -58,18 +58,32 @@ export function withoutUnsaved(
   );
 }
 
-/** The entries of a player's changes, with the values they hold. */
+/**
+ * The changes without the entries of `read` that still hold what was read:
+ * an entry another page wrote again since is newer, and stays.
+ */
+export function withoutUnchanged(
+  changes: UnsavedChanges,
+  read: UnsavedChanges
+): UnsavedChanges {
+  const unchanged = Object.entries(read)
+    .filter(
+      ([entry, { value }]) =>
+        entry in changes &&
+        JSON.stringify(changes[entry].value) === JSON.stringify(value)
+    )
+    .map(([entry]) => entry);
+  return withoutUnsaved(changes, unchanged);
+}
+
+/** A player's changes alone. */
 export function unsavedOf(
   changes: UnsavedChanges,
   player: string
-): { entries: string[]; values: unknown[] } {
-  const own = Object.entries(changes).filter(
-    ([, change]) => change.player === player
+): UnsavedChanges {
+  return Object.fromEntries(
+    Object.entries(changes).filter(([, change]) => change.player === player)
   );
-  return {
-    entries: own.map(([entry]) => entry),
-    values: own.map(([, change]) => change.value),
-  };
 }
 
 /** What to store for the changes: nothing once none are left. */

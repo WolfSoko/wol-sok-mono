@@ -18,6 +18,7 @@ import {
   unsavedEntry,
   unsavedKey,
   unsavedOf,
+  withoutUnchanged,
   withoutUnsaved,
   withUnsaved,
 } from './unsaved-changes';
@@ -84,14 +85,14 @@ export function playerDocument<T>(
   const device = inject(DeviceStorage);
   const value = signal(empty, { equal });
   const loaded = signal(false);
-  const unsaved = unsavedChanges(device, key, account.cloud);
+  const unsaved = unsavedChanges(device, key, account.cloud, merge);
   /** Whoever plays, null between a sign-out and the next guest. */
   let player: string | null = null;
 
   const store = (next: T, write: (stored: T) => T): void => {
     const settled = storage.update(key, (stored) => write(parse(stored)));
     if (player !== null) {
-      unsaved.keep(player, next, settled);
+      void unsaved.keep(player, next, settled);
     }
   };
 
@@ -117,18 +118,24 @@ export function playerDocument<T>(
     }
   };
 
-  /** Hands the device's copy to the player, once - dropped once the cloud has it. */
+  /**
+   * Hands the device's copy to the player, once: kept as an unsaved change
+   * first, then taken off the device, so a second page never adopts it too
+   * and a page closed before the cloud has it leaves it for the next visit.
+   */
   const deviceCopy = (): Observable<never> =>
     device.watch(key).pipe(
       take(1),
       tap((stored) => {
-        if (stored !== null) {
-          void adoptOnce(parse(stored)).then((adopted) => {
-            if (adopted) {
-              device.write(key, null);
-            }
-          });
+        if (stored === null) {
+          return;
         }
+        const copy = parse(stored);
+        const kept =
+          player === null
+            ? Promise.resolve()
+            : unsaved.keep(player, copy, adoptOnce(copy));
+        void kept.then(() => device.write(key, null));
       }),
       ignoreElements()
     );
@@ -136,15 +143,16 @@ export function playerDocument<T>(
   /** Applies what earlier pages left unsaved for the player, as a change of this one. */
   const replayUnsaved = (owner: string): Observable<never> =>
     unsaved.of(owner).pipe(
-      tap(({ entries, values }) => {
+      tap((read) => {
+        const values = Object.values(read).map(({ value }) => parse(value));
         if (values.length === 0) {
           return;
         }
-        const left = values.map(parse).reduce(merge, empty);
+        const left = values.reduce(merge, empty);
         const next = merge(value(), left);
         value.set(next);
         store(next, (stored) => merge(stored, left));
-        unsaved.drop(entries);
+        unsaved.drop(read);
       }),
       ignoreElements()
     );
@@ -179,64 +187,80 @@ export function playerDocument<T>(
 }
 
 /** The unsaved changes of a document on this device, as this page keeps them. */
-interface UnsavedJournal {
-  /** Keeps what the page holds for the player until `settled` and no later change waits. */
-  keep(player: string, value: unknown, settled: Promise<boolean>): void;
-  /** The player's changes on the device, read once. */
-  of(player: string): Observable<{ entries: string[]; values: unknown[] }>;
-  /** Removes entries replayed into this page's own. */
-  drop(entries: readonly string[]): void;
+interface UnsavedJournal<T> {
+  /**
+   * Keeps what the page holds for the player, merged into what it kept
+   * before, until `settled` says it is stored and no later change waits.
+   * Resolves once it is on the device.
+   */
+  keep(player: string, value: T, settled: Promise<boolean>): Promise<void>;
+  /** The changes other pages left for the player on the device, read once. */
+  of(player: string): Observable<UnsavedChanges>;
+  /** Removes the changes read, unless another page wrote them again since. */
+  drop(read: UnsavedChanges): void;
 }
 
 /** A journal of a key's unsaved changes in the device storage; none without the cloud. */
-function unsavedChanges(
+function unsavedChanges<T>(
   device: GameStorage,
   key: string,
-  cloud: boolean
-): UnsavedJournal {
-  const page = Math.random().toString(36).slice(2);
+  cloud: boolean,
+  merge: (held: T, other: T) => T
+): UnsavedJournal<T> {
+  const page = pageId();
   const journalKey = unsavedKey(key);
-  /** The number of the latest change kept, per player. */
-  const latest = new Map<string, number>();
-  const change = (edit: (changes: UnsavedChanges) => UnsavedChanges): void =>
-    void device.update(journalKey, (stored) =>
+  /** What this page kept per player since the last change stored. */
+  const kept = new Map<string, { value: T; latest: number }>();
+  const change = (
+    edit: (changes: UnsavedChanges) => UnsavedChanges
+  ): Promise<boolean> =>
+    device.update(journalKey, (stored) =>
       storedUnsaved(edit(parseUnsaved(stored)))
     );
 
   return {
     keep(player, value, settled) {
       if (!cloud) {
-        return;
+        return Promise.resolve();
       }
       const entry = unsavedEntry(page, player);
-      const number = (latest.get(player) ?? 0) + 1;
-      latest.set(player, number);
-      change((changes) => withUnsaved(changes, entry, { player, value }));
-      void settled.then(() => {
-        if (latest.get(player) === number) {
-          change((changes) => withoutUnsaved(changes, [entry]));
+      const before = kept.get(player);
+      const held = {
+        value: before === undefined ? value : merge(before.value, value),
+        latest: (before?.latest ?? 0) + 1,
+      };
+      kept.set(player, held);
+      void settled.then((stored) => {
+        // A change dropped for good stays, for the player's next start here.
+        if (stored && kept.get(player) === held) {
+          kept.delete(player);
+          void change((changes) => withoutUnsaved(changes, [entry]));
         }
       });
+      return change((changes) =>
+        withUnsaved(changes, entry, { player, value: held.value })
+      ).then(() => undefined);
     },
     of(player) {
+      const own = unsavedEntry(page, player);
       return device.watch(journalKey).pipe(
         take(1),
-        map((stored) => {
-          const own = unsavedOf(parseUnsaved(stored), player);
-          const entry = unsavedEntry(page, player);
-          // This page's own entry is the change it is making now.
-          const others = own.entries.flatMap((id, index) =>
-            id === entry ? [] : [{ id, value: own.values[index] }]
-          );
-          return {
-            entries: others.map(({ id }) => id),
-            values: others.map(({ value }) => value),
-          };
-        })
+        // This page's own entry is the change it is making now.
+        map((stored) =>
+          withoutUnsaved(unsavedOf(parseUnsaved(stored), player), [own])
+        )
       );
     },
-    drop(entries) {
-      change((changes) => withoutUnsaved(changes, entries));
+    drop(read) {
+      void change((changes) => withoutUnchanged(changes, read));
     },
   };
+}
+
+/** Names this page apart from every other page of the device. */
+function pageId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  );
 }

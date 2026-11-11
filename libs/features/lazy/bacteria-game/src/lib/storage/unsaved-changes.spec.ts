@@ -4,6 +4,7 @@ import {
   unsavedEntry,
   unsavedKey,
   unsavedOf,
+  withoutUnchanged,
   withoutUnsaved,
   withUnsaved,
 } from './unsaved-changes';
@@ -55,7 +56,7 @@ describe('unsaved changes', () => {
     expect(withoutUnsaved(replaced, ['p:none'])).toBe(replaced);
   });
 
-  it("find a player's entries and values only", () => {
+  it("find a player's changes only", () => {
     const changes = {
       'p:ada': { player: 'ada', value: 1 },
       'q:ada': { player: 'ada', value: 2 },
@@ -63,10 +64,27 @@ describe('unsaved changes', () => {
     };
 
     expect(unsavedOf(changes, 'ada')).toEqual({
-      entries: ['p:ada', 'q:ada'],
-      values: [1, 2],
+      'p:ada': { player: 'ada', value: 1 },
+      'q:ada': { player: 'ada', value: 2 },
     });
-    expect(unsavedOf(changes, 'eve')).toEqual({ entries: [], values: [] });
+    expect(unsavedOf(changes, 'eve')).toEqual({});
+  });
+
+  it('remove only the entries that still hold what was read', () => {
+    const read = {
+      'p:ada': { player: 'ada', value: ['gold'] },
+      'q:ada': { player: 'ada', value: ['gold'] },
+    };
+    const now = {
+      'p:ada': { player: 'ada', value: ['gold'] },
+      'q:ada': { player: 'ada', value: ['gold', 'silver'] },
+      'p:bob': { player: 'bob', value: ['bronze'] },
+    };
+
+    expect(withoutUnchanged(now, read)).toEqual({
+      'q:ada': { player: 'ada', value: ['gold', 'silver'] },
+      'p:bob': { player: 'bob', value: ['bronze'] },
+    });
   });
 
   it('store nothing once no change is left', () => {
