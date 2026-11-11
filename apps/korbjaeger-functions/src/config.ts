@@ -44,4 +44,6 @@ export const CLUB_INDEX_SCHEDULE = {
    * read again a day later, well inside the run's 30 minutes.
    */
   namesForMs: mToMs(minutes(20)),
+  /** A Verband without a list for a whole weekly cycle is stuck (#3022). */
+  warnListlessAfterMs: dToMs(days(CLUB_INDEX_CRAWL_DAYS.maxAge)),
 } as const;

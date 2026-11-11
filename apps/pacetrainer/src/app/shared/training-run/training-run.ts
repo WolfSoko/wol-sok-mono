@@ -29,7 +29,7 @@ export interface IntervalView {
   elapsed: Milliseconds;
 }
 
-export interface Zusammenfassung {
+export interface Summary {
   elapsed: Milliseconds;
   sprintsCompleted: number;
   sprintsTotal: number;
@@ -45,13 +45,13 @@ export type TrainingRunView =
       next: TrainingName | 'finished';
       elapsed: Milliseconds;
     }
-  | { phase: 'finished'; zusammenfassung: Zusammenfassung };
+  | { phase: 'finished'; summary: Summary };
 
 const LEAD_IN = milliseconds(5000);
 const TICK_PERIOD = 50;
 const SAVE_EVERY = 1000;
 
-interface PlannedIntervall {
+interface PlannedInterval {
   type: ExerciseType;
   start: Milliseconds;
   duration: Milliseconds;
@@ -62,10 +62,10 @@ type Run =
   | {
       phase: 'leadIn' | 'running' | 'paused';
       config: TrainingConfigWithDuration;
-      intervalle: PlannedIntervall[];
+      intervals: PlannedInterval[];
       elapsed: Milliseconds;
     }
-  | { phase: 'finished'; zusammenfassung: Zusammenfassung };
+  | { phase: 'finished'; summary: Summary };
 
 /** what survives a reload: enough to rebuild the run, nothing derived */
 interface StoredRun {
@@ -74,7 +74,7 @@ interface StoredRun {
 }
 
 /**
- * Führt einen Trainingslauf vom Start bis zum Ende durch.
+ * Runs a Trainingslauf from its start to its end.
  *
  * Every transition happens synchronously inside a command or a clock tick;
  * illegal commands are ignored.
@@ -100,11 +100,11 @@ export class TrainingRun {
   }
 
   public start(config: TrainingConfigWithDuration): void {
-    const intervalle = toIntervalle(config);
-    if (this.run().phase !== 'ready' || intervalle.length === 0) {
+    const intervals = toIntervals(config);
+    if (this.run().phase !== 'ready' || intervals.length === 0) {
       return;
     }
-    this.update({ phase: 'leadIn', config, intervalle, elapsed: ZERO_MS });
+    this.update({ phase: 'leadIn', config, intervals, elapsed: ZERO_MS });
     this.startClock();
   }
 
@@ -125,7 +125,7 @@ export class TrainingRun {
       this.stopClock();
       this.update({ phase: 'ready' });
     } else if (run.phase === 'running' || run.phase === 'paused') {
-      this.finish(run.intervalle, run.elapsed, 'endedEarly');
+      this.finish(run.intervals, run.elapsed, 'endedEarly');
     }
   }
 
@@ -158,15 +158,15 @@ export class TrainingRun {
       if (!stored) {
         return { phase: 'ready' };
       }
-      const intervalle = toIntervalle(stored.config);
+      const intervals = toIntervals(stored.config);
       const { elapsed } = stored;
       // also rejects a run without Intervalle: its total duration is 0
       const usable =
         typeof elapsed === 'number' &&
         elapsed >= 0 &&
-        elapsed < totalDuration(intervalle);
+        elapsed < totalDuration(intervals);
       return usable
-        ? { phase: 'paused', config: stored.config, intervalle, elapsed }
+        ? { phase: 'paused', config: stored.config, intervals, elapsed }
         : { phase: 'ready' };
     } catch {
       // stored by an older version or tampered with
@@ -209,27 +209,27 @@ export class TrainingRun {
   }
 
   private advanceRunning(
-    run: Extract<Run, { intervalle: PlannedIntervall[] }>,
+    run: Extract<Run, { intervals: PlannedInterval[] }>,
     delta: Milliseconds
   ): void {
     const elapsed = add(run.elapsed, delta);
-    if (elapsed < totalDuration(run.intervalle)) {
+    if (elapsed < totalDuration(run.intervals)) {
       this.update({ ...run, elapsed });
     } else {
-      this.finish(run.intervalle, totalDuration(run.intervalle), 'complete');
+      this.finish(run.intervals, totalDuration(run.intervals), 'complete');
     }
   }
 
   private finish(
-    intervalle: PlannedIntervall[],
+    intervals: PlannedInterval[],
     elapsed: Milliseconds,
-    completion: Zusammenfassung['completion']
+    completion: Summary['completion']
   ): void {
     this.stopClock();
-    const sprints = intervalle.filter((i) => i.type === 'sprintWithDuration');
+    const sprints = intervals.filter((i) => i.type === 'sprintWithDuration');
     this.update({
       phase: 'finished',
-      zusammenfassung: {
+      summary: {
         elapsed,
         sprintsCompleted: sprints.filter(
           (i) => add(i.start, i.duration) <= elapsed
@@ -241,7 +241,7 @@ export class TrainingRun {
   }
 }
 
-function toIntervalle(config: TrainingConfigWithDuration): PlannedIntervall[] {
+function toIntervals(config: TrainingConfigWithDuration): PlannedInterval[] {
   const types: { type: ExerciseType; duration: Milliseconds }[] = [];
   for (const exercise of config.exercises) {
     if (exercise.type === 'intervalWithDuration') {
@@ -256,14 +256,14 @@ function toIntervalle(config: TrainingConfigWithDuration): PlannedIntervall[] {
   }
   let start = ZERO_MS;
   return types.map(({ type, duration }) => {
-    const intervall = { type, start, duration };
+    const interval = { type, start, duration };
     start = add(start, duration);
-    return intervall;
+    return interval;
   });
 }
 
-function totalDuration(intervalle: PlannedIntervall[]): Milliseconds {
-  return add(...intervalle.map((i) => i.duration));
+function totalDuration(intervals: PlannedInterval[]): Milliseconds {
+  return add(...intervals.map((i) => i.duration));
 }
 
 function trainingName(type: ExerciseType): TrainingName {
@@ -290,28 +290,28 @@ function project(run: Run): TrainingRunView {
       };
     case 'running':
     case 'paused': {
-      const { intervalle, elapsed } = run;
-      const index = intervalle.findIndex(
+      const { intervals, elapsed } = run;
+      const index = intervals.findIndex(
         (i) => elapsed < add(i.start, i.duration)
       );
-      const intervall = intervalle[index];
-      const next = intervalle[index + 1];
-      const intervallElapsed = subtract(elapsed, intervall.start);
+      const interval = intervals[index];
+      const next = intervals[index + 1];
+      const intervalElapsed = subtract(elapsed, interval.start);
       return {
         phase: run.phase,
         current: {
-          name: trainingName(intervall.type),
+          name: trainingName(interval.type),
           index,
-          count: intervalle.length,
-          duration: intervall.duration,
-          elapsed: intervallElapsed,
-          left: subtract(intervall.duration, intervallElapsed),
+          count: intervals.length,
+          duration: interval.duration,
+          elapsed: intervalElapsed,
+          left: subtract(interval.duration, intervalElapsed),
         },
         next: next ? trainingName(next.type) : 'finished',
         elapsed,
       };
     }
     case 'finished':
-      return { phase: 'finished', zusammenfassung: run.zusammenfassung };
+      return { phase: 'finished', summary: run.summary };
   }
 }

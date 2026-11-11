@@ -20,7 +20,7 @@ test.describe('Run Sprint Training', () => {
   }) => {
     await sprintTraining.startTraining();
     await sprintTraining.stopTraining();
-    await sprintTraining.expectZusammenfassung({
+    await sprintTraining.expectSummary({
       sprintsCompleted: 0,
       sprintsTotal: 4,
       completion: 'Vorzeitig beendet',
@@ -29,7 +29,7 @@ test.describe('Run Sprint Training', () => {
 
   test('can abort the Vorlauf', async ({ sprintTraining }) => {
     await sprintTraining.startTraining();
-    await sprintTraining.abortVorlauf();
+    await sprintTraining.abortLeadIn();
     await sprintTraining.expectSprintTrainingConfiguration();
   });
 
@@ -48,7 +48,7 @@ test.describe('Run Sprint Training', () => {
     sprintTraining,
   }) => {
     await sprintTraining.startTraining();
-    await sprintTraining.expectVorlaufAnnounced();
+    await sprintTraining.expectLeadInAnnounced();
     await sprintTraining.expectCountdownTimer(5);
     await sprintTraining.expectTrainingStatePausable();
   });

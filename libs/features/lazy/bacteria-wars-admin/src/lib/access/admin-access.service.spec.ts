@@ -1,49 +1,40 @@
 import { TestBed } from '@angular/core/testing';
 import {
-  type FirebaseConnection,
-  GameCloud,
-} from '@wolsok/feat-lazy-bac-game/admin-kit';
+  FAKE_AUTH_TIME,
+  FakeFirebase,
+  type FakeUser,
+  fakeToken,
+  googleUser,
+  guestUser,
+  provideFakeGameCloud,
+} from '@wolsok/feat-lazy-bac-game/testing';
 import { AdminAccessService } from './admin-access.service';
 
-const NOW = Date.UTC(2026, 9, 25, 12);
-
-interface FakeUser {
-  uid: string;
-  isAnonymous: boolean;
-}
+/** A minute after the fake's sign-in. */
+const NOW = FAKE_AUTH_TIME + 60_000;
 
 /** Auth with one user, whose token carries `claims`. */
 function connect(
   user: FakeUser | null,
   claims: Record<string, unknown> = {},
-  { provider = 'google.com', authTime = NOW - 60_000 } = {}
+  tokenOptions: Parameters<typeof fakeToken>[1] = {}
 ) {
-  const auth = {
-    currentUser: user,
-    authStateReady: () => Promise.resolve(),
-  };
-  const authSdk = {
-    getIdTokenResult: jest.fn(async () => ({
-      claims,
-      signInProvider: provider,
-      authTime: new Date(authTime).toUTCString(),
-    })),
-    signInWithPopup: jest.fn(async () => {
-      auth.currentUser = { uid: 'owner', isAnonymous: false };
-    }),
-    signOut: jest.fn(async () => {
-      auth.currentUser = null;
-    }),
-    GoogleAuthProvider: class {},
-    browserPopupRedirectResolver: {},
-  };
-  const connection = { auth, authSdk } as unknown as FirebaseConnection;
+  const fake = new FakeFirebase();
+  const auth = fake.auth;
+  const token = fakeToken(claims, tokenOptions);
+  auth.become(user);
+  // The token a Google sign-in as the owner brings, too.
+  auth.tokens.set('owner', token);
+  if (user !== null) {
+    auth.tokens.set(user.uid, token);
+  }
+  auth.signInWithPopup.mockImplementation(async () =>
+    auth.become(googleUser('owner', 'Owner'))
+  );
   TestBed.configureTestingModule({
-    providers: [
-      { provide: GameCloud, useValue: { firebase: () => connection } },
-    ],
+    providers: [provideFakeGameCloud({ firebase: fake.connection() })],
   });
-  return { auth, authSdk };
+  return auth;
 }
 
 const OWNER = { admin: true, email_verified: true };
@@ -52,12 +43,12 @@ describe('AdminAccessService', () => {
   beforeEach(() => TestBed.resetTestingModule());
 
   it('grants the owner, read from a fresh token', async () => {
-    const { authSdk } = connect({ uid: 'owner', isAnonymous: false }, OWNER);
+    const auth = connect(googleUser('owner', 'Owner'), OWNER);
     const access = TestBed.inject(AdminAccessService);
 
     expect(await access.check()).toBe('granted');
-    expect(authSdk.getIdTokenResult).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(auth.getIdTokenResult).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: 'owner' }),
       true
     );
     expect(access.uid()).toBe('owner');
@@ -70,7 +61,9 @@ describe('AdminAccessService', () => {
     ['an unverified email', { admin: true }, 'google.com'],
     ['another sign-in provider', OWNER, 'password'],
   ])('refuses %s', async (_, claims, provider) => {
-    connect({ uid: 'someone', isAnonymous: false }, claims, { provider });
+    connect(googleUser('someone', 'Someone'), claims, {
+      signInProvider: provider,
+    });
     const access = TestBed.inject(AdminAccessService);
 
     expect(await access.check()).toBe('no-access');
@@ -78,7 +71,7 @@ describe('AdminAccessService', () => {
   });
 
   it('asks a guest or nobody to sign in', async () => {
-    connect({ uid: 'guest', isAnonymous: true }, OWNER);
+    connect(guestUser('guest'), OWNER);
     expect(await TestBed.inject(AdminAccessService).check()).toBe('signed-out');
 
     TestBed.resetTestingModule();
@@ -87,18 +80,16 @@ describe('AdminAccessService', () => {
   });
 
   it('has nothing to grant without a project', async () => {
-    TestBed.configureTestingModule({
-      providers: [{ provide: GameCloud, useValue: { firebase: () => null } }],
-    });
+    TestBed.configureTestingModule({ providers: [provideFakeGameCloud()] });
     expect(await TestBed.inject(AdminAccessService).check()).toBe('no-project');
   });
 
   it('signs in with Google, then checks again', async () => {
-    const { authSdk } = connect(null, OWNER);
+    const auth = connect(null, OWNER);
     const access = TestBed.inject(AdminAccessService);
 
     expect(await access.signIn()).toBe(true);
-    expect(authSdk.signInWithPopup).toHaveBeenCalled();
+    expect(auth.signInWithPopup).toHaveBeenCalled();
     expect(access.access()).toBe('granted');
 
     await access.signOut();
@@ -108,8 +99,8 @@ describe('AdminAccessService', () => {
 
   it('says so when the sign-in fails', async () => {
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    const { authSdk } = connect(null, OWNER);
-    authSdk.signInWithPopup.mockRejectedValueOnce(new Error('closed'));
+    const auth = connect(null, OWNER);
+    auth.signInWithPopup.mockRejectedValueOnce(new Error('closed'));
 
     expect(await TestBed.inject(AdminAccessService).signIn()).toBe(false);
   });

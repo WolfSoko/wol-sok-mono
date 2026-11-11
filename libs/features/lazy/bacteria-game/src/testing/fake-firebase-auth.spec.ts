@@ -1,10 +1,13 @@
 import { settleSnapshots } from './fake-callbacks';
 import {
+  FAKE_AUTH_TIME,
   FakeFirebaseAuth,
+  fakeToken,
   googleUser,
   guestUser,
   PLAIN_GOOGLE_TOKEN,
 } from './fake-firebase-auth';
+import { FAKE_SERVER_TIME } from './fake-firebase-sdk';
 
 describe('FakeFirebaseAuth', () => {
   let auth: FakeFirebaseAuth;
@@ -65,8 +68,33 @@ describe('FakeFirebaseAuth', () => {
     expect(auth.currentUser).toBeNull();
   });
 
+  it('has its auth state ready at once', async () => {
+    await expect(auth.authStateReady()).resolves.toBeUndefined();
+  });
+
+  it('dates a token an hour before the server time by default', () => {
+    expect(FAKE_SERVER_TIME - FAKE_AUTH_TIME).toBe(3_600_000);
+    expect(PLAIN_GOOGLE_TOKEN.authTime).toBe(
+      new Date(FAKE_AUTH_TIME).toUTCString()
+    );
+  });
+
+  it('builds a token with the plain Google defaults, overridden where given', () => {
+    expect(fakeToken({ admin: true })).toEqual({
+      ...PLAIN_GOOGLE_TOKEN,
+      claims: { admin: true },
+    });
+    expect(
+      fakeToken({}, { signInProvider: 'password', authTime: 1_000 })
+    ).toEqual({
+      claims: {},
+      signInProvider: 'password',
+      authTime: new Date(1_000).toUTCString(),
+    });
+  });
+
   it("reads a user's token, a plain Google one by default", async () => {
-    const owner = { claims: { admin: true }, signInProvider: 'google.com' };
+    const owner = fakeToken({ admin: true });
     auth.tokens.set('ada', owner);
 
     expect(await auth.sdk.getIdTokenResult(googleUser('ada', 'Ada'))).toBe(

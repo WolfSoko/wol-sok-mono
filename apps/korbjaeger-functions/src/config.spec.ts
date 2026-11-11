@@ -40,6 +40,11 @@ describe('the club index', () => {
     expect(CLUB_INDEX_SCHEDULE.maxAgeMs).toBe(7 * 86_400_000);
   });
 
+  // #3022: a Verband without a list for a week gets a warning
+  it('warns of a Verband that has had no list for a week', () => {
+    expect(CLUB_INDEX_SCHEDULE.warnListlessAfterMs).toBe(7 * 86_400_000);
+  });
+
   // the privacy policy renders the same days
   it('takes its days from the account lib', () => {
     expect(CLUB_INDEX_SCHEDULE.maxAgeMs).toBe(

@@ -27,9 +27,7 @@
         </pace-training-live-state>
       }
       @case ("finished") {
-        <pace-zusammenfassung
-          [zusammenfassung]="state.zusammenfassung"
-        ></pace-zusammenfassung>
+        <pace-summary [summary]="state.summary"></pace-summary>
       }
       @default {
         <pace-training-live-state
