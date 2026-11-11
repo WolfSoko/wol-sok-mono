@@ -239,20 +239,20 @@ describe('playerDocument', () => {
       expect(device.stored(`${KEY}.unsaved`)).toBeNull();
     });
 
-    it('stays on the device until the cloud stored it where the journal is refused', async () => {
-      create({ onDevice: { [KEY]: ['gold'] } });
+    it('leaves the device at once where the journal is refused, so no second page adopts it', async () => {
+      const adopt = jest.fn(union);
+      create({ onDevice: { [KEY]: ['gold'] }, adopt });
       const refuseJournal = jest.spyOn(device, 'update');
       refuseJournal.mockImplementation(() => Promise.resolve(false));
-      device.flush();
-      await settle();
-      device.flush();
+      await answerDevice();
 
-      expect(device.stored(KEY)).toEqual(['gold']);
+      expect(device.stored(KEY)).toBeNull();
 
+      createOn(device, { adopt });
       await answerAll();
 
+      expect(adopt).toHaveBeenCalledTimes(1);
       expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
-      expect(device.stored(KEY)).toBeNull();
     });
 
     it('goes to no second page that starts meanwhile', async () => {
@@ -485,6 +485,22 @@ describe('playerDocument', () => {
       await answerAll();
 
       expect(unsavedOn()).toEqual({ guest: [['silver']] });
+    });
+
+    it('keep the page entry where the device refused to keep a dropped change apart', async () => {
+      const document = createAnswering([false, true]);
+      add(document, 'silver');
+      await answerDevice();
+      // The device takes the page entry, but not the dropped change's own.
+      const update = device.update.bind(device);
+      const refuseDropped = jest.spyOn(device, 'update');
+      refuseDropped.mockImplementationOnce(() => Promise.resolve(false));
+      await answerAll();
+      refuseDropped.mockImplementation(update);
+      add(document, 'gold');
+      await answerAll();
+
+      expect(unsavedOn()).toEqual({ guest: [['gold', 'silver']] });
     });
 
     it('are not kept without the cloud', async () => {

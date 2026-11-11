@@ -10,7 +10,10 @@ export interface UnsavedChange {
   value: unknown;
 }
 
-/** The unsaved changes of a document, by entry: one per page and player. */
+/**
+ * The unsaved changes of a document, by entry: one per page and player,
+ * and one per change the storage dropped (`droppedEntry`).
+ */
 export type UnsavedChanges = Readonly<Record<string, UnsavedChange>>;
 
 const NO_CHANGES: UnsavedChanges = {};

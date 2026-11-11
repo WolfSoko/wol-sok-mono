@@ -134,19 +134,14 @@ export function playerDocument<T>(
         }
         const copy = parse(stored);
         const adopted = adoptOnce(copy);
-        // Off the device once it is safe elsewhere: in the journal, or where
-        // the journal took nothing (storage full), in the cloud.
-        const safe =
+        // Off the device once the journal took it - and also where it took
+        // nothing (storage full): a copy left there would be adopted again
+        // by every page starting before the cloud stored it.
+        const kept =
           player === null
-            ? adopted
-            : unsaved
-                .keep(player, copy, adopted)
-                .then((kept) => kept || adopted);
-        void safe.then((done) => {
-          if (done) {
-            device.write(key, null);
-          }
-        });
+            ? Promise.resolve(false)
+            : unsaved.keep(player, copy, adopted);
+        void kept.then(() => device.write(key, null));
       }),
       ignoreElements()
     );
@@ -229,6 +224,11 @@ function unsavedChanges<T>(
   const kept = new Map<string, { value: T }>();
   /** Numbers the entries of changes the storage dropped. */
   let drops = 0;
+  /**
+   * The players whose dropped change the device refused to keep apart:
+   * their page entry is the only copy left, so the page never clears it.
+   */
+  const pinned = new Set<string>();
   const change = (
     edit: (changes: UnsavedChanges) => UnsavedChanges
   ): Promise<boolean> =>
@@ -254,8 +254,12 @@ function unsavedChanges<T>(
           const dropped = droppedEntry(entry, ++drops);
           void change((changes) =>
             withUnsaved(changes, dropped, { player, value: held.value })
-          );
-        } else if (kept.get(player) === held) {
+          ).then((keptApart) => {
+            if (!keptApart) {
+              pinned.add(player);
+            }
+          });
+        } else if (kept.get(player) === held && !pinned.has(player)) {
           kept.delete(player);
           void change((changes) => withoutUnsaved(changes, [entry]));
         }
