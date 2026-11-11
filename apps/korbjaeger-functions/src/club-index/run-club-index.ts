@@ -37,7 +37,10 @@ export interface ClubIndexState {
    * in milliseconds, while it still has none (#3022).
    */
   readonly listlessSince: ReadonlyMap<AssociationId, number>;
-  /** The error of an Association's last failed crawl, while it has no list. */
+  /**
+   * The error of an Association's last failed crawl, until a list is saved;
+   * for one without a list only its latest attempt's (none after a timeout).
+   */
   readonly lastErrors: ReadonlyMap<AssociationId, string>;
 }
 
@@ -51,7 +54,8 @@ export interface ClubIndexStore {
   noteOffered(associations: readonly AssociationId[]): Promise<void>;
   /**
    * Notes that a crawl of `association` starts `at`, keeping its list; for
-   * one without a list also since when it has had none (`listlessSince`).
+   * one without a list also since when it has had none (`listlessSince`),
+   * and drops its last error, so a timeout leaves none recorded.
    */
   markAttempt(
     association: AssociationId,

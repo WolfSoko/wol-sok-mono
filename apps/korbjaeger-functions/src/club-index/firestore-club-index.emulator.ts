@@ -136,4 +136,16 @@ describe('the club index in Firestore', () => {
     expect([...saved.listlessSince]).toEqual([]);
     expect([...saved.lastErrors]).toEqual([]);
   });
+
+  it('drops the last error with the next attempt of a Verband without a list, so a timeout leaves none (#3022)', async () => {
+    const store = firestoreClubIndex(project().admin);
+    await store.markAttempt(2, 50, 40);
+    await store.markFailure(2, 'unavailable: DBB down');
+
+    await store.markAttempt(2, 60, 40);
+
+    const read = await store.read();
+    expect([...read.lastErrors]).toEqual([]);
+    expect([...read.listlessSince]).toEqual([[2, 40]]);
+  });
 });

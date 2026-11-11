@@ -412,6 +412,24 @@ describe('runClubIndex', () => {
       expect(store.log).toEqual([`attempt 2 ${NOW}`, 'save 2']);
     });
 
+    it("rejects with the crawl's error where noting it fails too", async () => {
+      const store = {
+        ...fakeStore([BAYERN_LIST], new Map(), [3]),
+        markFailure: () => Promise.reject(new Error('Firestore down')),
+      };
+
+      await expect(
+        runClubIndex(
+          runWith(
+            store,
+            fakeData(() =>
+              Promise.reject(new BasketballDataError('unavailable', 'DBB down'))
+            )
+          )
+        )
+      ).rejects.toMatchObject({ kind: 'unavailable' });
+    });
+
     it('stores at most 200 characters of an unexpected error, by its name', async () => {
       const store = fakeStore([BAYERN_LIST], new Map(), [3]);
 

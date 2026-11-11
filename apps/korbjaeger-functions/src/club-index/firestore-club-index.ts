@@ -6,7 +6,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import { CLUB_INDEX_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import type { AssociationId } from '@wolsok/feat-shared-basketball-data';
-import type { Firestore } from 'firebase-admin/firestore';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import type { ClubIndexStore } from './run-club-index';
 
 /** The field noting when a crawl started; a saved list drops it. */
@@ -20,9 +20,9 @@ const LAST_ERROR = 'lastError';
 
 /**
  * The club index in Firestore: `clubIndex/{associationId}`, one list each,
- * with `attemptedAt` while a crawl started after it left none (and, for a
- * Verband without a list, `listlessSince` and the failed crawl's
- * `lastError`), and the
+ * with `attemptedAt` while a crawl started after it left none, `lastError`
+ * once one failed (for a Verband without a list, only its latest
+ * attempt's) and, for a Verband without a list, `listlessSince`, and the
  * mark `OFFERED_ASSOCIATION` on every Verband the crawl noted, a list or
  * not yet. A document without a list is skipped (`parseAssociationClubs`),
  * and tells the server the index is still incomplete (`parseClubIndex`).
@@ -55,14 +55,16 @@ export function firestoreClubIndex(db: Firestore): ClubIndexStore {
       await batch.commit();
     },
     markAttempt: async (association, at, listlessSince) => {
-      await lists
-        .doc(String(association))
-        .set(
-          listlessSince === undefined
-            ? { [ATTEMPTED_AT]: at }
-            : { [ATTEMPTED_AT]: at, [LISTLESS_SINCE]: listlessSince },
-          { merge: true }
-        );
+      await lists.doc(String(association)).set(
+        listlessSince === undefined
+          ? { [ATTEMPTED_AT]: at }
+          : {
+              [ATTEMPTED_AT]: at,
+              [LISTLESS_SINCE]: listlessSince,
+              [LAST_ERROR]: FieldValue.delete(),
+            },
+        { merge: true }
+      );
     },
     markFailure: async (association, error) => {
       await lists

@@ -81,7 +81,7 @@ export const clubIndex = CLUB_INDEX_ON
           schedule: CLUB_INDEX_SCHEDULE,
           // #3022: a Verband stuck without a list keeps /api/clubs short-cached
           warn: (warning) =>
-            logger.warn('Club index: a Verband has had no list for a week', {
+            logger.warn('Club index: a Verband has had no list for too long', {
               ...warning,
             }),
         });
