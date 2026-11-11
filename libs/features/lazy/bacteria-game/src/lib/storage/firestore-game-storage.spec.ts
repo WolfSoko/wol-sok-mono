@@ -43,25 +43,25 @@ describe('FirestoreGameStorage', () => {
     const values = watched();
     await settleSnapshots();
 
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     await settleSnapshots();
 
     expect(values).toEqual([null, { count: 1 }]);
   });
 
   it('adds every change to the latest stored value, in turn', async () => {
-    storage.update(KEY, addOne);
-    storage.update(KEY, addOne);
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     await settleSnapshots();
 
     expect(valueOf(firestore, 'alice')).toEqual({ count: 3 });
   });
 
   it('skips a change that leaves the value as it is', async () => {
-    storage.update(KEY, () => ({ count: 1 }));
+    void storage.update(KEY, () => ({ count: 1 }));
     await settleSnapshots();
-    storage.update(KEY, () => ({ count: 1 }));
+    void storage.update(KEY, () => ({ count: 1 }));
     await settleSnapshots();
 
     expect(firestore.writes.length).toBe(1);
@@ -80,7 +80,7 @@ describe('FirestoreGameStorage', () => {
   it('applies a change made offline once online, exactly once', async () => {
     jest.useFakeTimers();
     firestore.offline = true;
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     await settleSnapshots();
     expect(valueOf(firestore, 'alice')).toBeNull();
 
@@ -96,7 +96,7 @@ describe('FirestoreGameStorage', () => {
     jest.useFakeTimers();
     firestore.refused.add(PATH_ALICE);
     jest.spyOn(console, 'error').mockImplementation(() => undefined);
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     await settleSnapshots();
 
     firestore.refused.delete(PATH_ALICE);
@@ -105,14 +105,47 @@ describe('FirestoreGameStorage', () => {
     expect(firestore.writes.length).toBe(0);
   });
 
+  it('says a change settled once its transaction committed', async () => {
+    const settled = storage.update(KEY, addOne);
+    await settleSnapshots();
+
+    await expect(settled).resolves.toBe(true);
+    expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
+  });
+
+  it('says a change that left the value as it is settled too', async () => {
+    await expect(storage.update(KEY, () => null)).resolves.toBe(true);
+  });
+
+  it('says a change the rules refuse was dropped', async () => {
+    firestore.refused.add(PATH_ALICE);
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    await expect(storage.update(KEY, addOne)).resolves.toBe(false);
+  });
+
+  it('keeps a change made offline unsettled until it is stored', async () => {
+    jest.useFakeTimers();
+    firestore.offline = true;
+    let settled: boolean | undefined;
+    void storage.update(KEY, addOne).then((stored) => (settled = stored));
+    await jest.advanceTimersByTimeAsync(5000);
+    expect(settled).toBeUndefined();
+
+    firestore.offline = false;
+    await jest.advanceTimersByTimeAsync(60_000);
+
+    expect(settled).toBe(true);
+  });
+
   it('answers for the next player after a switch', async () => {
-    storage.update(KEY, () => ({ owner: 'alice' }));
+    void storage.update(KEY, () => ({ owner: 'alice' }));
     await settleSnapshots();
     const values = watched();
     await settleSnapshots();
 
     players.next('bob');
-    storage.update(KEY, () => ({ owner: 'bob' }));
+    void storage.update(KEY, () => ({ owner: 'bob' }));
     await settleSnapshots();
 
     expect(values).toEqual([{ owner: 'alice' }, null, { owner: 'bob' }]);
@@ -121,7 +154,7 @@ describe('FirestoreGameStorage', () => {
 
   it('holds back what is stored while nobody plays, for the next guest', async () => {
     players.next(null);
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     await settleSnapshots();
     expect(firestore.writes.length).toBe(0);
 
@@ -135,7 +168,7 @@ describe('FirestoreGameStorage', () => {
   it('holds the writes while a ban holds, and makes them once it ends', async () => {
     const banned = new BehaviorSubject(true);
     storage = new FirestoreGameStorage(firestore.connection(), players, banned);
-    storage.update(KEY, addOne);
+    void storage.update(KEY, addOne);
     storage.write('bacteria-game.settings', { sound: true });
     await settleSnapshots();
     expect(firestore.writes.length).toBe(0);

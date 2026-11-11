@@ -66,7 +66,7 @@ describe('LocalGameReplays', () => {
   async function rewriteStored(
     change: (entry: Record<string, unknown>) => Record<string, unknown>
   ): Promise<void> {
-    storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+    void storage.update(LOCAL_REPLAYS_KEY, (stored) =>
       (stored as Record<string, unknown>[]).map(change)
     );
     await settle();

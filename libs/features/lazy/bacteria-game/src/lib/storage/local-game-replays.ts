@@ -101,7 +101,7 @@ export class LocalGameReplays implements GameReplays {
       state: 'submitted',
       bytes: toBase64(bytes),
     };
-    this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+    void this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
       capped([
         entry,
         ...parseLocalReplays(stored).filter((kept) => kept.id !== id),
@@ -138,7 +138,7 @@ export class LocalGameReplays implements GameReplays {
     const id = `c_${this.nextId++}`;
     // Nothing here reaches a gallery: both delete the match.
     if (type === 'remove' || type === 'forget') {
-      this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      void this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
         parseLocalReplays(stored).filter((kept) => kept.id !== replayId)
       );
       this.commands.set(id, { ok: true });
@@ -165,7 +165,7 @@ export class LocalGameReplays implements GameReplays {
       kept.filter((replay) => replay.simulation === undefined)
     );
     if (read.size > 0) {
-      this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+      void this.storage.update(LOCAL_REPLAYS_KEY, (stored) =>
         backfilled(stored, read)
       );
     }

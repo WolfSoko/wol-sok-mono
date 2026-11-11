@@ -11,6 +11,18 @@ import {
 } from 'rxjs';
 import { GameAccount, PlayerSwitch } from './game-account';
 import { DeviceStorage, GameStorage } from './game-storage';
+import {
+  droppedEntry,
+  parseUnsaved,
+  storedUnsaved,
+  UnsavedChanges,
+  unsavedEntry,
+  unsavedKey,
+  unsavedOf,
+  withoutUnchanged,
+  withoutUnsaved,
+  withUnsaved,
+} from './unsaved-changes';
 
 /** What a document of the player's data is made of. */
 export interface PlayerDocumentOptions<T> {
@@ -54,7 +66,12 @@ export interface PlayerDocument<T> {
  * player's, unless a guest signed in to an account that played elsewhere -
  * then the guest's data joins the account's, once. The first player of a
  * visit with the cloud also gets what this device kept under the key before
- * the cloud, once.
+ * the cloud, once: the device's copy goes only once the cloud stored it.
+ *
+ * With the cloud, what the page holds after a change also stays on the
+ * device (`unsaved-changes.ts`) until the cloud stored the change: a page
+ * closed before that leaves it for the player's next visit here, which
+ * merges it in. `merge` can only gain, so landing it twice changes nothing.
  *
  * Call it in an injection context, a service's field initialiser; it stops
  * with that context.
@@ -69,17 +86,28 @@ export function playerDocument<T>(
   const device = inject(DeviceStorage);
   const value = signal(empty, { equal });
   const loaded = signal(false);
+  const unsaved = unsavedChanges(device, key, account.cloud, merge);
+  /** Whoever plays, null between a sign-out and the next guest. */
+  let player: string | null = null;
+
+  /** Stores a change; resolves true once it is kept on the device too. */
+  const store = (next: T, write: (stored: T) => T): Promise<boolean> => {
+    const settled = storage.update(key, (stored) => write(parse(stored)));
+    return player === null
+      ? Promise.resolve(false)
+      : unsaved.keep(player, next, settled);
+  };
 
   const apply = (next: T, write: (stored: T) => T): void => {
     value.set(next);
-    storage.update(key, (stored) => write(parse(stored)));
+    void store(next, write);
   };
 
-  const adoptOnce = (guest: T): void => {
+  const adoptOnce = (guest: T): Promise<boolean> => {
     if (equal(guest, empty)) {
-      return;
+      return Promise.resolve(true);
     }
-    storage.update(key, (stored) => adopt(parse(stored), guest));
+    return storage.update(key, (stored) => adopt(parse(stored), guest));
   };
 
   const switchTo = ({ adoptsGuest }: PlayerSwitch): void => {
@@ -88,32 +116,79 @@ export function playerDocument<T>(
     value.set(empty);
     onSwitch?.();
     if (adoptsGuest) {
-      adoptOnce(guest);
+      void adoptOnce(guest);
     }
   };
 
-  /** Hands the device's copy to the player, once - dropped with them. */
+  /**
+   * Hands the device's copy to the player, once: kept as an unsaved change
+   * first, then taken off the device, so a second page never adopts it too
+   * and a page closed before the cloud has it leaves it for the next visit.
+   */
   const deviceCopy = (): Observable<never> =>
     device.watch(key).pipe(
       take(1),
       tap((stored) => {
-        if (stored !== null) {
-          adoptOnce(parse(stored));
-          device.write(key, null);
+        if (stored === null) {
+          return;
         }
+        const copy = parse(stored);
+        const adopted = adoptOnce(copy);
+        // Off the device once the journal took it - and also where it took
+        // nothing (storage full): a copy left there would be adopted again
+        // by every page starting before the cloud stored it.
+        const kept =
+          player === null
+            ? Promise.resolve(false)
+            : unsaved.keep(player, copy, adopted);
+        void kept.then(() => device.write(key, null));
+      }),
+      ignoreElements()
+    );
+
+  /**
+   * Applies what is left unsaved for the player on the device, as a change
+   * of this one: other pages' entries, and this page's own when the player
+   * plays here again after a switch (its change may still wait).
+   */
+  const replayUnsaved = (owner: string): Observable<never> =>
+    unsaved.of(owner).pipe(
+      tap(({ others: read, own }) => {
+        const values = [...Object.values(read), ...Object.values(own)].map(
+          ({ value }) => parse(value)
+        );
+        if (values.length === 0) {
+          return;
+        }
+        const left = values.reduce(merge, empty);
+        const next = merge(value(), left);
+        value.set(next);
+        // The entries read go only once this page's entry holds them.
+        void store(next, (stored) => merge(stored, left)).then((kept) => {
+          if (kept) {
+            unsaved.drop(read);
+          }
+        });
       }),
       ignoreElements()
     );
 
   account.players
     .pipe(
-      switchMap((player, index) => {
+      switchMap((playerSwitch, index) => {
         if (index > 0) {
-          switchTo(player);
-        } else if (account.cloud) {
-          return mergeStreams(deviceCopy(), storage.watch(key));
+          switchTo(playerSwitch);
         }
-        return storage.watch(key);
+        player = playerSwitch.playerId;
+        const stored = storage.watch(key);
+        if (!account.cloud) {
+          return stored;
+        }
+        const handOver = [
+          ...(index === 0 ? [deviceCopy()] : []),
+          ...(player === null ? [] : [replayUnsaved(player)]),
+        ];
+        return mergeStreams(...handOver, stored);
       }),
       map(parse),
       takeUntilDestroyed()
@@ -125,4 +200,114 @@ export function playerDocument<T>(
     });
 
   return { value: value.asReadonly(), loaded: loaded.asReadonly(), apply };
+}
+
+/** The unsaved changes of a document on this device, as this page keeps them. */
+interface UnsavedJournal<T> {
+  /**
+   * Keeps what the page holds for the player, merged into what it kept
+   * before, until `settled` says it is stored and no later change waits;
+   * a change the storage drops is kept apart, for the player's next start.
+   * Resolves true once it is on the device, false when the device refused.
+   */
+  keep(player: string, value: T, settled: Promise<boolean>): Promise<boolean>;
+  /**
+   * The player's changes on the device, read once: those of other pages
+   * and this page's own entry, which only this page clears.
+   */
+  of(
+    player: string
+  ): Observable<{ others: UnsavedChanges; own: UnsavedChanges }>;
+  /** Removes the changes read, unless another page wrote them again since. */
+  drop(read: UnsavedChanges): void;
+}
+
+/** A journal of a key's unsaved changes in the device storage; none without the cloud. */
+function unsavedChanges<T>(
+  device: GameStorage,
+  key: string,
+  cloud: boolean,
+  merge: (held: T, other: T) => T
+): UnsavedJournal<T> {
+  const page = pageId();
+  const journalKey = unsavedKey(key);
+  /** What this page kept per player since the last change stored. */
+  const kept = new Map<string, { value: T }>();
+  /** Numbers the entries of changes the storage dropped. */
+  let drops = 0;
+  /**
+   * Per player, the dropped changes not yet kept apart - Infinity once the
+   * device refused one: while any is, the page entry may be the only copy
+   * left, so the page does not clear it (never again after a refusal).
+   */
+  const pinned = new Map<string, number>();
+  const change = (
+    edit: (changes: UnsavedChanges) => UnsavedChanges
+  ): Promise<boolean> =>
+    device.update(journalKey, (stored) =>
+      storedUnsaved(edit(parseUnsaved(stored)))
+    );
+
+  return {
+    keep(player, value, settled) {
+      if (!cloud) {
+        return Promise.resolve(false);
+      }
+      const entry = unsavedEntry(page, player);
+      const before = kept.get(player);
+      const held = {
+        value: before === undefined ? value : merge(before.value, value),
+      };
+      kept.set(player, held);
+      void settled.then((stored) => {
+        if (!stored) {
+          // A later change that is stored carries only its own part, so the
+          // dropped one moves to an entry this page never clears.
+          const dropped = droppedEntry(entry, ++drops);
+          // Pinned at once, so a later change stored before this write ran
+          // does not clear the page entry meanwhile; unpinned only once every
+          // dropped change of the player is kept apart.
+          pinned.set(player, (pinned.get(player) ?? 0) + 1);
+          void change((changes) =>
+            withUnsaved(changes, dropped, { player, value: held.value })
+          ).then((keptApart) => {
+            const left = keptApart ? (pinned.get(player) ?? 1) - 1 : Infinity;
+            if (left === 0) {
+              pinned.delete(player);
+            } else {
+              pinned.set(player, left);
+            }
+          });
+        } else if (kept.get(player) === held && !pinned.has(player)) {
+          kept.delete(player);
+          void change((changes) => withoutUnsaved(changes, [entry]));
+        }
+      });
+      return change((changes) =>
+        withUnsaved(changes, entry, { player, value: held.value })
+      );
+    },
+    of(player) {
+      const own = unsavedEntry(page, player);
+      return device.watch(journalKey).pipe(
+        take(1),
+        map((stored) => {
+          const theirs = unsavedOf(parseUnsaved(stored), player);
+          const others = withoutUnsaved(theirs, [own]);
+          return { others, own: own in theirs ? { [own]: theirs[own] } : {} };
+        })
+      );
+    },
+    drop(read) {
+      void change((changes) => withoutUnchanged(changes, read));
+    },
+  };
+}
+
+/** Names this page apart from every other page of the device. */
+function pageId(): string {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`
+  );
 }

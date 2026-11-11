@@ -67,7 +67,7 @@ export class GuestNotice {
         this.cameBack.set(cameBack);
         this.visits.set(visits);
         if (visits !== stored) {
-          this.storage.update(
+          void this.storage.update(
             GUEST_NOTICE_KEY,
             (latest) => withVisit(parseGuestVisits(latest), now).visits
           );
@@ -93,7 +93,7 @@ export class GuestNotice {
   private change(part: Partial<GuestVisits>): void {
     if (this.visits() === undefined) return;
     this.visits.update((visits) => visits && { ...visits, ...part });
-    this.storage.update(GUEST_NOTICE_KEY, (latest) => ({
+    void this.storage.update(GUEST_NOTICE_KEY, (latest) => ({
       ...parseGuestVisits(latest),
       ...part,
     }));

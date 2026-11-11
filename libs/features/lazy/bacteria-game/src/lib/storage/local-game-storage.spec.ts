@@ -57,30 +57,54 @@ describe('LocalGameStorage', () => {
     const setItem = jest.spyOn(Storage.prototype, 'setItem');
 
     storage.write('key', { a: 1 });
-    storage.update('key', (stored) => stored);
+    void storage.update('key', (stored) => stored);
 
     expect(setItem).not.toHaveBeenCalled();
   });
 
   it('updates the stored value with what the change makes of it', () => {
-    storage.update('count', (stored) => (stored == null ? 1 : 0));
-    storage.update('count', (stored) => (stored as number) + 1);
+    void storage.update('count', (stored) => (stored == null ? 1 : 0));
+    void storage.update('count', (stored) => (stored as number) + 1);
     expect(watched('count')).toEqual([2]);
+  });
+
+  it('says a change settled once it is stored', async () => {
+    await expect(storage.update('count', () => 1)).resolves.toBe(true);
+    await expect(storage.update('count', (stored) => stored)).resolves.toBe(
+      true
+    );
+  });
+
+  it('says a change the browser refused to store was dropped', async () => {
+    jest.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota', 'QuotaExceededError');
+    });
+
+    await expect(storage.update('count', () => 1)).resolves.toBe(false);
+  });
+
+  it('says a change that threw was dropped, without throwing itself', async () => {
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+    const failing = () => {
+      throw new Error('broken change');
+    };
+
+    await expect(storage.update('count', failing)).resolves.toBe(false);
   });
 
   it('changes the value under a lock all tabs share, where there is one', async () => {
     const held: string[] = [];
-    const request = jest.fn(async (name: string, callback: () => void) => {
+    // As the browser's, it resolves with what the callback returns.
+    const request = jest.fn(async (name: string, callback: () => unknown) => {
       held.push(name);
-      callback();
+      return callback();
     });
     Object.defineProperty(navigator, 'locks', {
       value: { request },
       configurable: true,
     });
     try {
-      storage.update('count', () => 1);
-      await Promise.resolve();
+      await expect(storage.update('count', () => 1)).resolves.toBe(true);
 
       expect(held).toEqual(['bacteria-game-storage:count']);
       expect(watched('count')).toEqual([1]);
@@ -98,9 +122,7 @@ describe('LocalGameStorage', () => {
       configurable: true,
     });
     try {
-      storage.update('count', () => 2);
-      await Promise.resolve();
-      await Promise.resolve();
+      await expect(storage.update('count', () => 2)).resolves.toBe(true);
 
       expect(watched('count')).toEqual([2]);
     } finally {
@@ -119,7 +141,7 @@ describe('LocalGameStorage', () => {
       throw new DOMException('denied', 'SecurityError');
     });
     expect(() => storage.write('key', 1)).not.toThrow();
-    expect(() => storage.update('key', () => 1)).not.toThrow();
+    expect(() => void storage.update('key', () => 1)).not.toThrow();
     expect(watched('key')).toEqual([null]);
   });
 });

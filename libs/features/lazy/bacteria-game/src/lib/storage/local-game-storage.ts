@@ -21,14 +21,7 @@ export class LocalGameStorage implements GameStorage {
   }
 
   public write(key: string, value: unknown): void {
-    try {
-      const json = JSON.stringify(value);
-      if (localStorage.getItem(key) !== json) {
-        localStorage.setItem(key, json);
-      }
-    } catch {
-      // Storage refused - the value lasts for this visit only.
-    }
+    this.store(key, value);
   }
 
   /**
@@ -36,15 +29,38 @@ export class LocalGameStorage implements GameStorage {
    * the browser has Web Locks: two tabs ending a match at once would both
    * read the old count, and one match would be lost.
    */
-  public update(key: string, change: (stored: unknown) => unknown): void {
-    const apply = () => this.write(key, change(readStoredJson(key)));
+  public update(
+    key: string,
+    change: (stored: unknown) => unknown
+  ): Promise<boolean> {
+    const apply = () => {
+      try {
+        return this.store(key, change(readStoredJson(key)));
+      } catch (error) {
+        console.error(`Could not store ${key}`, error);
+        return false;
+      }
+    };
     const locks = globalThis.navigator?.locks;
     if (locks == null) {
-      apply();
-      return;
+      return Promise.resolve(apply());
     }
     // A browser that refuses the lock still gets the change.
-    locks.request(`${LOCK_PREFIX}${key}`, apply).catch(apply);
+    return locks.request(`${LOCK_PREFIX}${key}`, apply).catch(apply);
+  }
+
+  /** Writes the value unless it is stored already: false when refused. */
+  private store(key: string, value: unknown): boolean {
+    try {
+      const json = JSON.stringify(value);
+      if (localStorage.getItem(key) !== json) {
+        localStorage.setItem(key, json);
+      }
+      return true;
+    } catch {
+      // Storage refused - the value lasts for this visit only.
+      return false;
+    }
   }
 }
 
