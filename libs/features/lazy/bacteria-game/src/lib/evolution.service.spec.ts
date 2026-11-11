@@ -265,7 +265,7 @@ describe('EvolutionService', () => {
       });
       storage.flush();
       // Another device breeds membrane meanwhile.
-      storage.update(EVOLUTION_STORAGE_KEY, (stored) => ({
+      void storage.update(EVOLUTION_STORAGE_KEY, (stored) => ({
         ...(stored as object),
         genes: { mitosis: 2, membrane: 1 },
       }));
@@ -342,7 +342,7 @@ describe('EvolutionService', () => {
       evolution.equip('toxin-bomb');
       // A stale value lands before the pick does: another device bred a
       // gene, still carrying what it last heard of.
-      storage.update(EVOLUTION_STORAGE_KEY, () => ({
+      void storage.update(EVOLUTION_STORAGE_KEY, () => ({
         genes: { membrane: 1 },
         weapons: ['toxin-bomb', 'cryo-pulse'],
         equipped: 'cryo-pulse',

@@ -49,7 +49,7 @@ export class FirestoreGameStorage implements GameStorage {
   public write(key: string, value: unknown): void {
     const json = JSON.stringify(value);
     const { dbSdk } = this.connection;
-    this.enqueue(key, async (ref) => {
+    void this.enqueue(key, async (ref) => {
       // The snapshot of the write itself, which comes at once, updates `seen`.
       if (json === undefined || this.seen.get(ref.path) === json) {
         return;
@@ -63,9 +63,12 @@ export class FirestoreGameStorage implements GameStorage {
     });
   }
 
-  public update(key: string, change: (stored: unknown) => unknown): void {
+  public update(
+    key: string,
+    change: (stored: unknown) => unknown
+  ): Promise<boolean> {
     const { db, dbSdk } = this.connection;
-    this.enqueue(key, async (ref) => {
+    return this.enqueue(key, async (ref) => {
       for (let attempt = 0; ; attempt++) {
         try {
           await dbSdk.runTransaction(db, async (transaction) => {
@@ -75,11 +78,11 @@ export class FirestoreGameStorage implements GameStorage {
               transaction.set(ref, stored(dbSdk, after));
             }
           });
-          return;
+          return true;
         } catch (error) {
           if (FINAL_ERRORS.has(errorCode(error))) {
             console.error(`Could not store ${key}`, error);
-            return;
+            return false;
           }
           await beforeRetry(attempt);
         }
@@ -90,11 +93,12 @@ export class FirestoreGameStorage implements GameStorage {
   /**
    * Runs `task` on the document of the key for the player playing now - or
    * the next one, when nobody does yet - after the tasks queued before it.
+   * Resolves as the task does, false when it failed.
    */
-  private enqueue(
+  private enqueue<T>(
     key: string,
-    task: (ref: DocumentReference) => Promise<void>
-  ): void {
+    task: (ref: DocumentReference) => Promise<T>
+  ): Promise<T | false> {
     // Nobody plays between a sign-out and the next guest: what is stored
     // meanwhile is the next guest's.
     const player = firstValueFrom(
@@ -104,12 +108,17 @@ export class FirestoreGameStorage implements GameStorage {
       .then(async () => {
         const uid = await player;
         await firstValueFrom(this.held.pipe(filter((held) => !held)));
-        await task(this.document(uid, key));
+        return task(this.document(uid, key));
       })
-      .catch((error: unknown) =>
-        console.error(`Could not store ${key}`, error)
-      );
-    this.queues.set(key, queued);
+      .catch((error: unknown) => {
+        console.error(`Could not store ${key}`, error);
+        return false as const;
+      });
+    this.queues.set(
+      key,
+      queued.then(() => undefined)
+    );
+    return queued;
   }
 
   private snapshots(uid: string, key: string): Observable<unknown> {

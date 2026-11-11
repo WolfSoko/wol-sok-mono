@@ -97,7 +97,7 @@ describe('playerDocument', () => {
     const document = create();
     account.flush();
 
-    account.storageOf('guest').update(KEY, () => ['bronze']);
+    void account.storageOf('guest').update(KEY, () => ['bronze']);
     account.flush();
 
     expect(document.value()).toEqual(['bronze']);
@@ -108,7 +108,7 @@ describe('playerDocument', () => {
     account.flush();
     const held = document.value();
 
-    account.storageOf('guest').update(KEY, () => ['gold']);
+    void account.storageOf('guest').update(KEY, () => ['gold']);
     account.flush();
 
     expect(document.value()).toBe(held);
@@ -255,7 +255,7 @@ describe('playerDocument', () => {
     account.flush();
 
     TestBed.resetTestingModule();
-    account.storageOf('guest').update(KEY, () => ['gold']);
+    void account.storageOf('guest').update(KEY, () => ['gold']);
     account.flush();
 
     expect(document.value()).toEqual([]);

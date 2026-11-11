@@ -32,8 +32,17 @@ export class LateGameStorage implements GameStorage {
     this.pending.push(() => this.store(key, value));
   }
 
-  public update(key: string, change: (stored: unknown) => unknown): void {
-    this.pending.push(() => this.store(key, change(this.stored(key))));
+  /** Resolves true once `flush()` (or `flushLast()`) answered the change. */
+  public update(
+    key: string,
+    change: (stored: unknown) => unknown
+  ): Promise<boolean> {
+    return new Promise((resolve) =>
+      this.pending.push(() => {
+        this.store(key, change(this.stored(key)));
+        resolve(true);
+      })
+    );
   }
 
   /** Answers everything asked so far. */

@@ -44,11 +44,16 @@ export abstract class GameStorage {
    * have side effects. Changes that merge and can only gain come to the same
    * however often they land; a change that adds to a count must land exactly
    * once - a transaction does that.
+   *
+   * Resolves true once the change is stored - or found to change nothing -
+   * and false once the backend dropped it for good; it never rejects. A
+   * change that waits to be online stays unresolved meanwhile, and one the
+   * page leaves behind when it closes never resolves.
    */
   public abstract update(
     key: string,
     change: (stored: unknown) => unknown
-  ): void;
+  ): Promise<boolean>;
 }
 
 /**

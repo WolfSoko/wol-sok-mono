@@ -72,14 +72,14 @@ export function playerDocument<T>(
 
   const apply = (next: T, write: (stored: T) => T): void => {
     value.set(next);
-    storage.update(key, (stored) => write(parse(stored)));
+    void storage.update(key, (stored) => write(parse(stored)));
   };
 
   const adoptOnce = (guest: T): void => {
     if (equal(guest, empty)) {
       return;
     }
-    storage.update(key, (stored) => adopt(parse(stored), guest));
+    void storage.update(key, (stored) => adopt(parse(stored), guest));
   };
 
   const switchTo = ({ adoptsGuest }: PlayerSwitch): void => {
