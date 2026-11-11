@@ -1,3 +1,4 @@
+import { playerStatsOf } from '../../testing/player-stats';
 import { fieldGoals, isNamed, type RosterEntry } from './game-report';
 
 describe('isNamed', () => {
@@ -16,15 +17,16 @@ describe('isNamed', () => {
 });
 
 describe('fieldGoals', () => {
-  it('counts the field goals: twos and threes made, no free throws', () => {
+  it('adds up twos and threes, made and attempted, no free throws', () => {
     expect(
-      fieldGoals({
-        points: 29,
-        twoPointers: 9,
-        threePointers: 3,
-        freeThrows: { made: 2, attempted: 7 },
-        fouls: 3,
-      })
-    ).toBe(12);
+      fieldGoals(
+        playerStatsOf({
+          points: 29,
+          twoPointers: { made: 9, attempted: 14 },
+          threePointers: { made: 3, attempted: 5 },
+          freeThrows: { made: 2, attempted: 7 },
+        })
+      )
+    ).toEqual({ made: 12, attempted: 19 });
   });
 });

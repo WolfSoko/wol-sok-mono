@@ -10,6 +10,7 @@ import {
   type GameReport,
   type PlayerStats,
 } from '@wolsok/feat-shared-basketball-data';
+import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   type Auswahl,
@@ -78,14 +79,31 @@ const GESPIELT: GameDetails = {
 };
 
 function werte(punkte: number, fouls = 2): PlayerStats {
-  return {
+  return playerStatsOf({
     points: punkte,
-    twoPointers: 4,
-    threePointers: 1,
+    twoPointers: { made: 4, attempted: 0 },
+    threePointers: { made: 1, attempted: 0 },
     freeThrows: { made: 3, attempted: 5 },
     fouls,
-  };
+  });
 }
+
+/** A starter of the 1. Regionalliga, every value recorded. */
+const ALLE_WERTE = playerStatsOf({
+  playingTimeSeconds: 1724,
+  points: 16,
+  twoPointers: { made: 8, attempted: 12 },
+  threePointers: { made: 0, attempted: 2 },
+  freeThrows: { made: 0, attempted: 2 },
+  rebounds: 7,
+  assists: 1,
+  steals: 2,
+  turnovers: 1,
+  blocks: 1,
+  fouls: 2,
+  efficiency: 18,
+  startingFive: true,
+});
 
 const MIT_WERTEN: Roster = {
   playerStatsRecorded: true,
@@ -688,14 +706,78 @@ describe('SpielComponent', () => {
         'Name',
         'Punkte',
         'Feldkörbe',
+        'Dreier',
         'Freiwürfe getroffen von versucht',
         'Fouls',
       ]);
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['7', 'Ilvio Mistelgrund', '14', '5', '3/5', '2'],
-        ['', 'Anonymer Spieler', '10', '5', '3/5', '4'],
+        ['7', 'Ilvio Mistelgrund', '14', '5', '1', '3/5', '2'],
+        ['', 'Anonymer Spieler', '10', '5', '1', '3/5', '4'],
       ]);
       expect(teil(heim, 'kader-ohne-werte')).toBeNull();
+      expect(teil(heim, 'kader-start')).toBeNull();
+    });
+
+    it('shows every Spielerwert the Verband records, and the starting five', async () => {
+      const alleWerte: Roster = {
+        playerStatsRecorded: true,
+        entries: [
+          {
+            kind: 'named',
+            personId: 96606327,
+            firstName: 'Rilla',
+            lastName: 'Schlehenau',
+            shirtNumber: '1',
+            playerStats: ALLE_WERTE,
+          },
+          {
+            kind: 'anonymous',
+            playerStats: { ...ALLE_WERTE, startingFive: false },
+          },
+        ],
+      };
+      const seite = await render(
+        fakeData(
+          async () => GESPIELT,
+          async () => bericht(alleWerte, OHNE_WERTE)
+        )
+      );
+
+      const [heim] = kader(seite);
+      expect(kopfzellen(heim)).toEqual([
+        'Trikotnummer',
+        'Name',
+        'Spielzeit in Minuten',
+        'Punkte',
+        'Feldkörbe getroffen von versucht',
+        'Dreier getroffen von versucht',
+        'Freiwürfe getroffen von versucht',
+        'Rebounds',
+        'Assists',
+        'Ballgewinne',
+        'Ballverluste',
+        'Blocks',
+        'Fouls',
+        'Effizienz',
+      ]);
+      const [starter, anonym] = zellen(heim, 'kader-zeile');
+      expect(starter.slice(2)).toEqual([
+        '28:44',
+        '16',
+        '8/14',
+        '0/2',
+        '0/2',
+        '7',
+        '1',
+        '2',
+        '1',
+        '1',
+        '2',
+        '18',
+      ]);
+      expect(alle(heim, 'kader-start')).toHaveLength(1);
+      expect(text(teil(heim, 'kader-start'))).toContain('In der Startfünf');
+      expect(anonym[1]).toBe('Anonymer Spieler');
     });
 
     it('says "keine Spielerwerte erfasst" for a Kader without, never zeros', async () => {
@@ -733,7 +815,7 @@ describe('SpielComponent', () => {
       const [heim, gast] = kader(seite);
       expect(kopfzellen(heim)[0]).toBe('Name');
       expect(zellen(heim, 'kader-zeile')).toEqual([
-        ['Anonymer Spieler', '10', '5', '3/5', '2'],
+        ['Anonymer Spieler', '10', '5', '1', '3/5', '2'],
       ]);
       expect(kopfzellen(gast)[0]).toBe('Trikotnummer');
     });

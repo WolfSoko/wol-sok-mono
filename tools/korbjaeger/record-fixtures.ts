@@ -20,7 +20,7 @@ import {
   dbbHttpRequest,
   type DbbRequest,
 } from '@wolsok/feat-shared-basketball-data';
-import { FIXTURE_REQUESTS, type FixtureRequest } from './fixture-requests';
+import { selectedFixtures } from './fixture-requests';
 import { rawDirOutsideWorkspace } from './raw-dir';
 
 const USER_AGENT = 'Korbjaeger-dev (+https://korb.wolsok.de)';
@@ -29,7 +29,7 @@ const PAUSE_MS = 1000;
 async function main(): Promise<void> {
   const rawDir = rawDirOutsideWorkspace(process.argv[2]);
   mkdirSync(rawDir, { recursive: true });
-  for (const fixture of selected(process.argv.slice(3))) {
+  for (const fixture of selectedFixtures(process.argv.slice(3))) {
     const response = await fetchDbb(fixture.request);
     writeFileSync(
       join(rawDir, `${fixture.name}.json`),
@@ -38,20 +38,6 @@ async function main(): Promise<void> {
     console.log(`recorded ${fixture.name}`);
     await pause(PAUSE_MS);
   }
-}
-
-/** The fixtures `names` name, all of them without names. */
-function selected(names: readonly string[]): readonly FixtureRequest[] {
-  if (names.length === 0) {
-    return FIXTURE_REQUESTS;
-  }
-  return names.map((name) => {
-    const fixture = FIXTURE_REQUESTS.find((request) => request.name === name);
-    if (fixture === undefined) {
-      throw new Error(`no such fixture: ${name}`);
-    }
-    return fixture;
-  });
 }
 
 async function fetchDbb(request: DbbRequest): Promise<unknown> {

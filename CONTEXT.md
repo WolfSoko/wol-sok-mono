@@ -104,7 +104,7 @@ _Code_: `Roster`
 _Avoid_: Roster, Aufstellung
 
 **Spielerwerte**:
-A player's numbers in one Spiel (points, fouls, free throws, ...); only some Verbände record them.
+A player's numbers in one Spiel: points, field goals and threes, free throws, fouls and, where the Verband records them, playing time, shot attempts, rebounds, assists, steals, turnovers, blocks, efficiency and the starting five; only some Verbände record any, and which ones is decided per Kader.
 _Code_: `PlayerStats`
 _Avoid_: Stats, Statistik
 

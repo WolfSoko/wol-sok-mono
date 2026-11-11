@@ -190,6 +190,11 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
     name: 'boxscore-2843814',
     request: { kind: 'game-report', gameId: 2843814 },
   },
+  // 1. Regionalliga Herren: every Spielerwert filled (playing time, attempts, rebounds …)
+  {
+    name: 'boxscore-2861555',
+    request: { kind: 'game-report', gameId: 2861555 },
+  },
   { name: 'matchinfo-not-found', request: { kind: 'game-info', gameId: 1 } },
   { name: 'boxscore-not-found', request: { kind: 'game-report', gameId: 1 } },
   // a Spiel of Team 313036 (at home against MTV Gifhorn), for the e2e's Spiel page
@@ -206,3 +211,22 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
 /** The lib's fixtures folder, relative to the workspace root. */
 export const FIXTURES_DIR =
   'libs/features/basketball-data/src/lib/dbb/fixtures';
+
+/**
+ * The fixtures `names` name, every one of `FIXTURE_REQUESTS` without names;
+ * throws on a name it does not know.
+ */
+export function selectedFixtures(
+  names: readonly string[]
+): readonly FixtureRequest[] {
+  if (names.length === 0) {
+    return FIXTURE_REQUESTS;
+  }
+  return names.map((name) => {
+    const fixture = FIXTURE_REQUESTS.find((request) => request.name === name);
+    if (fixture === undefined) {
+      throw new Error(`no such fixture: ${name}`);
+    }
+    return fixture;
+  });
+}
