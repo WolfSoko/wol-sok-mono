@@ -146,11 +146,17 @@ export function playerDocument<T>(
       ignoreElements()
     );
 
-  /** Applies what earlier pages left unsaved for the player, as a change of this one. */
+  /**
+   * Applies what is left unsaved for the player on the device, as a change
+   * of this one: other pages' entries, and this page's own when the player
+   * plays here again after a switch (its change may still wait).
+   */
   const replayUnsaved = (owner: string): Observable<never> =>
     unsaved.of(owner).pipe(
-      tap((read) => {
-        const values = Object.values(read).map(({ value }) => parse(value));
+      tap(({ others: read, own }) => {
+        const values = [...Object.values(read), ...Object.values(own)].map(
+          ({ value }) => parse(value)
+        );
         if (values.length === 0) {
           return;
         }
@@ -205,8 +211,13 @@ interface UnsavedJournal<T> {
    * Resolves true once it is on the device, false when the device refused.
    */
   keep(player: string, value: T, settled: Promise<boolean>): Promise<boolean>;
-  /** The changes other pages left for the player on the device, read once. */
-  of(player: string): Observable<UnsavedChanges>;
+  /**
+   * The player's changes on the device, read once: those of other pages
+   * and this page's own entry, which only this page clears.
+   */
+  of(
+    player: string
+  ): Observable<{ others: UnsavedChanges; own: UnsavedChanges }>;
   /** Removes the changes read, unless another page wrote them again since. */
   drop(read: UnsavedChanges): void;
 }
@@ -280,10 +291,11 @@ function unsavedChanges<T>(
       const own = unsavedEntry(page, player);
       return device.watch(journalKey).pipe(
         take(1),
-        // This page's own entry is the change it is making now.
-        map((stored) =>
-          withoutUnsaved(unsavedOf(parseUnsaved(stored), player), [own])
-        )
+        map((stored) => {
+          const theirs = unsavedOf(parseUnsaved(stored), player);
+          const others = withoutUnsaved(theirs, [own]);
+          return { others, own: own in theirs ? { [own]: theirs[own] } : {} };
+        })
       );
     },
     drop(read) {

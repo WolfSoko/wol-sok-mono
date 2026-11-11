@@ -12,10 +12,10 @@ Spec: [2820](../specs/2820-game-progress-saves-are-lost-when-the-tab-closes-with
 - Fix specs whose hand-made `GameStorage` doesn't type any more (`typecheck-specs`).
 - Commit: `feat(feat-lazy-bacteria-game): report when a game storage change settled`.
 
-## 2. Clear the device's progress only once the cloud has it
+## 2. Never lose the device's progress to a closed page
 
-- `lib/storage/player-document.ts`: `adoptOnce` returns the update's promise; `deviceCopy` writes `null` to the device only when it resolves true.
-- Tests first in `player-document.spec.ts`: the device copy stays until `flush`, is gone after it; a new document with the copy still there adopts it again.
+- `lib/storage/player-document.ts`: `adoptOnce` returns the update's promise; `deviceCopy` first keeps the copy as an unsaved change of the page (task 3), then writes `null` to the device, also where the device refuses the journal, so no second page adopts it again (changed in review; the first draft cleared it only once the adoption resolved true).
+- Tests first in `player-document.spec.ts`: the copy leaves the device at once and waits in the journal until stored, no second page adopts it, the next visit lands it from the journal.
 - Commit: `fix(feat-lazy-bacteria-game): keep the device's progress until the cloud stored it`.
 
 ## 3. Journal unsaved changes per player

@@ -433,6 +433,20 @@ describe('playerDocument', () => {
       expect(next.stored(UNSAVED)).toEqual(theirs);
     });
 
+    it("show this page's own when its player plays here again", async () => {
+      const document = create();
+      add(document, 'silver');
+      await answerDevice();
+
+      account.switchTo('ada');
+      await answerDevice();
+      account.switchTo('guest');
+      await answerDevice();
+
+      expect(document.value()).toEqual(['silver']);
+      expect(unsavedOn()['guest']).toEqual([['silver']]);
+    });
+
     it('are applied when their player takes over again', async () => {
       account = new FakeGameAccount('guest');
       const next = new LateGameStorage({

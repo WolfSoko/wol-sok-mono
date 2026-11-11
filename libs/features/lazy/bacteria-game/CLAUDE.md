@@ -348,7 +348,9 @@ storage until then. Settings stay with the device either way.
   under the document's key before the cloud (`playerDocument`), once: the
   copy is kept as an unsaved change first and then cleared, so a second
   page never adopts it too and a page closed before the cloud stored it
-  lands it on the next visit (through `merge`, so never counted twice).
+  lands it on the next visit (through `merge`, so never counted twice). A
+  device that refuses the journal (storage full) sees the copy cleared all
+  the same, and loses it if the page closes before the cloud stored it.
 - Specs for a service that stores data also run it against `LateGameStorage`
   (`src/testing/`, kept out of the lib build), an asynchronous fake, so a
   service that depends on local storage answering synchronously fails a test.
