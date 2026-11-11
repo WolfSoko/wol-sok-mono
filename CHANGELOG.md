@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.0...v74.167.1) (2026-11-11)
+
+### Refactorings
+
+* **feat-korbjaeger-selection:** English identifiers, part B: the Auswahl and Antworten libs ([#3053](https://github.com/WolfSoko/wol-sok-mono/issues/3053)) ([1c3a3a0](https://github.com/WolfSoko/wol-sok-mono/commit/1c3a3a00e6caf5a3c26e0c4c7436fe6cb12565d4)), references [#3010](https://github.com/WolfSoko/wol-sok-mono/issues/3010) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#3010](https://github.com/WolfSoko/wol-sok-mono/issues/3010) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967) [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967)
+
 ## [74.167.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.166.0...v74.167.0) (2026-11-11)
 
 ### Features
