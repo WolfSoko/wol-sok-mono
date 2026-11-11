@@ -12,6 +12,7 @@ import { RouterLink } from '@angular/router';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
+import { aeltesterStand } from '../basketball-data/stand';
 import { teamSaisonResource } from '../basketball-data/team-saison-resource';
 import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
 import { HEUTE } from '../heute';
@@ -38,7 +39,7 @@ import { checkedChildStep, childStep } from './child-step';
   ],
   template: `
     @if (followed()) {
-      @if (saison.isLoading() || details.isLoading()) {
+      @if (saison.isLoading() || waitingForDetails()) {
         <mat-progress-bar
           mode="indeterminate"
           [attr.aria-label]="'Spiele von ' + teamName() + ' werden geladen'"
@@ -46,7 +47,7 @@ import { checkedChildStep, childStep } from './child-step';
       } @else if (failure(); as text) {
         <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
       } @else if (shown(); as step) {
-        <korb-stand data-qa="child-step-stand" [stand]="saison.stand()" />
+        <korb-stand data-qa="child-step-stand" [stand]="stand()" />
         @switch (step.kind) {
           @case ('mark') {
             <a
@@ -125,6 +126,16 @@ export class ChildStepComponent {
     const step = this.step();
     return step?.kind === 'mark' ? step.spielId : undefined;
   });
+
+  /** Only until the first details came: a reload keeps the step shown. */
+  protected readonly waitingForDetails = computed(
+    () => this.details.isLoading() && !this.details.hasValue()
+  );
+
+  /** The oldest of the reads the step stands on. */
+  protected readonly stand = computed(() =>
+    aeltesterStand(this.saison.stand(), this.details.stand())
+  );
 
   protected readonly shown = computed(() => {
     const step = this.step();

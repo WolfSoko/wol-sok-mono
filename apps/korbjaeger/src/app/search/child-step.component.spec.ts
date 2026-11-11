@@ -19,7 +19,7 @@ import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
 import { ChildStepComponent } from './child-step.component';
 
 type TeamSpieleRead = KorbjaegerData['teamGames'];
-type SpielRead = KorbjaegerData['game'];
+type GameRead = KorbjaegerData['game'];
 
 /** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
 const recordedDbb: DbbTransport = async (request) => {
@@ -29,15 +29,15 @@ const recordedDbb: DbbTransport = async (request) => {
 const RECORDED = new DbbBasketballData(recordedDbb);
 
 /** A recorded Spiel of a Liga with Spielberichte (`statisticType` 1). */
-const SPIEL_MIT_BERICHTEN = 2861436;
+const GAME_WITH_REPORTS = 2861436;
 /** A recorded Spiel of a Liga without Spielberichte (`statisticType` 0). */
-const SPIEL_OHNE_BERICHTE = 2930311;
+const GAME_WITHOUT_REPORTS = 2930311;
 
 /**
  * The Spiel asked for, in the Liga of the recorded Spiel `recorded` as its
  * details name it: the fixtures hold no Team of such a Liga.
  */
-function inLigaOf(recorded: number): SpielRead {
+function inLigaOf(recorded: number): GameRead {
   return async (spiel, options) => {
     const details = await RECORDED.game(recorded, options);
     return { ...details, game: { ...details.game, id: spiel } };
@@ -48,7 +48,7 @@ const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 const WASBUETTEL = WASBUETTEL_RST;
 
 /** A Spiel the DBB does not know, so its Liga stays unknown. */
-const unknownSpiel: SpielRead = async () => {
+const unknownSpiel: GameRead = async () => {
   throw new BasketballDataError('not-found', 'no such Spiel');
 };
 
@@ -57,7 +57,7 @@ async function render(
   {
     followed = true,
     game = unknownSpiel,
-  }: { followed?: boolean; game?: SpielRead } = {}
+  }: { followed?: boolean; game?: GameRead } = {}
 ): Promise<{
   page: HTMLElement;
   teamGames: ReturnType<typeof vi.fn<TeamSpieleRead>>;
@@ -134,7 +134,7 @@ describe('ChildStepComponent', () => {
 
     it("says the Kind cannot be marked where the Spiel's details name a Liga without Spielberichte", async () => {
       const { page } = await render(recordedSaison, {
-        game: inLigaOf(SPIEL_OHNE_BERICHTE),
+        game: inLigaOf(GAME_WITHOUT_REPORTS),
       });
 
       expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
@@ -146,7 +146,7 @@ describe('ChildStepComponent', () => {
     });
 
     it('links the last played Spiel where its Liga keeps Spielberichte', async () => {
-      const game = vi.fn<SpielRead>(inLigaOf(SPIEL_MIT_BERICHTEN));
+      const game = vi.fn<GameRead>(inLigaOf(GAME_WITH_REPORTS));
       const { page } = await render(recordedSaison, { game });
 
       expect(game).toHaveBeenCalledWith(2861445, expect.anything());

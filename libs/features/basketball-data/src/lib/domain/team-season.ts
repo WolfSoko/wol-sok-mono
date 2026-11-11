@@ -59,9 +59,9 @@ export function nextGameIndex(season: TeamSeason, today: string): number {
 
 /**
  * The Spiele of `season` played up to `today` (today's included), newest
- * first, at most `atMost`: those with a Spielbericht to look into, unless
- * their Liga keeps none (`League.withoutGameReports`, which only a Spiel's
- * details tell). Cancelled and forfeited Spiele have none; a result the DBB lists ahead of
+ * first, at most `atMost`. Their Liga is not looked at: whether it keeps
+ * Spielberichte (`League.withoutGameReports`) only a Spiel's details tell.
+ * Cancelled and forfeited Spiele have none; a result the DBB lists ahead of
  * its day is passed over, as `teamOverview` does. Relies on the date
  * order of `season.games`.
  *
