@@ -138,6 +138,7 @@ export {
   nextGame,
   seasonOver,
   lastPlayed,
+  keepsGameReports,
 } from './lib/domain/team-season';
 export type { TeamSeason, ClubTeam, ClubTeams } from './lib/domain/team-season';
 export {

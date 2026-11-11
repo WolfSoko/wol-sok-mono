@@ -7,6 +7,7 @@ import {
   nextGame,
   seasonOver,
   lastPlayed,
+  keepsGameReports,
   type TeamSeason,
 } from './team-season';
 
@@ -410,5 +411,30 @@ describe('lastPlayed', () => {
     );
 
     expect(played.map(({ id }) => id)).toEqual([3, 2]);
+  });
+});
+
+describe('keepsGameReports', () => {
+  it('is false for a Spiel of a Liga the DBB keeps no Spielberichte for', () => {
+    const withoutReports: League = { ...MAIN_ROUND, withoutGameReports: true };
+    const spiel = game(1, MAIN_ROUND.id, '2026-10-03');
+    const saison: TeamSeason = {
+      ...season(spiel),
+      leagues: [withoutReports],
+    };
+
+    expect(keepsGameReports(saison, spiel)).toBe(false);
+  });
+
+  it('is true for a Spiel of a Liga with Spielberichte', () => {
+    const spiel = game(1, FIRST_ROUND.id, '2026-10-03');
+
+    expect(keepsGameReports(season(spiel), spiel)).toBe(true);
+  });
+
+  it('is true for a Spiel of a Liga the Saison does not list', () => {
+    const spiel = game(1, 99999, '2026-10-03');
+
+    expect(keepsGameReports(season(spiel), spiel)).toBe(true);
   });
 });

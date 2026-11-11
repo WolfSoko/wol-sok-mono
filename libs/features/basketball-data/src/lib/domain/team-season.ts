@@ -77,6 +77,16 @@ export function lastPlayed(
     .slice(0, atMost);
 }
 
+/**
+ * Whether the DBB keeps a Spielbericht for `game`, a Spiel of `season`: not
+ * where its Liga is `withoutGameReports`, so its page has no Kader. A Liga
+ * the Saison does not list counts as keeping them, as nothing says
+ * otherwise.
+ */
+export function keepsGameReports(season: TeamSeason, game: Game): boolean {
+  return !leagueOf(season, game.leagueId)?.withoutGameReports;
+}
+
 /** How many days after its last Spiel a Team's Saison counts as over. */
 const SEASON_OVER_AFTER_DAYS = 14;
 
