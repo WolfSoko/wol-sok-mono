@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.1...v74.167.2) (2026-11-11)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** keep game progress saves when the tab closes before the cloud stored them ([#3043](https://github.com/WolfSoko/wol-sok-mono/issues/3043)) ([096cc96](https://github.com/WolfSoko/wol-sok-mono/commit/096cc96367546b8b52d53dcc2398167b5c166391)), closes [#2820](https://github.com/WolfSoko/wol-sok-mono/issues/2820), references [#2820](https://github.com/WolfSoko/wol-sok-mono/issues/2820) [#2820](https://github.com/WolfSoko/wol-sok-mono/issues/2820) [#2820](https://github.com/WolfSoko/wol-sok-mono/issues/2820)
+* **pacetrainer:** self-host Inter, fix fs.allow, editor tsconfig and nxViteTsPaths in the Analog apps ([#3046](https://github.com/WolfSoko/wol-sok-mono/issues/3046)) ([82c4d4c](https://github.com/WolfSoko/wol-sok-mono/commit/82c4d4c8f076e691c53b81c81e6aba059fb1d9cd)), references [#2884](https://github.com/WolfSoko/wol-sok-mono/issues/2884) [#2884](https://github.com/WolfSoko/wol-sok-mono/issues/2884)
+
+### Refactorings
+
+* **korbjaeger:** remove the transitional code of the move before [#2966](https://github.com/WolfSoko/wol-sok-mono/issues/2966) ([#3009](https://github.com/WolfSoko/wol-sok-mono/issues/3009)) ([2004dbc](https://github.com/WolfSoko/wol-sok-mono/commit/2004dbcf9de6d1304f7eba039ca255d2443a00ff)), references [#2983](https://github.com/WolfSoko/wol-sok-mono/issues/2983) [#2983](https://github.com/WolfSoko/wol-sok-mono/issues/2983)
+
+### Chore
+
+* **release:** publish ([e812bb7](https://github.com/WolfSoko/wol-sok-mono/commit/e812bb71bb7bc3a20bfddaa99ff27323a23f3eae))
+
 ## [74.167.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.0...v74.167.1) (2026-11-11)
 
 ### Refactorings
