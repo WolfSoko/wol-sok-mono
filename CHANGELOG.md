@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.166.0...v74.167.0) (2026-11-11)
+
+### Features
+
+* **korbjaeger:** show every Spielerwert the DBB records for a Kader ([#3050](https://github.com/WolfSoko/wol-sok-mono/issues/3050)) ([6939853](https://github.com/WolfSoko/wol-sok-mono/commit/6939853540aa63b3b76b48c9a6c8e2ea99ec0428)), closes [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975), references [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975) [#2975](https://github.com/WolfSoko/wol-sok-mono/issues/2975)
+
+### Bug Fixes
+
+* **tools:** version only the npm packages whose build reads a change ([#3044](https://github.com/WolfSoko/wol-sok-mono/issues/3044)) ([4da9414](https://github.com/WolfSoko/wol-sok-mono/commit/4da9414cc1633b17b897ecd1c42ac7e86293fbe0)), closes [#3020](https://github.com/WolfSoko/wol-sok-mono/issues/3020)
+
 ## [74.166.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.165.2...v74.166.0) (2026-11-11)
 
 ### Features
