@@ -1,8 +1,8 @@
 /**
  * What specs outside the game lib take from it, imported as
  * `@wolsok/feat-lazy-bac-game/testing`: the fake game cloud, the fake
- * Firebase SDK and its Auth users and tokens the admin area's specs run on. Specs only, never a build;
- * export more as a spec needs it.
+ * Firebase SDK and its Auth users and tokens the admin area's specs run
+ * on. Specs only, never a build; export more as a spec needs it.
  */
 export { provideFakeGameCloud } from './testing/fake-game-cloud';
 export {

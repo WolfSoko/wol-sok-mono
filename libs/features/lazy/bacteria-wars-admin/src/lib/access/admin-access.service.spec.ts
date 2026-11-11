@@ -20,7 +20,7 @@ function connect(
   const fake = new FakeFirebase();
   const auth = fake.auth;
   const token = fakeToken(claims, { signInProvider: provider, authTime });
-  auth.currentUser = user;
+  auth.become(user);
   // The token a Google sign-in as the owner brings, too.
   auth.tokens.set('owner', token);
   if (user !== null) {
@@ -45,7 +45,10 @@ describe('AdminAccessService', () => {
     const access = TestBed.inject(AdminAccessService);
 
     expect(await access.check()).toBe('granted');
-    expect(auth.getIdTokenResult).toHaveBeenCalledWith(expect.anything(), true);
+    expect(auth.getIdTokenResult).toHaveBeenCalledWith(
+      expect.objectContaining({ uid: 'owner' }),
+      true
+    );
     expect(access.uid()).toBe('owner');
     expect(access.signedInLately(NOW)).toBe(true);
     expect(access.signedInLately(NOW + 3_600_000)).toBe(false);
