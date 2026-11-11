@@ -56,7 +56,10 @@ import { childStep } from './child-step';
               <mat-icon aria-hidden="true">star_outline</mat-icon>
               Kind im Kader markieren
             </a>
-            <p>Im Kader seines letzten Spiels markierst du dein Kind.</p>
+            <p>
+              Im Kader seines letzten Spiels mit Spielbericht markierst du dein
+              Kind.
+            </p>
           }
           @case ('no-game-reports') {
             <p data-qa="child-step-no-game-reports">

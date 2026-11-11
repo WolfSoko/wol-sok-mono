@@ -87,6 +87,26 @@ export function keepsGameReports(season: TeamSeason, game: Game): boolean {
   return !leagueOf(season, game.leagueId)?.withoutGameReports;
 }
 
+/**
+ * The last Spiel of `season` played up to `today` (today's included) that
+ * the DBB keeps a Spielbericht for (`keepsGameReports`): the newest whose
+ * Kader names its players. Passes over cancelled and forfeited Spiele as
+ * `lastPlayed` does.
+ *
+ * @param today a German calendar day, `YYYY-MM-DD` (`dateInGermany`)
+ */
+export function lastWithGameReport(
+  season: TeamSeason,
+  today: string
+): Game | undefined {
+  return season.games.findLast(
+    (game) =>
+      game.date <= today &&
+      game.status.kind === 'played' &&
+      keepsGameReports(season, game)
+  );
+}
+
 /** How many days after its last Spiel a Team's Saison counts as over. */
 const SEASON_OVER_AFTER_DAYS = 14;
 

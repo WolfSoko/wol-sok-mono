@@ -48,7 +48,7 @@ describe('childStep', () => {
     });
   });
 
-  it('offers no link where the Team played only in a Liga without Spielberichte', () => {
+  it('offers no link where every Spiel is in a Liga without Spielberichte', () => {
     const step = childStep(
       inLigaWithoutGameReports(
         saisonOf(
@@ -76,5 +76,21 @@ describe('childStep', () => {
     );
 
     expect(step).toEqual({ kind: 'mark', spielId: 1 });
+  });
+
+  it('waits for a Spiel to come in a Liga with Spielberichte', () => {
+    const VORRUNDE = 54862;
+    const step = childStep(
+      inLigaWithoutGameReports(
+        saisonOf(spielOn(1, '2026-09-20', PLAYED), {
+          ...spielOn(2, '2026-11-15', { kind: 'scheduled' }),
+          leagueId: 54900,
+        }),
+        VORRUNDE
+      ),
+      '2026-11-08'
+    );
+
+    expect(step).toEqual({ kind: 'after-first-game' });
   });
 });

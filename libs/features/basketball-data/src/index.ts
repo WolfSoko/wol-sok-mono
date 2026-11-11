@@ -139,6 +139,7 @@ export {
   seasonOver,
   lastPlayed,
   keepsGameReports,
+  lastWithGameReport,
 } from './lib/domain/team-season';
 export type { TeamSeason, ClubTeam, ClubTeams } from './lib/domain/team-season';
 export {

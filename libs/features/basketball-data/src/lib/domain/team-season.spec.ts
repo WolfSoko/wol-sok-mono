@@ -8,6 +8,7 @@ import {
   seasonOver,
   lastPlayed,
   keepsGameReports,
+  lastWithGameReport,
   type TeamSeason,
 } from './team-season';
 
@@ -436,5 +437,43 @@ describe('keepsGameReports', () => {
     const spiel = game(1, 99999, '2026-10-03');
 
     expect(keepsGameReports(season(spiel), spiel)).toBe(true);
+  });
+});
+
+describe('lastWithGameReport', () => {
+  const PLAYED: Game['status'] = {
+    kind: 'played',
+    result: { home: 78, away: 47 },
+    confirmed: true,
+  };
+  const TODAY = '2026-11-08';
+  const withoutReports: League = { ...MAIN_ROUND, withoutGameReports: true };
+
+  it('is the last Spiel played up to today in a Liga with Spielberichte', () => {
+    const saison: TeamSeason = {
+      ...season(),
+      leagues: [FIRST_ROUND, withoutReports],
+      games: [
+        game(1, FIRST_ROUND.id, '2026-10-03', PLAYED),
+        game(2, FIRST_ROUND.id, '2026-10-10', PLAYED),
+        game(3, MAIN_ROUND.id, '2026-10-24', PLAYED),
+        game(4, FIRST_ROUND.id, '2026-11-21', PLAYED),
+      ],
+    };
+
+    expect(lastWithGameReport(saison, TODAY)?.id).toBe(2);
+  });
+
+  it('is none where nothing was played in such a Liga', () => {
+    const saison: TeamSeason = {
+      ...season(),
+      leagues: [FIRST_ROUND, withoutReports],
+      games: [
+        game(1, FIRST_ROUND.id, '2026-10-03', { kind: 'cancelled' }),
+        game(2, MAIN_ROUND.id, '2026-10-24', PLAYED),
+      ],
+    };
+
+    expect(lastWithGameReport(saison, TODAY)).toBeUndefined();
   });
 });
