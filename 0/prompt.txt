@@ -1,0 +1,44 @@
+<pasted_content id="7cf5">
+wol-sok-mono cloud sessions sign in to gcloud with one service-account key (env GCP_SA_KEY_B64 in the claude.ai/code environment, activated by tools/claude-cloud/session-start.sh). Today it reaches bacteria-wars, but not korbjaeger (CREDENTIALS_MISSING / UNAUTHENTICATED on logging read). What it can read is set in IAM, not in the repo.
+1. Find its email: Google Cloud console > IAM & Admin > Service accounts in the project that owns the key (probably bacteria-wars; the key file is called claude-code-dev.json), or the client_email field of the key.
+2. In each of korbjaeger, pacetrainer-ef5b4, rollapolla-v1 and bacteria-wars, grant it read-only roles. Console: IAM > Grant access > that email. Or with gcloud:
+   gcloud projects add-iam-policy-binding <project> --member=serviceAccount:<email> --role=roles/logging.viewer
+   gcloud projects add-iam-policy-binding <project> --member=serviceAccount:<email> --role=roles/firebase.viewer
+   logging.viewer covers Cloud Logging, which is what work item 401 needed. firebase.viewer covers the status of functions, hosting and rules.
+3. Leave out roles that read production data (roles/datastore.viewer, Firestore user data): Korbjäger stores children's nicknames, and sessions do not need them for log checks.
+4. Check from a new cloud session: gcloud logging read 'resource.type="cloud_run_revision"' --project=korbjaeger --limit=1. It should answer without CREDENTIALS_MISSING. Every gcloud call needs --project, because the session sets no default project.
+IAM takes effect within minutes, and running sessions pick it up without a restart. Then send me a message, and I will tell sessions the logs are readable.
+</pasted_content id="7cf5">
+
+---
+
+Result from session:
+
+<pasted_content id="7cf5">
+I ran the command and it failed. This session has no working Google credential for that call.
+
+```
+ERROR: (gcloud.logging.read) UNAUTHENTICATED: Request had invalid authentication credentials.
+```
+
+`reason: CREDENTIALS_MISSING`
+
+* No real token: `gcloud` reads its token from `CLOUDSDK_AUTH_ACCESS_TOKEN`, which here holds a 14-character placeholder. The proxy only fills in real credentials for hosts saved on the environment, and the only one saved is `routine-utt5l6k4qa-ez.a.run.app`. Nothing is saved for `logging.googleapis.com`, so the request went to Google with the placeholder.
+* Wrong project’s account: the configured gcloud account is `claude-code-dev@bacteria-wars.iam.gserviceaccount.com`. Even with a working token, it would need a role like roles/logging.viewer on the `korbjaeger` project to read its logs.
+
+To make this work:
+
+1. Give that service account (or a new read-only one) Logs Viewer on `korbjaeger`.
+2. Save a credential for `logging.googleapis.com` under the cloud environment’s settings: open the environment menu in the session’s title bar, choose Edit, then Network secrets. Note that a plain Google access token expires after about an hour, so it is only good for a one-off check.
+3. Start a new session, which will pick up the saved credential.
+
+If you just need the answer now, run the command on your own machine:
+
+```
+gcloud logging read 'resource.type="cloud_run_revision"' --project=korbjaeger --limit=1
+```
+</pasted_content id="7cf5">
+
+---
+
+You can commit to main directly
