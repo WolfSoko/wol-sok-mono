@@ -2,6 +2,7 @@ import { firstValueFrom } from 'rxjs';
 import {
   type FakeFirebaseAuth,
   type FakeToken,
+  fakeToken,
   googleUser,
   guestUser,
 } from '../../testing/fake-firebase-auth';
@@ -13,10 +14,7 @@ import { FirebaseGameAccount } from './firebase-game-account';
 import type { PlayerSwitch } from './game-account';
 
 /** The token of the owner: the claim, a verified email, a Google sign-in. */
-const OWNER_TOKEN: FakeToken = {
-  claims: { admin: true, email_verified: true },
-  signInProvider: 'google.com',
-};
+const OWNER_TOKEN = fakeToken({ admin: true, email_verified: true });
 
 describe('FirebaseGameAccount', () => {
   let auth: FakeFirebaseAuth;
