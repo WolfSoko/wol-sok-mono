@@ -15,6 +15,18 @@ export interface ClubIndexSchedule {
   readonly retryAfterMs: number;
   /** How long into a crawl Clubs' names are still read. */
   readonly namesForMs: number;
+  /**
+   * How long an offered Association may go without a list before each run
+   * warns of it (#3022): it keeps `/api/clubs` on the short cache.
+   */
+  readonly warnListlessAfterMs: number;
+}
+
+/** An offered Association that has had no list for too long. */
+export interface ListlessAssociation {
+  readonly association: AssociationId;
+  /** The start of its first attempt that found no list, in milliseconds. */
+  readonly listlessSince: number;
 }
 
 /**
@@ -54,4 +66,33 @@ export function associationToCrawl(
     .filter(({ due }) => due <= now)
     .sort((a, b) => a.due - b.due);
   return first?.association;
+}
+
+/** The Associations of `associations` the index holds no list of. */
+export function withoutList(
+  associations: readonly Association[],
+  lists: readonly AssociationClubs[]
+): readonly Association[] {
+  const listed = new Set(lists.map((list) => list.association.id));
+  return associations.filter(({ id }) => !listed.has(id));
+}
+
+/**
+ * Those of `listless` (`withoutList`) whose first attempt that found no list
+ * (`listlessSince`) lies more than `warnListlessAfterMs` back (#3022), in
+ * their order. One no attempt has dated yet is not overdue: it is due at
+ * once, so dated within a day.
+ */
+export function overdueListless(
+  listless: readonly Association[],
+  listlessSince: ReadonlyMap<AssociationId, number>,
+  schedule: ClubIndexSchedule,
+  now: number
+): readonly ListlessAssociation[] {
+  return listless.flatMap(({ id }) => {
+    const since = listlessSince.get(id);
+    return since !== undefined && now - since > schedule.warnListlessAfterMs
+      ? [{ association: id, listlessSince: since }]
+      : [];
+  });
 }

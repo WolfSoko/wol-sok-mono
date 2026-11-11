@@ -46,13 +46,33 @@ describe('selectReleaseAffected', () => {
     ]);
   });
 
-  it("keeps Nx's verdict for a lockfile or root package.json change", () => {
-    assert.deepEqual(select(['package-lock.json']), Object.keys(INPUTS));
-    assert.deepEqual(select(['package.json']), Object.keys(INPUTS));
+  // No candidate's inputs list these files: the rule, not Nx's hashing,
+  // keeps them.
+  it("keeps Nx's verdict for the root files it cannot judge", () => {
+    for (const file of [
+      'package.json',
+      'package-lock.json',
+      'nx.json',
+      'tsconfig.cdk.json',
+      'tsconfig.base.json',
+    ]) {
+      assert.deepEqual(select([file]), Object.keys(INPUTS), file);
+    }
   });
 
-  it("keeps Nx's verdict for a root tsconfig projects extend", () => {
-    assert.deepEqual(select(['tsconfig.cdk.json']), Object.keys(INPUTS));
+  it("keeps a candidate whose inputs could not be read, with Nx's verdict", () => {
+    const { selected, reasons } = selectReleaseAffected({
+      candidates: ['pacetrainer', 'korbjaeger'],
+      changedFiles: ['firebase.pacetrainer.json'],
+      deletedFiles: [],
+      inputsOf: (project) =>
+        project === 'korbjaeger' ? undefined : new Set(INPUTS[project]),
+    });
+    assert.deepEqual(selected, ['pacetrainer', 'korbjaeger']);
+    assert.deepEqual(reasons, {
+      pacetrainer: 'reads firebase.pacetrainer.json',
+      korbjaeger: "Nx's verdict: its inputs could not be read",
+    });
   });
 
   it("keeps Nx's verdict for a deleted file, which no input set lists", () => {
@@ -121,6 +141,37 @@ describe('tsconfigBaseChanges', () => {
     ]);
   });
 
+  // A wildcard target matches no input file literally, so the change counts
+  // as the base itself, which keeps Nx's verdict.
+  it('counts a changed wildcard alias or target as the file itself', () => {
+    const withWildcard = withPaths({
+      ...TSCONFIG.compilerOptions.paths,
+      '@wolsok/*': ['./libs/*/src/index.ts'],
+    });
+    const cases = {
+      'wildcard alias added': [TSCONFIG, withWildcard],
+      'wildcard alias removed': [withWildcard, TSCONFIG],
+      'wildcard alias retargeted': [
+        withWildcard,
+        withPaths({
+          ...TSCONFIG.compilerOptions.paths,
+          '@wolsok/*': ['./libs/*/index.ts'],
+        }),
+      ],
+      'literal alias retargeted to a wildcard': [
+        TSCONFIG,
+        withPaths({ '@wolsok/a': ['./libs/a/src/*'] }),
+      ],
+    };
+    for (const [name, [before, after]] of Object.entries(cases)) {
+      assert.deepEqual(
+        tsconfigBaseChanges(before, after),
+        ['tsconfig.base.json'],
+        name
+      );
+    }
+  });
+
   it('counts any other change as the file itself', () => {
     const retarget = withPaths(TSCONFIG.compilerOptions.paths, 'ES2024');
     assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retarget), [
@@ -130,17 +181,19 @@ describe('tsconfigBaseChanges', () => {
 });
 
 describe('keepsNxVerdict', () => {
-  it('holds for the npm files and the root tsconfigs but the base', () => {
+  it('holds for the npm files, nx.json and the root tsconfigs', () => {
     for (const file of [
       'package.json',
       'package-lock.json',
+      'nx.json',
+      'tsconfig.base.json',
       'tsconfig.cdk.json',
     ]) {
       assert.equal(keepsNxVerdict(file), true, file);
     }
     for (const file of [
-      'tsconfig.base.json',
       'apps/x/tsconfig.json',
+      'apps/x/nx.json',
       'apps/x/package.json',
       '.oxlintrc.json',
     ]) {
