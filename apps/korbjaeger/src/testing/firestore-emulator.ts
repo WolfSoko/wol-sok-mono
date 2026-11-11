@@ -64,7 +64,7 @@ export async function ohneRegeln<T>(
   return ergebnis;
 }
 
-/** Stores `daten` as the `AuswahlDokument` of `uid`, past the rules. */
+/** Stores `daten` as the `SelectionDocument` of `uid`, past the rules. */
 export function vorhanden(
   env: RulesTestEnvironment,
   uid: string,
@@ -75,7 +75,7 @@ export function vorhanden(
   );
 }
 
-/** What the `AuswahlDokument` of `uid` holds, read past the rules; `null` for none. */
+/** What the `SelectionDocument` of `uid` holds, read past the rules; `null` for none. */
 export function gespeichert(
   env: RulesTestEnvironment,
   uid: string

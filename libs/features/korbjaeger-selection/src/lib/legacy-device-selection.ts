@@ -6,8 +6,8 @@ export const LEGACY_SELECTION_KEY = 'korbjaeger-auswahl';
 
 /**
  * Moves the device's legacy selection (`LEGACY_SELECTION_KEY`, German
- * fields) to `AUSWAHL_SCHLUESSEL` as this version's document (#2966), before
- * `LokaleAuswahl` reads it. The legacy key goes once the new one is
+ * fields) to `SELECTION_KEY` as this version's document (#2966), before
+ * `LocalSelection` reads it. The legacy key goes once the new one is
  * written; where that fails (storage full or blocked), it stays for the
  * next start. Where the new key holds a selection already, or the legacy
  * one none that can be read, the legacy key just goes.

@@ -222,12 +222,12 @@ describe('LocalAnswerCache', () => {
     const cache = new LocalAnswerCache(storage, { entries: 2 });
     cache.store(TEAM, 'team-games', answer(1000));
     cache.store(STANDINGS, 'standings', answer(2000));
-    const schreiben = storage.setItem.bind(storage);
+    const write = storage.setItem.bind(storage);
     vi.spyOn(storage, 'setItem').mockImplementation((key, value) => {
       if (key === `${ANSWER_PREFIX}${GAME}`) {
         throw new DOMException('denied', 'SecurityError');
       }
-      schreiben(key, value);
+      write(key, value);
     });
 
     cache.store(GAME, 'game-info', answer(3000));

@@ -23,12 +23,12 @@ export function legacySelectionDocument(
  * Moves the account's legacy selection (`legacySelectionDocument`, German
  * fields) into its document of this version (#2966): joins what it holds
  * into the account as a sign-in joins the device's choices
- * (`geraetUebernehmen`: the account's first, one transaction a map, only
+ * (`takeOverDevice`: the account's first, one transaction a map, only
  * what fits under the caps), then deletes it. Read from the server, as the
  * cache may hold it after another device moved it. The deletion comes last,
  * so a run cut short repeats on the next call and joins the same entries
  * again, which changes nothing. Rejects where the server cannot be reached
- * or a newer version stored the account's selection (`AuswahlZuNeuError`),
+ * or a newer version stored the account's selection (`SelectionTooNewError`),
  * leaving the legacy document for the next call.
  */
 export async function legacyAccountMigration(

@@ -42,7 +42,7 @@ async function gelesen(uid: string): Promise<SelectionContent> {
 const teamsRoh = (...ids: readonly number[]) =>
   Object.fromEntries(ids.map((id, i) => [id, i + 1]));
 
-describe('geraetUebernehmen', () => {
+describe('takeOverDevice', () => {
   it("stores the device's choices in an empty account", async () => {
     const uid = konto();
 

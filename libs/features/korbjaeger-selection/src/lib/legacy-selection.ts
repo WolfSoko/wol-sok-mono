@@ -7,7 +7,7 @@ const LEGACY_VERSIONS: readonly unknown[] = [1, 2];
 /**
  * `raw`, a selection of version 1 or 2 (German fields: `kinder` with
  * `seit` and `spitzname`, `vereinsfarben`), as a document of this version
- * (`AuswahlDokument`), for `auswahlDokumentLesen` to read; `undefined` where
+ * (`SelectionDocument`), for `readSelectionDocument` to read; `undefined` where
  * it is none of those versions. Version 1's lists become maps, each entry
  * counting 1, 2, 3 … in the list's order (a person listed twice once); a
  * list of Teams that are not all ids stays one, so the reader takes the

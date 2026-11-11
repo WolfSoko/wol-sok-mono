@@ -19,7 +19,7 @@ import {
 export type ClubColorsField = string | typeof REMOVED;
 
 /**
- * The Vereine's colours, stored as `clubColors: { [vereinId]: farbenText }`,
+ * The Vereine's colours, stored as `clubColors: { [clubId]: colorsText }`,
  * a Verein without any having no entry; kept in the order of the Verein's
  * id. An entry it cannot read is left out.
  */

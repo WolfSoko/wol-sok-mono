@@ -28,12 +28,12 @@ class SpecStorage {
 
   public setItem(key: string, value: string): void {
     this.writeCount++;
-    this.setzeLeise(key, value);
+    this.setQuietly(key, value);
     this.events.dispatchEvent(new StorageEvent('storage', { key }));
   }
 
   /** Stores `value` without telling any tab. */
-  public setzeLeise(key: string, value: string): void {
+  public setQuietly(key: string, value: string): void {
     this.items.set(key, value);
   }
 
@@ -58,7 +58,7 @@ describe('LocalSelection', () => {
     it('reads what another tab stored, before its storage event came', () => {
       const device = new SpecStorage();
       const selection = new LocalSelection(device, device.events);
-      device.setzeLeise(
+      device.setQuietly(
         SELECTION_KEY,
         JSON.stringify({ version: 3, teams: { 201500: 1 } })
       );
@@ -214,12 +214,12 @@ describe('LocalSelection', () => {
     } {
       const device = new SpecStorage();
       let full = true;
-      const schreiben = device.setItem.bind(device);
+      const write = device.setItem.bind(device);
       vi.spyOn(device, 'setItem').mockImplementation((key, value) => {
         if (full) {
           throw new DOMException('full', 'QuotaExceededError');
         }
-        schreiben(key, value);
+        write(key, value);
       });
       const makeRoom = vi.fn(() => {
         full = false;
@@ -296,7 +296,7 @@ describe('LocalSelection', () => {
       const device = new SpecStorage();
       const selection = new LocalSelection(device, device.events);
       await selection.follow(313036);
-      device.setzeLeise(
+      device.setQuietly(
         SELECTION_KEY,
         JSON.stringify({ version: 3, teams: { 201500: 1 } })
       );
@@ -357,12 +357,12 @@ describe('LocalSelection', () => {
     } {
       const device = new SpecStorage();
       const full = { on: false };
-      const schreiben = device.setItem.bind(device);
+      const write = device.setItem.bind(device);
       vi.spyOn(device, 'setItem').mockImplementation((key, value) => {
         if (full.on) {
           throw new DOMException('full', 'QuotaExceededError');
         }
-        schreiben(key, value);
+        write(key, value);
       });
       return { storage: device, full };
     }

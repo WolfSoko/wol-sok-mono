@@ -7,10 +7,7 @@ import {
   type Shots,
 } from '@wolsok/feat-shared-basketball-data';
 import { SECONDS_IN_MINUTE } from '@wolsok/utils-time';
-import type {
-  Child,
-  MarkablePlayer,
-} from '@wolsok/feat-korbjaeger-selection';
+import type { Child, MarkablePlayer } from '@wolsok/feat-korbjaeger-selection';
 
 /**
  * What the Kader table shows of a player's Spielerwerte, one field a

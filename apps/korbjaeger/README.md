@@ -58,16 +58,16 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
   `entfolgen`. Its local adapter
-  `LokaleAuswahl` keeps them in `localStorage` (`korbjaeger-selection`) as
-  `{ version: 3, teams, children, clubColors }` (`auswahl-dokument.ts`: ids
+  `LocalSelection` keeps them in `localStorage` (`korbjaeger-selection`) as
+  `{ version: 3, teams, children, clubColors }` (`selection-document.ts`: ids
   only; English field names since #2966). It reads the document again
   before each write and on the `storage` event, so two tabs keep each
   other's changes, and keeps fields it does not know. Storage that cannot
   be read or holds something else counts as empty, storage that takes
   nothing keeps them for the visit; a document of a newer version is left
-  alone and changes are refused (`AuswahlZuNeuError`, "Bitte die App neu
+  alone and changes are refused (`SelectionTooNewError`, "Bitte die App neu
   laden"). Every adapter runs the shared contract suite
-  `auswahlVertrag` (`testing/auswahl-vertrag.ts`), the Firestore adapter
+  `selectionContract` (`testing/selection-contract.ts`), the Firestore adapter
   of #2873 too.
 - **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
   next Spiel (day, time, home or away, opponent), the Spiele
@@ -126,7 +126,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Last good data** (`src/app/basketball-data/`): the browser transport
   keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
   match info and a Verein's Spiele by its proxy path
-  (`SPEICHERBARE_ARTEN`, `LokaleLetzteAntworten`, `localStorage` keys
+  (`SPEICHERBARE_ARTEN`, `LocalAnswerCache`, `localStorage` keys
   `korbjaeger-answer:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
   an index `korbjaeger-answers` of each one's size, time and kind). Each
   is kept without the persons it names (the lib's `dbbWithoutPersons`: a
@@ -144,7 +144,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
   longer kept at the start, when the page comes back into view and hourly
   while it stays open. When Meine Teams find the storage full, the
-  answers give way (`SPEICHER_FREIGEBEN`) and `LokaleAuswahl` writes once
+  answers give way (`SPEICHER_FREIGEBEN`) and `LocalSelection` writes once
   more. At most 60 answers and 1,000,000 characters
   (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
   either evicts the oldest answers first, once the new one is stored (a
@@ -267,5 +267,5 @@ npx nx e2e korbjaeger                        # Playwright, on the fake DBB
 The proxy specs mount the real route files in h3 where Nitro's file
 routing puts them, with the DBB faked; `e2e/dbb-proxy.spec.ts` checks that
 routing on the served app. The page specs run against a fake
-`BasketballData` and `LokaleAuswahl` without storage. The e2e starts `fake-dbb`
+`BasketballData` and `LocalSelection` without storage. The e2e starts `fake-dbb`
 and `serve-e2e` as Nx tasks (CLAUDE.md, Testing).

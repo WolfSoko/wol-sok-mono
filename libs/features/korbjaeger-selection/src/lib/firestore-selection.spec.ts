@@ -4,7 +4,7 @@ import { FirestoreSelection } from './firestore-selection';
 /** The listener Firestore was given, steered by each spec. */
 const listener = vi.hoisted(() => ({
   weiter: undefined as ((state: unknown) => void) | undefined,
-  fehler: undefined as ((error: unknown) => void) | undefined,
+  error: undefined as ((error: unknown) => void) | undefined,
 }));
 
 vi.mock('firebase/firestore', () => ({
@@ -17,7 +17,7 @@ vi.mock('firebase/firestore', () => ({
       error: (f: unknown) => void
     ) => {
       listener.weiter = weiter;
-      listener.fehler = error;
+      listener.error = error;
       return () => undefined;
     }
   ),
@@ -32,14 +32,14 @@ const state = (data: unknown) => ({
 });
 
 describe('FirestoreSelection', () => {
-  const oeffnen = () => new FirestoreSelection({} as Firestore, 'uid-1');
+  const open = () => new FirestoreSelection({} as Firestore, 'uid-1');
 
   it('shows nothing and takes no change once its listener failed after a read', async () => {
-    const selection = oeffnen();
+    const selection = open();
     listener.weiter?.(state({ version: 3, teams: { 313036: 1 } }));
     expect(selection.teams()).toEqual([313036]);
 
-    listener.fehler?.({ code: 'unavailable' });
+    listener.error?.({ code: 'unavailable' });
 
     expect(selection.unreadable()).toBe(true);
     expect(selection.teams()).toBeUndefined();
@@ -48,7 +48,7 @@ describe('FirestoreSelection', () => {
   });
 
   it('ends a change waiting for the first read once it is ended', async () => {
-    const selection = oeffnen();
+    const selection = open();
     const followed = selection.follow(201500);
 
     selection.stop();

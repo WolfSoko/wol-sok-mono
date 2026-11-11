@@ -14,7 +14,7 @@ import type { ListDescriptor } from '../list-descriptor';
 export type TeamField = number | typeof REMOVED;
 
 /**
- * Meine Teams, stored as `teams: { [teamId]: seit }`, in the order they
+ * Meine Teams, stored as `teams: { [teamId]: since }`, in the order they
  * were followed. A map holding anything but ids and numbers makes the whole
  * document unreadable; a missing one holds no Teams.
  */

@@ -29,7 +29,7 @@ const HOSTING_PUBLIC = 'dist/apps/korbjaeger/analog/public';
 
 /**
  * Angular's service worker (ngsw) keeps the app shell, so the app opens
- * without a network; the DBB's data is the app's own (`LokaleLetzteAntworten`)
+ * without a network; the DBB's data is the app's own (`LocalAnswerCache`)
  * and the CDN's, never the worker's.
  */
 describe('service worker', () => {

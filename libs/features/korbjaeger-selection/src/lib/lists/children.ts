@@ -24,7 +24,7 @@ export type ChildField =
   | typeof REMOVED;
 
 /**
- * The marked Kinder, stored as `children: { [personId]: KindEintrag }`, in
+ * The marked Kinder, stored as `children: { [personId]: ChildEntry }`, in
  * the order they were marked. An entry it cannot read is left out, the
  * rest of the document kept.
  */

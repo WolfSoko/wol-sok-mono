@@ -1204,7 +1204,7 @@ describe('SpielComponent', () => {
         fakeSelection({
           teams,
           mark: async () => {
-            // as LokaleAuswahl does: it shows nothing of a newer version
+            // as LocalSelection does: it shows nothing of a newer version
             teams.set([]);
             throw new SelectionTooNewError();
           },

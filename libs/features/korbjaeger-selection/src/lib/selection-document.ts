@@ -37,7 +37,7 @@ export const SELECTION_VERSION = 3;
  * Each list is a map under its descriptor's field (`LIST_DESCRIPTORS`),
  * whose descriptor tells what an entry holds (`teams: { [teamId]: since }`,
  * `children: { [personId]: { since, nickname? } }`,
- * `clubColors: { [vereinId]: farbenText }`); a missing map holds nothing.
+ * `clubColors: { [clubId]: colorsText }`); a missing map holds nothing.
  */
 export type SelectionDocument = {
   readonly version: typeof SELECTION_VERSION;
