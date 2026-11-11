@@ -1,7 +1,5 @@
 import { defineConfig } from 'vitest/config';
 
-import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
-
 import { fileURLToPath } from 'node:url';
 import { dirname } from 'node:path';
 
@@ -9,12 +7,8 @@ export default defineConfig({
   root: dirname(fileURLToPath(import.meta.url)),
   cacheDir: '../../../node_modules/.vite/libs/public/spa-cdk-stack',
 
-  plugins: [nxViteTsPaths()],
-
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [ nxViteTsPaths() ],
-  // },
+  // the workspace's @wolsok/* aliases (tsconfig.base.json)
+  resolve: { tsconfigPaths: true },
 
   test: {
     globals: true,

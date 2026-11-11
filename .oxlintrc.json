@@ -303,7 +303,9 @@
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "allow": ["^\\.\\./\\.\\./tools/vite/nitro-ts-path-aliases$"],
+            "allow": [
+              "^\\.\\./\\.\\./tools/vite/(nitro-ts-path-aliases|workspace-file)$"
+            ],
             "depConstraints": [
               {
                 "sourceTag": "*",
