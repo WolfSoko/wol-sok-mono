@@ -12,6 +12,7 @@ import {
 import { GameAccount, PlayerSwitch } from './game-account';
 import { DeviceStorage, GameStorage } from './game-storage';
 import {
+  droppedEntry,
   parseUnsaved,
   storedUnsaved,
   UnsavedChanges,
@@ -89,16 +90,17 @@ export function playerDocument<T>(
   /** Whoever plays, null between a sign-out and the next guest. */
   let player: string | null = null;
 
-  const store = (next: T, write: (stored: T) => T): void => {
+  /** Stores a change; resolves true once it is kept on the device too. */
+  const store = (next: T, write: (stored: T) => T): Promise<boolean> => {
     const settled = storage.update(key, (stored) => write(parse(stored)));
-    if (player !== null) {
-      void unsaved.keep(player, next, settled);
-    }
+    return player === null
+      ? Promise.resolve(false)
+      : unsaved.keep(player, next, settled);
   };
 
   const apply = (next: T, write: (stored: T) => T): void => {
     value.set(next);
-    store(next, write);
+    void store(next, write);
   };
 
   const adoptOnce = (guest: T): Promise<boolean> => {
@@ -131,11 +133,20 @@ export function playerDocument<T>(
           return;
         }
         const copy = parse(stored);
-        const kept =
+        const adopted = adoptOnce(copy);
+        // Off the device once it is safe elsewhere: in the journal, or where
+        // the journal took nothing (storage full), in the cloud.
+        const safe =
           player === null
-            ? Promise.resolve()
-            : unsaved.keep(player, copy, adoptOnce(copy));
-        void kept.then(() => device.write(key, null));
+            ? adopted
+            : unsaved
+                .keep(player, copy, adopted)
+                .then((kept) => kept || adopted);
+        void safe.then((done) => {
+          if (done) {
+            device.write(key, null);
+          }
+        });
       }),
       ignoreElements()
     );
@@ -151,8 +162,12 @@ export function playerDocument<T>(
         const left = values.reduce(merge, empty);
         const next = merge(value(), left);
         value.set(next);
-        store(next, (stored) => merge(stored, left));
-        unsaved.drop(read);
+        // The entries read go only once this page's entry holds them.
+        void store(next, (stored) => merge(stored, left)).then((kept) => {
+          if (kept) {
+            unsaved.drop(read);
+          }
+        });
       }),
       ignoreElements()
     );
@@ -190,10 +205,11 @@ export function playerDocument<T>(
 interface UnsavedJournal<T> {
   /**
    * Keeps what the page holds for the player, merged into what it kept
-   * before, until `settled` says it is stored and no later change waits.
-   * Resolves once it is on the device.
+   * before, until `settled` says it is stored and no later change waits;
+   * a change the storage drops is kept apart, for the player's next start.
+   * Resolves true once it is on the device, false when the device refused.
    */
-  keep(player: string, value: T, settled: Promise<boolean>): Promise<void>;
+  keep(player: string, value: T, settled: Promise<boolean>): Promise<boolean>;
   /** The changes other pages left for the player on the device, read once. */
   of(player: string): Observable<UnsavedChanges>;
   /** Removes the changes read, unless another page wrote them again since. */
@@ -210,7 +226,9 @@ function unsavedChanges<T>(
   const page = pageId();
   const journalKey = unsavedKey(key);
   /** What this page kept per player since the last change stored. */
-  const kept = new Map<string, { value: T; latest: number }>();
+  const kept = new Map<string, { value: T }>();
+  /** Numbers the entries of changes the storage dropped. */
+  let drops = 0;
   const change = (
     edit: (changes: UnsavedChanges) => UnsavedChanges
   ): Promise<boolean> =>
@@ -221,25 +239,30 @@ function unsavedChanges<T>(
   return {
     keep(player, value, settled) {
       if (!cloud) {
-        return Promise.resolve();
+        return Promise.resolve(false);
       }
       const entry = unsavedEntry(page, player);
       const before = kept.get(player);
       const held = {
         value: before === undefined ? value : merge(before.value, value),
-        latest: (before?.latest ?? 0) + 1,
       };
       kept.set(player, held);
       void settled.then((stored) => {
-        // A change dropped for good stays, for the player's next start here.
-        if (stored && kept.get(player) === held) {
+        if (!stored) {
+          // A later change that is stored carries only its own part, so the
+          // dropped one moves to an entry this page never clears.
+          const dropped = droppedEntry(entry, ++drops);
+          void change((changes) =>
+            withUnsaved(changes, dropped, { player, value: held.value })
+          );
+        } else if (kept.get(player) === held) {
           kept.delete(player);
           void change((changes) => withoutUnsaved(changes, [entry]));
         }
       });
       return change((changes) =>
         withUnsaved(changes, entry, { player, value: held.value })
-      ).then(() => undefined);
+      );
     },
     of(player) {
       const own = unsavedEntry(page, player);

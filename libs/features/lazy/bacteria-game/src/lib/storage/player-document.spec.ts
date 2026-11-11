@@ -239,6 +239,22 @@ describe('playerDocument', () => {
       expect(device.stored(`${KEY}.unsaved`)).toBeNull();
     });
 
+    it('stays on the device until the cloud stored it where the journal is refused', async () => {
+      create({ onDevice: { [KEY]: ['gold'] } });
+      const refuseJournal = jest.spyOn(device, 'update');
+      refuseJournal.mockImplementation(() => Promise.resolve(false));
+      device.flush();
+      await settle();
+      device.flush();
+
+      expect(device.stored(KEY)).toEqual(['gold']);
+
+      await answerAll();
+
+      expect(account.storageOf('guest').stored(KEY)).toEqual(['gold']);
+      expect(device.stored(KEY)).toBeNull();
+    });
+
     it('goes to no second page that starts meanwhile', async () => {
       const adopt = jest.fn(union);
       create({ onDevice: { [KEY]: ['gold'] }, adopt });
@@ -432,26 +448,40 @@ describe('playerDocument', () => {
       expect(next.stored(UNSAVED)).toBeNull();
     });
 
-    it('stay for the next start when the storage dropped the change', async () => {
+    /** A document on a cloud whose updates answer as `answers` say, in turn. */
+    function createAnswering(answers: boolean[]): PlayerDocument<Badges> {
       account = new FakeGameAccount('guest');
       const cloud = account.storage;
-      const dropping: GameStorage = {
+      const answering: GameStorage = {
         watch: (key) => cloud.watch(key),
         write: (key, value) => cloud.write(key, value),
-        update: () => Promise.resolve(false),
+        update: (key, change) =>
+          cloud.update(key, change).then(() => answers.shift() ?? true),
       };
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
           { provide: GameAccount, useValue: account },
-          { provide: GameStorage, useValue: dropping },
+          { provide: GameStorage, useValue: answering },
           { provide: DeviceStorage, useValue: device },
         ],
       });
-      const document = TestBed.runInInjectionContext(() =>
-        playerDocument(BADGES)
-      );
+      return TestBed.runInInjectionContext(() => playerDocument(BADGES));
+    }
+
+    it('stay for the next start when the storage dropped the change', async () => {
+      const document = createAnswering([false]);
       add(document, 'silver');
+      await answerAll();
+
+      expect(unsavedOn()['guest']).toContainEqual(['silver']);
+    });
+
+    it('stay when a change was dropped, though a later one was stored', async () => {
+      const document = createAnswering([false, true]);
+      add(document, 'silver');
+      await answerAll();
+      add(document, 'gold');
       await answerAll();
 
       expect(unsavedOn()).toEqual({ guest: [['silver']] });

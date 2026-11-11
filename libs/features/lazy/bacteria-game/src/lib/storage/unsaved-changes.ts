@@ -25,6 +25,14 @@ export function unsavedEntry(page: string, player: string): string {
   return `${page}:${player}`;
 }
 
+/**
+ * The entry a change the storage dropped moves to: apart from the page's
+ * own, which the page clears, so the player's next start takes it up.
+ */
+export function droppedEntry(entry: string, number: number): string {
+  return `${entry}:dropped-${number}`;
+}
+
 /** The unsaved changes in a stored value, dropping what is not one. */
 export function parseUnsaved(stored: unknown): UnsavedChanges {
   if (typeof stored !== 'object' || stored === null || Array.isArray(stored)) {
