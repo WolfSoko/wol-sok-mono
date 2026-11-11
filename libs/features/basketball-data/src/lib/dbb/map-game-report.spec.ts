@@ -5,14 +5,68 @@ import {
   type RosterEntry,
 } from '../domain/game-report';
 import { caughtError } from '../../testing/caught-error';
+import { playerStatsOf } from '../../testing/player-stats';
 import { readEnvelope } from './envelope';
 import noReport from './fixtures/boxscore-2843814.json';
 import rosterOnly from './fixtures/boxscore-2843811.json';
 import rosterOnlyWithAnonymous from './fixtures/boxscore-2861436.json';
 import withStats from './fixtures/boxscore-2911141.json';
+import everyStat from './fixtures/boxscore-2861555.json';
 import { mapGameReport } from './map-game-report';
 
 describe('mapGameReport', () => {
+  describe('where the Verband records every Spielerwert (1. Regionalliga Herren)', () => {
+    const report = mapGameReport(readEnvelope(everyStat));
+
+    it('reads every value of a player', () => {
+      expect(report?.home.entries[0]).toEqual({
+        kind: 'named',
+        personId: 96606327,
+        firstName: 'Rilla',
+        lastName: 'Schlehenau',
+        shirtNumber: '1',
+        playerStats: {
+          playingTimeSeconds: 1724,
+          points: 16,
+          twoPointers: { made: 8, attempted: 12 },
+          threePointers: { made: 0, attempted: 2 },
+          freeThrows: { made: 0, attempted: 2 },
+          rebounds: 7,
+          assists: 1,
+          steals: 2,
+          turnovers: 1,
+          blocks: 1,
+          fouls: 2,
+          efficiency: 18,
+          startingFive: false,
+        },
+      });
+    });
+
+    it('reads the starting five, five a side', () => {
+      const starters = (roster: Roster | undefined): number =>
+        (roster?.entries ?? []).filter(
+          (entry) => entry.playerStats?.startingFive
+        ).length;
+
+      expect(starters(report?.home)).toBe(5);
+      expect(starters(report?.away)).toBe(5);
+    });
+
+    it('reads the playing time in seconds: five players for 40 minutes a side', () => {
+      const seconds = (report?.home.entries ?? []).reduce(
+        (sum, entry) => sum + (entry.playerStats?.playingTimeSeconds ?? 0),
+        0
+      );
+
+      expect(seconds).toBe(5 * 40 * 60);
+    });
+
+    it('keeps a negative efficiency', () => {
+      expect(report?.home.entries[1]?.playerStats?.efficiency).toBe(-1);
+    });
+  });
+
   describe('where the Verband records Spielerwerte (Bayern)', () => {
     const report = mapGameReport(readEnvelope(withStats));
 
@@ -29,26 +83,28 @@ describe('mapGameReport', () => {
         personId: 91692638,
         firstName: 'Ilvio',
         lastName: 'Mistelgrund',
-        playerStats: {
+        playerStats: playerStatsOf({
           points: 29,
-          twoPointers: 9,
-          threePointers: 3,
+          twoPointers: { made: 9, attempted: 0 },
+          threePointers: { made: 3, attempted: 0 },
           freeThrows: { made: 2, attempted: 7 },
           fouls: 3,
-        },
+          efficiency: 36,
+        }),
       });
     });
 
     it('reads an Anonymer Spieler without person id or name, with their Spielerwerte', () => {
       expect(report?.home.entries[0]).toEqual({
         kind: 'anonymous',
-        playerStats: {
+        playerStats: playerStatsOf({
           points: 10,
-          twoPointers: 4,
-          threePointers: 0,
+          twoPointers: { made: 4, attempted: 0 },
+          threePointers: { made: 0, attempted: 0 },
           freeThrows: { made: 2, attempted: 4 },
           fouls: 3,
-        },
+          efficiency: 12,
+        }),
       });
       expect(
         report?.away.entries.filter((entry) => !isNamed(entry))
@@ -143,6 +199,7 @@ describe('mapGameReport', () => {
           ...stats,
           pts: 0,
           fouls: 0,
+          eff: 0,
           twoPoints: { made: 0, attempted: 0, quota: null },
           threePoints: { made: 0, attempted: 0, quota: null },
           onePoints: { made: 0, attempted: 0, quota: null },

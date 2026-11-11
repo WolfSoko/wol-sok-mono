@@ -129,7 +129,10 @@ export type {
   RosterEntry,
   GameReport,
   PlayerStats,
+  Shots,
 } from './lib/domain/game-report';
+export { NONE_RECORDED, recordedStats } from './lib/domain/recorded-stats';
+export type { RecordedStats } from './lib/domain/recorded-stats';
 export type { Standings, StandingsRow } from './lib/domain/standings';
 export type { Team } from './lib/domain/team';
 export {
