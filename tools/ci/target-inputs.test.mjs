@@ -49,15 +49,15 @@ function namesMissingFile(input) {
 
 const INPUTS = allInputs();
 
-describe('target inputs', () => {
-  it('never use {projectName}, which Nx leaves unresolved in inputs', () => {
+void describe('target inputs', () => {
+  void it('never use {projectName}, which Nx leaves unresolved in inputs', () => {
     const unresolved = INPUTS.filter(({ input }) =>
       input.includes(PROJECT_NAME)
     ).map(({ where, input }) => `${where}: ${input}`);
     assert.deepEqual(unresolved, []);
   });
 
-  it('name only workspace files that exist', () => {
+  void it('name only workspace files that exist', () => {
     const missing = INPUTS.filter(({ input }) => namesMissingFile(input)).map(
       ({ where, input }) => `${where}: ${input}`
     );

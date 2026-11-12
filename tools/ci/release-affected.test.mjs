@@ -33,12 +33,12 @@ function select(changedFiles, deletedFiles = []) {
   }).selected;
 }
 
-describe('selectReleaseAffected', () => {
-  it('drops every candidate when no changed file is an input', () => {
+void describe('selectReleaseAffected', () => {
+  void it('drops every candidate when no changed file is an input', () => {
     assert.deepEqual(select(['.oxlintrc.json', 'eslint.config.mjs']), []);
   });
 
-  it('keeps only the candidates reading a changed file', () => {
+  void it('keeps only the candidates reading a changed file', () => {
     assert.deepEqual(select(['firebase.pacetrainer.json']), ['pacetrainer']);
     assert.deepEqual(select(['libs/shared/legal/index.ts']), [
       'korbjaeger',
@@ -48,7 +48,7 @@ describe('selectReleaseAffected', () => {
 
   // No candidate's inputs list these files: the rule, not Nx's hashing,
   // keeps them.
-  it("keeps Nx's verdict for the root files it cannot judge", () => {
+  void it("keeps Nx's verdict for the root files it cannot judge", () => {
     for (const file of [
       'package.json',
       'package-lock.json',
@@ -60,7 +60,7 @@ describe('selectReleaseAffected', () => {
     }
   });
 
-  it("keeps a candidate whose inputs could not be read, with Nx's verdict", () => {
+  void it("keeps a candidate whose inputs could not be read, with Nx's verdict", () => {
     const { selected, reasons } = selectReleaseAffected({
       candidates: ['pacetrainer', 'korbjaeger'],
       changedFiles: ['firebase.pacetrainer.json'],
@@ -75,14 +75,14 @@ describe('selectReleaseAffected', () => {
     });
   });
 
-  it("keeps Nx's verdict for a deleted file, which no input set lists", () => {
+  void it("keeps Nx's verdict for a deleted file, which no input set lists", () => {
     assert.deepEqual(
       select([], ['apps/pacetrainer/src/old.ts']),
       Object.keys(INPUTS)
     );
   });
 
-  it('selects nothing without candidates', () => {
+  void it('selects nothing without candidates', () => {
     const { selected } = selectReleaseAffected({
       candidates: [],
       changedFiles: ['apps/pacetrainer/src/main.ts'],
@@ -94,7 +94,7 @@ describe('selectReleaseAffected', () => {
     assert.deepEqual(selected, []);
   });
 
-  it('says why each candidate was kept or dropped', () => {
+  void it('says why each candidate was kept or dropped', () => {
     const { reasons } = selectReleaseAffected({
       candidates: ['pacetrainer', 'korbjaeger'],
       changedFiles: ['firebase.pacetrainer.json', '.oxlintrc.json'],
@@ -119,8 +119,8 @@ function withPaths(paths, target = 'ES2022') {
   return { compilerOptions: { target, paths } };
 }
 
-describe('tsconfigBaseChanges', () => {
-  it('counts a new alias as the files it points to', () => {
+void describe('tsconfigBaseChanges', () => {
+  void it('counts a new alias as the files it points to', () => {
     const after = withPaths({
       '@wolsok/a': ['./libs/a/src/index.ts'],
       '@wolsok/b': ['./libs/b/src/index.ts'],
@@ -130,7 +130,7 @@ describe('tsconfigBaseChanges', () => {
     ]);
   });
 
-  it('counts a retargeted or removed alias by its old and new files', () => {
+  void it('counts a retargeted or removed alias by its old and new files', () => {
     const retargeted = withPaths({ '@wolsok/a': ['./libs/a/src/main.ts'] });
     assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retargeted), [
       'libs/a/src/index.ts',
@@ -143,7 +143,7 @@ describe('tsconfigBaseChanges', () => {
 
   // A wildcard target matches no input file literally, so the change counts
   // as the base itself, which keeps Nx's verdict.
-  it('counts a changed wildcard alias or target as the file itself', () => {
+  void it('counts a changed wildcard alias or target as the file itself', () => {
     const withWildcard = withPaths({
       ...TSCONFIG.compilerOptions.paths,
       '@wolsok/*': ['./libs/*/src/index.ts'],
@@ -172,7 +172,7 @@ describe('tsconfigBaseChanges', () => {
     }
   });
 
-  it('counts any other change as the file itself', () => {
+  void it('counts any other change as the file itself', () => {
     const retarget = withPaths(TSCONFIG.compilerOptions.paths, 'ES2024');
     assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retarget), [
       'tsconfig.base.json',
@@ -180,8 +180,8 @@ describe('tsconfigBaseChanges', () => {
   });
 });
 
-describe('keepsNxVerdict', () => {
-  it('holds for the npm files, nx.json and the root tsconfigs', () => {
+void describe('keepsNxVerdict', () => {
+  void it('holds for the npm files, nx.json and the root tsconfigs', () => {
     for (const file of [
       'package.json',
       'package-lock.json',
@@ -202,17 +202,17 @@ describe('keepsNxVerdict', () => {
   });
 });
 
-describe('isVersionBumpOnly', () => {
+void describe('isVersionBumpOnly', () => {
   const before = { name: '@wolsok/thanos', version: '1.0.0', dependencies: {} };
 
-  it('holds for a change of the version alone', () => {
+  void it('holds for a change of the version alone', () => {
     assert.equal(
       isVersionBumpOnly(before, { ...before, version: '1.0.1' }),
       true
     );
   });
 
-  it('fails for any other change', () => {
+  void it('fails for any other change', () => {
     const withDependency = {
       ...before,
       version: '1.0.1',
@@ -235,9 +235,9 @@ function runScript(...args) {
 
 const NON_CDK = '--exclude=tag:cdk,tag:published,tag:type:android';
 
-describe('release-affected on the workspace', () => {
+void describe('release-affected on the workspace', () => {
   for (const file of ['.oxlintrc.json', 'eslint.config.mjs']) {
-    it(`deploys and publishes nothing for ${file}`, () => {
+    void it(`deploys and publishes nothing for ${file}`, () => {
       assert.deepEqual(runScript(`--files=${file}`, '--target=deploy'), []);
       assert.deepEqual(
         runScript(
@@ -250,7 +250,7 @@ describe('release-affected on the workspace', () => {
     });
   }
 
-  it('deploys an app whose root Firebase config changed', () => {
+  void it('deploys an app whose root Firebase config changed', () => {
     assert.deepEqual(
       runScript(
         '--files=firebase.pacetrainer.json',
@@ -263,7 +263,7 @@ describe('release-affected on the workspace', () => {
 
   // .browserslistrc is an input of korbjaeger:build-app, which deploy runs
   // through build: inputs of the tasks a deploy depends on count too.
-  it('deploys an app whose build step reads the changed file', () => {
+  void it('deploys an app whose build step reads the changed file', () => {
     assert.ok(
       runScript('--files=.browserslistrc', '--target=deploy', NON_CDK).includes(
         'korbjaeger'
@@ -271,7 +271,7 @@ describe('release-affected on the workspace', () => {
     );
   });
 
-  it('deploys an app whose own source changed, and only it', () => {
+  void it('deploys an app whose own source changed, and only it', () => {
     assert.deepEqual(
       runScript(
         '--files=apps/pacetrainer/src/main.ts',
@@ -289,10 +289,10 @@ function stepsOf(workflow) {
     .slice(1);
 }
 
-describe('deploy.yml', () => {
+void describe('deploy.yml', () => {
   const steps = stepsOf('deploy.yml');
 
-  it('releases exactly the selected projects, never through nx affected', () => {
+  void it('releases exactly the selected projects, never through nx affected', () => {
     const releasing = steps.filter((step) =>
       /nx (run-many|release publish)/.test(step)
     );
@@ -304,7 +304,7 @@ describe('deploy.yml', () => {
   });
 
   // Without pipefail, a pipe would turn a failing selection into an empty one.
-  it('never pipes the selection, which would hide its failure', () => {
+  void it('never pipes the selection, which would hide its failure', () => {
     const piped = steps.filter((step) =>
       /release-affected\.mjs[^\n]*\|/.test(step)
     );
@@ -312,7 +312,7 @@ describe('deploy.yml', () => {
   });
 
   // An empty --projects can mean every project; such a leg skips instead.
-  it('skips every releasing step when the selection is empty', () => {
+  void it('skips every releasing step when the selection is empty', () => {
     const unguarded = steps
       .filter((step) => step.includes('--projects="$RELEASE_PROJECTS"'))
       .filter((step) => !step.includes("env.RELEASE_PROJECTS != ''"));
@@ -322,12 +322,12 @@ describe('deploy.yml', () => {
 
 // nx release counts every target's inputs too, so on its own it bumped, and
 // the npm leg published, every package on a lint-only commit (#3020).
-describe('release.yml', () => {
+void describe('release.yml', () => {
   const version = stepsOf('release.yml').find((step) =>
     step.includes('name: Version')
   );
 
-  it('versions only the packages whose build reads a change of this release', () => {
+  void it('versions only the packages whose build reads a change of this release', () => {
     assert.match(
       version,
       /release-affected\.mjs --base="v\$\(node -p "require\('\.\/version\.json'\)\.version"\)" --head=HEAD --target=build --projects='tag:published'/
@@ -337,13 +337,13 @@ describe('release.yml', () => {
   });
 
   // Up to the substitution's end, so a pipe on a continuation line counts.
-  it('never pipes the selection, which would hide its failure', () => {
+  void it('never pipes the selection, which would hide its failure', () => {
     assert.doesNotMatch(version, /release-affected\.mjs[^)]*\|/);
     assert.match(version, /packages=\$\(paste -sd, - <<< "\$selected"\)/);
   });
 
   // An empty --projects can mean every package.
-  it('skips nx release version when the selection is empty', () => {
+  void it('skips nx release version when the selection is empty', () => {
     assert.match(
       version,
       /if \[\[ -n "\$packages" \]\]; then\s+npx nx release version --projects="\$packages"/

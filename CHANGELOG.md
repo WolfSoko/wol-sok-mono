@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.5...v74.167.6) (2026-11-12)
+
+### Bug Fixes
+
+* **feat-shared-basketball-data:** fail the club crawl on a DBB outage instead of storing Team names ([#3075](https://github.com/WolfSoko/wol-sok-mono/issues/3075)) ([dd6245f](https://github.com/WolfSoko/wol-sok-mono/commit/dd6245f299f25f68d9079ed2d717c1ec5b2422b4)), closes [#3017](https://github.com/WolfSoko/wol-sok-mono/issues/3017), references [#3017](https://github.com/WolfSoko/wol-sok-mono/issues/3017)
+* **nx-aws-cdk-v2:** published packages ship their own MIT LICENSE ([#3069](https://github.com/WolfSoko/wol-sok-mono/issues/3069)) ([974dd1c](https://github.com/WolfSoko/wol-sok-mono/commit/974dd1c0221760ef4400d607d4957801fd8c8402)), references [#2969](https://github.com/WolfSoko/wol-sok-mono/issues/2969) [#2969](https://github.com/WolfSoko/wol-sok-mono/issues/2969)
+* **tools:** fail the workers' emulator download step on the first error ([#3068](https://github.com/WolfSoko/wol-sok-mono/issues/3068)) ([ae48e69](https://github.com/WolfSoko/wol-sok-mono/commit/ae48e696a497f1a7f94b8fd07f42c3df1eaa1fb2)), closes [#2974](https://github.com/WolfSoko/wol-sok-mono/issues/2974), references [#2960](https://github.com/WolfSoko/wol-sok-mono/issues/2960)
+* **tools:** mark node:test describe and it calls with void ([#3070](https://github.com/WolfSoko/wol-sok-mono/issues/3070)) ([87fe42c](https://github.com/WolfSoko/wol-sok-mono/commit/87fe42c9be10243a50769e7d5df19b2380dc3d43)), closes [#2985](https://github.com/WolfSoko/wol-sok-mono/issues/2985), references [#2985](https://github.com/WolfSoko/wol-sok-mono/issues/2985)
+* **tools:** run every tools/**/*.test.mjs in the test target ([#3071](https://github.com/WolfSoko/wol-sok-mono/issues/3071)) ([e9da1c6](https://github.com/WolfSoko/wol-sok-mono/commit/e9da1c68155ff295f8a8e46d2cce07e4296de9c2)), closes [#2955](https://github.com/WolfSoko/wol-sok-mono/issues/2955)
+
+### Chore
+
+* **release:** publish ([a17a32f](https://github.com/WolfSoko/wol-sok-mono/commit/a17a32ffbd96a0f333c613a1090831448306985d))
+
+### Performance
+
+* **feat-shared-bacteria-engine:** make IntSimulation about 2-2.8x faster, byte-equal ([#3072](https://github.com/WolfSoko/wol-sok-mono/issues/3072)) ([b17eda2](https://github.com/WolfSoko/wol-sok-mono/commit/b17eda23bcfd09747c27947f5928d2c4ece0d1d3)), references [#3065](https://github.com/WolfSoko/wol-sok-mono/issues/3065) [#3065](https://github.com/WolfSoko/wol-sok-mono/issues/3065)
+
 ## [74.167.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.4...v74.167.5) (2026-11-12)
 
 ### Bug Fixes
