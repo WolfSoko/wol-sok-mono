@@ -19,11 +19,11 @@ and `main` (`50a6dca`) with the same `node_modules`, and attributing every
 byte of `main-*`, `polyfills-*` and `chunk-*` to its source through the
 source maps:
 
-| Budget | Baseline | Warning at | `main` today |
-|---|---|---|---|
-| `allScript` | 1768 kB | 1856.4 kB | 1862.6 kB (+5.4%), **warns** |
-| `anyScript` | 622 kB | 653.1 kB | 652.1 kB (+4.8%), 1 kB below the warning |
-| `initial` | 227 kB | 249.7 kB | 228.5 kB (+0.7%) |
+| Budget      | Baseline | Warning at | `main` today                             |
+| ----------- | -------- | ---------- | ---------------------------------------- |
+| `allScript` | 1768 kB  | 1856.4 kB  | 1862.6 kB (+5.4%), **warns**             |
+| `anyScript` | 622 kB   | 653.1 kB   | 652.1 kB (+4.8%), 1 kB below the warning |
+| `initial`   | 227 kB   | 249.7 kB   | 228.5 kB (+0.7%)                         |
 
 Where the ~95 kB came from (raw bytes, rounded):
 
