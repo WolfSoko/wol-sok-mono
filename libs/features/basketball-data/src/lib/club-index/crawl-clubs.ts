@@ -33,13 +33,22 @@ export interface ClubCrawlOptions {
 }
 
 /**
+ * How often a crawl reads a Club's name before a failure that may pass (a
+ * DBB error, a timeout) rejects it: one hiccup among hundreds of reads
+ * should not cost the whole Association's crawl, which is due again only a
+ * day later.
+ */
+export const CLUB_NAME_ATTEMPTS = 3;
+
+/**
  * Every Club playing in a League of `association`, each once, by name: its
  * Leagues page by page, each League's Teams, and the name of each Club no
- * earlier crawl read. Where that name cannot be read (in time), one of the
- * Club's Teams' names stands in, marked `nameFromTeam`. A League the
- * source does not know or cannot map is skipped; a League list or Teams
- * the source cannot deliver now reject, so the caller keeps what it had.
- * Waits `pause` before every read.
+ * earlier crawl read. Where the source does not know or cannot map that
+ * Club, or no time is left to read its name, one of the Club's Teams'
+ * names stands in, marked `nameFromTeam`. A League the source does not
+ * know or cannot map is skipped; a League list, Teams or a Club's name
+ * (after `CLUB_NAME_ATTEMPTS` reads) the source cannot deliver now reject,
+ * so the caller keeps what it had. Waits `pause` before every read.
  */
 export async function crawlClubs(
   data: ClubCrawlSource,
@@ -111,28 +120,46 @@ async function teamsOf(
   try {
     return await read(() => data.leagueTeams(league));
   } catch (error) {
-    if (
-      isBasketballDataError(error, 'not-found') ||
-      isBasketballDataError(error, 'unexpected-shape')
-    ) {
+    if (isLastingAnswer(error)) {
       return [];
     }
     throw error;
   }
 }
 
-/** The Club's own name, or `undefined` where the source does not give it. */
+/**
+ * The Club's own name, or `undefined` where the source answered that it
+ * does not know or cannot map it. A read that fails for the moment is made
+ * again, up to `CLUB_NAME_ATTEMPTS` reads, each after the crawl's pause; then
+ * it rejects, so no Team's name is stored for a name only missing for now
+ * (#3017).
+ */
 async function clubName(
   data: ClubCrawlSource,
   club: ClubId,
   read: PacedRead
 ): Promise<string | undefined> {
-  try {
-    return (await read(() => data.club(club))).name;
-  } catch (error) {
-    if (isBasketballDataError(error)) {
-      return undefined;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      return (await read(() => data.club(club))).name;
+    } catch (error) {
+      if (isLastingAnswer(error)) {
+        return undefined;
+      }
+      if (attempt >= CLUB_NAME_ATTEMPTS) {
+        throw error;
+      }
     }
-    throw error;
   }
+}
+
+/**
+ * Whether `error` is an answer trying again will not change: the source
+ * does not know the thing, or answers in a shape this lib cannot read.
+ */
+function isLastingAnswer(error: unknown): boolean {
+  return (
+    isBasketballDataError(error, 'not-found') ||
+    isBasketballDataError(error, 'unexpected-shape')
+  );
 }

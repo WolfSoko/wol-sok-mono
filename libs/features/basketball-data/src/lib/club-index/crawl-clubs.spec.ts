@@ -1,10 +1,17 @@
-import { BasketballDataError } from '../domain/basketball-data-error';
+import {
+  BasketballDataError,
+  type BasketballDataErrorKind,
+} from '../domain/basketball-data-error';
 import type { LeagueId, ClubId } from '../domain/ids';
 import type { League } from '../domain/league';
 import type { LeaguePage, LeagueSearchFilter } from '../domain/league-search';
 import type { Team } from '../domain/team';
 import type { Club } from '../domain/club';
-import { crawlClubs, type ClubCrawlSource } from './crawl-clubs';
+import {
+  CLUB_NAME_ATTEMPTS,
+  crawlClubs,
+  type ClubCrawlSource,
+} from './crawl-clubs';
 
 const NIEDERSACHSEN = { id: 7, name: 'Niedersachsen' };
 
@@ -42,8 +49,20 @@ const CLUB_NAMES: Record<ClubId, string> = {
   200: 'MTV Gifhorn',
 };
 
-/** A source with the pages, Teams and Clubs above, logging every read. */
-function fakeData(teams = TEAMS): {
+/** How a Club's name read fails: with `kind`, its first `times` reads (all). */
+interface NameFailure {
+  readonly kind: BasketballDataErrorKind;
+  readonly times?: number;
+}
+
+/**
+ * A source with the pages, Teams and Clubs above, the name reads of
+ * `failedNames` rejecting with their kind, logging every read.
+ */
+function fakeData(
+  teams = TEAMS,
+  failedNames: Readonly<Record<ClubId, NameFailure>> = {}
+): {
   data: ClubCrawlSource;
   reads: string[];
 } {
@@ -74,6 +93,11 @@ function fakeData(teams = TEAMS): {
     },
     club: async (club: ClubId): Promise<Club> => {
       reads.push(`club ${club}`);
+      const failure = failedNames[club];
+      const attempt = reads.filter((read) => read === `club ${club}`).length;
+      if (failure !== undefined && attempt <= (failure.times ?? Infinity)) {
+        throw new BasketballDataError(failure.kind, `Verein ${club}`);
+      }
       const name = CLUB_NAMES[club];
       if (name === undefined) {
         throw new BasketballDataError('not-found', `Verein ${club}`);
@@ -212,5 +236,60 @@ describe('crawlClubs', () => {
         timeForNames: () => true,
       })
     ).rejects.toMatchObject({ kind: 'unavailable' });
+  });
+
+  it("lets a Team's name stand in where the source cannot map the Club", async () => {
+    const { data } = fakeData(TEAMS, { 300: { kind: 'unexpected-shape' } });
+
+    const clubs = await crawlClubs(data, 7, {
+      knownNames: new Map(),
+      pause: async () => undefined,
+      timeForNames: () => true,
+    });
+
+    expect(clubs[2]).toEqual({
+      id: 300,
+      name: 'SG Unbekannt',
+      nameFromTeam: true,
+    });
+  });
+
+  it.each(['unavailable', 'offline'] as const)(
+    "rejects rather than letting a Team's name stand in where every read of a name fails as %s",
+    async (kind) => {
+      const { data, reads } = fakeData(TEAMS, { 200: { kind } });
+
+      await expect(
+        crawlClubs(data, 7, {
+          knownNames: new Map(),
+          pause: async () => undefined,
+          timeForNames: () => true,
+        })
+      ).rejects.toMatchObject({ kind });
+      expect(reads.filter((read) => read === 'club 200')).toHaveLength(
+        CLUB_NAME_ATTEMPTS
+      );
+    }
+  );
+
+  it('reads a name again, pausing first, where a read fails for the moment', async () => {
+    const { data, reads } = fakeData(TEAMS, {
+      200: { kind: 'unavailable', times: CLUB_NAME_ATTEMPTS - 1 },
+    });
+    let pauses = 0;
+
+    const clubs = await crawlClubs(data, 7, {
+      knownNames: new Map(),
+      pause: async () => {
+        pauses++;
+      },
+      timeForNames: () => true,
+    });
+
+    expect(clubs[0]).toEqual({ id: 200, name: 'MTV Gifhorn' });
+    expect(reads.filter((read) => read === 'club 200')).toHaveLength(
+      CLUB_NAME_ATTEMPTS
+    );
+    expect(pauses).toBe(reads.length);
   });
 });
