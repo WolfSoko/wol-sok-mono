@@ -1,7 +1,8 @@
 import { IntMatchUniforms } from './int-uniforms';
 import {
+  beginIntClaimSteps,
   IntCombatUniforms,
-  intClaimAndApply,
+  intClaimStep,
   intCombat,
   intCrush,
   intFeed,
@@ -90,16 +91,15 @@ export function intReferenceTick(
   const next = (source: Uint16Array) =>
     buffers?.after(source) ?? new Uint16Array(source.length);
   let state = grid.state;
-  for (let step = 0; step < inputs.escapeSteps; step++) {
-    state = intClaimAndApply(
-      at(state),
-      pass,
-      hunt,
-      INT_KIND.escape,
-      step,
-      scratch,
-      next(state)
-    );
+  if (inputs.escapeSteps > 0) {
+    // The steps run in place, so on a copy: the grid's state stays as it is.
+    const escaping = next(state);
+    escaping.set(state);
+    state = escaping;
+    beginIntClaimSteps(at(state), scratch);
+    for (let step = 0; step < inputs.escapeSteps; step++) {
+      intClaimStep(at(state), pass, hunt, INT_KIND.escape, step, scratch);
+    }
   }
   state = intCrush(at(state), next(state));
   state = intCombat(
@@ -115,26 +115,12 @@ export function intReferenceTick(
   if (trace != null) {
     trace.combat = state;
   }
+  // Feeding writes a state of its own, which the steps then change in place.
   state = intFeed(at(state), inputs.match.feed, next(state));
-  state = intClaimAndApply(
-    at(state),
-    pass,
-    hunt,
-    INT_KIND.divide,
-    0,
-    scratch,
-    next(state)
-  );
+  beginIntClaimSteps(at(state), scratch);
+  intClaimStep(at(state), pass, hunt, INT_KIND.divide, 0, scratch);
   for (let step = 0; step < inputs.moveSteps; step++) {
-    state = intClaimAndApply(
-      at(state),
-      pass,
-      hunt,
-      INT_KIND.move,
-      step,
-      scratch,
-      next(state)
-    );
+    intClaimStep(at(state), pass, hunt, INT_KIND.move, step, scratch);
   }
   return state;
 }
