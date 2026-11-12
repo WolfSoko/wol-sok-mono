@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.4...v74.167.5) (2026-11-12)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** play gallery replays on a trusted GPU in /watch ([#3064](https://github.com/WolfSoko/wol-sok-mono/issues/3064)) ([9012bab](https://github.com/WolfSoko/wol-sok-mono/commit/9012babf35f5039035c2bdc5f546f20bf4006419)), closes [#3059](https://github.com/WolfSoko/wol-sok-mono/issues/3059), references [#3059](https://github.com/WolfSoko/wol-sok-mono/issues/3059)
+
 ## [74.167.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.3...v74.167.4) (2026-11-12)
 
 ### Refactorings
