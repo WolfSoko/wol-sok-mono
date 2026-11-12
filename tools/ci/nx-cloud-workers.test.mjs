@@ -90,12 +90,12 @@ function affectedTargets() {
   return sorted(call[1].split(','));
 }
 
-describe('Nx Cloud workers', () => {
-  it('finds the Firebase configs of the emulator suites', () => {
+void describe('Nx Cloud workers', () => {
+  void it('finds the Firebase configs of the emulator suites', () => {
     assert.ok(emulatorsInUse().includes('firestore'));
   });
 
-  it('download every emulator a Firebase config uses after npm install, before any task', () => {
+  void it('download every emulator a Firebase config uses after npm install, before any task', () => {
     const commands = executableLines(read(WORKERS));
     const install = commands.indexOf('npm install');
     assert.ok(install >= 0, `${WORKERS} runs no npm install`);
@@ -108,7 +108,7 @@ describe('Nx Cloud workers', () => {
     }
   });
 
-  it('stay until every target of the CI call is done', () => {
+  void it('stay until every target of the CI call is done', () => {
     assert.deepEqual(stopAfterTargets(), affectedTargets());
   });
 });
