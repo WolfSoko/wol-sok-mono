@@ -50,13 +50,13 @@ already runs in CI. Deterministic: the same code gives the same bytes.
 - **Every app gets an `anyScript` budget** on its largest single script. For
   `bacteria-game-remote` that is the game chunk:
   `{ "type": "anyScript", "baseline": "815kb", "maximumWarning": "5%",
-"maximumError": "10%" }`. It caps any one script at that size, so the game
+  "maximumError": "10%" }`. It caps any one script at that size, so the game
   chunk cannot grow past it; it does not see a smaller chunk grow below it.
 - **Every app also gets an `allScript` budget** on the sum of all its
   scripts, initial and lazy, which catches growth in any chunk, and a new
   chunk: `bacteria-game-remote` totals about 1,061 kB raw, so
   `{ "type": "allScript", "baseline": "1061kb", "maximumWarning": "5%",
-"maximumError": "10%" }`. The other apps get both forms, measured on
+  "maximumError": "10%" }`. The other apps get both forms, measured on
   their own builds.
 - **`initial` stays**, tightened to the measured size plus headroom where it
   is far below its limit (`bacteria-game-remote`: baseline 241 kB, warning
@@ -183,6 +183,11 @@ is decided after a month, like gate 3.
      them. `new-game` 7.37 → about 5.4 kB, `bacteria-game` 6.68 → about
      5.7 kB, `evolution` 6.09 → about 5.9 kB; the screens compared pixel for
      pixel before and after.
+   - Raised on 2026-11-12 for wanted growth
+     ([#3047](https://github.com/WolfSoko/wol-sok-mono/issues/3047)):
+     `bacteria-game-remote`'s `allScript` 1,768 → 1,863 kB and `anyScript`
+     622 → 653 kB (privacy policy sections, opt-in usage statistics, the
+     replay viewer, the game lib's new parts and engine rules).
 2. **Phase 2, engine benchmark**: `tools/perf/engine-bench.mjs`, the heavy
    fixture, `engine-baseline.json`, the `perf` target and the CI wiring;
    report-only for two weeks, then blocking.
