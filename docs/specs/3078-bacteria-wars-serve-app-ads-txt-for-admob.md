@@ -18,7 +18,7 @@ google.com, pub-6346271540341424, DIRECT, f08c47fec0942fa0
 
 ## Decisions
 
-- **Both domains** (owner, grilling round 1): the Play listing's developer website is not in the repo, so the file goes to `https://bacteria-wars.wolsok.de/app-ads.txt` and `https://wolsok.de/app-ads.txt`. Whichever the listing names, AdMob finds it.
+- **Both domains** (manager, grilling round 1): the Play listing's developer website is not in the repo, so the file goes to `https://bacteria-wars.wolsok.de/app-ads.txt` and `https://wolsok.de/app-ads.txt`. Whichever the listing names, AdMob finds it.
 - **Exactly one line**, the same as `wolsok.de/ads.txt`.
 - **bacteria-wars.wolsok.de**: a static asset of `bacteria-game-remote` (`src/app-ads.txt`, listed in the `esbuild` target's `assets`). Firebase Hosting serves files before rewrites, and its `**` header already sends `Cache-Control: no-cache`. The service worker leaves it alone: it is in no asset group, and `navigationUrls` skip paths with an extension.
 - **wolsok.de**: `apps/portfolio/public/app-ads.txt`, copied into the build like `ads.txt`, and named in `portfolio-cdk`'s `noCacheFiles` beside `ads.txt`, since crawlers read it by name.
@@ -36,4 +36,4 @@ google.com, pub-6346271540341424, DIRECT, f08c47fec0942fa0
 
 ## Open questions
 
-None: the owner decided the domain question (both).
+None: the manager decided the domain question (both) in grilling round 1.
