@@ -21,24 +21,24 @@ import {
   CLUB_INDEX_SCHEDULE,
   REGION,
 } from './config';
-import { kontoGeloescht } from './konto-geloescht';
+import { accountDeleted } from './account-deleted';
 
 initializeApp();
 
 /**
- * Deletes a deleted account's Auswahl (#2912, ADR 0019). 1st gen, as 2nd-gen
+ * Deletes a deleted account's selection (#2912, ADR 0019). 1st gen, as 2nd-gen
  * functions have no Auth deletion event. Retried until it succeeds (Cloud
  * Functions gives up after `DELETION_RETRY_DAYS` of the account lib), which
- * `kontoGeloescht` allows: a rerun ends the same.
+ * `accountDeleted` allows: a rerun ends the same.
  */
-export const auswahlLoeschen = v1
+export const deleteSelection = v1
   .region(REGION)
   .runWith({ failurePolicy: true })
   .auth.user()
   .onDelete(async (user) => {
-    await kontoGeloescht(getFirestore(), user.uid);
+    await accountDeleted(getFirestore(), user.uid);
     // no uid: Cloud Logging keeps it 30 days, the privacy policy promises one
-    logger.info('Auswahl of a deleted account deleted');
+    logger.info('Selection of a deleted account deleted');
   });
 
 /**

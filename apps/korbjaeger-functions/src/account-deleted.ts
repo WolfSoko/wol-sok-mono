@@ -17,7 +17,7 @@ import {
  * Every step is idempotent, so a retry ends the same however far the
  * failed run got; the tombstone's `expireAt` is counted from the last run.
  */
-export async function kontoGeloescht(
+export async function accountDeleted(
   db: Firestore,
   uid: string,
   now: number = Date.now()
