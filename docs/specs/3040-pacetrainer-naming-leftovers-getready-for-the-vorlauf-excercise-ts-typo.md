@@ -30,7 +30,7 @@ Two names #2968 left behind in `apps/pacetrainer`:
 
 - `grep -rn "getready\|excercise" apps/pacetrainer` finds nothing.
 - `npx nx test pacetrainer`, `lint`, `lint-templates` and the app's build pass.
-- The Vorlauf's countdown still ends in "Bereit" (sprint-training spec).
+- The Vorlauf is still named "Bereit" (`training-name.pipe.spec.ts`), and its countdown runs to `leadIn` (sprint-training spec).
 
 ## Open questions
 

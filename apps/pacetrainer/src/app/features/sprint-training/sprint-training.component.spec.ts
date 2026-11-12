@@ -51,7 +51,7 @@ describe('SprintTrainingComponent Ansagen', () => {
     expect(countdown()).toBeNull();
   });
 
-  it('counts the Vorlauf down to "Bereit"', () => {
+  it('counts the Vorlauf down to its own end', () => {
     clickPrimary();
     advance(2000);
 
