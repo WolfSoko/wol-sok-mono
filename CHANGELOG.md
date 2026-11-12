@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.6...v74.167.7) (2026-11-12)
+
+### Bug Fixes
+
+* **tools:** redeploy a release without the Nx cache and show what each deploy did ([#3076](https://github.com/WolfSoko/wol-sok-mono/issues/3076)) ([c018a84](https://github.com/WolfSoko/wol-sok-mono/commit/c018a8402cfebe7b25d577b1cf39ac077dfdaae2)), references [#3058](https://github.com/WolfSoko/wol-sok-mono/issues/3058) [#2985](https://github.com/WolfSoko/wol-sok-mono/issues/2985)
+
+### Refactorings
+
+* **korbjaeger-functions:** English identifiers, part C ([#3011](https://github.com/WolfSoko/wol-sok-mono/issues/3011)) ([#3077](https://github.com/WolfSoko/wol-sok-mono/issues/3077)) ([b950ce2](https://github.com/WolfSoko/wol-sok-mono/commit/b950ce2af2951ea7c4b87f1544730d503698010e))
+
 ## [74.167.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.5...v74.167.6) (2026-11-12)
 
 ### Bug Fixes
