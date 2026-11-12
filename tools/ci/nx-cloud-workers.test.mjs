@@ -10,6 +10,9 @@ const ROOT = join(import.meta.dirname, '..', '..');
 const WORKERS = '.nx/workflows/workers.yml';
 const CI_CONFIG = '.nx/ci-config.yaml';
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
+const DOWNLOAD_STEP = 'Download the Firebase emulators';
+const FAIL_FAST = 'set -euo pipefail';
+const DOWNLOAD_COMMAND = 'npx firebase setup:emulators:';
 
 // The emulators the Firebase CLI downloads on first use (a jar, a binary or
 // the UI's zip); auth, functions, hosting and the hub run from the CLI itself.
@@ -78,6 +81,17 @@ function executableLines(yaml) {
     .filter((line) => line !== '' && !line.startsWith('#'));
 }
 
+// The executable lines of one init step, from its name to the next step.
+function stepLines(yaml, name) {
+  const lines = executableLines(yaml);
+  const start = lines.indexOf(`- name: ${name}`);
+  assert.ok(start >= 0, `${WORKERS} has no step "${name}"`);
+  const next = lines.findIndex(
+    (line, index) => index > start && line.startsWith('- name:')
+  );
+  return lines.slice(start + 1, next < 0 ? undefined : next);
+}
+
 function stopAfterTargets() {
   const block = read(CI_CONFIG).match(/stop-after:\n((?:\s+(?:-.*|#.*)\n?)+)/);
   assert.ok(block, `${CI_CONFIG} has no stop-after list`);
@@ -106,6 +120,17 @@ describe('Nx Cloud workers', () => {
         `${WORKERS} must run "npx firebase setup:emulators:${name}" after npm install`
       );
     }
+  });
+
+  it('fail the emulator download step on its first failed download', () => {
+    const lines = stepLines(read(WORKERS), DOWNLOAD_STEP);
+    const commands = lines.slice(lines.indexOf('script: |') + 1);
+    assert.equal(
+      commands[0],
+      FAIL_FAST,
+      `"${DOWNLOAD_STEP}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
+    );
+    assert.ok(commands.some((line) => line.startsWith(DOWNLOAD_COMMAND)));
   });
 
   it('stay until every target of the CI call is done', () => {
