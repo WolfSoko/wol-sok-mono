@@ -2,7 +2,9 @@ name: Deploy release
 
 # Deploys what changed since the last deploy of each kind, at the given release
 # tag. release.yml calls it right after creating the release; run it by hand to
-# redeploy a version.
+# redeploy a version, where `projects` names what to deploy (a version deployed
+# once selects nothing since its own deploy tag) and `skip-cache` rebuilds it
+# without the Nx cache (#3058).
 on:
   workflow_call:
     inputs:
@@ -17,6 +19,14 @@ on:
         required: true
         type: string
         description: Release tag (v<version>)
+      projects:
+        type: string
+        default: ''
+        description: Projects to deploy, comma-separated (empty = what changed since the last deploy tag)
+      skip-cache:
+        type: boolean
+        default: false
+        description: Rebuild without the Nx cache
 
 permissions:
   issues: write
@@ -31,6 +41,9 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
   GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
+  # Dispatch only: release.yml's call passes neither.
+  DEPLOY_PROJECTS: ${{ inputs.projects }}
+  NX_SKIP_NX_CACHE: ${{ inputs.skip-cache && 'true' || 'false' }}
 
 jobs:
   deploy:
@@ -49,6 +62,7 @@ jobs:
           - app-type: npm-packages
             deploy-tag-suffix: npm-deployed
             projects-filter: 'tag:published'
+            exclude-pattern: '*,!tag:published'
             extra-deploy-args: ''
           - app-type: non-cdk
             deploy-tag-suffix: non-cdk-deployed
@@ -120,14 +134,20 @@ jobs:
       # lint-only root config would redeploy every app.
       - name: Select the projects to release and set triggerRelease
         run: |
-          if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
-            selection=(--target=build --projects='${{ matrix.config.projects-filter }}')
+          if [[ -n "$DEPLOY_PROJECTS" ]]; then
+            # A dispatch naming projects: those of this leg's kind (#3058).
+            target=$([[ "${{ matrix.config.app-type }}" == "npm-packages" ]] && echo build || echo deploy)
+            selected=$(node tools/ci/deploy-override.mjs --projects="$DEPLOY_PROJECTS" --exclude='${{ matrix.config.exclude-pattern }}' --target="$target")
           else
-            selection=(--target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
+            if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
+              selection=(--target=build --projects='${{ matrix.config.projects-filter }}')
+            else
+              selection=(--target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
+            fi
+            # Apart from the paste: the step's bash has no pipefail, so a failing
+            # selection would otherwise read as an empty one and skip the leg.
+            selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}")
           fi
-          # Apart from the paste: the step's bash has no pipefail, so a failing
-          # selection would otherwise read as an empty one and skip the leg.
-          selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}")
           RELEASE_PROJECTS=$(paste -sd, - <<< "$selected")
           echo "Selected: ${RELEASE_PROJECTS:-none}"
           echo "RELEASE_PROJECTS=$RELEASE_PROJECTS" >> $GITHUB_ENV
@@ -143,15 +163,18 @@ jobs:
 
       - name: Build npm packages
         if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type == 'npm-packages'
-        run: npx nx run-many -t build --projects="$RELEASE_PROJECTS"
+        run: npx nx run-many -t build --projects="$RELEASE_PROJECTS" --output-style=static
 
       - name: Publish npm packages
         if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type == 'npm-packages'
-        run: npx nx release publish --projects="$RELEASE_PROJECTS"
+        run: npx nx release publish --projects="$RELEASE_PROJECTS" --output-style=static
 
       - name: Deploy Apps
         if: success() && env.triggerRelease == 'true' && env.RELEASE_PROJECTS != '' && matrix.config.app-type != 'npm-packages'
-        run: npx nx run-many --target=deploy --projects="$RELEASE_PROJECTS" ${{ matrix.config.extra-deploy-args}}
+        # static: the Firebase CLI's lines of each deploy reach the log, which
+        # held only "Output of 26 successful tasks were not shown" when a
+        # Hosting release went missing (#3058).
+        run: npx nx run-many --target=deploy --projects="$RELEASE_PROJECTS" --output-style=static ${{ matrix.config.extra-deploy-args}}
         env:
           # The upload key and the Play account only reach the Android leg.
           ANDROID_KEYSTORE_BASE64: ${{ matrix.config.app-type == 'android' && secrets.ANDROID_KEYSTORE_BASE64 || '' }}
@@ -164,8 +187,10 @@ jobs:
           YOUTUBE_OAUTH_CLIENT_SECRET: ${{ matrix.config.app-type == 'android' && secrets.YOUTUBE_OAUTH_CLIENT_SECRET || '' }}
           YOUTUBE_OAUTH_REFRESH_TOKEN: ${{ matrix.config.app-type == 'android' && secrets.YOUTUBE_OAUTH_REFRESH_TOKEN || '' }}
 
+      # Not for a dispatch naming projects: the tag says everything that changed
+      # up to this version is deployed, which a chosen few do not prove.
       - name: Tag deployment success
-        if: success() && env.triggerRelease == 'true'
+        if: success() && env.triggerRelease == 'true' && env.DEPLOY_PROJECTS == ''
         run: |
           echo "Configuring git user"
           git config --global user.email "github-actions[bot]@users.no-reply.github.com"
@@ -174,6 +199,12 @@ jobs:
           echo "Setting deploy tag"
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
           echo "Deploy tag: $DEPLOY_TAG"
+          # Defensive: a tag on HEAD is NX_BASE, so its own version selects
+          # nothing and never gets here; a second tag would fail git tag.
+          if git rev-parse -q --verify "refs/tags/$DEPLOY_TAG" >/dev/null; then
+            echo "Deploy tag $DEPLOY_TAG exists already, leaving it."
+            exit 0
+          fi
 
           # HEAD is the checked-out release tag, the tree that was deployed.
           echo "Tagging the deployed commit"
@@ -182,8 +213,10 @@ jobs:
           echo "Pushing tags"
           git push origin "$DEPLOY_TAG"
 
+      # Not for a dispatch naming projects: whoever started it watches it, and
+      # a mistyped name fails every leg, which would file one issue a leg.
       - name: Create Issue
-        if: failure()
+        if: failure() && env.DEPLOY_PROJECTS == ''
         run: |
           gh issue create \
             --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} for ${{ matrix.config.app-type }} apps failed" \
