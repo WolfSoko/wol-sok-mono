@@ -6,7 +6,7 @@ import { seconds, sToMs } from '@wolsok/utils-time';
 import {
   createRecoveryExercise,
   createSprintExercise,
-} from '../model/training/excercise';
+} from '../model/training/exercise';
 import { createIntervalWithDuration } from '../model/training/interval';
 import { createTrainingWithDuration } from '../model/training/training-config-with.duration';
 import { TrainingRun } from '../training-run/training-run';

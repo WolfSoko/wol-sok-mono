@@ -3,7 +3,7 @@ import { add, milliseconds, Seconds, sToMs } from '@wolsok/utils-time';
 import {
   createRecoveryExercise,
   createSprintExercise,
-} from '../../../shared/model/training/excercise';
+} from '../../../shared/model/training/exercise';
 import { createIntervalWithDuration } from '../../../shared/model/training/interval';
 import {
   createTrainingWithDuration,
