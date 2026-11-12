@@ -53,9 +53,15 @@ launch-templates:
       # with a non-atomic copy, so a second emulator task on the same worker
       # started Java on the partial jar and failed within seconds (#2960).
       # After npm install, so the locked CLI picks the jar versions.
-      # tools/ci/nx-cloud-workers.test.mjs keeps this list complete.
+      # Fails on the first failed download (#2974): Nx Cloud documents neither
+      # fail-fast nor the shell for inline scripts (hence POSIX `set -eu`), and
+      # a step that passed without the jar would leave the download, and its
+      # race, to the first emulator task.
+      # tools/ci/nx-cloud-workers.test.mjs keeps this list complete and the
+      # step failing fast.
       - name: Download the Firebase emulators
         script: |
+          set -eu
           npx firebase setup:emulators:firestore
           npx firebase setup:emulators:database
           npx firebase setup:emulators:ui
