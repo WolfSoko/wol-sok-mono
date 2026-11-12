@@ -23,7 +23,10 @@ What the shell adds:
   that app. The manifest drops the advertising id permission Analytics
   brings along and turns its advertising id collection off: the app itself
   serves no ads (the web game's ads run in Chrome, without the
-  Android advertising id), and the app's Play declaration says so. The file
+  Android advertising id), and the app's Play declaration says so. AdMob still
+  asks for an `app-ads.txt` at the listing's developer website: the game site
+  and wolsok.de both serve it (`apps/bacteria-game-remote/src/app-ads.txt`,
+  `apps/portfolio/public/app-ads.txt`, #3078) for AdMob's verification. The Firebase file
   holds no secret: the API key identifies the project and ships in every
   build, so restrict it in the Cloud console rather than hide it. Download
   it again from the Firebase console (Project settings → Your apps) after
