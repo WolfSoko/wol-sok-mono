@@ -6,11 +6,16 @@ import { of } from 'rxjs';
 import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { recordingPainters } from '../../testing/recording-painter';
 import { I18nService } from '../i18n/i18n.service';
+import { signal } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import {
   BALANCE_VERSION,
+  GPU_INT_REPLAY_VERSION,
   type Replay,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { ReplayViewerComponent } from './replay-viewer.component';
+import { WatchGpu } from './watch-gpu';
 import { PublicReplayResult, PublicReplays } from './public-replays';
 import { WatchPageComponent } from './watch-page.component';
 
@@ -24,7 +29,26 @@ async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   }
 }
 
+/** A stand-in for the page's GPU source, telling how often it started. */
+function fakeWatchGpu(renderer: string | null = null) {
+  const trusted = signal(renderer);
+  return {
+    starts: [] as (string | null)[],
+    trusted,
+    trustedRenderer: () => trusted(),
+    start(renderer: string | null = null) {
+      this.starts.push(renderer);
+    },
+  };
+}
+
 describe('WatchPageComponent', () => {
+  let watchGpu: ReturnType<typeof fakeWatchGpu>;
+
+  beforeEach(() => {
+    watchGpu = fakeWatchGpu();
+  });
+
   async function open(result: PublicReplayResult) {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -35,6 +59,7 @@ describe('WatchPageComponent', () => {
           useValue: { paramMap: of(convertToParamMap({ publicId: ID })) },
         },
         { provide: PublicReplays, useValue: { load: async () => result } },
+        { provide: WatchGpu, useValue: watchGpu },
       ],
     });
     TestBed.inject(I18nService).setLanguage('en');
@@ -63,6 +88,47 @@ describe('WatchPageComponent', () => {
 
     expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
     expect(TestBed.inject(Meta).getTag('name="robots"')).toBeNull();
+  });
+
+  it('finds a trusted GPU for a gpu-int replay and hands it to the viewer', async () => {
+    const replay = recordedReplay('petri-dish', 30);
+    const { fixture } = await open({
+      replay: {
+        ...replay,
+        header: {
+          ...replay.header,
+          simulation: 'gpu-int',
+          version: GPU_INT_REPLAY_VERSION,
+        },
+      },
+    });
+    const viewer = () =>
+      fixture.debugElement.query(By.directive(ReplayViewerComponent))
+        .componentInstance as ReplayViewerComponent;
+
+    const viewerElement = fixture.debugElement.query(
+      By.directive(ReplayViewerComponent)
+    );
+    expect(watchGpu.starts).toEqual([]);
+
+    viewerElement.triggerEventHandler('gpuRenderer', 'Adreno 650');
+    expect(watchGpu.starts).toEqual(['Adreno 650']);
+    expect(viewer().gpu()).toBeNull();
+
+    watchGpu.trusted.set('Adreno 650');
+    await settle(fixture);
+
+    expect(viewer().gpu()).toBe('Adreno 650');
+  });
+
+  it('asks for no GPU for a cpu replay', async () => {
+    const { fixture } = await open({ replay: recordedReplay() });
+
+    fixture.debugElement
+      .query(By.directive(ReplayViewerComponent))
+      .triggerEventHandler('gpuRenderer', 'Adreno 650');
+
+    expect(watchGpu.starts).toEqual([]);
   });
 
   it('says why a replay does not play', async () => {
