@@ -41,8 +41,8 @@ function stepOf(name) {
   return step;
 }
 
-describe('deploy.yml', () => {
-  it('offers skip-cache and projects to a dispatch only', () => {
+void describe('deploy.yml', () => {
+  void it('offers skip-cache and projects to a dispatch only', () => {
     const dispatch = blockOf(DEPLOY, 'workflow_dispatch');
     assert.match(dispatch, /skip-cache:\n\s+type: boolean\n\s+default: false/);
     assert.match(dispatch, /projects:\n\s+type: string\n\s+default: ''/);
@@ -50,7 +50,7 @@ describe('deploy.yml', () => {
     assert.doesNotMatch(call, /skip-cache|projects/);
   });
 
-  it('is called by release.yml with the version alone', () => {
+  void it('is called by release.yml with the version alone', () => {
     const withBlocks = [
       ...RELEASE.matchAll(/deploy\.yml[\s\S]*?with:\n((?:\s{6,}\S.*\n)+)/g),
     ];
@@ -66,21 +66,21 @@ describe('deploy.yml', () => {
     }
   });
 
-  it('hands the named projects to the selection', () => {
+  void it('hands the named projects to the selection', () => {
     assert.match(
       blockOf(DEPLOY, 'env'),
       /DEPLOY_PROJECTS: \$\{\{ inputs\.projects \}\}/
     );
   });
 
-  it('skips the Nx cache only when asked', () => {
+  void it('skips the Nx cache only when asked', () => {
     assert.match(
       blockOf(DEPLOY, 'env'),
       /NX_SKIP_NX_CACHE: \$\{\{ inputs\.skip-cache && 'true' \|\| 'false' \}\}/
     );
   });
 
-  it('selects the named projects of each leg, else the affected ones', () => {
+  void it('selects the named projects of each leg, else the affected ones', () => {
     const select = stepOf(
       'Select the projects to release and set triggerRelease'
     );
@@ -91,20 +91,20 @@ describe('deploy.yml', () => {
     assert.match(select, /release-affected\.mjs/);
   });
 
-  it('gives every leg an exclude pattern', () => {
+  void it('gives every leg an exclude pattern', () => {
     assert.deepEqual(
       legs().map((leg) => leg.appType),
       ['npm-packages', 'non-cdk', 'android', 'cdk']
     );
   });
 
-  it('tags no override and leaves an existing tag alone', () => {
+  void it('tags no override and leaves an existing tag alone', () => {
     const tag = stepOf('Tag deployment success');
     assert.match(tag, /if: .*env\.DEPLOY_PROJECTS == ''/);
     assert.match(tag, /git rev-parse -q --verify "refs\/tags\/\$DEPLOY_TAG"/);
   });
 
-  it('prints the output of every Nx task', () => {
+  void it('prints the output of every Nx task', () => {
     const calls = DEPLOY.split('\n').filter((line) =>
       /npx nx (run-many|release publish)/.test(line)
     );
@@ -113,8 +113,8 @@ describe('deploy.yml', () => {
   });
 });
 
-describe('deploy-override', () => {
-  it('reads a comma-separated list', () => {
+void describe('deploy-override', () => {
+  void it('reads a comma-separated list', () => {
     assert.deepEqual(requestedProjects(' korbjaeger, ,pacetrainer '), [
       'korbjaeger',
       'pacetrainer',
@@ -122,7 +122,7 @@ describe('deploy-override', () => {
     assert.throws(() => requestedProjects(' , '), /names no project/);
   });
 
-  it('names the requested projects that are missing', () => {
+  void it('names the requested projects that are missing', () => {
     assert.deepEqual(missingProjects(['a', 'b'], ['b', 'c']), ['a']);
   });
 
@@ -137,7 +137,7 @@ describe('deploy-override', () => {
   const targetOf = (appType) =>
     appType === 'npm-packages' ? 'build' : 'deploy';
 
-  it("keeps each leg's own kind of the named projects", () => {
+  void it("keeps each leg's own kind of the named projects", () => {
     const expected = {
       'npm-packages': ['ws-thanos'],
       'non-cdk': ['korbjaeger'],
@@ -157,7 +157,7 @@ describe('deploy-override', () => {
     }
   });
 
-  it('fails on a name the workspace does not know', () => {
+  void it('fails on a name the workspace does not know', () => {
     assert.throws(
       () =>
         run('--projects=korbjagger', '--exclude=tag:cdk', '--target=deploy'),
@@ -165,7 +165,7 @@ describe('deploy-override', () => {
     );
   });
 
-  it("fails on a project of the leg without the leg's target", () => {
+  void it("fails on a project of the leg without the leg's target", () => {
     assert.throws(
       () =>
         run(
