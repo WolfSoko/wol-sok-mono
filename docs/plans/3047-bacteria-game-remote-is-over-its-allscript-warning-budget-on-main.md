@@ -8,8 +8,9 @@ Spec: [docs/specs/3047-…](../specs/3047-bacteria-game-remote-is-over-its-allsc
    `production` configuration): `allScript` `1768kb` → `1863kb`,
    `anyScript` `622kb` → `653kb`. Commit of its own,
    `perf(bacteria-game-remote): raise the allScript and anyScript baselines to what ships`.
-   - Test: `npx nx run bacteria-game-remote:build:production` shows no
-     `exceeded maximum budget` warning for scripts (acceptance 1 and 4).
+   - Test: `npx nx run bacteria-game-remote:build:production`, which runs
+     `build-federation:production`, shows no `exceeded maximum budget`
+     warning for scripts and succeeds (acceptance 1 and 4).
 3. **Checks**: `npx nx format:write`,
    `npx nx affected -t lint,lint-templates --base=origin/main`.
 4. **PR** to `main` with `Closes #3047`, the "what grew" table from the spec

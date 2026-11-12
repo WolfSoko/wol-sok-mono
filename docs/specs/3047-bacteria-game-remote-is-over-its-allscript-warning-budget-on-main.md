@@ -29,9 +29,9 @@ Where the ~95 kB came from (raw bytes, rounded):
 
 - **Privacy policy** (`apps/bacteria-game-remote/src/app/privacy`): +19 kB,
   sections for analytics, the ad network port, ImprovMX, the command
-  documents and the progress journal (#2727, #2729, #2734, #2802, #2825,
-  #3043). A lazy chunk of its own, only loaded on `/privacy`.
-- **Opt-in usage statistics** (#2729): `libs/shared/analytics` +4 kB, the
+  documents and the progress journal ([#2727](https://github.com/WolfSoko/wol-sok-mono/issues/2727), [#2729](https://github.com/WolfSoko/wol-sok-mono/issues/2729), [#2734](https://github.com/WolfSoko/wol-sok-mono/issues/2734), [#2802](https://github.com/WolfSoko/wol-sok-mono/issues/2802), [#2825](https://github.com/WolfSoko/wol-sok-mono/issues/2825),
+  [#3043](https://github.com/WolfSoko/wol-sok-mono/issues/3043)). A lazy chunk of its own, only loaded on `/privacy`.
+- **Opt-in usage statistics** ([#2729](https://github.com/WolfSoko/wol-sok-mono/issues/2729)): `libs/shared/analytics` +4 kB, the
   game's `analytics/` +6 kB and `@firebase/installations` +8 kB, a chunk the
   federation's shared `firebase/analytics` and `firebase/remote-config`
   bundles import, so it counts towards the remote's scripts.
