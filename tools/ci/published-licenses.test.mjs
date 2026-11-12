@@ -8,13 +8,14 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
 
-const MIT_HEADING = 'MIT License';
+// The heading on a line of its own: the Scope paragraph names "The MIT License" too.
+const MIT_HEADING = /^MIT License$/m;
 
 function rootMitText() {
   const root = readFileSync(join(ROOT, 'LICENSE'), 'utf8');
-  const start = root.indexOf(MIT_HEADING);
-  assert.ok(start >= 0, `the root LICENSE has no "${MIT_HEADING}" part`);
-  return root.slice(start);
+  const heading = MIT_HEADING.exec(root);
+  assert.ok(heading, 'the root LICENSE has no "MIT License" heading');
+  return root.slice(heading.index);
 }
 
 function projectRootOf(project) {
