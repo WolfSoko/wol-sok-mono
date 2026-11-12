@@ -12,6 +12,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import * as v1 from 'firebase-functions/v1';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { accountDeleted } from './account-deleted';
 import { directDbbTransport } from './club-index/dbb-transport';
 import { firestoreClubIndex } from './club-index/firestore-club-index';
 import { runClubIndex } from './club-index/run-club-index';
@@ -21,24 +22,23 @@ import {
   CLUB_INDEX_SCHEDULE,
   REGION,
 } from './config';
-import { kontoGeloescht } from './konto-geloescht';
 
 initializeApp();
 
 /**
- * Deletes a deleted account's Auswahl (#2912, ADR 0019). 1st gen, as 2nd-gen
+ * Deletes a deleted account's selection (#2912, ADR 0019). 1st gen, as 2nd-gen
  * functions have no Auth deletion event. Retried until it succeeds (Cloud
  * Functions gives up after `DELETION_RETRY_DAYS` of the account lib), which
- * `kontoGeloescht` allows: a rerun ends the same.
+ * `accountDeleted` allows: a rerun ends the same.
  */
-export const auswahlLoeschen = v1
+export const deleteSelection = v1
   .region(REGION)
   .runWith({ failurePolicy: true })
   .auth.user()
   .onDelete(async (user) => {
-    await kontoGeloescht(getFirestore(), user.uid);
+    await accountDeleted(getFirestore(), user.uid);
     // no uid: Cloud Logging keeps it 30 days, the privacy policy promises one
-    logger.info('Auswahl of a deleted account deleted');
+    logger.info('Selection of a deleted account deleted');
   });
 
 /**

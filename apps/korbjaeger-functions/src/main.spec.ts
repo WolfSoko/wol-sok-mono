@@ -24,7 +24,7 @@ describe('the deployed functions', () => {
 
   // `--force` deletes a function of the codebase that is gone from here
   it('are the Auth deletion trigger and the club index', () => {
-    expect(Object.keys(main)).toEqual(['auswahlLoeschen', 'clubIndex']);
+    expect(Object.keys(main)).toEqual(['deleteSelection', 'clubIndex']);
   });
 
   it('crawl the club index hourly, next to the database, one at a time, unretried', () => {
@@ -39,8 +39,8 @@ describe('the deployed functions', () => {
     });
   });
 
-  it('delete the Auswahl on every Auth deletion, next to the database, retried until it succeeds', () => {
-    expect(endpointOf(main.auswahlLoeschen)).toMatchObject({
+  it('delete the selection on every Auth deletion, next to the database, retried until it succeeds', () => {
+    expect(endpointOf(main.deleteSelection)).toMatchObject({
       region: [REGION],
       eventTrigger: {
         eventType: 'providers/firebase.auth/eventTypes/user.delete',

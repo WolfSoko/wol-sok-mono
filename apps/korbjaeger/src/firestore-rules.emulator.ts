@@ -308,7 +308,7 @@ describe('the Auswahl document', () => {
     });
   });
 
-  // the Auth deletion's trigger (korbjaeger-functions, `kontoGeloescht`)
+  // the Auth deletion's trigger (korbjaeger-functions, `accountDeleted`)
   // writes the tombstone first: a second device's token stays valid for up
   // to an hour, so the rules refuse it from then on
   describe('once the account is deleted', () => {

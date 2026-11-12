@@ -130,7 +130,7 @@ describe('DatenschutzComponent', () => {
     expect(loeschen).toContain('Konto löschen');
   });
 
-  // korbjaeger-functions' `kontoGeloescht` (#2912): the tombstone first,
+  // korbjaeger-functions' `accountDeleted` (#2912): the tombstone first,
   // then the document; retried by Cloud Functions, the tombstone deleted by
   // Firestore's TTL
   it('says what the server deletes once the account is gone, and what it keeps', () => {

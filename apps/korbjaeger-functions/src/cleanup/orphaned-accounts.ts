@@ -3,7 +3,7 @@ import {
   CHOICES_COLLECTION,
   LEGACY_CHOICES_COLLECTION,
 } from '@wolsok/feat-shared-korbjaeger-account';
-import { kontoGeloescht } from '../konto-geloescht';
+import { accountDeleted } from '../account-deleted';
 
 /** The collections that hold an account's choices, keyed by its uid. */
 const ACCOUNT_COLLECTIONS = [CHOICES_COLLECTION, LEGACY_CHOICES_COLLECTION];
@@ -62,7 +62,7 @@ export async function findOrphanedAccounts(
 
 /**
  * Deletes what orphaned accounts left, as the Auth deletion trigger does
- * (`kontoGeloescht`: the tombstone first, then `selections/{uid}`), and
+ * (`accountDeleted`: the tombstone first, then `selections/{uid}`), and
  * then the account's document of before #2966, which the trigger no longer
  * knows (#2983), so a rerun ends the same. Without `deleteOrphans` it only
  * counts (dry run). A failed deletion is counted, not thrown, so the report
@@ -93,7 +93,7 @@ export async function cleanUpOrphanedAccounts(
   let orphansDeleted = 0;
   for (const uid of search.orphans) {
     try {
-      await kontoGeloescht(db, uid);
+      await accountDeleted(db, uid);
       await db.collection(LEGACY_CHOICES_COLLECTION).doc(uid).delete();
       orphansDeleted++;
     } catch {

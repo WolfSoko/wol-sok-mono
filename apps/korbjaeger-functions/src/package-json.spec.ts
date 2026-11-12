@@ -32,10 +32,12 @@ describe('the deploy', () => {
   const firebase = json<{
     functions: { codebase: string; source: string; predeploy: string[] }[];
   }>('../../../firebase.korbjaeger.json');
-  const konto = firebase.functions.find(({ codebase }) => codebase === 'konto');
+  const functionsCodebase = firebase.functions.find(
+    ({ codebase }) => codebase === 'konto'
+  );
 
   it('takes this build as codebase konto, beside the Nitro server', () => {
-    expect(konto?.source).toBe('dist/apps/korbjaeger-functions');
+    expect(functionsCodebase?.source).toBe('dist/apps/korbjaeger-functions');
   });
 
   // Firebase runs it inside `npx nx`, which hands the workspace's `.npmrc`
@@ -43,7 +45,7 @@ describe('the deploy', () => {
   // file would then lack required peers, and Cloud Build's plain `npm ci`
   // refuses such a lock, so the install turns the setting off itself.
   it('writes a lock file with the peers that npm ci in Cloud Build expects', () => {
-    expect(konto?.predeploy).toEqual([
+    expect(functionsCodebase?.predeploy).toEqual([
       'npm --prefix "$RESOURCE_DIR" install --omit dev --legacy-peer-deps=false',
     ]);
   });

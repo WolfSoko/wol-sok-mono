@@ -284,3 +284,48 @@ paths.
   section.
 - Tests: the check step, `ngc` over the app's templates.
 - Commit: `refactor(feat-korbjaeger-selection): name the renamed identifiers in comments and CLAUDE.md (#2967)`.
+
+## Part C: `korbjaeger-functions`
+
+Issue [#3011](https://github.com/WolfSoko/wol-sok-mono/issues/3011), spec
+[docs/specs/3011-…](../specs/3011-korbjaeger-english-identifiers-part-c-korbjaeger-functions.md).
+
+### Task C1: spec and plan
+
+- Files: the spec of #3011, this section.
+- Commit: `docs(korbjaeger-functions): spec and plan for part C of the English identifiers (#3011)`.
+
+### Task C2: rename by the map
+
+| Old                                                                                                               | New                                                                          |
+| ----------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `auswahlLoeschen` (export of `main.ts`, the deployed function)                                                    | `deleteSelection`                                                            |
+| `kontoGeloescht`                                                                                                  | `accountDeleted`                                                             |
+| emulator spec: `ELTERNTEIL`, `ANDERES`, `JETZT`, `AUSWAHL_DOKUMENT`                                               | `PARENT`, `OTHER_PARENT`, `NOW`, `SELECTION_DOCUMENT`                        |
+| emulator spec: `auswahlVon`, `grabsteinVon`, `geraet`, `folgen`                                                   | `selectionOf`, `tombstoneOf`, `signedInDevice`, `follow`                     |
+| emulator spec: `loeschendes`, `anderes`, `geloescht`, `nachDerLoeschung`, `ersteGespeichert`, `einmalGespeichert` | `deleting`, `other`, `deleted`, `afterDeletion`, `firstStored`, `storedOnce` |
+| emulator spec: `schreiben`, `danach`, `gespeichert`                                                               | `writing`, `afterwards`, `stored`                                            |
+| `package-json.spec.ts`: `konto`; `run-club-index.spec.ts`: the parameter `verein`                                 | `functionsCodebase`; `club`                                                  |
+
+Files (`src/`): `konto-geloescht.ts` → `account-deleted.ts`,
+`konto-geloescht.emulator.ts` → `account-deleted.emulator.ts`. The helper `geraet` becomes `signedInDevice`, not `device`: `follow`'s
+parameter `device` is typed `ReturnType<typeof …>` of it, which a helper of
+the same name would make refer to the parameter itself. The uids
+`elternteil-a`/`-b` become `parent-a`/`-b`. The codebase `konto`, the
+collections and the Verbände of the fixtures (`BAYERN`, `BERLIN`,
+`HESSEN`) stay.
+
+- Tests: `korbjaeger-functions:test`, `:test-emulator` and
+  `:typecheck-specs` where it exists, unchanged in substance; `main.spec.ts`
+  expects `deleteSelection`.
+- Commit: `refactor(korbjaeger-functions): rename the German identifiers to English (#3011)`.
+
+### Task C3: hand fixes and docs
+
+- Files: comments and test titles that quote an old name (`main.ts`,
+  `orphaned-accounts.ts` and its spec, the emulator spec), the log line,
+  the comments in `apps/korbjaeger/firestore.rules`,
+  `firestore-rules.emulator.ts`, `firebase-deploy.spec.ts` and
+  `datenschutz.component.spec.ts`, `CLAUDE.md`'s Korbjäger section.
+- Tests: the check step.
+- Commit: folded into C2's (the PR squashes).

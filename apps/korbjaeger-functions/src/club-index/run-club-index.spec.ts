@@ -63,7 +63,7 @@ function fakeData(
     }),
     leaguePage: unused,
     leagueTeams: teams,
-    club: async (verein) => ({ id: verein, name: `Verein ${verein}` }),
+    club: async (club) => ({ id: club, name: `Verein ${club}` }),
   };
 }
 

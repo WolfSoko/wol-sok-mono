@@ -19,7 +19,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // The owner, unless their account was deleted: the Auth deletion's
-    // trigger (korbjaeger-functions, `kontoGeloescht`) writes
+    // trigger (korbjaeger-functions, `accountDeleted`) writes
     // deletedAccounts/{uid} before it deletes selections/{uid}, as another
     // device's token stays valid for up to an hour. The tombstone is closed to
     // clients (no rule matches it) and expires after a day (TTL on

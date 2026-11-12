@@ -1,12 +1,12 @@
 import { type Firestore } from 'firebase-admin/firestore';
-import { kontoGeloescht } from '../konto-geloescht';
+import { accountDeleted } from '../account-deleted';
 import { cleanUpOrphanedAccounts } from './orphaned-accounts';
 
-jest.mock('../konto-geloescht', () => ({ kontoGeloescht: jest.fn() }));
+jest.mock('../account-deleted', () => ({ accountDeleted: jest.fn() }));
 
 /**
  * A Firestore that lists the given ids in every collection and deletes
- * whatever it is asked to (the legacy document after `kontoGeloescht`).
+ * whatever it is asked to (the legacy document after `accountDeleted`).
  */
 const listing = (ids: readonly string[]) =>
   ({
@@ -19,7 +19,7 @@ const listing = (ids: readonly string[]) =>
 describe('cleanUpOrphanedAccounts, when a deletion fails', () => {
   it('goes on with the others and reports how far it got', async () => {
     jest
-      .mocked(kontoGeloescht)
+      .mocked(accountDeleted)
       .mockResolvedValueOnce()
       .mockRejectedValueOnce(new Error('unavailable'))
       .mockResolvedValueOnce();
@@ -30,7 +30,7 @@ describe('cleanUpOrphanedAccounts, when a deletion fails', () => {
       { deleteOrphans: true }
     );
 
-    expect(kontoGeloescht).toHaveBeenCalledTimes(3);
+    expect(accountDeleted).toHaveBeenCalledTimes(3);
     expect(report).toMatchObject({
       orphansFound: 3,
       orphansDeleted: 2,

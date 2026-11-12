@@ -184,7 +184,7 @@ describe('the Firebase deploy', () => {
   });
 
   // the rules refuse a deleted account while its tombstone exists; the TTL
-  // takes it away after a day (korbjaeger-functions, `kontoGeloescht`).
+  // takes it away after a day (korbjaeger-functions, `accountDeleted`).
   // DEPLOY runs `firestore:indexes` without `--force`, so a TTL dropped from
   // the file stays live in Firestore (#2983: that of the tombstones of
   // before #2966, for the last ones written there)
