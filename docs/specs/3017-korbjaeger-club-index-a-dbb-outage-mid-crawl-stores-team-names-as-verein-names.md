@@ -30,7 +30,6 @@ as complete, so `/api/clubs` serves it with the long cache, and the search
 
 - No change to the run's schedule (a failed crawl is due again after a day),
   the store or `/api/clubs`.
-- No retry of single name reads within a run.
 - `timeForNames` running out keeps letting Team names stand in, as today.
 
 ## Decisions
@@ -40,20 +39,32 @@ as complete, so `/api/clubs` serves it with the long cache, and the search
 - **`offline` rejects too.** It means "try again once online", like
   `unavailable`; the functions' transport never reports it, but a name that is
   only missing for now must not be stored as a Team's.
+- **Retry a single name read before rejecting** (the manager's condition on
+  merge request 1096). A Verband has hundreds of Vereine, and a failed crawl
+  is due again only a day later, so one transient DBB error (5xx, timeout,
+  envelope `-1`) among the name reads must not drop the whole crawl: a
+  Verband without a list might never finish its first fill. A name read that
+  fails as `unavailable` or `offline` is made again, up to
+  `CLUB_NAME_ATTEMPTS` (3) reads, each after the crawl's `pause`; only then
+  does the crawl reject.
 - **Fix in the lib, not in the run.** The crawl decides what counts as "no
   name"; the run already handles a rejecting crawl (failure noted, old list
   kept, error rethrown so the log shows it).
 
 ## Acceptance
 
-1. A crawl spec where the name read rejects `unavailable` rejects with that
-   error and so returns no list with a `nameFromTeam` name.
-2. A crawl spec where it rejects `offline` rejects too.
+1. A crawl spec where every read of a name rejects `unavailable` rejects with
+   that error after `CLUB_NAME_ATTEMPTS` reads, and so returns no list with a
+   `nameFromTeam` name.
+2. A crawl spec where they reject `offline` rejects too.
 3. `not-found` (existing spec, Verein 300) and `unexpected-shape` (new spec)
    still let the Team's name stand in.
 4. A run spec where a name read rejects `unavailable` saves no list, notes the
    failure (`failure 3 unavailable: …`) and rejects.
 5. The crawl's doc comment says which failures fall back.
+6. A crawl spec where a name read fails `unavailable` fewer than
+   `CLUB_NAME_ATTEMPTS` times stores the Verein's own name, pausing before
+   each read.
 
 ## Open questions
 

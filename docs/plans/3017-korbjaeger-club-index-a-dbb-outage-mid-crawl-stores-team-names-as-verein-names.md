@@ -9,11 +9,15 @@ Spec: [docs/specs/3017-korbjaeger-club-index-a-dbb-outage-mid-crawl-stores-team-
    rejecting specs fail.
 2. **Fix (green).** `crawl-clubs.ts`: `clubName` returns `undefined` only on
    `not-found` and `unexpected-shape` and rethrows everything else; share the
-   check with `teamsOf` (`isAbsentAnswer`), and update the doc comments of
+   check with `teamsOf` (`isLastingAnswer`), and update the doc comments of
    `crawlClubs` and `clubName`. Tests green.
 3. **Run spec.** `apps/korbjaeger-functions/src/club-index/run-club-index.spec.ts`:
    a run whose name read rejects `unavailable` saves nothing, notes the
    failure and rejects. Run `npx nx test korbjaeger-functions`.
-4. **Checks and commit.** `npx nx format:write`, `npx nx affected -t lint,lint-templates,test`;
+4. **Retry a name read** (condition of merge request 1096). `crawl-clubs.ts`:
+   `CLUB_NAME_ATTEMPTS` (3), `clubName` reads again after a failure that may
+   pass; specs for a read that recovers and for one that fails every time
+   (`crawl-clubs.spec.ts`). Commit `fix(feat-shared-basketball-data): retry a Club's name read before failing the crawl`.
+5. **Checks and commit.** `npx nx format:write`, `npx nx affected -t lint,lint-templates,test`;
    one commit `fix(feat-shared-basketball-data): fail the club crawl on a DBB outage instead of storing Team names`
    with spec and plan.
