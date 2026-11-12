@@ -7,14 +7,14 @@ Spec: [docs/specs/2974-ci-fail-fast-when-the-workers-firebase-emulator-download-
 - File: `tools/ci/nx-cloud-workers.test.mjs`
 - Add a helper that returns the executable lines of the init step named
   "Download the Firebase emulators" (from its `- name:` line to the next
-  `- name:`), and a test that its first command is `set -euo pipefail`, with
-  every `npx firebase setup:emulators:` line after it.
+  `- name:`), and a test that its first command is `set -eu` and that every
+  `npx firebase setup:emulators:` line of the template is in it.
 - Run `npx nx test tools`: the new test fails on today's template.
 
 ## Task 2: the step fails fast (green)
 
 - File: `.nx/workflows/workers.yml`
-- Put `set -euo pipefail` first in the step's script; extend the comment
+- Put `set -eu` first in the step's script; extend the comment
   above the step with why (a failed download would otherwise pass the step
   and leave the jar to the first task).
 - Run `npx nx test tools` (green), check once by deleting the line locally

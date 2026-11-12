@@ -22,15 +22,18 @@ on a partially copied jar) cannot come back unnoticed.
 
 ## Decisions
 
-- **`set -euo pipefail` as the script's first line**, rather than `&&`
-  between the commands or a check after each. Nx Cloud's launch template
-  reference documents `init-steps[*].script` as an inline script but not how
-  its shell treats a failing line, so the step must not rely on the runner
-  using `-e`. A `set` line holds for every command added below it, which the
+- **`set -eu` as the script's first line**, rather than `&&` between the
+  commands or a check after each. Nx Cloud's launch template reference
+  documents `init-steps[*].script` as an inline script but neither its shell
+  nor how it treats a failing line, so the step must not rely on the runner
+  using `-e`. POSIX `set -eu`, not `set -eu`: should the shell be
+  dash, `-o pipefail` would stop every worker on the `set` line itself, and
+  the script has no pipe. A `set` line holds for every command added below it, which the
   workers spec already asks to be added whenever a Firebase config uses a new
   downloadable emulator.
 - **`tools/ci/nx-cloud-workers.test.mjs` guards it**: the step that runs the
-  downloads starts with `set -euo pipefail` before its first download. Text
+  downloads starts with `set -eu`, and every download command of the
+  template sits in that step, so none slips into a step without it. Text
   checks as the spec already does (no YAML parser in the workspace): the
   step's `script` block is read from the line after
   `- name: Download the Firebase emulators` up to the next `- name:`.
@@ -38,9 +41,10 @@ on a partially copied jar) cannot come back unnoticed.
 ## Acceptance
 
 1. The script of "Download the Firebase emulators" starts with
-   `set -euo pipefail`.
+   `set -eu`.
 2. `npx nx test tools` fails when that line is missing or comes after a
-   download command, and passes with it.
+   download command, or when a download runs in another step, and passes
+   otherwise.
 3. Every emulator a Firebase config uses is still downloaded after
    `npm install` (the existing check stays green).
 4. The comment above the step says why the script fails fast.
