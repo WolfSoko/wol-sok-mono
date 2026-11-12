@@ -12,7 +12,10 @@
         "outputPath": "dist/libs/public/spa-cdk-stack",
         "main": "libs/public/spa-cdk-stack/src/index.ts",
         "tsConfig": "libs/public/spa-cdk-stack/tsconfig.lib.json",
-        "assets": ["libs/public/spa-cdk-stack/*.md"]
+        "assets": [
+          "libs/public/spa-cdk-stack/*.md",
+          "libs/public/spa-cdk-stack/LICENSE"
+        ]
       }
     },
     "test": {
