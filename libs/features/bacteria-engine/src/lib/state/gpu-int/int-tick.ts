@@ -66,8 +66,8 @@ export class IntStateBuffers {
  * combat, feeding, division and the steps of moving. Returns the new state.
  * A `trace` gets the state after combat.
  *
- * Without `buffers` every pass writes a new array and the grid's state is
- * left alone; with them the passes take turns in the same few, so a match
+ * Without `buffers` the passes write new arrays (the claim steps change
+ * the one feeding wrote, in place) and the grid's state is left alone; with them the passes take turns in the same few, so a match
  * allocates no state per tick - and a grid state that is one of them is
  * overwritten.
  */

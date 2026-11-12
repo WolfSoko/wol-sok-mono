@@ -263,8 +263,9 @@ export function beginIntClaimSteps(
 
 /**
  * One claim and apply pair - a step of moving, escaping or dividing - into
- * `out`, a new state unless given; the grid's state is left alone, so `out`
- * must not be it. `hunt` is {@link intHunt}'s. A tick runs its steps with
+ * `out`, a new state unless given, the grid's state left alone. `hunt` is
+ * {@link intHunt}'s. It copies and reads the whole grid each call, so it is
+ * for single steps (specs, the GPU cross-check); a tick runs its steps with
  * {@link intClaimStep} instead, in place.
  */
 export function intClaimAndApply(
@@ -286,7 +287,9 @@ export function intClaimAndApply(
 /**
  * One claim and apply pair on the grid's state, in place. `scratch` must
  * describe that state: from {@link beginIntClaimSteps}, then kept up to
- * date by every step on it.
+ * date by every step on it - nothing else may change the state between
+ * them, or the steps go wrong without an error. A step leaves `claims` all
+ * zero, as the next one needs it.
  *
  * In place is safe: a claimed cell was free, so it is nobody's source, and
  * a bacterium has one intent, so it moves or divides at most once.

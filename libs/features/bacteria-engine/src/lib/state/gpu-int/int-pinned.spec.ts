@@ -225,6 +225,40 @@ describe('the integer reference, pinned', () => {
     }).toEqual(PINNED.passes);
   });
 
+  it('fights as before on grids one or two cells across', () => {
+    const { pass, combat } = inputs(1);
+    const hashes = [
+      [1, 9],
+      [9, 1],
+      [2, 2],
+      [2, 7],
+    ].map(([width, height]) => {
+      const full = crowdedArena();
+      const state = new Uint16Array(width * height * 4);
+      const mask = new Uint8Array(width * height);
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          const from = y * WIDTH + x;
+          const to = y * width + x;
+          // Every cell taken, so each one fights its neighbours.
+          state.set(full.state.subarray(from * 4, from * 4 + 4), to * 4);
+          state[to * 4] = 1 + ((x + 2 * y) % 4);
+          mask[to] = full.mask[from] & ~WALL_BIT;
+        }
+      }
+      const grid: IntGrid = { width, height, state, mask };
+      return intStateHash(
+        intCombat(grid, {
+          ...combat,
+          seed: pass.seed,
+          match,
+          effects: pass.effects,
+        })
+      );
+    });
+    expect(hashes).toEqual(PINNED.thinCombat);
+  });
+
   it('plays ticks as before, with buffers and without', () => {
     const play = (buffered: boolean) => {
       let grid = crowdedArena();
@@ -265,6 +299,7 @@ const PINNED = {
     feedAfterCombat: 1626358162,
     feedCapped: 1179054135,
   },
+  thinCombat: [593413821, 1780570608, 2731327130, 2171089197],
   ticks: [
     2605390273, 18879247, 2848945546, 404760456, 2066393117, 3844949362,
     3490395657, 2636860827, 2012641909, 2814506934, 1951114748, 3004838780,
