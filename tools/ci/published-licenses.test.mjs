@@ -4,11 +4,12 @@
 // not contain, and its package.json says "MIT".
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { basename, dirname, join, matchesGlob, normalize } from 'node:path';
 import { describe, it } from 'node:test';
 import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
 
 // The heading on a line of its own: the Scope paragraph names "The MIT License" too.
+const LICENSE = 'LICENSE';
 const MIT_HEADING = /^MIT License$/m;
 
 function rootMitText() {
@@ -28,21 +29,45 @@ function publishedProjects() {
   );
 }
 
-function assetPath(asset) {
-  if (typeof asset === 'string') return asset;
-  return join(asset.input ?? '', asset.glob ?? '');
+/**
+ * An asset as `{ input, glob, output }`, its input relative to the workspace
+ * root. `@nx/js:tsc` resolves assets from the workspace root, ng-packagr from
+ * the project root; a plain path copies its file to the package root.
+ */
+function normalizedAsset(asset, base) {
+  if (typeof asset === 'string') {
+    const path = join(base, asset);
+    return { input: dirname(path), glob: basename(path), output: '.' };
+  }
+  return {
+    input: join(base, asset.input ?? '.'),
+    glob: asset.glob ?? '',
+    output: normalize(asset.output ?? '.').replace(/^\/$/, '.'),
+  };
 }
 
-/** The LICENSE paths a build target copies, relative to the workspace root. */
-function copiedLicenses(project) {
+function buildAssets(project) {
   const root = projectRootOf(project);
   const options = project.json.targets?.build?.options ?? {};
-  const assets = options.project
+  return options.project
     ? (readJson(options.project).assets ?? []).map((asset) =>
-        join(root, assetPath(asset))
+        normalizedAsset(asset, root)
       )
-    : (options.assets ?? []).map((asset) => join(assetPath(asset)));
-  return assets.filter((path) => path.endsWith('LICENSE'));
+    : (options.assets ?? []).map((asset) => normalizedAsset(asset, '.'));
+}
+
+/**
+ * Where a build copies a LICENSE from and to: every asset whose glob takes a
+ * `LICENSE` file lying in its input folder, a broader glob over the
+ * workspace root included.
+ */
+function copiedLicenses(project) {
+  return buildAssets(project)
+    .filter(
+      ({ input, glob }) =>
+        matchesGlob(LICENSE, glob) && existsSync(join(ROOT, input, LICENSE))
+    )
+    .map(({ input, output }) => ({ input, output }));
 }
 
 describe('published packages', () => {
@@ -66,8 +91,10 @@ describe('published packages', () => {
         assert.equal(readJson(join(root, 'package.json')).license, 'MIT');
       });
 
-      it('copy their own LICENSE into the build, not the root one', () => {
-        assert.deepEqual(copiedLicenses(project), [join(root, 'LICENSE')]);
+      it('copy their own LICENSE to the package root, and no other', () => {
+        assert.deepEqual(copiedLicenses(project), [
+          { input: root, output: '.' },
+        ]);
       });
     });
   }

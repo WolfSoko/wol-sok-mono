@@ -30,12 +30,16 @@ holding the standard MIT text, and nothing else, in its npm tarball:
   `@nx/js:tsc` asset `{ input: ".", glob: "LICENSE" }` becomes
   `libs/public/nx-aws-cdk-v2/LICENSE`, `spa-cdk-stack` adds
   `libs/public/spa-cdk-stack/LICENSE`, `ws-thanos`' `ng-package.json` adds
-  `"LICENSE"` to its `assets`.
+  `"LICENSE"` to its `assets` (ng-packagr copies a project's `LICENSE` by
+  default too; `@wolsok/thanos` shipped none only because the file was
+  missing, and the explicit entry keeps the guard's rule the same for every
+  package).
 - **`"license": "MIT"`** in `spa-cdk-stack`'s `package.json`.
 - **A guard against drift**: `tools/ci/published-licenses.test.mjs` (run by
   `npx nx test tools`) checks every project tagged `published`: a `LICENSE`
   in its root equal to the root `LICENSE`'s MIT part, `"license": "MIT"` in
-  its `package.json`, and its build assets naming its own `LICENSE`. So a new
+  its `package.json`, and its build assets copying its own `LICENSE`, and no
+  other, to the package root. So a new
   published package can't ship without one, and the root file can't leak in
   again. The `tools:test` inputs gain the `LICENSE` files, as they are no
   `*.json`.

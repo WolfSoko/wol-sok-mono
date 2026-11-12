@@ -27,8 +27,7 @@
         "{workspaceRoot}/.github/workflows/ci-cd.yml",
         "{workspaceRoot}/.github/workflows/deploy.yml",
         "{workspaceRoot}/**/*.json",
-        "{workspaceRoot}/LICENSE",
-        "{workspaceRoot}/libs/public/*/LICENSE"
+        "{workspaceRoot}/**/LICENSE"
       ]
     }
   }
