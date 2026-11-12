@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.168.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.7...v74.168.0) (2026-11-12)
+
+### Features
+
+* **bacteria-game-remote:** serve app-ads.txt for AdMob ([#3079](https://github.com/WolfSoko/wol-sok-mono/issues/3079)) ([f3d680c](https://github.com/WolfSoko/wol-sok-mono/commit/f3d680cc01bc37a4d1c2eeae2c97b53f94789be6))
+
 ## [74.167.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.6...v74.167.7) (2026-11-12)
 
 ### Bug Fixes
