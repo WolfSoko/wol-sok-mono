@@ -239,6 +239,31 @@ describe('runClubIndex', () => {
     ]);
   });
 
+  it("keeps the old list rather than storing Teams' names when a Club's name cannot be read now (#3017)", async () => {
+    const store = fakeStore([
+      { association: BAYERN, clubs: [], updatedAt: NOW },
+      {
+        association: BERLIN,
+        clubs: [{ id: 700, name: 'ALBA Berlin' }],
+        updatedAt: NOW - 2 * WEEK,
+      },
+    ]);
+    const data: ClubCrawlSource = {
+      ...fakeData(),
+      club: () =>
+        Promise.reject(new BasketballDataError('unavailable', 'DBB down')),
+    };
+
+    await expect(runClubIndex(runWith(store, data))).rejects.toMatchObject({
+      kind: 'unavailable',
+    });
+    expect(store.saved).toEqual([]);
+    expect(store.log).toEqual([
+      `attempt 3 ${NOW}`,
+      'failure 3 unavailable: DBB down',
+    ]);
+  });
+
   it('deletes the lists of Associations the DBB no longer offers', async () => {
     const store = fakeStore([
       { association: { id: 40, name: 'Aufgelöst' }, clubs: [], updatedAt: NOW },
