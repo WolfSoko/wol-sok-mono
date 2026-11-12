@@ -6,14 +6,13 @@ import {
 import { DeviceStorage } from '../storage/game-storage';
 import { LateGameStorage } from '../../testing/late-game-storage';
 import { GpuSelfTestResult } from './gpu-self-test';
+import { GpuSelfTestService } from './gpu-self-test.service';
 import {
   GPU_SELF_TEST_STORAGE_KEY,
-  GpuSelfTestService,
-  parseStoredSelfTest,
   SELF_TEST_MAX_AGE_MS,
   SelfTestDevice,
   StoredSelfTest,
-} from './gpu-self-test.service';
+} from './stored-self-test';
 
 const NOW = 1_800_000_000_000;
 
@@ -194,21 +193,5 @@ describe('GpuSelfTestService', () => {
     check(service);
     storage.flush();
     expect(runs).toBe(1);
-  });
-});
-
-describe('parseStoredSelfTest', () => {
-  it('reads what it stored', () => {
-    expect(parseStoredSelfTest(stored({ firstBadTick: 3 }))).toEqual(
-      stored({ firstBadTick: 3 })
-    );
-  });
-
-  it('drops what it cannot read', () => {
-    expect(parseStoredSelfTest(null)).toBeNull();
-    expect(parseStoredSelfTest('ok')).toBeNull();
-    expect(parseStoredSelfTest({ ...stored(), ok: 'yes' })).toBeNull();
-    const { testedAt: _testedAt, ...undated } = stored();
-    expect(parseStoredSelfTest(undated)).toBeNull();
   });
 });

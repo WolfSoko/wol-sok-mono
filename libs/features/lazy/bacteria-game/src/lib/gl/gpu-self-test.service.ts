@@ -1,91 +1,20 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import {
-  BALANCE_VERSION,
-  GPU_SELF_TEST_VERSION,
-} from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
 import { GpuSelfTestResult, runGpuSelfTest } from './gpu-self-test';
-import { webGlRenderer } from './renderer';
 import { gpuTrusted } from './simulation-check';
-
-/** Where this device keeps the self-test's last result. */
-export const GPU_SELF_TEST_STORAGE_KEY = 'bacteria-game.gpu-self-test';
-
-/** The device a stored result belongs to: its GPU and its browser. */
-export interface SelfTestDevice {
-  renderer: string;
-  browser: string;
-}
-
-/** A stored self-test result, and what it was run on. */
-export interface StoredSelfTest extends SelfTestDevice {
-  version: number;
-  balanceVersion: number;
-  ok: boolean;
-  firstBadTick?: number;
-  /** When it ran, in ms since the epoch - see {@link SELF_TEST_MAX_AGE_MS}. */
-  testedAt: number;
-}
-
-/**
- * How long a stored result holds. Neither the renderer string nor the
- * browser's names the driver's version on most devices, so a driver update
- * goes unseen: testing again every week bounds how long a device plays on
- * a verdict its new driver no longer earns.
- */
-export const SELF_TEST_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000;
-
-/** A stored result, as far as it can be read - null when it cannot. */
-export function parseStoredSelfTest(value: unknown): StoredSelfTest | null {
-  if (typeof value !== 'object' || value == null) {
-    return null;
-  }
-  const v = value as Record<string, unknown>;
-  if (
-    typeof v['version'] !== 'number' ||
-    typeof v['balanceVersion'] !== 'number' ||
-    typeof v['renderer'] !== 'string' ||
-    typeof v['browser'] !== 'string' ||
-    typeof v['ok'] !== 'boolean' ||
-    typeof v['testedAt'] !== 'number'
-  ) {
-    return null;
-  }
-  const tick = v['firstBadTick'];
-  return {
-    version: v['version'],
-    balanceVersion: v['balanceVersion'],
-    renderer: v['renderer'],
-    browser: v['browser'],
-    ok: v['ok'],
-    ...(typeof tick === 'number' ? { firstBadTick: tick } : {}),
-    testedAt: v['testedAt'],
-  };
-}
-
-/**
- * True when a stored result still speaks for this device: the same test,
- * balance, GPU and browser, and younger than {@link SELF_TEST_MAX_AGE_MS}.
- */
-export function storedResultHolds(
-  stored: StoredSelfTest,
-  device: SelfTestDevice,
-  now: number
-): boolean {
-  return (
-    stored.version === GPU_SELF_TEST_VERSION &&
-    stored.balanceVersion === BALANCE_VERSION &&
-    stored.renderer === device.renderer &&
-    stored.browser === device.browser &&
-    now - stored.testedAt >= 0 &&
-    now - stored.testedAt < SELF_TEST_MAX_AGE_MS
-  );
-}
-
-/** How long the check waits for the browser to idle, at most. */
-export const SELF_TEST_IDLE_TIMEOUT_MS = 2_000;
+import {
+  GPU_SELF_TEST_STORAGE_KEY,
+  keepsSelfTest,
+  parseStoredSelfTest,
+  SelfTestDevice,
+  storedResultHolds,
+  storedSelfTestOf,
+  thisDevice,
+  verdictOf,
+  whenIdle,
+} from './stored-self-test';
 
 /**
  * Whether this device's GPU computes the deterministic simulation as every
@@ -169,13 +98,7 @@ export class GpuSelfTestService {
       .subscribe((value) => {
         const stored = parseStoredSelfTest(value);
         if (stored != null && storedResultHolds(stored, here, now())) {
-          this.verdict.set({
-            ok: stored.ok,
-            renderer: stored.renderer,
-            ...(stored.firstBadTick == null
-              ? {}
-              : { firstBadTick: stored.firstBadTick }),
-          });
+          this.verdict.set(verdictOf(stored));
           return;
         }
         schedule(() => this.runAndStore(run, here, now));
@@ -199,39 +122,11 @@ export class GpuSelfTestService {
       );
     }
     this.verdict.set(result);
-    // Kept only for the GPU it ran on, and only when it ran to the end.
-    if (result.error != null || result.renderer !== here.renderer) {
-      return;
+    if (keepsSelfTest(result, here)) {
+      this.storage.write(
+        GPU_SELF_TEST_STORAGE_KEY,
+        storedSelfTestOf(result, here, now())
+      );
     }
-    const record: StoredSelfTest = {
-      version: GPU_SELF_TEST_VERSION,
-      balanceVersion: BALANCE_VERSION,
-      renderer: here.renderer,
-      browser: here.browser,
-      ok: result.ok,
-      ...(result.firstBadTick == null
-        ? {}
-        : { firstBadTick: result.firstBadTick }),
-      testedAt: now(),
-    };
-    this.storage.write(GPU_SELF_TEST_STORAGE_KEY, record);
   }
-}
-
-/** Runs the task once the browser idles, or after the timeout. */
-function whenIdle(task: () => void): void {
-  if (typeof requestIdleCallback === 'function') {
-    requestIdleCallback(() => task(), { timeout: SELF_TEST_IDLE_TIMEOUT_MS });
-  } else {
-    setTimeout(task);
-  }
-}
-
-/**
- * This device's GPU and its browser: the arena's GPU when it is known, else
- * the one a throwaway context renders with.
- */
-function thisDevice(arenaRenderer: string | null): SelfTestDevice {
-  const browser = typeof navigator === 'undefined' ? '' : navigator.userAgent;
-  return { renderer: arenaRenderer ?? webGlRenderer() ?? 'none', browser };
 }
