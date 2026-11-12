@@ -7,7 +7,6 @@ import {
   effect,
   inject,
   resource,
-  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -78,6 +77,7 @@ type WatchView =
           <feat-lazy-bac-game-replay-viewer
             [replay]="shown.replay"
             [gpu]="trustedGpu()"
+            (gpuRenderer)="sawGpu(shown.replay, $event)"
             [label]="'replay.watchPage.canvas' | t: { level: levelText() }"
           />
         }
@@ -183,25 +183,18 @@ export class WatchPageComponent {
   public constructor() {
     dismissSplash(this.document);
     this.setUpHead();
-    this.findGpuForIntReplays();
   }
 
   /**
-   * A `gpu-int` replay - every ranked match the gallery features - plays on
-   * the CPU's `intSimulation` many times slower than on a trusted GPU
-   * (#3059), so the page finds out whether this device has one; a `cpu`
-   * replay never asks.
+   * The view's GPU is there. A `gpu-int` replay - every ranked match the
+   * gallery features - plays on the CPU's `intSimulation` many times slower
+   * than on a trusted GPU (#3059), so the page finds out whether this one
+   * is; a `cpu` replay never asks.
    */
-  private findGpuForIntReplays(): void {
-    effect(() => {
-      const view = this.view();
-      if (
-        view.kind === 'ready' &&
-        view.replay.header.simulation === 'gpu-int'
-      ) {
-        untracked(() => this.watchGpu.start());
-      }
-    });
+  protected sawGpu(replay: Replay, renderer: string): void {
+    if (replay.header.simulation === 'gpu-int') {
+      this.watchGpu.start(renderer);
+    }
   }
 
   /**

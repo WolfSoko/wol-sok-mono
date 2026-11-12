@@ -52,7 +52,7 @@ describe('WatchGpu', () => {
   function gpu(): WatchGpu {
     return new WatchGpu({
       storage: () => storage,
-      device: () => here,
+      device: (renderer) => ({ ...here, renderer: renderer ?? here.renderer }),
       run: () => {
         runs++;
         return outcome;
@@ -79,6 +79,8 @@ describe('WatchGpu', () => {
     tasks = [];
     here = DEVICE;
   });
+
+  afterEach(() => jest.restoreAllMocks());
 
   it('trusts no GPU before it is started', () => {
     expect(gpu().trustedRenderer()).toBeNull();
@@ -133,6 +135,7 @@ describe('WatchGpu', () => {
   });
 
   it('trusts no GPU that fails the test, and stores that too', () => {
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
     outcome = { ok: false, renderer: DEVICE.renderer, firstBadTick: 2 };
     const watch = gpu();
     watch.start();
@@ -149,6 +152,26 @@ describe('WatchGpu', () => {
     watch.start();
     idle();
     expect(storage.getItem(GPU_SELF_TEST_STORAGE_KEY)).toBeNull();
+  });
+
+  it("asks about the view's GPU where the page knows it", () => {
+    store(stored({ renderer: 'Mali-G78' }));
+    const watch = gpu();
+    watch.start('Mali-G78');
+    idle();
+    expect(runs).toBe(0);
+    expect(watch.trustedRenderer()).toBe('Mali-G78');
+  });
+
+  it('warns of a GPU that fails the test', () => {
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    outcome = { ok: false, renderer: DEVICE.renderer, firstBadTick: 2 };
+    const watch = gpu();
+    watch.start();
+    idle();
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 
   it('starts once', () => {

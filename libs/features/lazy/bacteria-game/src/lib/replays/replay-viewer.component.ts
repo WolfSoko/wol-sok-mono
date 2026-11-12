@@ -44,6 +44,7 @@ import {
   simResolutionOf,
   simScale,
   TICKS_PER_SEC,
+  type TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { ReplayScene, type ReplayLook } from './replay-scene';
 
@@ -211,9 +212,7 @@ export const CHROME_HIDE_MS = 3000;
           <span
             class="engine"
             data-testid="engine"
-            [attr.title]="
-              (onGpu() ? 'replay.viewer.onGpu' : 'replay.viewer.onCpu') | t
-            "
+            [attr.title]="engineHint() | t"
             >{{ onGpu() ? 'GPU' : 'CPU' }}</span
           >
           <span class="spacer"></span>
@@ -377,7 +376,8 @@ export class ReplayViewerComponent {
   /**
    * The renderer of the GPU that passed the game's self-test, null where
    * none did: a `gpu-int` replay plays on the view's GPU when it is that
-   * one. `/watch` runs no self-test and leaves it null.
+   * one. `/watch` takes it from `WatchGpu`, which tests where no verdict
+   * is stored (`gpuRenderer` tells it which GPU the view renders with).
    */
   public readonly gpu = input<string | null>(null);
   /** A title over the arena, none without it. */
@@ -387,6 +387,11 @@ export class ReplayViewerComponent {
 
   /** The way out over the arena was taken. */
   public readonly close = output<void>();
+  /**
+   * The GPU the view's WebGL2 context renders with, once its GL painter is
+   * there - the one a host trusts (`gpu`) must be this one.
+   */
+  public readonly gpuRenderer = output<string>();
 
   protected readonly speeds = REPLAY_SPEEDS;
   protected readonly skip = REPLAY_SKIP_SECONDS;
@@ -403,6 +408,15 @@ export class ReplayViewerComponent {
    * `gpu-int` replay on the CPU plays far slower (#3059).
    */
   protected readonly onGpu = signal(false);
+  /** What the engine badge says: a `gpu-int` replay is slower on the CPU. */
+  protected readonly engineHint = computed((): TranslationKey => {
+    if (this.onGpu()) {
+      return 'replay.viewer.onGpu';
+    }
+    return this.replay().header.simulation === 'gpu-int'
+      ? 'replay.viewer.onCpuSlower'
+      : 'replay.viewer.onCpu';
+  });
   /** The match's length in whole seconds, as "My matches" gives it. */
   protected readonly length = computed(() =>
     Math.floor(this.replay().header.ticks / TICKS_PER_SEC)
@@ -648,6 +662,8 @@ export class ReplayViewerComponent {
   protected painterChanged(painter: ArenaPainter | null): void {
     if (painter === null) {
       untracked(this.played)?.useGpu(null);
+    } else if (painter instanceof GlArenaPainter) {
+      this.gpuRenderer.emit(painter.renderer());
     }
     this.painter.set(painter);
   }

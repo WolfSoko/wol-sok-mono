@@ -98,7 +98,8 @@ export const replay: Translation<typeof en> = {
     forward: '{seconds} Sekunden vor',
     seeking: 'Spult zu dieser Stelle …',
     onGpu: 'Läuft auf der GPU',
-    onCpu: 'Läuft auf der CPU, langsamer als auf der GPU',
+    onCpu: 'Läuft auf der CPU',
+    onCpuSlower: 'Läuft auf der CPU, langsamer als auf der GPU',
     controls: 'Wiedergabe-Steuerung',
   },
   watchPage: {

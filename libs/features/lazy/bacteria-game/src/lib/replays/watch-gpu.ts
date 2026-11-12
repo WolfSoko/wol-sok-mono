@@ -22,7 +22,8 @@ import {
 /** What `WatchGpu` reaches the device through - specs pass their own. */
 export interface WatchGpuDevice {
   storage: () => KeyValueStorage | undefined;
-  device: () => SelfTestDevice;
+  /** This device, on the GPU the view renders with where it is known. */
+  device: (renderer: string | null) => SelfTestDevice;
   run: () => GpuSelfTestResult;
   schedule: (task: () => void) => void;
   now: () => number;
@@ -30,7 +31,7 @@ export interface WatchGpuDevice {
 
 const BROWSER: WatchGpuDevice = {
   storage: deviceStorage,
-  device: () => thisDevice(null),
+  device: thisDevice,
   run: runGpuSelfTest,
   schedule: whenIdle,
   now: Date.now,
@@ -57,17 +58,22 @@ export class WatchGpu {
 
   public constructor(private readonly on: WatchGpuDevice = BROWSER) {}
 
-  /** Starts finding out, once: off the page's start, in idle tasks. */
-  public start(): void {
+  /**
+   * Starts finding out, once: off the page's start, in idle tasks. The
+   * view's GPU (`renderer`, from its GL painter) is the one asked about,
+   * as the viewer trusts only that one; without it a throwaway context
+   * names the GPU.
+   */
+  public start(renderer: string | null = null): void {
     if (this.started) {
       return;
     }
     this.started = true;
-    this.on.schedule(() => this.lookUp());
+    this.on.schedule(() => this.lookUp(renderer));
   }
 
-  private lookUp(): void {
-    const here = this.on.device();
+  private lookUp(renderer: string | null): void {
+    const here = this.on.device(renderer);
     const stored = parseStoredSelfTest(
       readStoredJson(GPU_SELF_TEST_STORAGE_KEY, this.on.storage())
     );
@@ -80,6 +86,12 @@ export class WatchGpu {
 
   private runAndStore(here: SelfTestDevice): void {
     const result = this.on.run();
+    if (!result.ok) {
+      console.warn(
+        'The GPU fails the deterministic self-test - replays play on the CPU',
+        result
+      );
+    }
     this.verdict.set(result);
     if (keepsSelfTest(result, here)) {
       writeStoredJson(

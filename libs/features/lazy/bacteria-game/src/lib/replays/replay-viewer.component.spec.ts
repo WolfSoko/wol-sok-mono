@@ -302,7 +302,14 @@ describe('ReplayViewerComponent', () => {
       }) as GlArenaPainter;
     }
 
-    it('says a replay plays on the CPU, slower', () => {
+    it('says a cpu replay plays on the CPU', () => {
+      const { page } = view();
+
+      expect(engine(page).textContent?.trim()).toBe('CPU');
+      expect(engine(page).getAttribute('title')).toBe('Plays on the CPU');
+    });
+
+    it('says a gpu-int replay plays on the CPU, slower', () => {
       const { page } = view(gpuIntReplay());
 
       expect(engine(page).textContent?.trim()).toBe('CPU');

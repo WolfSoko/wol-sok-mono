@@ -9,7 +9,7 @@ import { webGlRenderer } from './renderer';
  * The GPU self-test's result as a device keeps it between visits: what it
  * stores, when that still holds, and on which device it ran. Free of the
  * game's storage backends, so the game (`GpuSelfTestService`) and the
- * `/watch` page (`watchPageGpu`) read and write it alike.
+ * `/watch` page (`WatchGpu`) read and write it alike.
  */
 
 /** Where this device keeps the self-test's last result. */

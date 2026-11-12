@@ -33,11 +33,11 @@ async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
 function fakeWatchGpu(renderer: string | null = null) {
   const trusted = signal(renderer);
   return {
-    starts: 0,
+    starts: [] as (string | null)[],
     trusted,
     trustedRenderer: () => trusted(),
-    start() {
-      this.starts++;
+    start(renderer: string | null = null) {
+      this.starts.push(renderer);
     },
   };
 }
@@ -106,7 +106,13 @@ describe('WatchPageComponent', () => {
       fixture.debugElement.query(By.directive(ReplayViewerComponent))
         .componentInstance as ReplayViewerComponent;
 
-    expect(watchGpu.starts).toBe(1);
+    const viewerElement = fixture.debugElement.query(
+      By.directive(ReplayViewerComponent)
+    );
+    expect(watchGpu.starts).toEqual([]);
+
+    viewerElement.triggerEventHandler('gpuRenderer', 'Adreno 650');
+    expect(watchGpu.starts).toEqual(['Adreno 650']);
     expect(viewer().gpu()).toBeNull();
 
     watchGpu.trusted.set('Adreno 650');
@@ -116,9 +122,13 @@ describe('WatchPageComponent', () => {
   });
 
   it('asks for no GPU for a cpu replay', async () => {
-    await open({ replay: recordedReplay() });
+    const { fixture } = await open({ replay: recordedReplay() });
 
-    expect(watchGpu.starts).toBe(0);
+    fixture.debugElement
+      .query(By.directive(ReplayViewerComponent))
+      .triggerEventHandler('gpuRenderer', 'Adreno 650');
+
+    expect(watchGpu.starts).toEqual([]);
   });
 
   it('says why a replay does not play', async () => {
