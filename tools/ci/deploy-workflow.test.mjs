@@ -7,7 +7,7 @@ import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import { requestedProjects, unknownProjects } from './deploy-override.mjs';
+import { missingProjects, requestedProjects } from './deploy-override.mjs';
 
 const ROOT = join(dirname(import.meta.filename), '../..');
 const SCRIPT = join(ROOT, 'tools/ci/deploy-override.mjs');
@@ -66,6 +66,13 @@ describe('deploy.yml', () => {
     }
   });
 
+  it('hands the named projects to the selection', () => {
+    assert.match(
+      blockOf(DEPLOY, 'env'),
+      /DEPLOY_PROJECTS: \$\{\{ inputs\.projects \}\}/
+    );
+  });
+
   it('skips the Nx cache only when asked', () => {
     assert.match(
       blockOf(DEPLOY, 'env'),
@@ -79,7 +86,7 @@ describe('deploy.yml', () => {
     );
     assert.match(
       select,
-      /deploy-override\.mjs --projects="\$DEPLOY_PROJECTS" --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}'/
+      /deploy-override\.mjs --projects="\$DEPLOY_PROJECTS" --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}' --target="\$target"/
     );
     assert.match(select, /release-affected\.mjs/);
   });
@@ -115,18 +122,20 @@ describe('deploy-override', () => {
     assert.throws(() => requestedProjects(' , '), /names no project/);
   });
 
-  it('names the projects the workspace does not know', () => {
-    assert.deepEqual(unknownProjects(['a', 'b'], ['b', 'c']), ['a']);
+  it('names the requested projects that are missing', () => {
+    assert.deepEqual(missingProjects(['a', 'b'], ['b', 'c']), ['a']);
   });
 
   const run = (...args) =>
     execFileSync('node', [SCRIPT, ...args], {
       cwd: ROOT,
       encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
+      stdio: ['ignore', 'pipe', 'pipe'],
     })
       .split('\n')
       .filter((line) => line !== '');
+  const targetOf = (appType) =>
+    appType === 'npm-packages' ? 'build' : 'deploy';
 
   it("keeps each leg's own kind of the named projects", () => {
     const expected = {
@@ -139,7 +148,8 @@ describe('deploy-override', () => {
       assert.deepEqual(
         run(
           '--projects=korbjaeger,ws-thanos,korbjaeger-cdk',
-          `--exclude=${exclude}`
+          `--exclude=${exclude}`,
+          `--target=${targetOf(appType)}`
         ).sort(),
         expected[appType],
         appType
@@ -148,6 +158,23 @@ describe('deploy-override', () => {
   });
 
   it('fails on a name the workspace does not know', () => {
-    assert.throws(() => run('--projects=korbjagger', '--exclude=tag:cdk'));
+    assert.throws(
+      () =>
+        run('--projects=korbjagger', '--exclude=tag:cdk', '--target=deploy'),
+      (error) => /unknown projects: korbjagger/.test(error.stderr)
+    );
+  });
+
+  it("fails on a project of the leg without the leg's target", () => {
+    assert.throws(
+      () =>
+        run(
+          '--projects=korbjaeger,feat-shared-basketball-data',
+          '--exclude=tag:cdk,tag:published,tag:type:android',
+          '--target=deploy'
+        ),
+      (error) =>
+        /no deploy target: feat-shared-basketball-data/.test(error.stderr)
+    );
   });
 });

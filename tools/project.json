@@ -26,6 +26,7 @@
         "{workspaceRoot}/.nx/ci-config.yaml",
         "{workspaceRoot}/.github/workflows/ci-cd.yml",
         "{workspaceRoot}/.github/workflows/deploy.yml",
+        "{workspaceRoot}/.github/workflows/release.yml",
         "{workspaceRoot}/**/*.json"
       ]
     }

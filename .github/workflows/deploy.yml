@@ -136,7 +136,8 @@ jobs:
         run: |
           if [[ -n "$DEPLOY_PROJECTS" ]]; then
             # A dispatch naming projects: those of this leg's kind (#3058).
-            selected=$(node tools/ci/deploy-override.mjs --projects="$DEPLOY_PROJECTS" --exclude='${{ matrix.config.exclude-pattern }}')
+            target=$([[ "${{ matrix.config.app-type }}" == "npm-packages" ]] && echo build || echo deploy)
+            selected=$(node tools/ci/deploy-override.mjs --projects="$DEPLOY_PROJECTS" --exclude='${{ matrix.config.exclude-pattern }}' --target="$target")
           else
             if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
               selection=(--target=build --projects='${{ matrix.config.projects-filter }}')
@@ -198,7 +199,8 @@ jobs:
           echo "Setting deploy tag"
           DEPLOY_TAG=$RELEASE_VERSION-${{ matrix.config.deploy-tag-suffix }}
           echo "Deploy tag: $DEPLOY_TAG"
-          # A second deploy of the same version finds its tag set already.
+          # Defensive: a tag on HEAD is NX_BASE, so its own version selects
+          # nothing and never gets here; a second tag would fail git tag.
           if git rev-parse -q --verify "refs/tags/$DEPLOY_TAG" >/dev/null; then
             echo "Deploy tag $DEPLOY_TAG exists already, leaving it."
             exit 0
@@ -211,8 +213,10 @@ jobs:
           echo "Pushing tags"
           git push origin "$DEPLOY_TAG"
 
+      # Not for a dispatch naming projects: whoever started it watches it, and
+      # a mistyped name fails every leg, which would file one issue a leg.
       - name: Create Issue
-        if: failure()
+        if: failure() && env.DEPLOY_PROJECTS == ''
         run: |
           gh issue create \
             --title "bug(deploy): Deploy release ${{ env.RELEASE_VERSION }} for ${{ matrix.config.app-type }} apps failed" \

@@ -2,10 +2,11 @@
 // (#3058): the named projects of the leg's kind, instead of the selection
 // since the last deploy tag, which finds nothing for a version deployed once.
 //
-//   node tools/ci/deploy-override.mjs --projects=<name,...> --exclude=<pattern>
+//   node tools/ci/deploy-override.mjs --projects=<name,...> --exclude=<pattern> --target=<target>
 //
-// Prints one project a line; fails on a name the workspace does not know, as
-// Nx would silently drop it.
+// Prints one project a line. Fails on a name the workspace does not know, and
+// on one of the leg's kind without the leg's target (a lib for `deploy`), as
+// Nx would silently drop either and the leg would pass with nothing deployed.
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { parseArgs } from 'node:util';
@@ -22,9 +23,9 @@ export function requestedProjects(list) {
   return names;
 }
 
-/** The requested names that are no project of the workspace. */
-export function unknownProjects(requested, known) {
-  const projects = new Set(known);
+/** The names of `requested` missing from `present`. */
+export function missingProjects(requested, present) {
+  const projects = new Set(present);
   return requested.filter((name) => !projects.has(name));
 }
 
@@ -43,19 +44,30 @@ function showProjects(args) {
 
 function main() {
   const { values } = parseArgs({
-    options: { projects: { type: 'string' }, exclude: { type: 'string' } },
+    options: {
+      projects: { type: 'string' },
+      exclude: { type: 'string' },
+      target: { type: 'string' },
+    },
   });
   if (!values.exclude) throw new Error('--exclude is required');
+  if (!values.target) throw new Error('--target is required');
   const requested = requestedProjects(values.projects);
-  const unknown = unknownProjects(requested, showProjects([]));
+  const unknown = missingProjects(requested, showProjects([]));
   if (unknown.length > 0) {
     throw new Error(`unknown projects: ${unknown.join(', ')}`);
   }
-  const ofLeg = showProjects([
+  const leg = [
     `--projects=${requested.join(',')}`,
     `--exclude=${values.exclude}`,
-  ]);
-  for (const project of ofLeg) console.log(project);
+  ];
+  const ofLeg = showProjects(leg);
+  const withTarget = showProjects([...leg, `--withTarget=${values.target}`]);
+  const targetless = missingProjects(ofLeg, withTarget);
+  if (targetless.length > 0) {
+    throw new Error(`no ${values.target} target: ${targetless.join(', ')}`);
+  }
+  for (const project of withTarget) console.log(project);
 }
 
 if (import.meta.filename === process.argv[1]) {
