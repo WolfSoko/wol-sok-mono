@@ -10,6 +10,11 @@ const ROOT = join(import.meta.dirname, '..', '..');
 const WORKERS = '.nx/workflows/workers.yml';
 const CI_CONFIG = '.nx/ci-config.yaml';
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
+const DOWNLOAD_STEP = 'Download the Firebase emulators';
+// POSIX, since Nx Cloud documents no shell for inline scripts: a dash would
+// stop on `set -o pipefail` itself.
+const FAIL_FAST = 'set -eu';
+const DOWNLOAD_COMMAND = 'npx firebase setup:emulators:';
 
 // The emulators the Firebase CLI downloads on first use (a jar, a binary or
 // the UI's zip); auth, functions, hosting and the hub run from the CLI itself.
@@ -78,6 +83,20 @@ function executableLines(yaml) {
     .filter((line) => line !== '' && !line.startsWith('#'));
 }
 
+// The script of one init step: where its name stands among the template's
+// executable lines, and the commands below its `script:` header.
+function stepScript(lines, name) {
+  const start = lines.indexOf(`- name: ${name}`);
+  assert.ok(start >= 0, `${WORKERS} has no step "${name}"`);
+  const next = lines.findIndex(
+    (line, index) => index > start && line.startsWith('- name:')
+  );
+  const step = lines.slice(start + 1, next < 0 ? undefined : next);
+  const header = step.findIndex((line) => line.startsWith('script:'));
+  assert.ok(header >= 0, `"${name}" in ${WORKERS} has no script`);
+  return { start, commands: step.slice(header + 1) };
+}
+
 function stopAfterTargets() {
   const block = read(CI_CONFIG).match(/stop-after:\n((?:\s+(?:-.*|#.*)\n?)+)/);
   assert.ok(block, `${CI_CONFIG} has no stop-after list`);
@@ -95,17 +114,40 @@ describe('Nx Cloud workers', () => {
     assert.ok(emulatorsInUse().includes('firestore'));
   });
 
-  it('download every emulator a Firebase config uses after npm install, before any task', () => {
-    const commands = executableLines(read(WORKERS));
-    const install = commands.indexOf('npm install');
+  it('download every emulator a Firebase config uses in the download step, after npm install', () => {
+    const lines = executableLines(read(WORKERS));
+    const install = lines.indexOf('npm install');
     assert.ok(install >= 0, `${WORKERS} runs no npm install`);
+    const { start, commands } = stepScript(lines, DOWNLOAD_STEP);
+    assert.ok(
+      start > install,
+      `"${DOWNLOAD_STEP}" in ${WORKERS} must come after npm install`
+    );
     for (const name of emulatorsInUse()) {
-      const download = commands.indexOf(`npx firebase setup:emulators:${name}`);
       assert.ok(
-        download > install,
-        `${WORKERS} must run "npx firebase setup:emulators:${name}" after npm install`
+        commands.includes(`${DOWNLOAD_COMMAND}${name}`),
+        `"${DOWNLOAD_STEP}" in ${WORKERS} must run "${DOWNLOAD_COMMAND}${name}"`
       );
     }
+  });
+
+  it('download the emulators only in a step that stops on the first failed download', () => {
+    const lines = executableLines(read(WORKERS));
+    const { commands } = stepScript(lines, DOWNLOAD_STEP);
+    assert.equal(
+      commands[0],
+      FAIL_FAST,
+      `"${DOWNLOAD_STEP}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
+    );
+    const everywhere = lines.filter((line) =>
+      line.startsWith(DOWNLOAD_COMMAND)
+    );
+    const inStep = commands.filter((line) => line.startsWith(DOWNLOAD_COMMAND));
+    assert.deepEqual(
+      everywhere,
+      inStep,
+      `${WORKERS} must run every "${DOWNLOAD_COMMAND}…" in "${DOWNLOAD_STEP}"`
+    );
   });
 
   it('stay until every target of the CI call is done', () => {
