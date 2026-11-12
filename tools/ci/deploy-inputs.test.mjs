@@ -41,8 +41,8 @@ function rootFirebaseConfigsOf(project) {
 
 const PROJECTS = readProjects();
 
-describe('deploy inputs', () => {
-  it('name every root Firebase config the project passes to the CLI', () => {
+void describe('deploy inputs', () => {
+  void it('name every root Firebase config the project passes to the CLI', () => {
     const missing = PROJECTS.flatMap((project) => {
       const deploy = project.json.targets?.deploy;
       if (!deploy) return [];
@@ -55,7 +55,7 @@ describe('deploy inputs', () => {
     assert.deepEqual(missing, []);
   });
 
-  it('cover the apps that deploy through a root Firebase config', () => {
+  void it('cover the apps that deploy through a root Firebase config', () => {
     const checked = PROJECTS.filter((project) => project.json.targets?.deploy)
       .filter((project) => rootFirebaseConfigsOf(project).length > 0)
       .map((project) => project.json.name)
