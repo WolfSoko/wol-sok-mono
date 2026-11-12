@@ -1,4 +1,4 @@
-import { ExerciseWithDuration } from './excercise';
+import { ExerciseWithDuration } from './exercise';
 import { IntervalWithDuration } from './interval';
 import { calcTotalDuration, createDuration, WithDuration } from '../timing';
 

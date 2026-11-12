@@ -1,5 +1,5 @@
 import { Milliseconds, mul } from '@wolsok/utils-time';
-import { ExerciseWithDuration } from './excercise';
+import { ExerciseWithDuration } from './exercise';
 import { calcTotalDuration, createDuration, Duration } from '../timing';
 
 export type WithRepetition = {

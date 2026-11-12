@@ -13,7 +13,7 @@ import {
   subtract,
   ZERO_MS,
 } from '@wolsok/utils-time';
-import { ExerciseType } from '../model/training/excercise';
+import { ExerciseType } from '../model/training/exercise';
 import { RepositoryFactory } from '../repository/repository.factory';
 import { TrainingConfigWithDuration } from '../model/training/training-config-with.duration';
 import { TrainingName } from '../model/training/training-name';
