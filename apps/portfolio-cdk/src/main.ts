@@ -30,6 +30,7 @@ const stack = new SpaStack(app, stackName, {
   // Crawlers and AdSense read these by name; a page changes with each release.
   noCacheFiles: [
     'ads.txt',
+    'app-ads.txt',
     'robots.txt',
     'sitemap.xml',
     'favicon.ico',
