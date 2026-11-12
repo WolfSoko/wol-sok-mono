@@ -302,13 +302,15 @@ Issue [#3011](https://github.com/WolfSoko/wol-sok-mono/issues/3011), spec
 | `auswahlLoeschen` (export of `main.ts`, the deployed function)                                                    | `deleteSelection`                                                            |
 | `kontoGeloescht`                                                                                                  | `accountDeleted`                                                             |
 | emulator spec: `ELTERNTEIL`, `ANDERES`, `JETZT`, `AUSWAHL_DOKUMENT`                                               | `PARENT`, `OTHER_PARENT`, `NOW`, `SELECTION_DOCUMENT`                        |
-| emulator spec: `auswahlVon`, `grabsteinVon`, `geraet`, `folgen`                                                   | `selectionOf`, `tombstoneOf`, `device`, `follow`                             |
+| emulator spec: `auswahlVon`, `grabsteinVon`, `geraet`, `folgen`                                                   | `selectionOf`, `tombstoneOf`, `signedInDevice`, `follow`                     |
 | emulator spec: `loeschendes`, `anderes`, `geloescht`, `nachDerLoeschung`, `ersteGespeichert`, `einmalGespeichert` | `deleting`, `other`, `deleted`, `afterDeletion`, `firstStored`, `storedOnce` |
 | emulator spec: `schreiben`, `danach`, `gespeichert`                                                               | `writing`, `afterwards`, `stored`                                            |
 | `package-json.spec.ts`: `konto`; `run-club-index.spec.ts`: the parameter `verein`                                 | `functionsCodebase`; `club`                                                  |
 
 Files (`src/`): `konto-geloescht.ts` → `account-deleted.ts`,
-`konto-geloescht.emulator.ts` → `account-deleted.emulator.ts`. The uids
+`konto-geloescht.emulator.ts` → `account-deleted.emulator.ts`. The helper `geraet` becomes `signedInDevice`, not `device`: `follow`'s
+parameter `device` is typed `ReturnType<typeof …>` of it, which a helper of
+the same name would make refer to the parameter itself. The uids
 `elternteil-a`/`-b` become `parent-a`/`-b`. The codebase `konto`, the
 collections and the Verbände of the fixtures (`BAYERN`, `BERLIN`,
 `HESSEN`) stay.

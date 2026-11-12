@@ -12,6 +12,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import * as v1 from 'firebase-functions/v1';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
+import { accountDeleted } from './account-deleted';
 import { directDbbTransport } from './club-index/dbb-transport';
 import { firestoreClubIndex } from './club-index/firestore-club-index';
 import { runClubIndex } from './club-index/run-club-index';
@@ -21,7 +22,6 @@ import {
   CLUB_INDEX_SCHEDULE,
   REGION,
 } from './config';
-import { accountDeleted } from './account-deleted';
 
 initializeApp();
 

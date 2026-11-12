@@ -42,7 +42,7 @@ const follow = (
     .set({ version: 3, teams: { [id]: id } }, { merge: true });
 
 describe('accountDeleted', () => {
-  it('leaves a tombstone of a day and no Auswahl of the account', async () => {
+  it('leaves a tombstone of a day and no selection of the account', async () => {
     await selectionOf(PARENT).set(SELECTION_DOCUMENT);
 
     await accountDeleted(project().admin, PARENT, NOW);
@@ -53,7 +53,7 @@ describe('accountDeleted', () => {
     });
   });
 
-  it("leaves other accounts' Auswahl as it is", async () => {
+  it("leaves other accounts' selections as they are", async () => {
     await selectionOf(OTHER_PARENT).set(SELECTION_DOCUMENT);
 
     await accountDeleted(project().admin, PARENT, NOW);

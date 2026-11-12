@@ -51,6 +51,11 @@ As #2967's spec. In particular:
     without a trigger: for the seconds between the two steps both run;
   - `accountDeleted` is idempotent (tombstone `set`, then `delete`), so an
     account deleted in that window and handled by both ends the same;
+  - a deletion event the old function failed on and still retries when
+    the deploy deletes it loses its remaining retries; the client deleted
+    `selections/{uid}` before the Auth user already, and the window is
+    seconds, so at most a document another device wrote in that hour is
+    left, which a run of the one-off orphan cleanup (`src/cleanup/`) removes;
   - a failed deploy keeps the old function (no delete), and
     `tools/deploy/retry-once.ts` runs it again.
 
