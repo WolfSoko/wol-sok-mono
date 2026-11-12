@@ -1,5 +1,5 @@
 export type TrainingName =
-  | 'getready'
+  | 'leadIn'
   | 'recovery'
   | 'sprint'
   | 'running'

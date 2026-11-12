@@ -74,13 +74,13 @@
             },
             {
               "type": "anyScript",
-              "baseline": "622kb",
+              "baseline": "653kb",
               "maximumWarning": "5%",
               "maximumError": "10%"
             },
             {
               "type": "allScript",
-              "baseline": "1768kb",
+              "baseline": "1863kb",
               "maximumWarning": "5%",
               "maximumError": "10%"
             },

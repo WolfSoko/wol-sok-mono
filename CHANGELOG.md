@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.167.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.3...v74.167.4) (2026-11-12)
+
+### Refactorings
+
+* **pacetrainer:** naming leftovers (leadIn for the Vorlauf, exercise.ts) ([#3060](https://github.com/WolfSoko/wol-sok-mono/issues/3060)) ([51cedcd](https://github.com/WolfSoko/wol-sok-mono/commit/51cedcd1b5d51eb7654c2c166a9d658c92bb4c74)), references [#3040](https://github.com/WolfSoko/wol-sok-mono/issues/3040)
+
+### Performance
+
+* **bacteria-game-remote:** raise the allScript and anyScript baselines to what ships ([#3061](https://github.com/WolfSoko/wol-sok-mono/issues/3061)) ([67c9228](https://github.com/WolfSoko/wol-sok-mono/commit/67c9228cab364f8a3088c0e2ec77b1ddfd441dc5)), closes [#3047](https://github.com/WolfSoko/wol-sok-mono/issues/3047), references [#2698](https://github.com/WolfSoko/wol-sok-mono/issues/2698) [#3047](https://github.com/WolfSoko/wol-sok-mono/issues/3047)
+
 ## [74.167.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.2...v74.167.3) (2026-11-11)
 
 ### Bug Fixes

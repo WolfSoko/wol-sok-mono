@@ -51,14 +51,14 @@ describe('SprintTrainingComponent Ansagen', () => {
     expect(countdown()).toBeNull();
   });
 
-  it('counts the Vorlauf down to "Bereit"', () => {
+  it('counts the Vorlauf down to its own end', () => {
     clickPrimary();
     advance(2000);
 
     expect(countdown()).toEqual({
       countdownTime: 5000,
       timeLeft: 3000,
-      countdownTo: 'getready',
+      countdownTo: 'leadIn',
     });
   });
 
