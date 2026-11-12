@@ -70,28 +70,28 @@ function copiedLicenses(project) {
     .map(({ input, output }) => ({ input, output }));
 }
 
-describe('published packages', () => {
+void describe('published packages', () => {
   const projects = publishedProjects();
 
-  it('are found', () => {
+  void it('are found', () => {
     assert.ok(projects.length > 0, 'no project is tagged "published"');
   });
 
   for (const project of projects) {
     const root = projectRootOf(project);
 
-    describe(project.json.name, () => {
-      it('hold the MIT part of the root LICENSE, byte for byte', () => {
+    void describe(project.json.name, () => {
+      void it('hold the MIT part of the root LICENSE, byte for byte', () => {
         const license = join(ROOT, root, 'LICENSE');
         assert.ok(existsSync(license), `${root}/LICENSE is missing`);
         assert.equal(readFileSync(license, 'utf8'), rootMitText());
       });
 
-      it('declare "MIT" in their package.json', () => {
+      void it('declare "MIT" in their package.json', () => {
         assert.equal(readJson(join(root, 'package.json')).license, 'MIT');
       });
 
-      it('copy their own LICENSE to the package root, and no other', () => {
+      void it('copy their own LICENSE to the package root, and no other', () => {
         assert.deepEqual(copiedLicenses(project), [
           { input: root, output: '.' },
         ]);
