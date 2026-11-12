@@ -242,7 +242,8 @@
     {
       "files": [
         "libs/features/lazy/bacteria-game/src/watch.ts",
-        "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene}.ts",
+        "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene,watch-gpu}.ts",
+        "libs/features/lazy/bacteria-game/src/lib/gl/stored-self-test.ts",
         "libs/features/lazy/bacteria-game/src/lib/storage/public-replays.ts",
         "libs/features/lazy/bacteria-game/src/lib/arena/arena-content.ts",
         "libs/features/lazy/bacteria-game/src/lib/fullscreen.ts"

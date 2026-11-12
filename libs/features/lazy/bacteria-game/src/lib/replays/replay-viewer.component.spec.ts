@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { ArenaViewComponent } from '../arena/arena-view.component';
+import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
 import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import {
   RecordingPainter,
@@ -287,6 +288,55 @@ describe('ReplayViewerComponent', () => {
     expect(time(page)).toBe('0:01 / 0:01');
     // Paused, the view still runs the frames the seek plays in.
     expect(arena.paused()).toBe(false);
+  });
+
+  describe('the engine hint', () => {
+    const engine = (page: HTMLElement) =>
+      page.querySelector('[data-testid="engine"]') as HTMLElement;
+
+    /** A GL painter of that GPU, its integer passes stood in for. */
+    function glPainter(renderer: string): GlArenaPainter {
+      return Object.assign(Object.create(GlArenaPainter.prototype), {
+        renderer: () => renderer,
+        createSimulation: fakeGpu().createSimulation,
+      }) as GlArenaPainter;
+    }
+
+    it('says a replay plays on the CPU, slower', () => {
+      const { page } = view(gpuIntReplay());
+
+      expect(engine(page).textContent?.trim()).toBe('CPU');
+      expect(engine(page).getAttribute('title')).toBe(
+        'Plays on the CPU, slower than on the GPU'
+      );
+    });
+
+    it('says a gpu-int replay plays on the trusted GPU, and on the CPU once it goes', () => {
+      const { fixture, page } = view(gpuIntReplay(), { gpu: 'Adreno 650' });
+      const arena = fixture.debugElement.query(
+        By.directive(ArenaViewComponent)
+      );
+
+      arena.triggerEventHandler('painterChange', glPainter('Adreno 650'));
+      fixture.detectChanges();
+      expect(engine(page).textContent?.trim()).toBe('GPU');
+      expect(engine(page).getAttribute('title')).toBe('Plays on the GPU');
+
+      arena.triggerEventHandler('painterChange', null);
+      fixture.detectChanges();
+      expect(engine(page).textContent?.trim()).toBe('CPU');
+    });
+
+    it('stays on the CPU on a GPU that is not the trusted one', () => {
+      const { fixture, page } = view(gpuIntReplay(), { gpu: 'Adreno 650' });
+
+      fixture.debugElement
+        .query(By.directive(ArenaViewComponent))
+        .triggerEventHandler('painterChange', glPainter('Mali-G78'));
+      fixture.detectChanges();
+
+      expect(engine(page).textContent?.trim()).toBe('CPU');
+    });
   });
 
   it('fits the arena into the box it has, at its aspect, as large as it lets it', () => {

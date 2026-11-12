@@ -203,7 +203,12 @@ storage until then. Settings stay with the device either way.
   `gpu-int` replay plays on the viewer's own GL painter (the third
   argument of `replayEngine`) where its renderer is the host's `gpu`
   (`GpuSelfTestService.trustedRenderer`: "My matches" and the match just
-  played; `/watch` runs no self-test and stays on `intSimulation`).
+  played; `/watch` takes it from `WatchGpu` (`replays/watch-gpu.ts`,
+  #3059): the game's stored verdict, read from local storage through
+  `@wolsok/utils-browser-storage`, or the self-test run there on idle and
+  stored the same way; the record's shape and rules are
+  `gl/stored-self-test.ts`, shared with `GpuSelfTestService`). The viewer
+  shows whether the war runs on the GPU or the CPU (`data-testid="engine"`).
   `ReplayScene.useGpu` moves the war between the GPU and the CPU where it
   was: onto the painter once it is there, off it before its context goes;
   a GPU that fails to set up falls back to `intSimulation` and is not

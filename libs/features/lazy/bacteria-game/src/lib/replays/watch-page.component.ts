@@ -7,6 +7,7 @@ import {
   effect,
   inject,
   resource,
+  untracked,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { MatButtonModule } from '@angular/material/button';
@@ -28,6 +29,7 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { dismissSplash } from '../splash';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
+import { WatchGpu } from './watch-gpu';
 
 const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',
@@ -75,6 +77,7 @@ type WatchView =
         @case ('ready') {
           <feat-lazy-bac-game-replay-viewer
             [replay]="shown.replay"
+            [gpu]="trustedGpu()"
             [label]="'replay.watchPage.canvas' | t: { level: levelText() }"
           />
         }
@@ -127,6 +130,9 @@ export class WatchPageComponent {
   private readonly loader = inject(PublicReplays);
   private readonly i18n = inject(I18nService);
   private readonly document = inject(DOCUMENT);
+  private readonly watchGpu = inject(WatchGpu);
+  /** The GPU a `gpu-int` replay may play on, null while none is trusted. */
+  protected readonly trustedGpu = this.watchGpu.trustedRenderer;
 
   /** The public replay's id, from the route. */
   protected readonly publicId = toSignal(
@@ -177,6 +183,25 @@ export class WatchPageComponent {
   public constructor() {
     dismissSplash(this.document);
     this.setUpHead();
+    this.findGpuForIntReplays();
+  }
+
+  /**
+   * A `gpu-int` replay - every ranked match the gallery features - plays on
+   * the CPU's `intSimulation` many times slower than on a trusted GPU
+   * (#3059), so the page finds out whether this device has one; a `cpu`
+   * replay never asks.
+   */
+  private findGpuForIntReplays(): void {
+    effect(() => {
+      const view = this.view();
+      if (
+        view.kind === 'ready' &&
+        view.replay.header.simulation === 'gpu-int'
+      ) {
+        untracked(() => this.watchGpu.start());
+      }
+    });
   }
 
   /**

@@ -100,6 +100,8 @@ export const replay = {
     back: '{seconds} seconds back',
     forward: '{seconds} seconds forward',
     seeking: 'Winding to that time…',
+    onGpu: 'Plays on the GPU',
+    onCpu: 'Plays on the CPU, slower than on the GPU',
     controls: 'Playback controls',
   },
   watchPage: {

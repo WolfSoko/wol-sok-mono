@@ -53,7 +53,11 @@ device's GPU passed the deterministic self-test, as it already does in
    (`gl/stored-self-test.ts`: key, record, parser, `storedResultHolds`, the
    device, the record built from a result). `GpuSelfTestService` and the watch
    page share it, so the two cannot drift apart.
-4. **Trust stays as it is:** `gpuTrusted(verdict)` (passed, on hardware), and
+4. **The viewer shows where the war runs** (the manager's condition on
+   approving this spec): a small "GPU" or "CPU" badge among the controls,
+   with a title that says a CPU replay plays slower. So a slow replay tells
+   why, and the real-device check can see the GPU path at work.
+5. **Trust stays as it is:** `gpuTrusted(verdict)` (passed, on hardware), and
    the viewer plays on its painter only where the painter's renderer equals the
    trusted one.
 
@@ -73,7 +77,9 @@ device's GPU passed the deterministic self-test, as it already does in
    (`nx lint feat-lazy-bacteria-game` with the watch override).
 6. `bacteria-game-remote` production build passes its budgets and
    `check-lazy-admin`.
-7. Manual check on a real device (CI has no GPU): open a gallery replay in
+7. The replay viewer shows "GPU" while a replay plays on the GPU and "CPU"
+   otherwise, also after a fall back or a lost context (spec).
+8. Manual check on a real device (CI has no GPU): open a gallery replay in
    `/watch`, it plays smoothly at 1× and 4×.
 
 ## Open questions
