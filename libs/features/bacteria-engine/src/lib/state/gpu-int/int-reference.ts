@@ -133,6 +133,11 @@ const NY = Int8Array.of(-1, -1, -1, 0, 0, 1, 1, 1);
 const OX = Int8Array.of(1, 1, 0, -1, -1, -1, 0, 1);
 const OY = Int8Array.of(0, 1, 1, 1, 0, -1, -1, -1);
 
+/** The eight neighbours as offsets in cells on a grid `width` wide. */
+function neighbourOffsets(width: number): Int32Array {
+  return Int32Array.from(NX, (dx, i) => NY[i] * width + dx);
+}
+
 /** Bacteria per colony in each coarse cell, 4 per block - `INFLUENCE_FRAGMENT`. */
 export function intInfluence(grid: IntGrid, cellSize: number): Uint32Array {
   const blocksX = Math.ceil(grid.width / cellSize);
@@ -202,28 +207,66 @@ export function intHunt(
   return out;
 }
 
-/** Buffers a claim and apply pair reuses from step to step. */
+/**
+ * What the claim and apply steps of one tick share: the buffers they reuse,
+ * and which cells are free and which hold a bacterium, kept up to date from
+ * step to step - see {@link beginIntClaimSteps}.
+ */
 export class IntPassScratch {
-  public readonly intents: Int8Array;
   public readonly claims: Uint8Array;
   public readonly priorities: Uint32Array;
   /** 1 where a bacterium may move to: no wall and nobody there. */
   public readonly free: Uint8Array;
+  /** The cells holding a bacterium, in no particular order. */
+  public readonly occupied: Int32Array;
+  public occupiedCount = 0;
+  /** Where a cell stands in {@link occupied} - valid for occupied cells only. */
+  public readonly slotOf: Int32Array;
+  /** The cells claimed this step, each once. */
+  public readonly claimed: Int32Array;
   public readonly unit = new Int32Array(2);
 
   public constructor(width: number, height: number) {
-    this.intents = new Int8Array(width * height);
-    this.claims = new Uint8Array(width * height);
-    this.priorities = new Uint32Array(width * height);
-    this.free = new Uint8Array(width * height);
+    const cells = width * height;
+    this.claims = new Uint8Array(cells);
+    this.priorities = new Uint32Array(cells);
+    this.free = new Uint8Array(cells);
+    this.occupied = new Int32Array(cells);
+    this.slotOf = new Int32Array(cells);
+    this.claimed = new Int32Array(cells);
   }
 }
 
 /**
+ * Reads which cells of `grid` are free and which hold a bacterium into
+ * `scratch`, for the {@link intClaimStep}s that follow on the same state.
+ */
+export function beginIntClaimSteps(
+  grid: IntGrid,
+  scratch: IntPassScratch
+): void {
+  const { state, mask } = grid;
+  const { free, occupied, slotOf } = scratch;
+  const cells = grid.width * grid.height;
+  let count = 0;
+  for (let cell = 0; cell < cells; cell++) {
+    if (state[cell * 4] !== 0) {
+      free[cell] = 0;
+      slotOf[cell] = count;
+      occupied[count++] = cell;
+    } else {
+      free[cell] = (mask[cell] & WALL) === 0 ? 1 : 0;
+    }
+  }
+  scratch.occupiedCount = count;
+}
+
+/**
  * One claim and apply pair - a step of moving, escaping or dividing - into
- * `out`, a new state unless given; the grid's state is left alone, so `out`
- * must not be it. Pass `scratch` and two `out` buffers in turn to run
- * step after step without allocating. `hunt` is {@link intHunt}'s.
+ * `out`, a new state unless given, the grid's state left alone. `hunt` is
+ * {@link intHunt}'s. It copies and reads the whole grid each call, so it is
+ * for single steps (specs, the GPU cross-check); a tick runs its steps with
+ * {@link intClaimStep} instead, in place.
  */
 export function intClaimAndApply(
   grid: IntGrid,
@@ -234,8 +277,33 @@ export function intClaimAndApply(
   scratch: IntPassScratch = new IntPassScratch(grid.width, grid.height),
   out: Uint16Array = new Uint16Array(grid.state.length)
 ): Uint16Array {
+  out.set(grid.state);
+  const working: IntGrid = { ...grid, state: out };
+  beginIntClaimSteps(working, scratch);
+  intClaimStep(working, u, hunt, kind, step, scratch);
+  return out;
+}
+
+/**
+ * One claim and apply pair on the grid's state, in place. `scratch` must
+ * describe that state: from {@link beginIntClaimSteps}, then kept up to
+ * date by every step on it - nothing else may change the state between
+ * them, or the steps go wrong without an error. A step leaves `claims` all
+ * zero, as the next one needs it.
+ *
+ * In place is safe: a claimed cell was free, so it is nobody's source, and
+ * a bacterium has one intent, so it moves or divides at most once.
+ */
+export function intClaimStep(
+  grid: IntGrid,
+  u: IntPassUniforms,
+  hunt: Int32Array,
+  kind: IntKind,
+  step: number,
+  scratch: IntPassScratch
+): void {
   const { width, height, state, mask } = grid;
-  const { intents, claims, priorities, free, unit } = scratch;
+  const { claims, priorities, free, occupied, slotOf, claimed, unit } = scratch;
   const seed = u.seed >>> 0;
   const cellSize = u.cellSize;
   const blocksX = Math.ceil(width / cellSize);
@@ -254,10 +322,6 @@ export function intClaimAndApply(
   const fallbackSalt = stepSalt(SALT_FALLBACK, step);
   const prioritySalt = stepSalt(SALT_PRIORITY, step);
 
-  const cells = width * height;
-  for (let cell = 0; cell < cells; cell++) {
-    free[cell] = (mask[cell] & WALL) === 0 && state[cell * 4] === 0 ? 1 : 0;
-  }
   const freeAt = (x: number, y: number) =>
     x >= 0 && y >= 0 && x < width && y < height && free[y * width + x] === 1;
   const inEffect = (x: number, y: number, owner: number, weapon: number) =>
@@ -426,83 +490,80 @@ export function intClaimAndApply(
   // The intents once per bacterium (the GPU works them out per reader, to
   // the same result), scattered into the claims: a free cell takes the
   // claimant with the highest draw, on a tie the lowest neighbour index -
-  // as the shader's gather loop over i = 0..7 with a strict > does.
+  // as the shader's gather loop over i = 0..7 with a strict > does. That
+  // makes the claims independent of the order the bacteria are visited in.
   //
   // Every intent is a free neighbour or none, and the draws keep no state,
   // so a bacterium without a free neighbour can skip the work - a shortcut
   // the GPU does not take, to the same result.
-  claims.fill(0);
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const cell = y * width + x;
-      const owner = state[cell * 4];
-      if (owner === 0 || !anyFreeAround(x, y, cell)) {
-        intents[cell] = -1;
-        continue;
-      }
-      const intent = divide
-        ? divideIntent(x, y, cell, owner)
-        : moveIntent(x, y, cell, owner);
-      intents[cell] = intent;
-      if (intent < 0) {
-        continue;
-      }
-      const target = cell + NY[intent] * width + NX[intent];
-      const priority = draw(x, y, seed, prioritySalt);
-      const held = claims[target];
-      if (
-        held === 0 ||
-        priority > priorities[target] ||
-        (priority === priorities[target] && intent < held - 1)
-      ) {
-        claims[target] = intent + 1;
-        priorities[target] = priority;
-      }
+  let claimedCount = 0;
+  const occupiedCount = scratch.occupiedCount;
+  for (let j = 0; j < occupiedCount; j++) {
+    const cell = occupied[j];
+    const y = (cell / width) | 0;
+    const x = cell - y * width;
+    if (!anyFreeAround(x, y, cell)) {
+      continue;
+    }
+    const owner = state[cell * 4];
+    const intent = divide
+      ? divideIntent(x, y, cell, owner)
+      : moveIntent(x, y, cell, owner);
+    if (intent < 0) {
+      continue;
+    }
+    const target = cell + NY[intent] * width + NX[intent];
+    const priority = draw(x, y, seed, prioritySalt);
+    const held = claims[target];
+    if (held === 0) {
+      claimed[claimedCount++] = target;
+    }
+    if (
+      held === 0 ||
+      priority > priorities[target] ||
+      (priority === priorities[target] && intent < held - 1)
+    ) {
+      claims[target] = intent + 1;
+      priorities[target] = priority;
     }
   }
 
   // Everybody stays, but for the claimed cells and the bacteria whose
   // claim won.
-  out.set(state);
   const parentShare = u.parentShare;
-  for (let cell = 0; cell < cells; cell++) {
-    const to = cell * 4;
-    const claim = claims[cell];
-    if (claim !== 0) {
-      const from = (cell - NY[claim - 1] * width - NX[claim - 1]) * 4;
-      out[to] = state[from];
-      if (divide) {
-        // A child starts with no food and no record, as the shader's
-        // uvec4(mover.r, energy, 0u, 0u).
-        const energy = state[from + 1];
-        out[to + 1] = energy - mulQ(energy, parentShare);
-        out[to + 2] = 0;
-        out[to + 3] = 0;
-      } else {
-        out[to + 1] = state[from + 1];
-        out[to + 2] = state[from + 2];
-        out[to + 3] = state[from + 3];
-      }
-      continue;
-    }
-    // Only a bacterium has an intent - see the claims above.
-    const intent = intents[cell];
-    if (
-      intent < 0 ||
-      claims[cell + NY[intent] * width + NX[intent]] !== intent + 1
-    ) {
-      continue;
-    }
+  for (let k = 0; k < claimedCount; k++) {
+    const target = claimed[k];
+    const claim = claims[target] - 1;
+    claims[target] = 0;
+    const source = target - NY[claim] * width - NX[claim];
+    const to = target * 4;
+    const from = source * 4;
+    state[to] = state[from];
+    free[target] = 0;
     if (divide) {
-      out[to + 1] = mulQ(state[to + 1], parentShare);
+      // A child starts with no food and no record, as the shader's
+      // uvec4(mover.r, energy, 0u, 0u).
+      const energy = state[from + 1];
+      state[to + 1] = energy - mulQ(energy, parentShare);
+      state[to + 2] = 0;
+      state[to + 3] = 0;
+      state[from + 1] = mulQ(energy, parentShare);
+      slotOf[target] = scratch.occupiedCount;
+      occupied[scratch.occupiedCount++] = target;
     } else {
-      out[to] = 0;
-      out[to + 1] = 0;
-      out[to + 2] = 0;
-      out[to + 3] = 0;
+      state[to + 1] = state[from + 1];
+      state[to + 2] = state[from + 2];
+      state[to + 3] = state[from + 3];
+      state[from] = 0;
+      state[from + 1] = 0;
+      state[from + 2] = 0;
+      state[from + 3] = 0;
+      free[source] = (mask[source] & WALL) === 0 ? 1 : 0;
+      const slot = slotOf[source];
+      occupied[slot] = target;
+      slotOf[target] = slot;
     }
   }
-  return out;
 }
 
 /** FNV-1a over the texels' 16 bit values - to compare states quickly. */
@@ -589,14 +650,17 @@ export function intCombat(
     anyEffects ? effectOver(effects, x, y, owner, weapon) : 0;
   const { attack, drain, pellets: pelletUniforms, pelletCount } = frame;
   const pelletRadius = u.pelletRadius;
+  const around = neighbourOffsets(width);
   const strength = new Int32Array(COLONIES);
+  // An empty cell keeps its texel as it is.
+  out.set(state);
   for (let y = 0; y < height; y++) {
+    const inner = y > 0 && y < height - 1;
     for (let x = 0; x < width; x++) {
       const cell = y * width + x;
       const at = cell * 4;
       const owner = state[at];
       if (owner === 0) {
-        texel(out, at, 0, state[at + 1], state[at + 2], state[at + 3]);
         continue;
       }
       // An enemy's phages turn a share of the bacteria in their circle.
@@ -607,14 +671,22 @@ export function intCombat(
       }
       let own = 0;
       let enemy = 0;
-      strength.fill(0);
+      for (let i = 0; i < COLONIES; i++) {
+        strength[i] = 0;
+      }
+      const interior = inner && x > 0 && x < width - 1;
       for (let i = 0; i < 8; i++) {
-        const nx = x + NX[i];
-        const ny = y + NY[i];
-        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
-          continue;
+        let n: number;
+        if (interior) {
+          n = (cell + around[i]) * 4;
+        } else {
+          const nx = x + NX[i];
+          const ny = y + NY[i];
+          if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+            continue;
+          }
+          n = (ny * width + nx) * 4;
         }
-        const n = (ny * width + nx) * 4;
         const other = state[n];
         if (other === 0) {
           continue;
@@ -712,30 +784,36 @@ export function intFeed(
   out: Uint16Array = new Uint16Array(grid.state.length)
 ): Uint16Array {
   const { width, height, state } = grid;
-  for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      const at = (y * width + x) * 4;
-      const owner = state[at];
-      let food = (state[at + 3] & RECORD_MASK) !== 0 ? feed : 0;
-      // Only a bacterium is fed by the kills of its own colony around it.
-      for (let i = 0; owner !== 0 && i < 8; i++) {
-        const nx = x + NX[i];
-        const ny = y + NY[i];
-        if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
-          continue;
-        }
-        if ((state[(ny * width + nx) * 4 + 3] & RECORD_MASK) === owner) {
-          food += feed;
-        }
+  const cells = width * height;
+  // Every cell first gets the food of its own record; the kills, which are
+  // few, then feed the bacteria of their killer around them - the same sum
+  // as the shader's gather over the neighbours.
+  const kills: number[] = [];
+  const ownFood = Math.min(feed, 0xffff);
+  for (let cell = 0; cell < cells; cell++) {
+    const at = cell * 4;
+    const record = state[at + 3];
+    const killed = (record & RECORD_MASK) !== 0;
+    texel(out, at, state[at], state[at + 1], killed ? ownFood : 0, record);
+    if (killed) {
+      kills.push(cell);
+    }
+  }
+  for (const cell of kills) {
+    const killer = state[cell * 4 + 3] & RECORD_MASK;
+    const y = (cell / width) | 0;
+    const x = cell - y * width;
+    for (let i = 0; i < 8; i++) {
+      const nx = x + NX[i];
+      const ny = y + NY[i];
+      if (nx < 0 || ny < 0 || nx >= width || ny >= height) {
+        continue;
       }
-      texel(
-        out,
-        at,
-        owner,
-        state[at + 1],
-        Math.min(food, 0xffff),
-        state[at + 3]
-      );
+      const at = (ny * width + nx) * 4;
+      if (out[at] === killer) {
+        // Each addition capped, which caps the sum the same way.
+        out[at + 2] = Math.min(out[at + 2] + feed, 0xffff);
+      }
     }
   }
   return out;

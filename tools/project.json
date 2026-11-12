@@ -18,15 +18,17 @@
       ]
     },
     "test": {
-      "command": "node --test \"tools/ci/*.test.mjs\"",
+      "command": "node --test \"tools/**/*.test.mjs\"",
       "cache": true,
       "inputs": [
         "{workspaceRoot}/tools/ci/**/*",
+        "{workspaceRoot}/tools/**/*.mjs",
         "{workspaceRoot}/.nx/workflows/workers.yml",
         "{workspaceRoot}/.nx/ci-config.yaml",
         "{workspaceRoot}/.github/workflows/ci-cd.yml",
         "{workspaceRoot}/.github/workflows/deploy.yml",
-        "{workspaceRoot}/**/*.json"
+        "{workspaceRoot}/**/*.json",
+        "{workspaceRoot}/**/LICENSE"
       ]
     }
   }

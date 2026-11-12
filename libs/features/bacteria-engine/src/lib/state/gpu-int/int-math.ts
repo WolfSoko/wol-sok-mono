@@ -5,25 +5,17 @@ import { ONE_Q14 } from './fixed-point';
  * shaders (`gl/int-common.ts`) compute the same way.
  */
 
-/** floor(sqrt(n)) of a uint, bit by bit - exact, as `isqrt` in GLSL. */
+/**
+ * floor(sqrt(n)) of a uint, exact, as `isqrt` in GLSL, which works it out
+ * bit by bit. A double's square root is correctly rounded, so below 2^52 it
+ * never rounds up to the next integer and its floor is exact.
+ */
 export function isqrt(value: number): number {
-  let n = value >>> 0;
-  let result = 0;
-  let bit = 1 << 30;
-  while (bit > n) {
-    bit >>>= 2;
-  }
-  while (bit !== 0) {
-    if (n >= result + bit) {
-      n -= result + bit;
-      result = (result >>> 1) + bit;
-    } else {
-      result >>>= 1;
-    }
-    bit >>>= 2;
-  }
-  return result;
+  return Math.floor(Math.sqrt(value >>> 0));
 }
+
+/** The bit length the longer axis is scaled to: [2^14, 2^15). */
+const UNIT_SCALE_BITS = 15;
 
 /**
  * The direction of `(vx, vy)` as a Q14 unit vector, rounded to the nearest
@@ -45,13 +37,15 @@ export function unitQ14(vx: number, vy: number, out: Int32Array): Int32Array {
   }
   let ax = Math.abs(vx);
   let ay = Math.abs(vy);
-  while (Math.max(ax, ay) >= 32768) {
-    ax >>>= 1;
-    ay >>>= 1;
-  }
-  while (Math.max(ax, ay) < 16384) {
-    ax <<= 1;
-    ay <<= 1;
+  // All the halvings or doublings of the shader's loops in one shift: each
+  // halving floors, and floors of halvings compose.
+  const shift = UNIT_SCALE_BITS - (32 - Math.clz32(Math.max(ax, ay)));
+  if (shift < 0) {
+    ax >>>= -shift;
+    ay >>>= -shift;
+  } else {
+    ax <<= shift;
+    ay <<= shift;
   }
   const length = isqrt(ax * ax + ay * ay);
   const half = length >>> 1;

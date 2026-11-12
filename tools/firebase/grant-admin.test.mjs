@@ -1,4 +1,4 @@
-// Run with: node --test tools/firebase/grant-admin.test.mjs
+// Run with: npx nx test tools (runs every tools/**/*.test.mjs)
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { UsageError, nextClaims, parseArgs } from './grant-admin.mjs';
