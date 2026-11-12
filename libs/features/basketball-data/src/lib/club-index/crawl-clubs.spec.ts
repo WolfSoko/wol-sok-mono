@@ -40,28 +40,18 @@ const TEAMS: Record<
   3: 'not-found',
 };
 
-/** A Club's name, or the kind of error its read rejects with. */
-const CLUB_NAMES: Record<ClubId, string | BasketballDataErrorKind> = {
+const CLUB_NAMES: Record<ClubId, string> = {
   100: 'MTV Wasbüttel',
   200: 'MTV Gifhorn',
-  300: 'not-found',
 };
 
-const KINDS: readonly string[] = [
-  'not-found',
-  'offline',
-  'unavailable',
-  'unexpected-shape',
-] satisfies readonly BasketballDataErrorKind[];
-
-function isErrorKind(answer: string): answer is BasketballDataErrorKind {
-  return KINDS.includes(answer);
-}
-
-/** A source with the pages, Teams and Clubs above, logging every read. */
+/**
+ * A source with the pages, Teams and Clubs above, the name reads of
+ * `failedNames` rejecting with their kind, logging every read.
+ */
 function fakeData(
   teams = TEAMS,
-  clubNames = CLUB_NAMES
+  failedNames: Readonly<Record<ClubId, BasketballDataErrorKind>> = {}
 ): {
   data: ClubCrawlSource;
   reads: string[];
@@ -93,9 +83,13 @@ function fakeData(
     },
     club: async (club: ClubId): Promise<Club> => {
       reads.push(`club ${club}`);
-      const name = clubNames[club];
-      if (isErrorKind(name)) {
-        throw new BasketballDataError(name, `Verein ${club}`);
+      const failure = failedNames[club];
+      if (failure !== undefined) {
+        throw new BasketballDataError(failure, `Verein ${club}`);
+      }
+      const name = CLUB_NAMES[club];
+      if (name === undefined) {
+        throw new BasketballDataError('not-found', `Verein ${club}`);
       }
       return { id: club, name };
     },
@@ -234,10 +228,7 @@ describe('crawlClubs', () => {
   });
 
   it("lets a Team's name stand in where the source cannot map the Club", async () => {
-    const { data } = fakeData(TEAMS, {
-      ...CLUB_NAMES,
-      300: 'unexpected-shape',
-    });
+    const { data } = fakeData(TEAMS, { 300: 'unexpected-shape' });
 
     const clubs = await crawlClubs(data, 7, {
       knownNames: new Map(),
@@ -255,7 +246,7 @@ describe('crawlClubs', () => {
   it.each(['unavailable', 'offline'] as const)(
     "rejects rather than letting a Team's name stand in where a name read fails as %s",
     async (kind) => {
-      const { data } = fakeData(TEAMS, { ...CLUB_NAMES, 200: kind });
+      const { data } = fakeData(TEAMS, { 200: kind });
 
       await expect(
         crawlClubs(data, 7, {

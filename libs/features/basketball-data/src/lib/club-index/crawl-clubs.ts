@@ -37,11 +37,10 @@ export interface ClubCrawlOptions {
  * Leagues page by page, each League's Teams, and the name of each Club no
  * earlier crawl read. Where the source does not know or cannot map that
  * Club, or no time is left to read its name, one of the Club's Teams'
- * names stands in, marked `nameFromTeam`. A League
- * the source does not know or cannot map is skipped; a League list, Teams
- * or a Club's name the source cannot deliver now reject, so the caller
- * keeps what it had.
- * Waits `pause` before every read.
+ * names stands in, marked `nameFromTeam`. A League the source does not
+ * know or cannot map is skipped; a League list, Teams or a Club's name the
+ * source cannot deliver now reject, so the caller keeps what it had. Waits
+ * `pause` before every read.
  */
 export async function crawlClubs(
   data: ClubCrawlSource,
@@ -113,7 +112,7 @@ async function teamsOf(
   try {
     return await read(() => data.leagueTeams(league));
   } catch (error) {
-    if (isAbsentAnswer(error)) {
+    if (isLastingAnswer(error)) {
       return [];
     }
     throw error;
@@ -133,7 +132,7 @@ async function clubName(
   try {
     return (await read(() => data.club(club))).name;
   } catch (error) {
-    if (isAbsentAnswer(error)) {
+    if (isLastingAnswer(error)) {
       return undefined;
     }
     throw error;
@@ -144,7 +143,7 @@ async function clubName(
  * Whether `error` is an answer trying again will not change: the source
  * does not know the thing, or answers in a shape this lib cannot read.
  */
-function isAbsentAnswer(error: unknown): boolean {
+function isLastingAnswer(error: unknown): boolean {
   return (
     isBasketballDataError(error, 'not-found') ||
     isBasketballDataError(error, 'unexpected-shape')

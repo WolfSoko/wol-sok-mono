@@ -217,52 +217,34 @@ describe('runClubIndex', () => {
     expect(store.log).toEqual([]);
   });
 
-  it('notes the attempt but saves nothing when the crawl fails', async () => {
-    const store = fakeStore([
-      { association: BAYERN, clubs: [], updatedAt: NOW },
-    ]);
+  const DBB_DOWN = () =>
+    Promise.reject(new BasketballDataError('unavailable', 'DBB down'));
 
-    await expect(
-      runClubIndex(
-        runWith(
-          store,
-          fakeData(() =>
-            Promise.reject(new BasketballDataError('unavailable', 'DBB down'))
-          )
-        )
-      )
-    ).rejects.toMatchObject({ kind: 'unavailable' });
-    expect(store.log).toEqual([
-      'note 3',
-      `attempt 3 ${NOW} listless ${NOW}`,
-      'failure 3 unavailable: DBB down',
-    ]);
-  });
+  it.each([
+    ['the Teams', { leagueTeams: DBB_DOWN }],
+    ["a Club's name (#3017)", { club: DBB_DOWN }],
+  ] satisfies [string, Partial<ClubCrawlSource>][])(
+    'notes the attempt and the failure but saves nothing, keeping the old list, when %s cannot be read now',
+    async (_read, failing) => {
+      const store = fakeStore([
+        { association: BAYERN, clubs: [], updatedAt: NOW },
+        {
+          association: BERLIN,
+          clubs: [{ id: 700, name: 'ALBA Berlin' }],
+          updatedAt: NOW - 2 * WEEK,
+        },
+      ]);
 
-  it("keeps the old list rather than storing Teams' names when a Club's name cannot be read now (#3017)", async () => {
-    const store = fakeStore([
-      { association: BAYERN, clubs: [], updatedAt: NOW },
-      {
-        association: BERLIN,
-        clubs: [{ id: 700, name: 'ALBA Berlin' }],
-        updatedAt: NOW - 2 * WEEK,
-      },
-    ]);
-    const data: ClubCrawlSource = {
-      ...fakeData(),
-      club: () =>
-        Promise.reject(new BasketballDataError('unavailable', 'DBB down')),
-    };
-
-    await expect(runClubIndex(runWith(store, data))).rejects.toMatchObject({
-      kind: 'unavailable',
-    });
-    expect(store.saved).toEqual([]);
-    expect(store.log).toEqual([
-      `attempt 3 ${NOW}`,
-      'failure 3 unavailable: DBB down',
-    ]);
-  });
+      await expect(
+        runClubIndex(runWith(store, { ...fakeData(), ...failing }))
+      ).rejects.toMatchObject({ kind: 'unavailable' });
+      expect(store.saved).toEqual([]);
+      expect(store.log).toEqual([
+        `attempt 3 ${NOW}`,
+        'failure 3 unavailable: DBB down',
+      ]);
+    }
+  );
 
   it('deletes the lists of Associations the DBB no longer offers', async () => {
     const store = fakeStore([
