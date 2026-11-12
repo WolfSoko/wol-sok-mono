@@ -88,9 +88,10 @@ As #2967's spec. In particular:
 7. `korbjaeger-functions:test-emulator` passes: the renamed handler writes
    the tombstone and deletes the selection, idempotent, under writes of a
    second device.
-8. `git grep -E 'kontoGeloescht|konto-geloescht'` finds the names only in
-   the specs and plans of earlier issues; `auswahlLoeschen` also in the
-   app's `KontoDienst` (part D).
+8. `git grep -E 'kontoGeloescht|konto-geloescht|auswahlLoeschen' -- ':!docs'`
+   finds only the app's own `KontoDienst.auswahlLoeschen` and its specs
+   (part D); under `docs/` the names stay in the specs and plans of
+   earlier issues and in this spec and part C's map, which quote them.
 
 ## Open questions
 
