@@ -16,7 +16,7 @@ export class TrainingNamePipe implements PipeTransform {
     switch (name) {
       case 'running':
         return 'Joggen';
-      case 'getready':
+      case 'leadIn':
         return 'Bereit';
       case 'sprint':
         return 'Sprinten';

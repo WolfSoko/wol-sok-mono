@@ -58,7 +58,7 @@ describe('SprintTrainingComponent Ansagen', () => {
     expect(countdown()).toEqual({
       countdownTime: 5000,
       timeLeft: 3000,
-      countdownTo: 'getready',
+      countdownTo: 'leadIn',
     });
   });
 
