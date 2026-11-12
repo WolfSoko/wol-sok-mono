@@ -39,11 +39,7 @@
             "glob": "migrations.json",
             "output": "."
           },
-          {
-            "input": ".",
-            "glob": "LICENSE",
-            "output": "."
-          }
+          "libs/public/nx-aws-cdk-v2/LICENSE"
         ]
       }
     },
