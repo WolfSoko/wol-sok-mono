@@ -29,7 +29,9 @@ launch-templates:
       - name: Install necessary binaries
         script: |
           set -eu
-          echo "node version used: $(node -v)"
+          # On a line of its own, so `set -e` stops on a missing node.
+          echo "node version used:"
+          node -v
 
           # Not reduced to the Playwright libraries and the JDK: without these the
           # bacteria-game-remote e2e server never comes up on the workers
