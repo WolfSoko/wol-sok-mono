@@ -288,8 +288,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     }
     if (this.hud.playing()) {
       this.gameStateService.togglePause();
-    } else if (this.hud.countingDown()) {
-      // The match would start behind the page: it waits paused instead.
+    } else if (this.hud.countingDown() && this.hud.canPause()) {
+      // The match would start behind the page: it waits paused instead -
+      // but for a ranked one, which plays through as it does running.
       this.gameStateService.pause();
     } else if (this.flow.panel() === 'menu') {
       this.stageFullscreen.leave();
