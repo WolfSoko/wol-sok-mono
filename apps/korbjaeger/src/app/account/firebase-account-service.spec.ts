@@ -43,7 +43,7 @@ const ENVIRONMENT = {
   firebase: { projectId: 'korbjaeger' },
 } as unknown as Environment;
 
-describe('FirebaseKontoDienst', () => {
+describe('FirebaseAccountService', () => {
   beforeEach(() => {
     localStorage.clear();
     firebase.terminate.mockResolvedValue(undefined);

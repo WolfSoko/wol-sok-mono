@@ -30,7 +30,7 @@ async function chosen(group: MatButtonToggleGroupHarness): Promise<string[]> {
   return selected;
 }
 
-describe('DarstellungWahlComponent', () => {
+describe('AppearanceChoiceComponent', () => {
   afterEach(() => {
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');

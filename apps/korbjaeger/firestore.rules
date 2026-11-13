@@ -6,7 +6,7 @@ rules_version = '2';
 // when it is marked, and an optional Spitzname), the Vereinsfarben by the
 // Verein's DBB id (a colour and an optional second one, as one text), nothing
 // else and only theirs. Keyed by id, every change is a write of its own
-// entries, which the server merges with other devices' (auswahl-dokument.ts).
+// entries, which the server merges with other devices' (selection-document.ts).
 // The collection names are those of @wolsok/feat-shared-korbjaeger-account.
 // Specs: src/firestore-rules.emulator.ts (`nx run korbjaeger:test-emulator`).
 //
@@ -58,7 +58,7 @@ service cloud.firestore {
     }
   }
 
-  // Version 3 of the app's AuswahlDokument (auswahl-dokument.ts: the maps
+  // Version 3 of the app's SelectionDocument (selection-document.ts: the maps
   // keyed by id, the fields in English since #2966), with no other fields; a
   // newer version changes these rules in the same release. The maps are
   // checked in the rules above, not through a function of the document:

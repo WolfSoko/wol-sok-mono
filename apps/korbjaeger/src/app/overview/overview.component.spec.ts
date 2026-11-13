@@ -37,7 +37,7 @@ import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { AccountSession } from '../account/account-session';
 import {
   FakeAccountService,
-  FlagInSpec,
+  FakeFlag,
 } from '../account/testing/fake-account-service';
 
 /** The day the specs run on. */
@@ -265,7 +265,7 @@ describe('OverviewComponent', () => {
     const session = new AccountSession(
       new LocalSelection(undefined),
       async () => service,
-      new FlagInSpec()
+      new FakeFlag()
     );
     await session.start();
     await session.signIn();

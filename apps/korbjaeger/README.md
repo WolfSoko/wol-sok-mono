@@ -99,7 +99,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   "Weitere Ligen", the lib's `nextStartIndex`); then every Team of
   that Liga (`leagueTeamsResource`, the lib's `leagueTeams` from its
   Spielplan), by the DBB's Team name, which carries the Verein's team
-  number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
+  number ("TSV X 2"). One tap follows the Team (`Selection.follow`) and
   opens its Team page. Changing a pick starts over below it.
 - **Installable and offline:** `src/public/manifest.webmanifest` (name,
   German, `standalone`, the theme's orange `#e37100`, linked from
@@ -146,7 +146,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   while it stays open. When Meine Teams find the storage full, the
   answers give way (`FREE_STORAGE`) and `LocalSelection` writes once
   more. At most 60 answers and 1,000,000 characters
-  (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
+  (`ANSWER_LIMITS`, so Meine Teams always find room): a write beyond
   either evicts the oldest answers first, once the new one is stored (a
   write the storage refuses evicts nothing); a full storage
   (`QuotaExceededError`) evicts the oldest until the write fits; an answer

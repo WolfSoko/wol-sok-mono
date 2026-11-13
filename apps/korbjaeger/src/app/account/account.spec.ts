@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { BLOCKED_STORAGE } from '../../testing/storage';
 import { SIGNED_IN_KEY, deviceFlag, ACCOUNT_SESSION } from './account';
 
-describe('geraeteMerker', () => {
+describe('deviceFlag', () => {
   afterEach(() => localStorage.clear());
 
   it("remembers the sign-in in the device's storage", () => {
@@ -41,7 +41,7 @@ describe('geraeteMerker', () => {
   });
 });
 
-describe('KONTO_SITZUNG', () => {
+describe('ACCOUNT_SESSION', () => {
   afterEach(() => localStorage.clear());
 
   it('starts on the device for an Elternteil never signed in', () => {

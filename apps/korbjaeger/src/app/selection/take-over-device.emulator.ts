@@ -20,7 +20,7 @@ let env: RulesTestEnvironment;
 let nextUid = 0;
 
 beforeAll(async () => {
-  env = await emulatorProject('demo-korbjaeger-uebernahme', APP_RULES);
+  env = await emulatorProject('demo-korbjaeger-takeover', APP_RULES);
 });
 
 afterAll(() => env.cleanup());

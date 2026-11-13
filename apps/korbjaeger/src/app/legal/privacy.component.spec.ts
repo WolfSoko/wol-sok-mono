@@ -20,7 +20,7 @@ import { PrivacyComponent } from './privacy.component';
 import { DEVICE_KEYS } from './device-keys';
 import { germanDays } from './german-days';
 
-describe('DatenschutzComponent', () => {
+describe('PrivacyComponent', () => {
   function section(page: HTMLElement, id: string): string {
     const heading = page.querySelector(`h2#${id}`);
     expect(heading).not.toBeNull();

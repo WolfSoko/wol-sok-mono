@@ -12,7 +12,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
 
 /** Reloads the page; specs pass a fake. */
-export const RELOAD_PAGE = new InjectionToken<() => void>('SEITE_NEU_LADEN', {
+export const RELOAD_PAGE = new InjectionToken<() => void>('RELOAD_PAGE', {
   providedIn: 'root',
   factory: () => {
     const document = inject(DOCUMENT);

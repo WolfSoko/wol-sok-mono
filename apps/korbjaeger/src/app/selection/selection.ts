@@ -6,7 +6,7 @@ import { ACCOUNT_SESSION } from '../account/account';
  * The screens' `Selection`: the device's, or the account's once signed in
  * (`ACCOUNT_SESSION`); `teams` and `children` are `undefined` while it switches.
  */
-export const SELECTION = new InjectionToken<Selection>('Auswahl', {
+export const SELECTION = new InjectionToken<Selection>('Selection', {
   providedIn: 'root',
   factory: () => inject(ACCOUNT_SESSION).selection,
 });

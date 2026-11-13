@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { SELECTION } from './selection';
 import { SELECTION_KEY } from '@wolsok/feat-korbjaeger-selection';
 
-describe('AUSWAHL', () => {
+describe('SELECTION', () => {
   afterEach(() => localStorage.clear());
 
   it("keeps Meine Teams in the device's storage, across a reload", async () => {

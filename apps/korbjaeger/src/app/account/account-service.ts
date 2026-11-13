@@ -82,32 +82,32 @@ export interface AccountService {
 /** The Elternteil closed Google's popup: no error to show while signing in. */
 export class SignInCancelled extends Error {
   public constructor() {
-    super('Anmeldung abgebrochen');
-    this.name = 'AnmeldungAbgebrochen';
+    super('Sign-in cancelled');
+    this.name = 'SignInCancelled';
   }
 }
 
 /** The browser refused to open Google's popup. */
 export class PopupBlocked extends Error {
   public constructor() {
-    super('Popup blockiert');
-    this.name = 'PopupBlockiert';
+    super('Popup blocked');
+    this.name = 'PopupBlocked';
   }
 }
 
 /** Signing out would discard changes not yet sent to the account. */
 export class NotAllSent extends Error {
   public constructor() {
-    super('Nicht alles gesendet');
-    this.name = 'NichtAllesGesendet';
+    super('Not all sent');
+    this.name = 'NotAllSent';
   }
 }
 
 /** Auth's Elternteil changed while the account was being deleted: nothing more is. */
 export class AccountSwitched extends Error {
   public constructor() {
-    super('Konto gewechselt');
-    this.name = 'KontoGewechselt';
+    super('Account switched');
+    this.name = 'AccountSwitched';
   }
 }
 
@@ -118,15 +118,15 @@ export class AccountSwitched extends Error {
  */
 export class AccountNotDeleted extends Error {
   public constructor(public readonly reason: unknown) {
-    super('Konto nicht gelöscht');
-    this.name = 'KontoNichtGeloescht';
+    super('Account not deleted');
+    this.name = 'AccountNotDeleted';
   }
 }
 
 /** A step the server must confirm (deleting the account) found no network. */
 export class Offline extends Error {
   public constructor() {
-    super('Ohne Internet');
-    this.name = 'OhneInternet';
+    super('Offline');
+    this.name = 'Offline';
   }
 }

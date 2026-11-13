@@ -35,15 +35,15 @@ async function contrastErrors(page: Page): Promise<string[]> {
   );
 }
 
-for (const schema of ['light', 'dark'] as const) {
-  test.describe(`contrast (${schema})`, () => {
+for (const scheme of ['light', 'dark'] as const) {
+  test.describe(`contrast (${scheme})`, () => {
     // the look chosen in the settings (#2925), on a device set to the other
     // scheme, so the switch, not the device, decides what axe reads
     test.beforeEach(async ({ page }) => {
       await page.emulateMedia({
-        colorScheme: schema === 'light' ? 'dark' : 'light',
+        colorScheme: scheme === 'light' ? 'dark' : 'light',
       });
-      await withAppearance(page, schema);
+      await withAppearance(page, scheme);
     });
 
     test("keeps every text readable in the app's own colours", async ({

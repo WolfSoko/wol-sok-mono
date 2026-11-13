@@ -124,7 +124,7 @@ export interface InstallEnvironment {
 /** The browser's window, `undefined` where there is none. */
 export const INSTALL_ENVIRONMENT = new InjectionToken<
   InstallEnvironment | undefined
->('INSTALLATIONS_UMGEBUNG', {
+>('INSTALL_ENVIRONMENT', {
   providedIn: 'root',
   factory: () =>
     typeof window === 'undefined'

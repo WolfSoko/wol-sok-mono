@@ -41,7 +41,7 @@ export async function uidOf(
 }
 
 /**
- * Whether the Firestore emulator holds the `AuswahlDokument` of `uid`:
+ * Whether the Firestore emulator holds the `SelectionDocument` of `uid`:
  * false only for none (404); throws for any other failure.
  */
 export async function hasSelection(

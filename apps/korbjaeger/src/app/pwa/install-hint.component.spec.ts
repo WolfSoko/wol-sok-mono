@@ -64,7 +64,7 @@ function hintText(page: HTMLElement): string | undefined {
     ?.textContent?.replace(/\s+/g, ' ');
 }
 
-describe('InstallationsHinweisComponent', () => {
+describe('InstallHintComponent', () => {
   it("offers the browser's install dialog", async () => {
     const { page, install, click } = await render('install');
     expect(hintText(page)).toContain('Korbjäger als App');

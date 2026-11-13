@@ -12,7 +12,7 @@ import {
 import { AccountSession } from './account-session';
 import {
   FakeAccountService,
-  FlagInSpec,
+  FakeFlag,
   MIMI_PARENT,
 } from './testing/fake-account-service';
 
@@ -20,7 +20,7 @@ interface Setup {
   readonly session: AccountSession;
   readonly service: FakeAccountService;
   readonly local: LocalSelection;
-  readonly flag: FlagInSpec;
+  readonly flag: FakeFlag;
   readonly loaded: () => number;
   online: boolean;
 }
@@ -35,7 +35,7 @@ async function setUp(
 ): Promise<Setup> {
   const service = options.service ?? new FakeAccountService();
   const local = options.local ?? new LocalSelection(undefined);
-  const flag = new FlagInSpec(options.wasSignedIn);
+  const flag = new FakeFlag(options.wasSignedIn);
   let loads = 0;
   const load = async () => {
     loads++;
@@ -74,7 +74,7 @@ const settle = () => new Promise((proceed) => setTimeout(proceed));
 
 const SIGNED_IN = { kind: 'signed-in', name: 'Familie Muster' } as const;
 
-describe('KontoSitzung', () => {
+describe('AccountSession', () => {
   describe('at start', () => {
     it('offers no account and loads nothing where the build has no sign-in', async () => {
       const { session, local, loaded } = await setUp({
@@ -121,7 +121,7 @@ describe('KontoSitzung', () => {
       const session = new AccountSession(
         new LocalSelection(undefined),
         () => Promise.reject(new Error('offline')),
-        new FlagInSpec(true)
+        new FakeFlag(true)
       );
 
       await session.start();
@@ -517,7 +517,7 @@ describe('KontoSitzung', () => {
       const session = new AccountSession(
         local,
         async () => service,
-        new FlagInSpec(true)
+        new FakeFlag(true)
       );
       const started = session.start();
       await settle();
@@ -827,7 +827,7 @@ describe('KontoSitzung', () => {
       const service = new FakeAccountService();
       const cleared = Promise.withResolvers<void>();
       service.cacheReady = cleared.promise;
-      const flag = new FlagInSpec(true);
+      const flag = new FakeFlag(true);
       const session = new AccountSession(
         new LocalSelection(undefined),
         async () => service,
@@ -846,7 +846,7 @@ describe('KontoSitzung', () => {
     });
 
     it('clears the cache a sign-out left at a start without anyone signed in', async () => {
-      const flag = new FlagInSpec(false);
+      const flag = new FakeFlag(false);
       flag.cleanUp = true;
       const service = new FakeAccountService();
       const session = new AccountSession(

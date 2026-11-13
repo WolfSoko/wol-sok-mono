@@ -1,7 +1,7 @@
 import { show } from '../../testing/show';
 import { FooterComponent } from './footer.component';
 
-describe('FusszeileComponent', () => {
+describe('FooterComponent', () => {
   it('links the privacy policy and the legal notice', () => {
     const footer = show(FooterComponent);
 

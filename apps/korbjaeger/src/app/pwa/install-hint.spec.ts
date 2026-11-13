@@ -129,7 +129,7 @@ function start(browser: Browser = {}): Setup {
   };
 }
 
-describe('installationsAngebot', () => {
+describe('installOffer', () => {
   const SITUATION = {
     installed: false,
     dismissed: false,
@@ -159,7 +159,7 @@ describe('installationsAngebot', () => {
   });
 });
 
-describe('istIosMitTeilenMenue', () => {
+describe('isIosWithShareMenu', () => {
   const device = (userAgent: string, maxTouchPoints = 5): InstallNavigator => ({
     userAgent,
     maxTouchPoints,
@@ -210,7 +210,7 @@ describe('istIosMitTeilenMenue', () => {
   });
 });
 
-describe('InstallationsHinweis', () => {
+describe('InstallHint', () => {
   it('hears the browser from the start of the app, before a page asks', async () => {
     const target = new EventTarget();
     TestBed.configureTestingModule({

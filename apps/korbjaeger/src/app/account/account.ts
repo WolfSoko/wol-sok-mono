@@ -49,7 +49,7 @@ export function deviceFlag(
 
 /** The Elternteil's account, and with it the `Selection` the screens use (`SELECTION`). */
 export const ACCOUNT_SESSION = new InjectionToken<AccountSession>(
-  'KontoSitzung',
+  'AccountSession',
   {
     providedIn: 'root',
     factory: () => {

@@ -308,7 +308,7 @@ export class AccountSession {
     if (this.step !== undefined) {
       return this.step.kind === kind
         ? (this.step.run as Promise<T>)
-        : Promise.reject(new Error(`${this.step.kind} läuft noch.`));
+        : Promise.reject(new Error(`${this.step.kind} is still running.`));
     }
     this.lastFailure.set(undefined);
     this.runningStep.set(kind);
@@ -329,11 +329,11 @@ export class AccountSession {
 
   /**
    * Takes the device's choices into the account and then those the account
-   * took off the device (`abgeben`, in one read and write); what did not
+   * took off the device (`handOver`, in one read and write); what did not
    * fit stays on the device, and what joined meanwhile, here or in another
    * tab, goes over in another round. Where something new still stays after
    * the last, the next start takes it over (`kept`). Tells the account
-   * shown what it left (`takeover`).
+   * shown what it left (`takeoverHint`).
    */
   private async takeOver(
     service: AccountService,
@@ -460,7 +460,7 @@ export class AccountSession {
       void this.takeOffDevice(this.service);
     } else if (user !== null && this.openedFor !== user.uid) {
       // another tab signed in and took this device's choices over; a
-      // failure shows as `nicht-erreichbar`
+      // failure shows as `unreachable`
       this.open(this.service, user).catch(() => undefined);
     }
   }

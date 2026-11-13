@@ -7,7 +7,7 @@ import { notTakenOverText } from './not-taken-over-text';
 import { PopupBlocked } from './account-service';
 import { ACCOUNT_SESSION } from './account';
 import { AccountSession } from './account-session';
-import { FakeAccountService, FlagInSpec } from './testing/fake-account-service';
+import { FakeAccountService, FakeFlag } from './testing/fake-account-service';
 
 interface Page {
   readonly element: HTMLElement;
@@ -44,7 +44,7 @@ async function openPage(
           }
           return service;
         },
-    new FlagInSpec(),
+    new FakeFlag(),
     options.online
   );
   await session.start();
@@ -99,7 +99,7 @@ function inDialog(qa: 'delete-account-confirm' | 'cancel'): void {
   button?.click();
 }
 
-describe('EinstellungenComponent', () => {
+describe('SettingsComponent', () => {
   afterEach(() => {
     document.querySelector('.cdk-overlay-container')?.replaceChildren();
   });
@@ -411,7 +411,7 @@ describe('EinstellungenComponent', () => {
   });
 });
 
-describe('nichtUebernommenText', () => {
+describe('notTakenOverText', () => {
   it('says nothing where all fitted', () => {
     expect(
       notTakenOverText({ teams: [], children: [], clubColors: [] })

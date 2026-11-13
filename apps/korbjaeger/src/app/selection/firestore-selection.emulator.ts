@@ -40,10 +40,10 @@ let nextUid = 0;
 
 beforeAll(async () => {
   contractProject = await emulatorProject(
-    'demo-korbjaeger-vertrag',
+    'demo-korbjaeger-contract',
     OPEN_RULES
   );
-  rulesProject = await emulatorProject('demo-korbjaeger-auswahl', APP_RULES);
+  rulesProject = await emulatorProject('demo-korbjaeger-selection', APP_RULES);
 });
 
 afterAll(async () => {

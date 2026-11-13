@@ -6,10 +6,10 @@ export async function withAppearance(
   page: Page,
   choice: 'light' | 'dark'
 ): Promise<void> {
-  await page.addInitScript(
-    ([keys, value]) => localStorage.setItem(keys, value),
-    [APPEARANCE_KEY, choice] as const
-  );
+  await page.addInitScript(([key, value]) => localStorage.setItem(key, value), [
+    APPEARANCE_KEY,
+    choice,
+  ] as const);
 }
 
 /**

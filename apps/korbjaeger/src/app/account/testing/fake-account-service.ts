@@ -192,7 +192,7 @@ export class FakeAccountService implements AccountService {
 }
 
 /** An `SignInFlag` in memory; `fromAnotherTab` plays another tab's change. */
-export class FlagInSpec implements SignInFlag {
+export class FakeFlag implements SignInFlag {
   private readonly listeners: Array<() => void> = [];
   /** A sign-out left Firestore's copy on the device to clear. */
   public cleanUp = false;

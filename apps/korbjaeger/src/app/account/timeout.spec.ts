@@ -1,6 +1,6 @@
 import { withTimeout } from './timeout';
 
-describe('mitZeitlimit', () => {
+describe('withTimeout', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
