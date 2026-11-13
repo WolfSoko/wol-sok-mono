@@ -84,7 +84,8 @@ function executableLines(yaml) {
     .filter((line) => line !== '' && !line.startsWith('#'));
 }
 
-// The template's init steps: each starts at a list item (`- `), whichever key
+// The template's init steps: each starts at a list item (`- `, or a bare `-`
+// on its own line), whichever key
 // comes first, so no step hides inside the one before it. `start` is the
 // step's index among the executable lines; `script` holds the commands of an
 // inline script (a block below `script: |` or a one-line `script: …`), or is
@@ -92,7 +93,8 @@ function executableLines(yaml) {
 function initSteps(lines) {
   const steps = [];
   lines.forEach((line, index) => {
-    if (line.startsWith('- ')) steps.push({ start: index, lines: [] });
+    if (line === '-' || line.startsWith('- '))
+      steps.push({ start: index, lines: [] });
     steps
       .at(-1)
       ?.lines.push(index === steps.at(-1).start ? line.slice(2) : line);
