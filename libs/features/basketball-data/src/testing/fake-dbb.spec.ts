@@ -206,4 +206,13 @@ describe('recordedDbbTransport', () => {
       recordedDbbTransport({ kind: 'league-search', filter: NO_LEAGUE_FILTER })
     ).resolves.toBe(allLeagues);
   });
+
+  it('throws for a read nothing recorded', async () => {
+    await expect(
+      recordedDbbTransport({
+        kind: 'league-search',
+        filter: { ...NO_LEAGUE_FILTER, associationIds: [99] },
+      })
+    ).rejects.toThrow('not recorded: POST');
+  });
 });

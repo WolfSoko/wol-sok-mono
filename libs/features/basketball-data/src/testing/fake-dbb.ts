@@ -188,11 +188,18 @@ function parsedOrUndefined(body: string | undefined): unknown {
 
 /**
  * A transport that answers every read from the recorded fixtures
- * (`fakeDbbAnswer`), for specs that read them through `DbbBasketballData`.
+ * (`fakeDbbAnswer`), for specs that read them through `DbbBasketballData`;
+ * a read nothing answers throws, so a missing recording fails loudly.
  */
 export const recordedDbbTransport: DbbTransport = async (request) => {
   const call = dbbHttpRequest(request);
-  return call.method === 'POST'
-    ? fakeDbbAnswer(call.method, call.path, JSON.stringify(call.body))
-    : fakeDbbAnswer(call.method, call.path);
+  const answer = fakeDbbAnswer(
+    call.method,
+    call.path,
+    call.method === 'POST' ? JSON.stringify(call.body) : undefined
+  );
+  if (answer === undefined) {
+    throw new Error(`not recorded: ${call.method} ${call.path}`);
+  }
+  return answer;
 };
