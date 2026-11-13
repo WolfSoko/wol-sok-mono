@@ -22,48 +22,48 @@ import type { GameRow } from './game-row';
   selector: 'korb-game-row',
   imports: [MatChipsModule],
   template: `
-    @let spiel = row();
-    @if (title(); as text) {
+    @let game = row();
+    @if (heading(); as text) {
       <span class="title">{{ text }}</span>
     }
     <span class="who">
-      @if (spiel.homeOrAway) {
-        <span data-qa="game-home-or-away">{{ spiel.homeOrAway }}</span> gegen
+      @if (game.homeOrAway) {
+        <span data-qa="game-home-or-away">{{ game.homeOrAway }}</span> gegen
       }
-      <span data-qa="game-opponent">{{ spiel.opponent }}</span>
+      <span data-qa="game-opponent">{{ game.opponent }}</span>
     </span>
     <span class="when">
-      <span data-qa="game-date">{{ spiel.date }}</span>
-      @if (spiel.time) {
-        · <span data-qa="game-time">{{ spiel.time }}</span> Uhr
+      <span data-qa="game-date">{{ game.date }}</span>
+      @if (game.time) {
+        · <span data-qa="game-time">{{ game.time }}</span> Uhr
       }
     </span>
     @if (withLeague()) {
-      <span class="league" data-qa="game-league">{{ spiel.league }}</span>
+      <span class="league" data-qa="game-league">{{ game.league }}</span>
     }
-    @if (spiel.result || spiel.outcome || spiel.irregularity) {
+    @if (game.result || game.outcome || game.irregularity) {
       <span class="outcome">
-        @if (spiel.outcome; as ausgang) {
+        @if (game.outcome; as outcome) {
           <span
             class="outcome-badge"
-            [class]="ausgang"
+            [class]="outcome"
             data-qa="game-outcome"
-            >{{ outcomeText[ausgang] }}</span
+            >{{ outcomeText[outcome] }}</span
           >
         }
-        @if (spiel.result) {
+        @if (game.result) {
           &ngsp;<span class="result" data-qa="game-result">{{
-            spiel.result
+            game.result
           }}</span>
         }
-        @if (spiel.provisional) {
+        @if (game.provisional) {
           &ngsp;<span class="provisional" data-qa="game-provisional">{{
             provisionalText
           }}</span>
         }
-        @if (spiel.irregularity) {
+        @if (game.irregularity) {
           &ngsp;<mat-chip class="irregularity" data-qa="game-irregularity">{{
-            irregularityText[spiel.irregularity]
+            irregularityText[game.irregularity]
           }}</mat-chip>
         }
       </span>
@@ -136,7 +136,7 @@ import type { GameRow } from './game-row';
 export class GameRowComponent {
   public readonly row = input.required<GameRow>();
   /** A heading above the line, e.g. "Nächstes Spiel". */
-  public readonly title = input<string>();
+  public readonly heading = input<string>();
   /** Whether to name the Spiel's Liga. */
   public readonly withLeague = input(false, { transform: booleanAttribute });
 

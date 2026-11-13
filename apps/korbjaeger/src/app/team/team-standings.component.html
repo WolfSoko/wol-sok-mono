@@ -19,7 +19,7 @@
           [dataSource]="rows()"
           [attr.aria-labelledby]="headingId()"
         >
-          <ng-container matColumnDef="rang">
+          <ng-container matColumnDef="rank">
             <th
               mat-header-cell
               *matHeaderCellDef
@@ -39,7 +39,7 @@
               }
             </td>
           </ng-container>
-          <ng-container matColumnDef="spiele">
+          <ng-container matColumnDef="games">
             <th
               mat-header-cell
               *matHeaderCellDef
@@ -50,7 +50,7 @@
             </th>
             <td mat-cell *matCellDef="let row">{{ row.games }}</td>
           </ng-container>
-          <ng-container matColumnDef="siege">
+          <ng-container matColumnDef="wins">
             <th
               mat-header-cell
               *matHeaderCellDef
@@ -61,7 +61,7 @@
             </th>
             <td mat-cell *matCellDef="let row">{{ row.wins }}</td>
           </ng-container>
-          <ng-container matColumnDef="niederlagen">
+          <ng-container matColumnDef="losses">
             <th
               mat-header-cell
               *matHeaderCellDef
@@ -72,11 +72,11 @@
             </th>
             <td mat-cell *matCellDef="let row">{{ row.losses }}</td>
           </ng-container>
-          <ng-container matColumnDef="koerbe">
+          <ng-container matColumnDef="points">
             <th mat-header-cell *matHeaderCellDef>Körbe</th>
             <td mat-cell *matCellDef="let row">{{ row.points }}</td>
           </ng-container>
-          <ng-container matColumnDef="differenz">
+          <ng-container matColumnDef="difference">
             <th
               mat-header-cell
               *matHeaderCellDef

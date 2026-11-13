@@ -135,7 +135,7 @@ describe('FollowTeamComponent', () => {
     expect(await bars.getHarnessOrNull(MatSnackBarHarness)).toBeNull();
   });
 
-  describe('where the control disappears with the Team (NachEntfolgen)', () => {
+  describe('where the control disappears with the Team (AfterUnfollow)', () => {
     it('offers to undo the unfollowing, and follows the Team again', async () => {
       const selection = new LocalSelection(undefined);
       await selection.follow(MTV_WASBUETTEL);

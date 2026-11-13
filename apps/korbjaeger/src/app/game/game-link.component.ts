@@ -16,7 +16,7 @@ import type { GameRow } from './game-row';
     <a [routerLink]="['/spiel', row().id]">
       <korb-game-row
         [row]="row()"
-        [title]="title()"
+        [heading]="heading()"
         [withLeague]="withLeague()"
       />
     </a>
@@ -45,7 +45,7 @@ import type { GameRow } from './game-row';
 export class GameLinkComponent {
   public readonly row = input.required<GameRow>();
   /** A heading above the line, e.g. "Letztes Ergebnis". */
-  public readonly title = input<string>();
+  public readonly heading = input<string>();
   /** Whether to name the Spiel's Liga. */
   public readonly withLeague = input(false, { transform: booleanAttribute });
 }

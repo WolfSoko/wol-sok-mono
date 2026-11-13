@@ -1,5 +1,5 @@
 <section data-qa="roster">
-  <h3 [id]="headingId()">{{ title() }}</h3>
+  <h3 [id]="headingId()">{{ heading() }}</h3>
   @if (rows().length === 0) {
     <p>Im Spielbericht steht kein Kader.</p>
   } @else {
@@ -14,7 +14,7 @@
         [dataSource]="rows()"
         [attr.aria-labelledby]="headingId()"
       >
-        <ng-container matColumnDef="nummer" sticky>
+        <ng-container matColumnDef="number" sticky>
           <th
             mat-header-cell
             *matHeaderCellDef
@@ -84,7 +84,7 @@
           *matRowDef="let row; columns: columns()"
           data-qa="roster-row"
           [class.child]="row.child !== undefined"
-          [attr.data-kind]="row.child ? '' : null"
+          [attr.data-child]="row.child ? '' : null"
         ></tr>
       </table>
     </div>

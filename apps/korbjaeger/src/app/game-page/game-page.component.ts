@@ -74,8 +74,8 @@ export class GamePageComponent {
   /** Each period's column, then the final score's. */
   protected readonly periodColumns = computed(() => [
     'team',
-    ...(this.head()?.periods?.columns.map((_, i) => `periode-${i}`) ?? []),
-    'gesamt',
+    ...(this.head()?.periods?.columns.map((_, i) => `period-${i}`) ?? []),
+    'total',
   ]);
 
   protected readonly error = computed(() =>
@@ -114,10 +114,10 @@ export class GamePageComponent {
     vereinsfarbenAnwenden(() => this.followedTeam()?.clubId);
     breadcrumb(() => {
       const team = this.followedTeam();
-      const game = { title: 'Spiel' };
+      const gameLevel = { title: 'Spiel' };
       return team
-        ? [{ title: team.name, link: ['/team', String(team.id)] }, game]
-        : [game];
+        ? [{ title: team.name, link: ['/team', String(team.id)] }, gameLevel]
+        : [gameLevel];
     });
   }
 }

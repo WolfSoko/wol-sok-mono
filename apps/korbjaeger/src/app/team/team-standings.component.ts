@@ -17,13 +17,13 @@ const NO_STANDINGS = 'Diese Tabelle kennt der DBB nicht.';
 
 /** The columns, in the order the Tabelle shows them. */
 const COLUMNS = [
-  'rang',
+  'rank',
   'team',
-  'spiele',
-  'siege',
-  'niederlagen',
-  'koerbe',
-  'differenz',
+  'games',
+  'wins',
+  'losses',
+  'points',
+  'difference',
 ] as const;
 
 /**

@@ -21,7 +21,7 @@ import type { GameRow } from './game-row';
   imports: [GameVenueComponent, GameLinkComponent],
   template: `
     <korb-game-link
-      [title]="title()"
+      [heading]="heading()"
       [row]="row()"
       [withLeague]="withLeague()"
     />
@@ -44,5 +44,5 @@ export class NextGameComponent {
   /** Whether to name the Spiel's Liga. */
   public readonly withLeague = input(false, { transform: booleanAttribute });
   /** The heading above it, e.g. naming the Team that plays it. */
-  public readonly title = input('Nächstes Spiel');
+  public readonly heading = input('Nächstes Spiel');
 }

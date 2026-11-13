@@ -45,13 +45,16 @@
   }
   @if (leagues().length > 0) {
     <h2>Tabellen</h2>
-    @for (liga of leagues(); track liga.id) {
-      <korb-team-standings [league]="liga" [teamId]="season.value().team.id" />
+    @for (league of leagues(); track league.id) {
+      <korb-team-standings
+        [league]="league"
+        [teamId]="season.value().team.id"
+      />
     }
   }
 }
-@if (season.hasValue() && !seasonOver() && otherTeams(); as stand) {
+@if (season.hasValue() && !seasonOver() && otherTeams(); as state) {
   <h2>Weitere Teams des Vereins</h2>
   <korb-as-of data-qa="vereins-stand" [asOf]="clubTeams.asOf()" />
-  <korb-club-teams data-qa="vereins-teams" [state]="stand" />
+  <korb-club-teams data-qa="vereins-teams" [state]="state" />
 }

@@ -33,7 +33,7 @@ import { rosterRows } from './roster-rows';
 })
 export class RosterComponent {
   /** The Team's name, or its side while the Spiel cannot be read. */
-  public readonly title = input.required<string>();
+  public readonly heading = input.required<string>();
   public readonly roster = input.required<Roster>();
   /** Unique on the page, to name the table by its heading. */
   public readonly side = input.required<string>();
@@ -51,9 +51,9 @@ export class RosterComponent {
   });
   protected readonly statsColumns = computed(() => statsColumns(this.roster()));
   protected readonly columns = computed(() => [
-    ...(this.rows().some((row) => row.number !== undefined) ? ['nummer'] : []),
+    ...(this.rows().some((row) => row.number !== undefined) ? ['number'] : []),
     'name',
     ...this.statsColumns().map((column) => column.id),
   ]);
-  protected readonly headingId = computed(() => `kader-${this.side()}`);
+  protected readonly headingId = computed(() => `roster-${this.side()}`);
 }

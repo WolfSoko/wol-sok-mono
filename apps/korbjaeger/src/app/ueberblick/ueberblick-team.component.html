@@ -22,7 +22,7 @@
         <korb-as-of data-qa="ueberblick-stand" [asOf]="team.stand" />
         @for (ausfall of team.ausfaelle; track ausfall.id) {
           <korb-game-link
-            title="Fällt aus"
+            heading="Fällt aus"
             [row]="ausfall"
             data-qa="ueberblick-ausfall"
           />
@@ -37,7 +37,7 @@
         @if (team.letztes; as letztes) {
           <korb-game-link
             class="anzeigetafel"
-            title="Letztes Ergebnis"
+            heading="Letztes Ergebnis"
             [row]="letztes"
             data-qa="ueberblick-letztes"
           />

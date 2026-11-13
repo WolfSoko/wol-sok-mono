@@ -1068,7 +1068,7 @@ describe('GamePageComponent', () => {
         { personId: ILVIO, nickname: 'Ilvi' },
       ]);
       const row = rowOf(rosterOf(page, 'MTV Wasbüttel'), 'Ilvio');
-      expect(row.hasAttribute('data-kind')).toBe(true);
+      expect(row.hasAttribute('data-child')).toBe(true);
       expect(row.querySelector('mat-icon.star')).not.toBeNull();
       expect(text(part(row, 'roster-nickname'))).toBe('„Ilvi“');
       expect(text(row.querySelector('.name'))).toContain('Mein Kind:');
@@ -1106,7 +1106,7 @@ describe('GamePageComponent', () => {
 
       // Delon plays for the opponent here: not one of Meine Teams
       const away = rosterOf(page, 'MTV Gifhorn');
-      expect(rowOf(away, 'Delon').hasAttribute('data-kind')).toBe(false);
+      expect(rowOf(away, 'Delon').hasAttribute('data-child')).toBe(false);
       expect(part(away, 'roster-nickname')).toBeNull();
     });
 
@@ -1117,11 +1117,11 @@ describe('GamePageComponent', () => {
       );
 
       expect(
-        rowOf(rosterOf(page, 'MTV Gifhorn'), 'Delon').hasAttribute('data-kind')
+        rowOf(rosterOf(page, 'MTV Gifhorn'), 'Delon').hasAttribute('data-child')
       ).toBe(true);
       expect(
         rowOf(rosterOf(page, 'MTV Wasbüttel'), 'Ilvio').hasAttribute(
-          'data-kind'
+          'data-child'
         )
       ).toBe(true);
     });
@@ -1244,7 +1244,7 @@ describe('GamePageComponent', () => {
 
       for (const team of ['MTV Wasbüttel', 'MTV Gifhorn']) {
         const row = rowOf(rosterOf(page, team), 'Ilvio');
-        expect(row.hasAttribute('data-kind')).toBe(true);
+        expect(row.hasAttribute('data-child')).toBe(true);
         expect(text(part(row, 'roster-nickname'))).toBe('„Ilvi“');
       }
     });

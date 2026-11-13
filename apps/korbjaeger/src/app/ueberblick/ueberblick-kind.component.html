@@ -28,7 +28,7 @@
     }
     @for (ausfall of kind.ausfaelle; track ausfall.id) {
       <korb-game-link
-        title="Fällt aus"
+        heading="Fällt aus"
         [row]="ausfall"
         data-qa="ueberblick-ausfall"
       />
@@ -37,13 +37,13 @@
       <korb-next-game
         [row]="naechstes"
         [venue]="kind.halle"
-        [title]="kind.naechstesTitel"
+        [heading]="kind.naechstesTitel"
         data-qa="ueberblick-naechstes"
       />
     }
     @for (ausfall of kind.spaetereAusfaelle; track ausfall.id) {
       <korb-game-link
-        title="Fällt aus"
+        heading="Fällt aus"
         [row]="ausfall"
         data-qa="ueberblick-ausfall"
       />
@@ -51,7 +51,7 @@
     @if (kind.letztes; as letztes) {
       <korb-game-link
         class="anzeigetafel"
-        [title]="kind.letztesTitel"
+        [heading]="kind.letztesTitel"
         [row]="letztes"
         data-qa="ueberblick-letztes"
       />
