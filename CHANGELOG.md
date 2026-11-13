@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.169.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.0...v74.169.1) (2026-11-13)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-wars-admin:** typecheck the specs ([#3080](https://github.com/WolfSoko/wol-sok-mono/issues/3080)) ([1cbae25](https://github.com/WolfSoko/wol-sok-mono/commit/1cbae25c2832565f984bd3d69acd15d9b24b94a4)), closes [#3037](https://github.com/WolfSoko/wol-sok-mono/issues/3037)
+
 ## [74.169.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.168.0...v74.169.0) (2026-11-13)
 
 ### Features
