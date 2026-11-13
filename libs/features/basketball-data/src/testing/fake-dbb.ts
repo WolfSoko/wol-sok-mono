@@ -3,6 +3,7 @@ import {
   dbbHttpRequest,
   type DbbHttpRequest,
   type DbbRequest,
+  type DbbTransport,
 } from '../lib/dbb/dbb-request';
 import { NO_LEAGUE_FILTER } from '../lib/domain/league-search';
 import boxscore2843811 from '../lib/dbb/fixtures/boxscore-2843811.json';
@@ -46,9 +47,9 @@ const NIEDERSACHSEN_U12_YOUTH_MALE = {
  * The recorded answers: the Team wizard's Liga searches down to the male
  * U12 youth Ligen of Niedersachsen (all three pages) and the Spielplan of
  * Team 313036's Vorrunde there, Team 313036's Spiele, its two Ligen's Tabellen,
- * a BBL Team's Spiele (163073, results the DBB never confirms),
  * its Verein's Spiele of the weeks around 8 November 2026,
- * one of its Spiele with a Kader-only Spielbericht not confirmed yet, and
+ * one of its Spiele with a Kader-only Spielbericht not confirmed yet,
+ * a BBL Team's Spiele (163073, results the DBB never confirms), and
  * the Spiele of the adapter's cases (played with quarters and Spielerwerte,
  * a confirmed Kader-only Spielbericht, planned without a Spielbericht,
  * cancelled, forfeited).
@@ -184,3 +185,14 @@ function parsedOrUndefined(body: string | undefined): unknown {
     return undefined;
   }
 }
+
+/**
+ * A transport that answers every read from the recorded fixtures
+ * (`fakeDbbAnswer`), for specs that read them through `DbbBasketballData`.
+ */
+export const recordedDbbTransport: DbbTransport = async (request) => {
+  const call = dbbHttpRequest(request);
+  return call.method === 'POST'
+    ? fakeDbbAnswer(call.method, call.path, JSON.stringify(call.body))
+    : fakeDbbAnswer(call.method, call.path);
+};

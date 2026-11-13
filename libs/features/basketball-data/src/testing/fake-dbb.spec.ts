@@ -27,7 +27,7 @@ import niedersachsenU12 from '../lib/dbb/fixtures/wam-data-niedersachsen-u12.jso
 import nsU12m from '../lib/dbb/fixtures/wam-data-niedersachsen-u12-jugend-maennlich.json';
 import nsU12mSecond from '../lib/dbb/fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-10.json';
 import nsU12mThird from '../lib/dbb/fixtures/wam-liga-list-niedersachsen-u12-jugend-maennlich-20.json';
-import { fakeDbbAnswer } from './fake-dbb';
+import { fakeDbbAnswer, recordedDbbTransport } from './fake-dbb';
 
 const NIEDERSACHSEN = { ...NO_LEAGUE_FILTER, associationIds: [7] };
 const NIEDERSACHSEN_U12 = { ...NIEDERSACHSEN, ageGroupIds: [12] };
@@ -191,5 +191,19 @@ describe('fakeDbbAnswer', () => {
     ['a boxscore with more after it', 'GET', 'match/id/2911141/boxscore/1'],
   ])('knows nothing of %s', (_case, method, path) => {
     expect(fakeDbbAnswer(method, path)).toBeUndefined();
+  });
+});
+
+describe('recordedDbbTransport', () => {
+  it('answers a GET read with its recording', async () => {
+    await expect(
+      recordedDbbTransport({ kind: 'team-games', teamId: 313036 })
+    ).resolves.toBe(teamGames);
+  });
+
+  it('answers a POST read by its body', async () => {
+    await expect(
+      recordedDbbTransport({ kind: 'league-search', filter: NO_LEAGUE_FILTER })
+    ).resolves.toBe(allLeagues);
   });
 });
