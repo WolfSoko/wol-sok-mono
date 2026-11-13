@@ -16,8 +16,8 @@ import { ClubTeamsComponent } from './club-teams.component';
       <strong>Keine Spiele mehr angesetzt.</strong> Ist die Saison vorbei? Die
       aktuellen Teams des Vereins:
     </p>
-    @if (state(); as vereinsTeams) {
-      <korb-club-teams data-qa="club-teams" [state]="vereinsTeams" />
+    @if (state(); as clubTeams) {
+      <korb-club-teams data-qa="club-teams" [state]="clubTeams" />
     }
   `,
   styles: `

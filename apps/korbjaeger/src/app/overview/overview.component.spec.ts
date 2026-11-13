@@ -75,18 +75,18 @@ const PLAYED_78_47: Game['status'] = {
 
 let nextGameId = 1;
 
-/** A Spiel of `heim` at home against `gast`. */
+/** A Spiel of `home` at home against `away`. */
 function game(
   home: Team,
   away: Team,
-  datum: string,
+  date: string,
   overrides: Partial<Game> = {}
 ): Game {
   return {
     id: nextGameId++,
     leagueId: VORRUNDE.id,
     matchday: 1,
-    date: datum,
+    date,
     time: '10:00',
     home: participantOf(home),
     away: participantOf(away),
@@ -174,7 +174,7 @@ function fakeData(
 }
 
 /**
- * Renders the overview on `data`, following `gefolgt` (or with that
+ * Renders the overview on `data`, following `followed` (or with that
  * `Selection`), once the reads that settle have settled.
  */
 async function render(
@@ -843,12 +843,12 @@ describe('OverviewComponent', () => {
       ],
     };
 
-    function withLastGameOn(datum: string) {
+    function withLastGameOn(date: string) {
       return fakeData(
         [
           season(
             WASBUETTEL,
-            game(WASBUETTEL, GIFHORN, datum, { status: PLAYED_78_47 })
+            game(WASBUETTEL, GIFHORN, date, { status: PLAYED_78_47 })
           ),
         ],
         inTheSportsHall,
@@ -1054,8 +1054,8 @@ describe('OverviewComponent', () => {
       );
     }
 
-    const PLAYED_ON = (datum: string) =>
-      ({ status: PLAYED_78_47, time: '10:00', date: datum }) as const;
+    const PLAYED_ON = (date: string) =>
+      ({ status: PLAYED_78_47, time: '10:00', date }) as const;
 
     it('groups the overview by Kind, with the Teams it plays for, and lists the others below', async () => {
       const letztesWas = game(WASBUETTEL, GIFHORN, '2026-11-01', {
@@ -1282,8 +1282,8 @@ describe('OverviewComponent', () => {
     });
 
     it('reads only the last Spielbericht where it names every Kind', async () => {
-      const played = ['2026-10-18', '2026-10-25', '2026-11-01'].map((datum) =>
-        game(WASBUETTEL, GIFHORN, datum, { status: PLAYED_78_47 })
+      const played = ['2026-10-18', '2026-10-25', '2026-11-01'].map((date) =>
+        game(WASBUETTEL, GIFHORN, date, { status: PLAYED_78_47 })
       );
       const data = fakeData(
         [season(WASBUETTEL, ...played)],
@@ -1330,7 +1330,7 @@ describe('OverviewComponent', () => {
         '2026-10-25',
         '2026-11-01',
         '2026-11-07',
-      ].map((datum) => game(WASBUETTEL, GIFHORN, datum, PLAYED_ON(datum)));
+      ].map((date) => game(WASBUETTEL, GIFHORN, date, PLAYED_ON(date)));
       // the Kind played only in the oldest, the sixth Spiel back
       const data = fakeData(
         [season(WASBUETTEL, ...played)],
@@ -1364,7 +1364,7 @@ describe('OverviewComponent', () => {
         '2026-10-25',
         '2026-11-01',
         '2026-11-07',
-      ].map((datum) => game(WASBUETTEL, GIFHORN, datum, PLAYED_ON(datum)));
+      ].map((date) => game(WASBUETTEL, GIFHORN, date, PLAYED_ON(date)));
       const data = fakeData(
         [season(WASBUETTEL, ...played)],
         inTheSportsHall,

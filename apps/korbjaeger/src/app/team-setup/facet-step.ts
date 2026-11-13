@@ -10,7 +10,7 @@ import { errorText, NO_LEAGUES } from '../errors/error-text';
 
 /** One step of the Team wizard: the choices of one facet of a search. */
 export interface FacetStep<Id> {
-  /** The choices that leave Ligen (`angeboten`); none before the search. */
+  /** The choices that leave Ligen (`offered`); none before the search. */
   readonly facets: Signal<readonly Facet<Id>[]>;
   /** What the step says when its search found no choice at all. */
   readonly empty: Signal<string | undefined>;

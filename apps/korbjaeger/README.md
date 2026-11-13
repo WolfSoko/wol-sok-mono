@@ -92,7 +92,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Team einrichten** (`/team-einrichten`, `src/app/team-setup/`):
   finds a Team without its id, step by step. A Verband, then an age group
   and a gender, each offering only what the Liga search finds for the
-  picks before it (the lib's `angeboten`; each step a `facetStep`
+  picks before it (the lib's `offered`; each step a `facetStep`
   shown by `korb-facet-select`, which says so when a step offers
   nothing); then a Liga of the paged list (`leaguePages`: the first page
   with the search, every later one through the DBB's list call,

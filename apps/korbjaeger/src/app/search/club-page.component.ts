@@ -78,7 +78,7 @@ export class ClubPageComponent {
   private readonly club = computed(() => parseDbbId(this.clubId()));
   protected readonly teams = clubTeamsResource(() => this.club());
 
-  /** The read's stand; none for an id that is no DBB id. */
+  /** The read's state; none for an id that is no DBB id. */
   protected readonly state = computed(() =>
     this.club() === undefined ? undefined : clubTeamsState(this.teams)
   );

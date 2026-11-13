@@ -55,7 +55,7 @@ class HangingPages extends DbbBasketballData {
 /** The recorded DBB, whose search finds nothing where `empty` holds. */
 class WithoutFacets extends DbbBasketballData {
   public constructor(
-    private readonly leer: (filter: LeagueSearchFilter) => boolean
+    private readonly isEmpty: (filter: LeagueSearchFilter) => boolean
   ) {
     super(recordedDbbTransport);
   }
@@ -64,7 +64,7 @@ class WithoutFacets extends DbbBasketballData {
     filter: LeagueSearchFilter,
     options?: ReadOptions
   ): Promise<LeagueSearch> {
-    return this.leer(filter)
+    return this.isEmpty(filter)
       ? Promise.resolve({
           facets: {
             associations: [],

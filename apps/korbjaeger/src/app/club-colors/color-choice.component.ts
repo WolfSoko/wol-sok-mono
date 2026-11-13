@@ -31,15 +31,9 @@ const NO_CHOICE = '#000000';
         @if (withNone()) {
           <mat-button-toggle [value]="null">Keine</mat-button-toggle>
         }
-        @for (vorgabe of presets; track vorgabe.color) {
-          <mat-button-toggle
-            [value]="vorgabe.color"
-            [aria-label]="vorgabe.name"
-          >
-            <span
-              class="swatch"
-              [style.background-color]="vorgabe.color"
-            ></span>
+        @for (preset of presets; track preset.color) {
+          <mat-button-toggle [value]="preset.color" [aria-label]="preset.name">
+            <span class="swatch" [style.background-color]="preset.color"></span>
           </mat-button-toggle>
         }
       </mat-button-toggle-group>

@@ -149,8 +149,7 @@ function childSection(
   const ofTeam = (game: SeasonGame | undefined) =>
     game && own.find(({ season }) => season?.season === game.season);
   const inRoster = last && inRosterOf(ofTeam(last), last.game, child);
-  const nichtGefunden =
-    own.length === 0 && !searching ? whyNot(teams) : undefined;
+  const notFound = own.length === 0 && !searching ? whyNot(teams) : undefined;
   // a Kind with several Teams: which of them plays
   const title = (text: string, game: SeasonGame | undefined) =>
     game && own.length > 1 ? `${text} · ${game.season.team.name}` : text;
@@ -174,7 +173,7 @@ function childSection(
     ...(last && { last: row(last) }),
     ...(inRoster !== undefined && { inRoster }),
     asOf: oldestAsOf(...own.map(({ asOf }) => asOf)),
-    ...(nichtGefunden && { notFound: nichtGefunden }),
+    ...(notFound && { notFound }),
     maybeMoreTeams:
       own.length > 0 &&
       teams.some(
@@ -237,7 +236,7 @@ function afterGame(teams: readonly TeamInOverview[]): readonly TeamCard[] {
 
 /**
  * The hint while no Kind is marked: once every Saison is read (failed ones
- * aside), `spiel-oeffnen` where a Team played, else `nach-erstem-spiel`;
+ * aside), `open-game` where a Team played, else `after-first-game`;
  * none while no Team is followed or a Saison is still read.
  */
 function childHint(

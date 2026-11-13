@@ -1,13 +1,13 @@
-@let kind = section();
+@let child = section();
 <mat-card appearance="outlined" data-qa="overview-child">
   <mat-card-header>
     <mat-icon mat-card-avatar class="star" aria-hidden="true">star</mat-icon>
     <mat-card-title data-qa="overview-child-name">{{
-      kind.title
+      child.title
     }}</mat-card-title>
-    @if (kind.teams.length > 0) {
+    @if (child.teams.length > 0) {
       <mat-card-subtitle data-qa="overview-child-teams">
-        @for (team of kind.teams; track team.teamId) {
+        @for (team of child.teams; track team.teamId) {
           @if (!$first) {
             ·
           }
@@ -17,54 +17,54 @@
     }
   </mat-card-header>
   <mat-card-content>
-    @if (kind.searching && kind.teams.length === 0) {
+    @if (child.searching && child.teams.length === 0) {
       <mat-progress-bar
         mode="indeterminate"
         aria-label="Spielberichte werden gelesen"
       />
     }
-    @if (kind.teams.length > 0) {
-      <korb-as-of data-qa="overview-as-of" [asOf]="kind.asOf" />
+    @if (child.teams.length > 0) {
+      <korb-as-of data-qa="overview-as-of" [asOf]="child.asOf" />
     }
-    @for (ausfall of kind.cancellations; track ausfall.id) {
+    @for (cancellation of child.cancellations; track cancellation.id) {
       <korb-game-link
         heading="Fällt aus"
-        [row]="ausfall"
+        [row]="cancellation"
         data-qa="overview-cancellation"
       />
     }
-    @if (kind.next; as naechstes) {
+    @if (child.next; as next) {
       <korb-next-game
-        [row]="naechstes"
-        [venue]="kind.venue"
-        [heading]="kind.nextTitle"
+        [row]="next"
+        [venue]="child.venue"
+        [heading]="child.nextTitle"
         data-qa="overview-next"
       />
     }
-    @for (ausfall of kind.laterCancellations; track ausfall.id) {
+    @for (cancellation of child.laterCancellations; track cancellation.id) {
       <korb-game-link
         heading="Fällt aus"
-        [row]="ausfall"
+        [row]="cancellation"
         data-qa="overview-cancellation"
       />
     }
-    @if (kind.last; as letztes) {
+    @if (child.last; as last) {
       <korb-game-link
         class="anzeigetafel"
-        [heading]="kind.lastTitle"
-        [row]="letztes"
+        [heading]="child.lastTitle"
+        [row]="last"
         data-qa="overview-last"
       />
-      @if (kind.inRoster !== undefined) {
+      @if (child.inRoster !== undefined) {
         <p class="roster" data-qa="overview-roster">
           <mat-icon aria-hidden="true">{{
-            kind.inRoster ? "check_circle" : "remove_circle_outline"
+            child.inRoster ? "check_circle" : "remove_circle_outline"
           }}</mat-icon>
-          {{ kind.inRoster ? "Im Kader" : "Nicht im Kader" }}
+          {{ child.inRoster ? "Im Kader" : "Nicht im Kader" }}
         </p>
       }
     }
-    @for (team of kind.teams; track team.teamId) {
+    @for (team of child.teams; track team.teamId) {
       @if (team.kind === "loaded" && team.seasonOver) {
         <korb-season-over-hint
           data-qa="overview-season-over"
@@ -72,13 +72,13 @@
         />
       }
     }
-    @if (kind.maybeMoreTeams) {
+    @if (child.maybeMoreTeams) {
       <p class="hint" data-qa="overview-child-incomplete">
         Nicht alles zu deinen Teams ließ sich lesen: Vielleicht spielt dein Kind
         noch in einem weiteren.
       </p>
     }
-    @switch (kind.notFound) {
+    @switch (child.notFound) {
       @case ("not-in-roster") {
         <p data-qa="overview-child-missing">
           In den letzten Spielberichten deiner Teams steht dieses Kind nicht.
@@ -92,13 +92,13 @@
       }
     }
   </mat-card-content>
-  @if (kind.teams.length > 0) {
+  @if (child.teams.length > 0) {
     <mat-card-actions
       align="end"
       class="actions"
       data-qa="overview-child-actions"
     >
-      @for (team of kind.teams; track team.teamId) {
+      @for (team of child.teams; track team.teamId) {
         <div class="action" data-qa="overview-child-action">
           <span class="team-name" aria-hidden="true">{{ team.name }}</span>
           <korb-follow-team

@@ -20,25 +20,25 @@
       }
       @case ("loaded") {
         <korb-as-of data-qa="overview-as-of" [asOf]="team.asOf" />
-        @for (ausfall of team.cancellations; track ausfall.id) {
+        @for (cancellation of team.cancellations; track cancellation.id) {
           <korb-game-link
             heading="Fällt aus"
-            [row]="ausfall"
+            [row]="cancellation"
             data-qa="overview-cancellation"
           />
         }
-        @if (team.next; as naechstes) {
+        @if (team.next; as next) {
           <korb-next-game
-            [row]="naechstes"
+            [row]="next"
             [venue]="team.venue"
             data-qa="overview-next"
           />
         }
-        @if (team.last; as letztes) {
+        @if (team.last; as last) {
           <korb-game-link
             class="anzeigetafel"
             heading="Letztes Ergebnis"
-            [row]="letztes"
+            [row]="last"
             data-qa="overview-last"
           />
         }

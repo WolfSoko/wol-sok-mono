@@ -41,12 +41,12 @@
 @if (leagueFilter() !== undefined) {
   <section data-qa="step-league">
     <h2>3. Liga</h2>
-    @if (league(); as gewaehlt) {
+    @if (league(); as chosen) {
       <div class="chosen" data-qa="chosen-league">
         <p>
-          <strong>{{ gewaehlt.name }}</strong>
+          <strong>{{ chosen.name }}</strong>
           <br />
-          {{ description(gewaehlt) }}
+          {{ description(chosen) }}
         </p>
         <button matButton type="button" (click)="league.set(undefined)">
           Andere Liga
@@ -58,9 +58,9 @@
   </section>
 }
 
-@if (league(); as gewaehlt) {
+@if (league(); as chosen) {
   <section>
     <h2>4. Team</h2>
-    <korb-league-teams [leagueId]="gewaehlt.id" />
+    <korb-league-teams [leagueId]="chosen.id" />
   </section>
 }

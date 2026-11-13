@@ -27,8 +27,8 @@ import type { ClubTeamsState } from './club-teams-state';
     FollowTeamComponent,
   ],
   template: `
-    @let vereinsTeams = state();
-    @switch (vereinsTeams.kind) {
+    @let clubTeams = state();
+    @switch (clubTeams.kind) {
       @case ('loading') {
         <mat-progress-bar
           mode="indeterminate"
@@ -37,15 +37,15 @@ import type { ClubTeamsState } from './club-teams-state';
       }
       @case ('error') {
         <p class="fehler" data-qa="club-teams-error">
-          {{ vereinsTeams.text }}
+          {{ clubTeams.text }}
         </p>
       }
       @case ('read') {
-        @if (vereinsTeams.teams.length === 0) {
+        @if (clubTeams.teams.length === 0) {
           <p>{{ emptyText() }}</p>
         } @else {
           <ul>
-            @for (team of vereinsTeams.teams; track team.teamId) {
+            @for (team of clubTeams.teams; track team.teamId) {
               <li data-qa="club-team">
                 <span class="team">
                   <a

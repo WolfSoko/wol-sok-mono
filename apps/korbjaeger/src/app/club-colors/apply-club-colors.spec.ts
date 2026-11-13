@@ -61,9 +61,9 @@ describe('applyClubColors', () => {
     const { part } = await openPage();
 
     const tokens = colorSchemeTokens(ROT);
-    const stil = part('club').style;
+    const style = part('club').style;
     for (const [name, value] of Object.entries(tokens)) {
-      expect(stil.getPropertyValue(name)).toBe(value);
+      expect(style.getPropertyValue(name)).toBe(value);
     }
   });
 

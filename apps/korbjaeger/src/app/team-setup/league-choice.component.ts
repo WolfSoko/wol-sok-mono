@@ -22,29 +22,33 @@ import type { LeaguePages } from './league-pages';
   selector: 'korb-league-choice',
   imports: [MatButtonModule, MatListModule, MatProgressBarModule],
   template: `
-    @let ligen = pages();
-    @if (ligen.leagues().length > 0) {
+    @let leaguePages = pages();
+    @if (leaguePages.leagues().length > 0) {
       <mat-action-list class="umbrechende-liste">
-        @for (liga of ligen.leagues(); track liga.id) {
+        @for (league of leaguePages.leagues(); track league.id) {
           <button
             mat-list-item
             type="button"
             data-qa="league"
-            (click)="chosen.emit(liga)"
+            (click)="chosen.emit(league)"
           >
-            <span matListItemTitle>{{ liga.name }}</span>
-            <span matListItemLine>{{ description(liga) }}</span>
+            <span matListItemTitle>{{ league.name }}</span>
+            <span matListItemLine>{{ description(league) }}</span>
           </button>
         }
       </mat-action-list>
     }
-    @if (ligen.loading()) {
+    @if (leaguePages.loading()) {
       <mat-progress-bar
         mode="indeterminate"
         aria-label="Ligen werden geladen"
       />
-    } @else if (ligen.more()) {
-      <button matButton="outlined" type="button" (click)="ligen.loadMore()">
+    } @else if (leaguePages.more()) {
+      <button
+        matButton="outlined"
+        type="button"
+        (click)="leaguePages.loadMore()"
+      >
         Weitere Ligen
       </button>
     }

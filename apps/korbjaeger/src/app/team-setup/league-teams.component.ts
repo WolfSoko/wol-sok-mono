@@ -54,7 +54,7 @@ import { FollowTeamComponent } from '../team/follow-team.component';
       } @else {
         <mat-action-list class="umbrechende-liste">
           @for (team of teams.value(); track team.id) {
-            @let gefolgt = followedTeamIds().has(team.id);
+            @let followed = followedTeamIds().has(team.id);
             <div class="row">
               <button
                 mat-list-item
@@ -65,18 +65,18 @@ import { FollowTeamComponent } from '../team/follow-team.component';
                 (click)="followAndOpen(team)"
               >
                 <mat-icon matListItemIcon aria-hidden="true">{{
-                  gefolgt ? 'check' : 'add'
+                  followed ? 'check' : 'add'
                 }}</mat-icon>
                 <span matListItemTitle>{{ team.name }}</span>
-                @if (gefolgt) {
+                @if (followed) {
                   <span matListItemLine>Gefolgt</span>
                 }
               </button>
-              @if (gefolgt) {
+              @if (followed) {
                 <korb-follow-team
                   [teamId]="team.id"
                   [teamName]="team.name"
-                  [followed]="gefolgt"
+                  [followed]="followed"
                   disappearsOnUnfollow
                 />
               }

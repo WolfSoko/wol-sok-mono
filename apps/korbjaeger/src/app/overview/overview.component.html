@@ -1,7 +1,7 @@
 <h2 korbFocusAfterUnfollow tabindex="-1">Meine Teams</h2>
 @if (view(); as view) {
-  @let leer = view.children.length === 0 && view.teams.length === 0;
-  @if (leer) {
+  @let empty = view.children.length === 0 && view.teams.length === 0;
+  @if (empty) {
     <div class="empty" data-qa="overview-empty">
       <p>
         Du folgst noch keinem Team. Such das Team deines Kindes über seinen
@@ -25,8 +25,8 @@
   }
   @if (view.children.length > 0) {
     <ul class="overview" data-qa="overview-children">
-      @for (kind of view.children; track kind.personId) {
-        <li><korb-overview-child [section]="kind" /></li>
+      @for (child of view.children; track child.personId) {
+        <li><korb-overview-child [section]="child" /></li>
       }
     </ul>
     @if (view.teams.length > 0) {
@@ -34,11 +34,11 @@
     }
   }
   <ul class="overview">
-    @for (karte of view.teams; track karte.teamId) {
-      <li><korb-overview-team [card]="karte" /></li>
+    @for (card of view.teams; track card.teamId) {
+      <li><korb-overview-team [card]="card" /></li>
     }
   </ul>
-  @if (!leer) {
+  @if (!empty) {
     <a
       class="other-team"
       matButton="outlined"

@@ -16,13 +16,13 @@ import type { FacetStep } from './facet-step';
   selector: 'korb-facet-select',
   imports: [MatFormFieldModule, MatSelectModule],
   template: `
-    @let facetten = step().facets();
+    @let facets = step().facets();
     @if (step().error(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
     } @else if (step().empty(); as text) {
       <p>{{ text }}</p>
     }
-    @if (facetten.length > 0) {
+    @if (facets.length > 0) {
       <mat-form-field appearance="outline">
         <mat-label>{{ label() }}</mat-label>
         <mat-select
@@ -30,8 +30,8 @@ import type { FacetStep } from './facet-step';
           [value]="value()"
           (valueChange)="value.set($event)"
         >
-          @for (facette of facetten; track facette.id) {
-            <mat-option [value]="facette.id">{{ facette.name }}</mat-option>
+          @for (facet of facets; track facet.id) {
+            <mat-option [value]="facet.id">{{ facet.name }}</mat-option>
           }
         </mat-select>
       </mat-form-field>
