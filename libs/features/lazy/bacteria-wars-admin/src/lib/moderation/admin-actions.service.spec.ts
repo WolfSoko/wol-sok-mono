@@ -7,18 +7,24 @@ import type { CommandResult } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminCommandsService } from '../commands/admin-commands.service';
 import { AdminActionsService } from './admin-actions.service';
 
+type Send = AdminCommandsService['send'];
+type SendReplay = AdminCommandsService['sendReplay'];
+
 function setUp(confirmed: unknown, result: CommandResult | Error) {
   const action = new Subject<void>();
   const snackBar = {
     open: jest.fn(() => ({ onAction: () => action })),
   };
-  const send = jest.fn(async () => {
+  const answer = async (): Promise<CommandResult> => {
     if (result instanceof Error) {
       throw result;
     }
     return result;
-  });
-  const sendReplay = jest.fn(async () => result as CommandResult);
+  };
+  const send = jest.fn<ReturnType<Send>, Parameters<Send>>(answer);
+  const sendReplay = jest.fn<ReturnType<SendReplay>, Parameters<SendReplay>>(
+    answer
+  );
   const signIn = jest.fn(async () => true);
   TestBed.configureTestingModule({
     providers: [
