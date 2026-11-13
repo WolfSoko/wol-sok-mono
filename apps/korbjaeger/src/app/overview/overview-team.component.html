@@ -1,0 +1,67 @@
+@let team = card();
+<mat-card appearance="outlined" data-qa="overview-team">
+  <mat-card-header>
+    <mat-card-title>
+      <a [routerLink]="['/team', team.teamId]" data-qa="overview-name">{{
+        name()
+      }}</a>
+    </mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    @switch (team.kind) {
+      @case ("loading") {
+        <mat-progress-bar
+          mode="indeterminate"
+          aria-label="Spiele werden geladen"
+        />
+      }
+      @case ("error") {
+        <p class="fehler" data-qa="overview-error">{{ team.text }}</p>
+      }
+      @case ("loaded") {
+        <korb-as-of data-qa="overview-as-of" [asOf]="team.asOf" />
+        @for (cancellation of team.cancellations; track cancellation.id) {
+          <korb-game-link
+            heading="Fällt aus"
+            [row]="cancellation"
+            data-qa="overview-cancellation"
+          />
+        }
+        @if (team.next; as next) {
+          <korb-next-game
+            [row]="next"
+            [venue]="team.venue"
+            data-qa="overview-next"
+          />
+        }
+        @if (team.last; as last) {
+          <korb-game-link
+            class="anzeigetafel"
+            heading="Letztes Ergebnis"
+            [row]="last"
+            data-qa="overview-last"
+          />
+        }
+        @if (team.seasonOver) {
+          <korb-season-over-hint
+            data-qa="overview-season-over"
+            [state]="team.clubTeams"
+          />
+        }
+        @if (!team.next && !team.last && team.cancellations.length === 0) {
+          <p>Noch keine Spiele in dieser Saison.</p>
+        }
+      }
+    }
+  </mat-card-content>
+  <mat-card-actions align="end" data-qa="overview-actions">
+    @if (club(); as club) {
+      <korb-club-colors-button [club]="club" />
+    }
+    <korb-follow-team
+      [teamId]="team.teamId"
+      [teamName]="name()"
+      disappearsOnUnfollow
+    />
+  </mat-card-actions>
+</mat-card>

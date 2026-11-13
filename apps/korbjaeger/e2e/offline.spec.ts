@@ -35,10 +35,7 @@ test.describe('Without a network', () => {
 
     await page.clock.fastForward('02:00:00');
     await context.setOffline(true);
-    await startPage
-      .team('MTV Wasbüttel')
-      .getByTestId('ueberblick-name')
-      .click();
+    await startPage.team('MTV Wasbüttel').getByTestId('overview-name').click();
 
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
     await expect(teamPage.spiele).toHaveCount(6);

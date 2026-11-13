@@ -7,7 +7,7 @@
 @if (season.hasValue()) {
   <h1>{{ season.value().team.name }}</h1>
   <p class="club">{{ season.value().club.name }} · Spiele der Saison</p>
-  <korb-vereinsfarben-knopf class="colors" [verein]="season.value().club" />
+  <korb-club-colors-button class="colors" [club]="season.value().club" />
   <korb-as-of data-qa="team-as-of" [asOf]="headAsOf()" />
 }
 @if (followable(); as teamId) {
@@ -55,6 +55,6 @@
 }
 @if (season.hasValue() && !seasonOver() && otherTeams(); as state) {
   <h2>Weitere Teams des Vereins</h2>
-  <korb-as-of data-qa="vereins-stand" [asOf]="clubTeams.asOf()" />
-  <korb-club-teams data-qa="vereins-teams" [state]="state" />
+  <korb-as-of data-qa="club-as-of" [asOf]="clubTeams.asOf()" />
+  <korb-club-teams data-qa="club-teams" [state]="state" />
 }

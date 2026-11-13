@@ -33,16 +33,16 @@ const CLUB_TITLE = 'Verein';
   ],
   template: `
     <h1 data-qa="club-name">{{ title() }}</h1>
-    @if (stand(); as stand) {
-      <korb-as-of data-qa="vereins-stand" [asOf]="teams.asOf()" />
-      @if (forChild() && stand.kind === 'read' && stand.teams.length > 0) {
+    @if (state(); as state) {
+      <korb-as-of data-qa="club-as-of" [asOf]="teams.asOf()" />
+      @if (forChild() && state.kind === 'read' && state.teams.length > 0) {
         <p data-qa="child-search-follow-first">
           Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.
         </p>
       }
       <korb-club-teams
-        data-qa="vereins-teams"
-        [state]="stand"
+        data-qa="club-teams"
+        [state]="state"
         emptyText="Keine Teams des Vereins in den letzten Wochen."
       >
         <ng-template korbClubTeamDetail let-team>
@@ -52,7 +52,7 @@ const CLUB_TITLE = 'Verein';
         </ng-template>
       </korb-club-teams>
     } @else {
-      <p data-qa="vereins-teams-fehler">{{ unknownClub }}</p>
+      <p data-qa="club-teams-error">{{ unknownClub }}</p>
     }
   `,
   styles: `
@@ -78,8 +78,8 @@ export class ClubPageComponent {
   private readonly club = computed(() => parseDbbId(this.clubId()));
   protected readonly teams = clubTeamsResource(() => this.club());
 
-  /** The read's stand; none for an id that is no DBB id. */
-  protected readonly stand = computed(() =>
+  /** The read's state; none for an id that is no DBB id. */
+  protected readonly state = computed(() =>
     this.club() === undefined ? undefined : clubTeamsState(this.teams)
   );
 

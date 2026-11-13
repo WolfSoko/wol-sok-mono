@@ -17,9 +17,9 @@ import { NOW } from '../now';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { ClubPageComponent } from './club-page.component';
 
-type VereinsTeamsRead = KorbjaegerData['clubTeams'];
+type ClubTeamsRead = KorbjaegerData['clubTeams'];
 
-const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
+const NOW_IN_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 const ZWEI_STUNDEN = 2 * 60 * 60_000;
 
 const VORRUNDE: League = {
@@ -49,15 +49,15 @@ const NO_GAMES_YET: TeamSeason = {
 };
 
 async function render(
-  read: VereinsTeamsRead,
+  read: ClubTeamsRead,
   clubId = '1837',
   { forChild = false }: { forChild?: boolean } = {}
 ): Promise<{
   page: HTMLElement;
   breadcrumb: Breadcrumb;
-  clubTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
+  clubTeams: ReturnType<typeof vi.fn<ClubTeamsRead>>;
 }> {
-  const clubTeams = vi.fn<VereinsTeamsRead>(read);
+  const clubTeams = vi.fn<ClubTeamsRead>(read);
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
@@ -68,7 +68,7 @@ async function render(
       },
       // in memory: nothing reaches the device's storage
       { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
-      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
+      { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(ClubPageComponent);
@@ -105,13 +105,13 @@ describe('ClubPageComponent', () => {
   it('says how old the Teams are where the last good answer stood in', async () => {
     const { page } = await render(async (_, options) => {
       options?.reading?.replaced({
-        storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+        storedAt: NOW_IN_SPEC - ZWEI_STUNDEN,
         reason: 'no-connection',
       });
       return WASBUETTEL;
     });
 
-    expect(text(page.querySelector('[data-qa="vereins-stand"]'))).toContain(
+    expect(text(page.querySelector('[data-qa="club-as-of"]'))).toContain(
       'Stand: vor 2 Std.'
     );
     expect(page.querySelectorAll('[data-qa="club-team"]')).toHaveLength(1);
@@ -144,7 +144,7 @@ describe('ClubPageComponent', () => {
     });
 
     expect(text(page.querySelector('h1'))).toBe('Verein');
-    expect(text(page.querySelector('[data-qa="vereins-teams-fehler"]'))).toBe(
+    expect(text(page.querySelector('[data-qa="club-teams-error"]'))).toBe(
       'Diesen Verein kennt der DBB nicht.'
     );
   });
@@ -153,7 +153,7 @@ describe('ClubPageComponent', () => {
     const { page, clubTeams } = await render(async () => WASBUETTEL, 'abc');
 
     expect(clubTeams).not.toHaveBeenCalled();
-    expect(text(page.querySelector('[data-qa="vereins-teams-fehler"]'))).toBe(
+    expect(text(page.querySelector('[data-qa="club-teams-error"]'))).toBe(
       'Diesen Verein kennt der DBB nicht.'
     );
   });

@@ -253,7 +253,7 @@ describe('TeamComponent', () => {
       );
 
       expect(
-        page.querySelector('[data-qa="vereins-stand"]')?.textContent
+        page.querySelector('[data-qa="club-as-of"]')?.textContent
       ).toContain('Offline · Stand: vor 2 Std.');
       expect(
         page.querySelector('[data-qa="team-as-of"] [data-qa="as-of"]')
@@ -1026,7 +1026,7 @@ describe('TeamComponent', () => {
 
       expect(clubTeams(page)).toEqual([]);
       expect(
-        page.querySelector('[data-qa="vereins-teams"]')?.textContent
+        page.querySelector('[data-qa="club-teams"]')?.textContent
       ).toContain('Keine weiteren Teams');
     });
 
@@ -1044,7 +1044,7 @@ describe('TeamComponent', () => {
 
       expect(gameRows(page)).toHaveLength(1);
       expect(
-        page.querySelector('[data-qa="vereins-teams-fehler"]')?.textContent
+        page.querySelector('[data-qa="club-teams-error"]')?.textContent
       ).toContain('Der DBB ist gerade nicht erreichbar.');
       expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
     });
@@ -1083,16 +1083,14 @@ describe('TeamComponent', () => {
           ...(hint(page)?.querySelectorAll('[data-qa="club-team-name"]') ?? []),
         ].map((name) => name.textContent?.trim())
       ).toEqual(['MTV Wasbüttel 2', 'MTV Wasbüttel']);
-      expect(page.querySelectorAll('[data-qa="vereins-teams"]')).toHaveLength(
-        1
-      );
+      expect(page.querySelectorAll('[data-qa="club-teams"]')).toHaveLength(1);
     });
 
     it('says nothing exactly two weeks after the last Spiel', async () => {
       const page = await render(withLastGameOn('2026-10-25'));
 
       expect(hint(page)).toBeNull();
-      expect(page.querySelector('[data-qa="vereins-teams"]')).not.toBeNull();
+      expect(page.querySelector('[data-qa="club-teams"]')).not.toBeNull();
     });
 
     it('says nothing while a Spiel is still to come', async () => {

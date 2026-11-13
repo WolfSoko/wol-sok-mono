@@ -12,7 +12,7 @@ export class TeamEinrichtenPage {
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
     this.weitereLigen = page.getByRole('button', { name: 'Weitere Ligen' });
-    this.ligen = page.getByTestId('liga');
+    this.ligen = page.getByTestId('league');
     this.teams = page.getByTestId('team');
   }
 

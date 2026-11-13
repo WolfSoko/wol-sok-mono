@@ -39,7 +39,7 @@ import { checkedChildStep, childStep } from './child-step';
   ],
   template: `
     @if (followed()) {
-      @if (saison.isLoading() || waitingForDetails()) {
+      @if (season.isLoading() || waitingForDetails()) {
         <mat-progress-bar
           mode="indeterminate"
           [attr.aria-label]="'Spiele von ' + teamName() + ' werden geladen'"
@@ -47,13 +47,13 @@ import { checkedChildStep, childStep } from './child-step';
       } @else if (failure(); as text) {
         <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
       } @else if (shown(); as step) {
-        <korb-as-of data-qa="child-step-stand" [asOf]="stand()" />
+        <korb-as-of data-qa="child-step-as-of" [asOf]="asOf()" />
         @switch (step.kind) {
           @case ('mark') {
             <a
               matButton="filled"
               data-qa="child-step-mark"
-              [routerLink]="['/spiel', step.spielId]"
+              [routerLink]="['/spiel', step.gameId]"
               [attr.aria-label]="'Kind im Kader markieren: ' + teamName()"
             >
               <mat-icon aria-hidden="true">star_outline</mat-icon>
@@ -107,24 +107,24 @@ export class ChildStepComponent {
     () => this.myTeams()?.includes(this.teamId()) ?? false
   );
 
-  protected readonly saison = teamSeasonResource(() =>
+  protected readonly season = teamSeasonResource(() =>
     this.followed() ? this.teamId() : undefined
   );
 
   protected readonly failure = computed(() =>
-    errorText(this.saison.error(), NO_TEAM)
+    errorText(this.season.error(), NO_TEAM)
   );
 
   private readonly step = computed(() =>
-    this.saison.hasValue()
-      ? childStep(this.saison.value(), this.today())
+    this.season.hasValue()
+      ? childStep(this.season.value(), this.today())
       : undefined
   );
 
   /** The details of the Spiel the step leads to, for its Liga. */
   protected readonly details = gameDetailsResource(() => {
     const step = this.step();
-    return step?.kind === 'mark' ? step.spielId : undefined;
+    return step?.kind === 'mark' ? step.gameId : undefined;
   });
 
   /** Only until the first details came: a reload keeps the step shown. */
@@ -133,8 +133,8 @@ export class ChildStepComponent {
   );
 
   /** The oldest of the reads the step stands on. */
-  protected readonly stand = computed(() =>
-    oldestAsOf(this.saison.asOf(), this.details.asOf())
+  protected readonly asOf = computed(() =>
+    oldestAsOf(this.season.asOf(), this.details.asOf())
   );
 
   protected readonly shown = computed(() => {

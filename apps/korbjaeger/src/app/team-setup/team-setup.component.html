@@ -1,0 +1,66 @@
+<h1>Team einrichten</h1>
+<p>
+  Such das Team deines Kindes in vier Schritten. Ein Tipp auf das Team setzt es
+  auf Meine Teams.
+</p>
+@if (loading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Auswahl wird geladen" />
+}
+<section data-qa="step-association">
+  <h2>1. Verband</h2>
+  <korb-facet-select
+    label="Verband"
+    qa="association"
+    [step]="associations"
+    [(value)]="association"
+  />
+</section>
+
+@if (association() !== undefined) {
+  <section data-qa="step-age-group">
+    <h2>2. Altersklasse und Geschlecht</h2>
+    <div class="side-by-side">
+      <korb-facet-select
+        label="Altersklasse"
+        qa="age-group"
+        [step]="ageGroups"
+        [(value)]="ageGroup"
+      />
+      @if (ageGroup() !== undefined) {
+        <korb-facet-select
+          label="Geschlecht"
+          qa="gender"
+          [step]="genders"
+          [(value)]="gender"
+        />
+      }
+    </div>
+  </section>
+}
+
+@if (leagueFilter() !== undefined) {
+  <section data-qa="step-league">
+    <h2>3. Liga</h2>
+    @if (league(); as chosen) {
+      <div class="chosen" data-qa="chosen-league">
+        <p>
+          <strong>{{ chosen.name }}</strong>
+          <br />
+          {{ description(chosen) }}
+        </p>
+        <button matButton type="button" (click)="league.set(undefined)">
+          Andere Liga
+        </button>
+      </div>
+    } @else {
+      <korb-league-choice [pages]="leagues" (chosen)="league.set($event)" />
+    }
+  </section>
+}
+
+@if (league(); as chosen) {
+  <section>
+    <h2>4. Team</h2>
+    <korb-league-teams [leagueId]="chosen.id" />
+  </section>
+}

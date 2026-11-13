@@ -52,7 +52,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   stands (`VenueState`: loading, failed, read) and reads nothing itself.
   Only the next Spiel's details are read (`gameDetailsResource` in
   `src/app/basketball-data/`, beside `teamSeasonResource`): the Team page
-  holds its own read, `MeineTeamsUeberblick` one per followed Team, and
+  holds its own read, `FollowedTeamsOverview` one per followed Team, and
   `NextGameComponent` (`src/app/game/`) shows the Spiel with its
   Halle on both, so each loads and fails on its own.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
@@ -69,12 +69,12 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   laden"). Every adapter runs the shared contract suite
   `selectionContract` (`testing/selection-contract.ts`), the Firestore adapter
   of #2873 too.
-- **Overview** (`/`, `src/app/ueberblick/`): each of Meine Teams with its
+- **Overview** (`/`, `src/app/overview/`): each of Meine Teams with its
   next Spiel (day, time, home or away, opponent), the Spiele
   before it that fall through (cancelled or forfeited) and its last result (the lib's `teamOverview`), the Team
   that plays first first and Teams without a next Spiel last
   (`byNextGame`), each linking to its Team page.
-  `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
+  `FollowedTeamsOverview` holds the reads of each followed Team: its Saison
   (`teamSeasonResource`, as the Team page) and, once its next Spiel is
   known, that Spiel's details for the Halle (`gameDetailsResource`), both
   ended when the Team is unfollowed. A card whose Team's Saison looks
@@ -82,19 +82,19 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Teams; only then is the Verein read (`clubTeamsResource`), once per
   Verein however many of its Teams are followed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
-  (`ueberblick-team.component.ts`) only show what they are given, and one
+  (`overview-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
   `src/app/errors/`. Both screens
   show a Spiel through `GameRowComponent` (`src/app/game/`), as a
   link to its Spiel page (`GameLinkComponent` on the cards). While
   Meine Teams is empty it offers "Team suchen" (`/suchen`); once a Team
   is followed, "Weiteres Team suchen" below the cards.
-- **Team einrichten** (`/team-einrichten`, `src/app/team-einrichten/`):
+- **Team einrichten** (`/team-einrichten`, `src/app/team-setup/`):
   finds a Team without its id, step by step. A Verband, then an age group
   and a gender, each offering only what the Liga search finds for the
-  picks before it (the lib's `angeboten`; each step a `facettenSchritt`
-  shown by `korb-facetten-select`, which says so when a step offers
-  nothing); then a Liga of the paged list (`ligenSeiten`: the first page
+  picks before it (the lib's `offered`; each step a `facetStep`
+  shown by `korb-facet-select`, which says so when a step offers
+  nothing); then a Liga of the paged list (`leaguePages`: the first page
   with the search, every later one through the DBB's list call,
   "Weitere Ligen", the lib's `nextStartIndex`); then every Team of
   that Liga (`leagueTeamsResource`, the lib's `leagueTeams` from its

@@ -1,0 +1,113 @@
+@let child = section();
+<mat-card appearance="outlined" data-qa="overview-child">
+  <mat-card-header>
+    <mat-icon mat-card-avatar class="star" aria-hidden="true">star</mat-icon>
+    <mat-card-title data-qa="overview-child-name">{{
+      child.title
+    }}</mat-card-title>
+    @if (child.teams.length > 0) {
+      <mat-card-subtitle data-qa="overview-child-teams">
+        @for (team of child.teams; track team.teamId) {
+          @if (!$first) {
+            ·
+          }
+          <a [routerLink]="['/team', team.teamId]">{{ team.name }}</a>
+        }
+      </mat-card-subtitle>
+    }
+  </mat-card-header>
+  <mat-card-content>
+    @if (child.searching && child.teams.length === 0) {
+      <mat-progress-bar
+        mode="indeterminate"
+        aria-label="Spielberichte werden gelesen"
+      />
+    }
+    @if (child.teams.length > 0) {
+      <korb-as-of data-qa="overview-as-of" [asOf]="child.asOf" />
+    }
+    @for (cancellation of child.cancellations; track cancellation.id) {
+      <korb-game-link
+        heading="Fällt aus"
+        [row]="cancellation"
+        data-qa="overview-cancellation"
+      />
+    }
+    @if (child.next; as next) {
+      <korb-next-game
+        [row]="next"
+        [venue]="child.venue"
+        [heading]="child.nextTitle"
+        data-qa="overview-next"
+      />
+    }
+    @for (cancellation of child.laterCancellations; track cancellation.id) {
+      <korb-game-link
+        heading="Fällt aus"
+        [row]="cancellation"
+        data-qa="overview-cancellation"
+      />
+    }
+    @if (child.last; as last) {
+      <korb-game-link
+        class="anzeigetafel"
+        [heading]="child.lastTitle"
+        [row]="last"
+        data-qa="overview-last"
+      />
+      @if (child.inRoster !== undefined) {
+        <p class="roster" data-qa="overview-roster">
+          <mat-icon aria-hidden="true">{{
+            child.inRoster ? "check_circle" : "remove_circle_outline"
+          }}</mat-icon>
+          {{ child.inRoster ? "Im Kader" : "Nicht im Kader" }}
+        </p>
+      }
+    }
+    @for (team of child.teams; track team.teamId) {
+      @if (team.kind === "loaded" && team.seasonOver) {
+        <korb-season-over-hint
+          data-qa="overview-season-over"
+          [state]="team.clubTeams"
+        />
+      }
+    }
+    @if (child.maybeMoreTeams) {
+      <p class="hint" data-qa="overview-child-incomplete">
+        Nicht alles zu deinen Teams ließ sich lesen: Vielleicht spielt dein Kind
+        noch in einem weiteren.
+      </p>
+    }
+    @switch (child.notFound) {
+      @case ("not-in-roster") {
+        <p data-qa="overview-child-missing">
+          In den letzten Spielberichten deiner Teams steht dieses Kind nicht.
+          Folge dem Team, für das es spielt.
+        </p>
+      }
+      @case ("unreadable") {
+        <p data-qa="overview-child-missing">
+          Die Spiele deiner Teams lassen sich gerade nicht alle lesen.
+        </p>
+      }
+    }
+  </mat-card-content>
+  @if (child.teams.length > 0) {
+    <mat-card-actions
+      align="end"
+      class="actions"
+      data-qa="overview-child-actions"
+    >
+      @for (team of child.teams; track team.teamId) {
+        <div class="action" data-qa="overview-child-action">
+          <span class="team-name" aria-hidden="true">{{ team.name }}</span>
+          <korb-follow-team
+            [teamId]="team.teamId"
+            [teamName]="team.name"
+            disappearsOnUnfollow
+          />
+        </div>
+      }
+    </mat-card-actions>
+  }
+</mat-card>

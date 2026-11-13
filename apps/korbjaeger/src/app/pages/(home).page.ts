@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { InstallationsHinweisComponent } from '../pwa/installations-hinweis.component';
-import { UeberblickComponent } from '../ueberblick/ueberblick.component';
+import { OverviewComponent } from '../overview/overview.component';
 
 /**
  * `/`: the overview of Meine Teams, which offers the search (`/suchen`),
@@ -8,12 +8,12 @@ import { UeberblickComponent } from '../ueberblick/ueberblick.component';
  */
 @Component({
   selector: 'korb-home',
-  imports: [InstallationsHinweisComponent, UeberblickComponent],
+  imports: [InstallationsHinweisComponent, OverviewComponent],
   template: `
     <h1 #start tabindex="-1">Korbjäger</h1>
     <p>Die Spiele deiner Basketball-Teams der laufenden Saison.</p>
     <korb-installations-hinweis [fokusDanach]="start" />
-    <korb-ueberblick />
+    <korb-overview />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

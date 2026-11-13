@@ -26,7 +26,7 @@ import { RosterComponent } from './roster.component';
 import { gameHead } from './game-head';
 import { gameReportPart } from './game-report-part';
 import { AsOfComponent } from '../as-of/as-of.component';
-import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { applyClubColors } from '../club-colors/apply-club-colors';
 import { breadcrumb } from '../navigation/breadcrumb';
 import { followedSide } from './followed-club';
 
@@ -111,7 +111,7 @@ export class GamePageComponent {
   });
 
   public constructor() {
-    vereinsfarbenAnwenden(() => this.followedTeam()?.clubId);
+    applyClubColors(() => this.followedTeam()?.clubId);
     breadcrumb(() => {
       const team = this.followedTeam();
       const gameLevel = { title: 'Spiel' };
