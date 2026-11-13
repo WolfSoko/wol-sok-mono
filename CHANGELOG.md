@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.170.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.1...v74.170.2) (2026-11-13)
+
+### Refactorings
+
+* **korbjaeger:** English identifiers, part D2: Spiel and Team ([#3012](https://github.com/WolfSoko/wol-sok-mono/issues/3012)) ([#3089](https://github.com/WolfSoko/wol-sok-mono/issues/3089)) ([6b0e5e2](https://github.com/WolfSoko/wol-sok-mono/commit/6b0e5e2a6378f73e775c9472b6d294f3fb3212be)), references [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967)
+
 ## [74.170.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.0...v74.170.1) (2026-11-13)
 
 ### Refactorings
