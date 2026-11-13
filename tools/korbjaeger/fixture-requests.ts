@@ -147,6 +147,10 @@ export const FIXTURE_REQUESTS: readonly FixtureRequest[] = [
     name: 'team-313036-matches',
     request: { kind: 'team-games', teamId: 313036 },
   },
+  {
+    name: 'team-163073-matches',
+    request: { kind: 'team-games', teamId: 163073 },
+  },
   { name: 'team-not-found', request: { kind: 'team-games', teamId: 1 } },
   {
     name: 'club-1476-actualmatches',

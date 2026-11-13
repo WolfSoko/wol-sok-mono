@@ -7,6 +7,6 @@ export {
   anonymiseFixtures,
   survivingPersonData,
 } from './testing/anonymise-fixtures';
-export { fakeDbbAnswer } from './testing/fake-dbb';
+export { fakeDbbAnswer, recordedDbbTransport } from './testing/fake-dbb';
 export { isOutsideFolder } from './testing/outside-folder';
 export { playerStatsOf } from './testing/player-stats';

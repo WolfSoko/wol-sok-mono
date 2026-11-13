@@ -4,8 +4,6 @@ import { provideRouter } from '@angular/router';
 import {
   BasketballDataError,
   DbbBasketballData,
-  dbbHttpRequest,
-  type DbbTransport,
 } from '@wolsok/feat-shared-basketball-data';
 import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import { AUSWAHL } from '../auswahl/auswahl';
@@ -14,19 +12,14 @@ import {
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
 import { JETZT } from '../jetzt';
-import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
+import { recordedDbbTransport } from '@wolsok/feat-shared-basketball-data/testing';
 import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
 import { ChildStepComponent } from './child-step.component';
 
 type TeamSpieleRead = KorbjaegerData['teamGames'];
 type GameRead = KorbjaegerData['game'];
 
-/** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
-const recordedDbb: DbbTransport = async (request) => {
-  const call = dbbHttpRequest(request);
-  return fakeDbbAnswer(call.method, call.path);
-};
-const RECORDED = new DbbBasketballData(recordedDbb);
+const RECORDED = new DbbBasketballData(recordedDbbTransport);
 
 /** A recorded Spiel of a Liga with Spielberichte (`statisticType` 1). */
 const GAME_WITH_REPORTS = 2861436;

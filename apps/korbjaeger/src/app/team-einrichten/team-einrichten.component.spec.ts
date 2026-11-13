@@ -9,15 +9,13 @@ import { provideRouter, Router } from '@angular/router';
 import {
   BasketballDataError,
   DbbBasketballData,
-  dbbHttpRequest,
-  type DbbTransport,
   type LeaguePage,
   type LeagueSearch,
   type LeagueSearchFilter,
   type ReadOptions,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
-import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
+import { recordedDbbTransport } from '@wolsok/feat-shared-basketball-data/testing';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   type Selection,
@@ -30,20 +28,6 @@ import {
 import { TeamEinrichtenComponent } from './team-einrichten.component';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 
-/** The DBB as the recorded fixtures answer it (`fakeDbbAnswer`). */
-const recordedDbb: DbbTransport = async (request) => {
-  const call = dbbHttpRequest(request);
-  const answer = fakeDbbAnswer(
-    call.method,
-    call.path,
-    call.method === 'POST' ? JSON.stringify(call.body) : undefined
-  );
-  if (answer === undefined) {
-    throw new Error(`not recorded: ${call.method} ${call.path}`);
-  }
-  return answer;
-};
-
 @Component({ template: '' })
 class TeamSeiteAttrappe {}
 
@@ -53,7 +37,7 @@ class HaengendeSeiten extends DbbBasketballData {
   public readonly signale: ReadSignal[] = [];
 
   public constructor() {
-    super(recordedDbb);
+    super(recordedDbbTransport);
   }
 
   public override leaguePage(
@@ -73,7 +57,7 @@ class OhneFacetten extends DbbBasketballData {
   public constructor(
     private readonly leer: (filter: LeagueSearchFilter) => boolean
   ) {
-    super(recordedDbb);
+    super(recordedDbbTransport);
   }
 
   public override leagueSearch(
@@ -121,7 +105,7 @@ interface Assistent {
 }
 
 async function render(
-  data: KorbjaegerData = new DbbBasketballData(recordedDbb),
+  data: KorbjaegerData = new DbbBasketballData(recordedDbbTransport),
   auswahl: Selection = new LocalSelection(undefined)
 ): Promise<Assistent> {
   TestBed.configureTestingModule({

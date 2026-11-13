@@ -1,5 +1,6 @@
 import { caughtError } from '../../testing/caught-error';
 import { readEnvelope } from './envelope';
+import bblTeamMatches from './fixtures/team-163073-matches.json';
 import teamMatches from './fixtures/team-313036-matches.json';
 import { mapTeamGames } from './map-team-games';
 
@@ -70,28 +71,24 @@ describe('mapTeamGames', () => {
     ]);
   });
 
-  it('marks a Liga whose results the DBB never confirms', () => {
-    const bundesliga = {
-      ...DATA,
-      matches: DATA.matches.map((match) => {
-        const { ligaData } = match as { ligaData: object };
-        return {
-          ...match,
-          ligaData: {
-            ...ligaData,
-            verbandId: 100,
-            statisticType: 0,
-            geschlecht: 'männlich',
-          },
-        };
-      }),
-    };
+  describe('whether the DBB ever confirms a Liga’s results', () => {
+    it('marks every Liga of a BBL Team, though its Spiele send no statisticType', () => {
+      const bbl = mapTeamGames(readEnvelope(bblTeamMatches));
 
-    expect(
-      mapTeamGames(bundesliga).leagues.map(
-        (league) => league.resultsNeverConfirmed
-      )
-    ).toEqual([true, true]);
+      expect(
+        bbl.leagues.map((league) => [league.name, league.resultsNeverConfirmed])
+      ).toEqual([
+        ['1. Bundesliga (easyCredit BBL)', true],
+        ['BBL-Pokal 1/8-Finale', true],
+        ['BBL-Pokal 1/4-Finale', true],
+      ]);
+    });
+
+    it('leaves it out for a Landesverband’s youth Ligen', () => {
+      expect(
+        season.leagues.map((league) => league.resultsNeverConfirmed)
+      ).toEqual([undefined, undefined]);
+    });
   });
 
   it("leaves out whether a Liga keeps Spielberichte, as the recorded Ligen don't say", () => {

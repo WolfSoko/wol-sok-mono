@@ -150,23 +150,40 @@ describe('mapGameDetails', () => {
   });
 
   describe('whether the DBB ever confirms the Liga’s results', () => {
-    const BBL = { verbandId: 100, statisticType: 0, geschlecht: 'männlich' };
-
-    it('marks a men’s Liga of the Bundesligen without Spielberichte (BBL, ProA, ProB)', () => {
-      expect(
-        mapGameDetails(withLigaData(cancelled, BBL)).league
-          .resultsNeverConfirmed
-      ).toBe(true);
-    });
+    const BBL = {
+      verbandId: 100,
+      akName: 'Senioren',
+      geschlecht: 'männlich',
+      statisticType: 0,
+    };
 
     it.each([
-      ['statisticType 0 of a Landesverband', { ...BBL, verbandId: 2 }],
+      ['statisticType 0', BBL],
+      ['statisticType 1', { ...BBL, statisticType: 1 }],
+      ['a null statisticType', { ...BBL, statisticType: null }],
+    ])(
+      'marks a men’s Senioren Liga of the Bundesligen (BBL, ProA, ProB, BBL-Pokal) with %s',
+      (_case, fields) => {
+        expect(
+          mapGameDetails(withLigaData(cancelled, fields)).league
+            .resultsNeverConfirmed
+        ).toBe(true);
+      }
+    );
+
+    it.each([
+      [
+        'a men’s Senioren Liga of a Landesverband without Spielberichte',
+        { ...BBL, verbandId: 2 },
+      ],
       [
         'a women’s Liga of the Bundesligen (DBBL-Pokal Top4)',
         { ...BBL, geschlecht: 'weiblich' },
       ],
-      ['statisticType 1 of the Bundesligen', { ...BBL, statisticType: 1 }],
-      ['a null statisticType', { ...BBL, statisticType: null }],
+      [
+        'a men’s youth Liga of the Bundesligen (NBBL)',
+        { ...BBL, akName: 'U19', statisticType: 1 },
+      ],
     ])('leaves it out for %s', (_case, fields) => {
       expect(
         mapGameDetails(withLigaData(cancelled, fields)).league
