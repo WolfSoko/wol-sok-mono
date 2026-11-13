@@ -55,8 +55,8 @@ function workspaceFederation(config) {
     // keep their common code (`@firebase/app`, `/util`, `/installations`, ...)
     // in internal `@nf-internal/chunk-*` files that only they import, so a
     // `chunk-*` holding it is part of the shared bundles, not a duplicate
-    // (#3063). Skipped, it would put a second `@firebase/app` registry into
-    // an app's own code.
+    // (#3063). Nothing outside those bundles imports `@firebase/*` by name,
+    // so neither sharing nor skipping it would change the output.
     skip: [
       'rxjs/ajax',
       'rxjs/fetch',

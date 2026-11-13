@@ -16,7 +16,7 @@ Find out whether the `chunk-*` files of `bacteria-game-remote`'s federation buil
 
 ## Decisions
 
-- **No change to sharing or skipping.** Sharing `@firebase/*` would add entries nothing imports by name (esbuild resolves them inside the shared build), and skipping them would bundle a second `@firebase/app` into the remote's code, whose component registry the shared `firebase/*` entries would not see.
+- **No change to sharing or skipping.** The `@firebase/*` packages are no root dependencies, so `fromPackageJson()` never shares them, and no source outside the shared `firebase/*` bundles imports them by name: a `shared` or `skip` entry for them would change nothing.
 - **Write the finding down where the next measurement looks**: a bullet in `CLAUDE.md`'s Native Federation section and a comment in `workspace-federation.js`, so a `chunk-*` holding a shared package's code is not taken for a duplicate again.
 
 ## Non-goals
