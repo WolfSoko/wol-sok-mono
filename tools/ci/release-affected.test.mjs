@@ -25,12 +25,14 @@ const INPUTS = {
   portfolio: ['apps/portfolio/src/main.ts', 'libs/shared/legal/index.ts'],
 };
 
-const ROOTS = {
-  wolsok: '.',
-  pacetrainer: 'apps/pacetrainer',
-  korbjaeger: 'apps/korbjaeger',
-  portfolio: 'apps/portfolio',
-  'shared-legal': 'libs/shared/legal',
+const PROJECTS = {
+  wolsok: { root: '.', dependencies: [] },
+  pacetrainer: { root: 'apps/pacetrainer', dependencies: ['tools-federation'] },
+  korbjaeger: { root: 'apps/korbjaeger', dependencies: ['shared-legal'] },
+  portfolio: { root: 'apps/portfolio', dependencies: ['shared-legal'] },
+  'shared-legal': { root: 'libs/shared/legal', dependencies: [] },
+  tools: { root: 'tools', dependencies: [] },
+  'tools-federation': { root: 'tools/federation', dependencies: [] },
 };
 
 function select(changedFiles, deletedFiles = []) {
@@ -39,7 +41,7 @@ function select(changedFiles, deletedFiles = []) {
     changedFiles,
     deletedFiles,
     inputsOf: (project) => new Set(INPUTS[project]),
-    projectRoots: ROOTS,
+    projects: PROJECTS,
   }).selected;
 }
 
@@ -103,6 +105,24 @@ void describe('selectReleaseAffected', () => {
     assert.deepEqual(select([], ['apps/pacetrainer/src/old.ts']), [
       'pacetrainer',
     ]);
+    // No dependency on tools: only the read file under its root keeps one.
+    assert.deepEqual(
+      selectReleaseAffected({
+        candidates: ['pacetrainer', 'portfolio'],
+        changedFiles: [],
+        deletedFiles: ['tools/old.mjs'],
+        inputsOf: (project) =>
+          new Set([
+            ...INPUTS[project],
+            ...(project === 'portfolio' ? ['tools/x.mjs'] : []),
+          ]),
+        projects: PROJECTS,
+      }).reasons,
+      {
+        pacetrainer: 'reads none of the changed files',
+        portfolio: 'reads tools/, where tools/old.mjs was deleted',
+      }
+    );
     assert.deepEqual(
       select(['firebase.pacetrainer.json'], ['apps/portfolio/src/old.ts']),
       ['pacetrainer', 'portfolio']
@@ -118,13 +138,21 @@ void describe('selectReleaseAffected', () => {
     ]);
   });
 
-  void it("keeps Nx's verdict where the project roots could not be read", () => {
+  // Its only file it read is gone, so it reads nothing there any more; its
+  // dependency on the owner keeps it, as Nx's own affected does.
+  void it('keeps a dependent of the owner that read only the deleted file', () => {
+    assert.deepEqual(select([], ['tools/federation/workspace-federation.js']), [
+      'pacetrainer',
+    ]);
+  });
+
+  void it("keeps Nx's verdict where the project graph could not be read", () => {
     const { selected } = selectReleaseAffected({
       candidates: Object.keys(INPUTS),
       changedFiles: [],
       deletedFiles: ['apps/pacetrainer/src/old.ts'],
       inputsOf: (project) => new Set(INPUTS[project]),
-      projectRoots: undefined,
+      projects: undefined,
     });
     assert.deepEqual(selected, Object.keys(INPUTS));
   });
@@ -135,11 +163,11 @@ void describe('selectReleaseAffected', () => {
       changedFiles: [],
       deletedFiles: ['libs/shared/legal/src/old.ts'],
       inputsOf: (project) => new Set(INPUTS[project]),
-      projectRoots: ROOTS,
+      projects: PROJECTS,
     });
     assert.deepEqual(reasons, {
       korbjaeger:
-        'reads libs/shared/legal/, where libs/shared/legal/src/old.ts was deleted',
+        'depends on shared-legal, where libs/shared/legal/src/old.ts was deleted',
       pacetrainer: 'reads none of the changed files',
     });
   });

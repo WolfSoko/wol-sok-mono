@@ -31,10 +31,10 @@ the deletion.
   excluding specs, say). The resolved input sets name files, not globs, so a
   deleted spec still counts for a candidate reading its project's sources.
   That over-selects a little. It under-selects only where a candidate's glob
-  reached into the owner for the deleted files alone and nothing else in the
-  range changed (say all of `tools/version-handling/**` deleted with no edit
-  to the command reading it): the change that stops using such files keeps
-  the candidate in practice.
+  reached into a project it does not depend on for the deleted files alone
+  and nothing else in the range changed (say all of `tools/version-handling/**`
+  deleted with no edit to the command reading it): the change that stops
+  using such files keeps the candidate in practice.
 - Changing how renames, root files or `tsconfig.base.json` count.
 
 ## Decisions
@@ -44,11 +44,17 @@ the deletion.
   its path ending at a `/`: `tools/federation/x.js` is `tools-federation`'s,
   not `tools`'. The root project `wolsok` (root `.`) owns nothing, else every
   file would have an owner.
-- **A deletion counts for a candidate reading a file under its owner's
-  root.** The candidate's resolved inputs (its task and the tasks it depends
-  on, as today) list the owner's remaining files exactly where its globs
-  reach into the owner, which is what the issue's `{projectRoot}/**` stands
-  for. The reason reads `reads <root>/, where <file> was deleted`.
+- **A deletion counts for the owner, its dependents, and a candidate reading
+  a file under the owner's root.** The owner and every project depending on
+  it (directly or not, in the project graph) are what Nx itself counts
+  affected for the file; the read files cover a task whose globs reach into
+  the owner without a dependency (`{workspaceRoot}/tools/…`), which is what
+  the issue's `{projectRoot}/**` stands for. The dependency also keeps a
+  dependent that read only the deleted file (the `federation` named input
+  reads `tools/federation/workspace-federation.js` alone, CodeRabbit on
+  #3081). The reasons read `<file> was deleted from it`, `depends on
+  <owner>, where <file> was deleted` and `reads <root>/, where <file> was
+  deleted`.
 - **Nx's verdict stays for a deletion without an owner**: a file at the
   workspace root or outside every project, or one of a project gone at the
   head (a whole lib deleted, so no root at the head holds it). A deleted
@@ -56,15 +62,15 @@ the deletion.
   a removed nested project (`tools/vite`) would fall to the enclosing root
   (`tools`), which its readers need not read. Conservative, as before.
 - **The project roots are read only when something was deleted**, through
-  one `nx graph --file=<tmp>.json`; a failing read keeps Nx's verdict, as a
+  one `nx graph --file=<tmp>.json` (roots and dependencies); a failing read keeps Nx's verdict, as a
   failing input read does today.
-- The pure `selectReleaseAffected` takes the roots as `projectRoots`
-  (project to root), so its specs need no Nx.
+- The pure `selectReleaseAffected` takes the graph as `projects`
+  (project to root and direct dependencies), so its specs need no Nx.
 
 ## Acceptance
 
-1. A file deleted under a project's root keeps only the candidates whose
-   inputs hold a file under that root; the others are dropped unless a
+1. A file deleted under a project's root keeps only the owner, its
+   dependents and the candidates whose inputs hold a file under that root; the others are dropped unless a
    changed file keeps them.
 2. A file deleted outside every project root (or under `.` only) keeps Nx's
    verdict for every candidate.
