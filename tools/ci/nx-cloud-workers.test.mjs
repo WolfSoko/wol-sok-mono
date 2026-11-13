@@ -110,7 +110,13 @@ function scriptOf(step) {
   const header = step.findIndex((line) => line.startsWith('script:'));
   if (header < 0) return undefined;
   const inline = step[header].slice('script:'.length).trim();
-  return /^[|>]/.test(inline) ? step.slice(header + 1) : [inline];
+  // A folded block (`>`) joins its lines into one command, so `set -eu` would
+  // swallow the rest as arguments.
+  assert.ok(
+    !inline.startsWith('>'),
+    `${WORKERS} must write an inline script as a literal block (\`script: |\`)`
+  );
+  return inline.startsWith('|') ? step.slice(header + 1) : [inline];
 }
 
 function stepNamed(lines, name) {
