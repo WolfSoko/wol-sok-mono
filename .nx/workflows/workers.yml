@@ -10,6 +10,12 @@ launch-templates:
       HUSKY: 0
       NODE_OPTIONS: '--max_old_space_size=4096'
 
+    # Every inline script starts with POSIX `set -eu` (#2974, #3067): Nx Cloud
+    # documents neither the shell nor fail-fast for inline scripts, so without
+    # it a failed command (an apt-get install, npm install, an emulator
+    # download) could pass the step and only show later in a task; `set -o
+    # pipefail` would fail every step under dash.
+    # tools/ci/nx-cloud-workers.test.mjs keeps it on every inline script.
     init-steps:
       - name: Checkout # using a reusable step
         uses: 'nrwl/nx-cloud-workflows/v6/workflow-steps/checkout/main.yaml'
@@ -22,8 +28,10 @@ launch-templates:
 
       - name: Install necessary binaries
         script: |
-
-          echo "node version used: $(node -v)"
+          set -eu
+          # On a line of its own, so `set -e` stops on a missing node.
+          echo "node version used:"
+          node -v
 
           # Not reduced to the Playwright libraries and the JDK: without these the
           # bacteria-game-remote e2e server never comes up on the workers
@@ -47,18 +55,16 @@ launch-templates:
 
       - name: Install Node Modules
         script: |
+          set -eu
           npm install
 
       # Before any task: the Firebase CLI downloads an emulator on first use
       # with a non-atomic copy, so a second emulator task on the same worker
       # started Java on the partial jar and failed within seconds (#2960).
       # After npm install, so the locked CLI picks the jar versions.
-      # Fails on the first failed download (#2974): Nx Cloud documents neither
-      # fail-fast nor the shell for inline scripts (hence POSIX `set -eu`), and
-      # a step that passed without the jar would leave the download, and its
-      # race, to the first emulator task.
-      # tools/ci/nx-cloud-workers.test.mjs keeps this list complete and the
-      # step failing fast.
+      # A step that passed without the jar would leave the download, and its
+      # race, to the first emulator task (#2974).
+      # tools/ci/nx-cloud-workers.test.mjs keeps this list complete.
       - name: Download the Firebase emulators
         script: |
           set -eu

@@ -11,7 +11,8 @@ const WORKERS = '.nx/workflows/workers.yml';
 const CI_CONFIG = '.nx/ci-config.yaml';
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
 const DOWNLOAD_STEP = 'Download the Firebase emulators';
-// POSIX, since Nx Cloud documents no shell for inline scripts: a dash would
+// Every inline init script starts with it (#2974, #3067). POSIX, since Nx Cloud
+// documents neither the shell nor fail-fast for inline scripts: a dash would
 // stop on `set -o pipefail` itself.
 const FAIL_FAST = 'set -eu';
 const DOWNLOAD_COMMAND = 'npx firebase setup:emulators:';
@@ -83,18 +84,48 @@ function executableLines(yaml) {
     .filter((line) => line !== '' && !line.startsWith('#'));
 }
 
-// The script of one init step: where its name stands among the template's
-// executable lines, and the commands below its `script:` header.
-function stepScript(lines, name) {
-  const start = lines.indexOf(`- name: ${name}`);
-  assert.ok(start >= 0, `${WORKERS} has no step "${name}"`);
-  const next = lines.findIndex(
-    (line, index) => index > start && line.startsWith('- name:')
-  );
-  const step = lines.slice(start + 1, next < 0 ? undefined : next);
+// The template's init steps: each starts at a list item (`- `, or a bare `-`
+// on its own line), whichever key
+// comes first, so no step hides inside the one before it. `start` is the
+// step's index among the executable lines; `script` holds the commands of an
+// inline script (a block below `script: |` or a one-line `script: …`), or is
+// undefined for a reusable step.
+function initSteps(lines) {
+  const steps = [];
+  lines.forEach((line, index) => {
+    if (line === '-' || line.startsWith('- '))
+      steps.push({ start: index, lines: [] });
+    steps
+      .at(-1)
+      ?.lines.push(index === steps.at(-1).start ? line.slice(2) : line);
+  });
+  return steps.map(({ start, lines: step }) => ({
+    start,
+    name: step
+      .find((line) => line.startsWith('name:'))
+      ?.match(/^name:\s*(.*?)(?:\s+#.*)?$/)[1],
+    script: scriptOf(step),
+  }));
+}
+
+function scriptOf(step) {
   const header = step.findIndex((line) => line.startsWith('script:'));
-  assert.ok(header >= 0, `"${name}" in ${WORKERS} has no script`);
-  return { start, commands: step.slice(header + 1) };
+  if (header < 0) return undefined;
+  const inline = step[header].slice('script:'.length).trim();
+  // A folded block (`>`) joins its lines into one command, so `set -eu` would
+  // swallow the rest as arguments.
+  assert.ok(
+    !inline.startsWith('>'),
+    `${WORKERS} must write an inline script as a literal block (\`script: |\`)`
+  );
+  return inline.startsWith('|') ? step.slice(header + 1) : [inline];
+}
+
+function stepNamed(lines, name) {
+  const step = initSteps(lines).find((candidate) => candidate.name === name);
+  assert.ok(step, `${WORKERS} has no step "${name}"`);
+  assert.ok(step.script, `"${name}" in ${WORKERS} has no script`);
+  return step;
 }
 
 function stopAfterTargets() {
@@ -118,7 +149,7 @@ void describe('Nx Cloud workers', () => {
     const lines = executableLines(read(WORKERS));
     const install = lines.indexOf('npm install');
     assert.ok(install >= 0, `${WORKERS} runs no npm install`);
-    const { start, commands } = stepScript(lines, DOWNLOAD_STEP);
+    const { start, script: commands } = stepNamed(lines, DOWNLOAD_STEP);
     assert.ok(
       start > install,
       `"${DOWNLOAD_STEP}" in ${WORKERS} must come after npm install`
@@ -131,14 +162,27 @@ void describe('Nx Cloud workers', () => {
     }
   });
 
-  void it('download the emulators only in a step that stops on the first failed download', () => {
-    const lines = executableLines(read(WORKERS));
-    const { commands } = stepScript(lines, DOWNLOAD_STEP);
-    assert.equal(
-      commands[0],
-      FAIL_FAST,
-      `"${DOWNLOAD_STEP}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
+  void it('start every inline init script by stopping on its first failed command', () => {
+    const steps = initSteps(executableLines(read(WORKERS))).filter(
+      (step) => step.script
     );
+    assert.ok(
+      steps.some((step) => step.name === DOWNLOAD_STEP),
+      `${WORKERS} has no inline step "${DOWNLOAD_STEP}"`
+    );
+    for (const { name, script } of steps) {
+      assert.ok(name, `${WORKERS} has an inline init step without a name`);
+      assert.equal(
+        script[0],
+        FAIL_FAST,
+        `"${name}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
+      );
+    }
+  });
+
+  void it('download the emulators only in the download step', () => {
+    const lines = executableLines(read(WORKERS));
+    const { script: commands } = stepNamed(lines, DOWNLOAD_STEP);
     const everywhere = lines.filter((line) =>
       line.startsWith(DOWNLOAD_COMMAND)
     );
