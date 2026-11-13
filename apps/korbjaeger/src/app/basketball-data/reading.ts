@@ -5,9 +5,9 @@ import { older, type AsOf } from './as-of';
  * One read as a screen makes it (`basketballDataResource`), which the
  * transport tells what it did:
  * - an answer of the proxy it would keep (`defer`): kept only once the
- *   read could map it (`abschliessen`), so an answer the adapter refuses
+ *   read could map it (`complete`), so an answer the adapter refuses
  *   never replaces the last good one;
- * - an answer it took from the last good ones instead (`ersetzt`): the
+ * - an answer it took from the last good ones instead (`replaced`): the
  *   read's `asOf`, the oldest where it took several.
  */
 export class Reading {

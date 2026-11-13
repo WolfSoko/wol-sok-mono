@@ -44,9 +44,9 @@ export interface ProxyRoute<K extends ProxyKind> extends AnyProxyRoute {
 
 /** The query parameters of the Liga search, one per filter list. */
 const FILTER_PARAMS = {
-  verband: 'verband',
-  altersklasse: 'altersklasse',
-  geschlecht: 'geschlecht',
+  association: 'verband',
+  ageGroup: 'altersklasse',
+  gender: 'geschlecht',
 } as const;
 
 /** The query parameter of a later page's start index. */
@@ -205,15 +205,15 @@ function filterOf(
   if ([...query.keys()].some((key) => !known.has(key))) {
     return undefined;
   }
-  const associationIds = dbbIdsOf(query.getAll(FILTER_PARAMS.verband));
-  const ageGroupIds = dbbIdsOf(query.getAll(FILTER_PARAMS.altersklasse));
+  const associationIds = dbbIdsOf(query.getAll(FILTER_PARAMS.association));
+  const ageGroupIds = dbbIdsOf(query.getAll(FILTER_PARAMS.ageGroup));
   if (associationIds === undefined || ageGroupIds === undefined) {
     return undefined;
   }
   return {
     associationIds,
     ageGroupIds,
-    ageGroupGenderIds: query.getAll(FILTER_PARAMS.geschlecht),
+    ageGroupGenderIds: query.getAll(FILTER_PARAMS.gender),
   };
 }
 
@@ -244,9 +244,12 @@ function validOrUndefined<R extends DbbRequest>(request: R): R | undefined {
 
 function filterQuery(filter: LeagueSearchFilter): URLSearchParams {
   return new URLSearchParams([
-    ...filter.associationIds.map((id) => [FILTER_PARAMS.verband, String(id)]),
-    ...filter.ageGroupIds.map((id) => [FILTER_PARAMS.altersklasse, String(id)]),
-    ...filter.ageGroupGenderIds.map((id) => [FILTER_PARAMS.geschlecht, id]),
+    ...filter.associationIds.map((id) => [
+      FILTER_PARAMS.association,
+      String(id),
+    ]),
+    ...filter.ageGroupIds.map((id) => [FILTER_PARAMS.ageGroup, String(id)]),
+    ...filter.ageGroupGenderIds.map((id) => [FILTER_PARAMS.gender, id]),
   ]);
 }
 

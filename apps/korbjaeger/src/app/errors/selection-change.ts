@@ -6,7 +6,7 @@ export interface SelectionChange {
   /** The text of the last change's failure; none while it succeeded. */
   readonly error: Signal<string | undefined>;
   /**
-   * Runs `aenderung`, clearing the last failure first; resolves with
+   * Runs `change`, clearing the last failure first; resolves with
    * whether it succeeded (never rejects).
    */
   run(change: () => Promise<void>): Promise<boolean>;

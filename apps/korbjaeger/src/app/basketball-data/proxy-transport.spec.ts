@@ -390,13 +390,13 @@ describe('proxyTransport', () => {
     ] as const)(
       'answers a read that fails as %s from the last good answer, with when it came',
       async (reason, afterwards) => {
-        const { proxy, answer: answers } = proxyWith();
+        const { proxy, answer } = proxyWith();
         const { data, readAnswer, later } = transportWith(
           proxy,
           new RememberedAnswers()
         );
         const fresh = await readAnswer((o) => data.teamGames(313036, o));
-        answers(afterwards);
+        answer(afterwards);
         later(7_200_000);
 
         const stale = await readAnswer((o) => data.teamGames(313036, o));

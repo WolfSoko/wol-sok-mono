@@ -59,7 +59,7 @@ const STRING_OR_COMMENT =
 function withoutComments(style: string): string {
   return style.replace(
     STRING_OR_COMMENT,
-    (_hits, stringLiteral?: string) => stringLiteral ?? ''
+    (_match, stringLiteral?: string) => stringLiteral ?? ''
   );
 }
 

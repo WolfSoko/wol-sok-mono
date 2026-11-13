@@ -30,7 +30,7 @@ import {
   APP_RULES,
   emulatorProject,
   withoutRules,
-  seed as vorhandenIn,
+  seed,
 } from './testing/firestore-emulator';
 
 /**
@@ -73,14 +73,13 @@ const selectionOf = (firestore: Firestore, uid: string) =>
   doc(firestore, CHOICES_COLLECTION, uid);
 
 /** Writes past the rules, as an earlier write did. */
-const existing = (uid: string, data: object = VALID) =>
-  vorhandenIn(env, uid, data);
+const existing = (uid: string, data: object = VALID) => seed(env, uid, data);
 
 /** Whether the owner may store `data` as their Auswahl. */
 const save = (data: object) => setDoc(selectionOf(db(PARENT), PARENT), data);
 
-const numbers = (count: number, ab = 100): number[] =>
-  Array.from({ length: count }, (_, i) => ab + i);
+const numbers = (count: number, from = 100): number[] =>
+  Array.from({ length: count }, (_, i) => from + i);
 
 /** `count` Teams, keyed by id, each followed since its place. */
 const teamsOf = (count: number): Record<string, number> =>
