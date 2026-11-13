@@ -231,7 +231,11 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run {projectName}:firebase deploy --only hosting,firestore,database"
+        "commands": [
+          "nx run {projectName}:firebase deploy --only hosting,firestore,database",
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.bacteria-game-remote.json https://bacteria-wars.wolsok.de/"
+        ],
+        "parallel": false
       }
     },
     "icons": {

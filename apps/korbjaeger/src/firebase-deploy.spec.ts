@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { configMatcher } from 'superstatic/lib/utils/patterns';
 import { DELETED_ACCOUNTS_COLLECTION } from '@wolsok/feat-shared-korbjaeger-account';
 import { FUNCTION_REGION } from './shared/function-region';
+import { SITE_URL } from './shared/site';
 import {
   assertDeployableBuild,
   buildKonfigurationMerken,
@@ -77,6 +78,11 @@ const FIREBASE =
  */
 const RETRIED = `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts ${FIREBASE}`;
 const DEPLOY = `${RETRIED} deploy --only functions:default,hosting,firestore:rules,firestore:indexes --non-interactive`;
+/**
+ * After the deploy, the live site must serve the built index.html, so a
+ * Hosting release that never went live fails the release (#3073).
+ */
+const LIVE_CHECK = `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.korbjaeger.json ${SITE_URL}/`;
 
 describe('the Firebase deploy', () => {
   // a development or e2e build offers the sign-in and talks to the local
@@ -175,7 +181,7 @@ describe('the Firebase deploy', () => {
     });
   });
 
-  // DEPLOY, the deploy's last command, takes both (see below)
+  // DEPLOY, the deploy's Firebase command, takes both (see below)
   it("deploys the app's Firestore rules and indexes with it, the ones its emulator specs test", () => {
     expect(config.firestore).toEqual({
       rules: 'apps/korbjaeger/firestore.rules',
@@ -220,7 +226,13 @@ describe('the Firebase deploy', () => {
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
 
     expect(project.targets['firebase'].options.command).toBe(FIREBASE);
-    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(DEPLOY);
+    expect(project.targets['deploy'].options.commands?.at(-2)).toBe(DEPLOY);
+  });
+
+  it('checks after the deploy that the public domain serves the built index.html', () => {
+    const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
+
+    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(LIVE_CHECK);
   });
 
   /**
@@ -241,6 +253,7 @@ describe('the Firebase deploy', () => {
     expect(commands?.slice(1)).toEqual([
       `${RETRIED} functions:artifacts:setpolicy --location=${region} --days=1 --force`,
       DEPLOY,
+      LIVE_CHECK,
     ]);
   });
 

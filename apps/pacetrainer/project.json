@@ -97,7 +97,11 @@
       ],
       "dependsOn": ["build"],
       "options": {
-        "command": "nx run {projectName}:firebase deploy"
+        "commands": [
+          "nx run {projectName}:firebase deploy",
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.pacetrainer.json https://pace-trainer.com/"
+        ],
+        "parallel": false
       }
     }
   }
