@@ -116,7 +116,7 @@ const WITHOUT_REPORT: ReportRead = async () => undefined;
 const NEVER_REPORT = new Promise<never>(() => undefined);
 
 /** What a Kind's card says where not every Team could be read. */
-const VIELLEICHT_MEHR =
+const MAYBE_MORE =
   'Nicht alles zu deinen Teams ließ sich lesen: Vielleicht spielt dein Kind noch in einem weiteren.';
 
 /** A Verein whose recent Spiele show no Team. */
@@ -238,7 +238,7 @@ function part(entry: HTMLElement, name: string): HTMLElement | null {
   return entry.querySelector<HTMLElement>(`[data-qa="overview-${name}"]`);
 }
 
-function teamNamen(page: HTMLElement): (string | undefined)[] {
+function teamNames(page: HTMLElement): (string | undefined)[] {
   return entries(page).map((entry) => text(part(entry, 'name')));
 }
 
@@ -274,7 +274,7 @@ describe('OverviewComponent', () => {
       fakeData([season(WASBUETTEL)]),
       sitzung.auswahl
     );
-    expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+    expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
 
     dienst.lesefehler?.({ code: 'unavailable' });
     await settled();
@@ -467,7 +467,7 @@ describe('OverviewComponent', () => {
       [OESINGEN.id, GIFHORN.id, WASBUETTEL.id, WASBUETTEL_U14.id]
     );
 
-    expect(teamNamen(page)).toEqual([
+    expect(teamNames(page)).toEqual([
       'MTV Wasbüttel U14',
       'MTV Wasbüttel',
       'MTV Gifhorn',
@@ -697,7 +697,7 @@ describe('OverviewComponent', () => {
       await selection.unfollow(OESINGEN.id);
       await settled();
 
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel', 'MTV Gifhorn']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel', 'MTV Gifhorn']);
       expect(data.teamGames.mock.calls.map(([teamId]) => teamId)).toEqual([
         WASBUETTEL.id,
         OESINGEN.id,
@@ -758,12 +758,12 @@ describe('OverviewComponent', () => {
         },
         [WASBUETTEL.id, GIFHORN.id]
       );
-      expect(teamNamen(page)[0]).toBe('MTV Wasbüttel');
+      expect(teamNames(page)[0]).toBe('MTV Wasbüttel');
 
       loadGifhorn(season(GIFHORN, game(GIFHORN, OESINGEN, '2026-11-14')));
       await settled();
 
-      expect(teamNamen(page)).toEqual(['MTV Gifhorn', 'MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Gifhorn', 'MTV Wasbüttel']);
     });
 
     /** The card's control to unfollow its Team. */
@@ -795,7 +795,7 @@ describe('OverviewComponent', () => {
       await settled();
 
       expect(selection.teams()).toEqual([WASBUETTEL.id]);
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
     });
 
     it('unfollows a Team that loaded from its card, offering to undo it', async () => {
@@ -814,7 +814,7 @@ describe('OverviewComponent', () => {
       await settled();
 
       expect(selection.teams()).toEqual([GIFHORN.id]);
-      expect(teamNamen(page)).toEqual(['MTV Gifhorn']);
+      expect(teamNames(page)).toEqual(['MTV Gifhorn']);
       // focus stays on the overview, not on the page's body
       expect(document.activeElement?.textContent?.trim()).toBe('Meine Teams');
       const bar = await bars.getHarness(MatSnackBarHarness);
@@ -993,7 +993,7 @@ describe('OverviewComponent', () => {
   });
 
   describe('the Kinder', () => {
-    function benannt(personId: number, firstName: string): NamedPlayer {
+    function namedPlayer(personId: number, firstName: string): NamedPlayer {
       return {
         kind: 'named',
         personId,
@@ -1002,9 +1002,9 @@ describe('OverviewComponent', () => {
       };
     }
 
-    const LUMI = benannt(4711, 'Lumi');
-    const MORVO = benannt(4712, 'Morvo');
-    const NELKA = benannt(4713, 'Nelka');
+    const LUMI = namedPlayer(4711, 'Lumi');
+    const MORVO = namedPlayer(4712, 'Morvo');
+    const NELKA = namedPlayer(4713, 'Nelka');
 
     /**
      * Spielberichte by Spiel: the home Kader as given, an Anonymer Spieler
@@ -1036,8 +1036,8 @@ describe('OverviewComponent', () => {
       children: readonly (readonly [NamedPlayer, string?])[]
     ): Promise<LocalSelection> {
       const selection = await following(teams);
-      for (const [player, spitzname] of children) {
-        await selection.mark(player, spitzname);
+      for (const [player, nickname] of children) {
+        await selection.mark(player, nickname);
       }
       return selection;
     }
@@ -1094,7 +1094,7 @@ describe('OverviewComponent', () => {
       expect(text(page.querySelector('[data-qa="overview-others"]'))).toBe(
         'Weitere Teams'
       );
-      expect(teamNamen(page)).toEqual(['SV Groß Oesingen']);
+      expect(teamNames(page)).toEqual(['SV Groß Oesingen']);
     });
 
     it('offers to search a further Team after the Kind, where every Team is its', async () => {
@@ -1113,7 +1113,7 @@ describe('OverviewComponent', () => {
         await withChildren([WASBUETTEL.id], [[LUMI, 'Lu']])
       );
 
-      expect(teamNamen(page)).toEqual([]);
+      expect(teamNames(page)).toEqual([]);
       const [lumi] = childSections(page);
       const links =
         page.querySelectorAll<HTMLAnchorElement>('a[href="/suchen"]');
@@ -1217,7 +1217,7 @@ describe('OverviewComponent', () => {
       expect(text(part(lumi, 'last'))).toContain(
         'Letztes Ergebnis · MTV Wasbüttel U14'
       );
-      expect(teamNamen(page)).toEqual([]);
+      expect(teamNames(page)).toEqual([]);
       expect(page.querySelector('[data-qa="overview-others"]')).toBeNull();
     });
 
@@ -1319,7 +1319,7 @@ describe('OverviewComponent', () => {
       expect(text(part(lumi, 'child-missing'))).toContain(
         'In den letzten Spielberichten deiner Teams steht dieses Kind nicht.'
       );
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
     });
 
     it('puts a Team among the others once the Kind missed its last 5 played Spiele', async () => {
@@ -1354,7 +1354,7 @@ describe('OverviewComponent', () => {
         expect.anything()
       );
       expect(childNames(page)).toEqual(['Mein Kind']);
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
     });
 
     it('finds the Kind in the fifth played Spiel back', async () => {
@@ -1409,7 +1409,7 @@ describe('OverviewComponent', () => {
       expect(text(part(lumi, 'child-missing'))).toBe(
         'Die Spiele deiner Teams lassen sich gerade nicht alle lesen.'
       );
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
     });
 
     it('lists a Team among the others while its Kader is still read', async () => {
@@ -1431,7 +1431,7 @@ describe('OverviewComponent', () => {
       const [lumi] = childSections(page);
       expect(lumi.querySelector('mat-progress-bar')).not.toBeNull();
       expect(part(lumi, 'child-missing')).toBeNull();
-      expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+      expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
     });
 
     it("ends the search of a Team whose Saison can't be read, the Kind's card saying why", async () => {
@@ -1476,11 +1476,11 @@ describe('OverviewComponent', () => {
           WITHOUT_TEAMS,
           reports({ [PLAYED_GAME.id]: [LUMI, MORVO] })
         );
-        const gerendert = await render(
+        const rendered = await render(
           data,
           await withChildren([WASBUETTEL.id], [[LUMI, 'Lu']])
         );
-        return { data, ...gerendert };
+        return { data, ...rendered };
       }
 
       function showsLumi(page: HTMLElement): void {
@@ -1499,7 +1499,7 @@ describe('OverviewComponent', () => {
 
         showsLumi(page);
         expect(childNames(page)).toEqual(['Lu', MY_CHILD]);
-        expect(teamNamen(page)).toEqual([]);
+        expect(teamNames(page)).toEqual([]);
       });
 
       it('keeps what was found where a search run again fails as a whole', async () => {
@@ -1515,7 +1515,7 @@ describe('OverviewComponent', () => {
         await settled();
 
         showsLumi(page);
-        expect(teamNamen(page)).toEqual([]);
+        expect(teamNames(page)).toEqual([]);
       });
 
       it('reads nothing again when a Kind is unmarked', async () => {
@@ -1560,7 +1560,7 @@ describe('OverviewComponent', () => {
 
       const [lumi] = childSections(page);
       expect(text(part(lumi, 'child-teams'))).toBe('MTV Wasbüttel');
-      expect(text(part(lumi, 'child-incomplete'))).toBe(VIELLEICHT_MEHR);
+      expect(text(part(lumi, 'child-incomplete'))).toBe(MAYBE_MORE);
     });
 
     it("says a Kind's Teams may be more where another Team's Saison can't be read", async () => {
@@ -1586,7 +1586,7 @@ describe('OverviewComponent', () => {
       );
 
       expect(text(part(childSections(page)[0], 'child-incomplete'))).toBe(
-        VIELLEICHT_MEHR
+        MAYBE_MORE
       );
     });
 
@@ -1683,7 +1683,7 @@ describe('OverviewComponent', () => {
       await settled();
 
       expect(childNames(page)).toEqual(['Lu']);
-      expect(teamNamen(page)).toEqual([]);
+      expect(teamNames(page)).toEqual([]);
     });
 
     describe('while no Kind is marked', () => {
@@ -1702,7 +1702,7 @@ describe('OverviewComponent', () => {
         expect(hint(page)).toBe(
           'Dein Kind kannst du markieren, sobald es nach seinem ersten Spiel in einem Spielbericht steht. Öffne dann das Spiel und markiere es im Kader.'
         );
-        expect(teamNamen(page)).toEqual(['MTV Wasbüttel']);
+        expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
       });
 
       it('asks to open a played Spiel once a Team has played', async () => {
