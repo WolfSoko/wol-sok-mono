@@ -12,6 +12,7 @@ import {
   switchMap,
   take,
   takeUntil,
+  takeWhile,
 } from 'rxjs';
 import {
   addSeriesMatch,
@@ -258,39 +259,37 @@ export class GameStateService {
   public startMatch(arena: { width: number; height: number }): void {
     this.cleanup();
     this.init(arena.width, arena.height);
-    if (this.countdownSeconds <= 0) {
-      this.start();
-      return;
-    }
-    if (this.setUpMatch(GameState.COUNTDOWN)) {
-      this.countDown(this.countdownSeconds);
+    const seconds = Math.max(0, this.countdownSeconds);
+    if (this.setUpMatch(seconds)) {
+      this.countDown(seconds);
     }
   }
 
   /**
    * Counts the match set up down to its first tick, a second a number. The
    * match runs only from the countdown: a reset, a quit or a forfeit
-   * meanwhile took the state elsewhere, and the count changes nothing then.
-   * Part of the match's subscriptions, so `cleanup` stops it too.
+   * meanwhile took the state elsewhere, which ends the count. Part of the
+   * match's subscriptions, so `cleanup` stops it too.
    */
   private countDown(seconds: number): void {
-    this.gameStateStore.update({ countdown: seconds });
     this.subscriptions?.add(
       interval(COUNTDOWN_STEP_MS)
-        .pipe(take(seconds))
-        .subscribe((step) => {
-          if (
-            this.gameStateStore.snapshot().currentState !== GameState.COUNTDOWN
-          ) {
-            return;
-          }
-          const left = seconds - step - 1;
+        .pipe(
+          takeWhile(
+            () =>
+              this.gameStateStore.snapshot().currentState ===
+              GameState.COUNTDOWN
+          ),
+          map((step) => seconds - step - 1),
+          take(seconds)
+        )
+        .subscribe((left) =>
           this.gameStateStore.update(
             left > 0
               ? { countdown: left }
               : { countdown: null, currentState: GameState.RUNNING }
-          );
-        })
+          )
+        )
     );
   }
 
@@ -851,15 +850,15 @@ export class GameStateService {
    * match alone, for callers that advance it themselves (the specs).
    */
   public start(): void {
-    this.setUpMatch(GameState.RUNNING);
+    this.setUpMatch(0);
   }
 
   /**
-   * Sets the next match up and puts it into `state` - running, or counting
+   * Sets the next match up: running at once, or counting `countdownSeconds`
    * down to its first tick. False when there is no match to set up: an
    * online match the other device has left.
    */
-  private setUpMatch(state: GameState.RUNNING | GameState.COUNTDOWN): boolean {
+  private setUpMatch(countdownSeconds: number): boolean {
     // Online wins over a one-match setting still set (see `nextMatch`).
     const next = this.gameStateStore.nextMatch();
     if (next.kind === 'online') {
@@ -888,7 +887,9 @@ export class GameStateService {
     }
     const { inSeries, kind } = this.gameStateStore.matchRules();
     this.gameStateStore.update((current) => ({
-      currentState: state,
+      currentState:
+        countdownSeconds > 0 ? GameState.COUNTDOWN : GameState.RUNNING,
+      countdown: countdownSeconds > 0 ? countdownSeconds : null,
       series: inSeries
         ? nextSeries(current.series, current.seriesLength)
         : null,

@@ -56,7 +56,9 @@ export class HudState {
   /** The number the match counts down from to its start - null outside it. */
   public readonly countdown = this.store.countdownLeft;
   /** True while the match counts down to its first tick. */
-  public readonly countingDown = computed(() => this.countdown() !== null);
+  public readonly countingDown = this.store.isCountingDown;
+  /** True while a match is on and not paused: it plays or counts down. */
+  public readonly underway = computed(() => this.running() && !this.paused());
   /** True while a match is on, not paused and past its countdown: the war plays. */
   public readonly playing = computed(
     () => this.running() && !this.paused() && !this.countingDown()

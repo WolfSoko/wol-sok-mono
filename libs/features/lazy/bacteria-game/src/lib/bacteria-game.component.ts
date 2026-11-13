@@ -175,9 +175,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * of a match.
    */
   private readonly soundtrack = computed<Soundtrack | null>(() => {
-    const { running, playing, countingDown, matchOver, level } = this.hud;
+    const { running, underway, matchOver, level } = this.hud;
     // The level's music starts with the countdown, on the tap.
-    if (playing() || countingDown()) {
+    if (underway()) {
       return levelMusic(level().id);
     }
     const inMenu = !running() && !matchOver() && !this.flow.resetting();

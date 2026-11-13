@@ -238,7 +238,9 @@ describe('PlayFlow', () => {
       const draw = jest.spyOn(TestBed.inject(ArenaStage), 'draw');
       jest
         .spyOn(TestBed.inject(GameStateService), 'startMatch')
-        .mockImplementation(() => undefined);
+        .mockImplementation(() =>
+          store.update({ currentState: GameState.COUNTDOWN, countdown: 3 })
+        );
 
       flow.startGame();
 

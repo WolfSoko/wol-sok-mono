@@ -410,7 +410,9 @@ export class PlayFlow {
     this.stageFrame.newMatch();
     this.gameStateService.startMatch(this.arenaStage.arena());
     // The countdown shows the new match's start, not the last board.
-    this.arenaStage.draw();
+    if (this.hud.countingDown()) {
+      this.arenaStage.draw();
+    }
   }
 
   /** Toggles pause - the touch equivalent of the P key. */

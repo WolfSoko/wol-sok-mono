@@ -63,6 +63,14 @@ export enum GameState {
 }
 
 /**
+ * True while a match is on and not paused: it runs, or counts down to its
+ * first tick - the keys belong to the match then.
+ */
+export function isMatchUnderway(state: GameState): boolean {
+  return state === GameState.RUNNING || state === GameState.COUNTDOWN;
+}
+
+/**
  * True while a match is on - a paused match is still a match, and so is
  * one counting down to its first tick.
  */
@@ -207,6 +215,8 @@ export const GameStateStore = signalStore(
         isMatchOn: computed(() => isMatchOn(currentState())),
         /** True while the match is paused. */
         isPaused: computed(() => currentState() === GameState.PAUSED),
+        /** True while the match counts down to its first tick. */
+        isCountingDown: computed(() => currentState() === GameState.COUNTDOWN),
         /**
          * The seconds the match counts down before it starts - null
          * outside the countdown.
