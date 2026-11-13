@@ -14,7 +14,7 @@ const TIME_OF_DAY = new Intl.DateTimeFormat('de-DE', {
 });
 
 /**
- * How old an answer stored at `gespeichertAm` is at `jetzt` (both ms since
+ * How old an answer stored at `storedAt` is at `now` (both ms since
  * the epoch), as the screens label it: `Stand: vor 2 Std.`.
  */
 export function asOfAge(storedAt: number, now: number): string {

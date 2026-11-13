@@ -80,10 +80,10 @@ class FirebaseKontoDienst implements KontoDienst {
   private firestore?: Promise<Firestore>;
 
   public constructor(private readonly environment: Environment) {
-    const { emulators: emulatoren } = environment;
+    const { emulators } = environment;
     this.app = initializeApp(
-      emulatoren
-        ? { ...environment.firebase, projectId: emulatoren.projectId }
+      emulators
+        ? { ...environment.firebase, projectId: emulators.projectId }
         : environment.firebase,
       APP_NAME
     );
@@ -91,8 +91,8 @@ class FirebaseKontoDienst implements KontoDienst {
       persistence: [indexedDBLocalPersistence, browserLocalPersistence],
       popupRedirectResolver: browserPopupRedirectResolver,
     });
-    if (emulatoren) {
-      connectAuthEmulator(this.auth, emulatoren.authUrl, {
+    if (emulators) {
+      connectAuthEmulator(this.auth, emulators.authUrl, {
         disableWarnings: true,
       });
     }
@@ -221,12 +221,12 @@ class FirebaseKontoDienst implements KontoDienst {
         tabManager: persistentMultipleTabManager(),
       }),
     });
-    const { emulators: emulatoren } = this.environment;
-    if (emulatoren) {
+    const { emulators } = this.environment;
+    if (emulators) {
       connectFirestoreEmulator(
         firestore,
-        emulatoren.firestore.host,
-        emulatoren.firestore.port
+        emulators.firestore.host,
+        emulators.firestore.port
       );
     }
     return firestore;

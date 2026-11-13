@@ -1,7 +1,7 @@
 /**
- * An entry for each of `keys`, in their order: those in `vorher` kept,
- * the others made by `lesen`; the entries of `vorher` no key names are
- * handed to `ende`.
+ * An entry for each of `keys`, in their order: those in `before` kept,
+ * the others made by `read`; the entries of `before` no key names are
+ * handed to `end`.
  */
 export function reconcile<K, V>(
   before: ReadonlyMap<K, V>,

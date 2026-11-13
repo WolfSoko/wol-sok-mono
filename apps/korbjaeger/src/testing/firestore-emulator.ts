@@ -81,7 +81,7 @@ export function stored(
   uid: string
 ): Promise<unknown> {
   return withoutRules(env, async (firestore) => {
-    const asOf = await getDoc(selectionDocumentOf(firestore, uid));
-    return asOf.exists() ? asOf.data() : null;
+    const snapshot = await getDoc(selectionDocumentOf(firestore, uid));
+    return snapshot.exists() ? snapshot.data() : null;
   });
 }

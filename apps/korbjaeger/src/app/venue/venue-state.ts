@@ -6,7 +6,7 @@ import { errorText, NO_GAME } from '../errors/error-text';
 export type VenueState =
   | { readonly kind: 'loading' }
   | { readonly kind: 'error'; readonly text: string }
-  /** Read; `halle` absent while the DBB names none. */
+  /** Read; `venue` absent while the DBB names none. */
   | { readonly kind: 'read'; readonly venue?: Venue };
 
 /**

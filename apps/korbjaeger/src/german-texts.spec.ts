@@ -42,12 +42,12 @@ function templatesIn(path: string, content: string): string[] {
 /** The English words of the denylist in `template`, icon names left out. */
 function englishWords(template: string): string[] {
   const withoutIcons = template.replace(ICON_LIGATURE, '');
-  return [...withoutIcons.matchAll(ENGLISH)].map((hits) => hits[1]);
+  return [...withoutIcons.matchAll(ENGLISH)].map((match) => match[1]);
 }
 
 /** Every template of the app, with the file it is in, read once. */
 const APP_TEMPLATES = appSources(['ts', 'html']).flatMap(({ file, content }) =>
-  templatesIn(file, content).map((template) => ({ datei: file, template }))
+  templatesIn(file, content).map((template) => ({ file, template }))
 );
 
 describe('German texts', () => {
@@ -78,8 +78,8 @@ describe('German texts', () => {
   });
 
   it('keeps English out of every template of the app', () => {
-    const finds = APP_TEMPLATES.flatMap(({ datei, template }) =>
-      englishWords(template).map((word) => `${datei}: ${word}`)
+    const finds = APP_TEMPLATES.flatMap(({ file, template }) =>
+      englishWords(template).map((word) => `${file}: ${word}`)
     );
 
     expect(finds).toEqual([]);

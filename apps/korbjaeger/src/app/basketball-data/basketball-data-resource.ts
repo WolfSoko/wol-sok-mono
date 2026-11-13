@@ -34,7 +34,7 @@ export interface DataResource<T> extends Resource<T> {
   destroy(): void;
 }
 
-/** A `DataResource` over Angular's `resource`, with a `asOf` of its own. */
+/** A `DataResource` over Angular's `resource`, with an `asOf` of its own. */
 class ReadingResource<T> implements DataResource<T> {
   public readonly value: Signal<T>;
   public readonly status: Signal<ResourceStatus>;

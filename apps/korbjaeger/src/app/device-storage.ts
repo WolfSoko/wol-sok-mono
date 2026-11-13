@@ -24,7 +24,7 @@ export const INSTALL_DISMISSED_KEY = 'korbjaeger-install-dismissed';
  */
 export const APPEARANCE_KEY = 'korbjaeger-theme';
 
-/** Whether the flag `schluessel` is set (`'1'`); not where storage is withheld. */
+/** Whether the flag `key` is set (`'1'`); not where storage is withheld. */
 export function isFlagSet(
   storage: KeyValueStorage | undefined,
   key: string
@@ -33,7 +33,7 @@ export function isFlagSet(
 }
 
 /**
- * Sets the flag `schluessel` (`'1'`) or clears it; where storage is full
+ * Sets the flag `key` (`'1'`) or clears it; where storage is full
  * or withheld, nothing is kept and the caller carries on.
  */
 export function setFlag(

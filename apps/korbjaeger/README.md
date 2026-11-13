@@ -18,7 +18,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   page), then one Tabelle per Liga of those Spiele, the Team's own line
   highlighted. The current Liga comes first, by the lib's
   `leaguesCurrentFirst`: the Liga of the Team's next Spiel from today on
-  (`TODAY` in `src/app/heute.ts`, read again when the page comes back
+  (`TODAY` in `src/app/today.ts`, read again when the page comes back
   into view; specs replace it), or of its last
   Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
   one does); the others follow by their last Spiel, newest first. Each
@@ -46,7 +46,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   while there is none. The Spiel and its Spielbericht load and fail on
   their own; the view models are pure (`spiel-kopf.ts`,
   `kader-zeilen.ts`, `spielbericht-teil.ts`).
-- **Halle** (`src/app/halle/`): `VenueComponent` shows a Halle with a
+- **Halle** (`src/app/venue/`): `VenueComponent` shows a Halle with a
   link that opens navigation in a tab of its own (the lib's
   `venueNavigationUrl`); `GameVenueComponent` shows where a Halle's read
   stands (`VenueState`: loading, failed, read) and reads nothing itself.
@@ -84,7 +84,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   on its own and a follow or unfollow reads no other Team again; the cards
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
-  `src/app/fehler/`. Both screens
+  `src/app/errors/`. Both screens
   show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
   link to its Spiel page (`SpielLinkComponent` on the cards). While
   Meine Teams is empty it offers "Team suchen" (`/suchen`); once a Team
@@ -140,8 +140,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `navigator.onLine` is false, `NoInternetError`, when the proxy is not
   called at all) or `unavailable` (the proxy's 502) is answered from it,
   never a 404 or a cancelled read. An answer older than 7 days
-  (`MAX_ALTER_MS`) is neither served nor kept; `ANSWER_CACHE`
-  (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
+  (`MAX_AGE_MS`) is neither served nor kept; `ANSWER_CACHE`
+  (`answer-cache-maintenance.ts`) drops those and answers of kinds no
   longer kept at the start, when the page comes back into view and hourly
   while it stays open. When Meine Teams find the storage full, the
   answers give way (`FREE_STORAGE`) and `LocalSelection` writes once
@@ -156,13 +156,13 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   rebuilt from them when it cannot be read. The read's options are typed
   (`KorbReadOptions`, `DbbBasketballData<KorbReadOptions>` hands them to
   the transport as they are). Each resource of `basketballDataResource`
-  (a `DataResource`) has a `stand` beside its value, changing with it (a
-  value shown while reloading keeps its Stand); `korb-as-of` (`src/app/stand/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `NOW` (`src/app/jetzt.ts`, the screens' one
+  (a `DataResource`) has an `asOf` beside its value, changing with it (a
+  value shown while reloading keeps its Stand); `korb-as-of` (`src/app/as-of/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `NOW` (`src/app/now.ts`, the screens' one
   clock, read every minute and on visibility changes; `TODAY` is its
   German date). The Team page's head, its "Weitere Teams des Vereins",
   each Tabelle, the Spiel page and each overview card show one Stand, the
   oldest of the reads they show (the next Spiel's Halle included).
-- **Errors** (`src/app/fehler/`): `errorText` tells the three failures
+- **Errors** (`src/app/errors/`): `errorText` tells the three failures
   apart: no connection ("Kein Internet" where the browser says it is
   offline, else "Keine Verbindung. Internet oder Server nicht
   erreichbar"), the DBB unreachable

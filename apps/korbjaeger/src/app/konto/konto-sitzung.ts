@@ -32,7 +32,7 @@ import { fehlerCode } from './fehler-code';
 
 /**
  * Where the account stands, for the settings:
- * - `aus`: this build offers no sign-in (`environment.anmeldung`).
+ * - `aus`: this build offers no sign-in (`environment.signIn`).
  * - `abgemeldet`: Meine Teams and Kinder are on the device.
  * - `laedt`: the account of an Elternteil signed in before is opening.
  * - `angemeldet`: they are the account's, `name` from Google, in memory.

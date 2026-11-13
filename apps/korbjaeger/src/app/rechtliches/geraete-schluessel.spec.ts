@@ -11,8 +11,8 @@ describe('the device keys the privacy policy lists', () => {
     const imCode = new Set(
       appSources(['ts'])
         // the keys of before #2966, which the start only removes
-        .filter(({ file: datei }) => !datei.endsWith(OLD_KEYS_FILE))
-        .flatMap(({ content: inhalt }) => hits(inhalt, SCHLUESSEL))
+        .filter(({ file }) => !file.endsWith(OLD_KEYS_FILE))
+        .flatMap(({ content }) => hits(content, SCHLUESSEL))
     );
 
     expect(imCode.size).toBeGreaterThan(0);
