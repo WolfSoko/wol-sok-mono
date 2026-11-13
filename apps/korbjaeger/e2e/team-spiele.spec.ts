@@ -51,7 +51,7 @@ test.describe('Team page', () => {
         const reihe = zeile.getBoundingClientRect();
         const inhalt = zeile.querySelector('korb-game-row');
         const texte = [
-          ...(inhalt?.querySelectorAll<HTMLElement>('[data-qa^="spiel-"]') ??
+          ...(inhalt?.querySelectorAll<HTMLElement>('[data-qa^="game-"]') ??
             []),
         ];
         return {

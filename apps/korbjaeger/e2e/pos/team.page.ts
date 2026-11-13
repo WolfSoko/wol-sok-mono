@@ -117,13 +117,13 @@ export class TeamPage {
 
 async function eintrag(zeile: Locator): Promise<SpielEintrag> {
   const text = (name: string): Promise<string> =>
-    zeile.getByTestId(`spiel-${name}`).innerText();
+    zeile.getByTestId(`game-${name}`).innerText();
   const ergebnis = zeile.getByTestId('game-result');
   return {
-    datum: await text('datum'),
-    ort: await text('ort'),
-    gegner: await text('gegner'),
-    liga: await text('liga'),
+    datum: await text('date'),
+    ort: await text('home-or-away'),
+    gegner: await text('opponent'),
+    liga: await text('league'),
     ...((await ergebnis.count()) > 0
       ? { ergebnis: await ergebnis.innerText() }
       : {}),
