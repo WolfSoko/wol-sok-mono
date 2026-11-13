@@ -24,6 +24,7 @@ import spielplanNotFound from '../lib/dbb/fixtures/spielplan-not-found.json';
 import table54689 from '../lib/dbb/fixtures/table-54689.json';
 import table54862 from '../lib/dbb/fixtures/table-54862.json';
 import tableNotFound from '../lib/dbb/fixtures/table-not-found.json';
+import team163073Matches from '../lib/dbb/fixtures/team-163073-matches.json';
 import team313036Matches from '../lib/dbb/fixtures/team-313036-matches.json';
 import teamNotFound from '../lib/dbb/fixtures/team-not-found.json';
 import wamDataAlle from '../lib/dbb/fixtures/wam-data-alle.json';
@@ -45,6 +46,7 @@ const NIEDERSACHSEN_U12_YOUTH_MALE = {
  * The recorded answers: the Team wizard's Liga searches down to the male
  * U12 youth Ligen of Niedersachsen (all three pages) and the Spielplan of
  * Team 313036's Vorrunde there, Team 313036's Spiele, its two Ligen's Tabellen,
+ * a BBL Team's Spiele (163073, results the DBB never confirms),
  * its Verein's Spiele of the weeks around 8 November 2026,
  * one of its Spiele with a Kader-only Spielbericht not confirmed yet, and
  * the Spiele of the adapter's cases (played with quarters and Spielerwerte,
@@ -80,6 +82,7 @@ const RECORDINGS: ReadonlyArray<readonly [DbbRequest, unknown]> = [
   ],
   [{ kind: 'schedule', leagueId: 54862 }, spielplan54862],
   [{ kind: 'team-games', teamId: 313036 }, team313036Matches],
+  [{ kind: 'team-games', teamId: 163073 }, team163073Matches],
   [
     { kind: 'club-games', clubId: 1837, days: CLUB_GAMES_DAYS },
     club1837Actualmatches,

@@ -28,8 +28,10 @@ export interface League {
   /**
    * Set where the DBB never confirms a result of the Liga: the BBL, ProA,
    * ProB and BBL-Pokal take theirs from the leagues' own systems, so the
-   * score shown is the official one. Absent where the DBB confirms them or
-   * does not say, as in the Liga search.
+   * score shown is the official one. Every endpoint sets it, a Team's Spiele
+   * and the Liga search included, by the Verband „Bundesligen", the age
+   * group „Senioren" and „männlich" (the adapter's `mapLeague` says which
+   * survey that rule rests on). Absent where the DBB confirms them.
    */
   readonly resultsNeverConfirmed?: true;
 }

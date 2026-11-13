@@ -1,5 +1,6 @@
 import { caughtError } from '../../testing/caught-error';
 import { readEnvelope } from './envelope';
+import everyLeague from './fixtures/wam-data-alle.json';
 import wamData from './fixtures/wam-data-bayern-u14.json';
 import secondPage from './fixtures/wam-liga-list-bayern-u14-10.json';
 import lastPage from './fixtures/wam-liga-list-schleswig-holstein-jugend-30.json';
@@ -7,6 +8,21 @@ import { mapLeaguePage, mapLeagueSearch } from './map-league-search';
 
 describe('mapLeagueSearch', () => {
   const search = mapLeagueSearch(readEnvelope(wamData));
+
+  it('marks the men’s professional Ligen, whose results the DBB never confirms, though the search sends no statisticType', () => {
+    const { leagues } = mapLeagueSearch(readEnvelope(everyLeague)).firstPage;
+
+    expect(
+      leagues
+        .filter((league) => league.resultsNeverConfirmed)
+        .map((league) => league.name)
+    ).toEqual([
+      '1. Bundesliga (easyCredit BBL)',
+      'Herren ProA',
+      'Herren ProB Nord',
+      'Herren ProB Süd',
+    ]);
+  });
 
   it('reads the Verband, age group and gender facets', () => {
     expect(search.facets.associations).toContainEqual({
