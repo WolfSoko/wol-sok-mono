@@ -17,7 +17,8 @@ function deployOf(app: string): DeployTarget {
 
 /**
  * Every app that deploys to Firebase Hosting, with its root config and the
- * public domain visitors load it from.
+ * public domain visitors load it from. Korbjäger's domain is also held
+ * equal to its `SITE_URL` by the app's `firebase-deploy.spec.ts`.
  */
 const HOSTING_DEPLOYS = [
   ['korbjaeger', 'https://korb.wolsok.de/'],
@@ -39,9 +40,12 @@ describe('the Hosting deploys', () => {
     }
   );
 
-  it.each(HOSTING_DEPLOYS)('%s deploys before it checks', (app, _siteUrl) => {
-    const { commands = [] } = deployOf(app).options;
+  it.each(HOSTING_DEPLOYS.map(([app]) => app))(
+    '%s deploys before it checks',
+    (app) => {
+      const { commands = [] } = deployOf(app).options;
 
-    expect(commands.at(-2)).toMatch(/firebase.* deploy/);
-  });
+      expect(commands.at(-2)).toMatch(/firebase.* deploy/);
+    }
+  );
 });

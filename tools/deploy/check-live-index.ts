@@ -4,7 +4,6 @@
  * config's `hosting.public`, for up to two minutes.
  *
  * Usage: tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts <firebase-config> <site-url>
- * `LIVE_CHECK_PAUSE_MS` overrides the pause between attempts (the specs set 0).
  */
 import { readFileSync } from 'node:fs';
 import { setTimeout as sleep } from 'node:timers/promises';
@@ -26,14 +25,9 @@ async function fetchLive(url: string): Promise<LiveAnswer> {
   });
   return {
     status: response.status,
-    body: await response.text(),
+    body: Buffer.from(await response.arrayBuffer()),
     lastModified: response.headers.get('last-modified'),
   };
-}
-
-function pauseOverride(): number | undefined {
-  const ms = Number(process.env['LIVE_CHECK_PAUSE_MS'] || NaN);
-  return ms >= 0 ? ms : undefined;
 }
 
 async function main(): Promise<number> {
@@ -44,13 +38,12 @@ async function main(): Promise<number> {
   }
   const config = JSON.parse(readFileSync(configPath, 'utf8')) as FirebaseConfig;
   const indexPath = builtIndexPath(config);
-  const built = readFileSync(indexPath, 'utf8');
+  const built = readFileSync(indexPath);
   const result = await checkLiveIndex(siteUrl, built, {
     fetchLive,
     pause: sleep,
     log: console.log,
     now: Date.now,
-    pauseMs: pauseOverride(),
   });
   if (!result.ok) {
     console.log(`::error::${result.message}`);

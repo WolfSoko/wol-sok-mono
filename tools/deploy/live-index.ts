@@ -3,7 +3,7 @@ import { posix } from 'node:path';
 /** What the live site answered to one fetch. */
 export interface LiveAnswer {
   status: number;
-  body: string;
+  body: Buffer;
   lastModified: string | null;
 }
 
@@ -35,7 +35,7 @@ const LINE_EXCERPT = 160;
  */
 export async function checkLiveIndex(
   siteUrl: string,
-  built: string,
+  built: Buffer,
   {
     fetchLive,
     pause,
@@ -48,7 +48,7 @@ export async function checkLiveIndex(
   let mismatch = '';
   for (let attempt = 1; attempt <= attempts; attempt++) {
     if (attempt > 1) await pause(pauseMs);
-    mismatch = await mismatchOf(siteUrl, built, () =>
+    mismatch = await mismatchOf(built, () =>
       fetchLive(cacheBusted(siteUrl, now()))
     );
     if (!mismatch) return { ok: true, attempt };
@@ -62,8 +62,7 @@ export async function checkLiveIndex(
 
 /** Why the live answer is not the built file, or '' when it is. */
 async function mismatchOf(
-  siteUrl: string,
-  built: string,
+  built: Buffer,
   fetchLive: () => Promise<LiveAnswer>
 ): Promise<string> {
   let live: LiveAnswer;
@@ -73,11 +72,11 @@ async function mismatchOf(
     return `fetch failed (${error instanceof Error ? error.message : String(error)})`;
   }
   if (live.status !== HTTP_OK) return `status ${live.status}`;
-  if (live.body === built) return '';
+  if (live.body.equals(built)) return '';
   return [
     `last-modified ${live.lastModified ?? 'none'}`,
-    `${byteLength(live.body)} bytes live, ${byteLength(built)} bytes built`,
-    firstDifference(live.body, built),
+    `${live.body.length} bytes live, ${built.length} bytes built`,
+    firstDifference(live.body.toString('utf8'), built.toString('utf8')),
   ].join('; ');
 }
 
@@ -87,20 +86,19 @@ function cacheBusted(siteUrl: string, time: number): string {
   return url.toString();
 }
 
-function byteLength(text: string): number {
-  return Buffer.byteLength(text, 'utf8');
-}
-
 function firstDifference(live: string, built: string): string {
   const liveLines = live.split('\n');
   const builtLines = built.split('\n');
   const index = liveLines.findIndex((line, i) => line !== builtLines[i]);
   const at = index === -1 ? liveLines.length : index;
-  return `first difference in line ${at + 1}: live "${excerpt(liveLines[at])}", built "${excerpt(builtLines[at])}"`;
+  return `first difference in line ${at + 1}: live ${excerpt(liveLines[at])}, built ${excerpt(builtLines[at])}`;
 }
 
+/** The line quoted and escaped, so a `\r` or trailing space shows. */
 function excerpt(line: string | undefined): string {
-  return (line ?? '').trim().slice(0, LINE_EXCERPT);
+  return line === undefined
+    ? '(none)'
+    : JSON.stringify(line.slice(0, LINE_EXCERPT));
 }
 
 interface HostingEntry {

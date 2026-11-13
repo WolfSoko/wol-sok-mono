@@ -6,12 +6,20 @@ import {
   LiveCheckDeps,
 } from './live-index';
 
-const URL = 'https://korb.wolsok.de/';
-const BUILT = '<!doctype html>\n<script src="main-NEW.js"></script>\n';
-const STALE = '<!doctype html>\n<script src="main-OLD.js"></script>\n';
+const SITE = 'https://korb.wolsok.de/';
+const BUILT = Buffer.from(
+  '<!doctype html>\n<script src="main-NEW.js"></script>\n'
+);
+const STALE = Buffer.from(
+  '<!doctype html>\n<script src="main-OLD é.js"></script>\n'
+);
 
-function answer(body: string, status = 200): LiveAnswer {
-  return { status, body, lastModified: 'Wed, 11 Nov 2026 19:26:51 GMT' };
+function answer(body: Buffer | string, status = 200): LiveAnswer {
+  return {
+    status,
+    body: Buffer.from(body),
+    lastModified: 'Wed, 11 Nov 2026 19:26:51 GMT',
+  };
 }
 
 /** Deps whose fetch gives the answers in turn (an Error is thrown). */
@@ -42,7 +50,7 @@ describe('checkLiveIndex', () => {
   it('passes on the first fetch that serves the built file, without pausing', async () => {
     const { given, pauses, fetched } = deps([answer(BUILT)]);
 
-    await expect(checkLiveIndex(URL, BUILT, given)).resolves.toEqual({
+    await expect(checkLiveIndex(SITE, BUILT, given)).resolves.toEqual({
       ok: true,
       attempt: 1,
     });
@@ -53,15 +61,15 @@ describe('checkLiveIndex', () => {
   it('busts the CDN cache with a query on the URL', async () => {
     const { given, fetched } = deps([answer(BUILT)]);
 
-    await checkLiveIndex(URL, BUILT, given);
+    await checkLiveIndex(SITE, BUILT, given);
 
-    expect(fetched[0]).toBe(`${URL}?deploy-check=1700000000000`);
+    expect(fetched[0]).toBe(`${SITE}?deploy-check=1700000000000`);
   });
 
   it('waits for the release to propagate, pausing between attempts', async () => {
     const { given, pauses, lines } = deps([answer(STALE), answer(BUILT)]);
 
-    await expect(checkLiveIndex(URL, BUILT, given)).resolves.toEqual({
+    await expect(checkLiveIndex(SITE, BUILT, given)).resolves.toEqual({
       ok: true,
       attempt: 2,
     });
@@ -76,7 +84,7 @@ describe('checkLiveIndex', () => {
       answer(BUILT),
     ]);
 
-    await expect(checkLiveIndex(URL, BUILT, given)).resolves.toEqual({
+    await expect(checkLiveIndex(SITE, BUILT, given)).resolves.toEqual({
       ok: true,
       attempt: 3,
     });
@@ -89,24 +97,24 @@ describe('checkLiveIndex', () => {
       answer(STALE),
     ]);
 
-    const result = await checkLiveIndex(URL, BUILT, given);
+    const result = await checkLiveIndex(SITE, BUILT, given);
 
     expect(result.ok).toBe(false);
     expect(pauses).toEqual([10_000, 10_000]);
     const message = result.ok ? '' : result.message;
-    expect(message).toContain(URL);
+    expect(message).toContain(SITE);
     expect(message).toContain('Wed, 11 Nov 2026 19:26:51 GMT');
     expect(message).toContain(`${STALE.length} bytes live`);
     expect(message).toContain(`${BUILT.length} bytes built`);
     expect(message).toContain('line 2');
-    expect(message).toContain('main-OLD.js');
+    expect(message).toContain('main-OLD é.js');
     expect(message).toContain('main-NEW.js');
   });
 
   it('names the error when the last attempt could not fetch', async () => {
     const { given } = deps([new Error('socket hang up')], 1);
 
-    const result = await checkLiveIndex(URL, BUILT, given);
+    const result = await checkLiveIndex(SITE, BUILT, given);
 
     expect(result).toEqual({
       ok: false,
@@ -117,7 +125,7 @@ describe('checkLiveIndex', () => {
   it('names the status when the last attempt was not 200', async () => {
     const { given } = deps([answer('oops', 503)], 1);
 
-    const result = await checkLiveIndex(URL, BUILT, given);
+    const result = await checkLiveIndex(SITE, BUILT, given);
 
     expect(result).toEqual({
       ok: false,
