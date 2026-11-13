@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.170.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.2...v74.170.3) (2026-11-13)
+
+### Refactorings
+
+* **korbjaeger:** English identifiers, part D3: overview, colours and search ([#3012](https://github.com/WolfSoko/wol-sok-mono/issues/3012)) ([#3091](https://github.com/WolfSoko/wol-sok-mono/issues/3091)) ([9aea0af](https://github.com/WolfSoko/wol-sok-mono/commit/9aea0af32609c960c6fdbb87c84b73d2439d6828)), references [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967)
+
 ## [74.170.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.1...v74.170.2) (2026-11-13)
 
 ### Refactorings
