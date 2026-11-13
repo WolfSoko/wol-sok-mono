@@ -42,7 +42,7 @@ import {
 
 /** The day the specs run on. */
 const HEUTE_IM_SPEC = '2026-11-08';
-/** Noon of `HEUTE_IM_SPEC` in Germany. */
+/** Noon of `TODAY_IN_SPEC` in Germany. */
 const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
 const VORRUNDE: League = {
@@ -784,7 +784,7 @@ describe('UeberblickComponent', () => {
     /** The card's control to unfollow its Team. */
     function nichtMehrFolgen(eintrag: Element): HTMLButtonElement | null {
       return eintrag.querySelector<HTMLButtonElement>(
-        '[data-qa="ueberblick-aktionen"] [data-qa="team-folgen"]'
+        '[data-qa="ueberblick-aktionen"] [data-qa="follow-team"]'
       );
     }
 
@@ -887,7 +887,7 @@ describe('UeberblickComponent', () => {
       );
       expect(
         [
-          ...(hinweis?.querySelectorAll('[data-qa="vereins-team-name"]') ?? []),
+          ...(hinweis?.querySelectorAll('[data-qa="club-team-name"]') ?? []),
         ].map((name) => text(name))
       ).toEqual(['MTV Wasbüttel U14']);
       expect(text(teil(eintraege(seite)[0], 'letztes'))).toContain('78:47');
@@ -917,7 +917,7 @@ describe('UeberblickComponent', () => {
       const vorschlaege = eintraege(seite).map((eintrag) =>
         [
           ...(teil(eintrag, 'saison-beendet')?.querySelectorAll(
-            '[data-qa="vereins-team-name"]'
+            '[data-qa="club-team-name"]'
           ) ?? []),
         ].map((name) => text(name))
       );
@@ -932,7 +932,7 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       teil(eintraege(seite)[0], 'saison-beendet')
-        ?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]')
+        ?.querySelector<HTMLButtonElement>('[data-qa="follow-team"]')
         ?.click();
       await stabil();
 
@@ -949,7 +949,7 @@ describe('UeberblickComponent', () => {
         teil(
           eintraege(seite)[0],
           'saison-beendet'
-        )?.querySelector<HTMLButtonElement>('[data-qa="team-folgen"]');
+        )?.querySelector<HTMLButtonElement>('[data-qa="follow-team"]');
       knopf()?.click();
       await stabil();
       knopf()?.focus();
@@ -1157,7 +1157,7 @@ describe('UeberblickComponent', () => {
       const [lumi] = kinderAbschnitte(seite);
       const knoepfe = [
         ...lumi.querySelectorAll<HTMLButtonElement>(
-          '[data-qa="ueberblick-kind-aktionen"] [data-qa="team-folgen"]'
+          '[data-qa="ueberblick-kind-aktionen"] [data-qa="follow-team"]'
         ),
       ];
       expect(knoepfe.map((knopf) => knopf.getAttribute('aria-label'))).toEqual([
@@ -1215,7 +1215,7 @@ describe('UeberblickComponent', () => {
           (aktion) => [
             text(aktion.querySelector('.team-name')),
             aktion
-              .querySelector('[data-qa="team-folgen"]')
+              .querySelector('[data-qa="follow-team"]')
               ?.getAttribute('aria-label'),
           ]
         )
@@ -1644,7 +1644,7 @@ describe('UeberblickComponent', () => {
         ),
       ].map((element) => [
         element.getAttribute('data-qa'),
-        text(element.querySelector('[data-qa="spiel-datum"]')),
+        text(element.querySelector('[data-qa="game-date"]')),
       ]);
       expect(teile).toEqual([
         ['ueberblick-ausfall', 'Sa., 14.11.2026'],

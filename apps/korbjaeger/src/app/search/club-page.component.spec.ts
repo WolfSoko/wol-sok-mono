@@ -92,9 +92,9 @@ describe('ClubPageComponent', () => {
 
     expect(clubTeams).toHaveBeenCalledWith(1837, expect.anything());
     expect(text(page.querySelector('h1'))).toBe('MTV Wasbüttel');
-    const team = page.querySelector('[data-qa="vereins-team"]');
+    const team = page.querySelector('[data-qa="club-team"]');
     expect(
-      team?.querySelector('[data-qa="vereins-team-name"]')?.getAttribute('href')
+      team?.querySelector('[data-qa="club-team-name"]')?.getAttribute('href')
     ).toBe('/team/313036');
     expect(
       team?.querySelector('button')?.getAttribute('aria-label') ??
@@ -114,7 +114,7 @@ describe('ClubPageComponent', () => {
     expect(text(page.querySelector('[data-qa="vereins-stand"]'))).toContain(
       'Stand: vor 2 Std.'
     );
-    expect(page.querySelectorAll('[data-qa="vereins-team"]')).toHaveLength(1);
+    expect(page.querySelectorAll('[data-qa="club-team"]')).toHaveLength(1);
   });
 
   it("puts the Verein's name below the search in the breadcrumb", async () => {
@@ -133,7 +133,7 @@ describe('ClubPageComponent', () => {
       teams: [],
     }));
 
-    expect(text(page.querySelector('korb-vereins-teams'))).toBe(
+    expect(text(page.querySelector('korb-club-teams'))).toBe(
       'Keine Teams des Vereins in den letzten Wochen.'
     );
   });
@@ -182,10 +182,10 @@ describe('ClubPageComponent', () => {
       ).toBe(
         'Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.'
       );
-      const team = page.querySelector('[data-qa="vereins-team"]');
+      const team = page.querySelector('[data-qa="club-team"]');
       expect(text(team?.querySelector('korb-child-step'))).toBe('');
 
-      team?.querySelector<HTMLElement>('[data-qa="team-folgen"]')?.click();
+      team?.querySelector<HTMLElement>('[data-qa="follow-team"]')?.click();
       await TestBed.inject(ApplicationRef).whenStable();
 
       expect(

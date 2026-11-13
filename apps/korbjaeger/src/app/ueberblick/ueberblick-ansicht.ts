@@ -11,7 +11,7 @@ import {
 import type { Child } from '@wolsok/feat-korbjaeger-selection';
 import { oldestAsOf, type AsOf } from '../basketball-data/as-of';
 import type { VenueState } from '../venue/venue-state';
-import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
+import { gameRow, type GameRow } from '../game/game-row';
 import { kartenName, type TeamKarte } from './team-karte';
 
 /** A followed Team as the overview holds it: its card and its reads. */
@@ -56,17 +56,17 @@ export interface KindAbschnitt {
   readonly sucht: boolean;
   /** The first next Spiel of its Teams, by which the overview orders them. */
   readonly naechstesSpiel?: Game;
-  readonly naechstes?: SpielZeile;
+  readonly naechstes?: GameRow;
   /** The heading of `naechstes`, naming its Team where the Kind has several. */
   readonly naechstesTitel: string;
   /** The read of that Spiel's Halle. */
   readonly halle?: VenueState;
   /** What falls through before `naechstes` (all of it where none is next). */
-  readonly ausfaelle: readonly SpielZeile[];
+  readonly ausfaelle: readonly GameRow[];
   /** What falls through after `naechstes`, shown below it. */
-  readonly spaetereAusfaelle: readonly SpielZeile[];
+  readonly spaetereAusfaelle: readonly GameRow[];
   /** The latest result of its Teams. */
-  readonly letztes?: SpielZeile;
+  readonly letztes?: GameRow;
   /** The heading of `letztes`, naming its Team where the Kind has several. */
   readonly letztesTitel: string;
   /**
@@ -186,8 +186,8 @@ function kindAbschnitt(
   };
 }
 
-function zeile({ season: saison, game: spiel }: SeasonGame): SpielZeile {
-  return spielZeile(saison, spiel);
+function zeile({ season: saison, game: spiel }: SeasonGame): GameRow {
+  return gameRow(saison, spiel);
 }
 
 /** The first name the Team's Kader gave the Kind `person`, if it named them. */

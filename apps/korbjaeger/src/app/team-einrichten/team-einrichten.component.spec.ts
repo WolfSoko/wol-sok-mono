@@ -338,7 +338,7 @@ describe('TeamEinrichtenComponent', () => {
     const zeile = document.activeElement as HTMLElement | null;
     expect(zeile?.getAttribute('data-qa')).toBe('team');
     expect(textOf(zeile)).toBe('MTV Wasbüttel -RST-');
-    expect(assistent.seite.querySelector('[data-qa="team-folgen"]')).toBeNull();
+    expect(assistent.seite.querySelector('[data-qa="follow-team"]')).toBeNull();
     const leiste = await TestbedHarnessEnvironment.documentRootLoader(
       assistent.fixture
     ).getHarness(MatSnackBarHarness);
@@ -360,7 +360,7 @@ describe('TeamEinrichtenComponent', () => {
     await bisZumTeam(assistent);
 
     const knoepfe = [
-      ...assistent.seite.querySelectorAll('[data-qa="team-folgen"]'),
+      ...assistent.seite.querySelectorAll('[data-qa="follow-team"]'),
     ].map((knopf) => knopf.getAttribute('aria-label'));
     expect(knoepfe).toEqual(['Nicht mehr folgen: MTV Gifhorn']);
   });

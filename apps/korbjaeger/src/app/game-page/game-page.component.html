@@ -1,0 +1,115 @@
+@if (!head()) {
+  <!-- the page's heading until the Spiel names its Teams, above any failure -->
+  <h1>Spiel</h1>
+}
+@if (details.isLoading()) {
+  <mat-progress-bar mode="indeterminate" aria-label="Spiel wird geladen" />
+}
+@if (error(); as text) {
+  <p class="fehler" role="alert" data-qa="game-error">{{ text }}</p>
+}
+@if (head(); as game) {
+  <h1>
+    @for (partner of [game.home, game.away]; track $index) {
+      @if ($index > 0) {
+        –
+      }
+      @if (partner.teamId) {
+        <a [routerLink]="['/team', partner.teamId]">{{ partner.name }}</a>
+      } @else {
+        {{ partner.name }}
+      }
+    }
+  </h1>
+  <p class="when">
+    <span data-qa="game-when">{{ game.when }}</span>
+    <br />
+    <span data-qa="game-league">{{ game.league }}</span>
+  </p>
+  <korb-as-of data-qa="game-as-of" [asOf]="details.asOf()" />
+  @if (game.result) {
+    <p class="result">
+      <span data-qa="game-result">{{ game.result }}</span>
+      @if (game.provisional) {
+        &ngsp;<span class="provisional" data-qa="game-provisional">{{
+          provisionalText
+        }}</span>
+      }
+    </p>
+  }
+  @if (game.status) {
+    <p class="status" data-qa="game-status">{{ game.status }}</p>
+  }
+  @if (game.periods; as periods) {
+    <div class="table">
+      <table
+        mat-table
+        [dataSource]="periods.rows"
+        data-qa="quarters"
+        aria-label="Viertel"
+      >
+        <ng-container matColumnDef="team">
+          <th mat-header-cell *matHeaderCellDef>Team</th>
+          <td mat-cell *matCellDef="let row">{{ row.team }}</td>
+        </ng-container>
+        @for (column of periods.columns; track column.name; let i = $index) {
+          <ng-container [matColumnDef]="'periode-' + i">
+            <th
+              mat-header-cell
+              *matHeaderCellDef
+              [attr.aria-label]="column.name"
+              [title]="column.name"
+            >
+              {{ column.short }}
+            </th>
+            <td mat-cell *matCellDef="let row">{{ row.points[i] }}</td>
+          </ng-container>
+        }
+        <ng-container matColumnDef="gesamt">
+          <th mat-header-cell *matHeaderCellDef>Endstand</th>
+          <td mat-cell *matCellDef="let row">{{ row.total }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="periodColumns()"></tr>
+        <tr
+          mat-row
+          *matRowDef="let row; columns: periodColumns()"
+          data-qa="quarters-row"
+        ></tr>
+      </table>
+    </div>
+  }
+  <h2>Halle</h2>
+  <korb-venue
+    [venue]="details.hasValue() ? details.value().venue : undefined"
+  />
+}
+@if (gameReport(); as part) {
+  <h2>Kader</h2>
+  @if (childError(); as text) {
+    <p class="fehler" role="alert" data-qa="child-error">{{ text }}</p>
+  }
+  @switch (part.kind) {
+    @case ("loading") {
+      <mat-progress-bar
+        mode="indeterminate"
+        aria-label="Spielbericht wird geladen"
+      />
+    }
+    @case ("error") {
+      <p class="fehler" data-qa="game-report-error">{{ part.text }}</p>
+    }
+    @case ("missing") {
+      <p data-qa="game-report-missing">{{ part.text }}</p>
+    }
+    @case ("ready") {
+      @for (rosterPart of part.rosters; track rosterPart.side) {
+        <korb-roster
+          [title]="rosterPart.title"
+          [roster]="rosterPart.roster"
+          [side]="rosterPart.side"
+          [followed]="rosterPart.followed"
+        />
+      }
+    }
+  }
+}

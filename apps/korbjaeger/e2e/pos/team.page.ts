@@ -27,8 +27,8 @@ export class TeamPage {
 
   public constructor(private readonly page: Page) {
     this.heading = page.getByRole('heading', { level: 1 });
-    this.spiele = page.getByTestId('spiel');
-    this.tabellen = page.getByTestId('tabelle');
+    this.spiele = page.getByTestId('game');
+    this.tabellen = page.getByTestId('standings');
     this.folgen = page.getByRole('button', {
       name: 'Team folgen',
       exact: true,
@@ -37,14 +37,14 @@ export class TeamPage {
       name: 'Nicht mehr folgen',
       exact: true,
     });
-    this.vereinsTeams = page.getByTestId('vereins-team');
-    this.stand = page.getByTestId('team-stand');
+    this.vereinsTeams = page.getByTestId('club-team');
+    this.stand = page.getByTestId('team-as-of');
   }
 
   /** The Verein's other Team that plays in the Liga `liga`. */
   public vereinsTeam(liga: string): Locator {
     return this.vereinsTeams.filter({
-      has: this.page.getByTestId('vereins-team-ligen').getByText(liga),
+      has: this.page.getByTestId('club-team-leagues').getByText(liga),
     });
   }
 
@@ -57,7 +57,7 @@ export class TeamPage {
 
   /** The lines of a Tabelle, as `tabelle(liga)` finds it. */
   public zeilen(tabelle: Locator): Locator {
-    return tabelle.getByTestId('tabelle-zeile');
+    return tabelle.getByTestId('standings-row');
   }
 
   /** The line a Tabelle marks as the Team's own. */
@@ -68,7 +68,7 @@ export class TeamPage {
   /** The Spiel against `gegner` in the list, a link to its Spiel page. */
   public spielGegen(gegner: string): Locator {
     return this.spiele.filter({
-      has: this.page.getByTestId('spiel-gegner').getByText(gegner, {
+      has: this.page.getByTestId('game-opponent').getByText(gegner, {
         exact: true,
       }),
     });
@@ -118,7 +118,7 @@ export class TeamPage {
 async function eintrag(zeile: Locator): Promise<SpielEintrag> {
   const text = (name: string): Promise<string> =>
     zeile.getByTestId(`spiel-${name}`).innerText();
-  const ergebnis = zeile.getByTestId('spiel-ergebnis');
+  const ergebnis = zeile.getByTestId('game-result');
   return {
     datum: await text('datum'),
     ort: await text('ort'),

@@ -21,31 +21,31 @@
       @case ("geladen") {
         <korb-as-of data-qa="ueberblick-stand" [asOf]="team.stand" />
         @for (ausfall of team.ausfaelle; track ausfall.id) {
-          <korb-spiel-link
-            titel="Fällt aus"
-            [zeile]="ausfall"
+          <korb-game-link
+            title="Fällt aus"
+            [row]="ausfall"
             data-qa="ueberblick-ausfall"
           />
         }
         @if (team.naechstes; as naechstes) {
-          <korb-naechstes-spiel
-            [zeile]="naechstes"
-            [halle]="team.halle"
+          <korb-next-game
+            [row]="naechstes"
+            [venue]="team.halle"
             data-qa="ueberblick-naechstes"
           />
         }
         @if (team.letztes; as letztes) {
-          <korb-spiel-link
+          <korb-game-link
             class="anzeigetafel"
-            titel="Letztes Ergebnis"
-            [zeile]="letztes"
+            title="Letztes Ergebnis"
+            [row]="letztes"
             data-qa="ueberblick-letztes"
           />
         }
         @if (team.saisonBeendet) {
-          <korb-saison-ende-hinweis
+          <korb-season-over-hint
             data-qa="ueberblick-saison-beendet"
-            [stand]="team.vereinsTeams"
+            [state]="team.vereinsTeams"
           />
         }
         @if (!team.naechstes && !team.letztes && team.ausfaelle.length === 0) {
@@ -58,10 +58,10 @@
     @if (verein(); as verein) {
       <korb-vereinsfarben-knopf [verein]="verein" />
     }
-    <korb-team-folgen
+    <korb-follow-team
       [teamId]="team.teamId"
       [teamName]="name()"
-      verschwindetNachEntfolgen
+      disappearsOnUnfollow
     />
   </mat-card-actions>
 </mat-card>

@@ -7,13 +7,13 @@ import {
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
-import { SpielLinkComponent } from '../spiel/spiel-link.component';
+import { NextGameComponent } from '../game/next-game.component';
+import { GameLinkComponent } from '../game/game-link.component';
 import { AsOfComponent } from '../as-of/as-of.component';
-import { TeamFolgenComponent } from '../team/team-folgen.component';
+import { FollowTeamComponent } from '../team/follow-team.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
-import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
+import { SeasonOverHintComponent } from '../club/season-over-hint.component';
 import { kartenName, type TeamKarte } from './team-karte';
 
 /**
@@ -22,7 +22,7 @@ import { kartenName, type TeamKarte } from './team-karte';
  * opening its Spiel page, and once its Saison looks over a hint with its
  * Verein's current Teams to follow; or why its read failed. Every card
  * ends with "Nicht mehr folgen", which takes the card away and offers to
- * undo it (`NachEntfolgen`, the overview's), beside "Vereinsfarben"; the
+ * undo it (`AfterUnfollow`, the overview's), beside "Vereinsfarben"; the
  * card wears its Verein's colours. Reads no data itself:
  * `MeineTeamsUeberblick` holds every card's reads, the next Spiel's Halle
  * and the Verein's Teams included.
@@ -32,12 +32,12 @@ import { kartenName, type TeamKarte } from './team-karte';
   imports: [
     MatCardModule,
     MatProgressBarModule,
-    NaechstesSpielComponent,
+    NextGameComponent,
     RouterLink,
-    SaisonEndeHinweisComponent,
-    SpielLinkComponent,
+    SeasonOverHintComponent,
+    GameLinkComponent,
     AsOfComponent,
-    TeamFolgenComponent,
+    FollowTeamComponent,
     VereinsfarbenKnopfComponent,
   ],
   templateUrl: './ueberblick-team.component.html',

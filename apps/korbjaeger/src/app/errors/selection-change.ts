@@ -14,7 +14,7 @@ export interface SelectionChange {
 
 /**
  * Changes to Meine Teams or Kinder for one control or one page (the Spiel
- * page's `KIND_AENDERUNG`), with what each failure says (`selectionErrorText`).
+ * page's `CHILD_CHANGE`), with what each failure says (`selectionErrorText`).
  */
 export function selectionChange(): SelectionChange {
   const error = signal<string | undefined>(undefined);

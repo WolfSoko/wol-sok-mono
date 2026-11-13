@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
-import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
-import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
-import { NachEntfolgen } from '../team/nach-entfolgen';
+import { AFTER_FIRST_GAME_HINT } from '../child/child-hints';
+import { FocusAfterUnfollowDirective } from '../team/focus-after-unfollow.directive';
+import { AfterUnfollow } from '../team/after-unfollow';
 import { MeineTeamsUeberblick } from './meine-teams-ueberblick';
 import { UeberblickKindComponent } from './ueberblick-kind.component';
 import { UeberblickTeamComponent } from './ueberblick-team.component';
@@ -16,18 +16,18 @@ import { UeberblickTeamComponent } from './ueberblick-team.component';
  * to search a first Team while there is none, and a further one below
  * the cards once there are some; says so where they cannot be read at
  * all. A Team unfollowed from a card takes its control away, so focus
- * moves to the heading (`NachEntfolgen`).
+ * moves to the heading (`AfterUnfollow`).
  */
 @Component({
   selector: 'korb-ueberblick',
   imports: [
-    FokusNachEntfolgenDirective,
+    FocusAfterUnfollowDirective,
     MatButtonModule,
     RouterLink,
     UeberblickKindComponent,
     UeberblickTeamComponent,
   ],
-  providers: [MeineTeamsUeberblick, NachEntfolgen],
+  providers: [MeineTeamsUeberblick, AfterUnfollow],
   templateUrl: './ueberblick.component.html',
   styleUrl: './ueberblick.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
