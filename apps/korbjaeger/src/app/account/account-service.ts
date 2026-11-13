@@ -36,7 +36,7 @@ export interface AccountService {
   /**
    * Signs in with Google's popup, which the browser opens only in the
    * click: call it without waiting for anything before. Rejects with
-   * `SignInCancelled` when it was closed, `PopupBlocked` when the
+   * `SignInCancelledError` when it was closed, `PopupBlockedError` when the
    * browser refused it.
    */
   signInWithGoogle(): Promise<AccountUser>;
@@ -45,7 +45,7 @@ export interface AccountService {
   signOut(): Promise<void>;
   /**
    * Deletes the account `uid`, which Auth allows shortly after a sign-in;
-   * rejects with `AccountSwitched` where Auth's Elternteil is another now.
+   * rejects with `AccountSwitchedError` where Auth's Elternteil is another now.
    */
   deleteAuthUser(uid: string): Promise<void>;
   /**
@@ -65,7 +65,7 @@ export interface AccountService {
    * Deletes the account's document, resolving once the server confirmed
    * it, however long that takes: once queued, the deletion runs anyway.
    */
-  deleteSelection(uid: string): Promise<void>;
+  deleteAccountSelection(uid: string): Promise<void>;
   /**
    * Whether every change made on the device reached the account: waits a
    * few seconds for Firestore to send them, false where it could not.
@@ -80,34 +80,34 @@ export interface AccountService {
 }
 
 /** The Elternteil closed Google's popup: no error to show while signing in. */
-export class SignInCancelled extends Error {
+export class SignInCancelledError extends Error {
   public constructor() {
     super('Sign-in cancelled');
-    this.name = 'SignInCancelled';
+    this.name = 'SignInCancelledError';
   }
 }
 
 /** The browser refused to open Google's popup. */
-export class PopupBlocked extends Error {
+export class PopupBlockedError extends Error {
   public constructor() {
     super('Popup blocked');
-    this.name = 'PopupBlocked';
+    this.name = 'PopupBlockedError';
   }
 }
 
 /** Signing out would discard changes not yet sent to the account. */
-export class NotAllSent extends Error {
+export class NotAllSentError extends Error {
   public constructor() {
     super('Not all sent');
-    this.name = 'NotAllSent';
+    this.name = 'NotAllSentError';
   }
 }
 
 /** Auth's Elternteil changed while the account was being deleted: nothing more is. */
-export class AccountSwitched extends Error {
+export class AccountSwitchedError extends Error {
   public constructor() {
     super('Account switched');
-    this.name = 'AccountSwitched';
+    this.name = 'AccountSwitchedError';
   }
 }
 
@@ -116,17 +116,17 @@ export class AccountSwitched extends Error {
  * refused, as the question to Google lay too long back): deleting again
  * finishes it.
  */
-export class AccountNotDeleted extends Error {
+export class AccountNotDeletedError extends Error {
   public constructor(public readonly reason: unknown) {
     super('Account not deleted');
-    this.name = 'AccountNotDeleted';
+    this.name = 'AccountNotDeletedError';
   }
 }
 
 /** A step the server must confirm (deleting the account) found no network. */
-export class Offline extends Error {
+export class NoInternetToDeleteError extends Error {
   public constructor() {
     super('Offline');
-    this.name = 'Offline';
+    this.name = 'NoInternetToDeleteError';
   }
 }

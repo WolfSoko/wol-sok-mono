@@ -87,12 +87,13 @@ export function isIosWithShareMenu(navigator: InstallNavigator): boolean {
     return false;
   }
   return (
-    !IOS_OTHER_BROWSER.test(agent) || fromIosVersion(agent, OTHER_BROWSERS_FROM)
+    !IOS_OTHER_BROWSER.test(agent) ||
+    iosVersionAtLeast(agent, OTHER_BROWSERS_FROM)
   );
 }
 
-/** Whether `agent` names an iOS version (`OS 16_4`) of at least `ab`. */
-function fromIosVersion(
+/** Whether `agent` names an iOS version (`OS 16_4`) of at least `[fromMajor, fromMinor]`. */
+function iosVersionAtLeast(
   agent: string,
   [fromMajor, fromMinor]: readonly [number, number]
 ): boolean {

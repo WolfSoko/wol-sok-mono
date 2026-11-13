@@ -4,10 +4,14 @@ import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import { provideAppearance } from '../appearance/appearance';
 import { SettingsComponent } from './settings.component';
 import { notTakenOverText } from './not-taken-over-text';
-import { PopupBlocked } from './account-service';
+import { PopupBlockedError } from './account-service';
 import { ACCOUNT_SESSION } from './account';
 import { AccountSession } from './account-session';
-import { FakeAccountService, FakeFlag } from './testing/fake-account-service';
+import {
+  call,
+  FakeAccountService,
+  FakeFlag,
+} from './testing/fake-account-service';
 
 interface Page {
   readonly element: HTMLElement;
@@ -125,7 +129,7 @@ describe('SettingsComponent', () => {
     button('sign-in')?.click();
     await stable();
 
-    expect(service.calls[0]).toBe('signInWithGoogle');
+    expect(service.calls[0]).toBe(call('signInWithGoogle'));
     expect(
       element.querySelector('[data-qa="account-name"]')?.textContent?.trim()
     ).toBe('Angemeldet als Familie Muster');
@@ -147,7 +151,7 @@ describe('SettingsComponent', () => {
 
   it('says so where the browser blocked the popup', async () => {
     const service = new FakeAccountService();
-    service.popupError = new PopupBlocked();
+    service.popupError = new PopupBlockedError();
     const { button, stable, error } = await openPage({ service });
 
     button('sign-in')?.click();
@@ -323,7 +327,7 @@ describe('SettingsComponent', () => {
     button('sign-out')?.click();
     await stable();
 
-    expect(service.calls).toContain('signOut');
+    expect(service.calls).toContain(call('signOut'));
     expect(button('sign-in')).not.toBeNull();
   });
 
@@ -350,9 +354,9 @@ describe('SettingsComponent', () => {
     await stable();
 
     expect(service.calls.slice(0, 3)).toEqual([
-      'reauthenticate',
-      'deleteSelection uid-1',
-      'deleteAuthUser uid-1',
+      call('reauthenticate'),
+      call('deleteAccountSelection', 'uid-1'),
+      call('deleteAuthUser', 'uid-1'),
     ]);
     expect(document.querySelector('korb-delete-account-dialog')).toBeNull();
     expect(button('sign-in')).not.toBeNull();

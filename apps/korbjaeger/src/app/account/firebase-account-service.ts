@@ -36,9 +36,9 @@ import {
 import { deviceStorage } from '@wolsok/utils-browser-storage';
 import { isFlagSet, setFlag, CLEAR_CACHE_KEY } from '../device-storage';
 import {
-  SignInCancelled,
-  AccountSwitched,
-  PopupBlocked,
+  SignInCancelledError,
+  AccountSwitchedError,
+  PopupBlockedError,
   type AccountUser,
   type AccountSelection,
   type AccountService,
@@ -135,7 +135,7 @@ class FirebaseAccountService implements AccountService {
     const user = this.signedInUser();
     return user.uid === uid
       ? deleteUser(user)
-      : Promise.reject(new AccountSwitched());
+      : Promise.reject(new AccountSwitchedError());
   }
 
   public async selection(
@@ -159,7 +159,7 @@ class FirebaseAccountService implements AccountService {
    * even where this gave up, so giving up would leave the account without
    * its choices.
    */
-  public async deleteSelection(uid: string): Promise<void> {
+  public async deleteAccountSelection(uid: string): Promise<void> {
     await deleteDoc(selectionDocumentOf(await this.db(), uid));
   }
 
@@ -244,8 +244,8 @@ class FirebaseAccountService implements AccountService {
 }
 
 /**
- * Runs a popup of Auth: a closed one rejects with `SignInCancelled`,
- * one the browser refused with `PopupBlocked`.
+ * Runs a popup of Auth: a closed one rejects with `SignInCancelledError`,
+ * one the browser refused with `PopupBlockedError`.
  */
 async function withPopup<T>(popup: () => Promise<T>): Promise<T> {
   try {
@@ -253,9 +253,9 @@ async function withPopup<T>(popup: () => Promise<T>): Promise<T> {
   } catch (error) {
     const code = errorCode(error) ?? '';
     if (CANCELLED.has(code)) {
-      throw new SignInCancelled();
+      throw new SignInCancelledError();
     }
-    throw code === 'auth/popup-blocked' ? new PopupBlocked() : error;
+    throw code === 'auth/popup-blocked' ? new PopupBlockedError() : error;
   }
 }
 

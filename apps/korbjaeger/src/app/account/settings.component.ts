@@ -15,12 +15,12 @@ import { selectionErrorText } from '../errors/selection-error-text';
 import { ACCOUNT_SESSION } from './account';
 import { notTakenOverText } from './not-taken-over-text';
 import {
-  SignInCancelled,
-  AccountSwitched,
-  AccountNotDeleted,
-  NotAllSent,
-  Offline,
-  PopupBlocked,
+  SignInCancelledError,
+  AccountSwitchedError,
+  AccountNotDeletedError,
+  NotAllSentError,
+  NoInternetToDeleteError,
+  PopupBlockedError,
 } from './account-service';
 import type { Step } from './account-session';
 import {
@@ -107,7 +107,7 @@ const ACCOUNT_NOT_DELETED =
           @if (leftOverText(); as text) {
             <p class="hint" data-qa="not-taken-over">{{ text }}</p>
           }
-          @if (runningStep() === 'delete') {
+          @if (running() === 'delete') {
             <p class="hint" data-qa="deletion-running">
               Das Konto wird gelöscht. Ohne Internet wartet das, bis dein Gerät
               wieder online ist; lass die App so lange offen.
@@ -115,7 +115,7 @@ const ACCOUNT_NOT_DELETED =
           }
           @if (deviceKept()) {
             <p class="hint" data-qa="device-kept">
-              {{ DEVICE_KEPT }}
+              {{ DEVICE_KEPT_TEXT }}
             </p>
           }
           @if (error(); as text) {
@@ -203,17 +203,17 @@ export class SettingsComponent {
 
   protected readonly state = this.session.state;
   /** The step running, also one started before this page opened. */
-  protected readonly runningStep = this.session.running;
-  protected readonly busy = computed(() => this.runningStep() !== undefined);
+  protected readonly running = this.session.running;
+  protected readonly busy = computed(() => this.running() !== undefined);
   /** What the last step that failed says, also one before this page opened. */
   protected readonly error = computed(() => {
     const failure = this.session.failure();
-    return failure && errorText(failure.kind, failure.error);
+    return failure && errorText(failure.step, failure.error);
   });
   /** What of the device's choices did not fit into the account shown. */
   protected readonly leftOverText = computed(() => {
-    const takeover = this.session.takeoverHint();
-    return takeover && notTakenOverText(takeover.leftOver);
+    const hint = this.session.takeoverHint();
+    return hint && notTakenOverText(hint.leftOver);
   });
   /** Choices of the device not in the account shown yet, for the next start. */
   protected readonly deviceKept = computed(
@@ -223,7 +223,7 @@ export class SettingsComponent {
   protected readonly ready = this.session.ready;
   /** Firebase could not be loaded (offline, a chunk a release removed). */
   protected readonly prepareFailed = signal(false);
-  protected readonly DEVICE_KEPT =
+  protected readonly DEVICE_KEPT_TEXT =
     'Einige Änderungen dieses Geräts sind noch nicht in deinem Konto. Sie bleiben auf dem Gerät und kommen beim nächsten Öffnen der App dazu.';
 
   public constructor() {
@@ -280,22 +280,22 @@ function errorText(step: Step, error: unknown): string | undefined {
   if (step === 'take-over') {
     return undefined;
   }
-  if (error instanceof AccountSwitched) {
+  if (error instanceof AccountSwitchedError) {
     return ACCOUNT_SWITCHED;
   }
-  if (error instanceof AccountNotDeleted) {
+  if (error instanceof AccountNotDeletedError) {
     return ACCOUNT_NOT_DELETED;
   }
-  if (error instanceof SignInCancelled) {
+  if (error instanceof SignInCancelledError) {
     return step === 'delete' ? DELETION_CANCELLED : undefined;
   }
-  if (error instanceof PopupBlocked) {
+  if (error instanceof PopupBlockedError) {
     return POPUP_BLOCKED;
   }
-  if (error instanceof Offline) {
+  if (error instanceof NoInternetToDeleteError) {
     return DELETION_OFFLINE;
   }
-  if (error instanceof NotAllSent) {
+  if (error instanceof NotAllSentError) {
     return NOT_ALL_SENT;
   }
   return error instanceof SelectionTooNewError

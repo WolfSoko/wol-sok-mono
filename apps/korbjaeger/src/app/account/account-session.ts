@@ -20,10 +20,10 @@ import {
   type NotTakenOver,
 } from '@wolsok/feat-korbjaeger-selection';
 import {
-  AccountSwitched,
-  AccountNotDeleted,
-  NotAllSent,
-  Offline,
+  AccountSwitchedError,
+  AccountNotDeletedError,
+  NotAllSentError,
+  NoInternetToDeleteError,
   type AccountUser,
   type AccountSelection,
   type AccountService,
@@ -50,7 +50,7 @@ export type Step = 'sign-in' | 'sign-out' | 'delete' | 'take-over';
 
 /** The last step that failed, and how, for whichever page shows it. */
 export interface Failure {
-  readonly kind: Step;
+  readonly step: Step;
   readonly error: unknown;
 }
 
@@ -120,9 +120,9 @@ export class AccountSession {
   public readonly failure: Signal<Failure | undefined>;
 
   private readonly currentState = signal<AccountState>({ kind: 'off' });
-  private readonly loaded = signal(false);
+  private readonly serviceLoaded = signal(false);
   private readonly current = signal<Selection | undefined>(undefined);
-  private readonly hint = signal<
+  private readonly hintFor = signal<
     { readonly uid: string; readonly hint: TakeoverHint } | undefined
   >(undefined);
   /** The uid of the account shown. */
@@ -144,7 +144,7 @@ export class AccountSession {
    * a second call of the same joins it. Auth's news is this tab's own
    * while one runs.
    */
-  private step?: { readonly kind: Step; readonly run: Promise<unknown> };
+  private active?: { readonly step: Step; readonly run: Promise<unknown> };
 
   /**
    * @param load loads Firebase; `undefined` where this build offers no
@@ -159,9 +159,9 @@ export class AccountSession {
       globalThis.navigator?.onLine ?? true
   ) {
     this.state = this.currentState.asReadonly();
-    this.ready = this.loaded.asReadonly();
+    this.ready = this.serviceLoaded.asReadonly();
     this.takeoverHint = computed(() => {
-      const hint = this.hint();
+      const hint = this.hintFor();
       return hint !== undefined && hint.uid === this.accountUid()
         ? hint.hint
         : undefined;
@@ -217,8 +217,8 @@ export class AccountSession {
   /**
    * Signs in with Google and takes the device's choices into the account,
    * then off the device; resolves with what did not fit under the caps.
-   * Rejects with `SignInCancelled` when the popup was closed,
-   * `PopupBlocked` when the browser refused it; where the choices could
+   * Rejects with `SignInCancelledError` when the popup was closed,
+   * `PopupBlockedError` when the browser refused it; where the choices could
    * not be taken over, it signs out again and rejects with that failure,
    * the device's choices kept.
    */
@@ -255,7 +255,7 @@ export class AccountSession {
       }
       // signing out clears the device's copy: a change not yet sent would go
       if (!(await service.allSent())) {
-        throw new NotAllSent();
+        throw new NotAllSentError();
       }
       await service.signOut();
       await this.takeOffDevice(service);
@@ -266,9 +266,9 @@ export class AccountSession {
    * Deletes the account: asks Google first (Auth deletes an account only
    * shortly after a sign-in), so nothing is deleted where the Elternteil
    * cancels; then its document, which only a server can confirm (refused
-   * offline with `Offline`), then the account itself, both by the uid
-   * Google was asked about (`AccountSwitched` where Auth's Elternteil is
-   * another by then; `AccountNotDeleted` where Auth refuses the account
+   * offline with `NoInternetToDeleteError`), then the account itself, both by the uid
+   * Google was asked about (`AccountSwitchedError` where Auth's Elternteil is
+   * another by then; `AccountNotDeletedError` where Auth refuses the account
    * after its document went, so deleting again finishes it). Call it in the
    * click: the popup opens at once.
    */
@@ -279,21 +279,21 @@ export class AccountSession {
         return;
       }
       if (!this.isOnline()) {
-        throw new Offline();
+        throw new NoInternetToDeleteError();
       }
       const { uid } = account.user;
       await service.reauthenticate();
       // another tab may have switched accounts while Google asked
       if (service.currentUser()?.uid !== uid) {
-        throw new AccountSwitched();
+        throw new AccountSwitchedError();
       }
-      await service.deleteSelection(uid);
+      await service.deleteAccountSelection(uid);
       try {
         await service.deleteAuthUser(uid);
       } catch (error) {
-        throw error instanceof AccountSwitched
+        throw error instanceof AccountSwitchedError
           ? error
-          : new AccountNotDeleted(error);
+          : new AccountNotDeletedError(error);
       }
       await this.takeOffDevice(service);
     });
@@ -305,25 +305,25 @@ export class AccountSession {
    * the click, as its popup must.
    */
   private oneAtATime<T>(kind: Step, work: () => Promise<T>): Promise<T> {
-    if (this.step !== undefined) {
-      return this.step.kind === kind
-        ? (this.step.run as Promise<T>)
-        : Promise.reject(new Error(`${this.step.kind} is still running.`));
+    if (this.active !== undefined) {
+      return this.active.step === kind
+        ? (this.active.run as Promise<T>)
+        : Promise.reject(new Error(`${this.active.step} is still running.`));
     }
     this.lastFailure.set(undefined);
     this.runningStep.set(kind);
     const run = work()
       .catch((error: unknown) => {
-        this.lastFailure.set({ kind, error });
+        this.lastFailure.set({ step: kind, error });
         throw error;
       })
       .finally(() => {
-        this.step = undefined;
+        this.active = undefined;
         this.runningStep.set(undefined);
         // Auth's news while it ran was ignored: catch up with it now
         this.reconcile();
       });
-    this.step = { kind, run };
+    this.active = { step: kind, run };
     return run;
   }
 
@@ -360,7 +360,7 @@ export class AccountSession {
   }
 
   private setHint(uid: string, hint: TakeoverHint): void {
-    this.hint.set({ uid, hint });
+    this.hintFor.set({ uid, hint });
   }
 
   /**
@@ -379,20 +379,20 @@ export class AccountSession {
    * and the account it shows alone.
    */
   private async reopen(): Promise<void> {
-    const number = this.openingCount;
+    const opening = this.openingCount;
     this.currentState.set({ kind: 'loading' });
     this.current.set(undefined);
     let user: AccountUser | null;
     try {
       const service = await this.loadService();
       user = await service.signedIn();
-      if (number !== this.openingCount) {
+      if (opening !== this.openingCount) {
         return;
       }
       if (user === null) {
         // the marker goes last: a start that fails before clears again
         await service.clearCache();
-        if (number === this.openingCount) {
+        if (opening === this.openingCount) {
           this.flag.clear();
           this.onDevice('signed-out');
         }
@@ -401,7 +401,7 @@ export class AccountSession {
       await this.open(service, user);
     } catch {
       // the account's choices stay unshown rather than the device's
-      if (number === this.openingCount) {
+      if (opening === this.openingCount) {
         this.currentState.set({ kind: 'unreachable' });
       }
       return;
@@ -435,7 +435,7 @@ export class AccountSession {
     this.serviceLoading ??= this.load().then(
       (service) => {
         this.service = service;
-        this.loaded.set(true);
+        this.serviceLoaded.set(true);
         service.watch((user) => this.authChanged(user));
         return service;
       },
@@ -453,7 +453,7 @@ export class AccountSession {
    * while an account opens: a newer opening or a sign-out supersedes it.
    */
   private authChanged(user: AccountUser | null): void {
-    if (this.step !== undefined || this.service === undefined) {
+    if (this.active !== undefined || this.service === undefined) {
       return;
     }
     if (user === null && this.openedFor !== undefined) {
@@ -467,7 +467,7 @@ export class AccountSession {
 
   /** Another tab set or cleared the `flag` (before Firebase is loaded here). */
   private async flagChanged(): Promise<void> {
-    if (this.step !== undefined) {
+    if (this.active !== undefined) {
       return;
     }
     if (this.flag.isSet() && this.openedFor === undefined) {
@@ -491,7 +491,7 @@ export class AccountSession {
     service: AccountService,
     user: AccountUser
   ): Promise<void> {
-    const number = this.close();
+    const opening = this.close();
     this.openedFor = user.uid;
     this.current.set(undefined);
     this.currentState.set({ kind: 'loading' });
@@ -501,7 +501,7 @@ export class AccountSession {
         this.readFailed(error)
       );
     } catch (error) {
-      if (number === this.openingCount) {
+      if (opening === this.openingCount) {
         // Auth's next word about this Elternteil opens it again
         this.openedFor = undefined;
         this.currentState.set({ kind: 'unreachable' });
@@ -509,11 +509,11 @@ export class AccountSession {
       throw error;
     }
     if (
-      number !== this.openingCount ||
+      opening !== this.openingCount ||
       service.currentUser()?.uid !== user.uid
     ) {
       selection.stop();
-      if (number === this.openingCount) {
+      if (opening === this.openingCount) {
         this.reconcile();
       }
       return;

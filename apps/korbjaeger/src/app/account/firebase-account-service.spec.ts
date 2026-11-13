@@ -84,7 +84,7 @@ describe('FirebaseAccountService', () => {
     let done = false;
 
     const deletion = firebaseAccountService(ENVIRONMENT)
-      .deleteSelection('uid-1')
+      .deleteAccountSelection('uid-1')
       .then(() => (done = true));
     await vi.advanceTimersByTimeAsync(60_000);
     expect(done).toBe(false);
@@ -98,7 +98,7 @@ describe('FirebaseAccountService', () => {
   it("deletes the account's document only", async () => {
     firebase.deleteDoc.mockClear();
 
-    await firebaseAccountService(ENVIRONMENT).deleteSelection('uid-1');
+    await firebaseAccountService(ENVIRONMENT).deleteAccountSelection('uid-1');
 
     expect(firebase.deleteDoc).toHaveBeenCalledTimes(1);
   });

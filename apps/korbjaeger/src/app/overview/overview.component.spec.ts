@@ -276,7 +276,7 @@ describe('OverviewComponent', () => {
     );
     expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
 
-    service.readError?.({ code: 'unavailable' });
+    service.onReadFailure?.({ code: 'unavailable' });
     await settled();
 
     expect(text(page.querySelector('[data-qa="overview-unreadable"]'))).toBe(

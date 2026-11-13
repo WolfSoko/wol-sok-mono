@@ -3,17 +3,19 @@ import {
   LocalSelection,
 } from '@wolsok/feat-korbjaeger-selection';
 import {
-  SignInCancelled,
-  AccountSwitched,
-  AccountNotDeleted,
-  NotAllSent,
-  Offline,
+  SignInCancelledError,
+  AccountSwitchedError,
+  AccountNotDeletedError,
+  NotAllSentError,
+  NoInternetToDeleteError,
 } from './account-service';
 import { AccountSession } from './account-session';
 import {
+  call,
   FakeAccountService,
   FakeFlag,
   MIMI_PARENT,
+  type LoggedCall,
 } from './testing/fake-account-service';
 
 interface Setup {
@@ -104,7 +106,10 @@ describe('AccountSession', () => {
       const { session } = await setUp({ wasSignedIn: true, service });
 
       expect(session.state()).toEqual(SIGNED_IN);
-      expect(service.calls).toEqual(['signedIn', 'selection uid-1']);
+      expect(service.calls).toEqual([
+        call('signedIn'),
+        call('selection', 'uid-1'),
+      ]);
     });
 
     it('goes back to the device where Auth holds the Elternteil no longer, its cache cleared first', async () => {
@@ -114,7 +119,7 @@ describe('AccountSession', () => {
 
       expect(session.state()).toEqual({ kind: 'signed-out' });
       expect(flag.isSet()).toBe(false);
-      expect(service.calls).toEqual(['signedIn', 'clearCache']);
+      expect(service.calls).toEqual([call('signedIn'), call('clearCache')]);
     });
 
     it("says it cannot read, and shows no device's choices, while the account cannot be opened", async () => {
@@ -175,9 +180,9 @@ describe('AccountSession', () => {
       await session.signIn();
 
       expect(service.calls).toEqual([
-        'signInWithGoogle',
-        'takeOverDevice uid-1',
-        'selection uid-1',
+        call('signInWithGoogle'),
+        call('takeOverDevice', 'uid-1'),
+        call('selection', 'uid-1'),
       ]);
       expect(service.takenOver).toEqual({
         teams: [313036],
@@ -254,9 +259,11 @@ describe('AccountSession', () => {
       await local.follow(313036);
       service.cancelled = true;
 
-      await expect(session.signIn()).rejects.toBeInstanceOf(SignInCancelled);
+      await expect(session.signIn()).rejects.toBeInstanceOf(
+        SignInCancelledError
+      );
 
-      expect(service.calls).toEqual(['signInWithGoogle']);
+      expect(service.calls).toEqual([call('signInWithGoogle')]);
       expect(local.teams()).toEqual([313036]);
       expect(flag.isSet()).toBe(false);
       expect(session.state()).toEqual({ kind: 'signed-out' });
@@ -270,10 +277,10 @@ describe('AccountSession', () => {
       await expect(session.signIn()).rejects.toThrow('offline');
 
       expect(service.calls).toEqual([
-        'signInWithGoogle',
-        'takeOverDevice uid-1',
-        'signOut',
-        'clearCache',
+        call('signInWithGoogle'),
+        call('takeOverDevice', 'uid-1'),
+        call('signOut'),
+        call('clearCache'),
       ]);
       expect(local.teams()).toEqual([313036]);
       expect(flag.isSet()).toBe(false);
@@ -288,10 +295,10 @@ describe('AccountSession', () => {
       await session.signIn();
 
       expect(service.calls).toEqual([
-        'signInWithGoogle',
-        'takeOverDevice uid-1',
-        'takeOverDevice uid-1',
-        'selection uid-1',
+        call('signInWithGoogle'),
+        call('takeOverDevice', 'uid-1'),
+        call('takeOverDevice', 'uid-1'),
+        call('selection', 'uid-1'),
       ]);
       // the second round takes what joined; the first took the rest
       expect(service.takenOver?.teams).toEqual([201500]);
@@ -416,7 +423,7 @@ describe('AccountSession', () => {
       await Promise.all([session.signIn(), session.signIn()]);
 
       expect(
-        service.calls.filter((call) => call === 'signInWithGoogle')
+        service.calls.filter((logged) => logged === call('signInWithGoogle'))
       ).toHaveLength(1);
     });
 
@@ -436,10 +443,10 @@ describe('AccountSession', () => {
       await session.signOut();
 
       expect(service.calls).toEqual([
-        'allSent',
-        'signOut',
-        'stop',
-        'clearCache',
+        call('allSent'),
+        call('signOut'),
+        call('stop'),
+        call('clearCache'),
       ]);
       expect(session.state()).toEqual({ kind: 'signed-out' });
       expect(session.selection.teams()).toEqual([]);
@@ -451,9 +458,9 @@ describe('AccountSession', () => {
       const { session, service, flag } = await signedIn();
       service.notSent = true;
 
-      await expect(session.signOut()).rejects.toBeInstanceOf(NotAllSent);
+      await expect(session.signOut()).rejects.toBeInstanceOf(NotAllSentError);
 
-      expect(service.calls).toEqual(['allSent']);
+      expect(service.calls).toEqual([call('allSent')]);
       expect(session.state()).toEqual(SIGNED_IN);
       expect(flag.isSet()).toBe(true);
     });
@@ -464,7 +471,7 @@ describe('AccountSession', () => {
 
       await expect(session.signOut()).rejects.toThrow('Auth unreachable');
 
-      expect(service.calls).toEqual(['allSent', 'signOut']);
+      expect(service.calls).toEqual([call('allSent'), call('signOut')]);
       expect(session.state()).toEqual(SIGNED_IN);
       expect(session.selection.teams()).toBe(service.accountSelection.teams());
       expect(flag.isSet()).toBe(true);
@@ -479,13 +486,15 @@ describe('AccountSession', () => {
       };
 
       await expect(session.deleteAccount()).rejects.toBeInstanceOf(
-        AccountSwitched
+        AccountSwitchedError
       );
 
-      expect(service.calls).not.toContain('deleteSelection uid-1');
-      expect(service.calls.some((a) => a.startsWith('deleteAuthUser'))).toBe(
-        false
+      expect(service.calls).not.toContain(
+        call('deleteAccountSelection', 'uid-1')
       );
+      expect(
+        service.calls.some((a) => a.startsWith(call('deleteAuthUser')))
+      ).toBe(false);
     });
 
     it('deletes the account it asked Google about, by its uid', async () => {
@@ -493,7 +502,7 @@ describe('AccountSession', () => {
 
       await session.deleteAccount();
 
-      expect(service.calls).toContain('deleteAuthUser uid-1');
+      expect(service.calls).toContain(call('deleteAuthUser', 'uid-1'));
     });
 
     it('says the account is still there where Auth refuses it after its document went', async () => {
@@ -501,7 +510,7 @@ describe('AccountSession', () => {
       service.deleteAuthUserFails = true;
 
       await expect(session.deleteAccount()).rejects.toBeInstanceOf(
-        AccountNotDeleted
+        AccountNotDeletedError
       );
 
       expect(session.state()).toEqual(SIGNED_IN);
@@ -526,7 +535,9 @@ describe('AccountSession', () => {
 
       takeover.resolve();
       await started;
-      expect(service.calls).not.toContain('deleteSelection uid-1');
+      expect(service.calls).not.toContain(
+        call('deleteAccountSelection', 'uid-1')
+      );
     });
 
     it('tells the step running, and the failure of the last one, to any page', async () => {
@@ -542,8 +553,8 @@ describe('AccountSession', () => {
       confirmed.resolve();
       await deletion;
       expect(session.running()).toBeUndefined();
-      expect(session.failure()?.kind).toBe('delete');
-      expect(session.failure()?.error).toBeInstanceOf(AccountNotDeleted);
+      expect(session.failure()?.step).toBe('delete');
+      expect(session.failure()?.error).toBeInstanceOf(AccountNotDeletedError);
 
       service.deleteAuthUserFails = false;
       const secondAttempt = session.deleteAccount();
@@ -557,11 +568,11 @@ describe('AccountSession', () => {
       await session.deleteAccount();
 
       expect(service.calls).toEqual([
-        'reauthenticate',
-        'deleteSelection uid-1',
-        'deleteAuthUser uid-1',
-        'stop',
-        'clearCache',
+        call('reauthenticate'),
+        call('deleteAccountSelection', 'uid-1'),
+        call('deleteAuthUser', 'uid-1'),
+        call('stop'),
+        call('clearCache'),
       ]);
       expect(session.state()).toEqual({ kind: 'signed-out' });
       expect(session.selection.teams()).toEqual([]);
@@ -573,10 +584,10 @@ describe('AccountSession', () => {
       service.cancelled = true;
 
       await expect(session.deleteAccount()).rejects.toBeInstanceOf(
-        SignInCancelled
+        SignInCancelledError
       );
 
-      expect(service.calls).toEqual(['reauthenticate']);
+      expect(service.calls).toEqual([call('reauthenticate')]);
       expect(session.state()).toEqual(SIGNED_IN);
     });
 
@@ -585,7 +596,7 @@ describe('AccountSession', () => {
       setup.online = false;
 
       await expect(setup.session.deleteAccount()).rejects.toBeInstanceOf(
-        Offline
+        NoInternetToDeleteError
       );
 
       expect(setup.service.calls).toEqual([]);
@@ -600,14 +611,14 @@ describe('AccountSession', () => {
       const deletion = session.deleteAccount();
       await settle();
       expect(service.calls).toEqual([
-        'reauthenticate',
-        'deleteSelection uid-1',
+        call('reauthenticate'),
+        call('deleteAccountSelection', 'uid-1'),
       ]);
       expect(session.state()).toEqual(SIGNED_IN);
 
       confirmed.resolve();
       await deletion;
-      expect(service.calls).toContain('deleteAuthUser uid-1');
+      expect(service.calls).toContain(call('deleteAuthUser', 'uid-1'));
       expect(session.state()).toEqual({ kind: 'signed-out' });
     });
   });
@@ -622,7 +633,7 @@ describe('AccountSession', () => {
       expect(session.state()).toEqual({ kind: 'signed-out' });
       expect(session.selection.teams()).toEqual([]);
       expect(flag.isSet()).toBe(false);
-      expect(service.calls).toEqual(['stop', 'clearCache']);
+      expect(service.calls).toEqual([call('stop'), call('clearCache')]);
     });
 
     it('switches to the account another tab signed in to instead', async () => {
@@ -632,7 +643,7 @@ describe('AccountSession', () => {
       service.authReports({ uid: 'uid-2', name: 'Familie Beispiel' });
       await settle();
 
-      expect(service.calls).toEqual(['stop', 'selection uid-2']);
+      expect(service.calls).toEqual([call('stop'), call('selection', 'uid-2')]);
       expect(session.selection.teams()).toEqual([201765]);
       expect(session.state()).toEqual({
         kind: 'signed-in',
@@ -649,7 +660,7 @@ describe('AccountSession', () => {
       };
 
       await expect(session.deleteAccount()).rejects.toBeInstanceOf(
-        SignInCancelled
+        SignInCancelledError
       );
       await settle();
 
@@ -696,8 +707,8 @@ describe('AccountSession', () => {
         await setup.session.prepare();
         const ready = Promise.withResolvers<void>();
         setup.service.selectionReady = ready.promise;
-        const count = (call: string) =>
-          setup.service.calls.filter((a) => a === call).length;
+        const count = (expected: LoggedCall) =>
+          setup.service.calls.filter((logged) => logged === expected).length;
         return { ...setup, ready: ready.resolve, count };
       }
 
@@ -717,7 +728,9 @@ describe('AccountSession', () => {
 
         expect(session.state()).toEqual({ kind: 'signed-out' });
         expect(session.selection.teams()).toEqual([]);
-        expect(countCalls('stop')).toBe(countCalls('selection uid-1'));
+        expect(countCalls(call('stop'))).toBe(
+          countCalls(call('selection', 'uid-1'))
+        );
       });
 
       it('shows the account another tab switched to meanwhile, the first closed', async () => {
@@ -738,7 +751,7 @@ describe('AccountSession', () => {
           kind: 'signed-in',
           name: 'Familie Beispiel',
         });
-        expect(countCalls('stop')).toBe(1);
+        expect(countCalls(call('stop'))).toBe(1);
       });
 
       it('opens it once where another tab tells twice, the other opening closed', async () => {
@@ -758,7 +771,9 @@ describe('AccountSession', () => {
         await settle();
 
         expect(session.state()).toEqual(SIGNED_IN);
-        expect(countCalls('selection uid-1') - countCalls('stop')).toBe(1);
+        expect(
+          countCalls(call('selection', 'uid-1')) - countCalls(call('stop'))
+        ).toBe(1);
       });
     });
 
@@ -787,10 +802,14 @@ describe('AccountSession', () => {
     it('signs out where the account can no longer be read', async () => {
       const { session, service } = await signedIn();
 
-      service.readError?.({ code: 'permission-denied' });
+      service.onReadFailure?.({ code: 'permission-denied' });
       await settle();
 
-      expect(service.calls).toEqual(['signOut', 'stop', 'clearCache']);
+      expect(service.calls).toEqual([
+        call('signOut'),
+        call('stop'),
+        call('clearCache'),
+      ]);
       expect(session.state()).toEqual({ kind: 'signed-out' });
     });
 
@@ -799,7 +818,7 @@ describe('AccountSession', () => {
       await service.accountSelection.follow(313036);
       expect(session.selection.teams()).toEqual([313036]);
 
-      service.readError?.({ code: 'unavailable' });
+      service.onReadFailure?.({ code: 'unavailable' });
 
       expect(session.state()).toEqual({ kind: 'unreachable' });
       expect(session.selection.unreadable()).toBe(true);
@@ -847,7 +866,7 @@ describe('AccountSession', () => {
 
     it('clears the cache a sign-out left at a start without anyone signed in', async () => {
       const flag = new FakeFlag(false);
-      flag.cleanUp = true;
+      flag.pendingCleanUp = true;
       const service = new FakeAccountService();
       const session = new AccountSession(
         new LocalSelection(undefined),
@@ -858,7 +877,7 @@ describe('AccountSession', () => {
       await session.start();
       await settle();
 
-      expect(service.calls).toEqual(['clearCache']);
+      expect(service.calls).toEqual([call('clearCache')]);
       expect(session.state()).toEqual({ kind: 'signed-out' });
     });
   });

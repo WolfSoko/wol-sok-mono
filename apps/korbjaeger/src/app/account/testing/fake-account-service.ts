@@ -7,8 +7,8 @@ import {
 } from '@wolsok/feat-korbjaeger-selection';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import {
-  SignInCancelled,
-  AccountSwitched,
+  SignInCancelledError,
+  AccountSwitchedError,
   type AccountUser,
   type AccountSelection,
   type AccountService,
@@ -21,13 +21,24 @@ export const MIMI_PARENT: AccountUser = {
   name: 'Familie Muster',
 };
 
+/** A method of the service the fake logs, or its selection's `stop`. */
+export type FakeCall = keyof AccountService | 'stop';
+
+/** An entry of the call log: the method, with the uid where it takes one. */
+export type LoggedCall = FakeCall | `${FakeCall} ${string}`;
+
+/** The log entry of a call, as specs expect it in `calls`. */
+export function call(method: FakeCall, uid?: string): LoggedCall {
+  return uid === undefined ? method : `${method} ${uid}`;
+}
+
 /**
- * A `AccountService` for specs: it logs its calls in order (`calls`) and has
+ * An `AccountService` for specs: it logs its calls in order (`calls`) and has
  * switches for its faults; the account's selection is a `fakeSelection`, and
  * `authReports` plays Auth telling of another tab's sign-in or sign-out.
  */
 export class FakeAccountService implements AccountService {
-  public readonly calls: string[] = [];
+  public readonly calls: LoggedCall[] = [];
   public restored: AccountUser | null = null;
   /** The popup is closed by the Elternteil. */
   public cancelled = false;
@@ -56,7 +67,7 @@ export class FakeAccountService implements AccountService {
   public selectionReady?: Promise<void>;
   public takenOver?: SelectionContent;
   /** What the account's selection told of its failure (`selection`'s `onFailure`). */
-  public readError?: (error: unknown) => void;
+  public onReadFailure?: (error: unknown) => void;
   /** The selection of `MIMI_PARENT`'s account; others get their own (`selectionOf`). */
   public readonly accountSelection: AccountSelection = this.newSelection();
   private readonly selections = new Map<string, AccountSelection>([
@@ -71,7 +82,7 @@ export class FakeAccountService implements AccountService {
   }
 
   public async signedIn(): Promise<AccountUser | null> {
-    this.calls.push('signedIn');
+    this.log('signedIn');
     return this.restored;
   }
 
@@ -85,19 +96,19 @@ export class FakeAccountService implements AccountService {
   }
 
   public async signInWithGoogle(): Promise<AccountUser> {
-    this.calls.push('signInWithGoogle');
+    this.log('signInWithGoogle');
     this.checkPopup();
     this.restored = MIMI_PARENT;
     return MIMI_PARENT;
   }
 
   public async reauthenticate(): Promise<void> {
-    this.calls.push('reauthenticate');
+    this.log('reauthenticate');
     this.checkPopup();
   }
 
   public async signOut(): Promise<void> {
-    this.calls.push('signOut');
+    this.log('signOut');
     if (this.signOutFails) {
       throw new Error('Auth unreachable');
     }
@@ -105,12 +116,12 @@ export class FakeAccountService implements AccountService {
   }
 
   public async deleteAuthUser(uid: string): Promise<void> {
-    this.calls.push(`deleteAuthUser ${uid}`);
+    this.log('deleteAuthUser', uid);
     if (this.deleteAuthUserFails) {
       throw new Error('auth/requires-recent-login');
     }
     if (this.restored?.uid !== uid) {
-      throw new AccountSwitched();
+      throw new AccountSwitchedError();
     }
     this.restored = null;
   }
@@ -126,12 +137,12 @@ export class FakeAccountService implements AccountService {
     uid: string,
     onFailure: (error: unknown) => void
   ): Promise<AccountSelection> {
-    this.calls.push(`selection ${uid}`);
+    this.log('selection', uid);
     await this.selectionReady;
     if (this.selectionFails) {
       throw new Error('unavailable');
     }
-    this.readError = onFailure;
+    this.onReadFailure = onFailure;
     return this.selectionOf(uid);
   }
 
@@ -139,7 +150,7 @@ export class FakeAccountService implements AccountService {
     uid: string,
     device: SelectionContent
   ): Promise<NotTakenOver> {
-    this.calls.push(`takeOverDevice ${uid}`);
+    this.log('takeOverDevice', uid);
     if (this.takeoverFails) {
       throw new Error('offline');
     }
@@ -151,18 +162,18 @@ export class FakeAccountService implements AccountService {
     return this.leftOver;
   }
 
-  public async deleteSelection(uid: string): Promise<void> {
-    this.calls.push(`deleteSelection ${uid}`);
+  public async deleteAccountSelection(uid: string): Promise<void> {
+    this.log('deleteAccountSelection', uid);
     await this.deletionConfirmed;
   }
 
   public async allSent(): Promise<boolean> {
-    this.calls.push('allSent');
+    this.log('allSent');
     return !this.notSent;
   }
 
   public async clearCache(): Promise<void> {
-    this.calls.push('clearCache');
+    this.log('clearCache');
     await this.cacheReady;
   }
 
@@ -176,18 +187,22 @@ export class FakeAccountService implements AccountService {
       }),
       unreadable: signal(false),
       loaded: () => Promise.resolve(),
-      stop: () => this.calls.push('stop'),
+      stop: () => this.log('stop'),
     };
   }
 
   private checkPopup(): void {
     this.duringPopup?.();
     if (this.cancelled) {
-      throw new SignInCancelled();
+      throw new SignInCancelledError();
     }
     if (this.popupError) {
       throw this.popupError;
     }
+  }
+
+  private log(method: FakeCall, uid?: string): void {
+    this.calls.push(call(method, uid));
   }
 }
 
@@ -195,12 +210,12 @@ export class FakeAccountService implements AccountService {
 export class FakeFlag implements SignInFlag {
   private readonly listeners: Array<() => void> = [];
   /** A sign-out left Firestore's copy on the device to clear. */
-  public cleanUp = false;
+  public pendingCleanUp = false;
 
   public constructor(public signedIn = false) {}
 
   public cleanUpPending(): boolean {
-    return this.cleanUp;
+    return this.pendingCleanUp;
   }
 
   public isSet(): boolean {
