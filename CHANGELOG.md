@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.170.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.0...v74.170.1) (2026-11-13)
+
+### Refactorings
+
+* **korbjaeger:** English identifiers, part D1: data and plumbing ([#3012](https://github.com/WolfSoko/wol-sok-mono/issues/3012)) ([#3088](https://github.com/WolfSoko/wol-sok-mono/issues/3088)) ([4a81efd](https://github.com/WolfSoko/wol-sok-mono/commit/4a81efd8729b1a073f719f96a8fcea0d76d5a091)), references [#2967](https://github.com/WolfSoko/wol-sok-mono/issues/2967)
+
 ## [74.170.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.2...v74.170.0) (2026-11-13)
 
 ### Features
