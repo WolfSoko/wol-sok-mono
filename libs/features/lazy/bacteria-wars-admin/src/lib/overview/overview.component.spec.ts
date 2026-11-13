@@ -6,8 +6,18 @@ import {
   settleSnapshots,
   timestampAt,
 } from '@wolsok/feat-lazy-bac-game/testing';
+import type { CommandResult } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminCommandsService } from '../commands/admin-commands.service';
 import { OverviewComponent } from './overview.component';
+
+type Send = AdminCommandsService['send'];
+
+/** A fake of `AdminCommandsService.send`, typed as the real one. */
+function fakeSend(result: CommandResult) {
+  return jest.fn<ReturnType<Send>, Parameters<Send>>(async () => result);
+}
+
+const REFUSED: CommandResult = { ok: false, error: 'not-admin' };
 
 const NOON = Date.UTC(2026, 9, 25, 12);
 const HOUR = 3_600_000;
@@ -26,10 +36,7 @@ function fakeStats(now: FakeDoc | undefined): FakeFirebase {
   });
 }
 
-async function render(
-  now: FakeDoc | undefined,
-  send = jest.fn(async (_command: { type: string }) => ({ ok: true }))
-) {
+async function render(now: FakeDoc | undefined, send = fakeSend({ ok: true })) {
   const fake = fakeStats(now);
   TestBed.configureTestingModule({
     providers: [
@@ -101,10 +108,7 @@ describe('OverviewComponent', () => {
   });
 
   it('shows a refused refresh', async () => {
-    const { fixture, text } = await render(
-      undefined,
-      jest.fn(async () => ({ ok: false, error: 'not-admin' }))
-    );
+    const { fixture, text } = await render(undefined, fakeSend(REFUSED));
     button(fixture, 'Refresh').click();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -134,10 +138,7 @@ describe('OverviewComponent', () => {
   });
 
   it('does not refresh after a refused recount', async () => {
-    const send = jest.fn(async (_command: { type: string }) => ({
-      ok: false,
-      error: 'not-admin',
-    }));
+    const send = fakeSend(REFUSED);
     const { fixture, text } = await render(undefined, send);
     button(fixture, 'Recount accounts').click();
     await fixture.whenStable();

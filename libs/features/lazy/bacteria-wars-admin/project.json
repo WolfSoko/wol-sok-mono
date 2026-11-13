@@ -6,6 +6,7 @@
   "projectType": "library",
   "tags": ["feature:admin"],
   "targets": {
+    "typecheck-specs": {},
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
