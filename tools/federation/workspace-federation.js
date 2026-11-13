@@ -51,6 +51,12 @@ function workspaceFederation(config) {
       ...config.shared,
     },
 
+    // No `@firebase/*` entry here or in `shared`: the `firebase/*` bundles
+    // keep their common code (`@firebase/app`, `/util`, `/installations`, ...)
+    // in internal `@nf-internal/chunk-*` files that only they import, so a
+    // `chunk-*` holding it is part of the shared bundles, not a duplicate
+    // (#3063). Nothing outside those bundles imports `@firebase/*` by name,
+    // so neither sharing nor skipping it would change the output.
     skip: [
       'rxjs/ajax',
       'rxjs/fetch',
