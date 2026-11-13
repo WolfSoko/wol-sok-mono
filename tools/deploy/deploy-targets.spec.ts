@@ -1,51 +1,57 @@
 import { describe, expect, it } from '@jest/globals';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const WORKSPACE = join(__dirname, '..', '..');
+
+function workspaceJson<T>(path: string): T {
+  return JSON.parse(readFileSync(join(WORKSPACE, path), 'utf8')) as T;
+}
 
 interface DeployTarget {
   options: { command?: string; commands?: string[]; parallel?: boolean };
 }
 
-function deployOf(app: string): DeployTarget {
-  const project = JSON.parse(
-    readFileSync(join(WORKSPACE, 'apps', app, 'project.json'), 'utf8')
-  ) as { targets: Record<string, DeployTarget> };
-  return project.targets['deploy'];
-}
+/** The app of every root `firebase.<app>.json` that deploys Hosting. */
+const HOSTING_APPS = readdirSync(WORKSPACE)
+  .map((file) => /^firebase\.(.+)\.json$/.exec(file)?.[1])
+  .filter((app): app is string => app !== undefined)
+  .filter(
+    (app) =>
+      workspaceJson<{ hosting?: unknown }>(`firebase.${app}.json`).hosting !==
+      undefined
+  )
+  .sort();
 
 /**
- * Every app that deploys to Firebase Hosting, with its root config and the
- * public domain visitors load it from. Korbjäger's domain is also held
- * equal to its `SITE_URL` by the app's `firebase-deploy.spec.ts`.
+ * The public domain visitors load each Hosting app from. Korbjäger's is also
+ * held equal to its `SITE_URL` by the app's `firebase-deploy.spec.ts`.
  */
-const HOSTING_DEPLOYS = [
-  ['korbjaeger', 'https://korb.wolsok.de/'],
-  ['bacteria-game-remote', 'https://bacteria-wars.wolsok.de/'],
-  ['pacetrainer', 'https://pace-trainer.com/'],
-  ['rollapolla-analog', 'https://rollapolla.com/'],
-] as const;
+const PUBLIC_URLS: Record<string, string> = {
+  'bacteria-game-remote': 'https://bacteria-wars.wolsok.de/',
+  korbjaeger: 'https://korb.wolsok.de/',
+  pacetrainer: 'https://pace-trainer.com/',
+  'rollapolla-analog': 'https://rollapolla.com/',
+};
 
 describe('the Hosting deploys', () => {
-  it.each(HOSTING_DEPLOYS)(
-    '%s ends with the live index check on its config and domain (#3073)',
-    (app, siteUrl) => {
-      const { commands, parallel } = deployOf(app).options;
+  it('know the public domain of every Hosting config', () => {
+    expect(HOSTING_APPS).toEqual(Object.keys(PUBLIC_URLS).sort());
+  });
+
+  it.each(HOSTING_APPS)(
+    '%s deploys, then checks its domain serves the built index.html (#3073)',
+    (app) => {
+      const { targets } = workspaceJson<{
+        targets: Record<string, DeployTarget>;
+      }>(`apps/${app}/project.json`);
+      const { commands, parallel } = targets['deploy'].options;
 
       expect(parallel).toBe(false);
+      expect(commands?.at(-2)).toMatch(/firebase.* deploy/);
       expect(commands?.at(-1)).toBe(
-        `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.${app}.json ${siteUrl}`
+        `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.${app}.json ${PUBLIC_URLS[app]}`
       );
-    }
-  );
-
-  it.each(HOSTING_DEPLOYS.map(([app]) => app))(
-    '%s deploys before it checks',
-    (app) => {
-      const { commands = [] } = deployOf(app).options;
-
-      expect(commands.at(-2)).toMatch(/firebase.* deploy/);
     }
   );
 });

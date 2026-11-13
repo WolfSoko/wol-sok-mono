@@ -226,13 +226,7 @@ describe('the Firebase deploy', () => {
     const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
 
     expect(project.targets['firebase'].options.command).toBe(FIREBASE);
-    expect(project.targets['deploy'].options.commands?.at(-2)).toBe(DEPLOY);
-  });
-
-  it('checks after the deploy that the public domain serves the built index.html', () => {
-    const project = workspaceJson<ProjectJson>('apps/korbjaeger/project.json');
-
-    expect(project.targets['deploy'].options.commands?.at(-1)).toBe(LIVE_CHECK);
+    expect(project.targets['deploy'].options.commands).toContain(DEPLOY);
   });
 
   /**

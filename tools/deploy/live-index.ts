@@ -21,7 +21,10 @@ export type LiveCheckResult =
   | { ok: true; attempt: number }
   | { ok: false; message: string };
 
-/** Hosting puts a release live within seconds; two minutes leave room. */
+/**
+ * Hosting puts a release live within seconds; 12 attempts 10 s apart give
+ * it two minutes (more where single fetches hang until their timeout).
+ */
 const ATTEMPTS = 12;
 const PAUSE_MS = 10_000;
 const HTTP_OK = 200;
@@ -48,9 +51,7 @@ export async function checkLiveIndex(
   let mismatch = '';
   for (let attempt = 1; attempt <= attempts; attempt++) {
     if (attempt > 1) await pause(pauseMs);
-    mismatch = await mismatchOf(built, () =>
-      fetchLive(cacheBusted(siteUrl, now()))
-    );
+    mismatch = await mismatchOf(built, fetchLive, cacheBusted(siteUrl, now()));
     if (!mismatch) return { ok: true, attempt };
     log(`Live index check, attempt ${attempt} of ${attempts}: ${mismatch}`);
   }
@@ -63,11 +64,12 @@ export async function checkLiveIndex(
 /** Why the live answer is not the built file, or '' when it is. */
 async function mismatchOf(
   built: Buffer,
-  fetchLive: () => Promise<LiveAnswer>
+  fetchLive: LiveCheckDeps['fetchLive'],
+  url: string
 ): Promise<string> {
   let live: LiveAnswer;
   try {
-    live = await fetchLive();
+    live = await fetchLive(url);
   } catch (error) {
     return `fetch failed (${error instanceof Error ? error.message : String(error)})`;
   }

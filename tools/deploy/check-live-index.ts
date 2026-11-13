@@ -20,7 +20,6 @@ const FETCH_TIMEOUT_MS = 15_000;
 async function fetchLive(url: string): Promise<LiveAnswer> {
   const response = await fetch(url, {
     headers: { 'Cache-Control': 'no-cache' },
-    redirect: 'follow',
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   return {
