@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.170.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.2...v74.170.0) (2026-11-13)
+
+### Features
+
+* **tools-deploy:** check that the live site serves the built index.html after each Hosting deploy ([#3086](https://github.com/WolfSoko/wol-sok-mono/issues/3086)) ([333bc0b](https://github.com/WolfSoko/wol-sok-mono/commit/333bc0b5d759a4c76ec6567eb125aae29fe699dd)), references [#3073](https://github.com/WolfSoko/wol-sok-mono/issues/3073) [#3058](https://github.com/WolfSoko/wol-sok-mono/issues/3058)
+
 ## [74.169.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.1...v74.169.2) (2026-11-13)
 
 ### Bug Fixes
