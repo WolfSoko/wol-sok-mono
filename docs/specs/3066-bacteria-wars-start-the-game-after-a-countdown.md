@@ -45,12 +45,19 @@ or pads instead of losing the first second of the match.
 5. **The overlay** is a big number in the middle of the stage, a component
    of its own (`countdown/match-countdown.component.ts`, so the stage's
    stylesheet stays within its budget), announced through a `role="status"`
-   region ("The match starts in 3", `stage.countdown`), animated per number
+   region ("The match starts in 3", `stage.countdown`) that stays in the
+   stage, empty outside the countdown, so screen readers read the first
+   number too, animated per number
    except with reduced motion. The arena is painted once at the countdown's
    start, so the new match's start position shows, not the last board.
    The pads are disabled during it, so a tap waits for the start; the
    level's music starts with the countdown, on the tap.
-6. **The countdown's length is a token** (`MATCH_COUNTDOWN_SECONDS`,
+6. **Leaving fullscreen during the countdown pauses the match**, as it
+   pauses a running one, so it never starts behind the page. Space is kept
+   from scrolling the page during the countdown, as during the match.
+   An online opponent who leaves during the countdown gives the match up,
+   as during the match (accepted: the countdown is part of the match).
+7. **The countdown's length is a token** (`MATCH_COUNTDOWN_SECONDS`,
    default 3): the specs that drive a match tick by tick from its start
    provide 0.
 

@@ -34,9 +34,7 @@
     </p>
   }
 
-  @if (hud.countdown(); as count) {
-    <feat-lazy-bac-game-match-countdown [count]="count" />
-  }
+  <feat-lazy-bac-game-match-countdown [count]="hud.countdown()" />
 
   @if (hud.playing() && hud.waitingForPeer()) {
     <p class="peer-wait" role="status">

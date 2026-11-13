@@ -83,6 +83,8 @@ test('should report the frame time of a match on the CPU simulation', async ({
   await po.goto('/?sim=cpu');
   await po.startMatch();
   await expect(po.playArea).toHaveAttribute('data-simulation', 'cpu');
+  // The boost arms once the countdown is over and the match runs.
+  await expect(po.boostCta).toBeEnabled();
 
   // Measured from the start of the match on.
   await page.evaluate(() => {

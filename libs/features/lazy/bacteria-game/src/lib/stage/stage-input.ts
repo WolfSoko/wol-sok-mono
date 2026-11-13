@@ -62,8 +62,12 @@ export class StageInput {
     // Enter on "Reset" expects a reset, not a boost. Outside of a match
     // Space still scrolls. A weapon key counts only for a human who carries
     // a weapon; anyone else's E or Shift does what it did before.
+    // A countdown counts too: Space must not scroll then, and the boost and
+    // the weapon wait for the match to run by themselves.
+    const { currentState } = this.store.snapshot();
     const inMatch =
-      this.store.snapshot().currentState === GameState.RUNNING &&
+      (currentState === GameState.RUNNING ||
+        currentState === GameState.COUNTDOWN) &&
       !isInteractiveTarget(event.target);
     const humans = this.stage.humans();
     const boosted = inMatch ? humanForBoostKey(humans, event.key) : null;

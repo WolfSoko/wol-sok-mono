@@ -265,6 +265,9 @@ describe('PlayFlow', () => {
 
     it('does not carry a first tap over into the next match', () => {
       const quit = armed();
+      jest
+        .spyOn(TestBed.inject(GameStateService), 'startMatch')
+        .mockImplementation(() => undefined);
 
       flow.giveUp();
       flow.startGame();

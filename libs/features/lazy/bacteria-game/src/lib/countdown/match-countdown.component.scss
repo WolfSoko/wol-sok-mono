@@ -15,6 +15,7 @@
 
 .number {
   color: #fff;
+  font-family: var(--bw-display, inherit);
   font-size: clamp(4rem, 22vmin, 10rem);
   font-weight: 800;
   line-height: 1;
