@@ -11,7 +11,8 @@ const WORKERS = '.nx/workflows/workers.yml';
 const CI_CONFIG = '.nx/ci-config.yaml';
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
 const DOWNLOAD_STEP = 'Download the Firebase emulators';
-// POSIX, since Nx Cloud documents no shell for inline scripts: a dash would
+// Every inline init script starts with it (#2974, #3067). POSIX, since Nx Cloud
+// documents neither the shell nor fail-fast for inline scripts: a dash would
 // stop on `set -o pipefail` itself.
 const FAIL_FAST = 'set -eu';
 const DOWNLOAD_COMMAND = 'npx firebase setup:emulators:';
@@ -97,6 +98,22 @@ function stepScript(lines, name) {
   return { start, commands: step.slice(header + 1) };
 }
 
+// The name of every init step that runs an inline script.
+function inlineScriptSteps(lines) {
+  return lines
+    .map((line, index) => ({ line, index }))
+    .filter(({ line }) => line.startsWith('- name:'))
+    .filter(({ index }) => {
+      const next = lines.findIndex(
+        (line, after) => after > index && line.startsWith('- name:')
+      );
+      return lines
+        .slice(index + 1, next < 0 ? undefined : next)
+        .some((line) => line.startsWith('script:'));
+    })
+    .map(({ line }) => line.slice('- name:'.length).trim());
+}
+
 function stopAfterTargets() {
   const block = read(CI_CONFIG).match(/stop-after:\n((?:\s+(?:-.*|#.*)\n?)+)/);
   assert.ok(block, `${CI_CONFIG} has no stop-after list`);
@@ -131,14 +148,22 @@ void describe('Nx Cloud workers', () => {
     }
   });
 
-  void it('download the emulators only in a step that stops on the first failed download', () => {
+  void it('start every inline init script by stopping on its first failed command', () => {
+    const lines = executableLines(read(WORKERS));
+    const steps = inlineScriptSteps(lines);
+    assert.ok(steps.includes(DOWNLOAD_STEP));
+    for (const name of steps) {
+      assert.equal(
+        stepScript(lines, name).commands[0],
+        FAIL_FAST,
+        `"${name}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
+      );
+    }
+  });
+
+  void it('download the emulators only in the download step', () => {
     const lines = executableLines(read(WORKERS));
     const { commands } = stepScript(lines, DOWNLOAD_STEP);
-    assert.equal(
-      commands[0],
-      FAIL_FAST,
-      `"${DOWNLOAD_STEP}" in ${WORKERS} must start its script with "${FAIL_FAST}"`
-    );
     const everywhere = lines.filter((line) =>
       line.startsWith(DOWNLOAD_COMMAND)
     );
