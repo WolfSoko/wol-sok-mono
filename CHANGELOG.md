@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.169.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.1...v74.169.2) (2026-11-13)
+
+### Bug Fixes
+
+* **feat-shared-basketball-data:** mark BBL, ProA and ProB Ligen as never confirmed on every endpoint ([#3082](https://github.com/WolfSoko/wol-sok-mono/issues/3082)) ([7a85105](https://github.com/WolfSoko/wol-sok-mono/commit/7a851059a7684bbb51c93642b9006ed06f7fc968)), closes [#3056](https://github.com/WolfSoko/wol-sok-mono/issues/3056), references [#2953](https://github.com/WolfSoko/wol-sok-mono/issues/2953) [#3056](https://github.com/WolfSoko/wol-sok-mono/issues/3056)
+* **tools:** count a deleted file only for the projects reading its owner ([#3081](https://github.com/WolfSoko/wol-sok-mono/issues/3081)) ([573f8b9](https://github.com/WolfSoko/wol-sok-mono/commit/573f8b9a155ed9dc63351f6d0f3e56595d50989c)), references [#3054](https://github.com/WolfSoko/wol-sok-mono/issues/3054) [#3054](https://github.com/WolfSoko/wol-sok-mono/issues/3054) [#3054](https://github.com/WolfSoko/wol-sok-mono/issues/3054) [#3054](https://github.com/WolfSoko/wol-sok-mono/issues/3054)
+
+### Documentation
+
+* **tools-federation:** the remote's [@firebase](https://github.com/firebase) chunks are no duplicate ([#3063](https://github.com/WolfSoko/wol-sok-mono/issues/3063)) ([#3083](https://github.com/WolfSoko/wol-sok-mono/issues/3083)) ([d49e04f](https://github.com/WolfSoko/wol-sok-mono/commit/d49e04f82ad7684c733f771c4b5bd5f3501490e5))
+
 ## [74.169.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.169.0...v74.169.1) (2026-11-13)
 
 ### Bug Fixes
