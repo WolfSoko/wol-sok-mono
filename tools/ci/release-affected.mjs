@@ -6,9 +6,11 @@
 // `eslint.config.mjs` for `lint-templates`) made every app affected. Nx's list
 // stays the start: it maps the lockfile, root `package.json`,
 // `tsconfig.base.json` and `nx.json` to the projects they touch, which a file
-// list cannot, so a change to one of them keeps its verdict. The filter only
-// drops a candidate whose task reads none of the changed files, and keeps
-// every candidate where it cannot judge.
+// list cannot, so a change to one of them keeps its verdict. A deleted file
+// counts for the candidates reading files of the project it lay in (#3054);
+// one outside every project keeps Nx's verdict. The filter only drops a
+// candidate whose task reads none of the changed files, and keeps every
+// candidate where it cannot judge.
 //
 //   node tools/ci/release-affected.mjs --base=<ref> --head=<ref> \
 //     --target=deploy [--exclude=<pattern>] [--projects=<pattern>]
@@ -112,6 +114,24 @@ function sameJson(a, b) {
 }
 
 /**
+ * The root of the project a file lies in: the longest project root holding
+ * it up to a `/`. The root project (`.`) owns nothing, else every file would
+ * have an owner.
+ *
+ * @param {string} file a path relative to the workspace root
+ * @param {Iterable<string>} roots every project's root
+ * @returns {string | undefined}
+ */
+export function ownerRoot(file, roots) {
+  let owner;
+  for (const root of roots) {
+    if (root === '.' || !file.startsWith(`${root}/`)) continue;
+    if (!owner || root.length > owner.length) owner = root;
+  }
+  return owner;
+}
+
+/**
  * @param {object} release
  * @param {string[]} release.candidates projects Nx calls affected
  * @param {string[]} release.changedFiles files changed and present at the head
@@ -119,6 +139,9 @@ function sameJson(a, b) {
  * @param {(project: string) => Set<string> | undefined} release.inputsOf the
  *   files the project's task and the tasks it depends on read, `undefined`
  *   where they could not be read
+ * @param {Record<string, string>} [release.projectRoots] every project's root
+ *   at the head, `undefined` where they could not be read; needed only with
+ *   deleted files
  * @returns {{ selected: string[], reasons: Record<string, string> }}
  */
 export function selectReleaseAffected({
@@ -126,12 +149,14 @@ export function selectReleaseAffected({
   changedFiles,
   deletedFiles,
   inputsOf,
+  projectRoots,
 }) {
-  const nxVerdict = nxVerdictReason(changedFiles, deletedFiles);
+  const deletions = placeDeletions(deletedFiles, projectRoots);
+  const nxVerdict = nxVerdictReason(changedFiles, deletions);
   const reasons = Object.fromEntries(
     candidates.map((project) => [
       project,
-      nxVerdict ?? inputReason(inputsOf(project), changedFiles),
+      nxVerdict ?? inputReason(inputsOf(project), changedFiles, deletions),
     ])
   );
   const selected = candidates.filter((project) => reasons[project] !== DROPPED);
@@ -140,19 +165,42 @@ export function selectReleaseAffected({
 
 const DROPPED = 'reads none of the changed files';
 
-function nxVerdictReason(changedFiles, deletedFiles) {
+/**
+ * Each deleted file with the root of the project it lay in: a deleted file
+ * is in no input set, but a task whose inputs reach into its project would
+ * have read it. `owner` stays `undefined` without the roots.
+ */
+function placeDeletions(deletedFiles, projectRoots) {
+  const roots = projectRoots ? Object.values(projectRoots) : undefined;
+  return deletedFiles.map((file) => ({
+    file,
+    owner: roots && ownerRoot(file, roots),
+  }));
+}
+
+function nxVerdictReason(changedFiles, deletions) {
   const rootFile = changedFiles.find(keepsNxVerdict);
   if (rootFile) return `Nx's verdict: ${rootFile} changed`;
-  if (deletedFiles.length > 0) {
-    return `Nx's verdict: ${deletedFiles[0]} was deleted`;
-  }
+  const unplaced = deletions.find(({ owner }) => !owner);
+  if (unplaced) return `Nx's verdict: ${unplaced.file} was deleted`;
   return undefined;
 }
 
-function inputReason(inputs, changedFiles) {
+function inputReason(inputs, changedFiles, deletions) {
   if (!inputs) return "Nx's verdict: its inputs could not be read";
   const read = changedFiles.find((file) => inputs.has(file));
-  return read ? `reads ${read}` : DROPPED;
+  if (read) return `reads ${read}`;
+  const deletion = deletions.find(({ owner }) =>
+    readsUnder(inputs, `${owner}/`)
+  );
+  return deletion
+    ? `reads ${deletion.owner}/, where ${deletion.file} was deleted`
+    : DROPPED;
+}
+
+function readsUnder(inputs, prefix) {
+  for (const file of inputs) if (file.startsWith(prefix)) return true;
+  return false;
 }
 
 // --- CLI --------------------------------------------------------------------
@@ -394,13 +442,37 @@ async function readInputs(candidates, target) {
   };
 }
 
+/**
+ * Every project's root at the head, from the project graph; `undefined`
+ * where it could not be read, which keeps Nx's verdict for a deletion.
+ */
+async function readProjectRoots() {
+  const dir = mkdtempSync(join(tmpdir(), 'release-affected-projects-'));
+  const file = join(dir, 'graph.json');
+  try {
+    await runNx(['graph', `--file=${file}`], '/dev/null');
+    const { nodes } = JSON.parse(readFileSync(file, 'utf8')).graph;
+    return Object.fromEntries(
+      Object.entries(nodes).map(([name, { data }]) => [name, data.root])
+    );
+  } catch (error) {
+    console.error(`could not read the project roots: ${error.message}`);
+    return undefined;
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
 async function main() {
   const options = readOptions();
   const candidates = await candidatesOf(options);
+  const changes = await changesOf(options);
   const { selected, reasons } = selectReleaseAffected({
     candidates,
-    ...(await changesOf(options)),
+    ...changes,
     inputsOf: await readInputs(candidates, options.target),
+    projectRoots:
+      changes.deletedFiles.length > 0 ? await readProjectRoots() : undefined,
   });
   for (const [project, reason] of Object.entries(reasons)) {
     const verdict = selected.includes(project) ? 'kept' : 'dropped';

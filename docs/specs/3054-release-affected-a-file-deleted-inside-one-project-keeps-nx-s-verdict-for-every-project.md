@@ -64,8 +64,12 @@ the deletion.
    verdict for every candidate.
 3. The longest root wins (`tools/federation/…` is not `tools`').
 4. A failed read of the roots keeps Nx's verdict.
-5. Run over #3029 (`--base=95f38a8^ --head=95f38a8 --target=build
-   --projects=tag:published`), the script selects `nx-aws-cdk-v2` only.
+5. #3029's deletion beside the lint-only configs, as #3044's dry run had
+   it (`--files=libs/public/nx-aws-cdk-v2/src/utils/testing.ts,.oxlintrc.json,eslint.config.mjs
+   --target=build --projects=tag:published`), selects `nx-aws-cdk-v2` only
+   (all three packages before). Over #3029 alone (`--base=95f38a8^
+   --head=95f38a8`) Nx already names only `nx-aws-cdk-v2`: the deletion
+   hurt only by stopping the filter for the other changes of a range.
 6. `npx nx test tools`, lint and format pass; CLAUDE.md's "What a release
    deploys" says how a deletion counts.
 
