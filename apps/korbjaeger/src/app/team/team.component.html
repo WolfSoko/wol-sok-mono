@@ -1,57 +1,60 @@
-@if (saison.isLoading()) {
+@if (season.isLoading()) {
   <mat-progress-bar mode="indeterminate" aria-label="Spiele werden geladen" />
 }
-@if (fehler(); as text) {
+@if (error(); as text) {
   <p class="fehler" role="alert">{{ text }}</p>
 }
-@if (saison.hasValue()) {
-  <h1>{{ saison.value().team.name }}</h1>
-  <p class="verein">{{ saison.value().club.name }} · Spiele der Saison</p>
-  <korb-vereinsfarben-knopf class="farben" [verein]="saison.value().club" />
-  <korb-as-of data-qa="team-stand" [asOf]="kopfStand()" />
+@if (season.hasValue()) {
+  <h1>{{ season.value().team.name }}</h1>
+  <p class="club">{{ season.value().club.name }} · Spiele der Saison</p>
+  <korb-vereinsfarben-knopf class="colors" [verein]="season.value().club" />
+  <korb-as-of data-qa="team-as-of" [asOf]="headAsOf()" />
 }
-@if (folgbar(); as teamId) {
+@if (followable(); as teamId) {
   <!-- also where the read fails, so a followed Team can be unfollowed -->
-  <korb-team-folgen class="folgen" [teamId]="teamId" />
+  <korb-follow-team class="follow" [teamId]="teamId" />
 }
-@if (beendet()) {
-  <korb-saison-ende-hinweis
-    class="saison-ende"
-    data-qa="saison-beendet"
-    [stand]="weitereTeams()"
+@if (seasonOver()) {
+  <korb-season-over-hint
+    class="season-over"
+    data-qa="season-over"
+    [state]="otherTeams()"
   />
 }
-@if (saison.hasValue()) {
-  @if (naechstes(); as zeile) {
-    <korb-naechstes-spiel
-      class="naechstes"
-      data-qa="team-naechstes"
-      [zeile]="zeile"
-      [halle]="naechsteHalle()"
-      mitLiga
+@if (season.hasValue()) {
+  @if (next(); as row) {
+    <korb-next-game
+      class="next"
+      data-qa="team-next"
+      [row]="row"
+      [venue]="nextVenue()"
+      withLeague
     />
   }
-  @if (zeilen().length === 0) {
+  @if (rows().length === 0) {
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
     <h2>Spiele</h2>
     <mat-nav-list class="umbrechende-liste">
-      @for (zeile of zeilen(); track zeile.id) {
-        <a mat-list-item data-qa="spiel" [routerLink]="['/spiel', zeile.id]">
-          <korb-spiel-zeile matListItemTitle [zeile]="zeile" mitLiga />
+      @for (row of rows(); track row.id) {
+        <a mat-list-item data-qa="game" [routerLink]="['/spiel', row.id]">
+          <korb-game-row matListItemTitle [row]="row" withLeague />
         </a>
       }
     </mat-nav-list>
   }
-  @if (ligen().length > 0) {
+  @if (leagues().length > 0) {
     <h2>Tabellen</h2>
-    @for (liga of ligen(); track liga.id) {
-      <korb-team-tabelle [liga]="liga" [teamId]="saison.value().team.id" />
+    @for (league of leagues(); track league.id) {
+      <korb-team-standings
+        [league]="league"
+        [teamId]="season.value().team.id"
+      />
     }
   }
 }
-@if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
+@if (season.hasValue() && !seasonOver() && otherTeams(); as state) {
   <h2>Weitere Teams des Vereins</h2>
-  <korb-as-of data-qa="vereins-stand" [asOf]="vereinsTeams.asOf()" />
-  <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
+  <korb-as-of data-qa="vereins-stand" [asOf]="clubTeams.asOf()" />
+  <korb-club-teams data-qa="vereins-teams" [state]="state" />
 }

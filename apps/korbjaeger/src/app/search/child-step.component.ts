@@ -16,7 +16,7 @@ import { oldestAsOf } from '../basketball-data/as-of';
 import { teamSeasonResource } from '../basketball-data/team-season-resource';
 import { errorText, NO_TEAM } from '../errors/error-text';
 import { TODAY } from '../today';
-import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
+import { AFTER_FIRST_GAME_HINT } from '../child/child-hints';
 import { AsOfComponent } from '../as-of/as-of.component';
 import { checkedChildStep, childStep } from './child-step';
 

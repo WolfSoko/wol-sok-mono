@@ -24,18 +24,18 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   one does); the others follow by their last Spiel, newest first. Each
   Tabelle loads and fails on its own.
   A toggle button ("Team folgen", `aria-pressed`) adds the Team to Meine
-  Teams or takes it out (`team-folgen.component.ts`).
+  Teams or takes it out (`follow-team.component.ts`).
   Below, "Weitere Teams des Vereins": the Verein's other Teams as its
   Spiele of four weeks either way show them (the lib's `vereinsTeams`,
   `clubTeamsResource`), each with its Ligen, a link to its page and the
-  same follow button; `VereinsTeamsComponent` (`src/app/verein/`) only
+  same follow button; `ClubTeamsComponent` (`src/app/club/`) only
   shows the read's stand (it keeps them while a sibling Team of the same
   Verein loads, so that reads the Verein no second time). Once the Team's
   Saison looks over (the lib's `seasonOver`: no Spiel left and the last
-  more than two weeks past) a hint (`SaisonEndeHinweisComponent`, shared
+  more than two weeks past) a hint (`SeasonOverHintComponent`, shared
   with the overview) says no Spiel is set and asks whether the Saison is
   over, since a break looks the same, and offers these Teams at the top.
-- **Spiel page** (`/spiel/{id}`, `src/app/spiel-seite/`): the result, the
+- **Spiel page** (`/spiel/{id}`, `src/app/game-page/`): the result, the
   quarter scores (and overtimes) where the Verband records them, what
   became of the Spiel, both Teams linking to their Team pages, the Halle,
   and both Kader of the Spielbericht. Players appear as the DBB shows
@@ -44,8 +44,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   throws, fouls) only for a Kader whose `playerStatsRecorded` holds,
   "keine Spielerwerte erfasst" for one without, "Noch kein Spielbericht"
   while there is none. The Spiel and its Spielbericht load and fail on
-  their own; the view models are pure (`spiel-kopf.ts`,
-  `kader-zeilen.ts`, `spielbericht-teil.ts`).
+  their own; the view models are pure (`game-head.ts`,
+  `roster-rows.ts`, `game-report-part.ts`).
 - **Halle** (`src/app/venue/`): `VenueComponent` shows a Halle with a
   link that opens navigation in a tab of its own (the lib's
   `venueNavigationUrl`); `GameVenueComponent` shows where a Halle's read
@@ -53,7 +53,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Only the next Spiel's details are read (`gameDetailsResource` in
   `src/app/basketball-data/`, beside `teamSeasonResource`): the Team page
   holds its own read, `MeineTeamsUeberblick` one per followed Team, and
-  `NaechstesSpielComponent` (`src/app/spiel/`) shows the Spiel with its
+  `NextGameComponent` (`src/app/game/`) shows the Spiel with its
   Halle on both, so each loads and fails on its own.
 - **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
   Meine Teams as a signal (`undefined` until read) with `folgen` and
@@ -85,8 +85,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
   `src/app/errors/`. Both screens
-  show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
-  link to its Spiel page (`SpielLinkComponent` on the cards). While
+  show a Spiel through `GameRowComponent` (`src/app/game/`), as a
+  link to its Spiel page (`GameLinkComponent` on the cards). While
   Meine Teams is empty it offers "Team suchen" (`/suchen`); once a Team
   is followed, "Weiteres Team suchen" below the cards.
 - **Team einrichten** (`/team-einrichten`, `src/app/team-einrichten/`):

@@ -23,17 +23,17 @@ import {
   type TeamSeason,
   type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
-import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
-import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
-import { spielZeile, spielZeilen } from '../spiel/spiel-zeile';
+import { NextGameComponent } from '../game/next-game.component';
+import { GameRowComponent } from '../game/game-row.component';
+import { gameRow, gameRows } from '../game/game-row';
 import { errorText, NO_TEAM } from '../errors/error-text';
-import { TeamFolgenComponent } from './team-folgen.component';
-import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
-import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
-import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
+import { FollowTeamComponent } from './follow-team.component';
+import { clubTeamsState } from '../club/club-teams-state';
+import { SeasonOverHintComponent } from '../club/season-over-hint.component';
+import { ClubTeamsComponent } from '../club/club-teams.component';
 import { oldestAsOf } from '../basketball-data/as-of';
 import { AsOfComponent } from '../as-of/as-of.component';
-import { TeamTabelleComponent } from './team-tabelle.component';
+import { TeamStandingsComponent } from './team-standings.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { breadcrumb } from '../navigation/breadcrumb';
 import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
@@ -52,15 +52,15 @@ import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knop
   imports: [
     MatListModule,
     MatProgressBarModule,
-    NaechstesSpielComponent,
+    NextGameComponent,
     RouterLink,
-    SaisonEndeHinweisComponent,
-    SpielZeileComponent,
+    SeasonOverHintComponent,
+    GameRowComponent,
     AsOfComponent,
-    TeamFolgenComponent,
-    TeamTabelleComponent,
+    FollowTeamComponent,
+    TeamStandingsComponent,
     VereinsfarbenKnopfComponent,
-    VereinsTeamsComponent,
+    ClubTeamsComponent,
   ],
   templateUrl: './team.component.html',
   styleUrl: './team.component.scss',
@@ -70,112 +70,110 @@ export class TeamComponent {
   /** The Team's DBB id, as the route gives it. */
   public readonly teamId = input.required<string>();
 
-  private readonly heute = inject(TODAY);
-  private readonly meineTeams = inject(AUSWAHL).teams;
+  private readonly today = inject(TODAY);
+  private readonly followedTeams = inject(AUSWAHL).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
-  protected readonly saison = teamSeasonResource(() => this.team());
+  protected readonly season = teamSeasonResource(() => this.team());
 
   /**
    * The Team to offer following: one the DBB knows, or one of Meine Teams
    * whatever its read gave (a Saison may have ended for it).
    */
-  protected readonly folgbar = computed(() => {
+  protected readonly followable = computed(() => {
     const team = this.team();
     return team !== undefined &&
-      (this.saison.hasValue() || this.meineTeams()?.includes(team))
+      (this.season.hasValue() || this.followedTeams()?.includes(team))
       ? team
       : undefined;
   });
 
-  protected readonly zeilen = computed(() =>
-    this.saison.hasValue() ? spielZeilen(this.saison.value()) : []
+  protected readonly rows = computed(() =>
+    this.season.hasValue() ? gameRows(this.season.value()) : []
   );
 
   /** The next Spiel to go to, from today on. */
-  private readonly kommendesSpiel = computed(() =>
-    this.saison.hasValue()
-      ? nextGame(this.saison.value(), this.heute())
+  private readonly upcomingGame = computed(() =>
+    this.season.hasValue()
+      ? nextGame(this.season.value(), this.today())
       : undefined
   );
 
-  protected readonly naechstes = computed(() => {
-    const spiel = this.kommendesSpiel();
-    return spiel && this.saison.hasValue()
-      ? spielZeile(this.saison.value(), spiel)
+  protected readonly next = computed(() => {
+    const game = this.upcomingGame();
+    return game && this.season.hasValue()
+      ? gameRow(this.season.value(), game)
       : undefined;
   });
 
   /** The next Spiel's details, for its Halle: that Spiel's only. */
-  private readonly naechsteDetails = gameDetailsResource(
-    () => this.kommendesSpiel()?.id
+  private readonly nextDetails = gameDetailsResource(
+    () => this.upcomingGame()?.id
   );
 
-  protected readonly naechsteHalle = computed(() =>
-    venueState(this.naechsteDetails)
-  );
+  protected readonly nextVenue = computed(() => venueState(this.nextDetails));
 
-  protected readonly ligen = computed(() =>
-    this.saison.hasValue()
-      ? leaguesCurrentFirst(this.saison.value(), this.heute())
+  protected readonly leagues = computed(() =>
+    this.season.hasValue()
+      ? leaguesCurrentFirst(this.season.value(), this.today())
       : []
   );
 
   /** Whether the Team's Saison looks over, as of today. */
-  protected readonly beendet = computed(
+  protected readonly seasonOver = computed(
     () =>
-      this.saison.hasValue() && seasonOver(this.saison.value(), this.heute())
+      this.season.hasValue() && seasonOver(this.season.value(), this.today())
   );
 
   /**
    * The Team's Verein, kept while the next Team loads, so a sibling Team of
    * the same Verein reads it no second time.
    */
-  private readonly vereinId = linkedSignal<
+  private readonly clubId = linkedSignal<
     TeamSeason | undefined,
     ClubId | undefined
   >({
-    source: () => (this.saison.hasValue() ? this.saison.value() : undefined),
-    computation: (saison, vorher) => saison?.club.id ?? vorher?.value,
+    source: () => (this.season.hasValue() ? this.season.value() : undefined),
+    computation: (season, before) => season?.club.id ?? before?.value,
   });
 
-  protected readonly vereinsTeams = clubTeamsResource(() => this.vereinId());
+  protected readonly clubTeams = clubTeamsResource(() => this.clubId());
 
   /** The Verein's Teams other than this one, as their read stands. */
-  protected readonly weitereTeams = computed(() => {
+  protected readonly otherTeams = computed(() => {
     const team = this.team();
     return team === undefined
       ? undefined
-      : vereinsTeamsStand(this.vereinsTeams, team);
+      : clubTeamsState(this.clubTeams, team);
   });
 
   /**
    * The oldest Stand of what the head shows: the Spiele, the next Spiel's
    * Halle, and the Verein's Teams while the hint offers them up there.
    */
-  protected readonly kopfStand = computed(() =>
+  protected readonly headAsOf = computed(() =>
     oldestAsOf(
-      this.saison.asOf(),
-      this.naechsteDetails.asOf(),
-      this.beendet() ? this.vereinsTeams.asOf() : undefined
+      this.season.asOf(),
+      this.nextDetails.asOf(),
+      this.seasonOver() ? this.clubTeams.asOf() : undefined
     )
   );
 
-  protected readonly fehler = computed(() => {
+  protected readonly error = computed(() => {
     if (this.team() === undefined) {
       return NO_TEAM;
     }
-    return errorText(this.saison.error(), NO_TEAM);
+    return errorText(this.season.error(), NO_TEAM);
   });
 
   public constructor() {
-    // this Team's Verein only: `vereinId` keeps the last one while the next loads
+    // this Team's Verein only: `clubId` keeps the last one while the next loads
     vereinsfarbenAnwenden(() =>
-      this.saison.hasValue() ? this.saison.value().club.id : undefined
+      this.season.hasValue() ? this.season.value().club.id : undefined
     );
     breadcrumb(() => [
       {
-        title: this.saison.hasValue() ? this.saison.value().team.name : 'Team',
+        title: this.season.hasValue() ? this.season.value().team.name : 'Team',
       },
     ]);
   }

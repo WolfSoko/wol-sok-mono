@@ -424,6 +424,76 @@ fixtures' proper names stay.
   (the `korb-stand`, `korb-halle` selectors).
 - Commit: `refactor(korbjaeger): English identifiers, part D1: data and plumbing (#3012)`.
 
+### Task D2: Spiel and Team
+
+Types, components and their members:
+
+| Old                                                                                                                                                                                    | New                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `KindMarkierungComponent` (`spieler`, `kind`, `auswahl`, `seite`, `aenderung`, `eigenerFehler`, `offenerDialog`, `beendet`, `markieren`, `spitznameAendern`, `entmarkieren`, `fragen`) | `ChildMarkComponent` (`player`, `child`, `selection`, `pageChange`, `change`, `ownError`, `openDialog`, `destroyed`, `mark`, `changeNickname`, `unmark`, `ask`) |
+| `SpitznameDialogComponent` (`frage`, `laenge`, `titel`, `bestaetigenText`, `eingegeben`, `zeichen`, `zuLang`, `bestaetigen`)                                                           | `NicknameDialogComponent` (`question`, `length`, `title`, `confirmText`, `entered`, `characters`, `tooLong`, `confirm`)                                         |
+| `SpitznameFrage` (`spitzname`, `aktion`)                                                                                                                                               | `NicknameQuestion` (`nickname`, `action`)                                                                                                                       |
+| `SpitznameAntwort` (`spitzname`)                                                                                                                                                       | `NicknameAnswer` (`nickname`)                                                                                                                                   |
+| `NaechstesSpielComponent` (`zeile`, `halle`, `mitLiga`, `titel`)                                                                                                                       | `NextGameComponent` (`row`, `venue`, `withLeague`, `title`)                                                                                                     |
+| `SpielLinkComponent` (`zeile`, `titel`, `mitLiga`)                                                                                                                                     | `GameLinkComponent` (`row`, `title`, `withLeague`)                                                                                                              |
+| `SpielZeileComponent` (`zeile`, `titel`, `mitLiga`, `vorlaeufigText`, `ausgangText`, `markierungText`)                                                                                 | `GameRowComponent` (`row`, `title`, `withLeague`, `provisionalText`, `outcomeText`, `irregularityText`)                                                         |
+| `SpielZeile` (`datum`, `uhrzeit`, `liga`, `ort`, `gegner`, `ergebnis`, `ausgang`, `vorlaeufig`, `markierung`)                                                                          | `GameRow` (`date`, `time`, `league`, `homeOrAway`, `opponent`, `result`, `outcome`, `provisional`, `irregularity`)                                              |
+| `KaderComponent` (`titel`, `kader`, `seite`, `gefolgt`, `kinder`, `zeilen`, `spalten`, `ueberschriftId`)                                                                               | `RosterComponent` (`title`, `roster`, `side`, `followed`, `children`, `rows`, `columns`, `headingId`)                                                           |
+| `KaderZeile` (`nummer`, `anonym`, `werte`, `spieler`, `kind`)                                                                                                                          | `RosterRow` (`number`, `anonymous`, `stats`, `player`, `child`)                                                                                                 |
+| `SpielComponent` (`spielId`, `spiel`, `gefolgt`, `kindFehler`, `vorlaeufigText`, `bericht`, `kopf`, `periodenSpalten`, `fehler`, `spielbericht`)                                       | `GamePageComponent` (`gameId`, `game`, `followed`, `childError`, `provisionalText`, `report`, `head`, `periodColumns`, `error`, `gameReport`)                   |
+| `SpielKopf` (`heim`, `gast`, `wann`, `liga`, `ergebnis`, `vorlaeufig`, `perioden`)                                                                                                     | `GameHead` (`home`, `away`, `when`, `league`, `result`, `provisional`, `periods`)                                                                               |
+| `KaderTeil` (`seite`, `titel`, `kader`, `gefolgt`)                                                                                                                                     | `RosterPart` (`side`, `title`, `roster`, `followed`)                                                                                                            |
+| `SpielberichtTeil` (`art`, `kader`)                                                                                                                                                    | `GameReportPart` (`kind`, `rosters`)                                                                                                                            |
+| `TeamFolgenComponent` (`gefolgt`, `verschwindetNachEntfolgen`, `auswahl`, `folgt`, `aenderung`, `nachEntfolgen`, `umschalten`, `folgen`, `entfolgen`)                                  | `FollowTeamComponent` (`followed`, `disappearsOnUnfollow`, `selection`, `follows`, `change`, `afterUnfollow`, `toggle`, `follow`, `unfollow`)                   |
+| `TeamTabelleComponent` (`liga`, `spalten`, `ueberschriftId`, `tabelle`, `zeilen`, `fehler`)                                                                                            | `TeamStandingsComponent` (`league`, `columns`, `headingId`, `standings`, `rows`, `error`)                                                                       |
+| `TabelleZeileAnsicht` (`rang`, `spiele`, `siege`, `niederlagen`, `koerbe`, `differenz`, `eigenes`)                                                                                     | `StandingsRowView` (`rank`, `games`, `wins`, `losses`, `points`, `difference`, `own`)                                                                           |
+| `NachEntfolgen` (`auswahl`, `ziele`, `zielSetzen`, `entfolgt`, `rueckgaengigAnbieten`)                                                                                                 | `AfterUnfollow` (`selection`, `targets`, `setTarget`, `unfollowed`, `offerUndo`)                                                                                |
+| `FokusNachEntfolgenDirective` (`korbFokusNachEntfolgen`)                                                                                                                               | `FocusAfterUnfollowDirective` (`korbFocusAfterUnfollow`)                                                                                                        |
+| `SaisonEndeHinweisComponent` (`stand`)                                                                                                                                                 | `SeasonOverHintComponent` (`state`)                                                                                                                             |
+| `VereinsTeamsComponent` (`stand`)                                                                                                                                                      | `ClubTeamsComponent` (`state`)                                                                                                                                  |
+| `VereinsTeamsStand` (`art`)                                                                                                                                                            | `ClubTeamsState` (`kind`)                                                                                                                                       |
+| `VereinsTeamZeile` (`ligen`)                                                                                                                                                           | `ClubTeamRow` (`leagues`)                                                                                                                                       |
+
+Literals: `SpitznameFrage.aktion` (`'markieren'`, `'aendern'`) → `action`: `'mark'`, `'change'`; `SpielberichtTeil.art` (`'laedt'`, `'fehler'`, `'fehlt'`, `'da'`) → `kind`: `'loading'`, `'error'`, `'missing'`, `'ready'`; `VereinsTeamsStand.art` (`'laedt'`, `'fehler'`, `'gelesen'`) → `kind`: `'loading'`, `'error'`, `'read'`.
+
+Functions, constants and spec names:
+
+| Old                          | New                       |
+| ---------------------------- | ------------------------- |
+| `KIND_AENDERUNG`             | `CHILD_CHANGE`            |
+| `provideKindAenderung`       | `provideChildChange`      |
+| `spielTag`                   | `gameDay`                 |
+| `spielTagUndUhrzeit`         | `gameDayAndTime`          |
+| `ergebnisText`               | `resultText`              |
+| `VORLAEUFIG`                 | `PROVISIONAL`             |
+| `spielZeilen`                | `gameRows`                |
+| `spielZeile`                 | `gameRow`                 |
+| `istGefolgt`                 | `isFollowed`              |
+| `gefolgterVerein`            | `followedClub`            |
+| `kaderZeilen`                | `rosterRows`              |
+| `kaderZeile`                 | `rosterRow`               |
+| `spielKopf`                  | `gameHead`                |
+| `spielberichtTeil`           | `gameReportPart`          |
+| `tabelleZeilen`              | `standingsRows`           |
+| `vereinsTeamsStand`          | `clubTeamsState`          |
+| `RUECKGAENGIG_MS`            | `UNDO_MS`                 |
+| `KEINE_TABELLE`              | `NO_STANDINGS`            |
+| `VereinsTeamDetailDirective` | `ClubTeamDetailDirective` |
+| `VereinsTeamDetailContext`   | `ClubTeamDetailContext`   |
+| `HEUTE_IM_SPEC`              | `TODAY_IN_SPEC`           |
+| `JETZT_IM_SPEC`              | `NOW_IN_SPEC`             |
+| `TeamSpieleRead`             | `TeamGamesRead`           |
+
+Selectors: `korb-kind-markierung` → `korb-child-mark`, `korb-spitzname-dialog` → `korb-nickname-dialog`, `korb-naechstes-spiel` → `korb-next-game`, `korb-spiel-link` → `korb-game-link`, `korb-spiel-zeile` → `korb-game-row`, `korb-kader` → `korb-roster`, `korb-spiel` → `korb-game-page`, `korb-team-folgen` → `korb-follow-team`, `korb-team-tabelle` → `korb-team-standings`, `korb-saison-ende-hinweis` → `korb-season-over-hint`, `korb-vereins-teams` → `korb-club-teams`, `[korbFokusNachEntfolgen]` → `[korbFocusAfterUnfollow]`, `[korbVereinsTeamDetail]` → `[korbClubTeamDetail]`.
+
+`data-qa` values (templates, specs and e2e page objects): `team-folgen` → `follow-team`, `team-stand` → `team-as-of`, `tabelle-fehler` → `standings-error`, `tabelle-zeile` → `standings-row`, `tabelle` → `standings`, `tabelle-team` → `standings-team`, `spiel-vorlaeufig` → `game-provisional`, `kind-menue` → `child-menu`, `kind-markieren` → `child-mark`, `kind-fehler` → `child-error`, `team-naechstes` → `team-next`, `spitzname-zu-lang` → `nickname-too-long`, `spitzname-zaehler` → `nickname-counter`, `spiel-liga` → `game-league`, `spiel-ergebnis` → `game-result`, `spiel` → `game`, `saison-beendet` → `season-over`, `viertel-zeile` → `quarters-row`, `viertel` → `quarters`, `spielbericht-fehlt` → `game-report-missing`, `spielbericht-fehler` → `game-report-error`, `spiel-wann` → `game-when`, `spiel-uhrzeit` → `game-time`, `spiel-status` → `game-status`, `spiel-stand` → `game-as-of`, `spiel-ort` → `game-home-or-away`, `spiel-markierung` → `game-irregularity`, `spiel-gegner` → `game-opponent`, `spiel-fehler` → `game-error`, `spiel-datum` → `game-date`, `spiel-ausgang` → `game-outcome`, `kader-zeile` → `roster-row`, `kader-start` → `roster-starter`, `kader-spitzname` → `roster-nickname`, `kader-ohne-werte` → `roster-without-stats`, `kader` → `roster`, `vereins-team-name` → `club-team-name`, `vereins-team-ligen` → `club-team-leagues`, `vereins-team` → `club-team`. The `vereins-teams`, `vereins-stand` and `vereins-teams-fehler` of PR #3006 go with D3, as planned.
+
+Component CSS classes follow the same words (`.ausgang` → `.outcome`, `.tabelle` → `.table`, `.stern` → `.star`, `.eigenes-team` → `.own-team`, …); the global `.fehler` and `.umbrechende-liste` of `styles.scss` stay until D4.
+
+Files: `kind/kind-aenderung.ts` → `child/child-change.ts`, `kind/kind-markierung.component.ts` → `child/child-mark.component.ts`, `kind/spitzname-dialog.component.ts` → `child/nickname-dialog.component.ts`, `kind/child-hints.ts` → `child/child-hints.ts`, `spiel/naechstes-spiel.component.ts` → `game/next-game.component.ts`, `spiel/spiel-format.ts` → `game/game-format.ts`, `spiel/spiel-link.component.ts` → `game/game-link.component.ts`, `spiel/spiel-zeile.component.ts` → `game/game-row.component.ts`, `spiel/spiel-zeile.ts` → `game/game-row.ts`, `spiel-seite/gefolgter-verein.ts` → `game-page/followed-club.ts`, `spiel-seite/kader-spalten.ts` → `game-page/roster-columns.ts`, `spiel-seite/kader-zeilen.ts` → `game-page/roster-rows.ts`, `spiel-seite/kader.component.ts` → `game-page/roster.component.ts`, `spiel-seite/spiel-kopf.ts` → `game-page/game-head.ts`, `spiel-seite/spiel.component.ts` → `game-page/game-page.component.ts`, `spiel-seite/spielbericht-teil.ts` → `game-page/game-report-part.ts`, `team/fokus-nach-entfolgen.directive.ts` → `team/focus-after-unfollow.directive.ts`, `team/nach-entfolgen.ts` → `team/after-unfollow.ts`, `team/tabelle-zeilen.ts` → `team/standings-rows.ts`, `team/team-folgen.component.ts` → `team/follow-team.component.ts`, `team/team-tabelle.component.ts` → `team/team-standings.component.ts`, `verein/saison-ende-hinweis.component.ts` → `club/season-over-hint.component.ts`, `verein/vereins-team-detail.directive.ts` → `club/club-team-detail.directive.ts`, `verein/vereins-teams-stand.ts` → `club/club-teams-state.ts`, `verein/vereins-teams.component.ts` → `club/club-teams.component.ts`; the templates and styles of `kader`, `spiel` and `team-tabelle` with their component; specs with their file.
+
+Parameters, locals and private helpers follow the vocabulary (`spiel` → `game`, `kader` → `roster`, `zeile` → `row`, `seite` → `side`, or `page` where it holds the rendered page in a spec, …). Commit: `refactor(korbjaeger): English identifiers, part D2: Spiel and Team (#3012)`.
+
 ### Tasks D2 to D4
 
 Each adds its map here in its PR's first commit (step 1), by the

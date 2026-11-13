@@ -49,9 +49,9 @@ test.describe('Team page', () => {
     const kaesten = await teamPage.spiele.evaluateAll((zeilen) =>
       zeilen.map((zeile) => {
         const reihe = zeile.getBoundingClientRect();
-        const inhalt = zeile.querySelector('korb-spiel-zeile');
+        const inhalt = zeile.querySelector('korb-game-row');
         const texte = [
-          ...(inhalt?.querySelectorAll<HTMLElement>('[data-qa^="spiel-"]') ??
+          ...(inhalt?.querySelectorAll<HTMLElement>('[data-qa^="game-"]') ??
             []),
         ];
         return {

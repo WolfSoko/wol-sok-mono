@@ -8,8 +8,8 @@ import type {
 import { errorText, NO_TEAM } from '../errors/error-text';
 import type { AsOf } from '../basketball-data/as-of';
 import type { VenueState } from '../venue/venue-state';
-import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
-import type { VereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { gameRow, type GameRow } from '../game/game-row';
+import type { ClubTeamsState } from '../club/club-teams-state';
 
 /** What a card shows beside a Team's Saison, from the overview's reads. */
 export interface KartenZusatz {
@@ -20,7 +20,7 @@ export interface KartenZusatz {
   /** Whether the Team's Saison looks over (`seasonOver`). */
   readonly saisonBeendet: boolean;
   /** The read of the Verein's Teams to suggest, once it started. */
-  readonly vereinsTeams?: VereinsTeamsStand;
+  readonly vereinsTeams?: ClubTeamsState;
 }
 
 /** One of Meine Teams on the overview, as its card shows it. */
@@ -35,9 +35,9 @@ export type TeamKarte =
       readonly verein: Club;
       /** The next Spiel, by which the overview orders the cards. */
       readonly naechstesSpiel?: Game;
-      readonly naechstes?: SpielZeile;
-      readonly ausfaelle: readonly SpielZeile[];
-      readonly letztes?: SpielZeile;
+      readonly naechstes?: GameRow;
+      readonly ausfaelle: readonly GameRow[];
+      readonly letztes?: GameRow;
     } & KartenZusatz);
 
 /** The Team's name on a card, or its id while no read has given a name. */
@@ -60,9 +60,9 @@ export function geladeneKarte(
     name: saison.team.name,
     verein: saison.club,
     naechstesSpiel: naechstes,
-    naechstes: naechstes && spielZeile(saison, naechstes),
-    ausfaelle: ausfaelle.map((spiel) => spielZeile(saison, spiel)),
-    letztes: letztes && spielZeile(saison, letztes),
+    naechstes: naechstes && gameRow(saison, naechstes),
+    ausfaelle: ausfaelle.map((spiel) => gameRow(saison, spiel)),
+    letztes: letztes && gameRow(saison, letztes),
     ...zusatz,
   };
 }

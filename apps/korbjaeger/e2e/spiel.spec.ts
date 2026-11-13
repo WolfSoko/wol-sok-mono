@@ -109,7 +109,7 @@ test.describe('Spiel page', () => {
       'F',
       'Eff.',
     ]);
-    await expect(heim.getByTestId('kader-start')).toHaveCount(5);
+    await expect(heim.getByTestId('roster-starter')).toHaveCount(5);
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth
@@ -117,7 +117,7 @@ test.describe('Spiel page', () => {
     ).toBe(true);
 
     await heim
-      .locator('.tabelle')
+      .locator('.table')
       .evaluate((tabelle) => (tabelle.scrollLeft = tabelle.scrollWidth));
     const name = await spielPage
       .spieler(heim)

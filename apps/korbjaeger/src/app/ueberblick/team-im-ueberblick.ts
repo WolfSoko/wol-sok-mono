@@ -6,7 +6,7 @@ import type {
 import type { DataResource } from '../basketball-data/basketball-data-resource';
 import { oldestAsOf } from '../basketball-data/as-of';
 import { venueState } from '../venue/venue-state';
-import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { clubTeamsState } from '../club/club-teams-state';
 import { NICHT_LESBAR } from './kader-funde';
 import { fehlerKarte, geladeneKarte } from './team-karte';
 import type { TeamLesungen } from './team-lesungen';
@@ -49,7 +49,7 @@ export function teamImUeberblick(
     stand: oldestAsOf(stand, vereinsTeams?.asOf()),
     halle,
     saisonBeendet: verein !== undefined,
-    vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),
+    vereinsTeams: vereinsTeams && clubTeamsState(vereinsTeams, teamId),
   });
   const funde = mitKindern ? lesung.funde() : undefined;
   return {

@@ -3,11 +3,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
-import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
-import { SpielLinkComponent } from '../spiel/spiel-link.component';
+import { NextGameComponent } from '../game/next-game.component';
+import { GameLinkComponent } from '../game/game-link.component';
 import { AsOfComponent } from '../as-of/as-of.component';
-import { TeamFolgenComponent } from '../team/team-folgen.component';
-import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
+import { FollowTeamComponent } from '../team/follow-team.component';
+import { SeasonOverHintComponent } from '../club/season-over-hint.component';
 import type { KindAbschnitt } from './ueberblick-ansicht';
 
 /**
@@ -24,12 +24,12 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
     MatCardModule,
     MatIconModule,
     MatProgressBarModule,
-    NaechstesSpielComponent,
+    NextGameComponent,
     RouterLink,
-    SaisonEndeHinweisComponent,
-    SpielLinkComponent,
+    SeasonOverHintComponent,
+    GameLinkComponent,
     AsOfComponent,
-    TeamFolgenComponent,
+    FollowTeamComponent,
   ],
   templateUrl: './ueberblick-kind.component.html',
   styleUrl: './ueberblick-kind.component.scss',

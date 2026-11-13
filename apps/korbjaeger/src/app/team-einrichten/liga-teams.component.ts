@@ -15,28 +15,28 @@ import { AUSWAHL } from '../auswahl/auswahl';
 import { leagueTeamsResource } from '../basketball-data/league-teams-resource';
 import { selectionChange } from '../errors/selection-change';
 import { errorText, NO_LEAGUE } from '../errors/error-text';
-import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
-import { NachEntfolgen } from '../team/nach-entfolgen';
-import { TeamFolgenComponent } from '../team/team-folgen.component';
+import { FocusAfterUnfollowDirective } from '../team/focus-after-unfollow.directive';
+import { AfterUnfollow } from '../team/after-unfollow';
+import { FollowTeamComponent } from '../team/follow-team.component';
 
 /**
  * Every Team of a Liga, by name as the DBB writes it (with the Verein's
  * team number, "TSV X 2"). One tap adds the Team to Meine Teams and opens
  * its page; disabled until Meine Teams are read and while a tap is
  * following one. A Team followed already says so ("Gefolgt"), opens on a
- * tap and has "Nicht mehr folgen" beside its row (`korb-team-folgen`,
+ * tap and has "Nicht mehr folgen" beside its row (`korb-follow-team`,
  * outside the row's button, since a button holds no other), which goes
  * once tapped: focus moves to the Team's row, and the snackbar offers to
- * undo it (`NachEntfolgen`).
+ * undo it (`AfterUnfollow`).
  */
 @Component({
   selector: 'korb-liga-teams',
   imports: [
-    FokusNachEntfolgenDirective,
+    FocusAfterUnfollowDirective,
     MatIconModule,
     MatListModule,
     MatProgressBarModule,
-    TeamFolgenComponent,
+    FollowTeamComponent,
   ],
   template: `
     @if (teams.isLoading()) {
@@ -60,7 +60,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
                 mat-list-item
                 type="button"
                 data-qa="team"
-                [korbFokusNachEntfolgen]="team.id"
+                [korbFocusAfterUnfollow]="team.id"
                 [disabled]="meineTeams() === undefined || folgtGerade()"
                 (click)="folgenUndOeffnen(team)"
               >
@@ -73,11 +73,11 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
                 }
               </button>
               @if (gefolgt) {
-                <korb-team-folgen
+                <korb-follow-team
                   [teamId]="team.id"
                   [teamName]="team.name"
-                  [gefolgt]="gefolgt"
-                  verschwindetNachEntfolgen
+                  [followed]="gefolgt"
+                  disappearsOnUnfollow
                 />
               }
             </div>
@@ -89,7 +89,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
       <p class="fehler" role="alert">{{ text }}</p>
     }
   `,
-  providers: [NachEntfolgen],
+  providers: [AfterUnfollow],
   styles: `
     .zeile {
       display: flex;
@@ -101,7 +101,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
       flex: 1 1 12rem;
       width: auto;
     }
-    korb-team-folgen {
+    korb-follow-team {
       padding-inline: 1rem;
     }
   `,

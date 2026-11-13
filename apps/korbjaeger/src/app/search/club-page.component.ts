@@ -8,9 +8,9 @@ import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
 import { clubTeamsResource } from '../basketball-data/club-teams-resource';
 import { NO_CLUB } from '../errors/error-text';
 import { breadcrumb } from '../navigation/breadcrumb';
-import { VereinsTeamDetailDirective } from '../verein/vereins-team-detail.directive';
-import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
-import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
+import { ClubTeamDetailDirective } from '../club/club-team-detail.directive';
+import { ClubTeamsComponent } from '../club/club-teams.component';
+import { clubTeamsState } from '../club/club-teams-state';
 import { AsOfComponent } from '../as-of/as-of.component';
 import { ChildStepComponent } from './child-step.component';
 import { CHILD_SEARCH_LEVEL, SEARCH_LEVEL } from './search-level';
@@ -28,29 +28,29 @@ const CLUB_TITLE = 'Verein';
   imports: [
     ChildStepComponent,
     AsOfComponent,
-    VereinsTeamDetailDirective,
-    VereinsTeamsComponent,
+    ClubTeamDetailDirective,
+    ClubTeamsComponent,
   ],
   template: `
     <h1 data-qa="club-name">{{ title() }}</h1>
     @if (stand(); as stand) {
       <korb-as-of data-qa="vereins-stand" [asOf]="teams.asOf()" />
-      @if (forChild() && stand.art === 'gelesen' && stand.teams.length > 0) {
+      @if (forChild() && stand.kind === 'read' && stand.teams.length > 0) {
         <p data-qa="child-search-follow-first">
           Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.
         </p>
       }
-      <korb-vereins-teams
+      <korb-club-teams
         data-qa="vereins-teams"
-        [stand]="stand"
+        [state]="stand"
         emptyText="Keine Teams des Vereins in den letzten Wochen."
       >
-        <ng-template korbVereinsTeamDetail let-team>
+        <ng-template korbClubTeamDetail let-team>
           @if (forChild()) {
             <korb-child-step [teamId]="team.teamId" [teamName]="team.name" />
           }
         </ng-template>
-      </korb-vereins-teams>
+      </korb-club-teams>
     } @else {
       <p data-qa="vereins-teams-fehler">{{ unknownClub }}</p>
     }
@@ -80,7 +80,7 @@ export class ClubPageComponent {
 
   /** The read's stand; none for an id that is no DBB id. */
   protected readonly stand = computed(() =>
-    this.club() === undefined ? undefined : vereinsTeamsStand(this.teams)
+    this.club() === undefined ? undefined : clubTeamsState(this.teams)
   );
 
   protected readonly title = computed(() =>

@@ -24,9 +24,9 @@ import { NOW } from '../now';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { TeamComponent } from './team.component';
 
-const UNSER_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', clubId: 1837 };
+const OUR_TEAM: Team = { id: 313036, name: 'MTV Wasbüttel', clubId: 1837 };
 
-function liga(id: number, name: string): League {
+function league(id: number, name: string): League {
   return {
     id,
     name,
@@ -37,68 +37,69 @@ function liga(id: number, name: string): League {
   };
 }
 
-const VORRUNDE = liga(54862, 'U12 Vorrunde Nord');
-const TESTSPIELE = liga(54689, 'Testspiele Braunschweig u12');
+const FIRST_ROUND = league(54862, 'U12 Vorrunde Nord');
+const FRIENDLIES = league(54689, 'Testspiele Braunschweig u12');
 
-function gegner(id: number, name: string): Participant {
+function opponent(id: number, name: string): Participant {
   return { kind: 'team', team: { id, name, clubId: id } };
 }
 
-const UNS: Participant = { kind: 'team', team: UNSER_TEAM };
+const US: Participant = { kind: 'team', team: OUR_TEAM };
 
-function spiel(overrides: Partial<Game> & Pick<Game, 'id' | 'date'>): Game {
+function game(overrides: Partial<Game> & Pick<Game, 'id' | 'date'>): Game {
   return {
-    leagueId: VORRUNDE.id,
+    leagueId: FIRST_ROUND.id,
     matchday: 1,
     time: '10:00',
-    home: UNS,
-    away: gegner(201500, 'MTV Gifhorn'),
+    home: US,
+    away: opponent(201500, 'MTV Gifhorn'),
     status: { kind: 'scheduled' },
     ...overrides,
   };
 }
 
-function tabellenZeile(rang: number, team: Team): Standings['rows'][number] {
+function standingsRow(rank: number, team: Team): Standings['rows'][number] {
   return {
-    rank: rang,
+    rank,
     participant: { kind: 'team', team },
     games: 2,
-    wins: 2 - rang + 1,
-    losses: rang - 1,
-    points: 2 * (2 - rang + 1),
+    wins: 2 - rank + 1,
+    losses: rank - 1,
+    points: 2 * (2 - rank + 1),
     pointsFor: 100,
     pointsAgainst: 90,
     pointDifference: 10,
   };
 }
 
-function saison(spiele: readonly Game[]): TeamSeason {
+function season(games: readonly Game[]): TeamSeason {
   return {
-    team: UNSER_TEAM,
+    team: OUR_TEAM,
     club: { id: 1837, name: 'MTV Wasbüttel' },
-    leagues: [TESTSPIELE, VORRUNDE],
-    games: spiele,
+    leagues: [FRIENDLIES, FIRST_ROUND],
+    games,
   };
 }
 
-type TeamSpieleRead = KorbjaegerData['teamGames'];
-type TabelleRead = KorbjaegerData['standings'];
-type SpielRead = KorbjaegerData['game'];
-type VereinsTeamsRead = KorbjaegerData['clubTeams'];
+type TeamGamesRead = KorbjaegerData['teamGames'];
+type StandingsRead = KorbjaegerData['standings'];
+type GameRead = KorbjaegerData['game'];
+type ClubTeamsRead = KorbjaegerData['clubTeams'];
 
 /** The day the specs run on: after the last Spiel of the fixtures below. */
-const HEUTE_IM_SPEC = '2026-11-08';
-/** Noon of `HEUTE_IM_SPEC` in Germany. */
-const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
-const ZWEI_STUNDEN = 2 * 60 * 60_000;
+const TODAY_IN_SPEC = '2026-11-08';
+/** Noon of `TODAY_IN_SPEC` in Germany. */
+const NOW_IN_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
+const TWO_HOURS = 2 * 60 * 60_000;
 
-/** An empty Tabelle of Liga `ligaId`. */
-const keineZeilen: TabelleRead = async (ligaId) => ({
-  league: [TESTSPIELE, VORRUNDE].find(({ id }) => id === ligaId) ?? VORRUNDE,
+/** An empty Tabelle of Liga `leagueId`. */
+const noRows: StandingsRead = async (leagueId) => ({
+  league:
+    [FRIENDLIES, FIRST_ROUND].find(({ id }) => id === leagueId) ?? FIRST_ROUND,
   rows: [],
 });
 
-const SCHULSPORTHALLE: Venue = {
+const SCHOOL_GYM: Venue = {
   name: 'Schulsporthalle',
   street: 'Schulstr. 12',
   postcode: '38553',
@@ -106,33 +107,33 @@ const SCHULSPORTHALLE: Venue = {
 };
 
 /** A Spiel's details, played in the Schulsporthalle. */
-const inDerSchulsporthalle: SpielRead = async (spielId) => ({
-  game: spiel({ id: spielId, date: '2026-11-21' }),
-  league: VORRUNDE,
-  venue: SCHULSPORTHALLE,
+const inTheSchoolGym: GameRead = async (gameId) => ({
+  game: game({ id: gameId, date: '2026-11-21' }),
+  league: FIRST_ROUND,
+  venue: SCHOOL_GYM,
   quarters: [],
   overtimes: [],
 });
 
 /** The Verein's Teams of its recent Spiele: ours and two others. */
-const UNSER_VEREIN: ClubTeams = {
+const OUR_CLUB: ClubTeams = {
   club: { id: 1837, name: 'MTV Wasbüttel' },
   teams: [
-    { team: UNSER_TEAM, leagues: [VORRUNDE] },
+    { team: OUR_TEAM, leagues: [FIRST_ROUND] },
     {
       team: { id: 317618, name: 'MTV Wasbüttel 2', clubId: 1837 },
-      leagues: [liga(54900, 'Regionsvorrunde Nordwest mu14')],
+      leagues: [league(54900, 'Regionsvorrunde Nordwest mu14')],
     },
     {
       team: { id: 270037, name: 'MTV Wasbüttel', clubId: 1837 },
-      leagues: [liga(54901, 'Regionsliga Braunschweig mu16')],
+      leagues: [league(54901, 'Regionsliga Braunschweig mu16')],
     },
   ],
 };
 
 /** A Verein whose recent Spiele show no Team. */
-const OHNE_TEAMS: VereinsTeamsRead = async () => ({
-  club: UNSER_VEREIN.club,
+const WITHOUT_TEAMS: ClubTeamsRead = async () => ({
+  club: OUR_CLUB.club,
   teams: [],
 });
 
@@ -141,33 +142,33 @@ const OHNE_TEAMS: VereinsTeamsRead = async () => ({
  * every Spiel in the Schulsporthalle, the Verein without other Teams.
  */
 function fakeData(
-  read: TeamSpieleRead,
-  standings: TabelleRead = keineZeilen,
-  details: SpielRead = inDerSchulsporthalle,
-  clubTeams: VereinsTeamsRead = OHNE_TEAMS
+  read: TeamGamesRead,
+  standings: StandingsRead = noRows,
+  details: GameRead = inTheSchoolGym,
+  clubTeams: ClubTeamsRead = WITHOUT_TEAMS
 ): {
-  readonly teamGames: ReturnType<typeof vi.fn<TeamSpieleRead>>;
-  readonly standings: ReturnType<typeof vi.fn<TabelleRead>>;
-  readonly game: ReturnType<typeof vi.fn<SpielRead>>;
-  readonly clubTeams: ReturnType<typeof vi.fn<VereinsTeamsRead>>;
+  readonly teamGames: ReturnType<typeof vi.fn<TeamGamesRead>>;
+  readonly standings: ReturnType<typeof vi.fn<StandingsRead>>;
+  readonly game: ReturnType<typeof vi.fn<GameRead>>;
+  readonly clubTeams: ReturnType<typeof vi.fn<ClubTeamsRead>>;
 } {
   return {
-    teamGames: vi.fn<TeamSpieleRead>(read),
-    standings: vi.fn<TabelleRead>(standings),
-    game: vi.fn<SpielRead>(details),
-    clubTeams: vi.fn<VereinsTeamsRead>(clubTeams),
+    teamGames: vi.fn<TeamGamesRead>(read),
+    standings: vi.fn<StandingsRead>(standings),
+    game: vi.fn<GameRead>(details),
+    clubTeams: vi.fn<ClubTeamsRead>(clubTeams),
   };
 }
 
 function providers(
   data: ReturnType<typeof fakeData>,
-  heute: WritableSignal<string> = signal(HEUTE_IM_SPEC)
+  today: WritableSignal<string> = signal(TODAY_IN_SPEC)
 ) {
   return [
     provideRouter([]),
     { provide: BASKETBALL_DATA, useValue: data },
-    { provide: TODAY, useValue: heute },
-    { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
+    { provide: TODAY, useValue: today },
+    { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     // in memory: nothing reaches the device's storage
     { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
   ];
@@ -184,13 +185,13 @@ async function render(
   return fixture.nativeElement as HTMLElement;
 }
 
-function spielZeilen(page: HTMLElement): HTMLElement[] {
-  return [...page.querySelectorAll<HTMLElement>('[data-qa="spiel"]')];
+function gameRows(page: HTMLElement): HTMLElement[] {
+  return [...page.querySelectorAll<HTMLElement>('[data-qa="game"]')];
 }
 
-function feld(zeile: HTMLElement, name: string): string | undefined {
-  return zeile
-    .querySelector(`[data-qa="spiel-${name}"]`)
+function field(row: HTMLElement, name: string): string | undefined {
+  return row
+    .querySelector(`[data-qa="game-${name}"]`)
     ?.textContent?.replace(/\s+/g, ' ')
     .trim();
 }
@@ -201,52 +202,52 @@ describe('TeamComponent', () => {
       const page = await render(
         fakeData(async (_team, options?: KorbReadOptions) => {
           options?.reading?.replaced({
-            storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+            storedAt: NOW_IN_SPEC - TWO_HOURS,
             reason: 'no-internet',
           });
-          return saison([spiel({ id: 1, date: '2026-09-20' })]);
+          return season([game({ id: 1, date: '2026-09-20' })]);
         })
       );
 
       expect(
-        page.querySelector('[data-qa="team-stand"]')?.textContent
+        page.querySelector('[data-qa="team-as-of"]')?.textContent
       ).toContain('Offline · Stand: vor 2 Std.');
-      expect(spielZeilen(page)).toHaveLength(1);
+      expect(gameRows(page)).toHaveLength(1);
       expect(page.querySelector('[role="alert"]')).toBeNull();
     });
 
     it("labels the Team's head with the oldest Stand of what it shows, the next Spiel's Halle too", async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, date: '2026-11-14' })]),
-          keineZeilen,
-          async (spielId, options?: KorbReadOptions) => {
+          async () => season([game({ id: 1, date: '2026-11-14' })]),
+          noRows,
+          async (gameId, options?: KorbReadOptions) => {
             options?.reading?.replaced({
-              storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              storedAt: NOW_IN_SPEC - TWO_HOURS,
               reason: 'unavailable',
             });
-            return inDerSchulsporthalle(spielId);
+            return inTheSchoolGym(gameId);
           }
         )
       );
 
       expect(
-        page.querySelector('[data-qa="team-stand"]')?.textContent
+        page.querySelector('[data-qa="team-as-of"]')?.textContent
       ).toContain('DBB nicht erreichbar · Stand: vor 2 Std.');
     });
 
     it("labels the Verein's other Teams with their own Stand", async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, date: '2026-11-14' })]),
-          keineZeilen,
-          inDerSchulsporthalle,
-          async (verein, options?: KorbReadOptions) => {
+          async () => season([game({ id: 1, date: '2026-11-14' })]),
+          noRows,
+          inTheSchoolGym,
+          async (club, options?: KorbReadOptions) => {
             options?.reading?.replaced({
-              storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              storedAt: NOW_IN_SPEC - TWO_HOURS,
               reason: 'no-internet',
             });
-            return OHNE_TEAMS(verein);
+            return WITHOUT_TEAMS(club);
           }
         )
       );
@@ -255,19 +256,19 @@ describe('TeamComponent', () => {
         page.querySelector('[data-qa="vereins-stand"]')?.textContent
       ).toContain('Offline · Stand: vor 2 Std.');
       expect(
-        page.querySelector('[data-qa="team-stand"] [data-qa="as-of"]')
+        page.querySelector('[data-qa="team-as-of"] [data-qa="as-of"]')
       ).toBeNull();
     });
 
     it('labels no Stand for Spiele just read', async () => {
-      const page = await render(fakeData(async () => saison([])));
+      const page = await render(fakeData(async () => season([])));
 
       expect(page.querySelector('[data-qa="as-of"]')).toBeNull();
     });
   });
 
   it("reads the Team of the page's id", async () => {
-    const data = fakeData(async () => saison([]));
+    const data = fakeData(async () => season([]));
 
     await render(data, '313036');
 
@@ -278,7 +279,7 @@ describe('TeamComponent', () => {
   });
 
   it('names the Team', async () => {
-    const page = await render(fakeData(async () => saison([])));
+    const page = await render(fakeData(async () => season([])));
 
     expect(page.querySelector('h1')?.textContent).toContain('MTV Wasbüttel');
   });
@@ -287,83 +288,83 @@ describe('TeamComponent', () => {
     // the port promises date order; the page shows what it gets as it is
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
-          spiel({ id: 2, date: '2026-09-20', time: '15:00' }),
-          spiel({ id: 3, date: '2026-09-20', time: '09:00' }),
-          spiel({ id: 4, date: '2026-09-12' }),
+        season([
+          game({ id: 1, date: '2026-08-29', leagueId: FRIENDLIES.id }),
+          game({ id: 2, date: '2026-09-20', time: '15:00' }),
+          game({ id: 3, date: '2026-09-20', time: '09:00' }),
+          game({ id: 4, date: '2026-09-12' }),
         ])
       )
     );
 
-    expect(spielZeilen(page).map((zeile) => feld(zeile, 'datum'))).toEqual([
+    expect(gameRows(page).map((row) => field(row, 'date'))).toEqual([
       'Sa., 29.08.2026',
       'So., 20.09.2026',
       'So., 20.09.2026',
       'Sa., 12.09.2026',
     ]);
-    expect(spielZeilen(page).map((zeile) => feld(zeile, 'uhrzeit'))).toEqual([
+    expect(gameRows(page).map((row) => field(row, 'time'))).toEqual([
       '10:00',
       '15:00',
       '09:00',
       '10:00',
     ]);
-    expect(spielZeilen(page).map((zeile) => feld(zeile, 'liga'))).toEqual([
-      TESTSPIELE.name,
-      VORRUNDE.name,
-      VORRUNDE.name,
-      VORRUNDE.name,
+    expect(gameRows(page).map((row) => field(row, 'league'))).toEqual([
+      FRIENDLIES.name,
+      FIRST_ROUND.name,
+      FIRST_ROUND.name,
+      FIRST_ROUND.name,
     ]);
   });
 
   it('shows no time where the DBB has none', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([spiel({ id: 1, date: '2026-09-12', time: undefined })])
+        season([game({ id: 1, date: '2026-09-12', time: undefined })])
       )
     );
 
-    expect(feld(spielZeilen(page)[0], 'uhrzeit')).toBeUndefined();
+    expect(field(gameRows(page)[0], 'time')).toBeUndefined();
   });
 
   it('tells home from away and names the opponent', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({ id: 1, date: '2026-09-12', away: gegner(2, 'MTV Gifhorn') }),
-          spiel({
+        season([
+          game({ id: 1, date: '2026-09-12', away: opponent(2, 'MTV Gifhorn') }),
+          game({
             id: 2,
             date: '2026-09-20',
-            home: gegner(3, 'SV Groß Oesingen'),
-            away: UNS,
+            home: opponent(3, 'SV Groß Oesingen'),
+            away: US,
           }),
         ])
       )
     );
 
-    const [heim, auswaerts] = spielZeilen(page);
-    expect(feld(heim, 'ort')).toBe('Heim');
-    expect(feld(heim, 'gegner')).toBe('MTV Gifhorn');
-    expect(feld(auswaerts, 'ort')).toBe('Auswärts');
-    expect(feld(auswaerts, 'gegner')).toBe('SV Groß Oesingen');
+    const [home, away] = gameRows(page);
+    expect(field(home, 'home-or-away')).toBe('Heim');
+    expect(field(home, 'opponent')).toBe('MTV Gifhorn');
+    expect(field(away, 'home-or-away')).toBe('Auswärts');
+    expect(field(away, 'opponent')).toBe('SV Groß Oesingen');
   });
 
   it('names both sides of a Spiel the DBB lists without the Team', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-09-12',
-            home: gegner(2, 'MTV Gifhorn'),
-            away: gegner(3, 'SV Groß Oesingen'),
+            home: opponent(2, 'MTV Gifhorn'),
+            away: opponent(3, 'SV Groß Oesingen'),
           }),
         ])
       )
     );
 
-    expect(feld(spielZeilen(page)[0], 'ort')).toBeUndefined();
-    expect(feld(spielZeilen(page)[0], 'gegner')).toBe(
+    expect(field(gameRows(page)[0], 'home-or-away')).toBeUndefined();
+    expect(field(gameRows(page)[0], 'opponent')).toBe(
       'MTV Gifhorn – SV Groß Oesingen'
     );
   });
@@ -371,8 +372,8 @@ describe('TeamComponent', () => {
   it('names an opponent the Liga has yet to settle by its slot', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-12-05',
             away: { kind: 'open', label: 'Nord 1. Platz' },
@@ -381,39 +382,39 @@ describe('TeamComponent', () => {
       )
     );
 
-    expect(feld(spielZeilen(page)[0], 'gegner')).toBe('Nord 1. Platz');
+    expect(field(gameRows(page)[0], 'opponent')).toBe('Nord 1. Platz');
   });
 
   it('shows the result, home first, once played', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-09-12',
-            home: gegner(3, 'TuS Müden-Dieckhorst'),
-            away: UNS,
+            home: opponent(3, 'TuS Müden-Dieckhorst'),
+            away: US,
             status: {
               kind: 'played',
               result: { home: 46, away: 99 },
               confirmed: true,
             },
           }),
-          spiel({ id: 2, date: '2026-11-21' }),
+          game({ id: 2, date: '2026-11-21' }),
         ])
       )
     );
 
-    const [gespielt, geplant] = spielZeilen(page);
-    expect(feld(gespielt, 'ergebnis')).toBe('46:99');
-    expect(feld(geplant, 'ergebnis')).toBeUndefined();
+    const [played, scheduled] = gameRows(page);
+    expect(field(played, 'result')).toBe('46:99');
+    expect(field(scheduled, 'result')).toBeUndefined();
   });
 
   it('marks a result the Verband has not confirmed yet as vorläufig', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-09-12',
             status: {
@@ -422,7 +423,7 @@ describe('TeamComponent', () => {
               confirmed: false,
             },
           }),
-          spiel({
+          game({
             id: 2,
             date: '2026-09-19',
             status: {
@@ -435,22 +436,22 @@ describe('TeamComponent', () => {
       )
     );
 
-    const [vorlaeufig, bestaetigt] = spielZeilen(page);
-    expect(feld(vorlaeufig, 'ausgang')).toBe('Sieg');
-    expect(feld(vorlaeufig, 'vorlaeufig')).toBe('vorläufig');
-    expect(feld(bestaetigt, 'vorlaeufig')).toBeUndefined();
+    const [provisional, confirmed] = gameRows(page);
+    expect(field(provisional, 'outcome')).toBe('Sieg');
+    expect(field(provisional, 'provisional')).toBe('vorläufig');
+    expect(field(confirmed, 'provisional')).toBeUndefined();
   });
 
   it('shows a result the DBB never confirms (BBL, ProA, ProB) as final', async () => {
     const bbl: League = {
-      ...liga(55802, '1. Bundesliga (easyCredit BBL)'),
+      ...league(55802, '1. Bundesliga (easyCredit BBL)'),
       association: { id: 100, name: 'Bundesligen' },
       resultsNeverConfirmed: true,
     };
-    const unbestaetigt = (id: number, ligaId: number): Game =>
-      spiel({
+    const unconfirmed = (id: number, leagueId: number): Game =>
+      game({
         id,
-        leagueId: ligaId,
+        leagueId,
         date: `2026-09-1${id}`,
         status: {
           kind: 'played',
@@ -460,47 +461,47 @@ describe('TeamComponent', () => {
       });
     const page = await render(
       fakeData(async () => ({
-        ...saison([unbestaetigt(1, bbl.id), unbestaetigt(2, VORRUNDE.id)]),
-        leagues: [bbl, VORRUNDE],
+        ...season([unconfirmed(1, bbl.id), unconfirmed(2, FIRST_ROUND.id)]),
+        leagues: [bbl, FIRST_ROUND],
       }))
     );
 
-    const [inDerBbl, inDerVorrunde] = spielZeilen(page);
-    expect(feld(inDerBbl, 'ergebnis')).toBe('99:46');
-    expect(feld(inDerBbl, 'ausgang')).toBe('Sieg');
-    expect(feld(inDerBbl, 'vorlaeufig')).toBeUndefined();
-    expect(feld(inDerVorrunde, 'vorlaeufig')).toBe('vorläufig');
+    const [inTheBbl, inTheFirstRound] = gameRows(page);
+    expect(field(inTheBbl, 'result')).toBe('99:46');
+    expect(field(inTheBbl, 'outcome')).toBe('Sieg');
+    expect(field(inTheBbl, 'provisional')).toBeUndefined();
+    expect(field(inTheFirstRound, 'provisional')).toBe('vorläufig');
   });
 
   it('says in words how each decided Spiel ended for the Team', async () => {
-    const gespielt = (heim: number, gast: number) =>
+    const played = (home: number, away: number) =>
       ({
         kind: 'played',
-        result: { home: heim, away: gast },
+        result: { home, away },
         confirmed: true,
       }) as const;
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-09-12',
-            home: gegner(3, 'TuS Müden-Dieckhorst'),
-            away: UNS,
-            status: gespielt(46, 99),
+            home: opponent(3, 'TuS Müden-Dieckhorst'),
+            away: US,
+            status: played(46, 99),
           }),
-          spiel({ id: 2, date: '2026-09-19', status: gespielt(40, 52) }),
-          spiel({
+          game({ id: 2, date: '2026-09-19', status: played(40, 52) }),
+          game({
             id: 3,
             date: '2026-09-26',
             status: { kind: 'forfeited', forfeitedBy: ['home'] },
           }),
-          spiel({ id: 4, date: '2026-11-21' }),
+          game({ id: 4, date: '2026-11-21' }),
         ])
       )
     );
 
-    expect(spielZeilen(page).map((zeile) => feld(zeile, 'ausgang'))).toEqual([
+    expect(gameRows(page).map((row) => field(row, 'outcome'))).toEqual([
       'Sieg',
       'Niederlage',
       'Niederlage',
@@ -511,21 +512,21 @@ describe('TeamComponent', () => {
   it('marks a cancelled Spiel', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({ id: 1, date: '2026-10-03', status: { kind: 'cancelled' } }),
+        season([
+          game({ id: 1, date: '2026-10-03', status: { kind: 'cancelled' } }),
         ])
       )
     );
 
-    expect(feld(spielZeilen(page)[0], 'markierung')).toBe('abgesagt');
-    expect(feld(spielZeilen(page)[0], 'ergebnis')).toBeUndefined();
+    expect(field(gameRows(page)[0], 'irregularity')).toBe('abgesagt');
+    expect(field(gameRows(page)[0], 'result')).toBeUndefined();
   });
 
   it('marks a forfeited Spiel, with its result where there is one', async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({
+        season([
+          game({
             id: 1,
             date: '2026-10-03',
             status: {
@@ -534,7 +535,7 @@ describe('TeamComponent', () => {
               result: { home: 20, away: 0 },
             },
           }),
-          spiel({
+          game({
             id: 2,
             date: '2026-10-10',
             status: { kind: 'forfeited', forfeitedBy: [] },
@@ -543,31 +544,31 @@ describe('TeamComponent', () => {
       )
     );
 
-    const [mitErgebnis, ohneErgebnis] = spielZeilen(page);
-    expect(feld(mitErgebnis, 'markierung')).toBe('kampflos');
-    expect(feld(mitErgebnis, 'ergebnis')).toBe('20:0');
-    expect(feld(ohneErgebnis, 'markierung')).toBe('kampflos');
-    expect(feld(ohneErgebnis, 'ergebnis')).toBeUndefined();
+    const [withResult, withoutResult] = gameRows(page);
+    expect(field(withResult, 'irregularity')).toBe('kampflos');
+    expect(field(withResult, 'result')).toBe('20:0');
+    expect(field(withoutResult, 'irregularity')).toBe('kampflos');
+    expect(field(withoutResult, 'result')).toBeUndefined();
   });
 
   it("opens each Spiel's page", async () => {
     const page = await render(
       fakeData(async () =>
-        saison([
-          spiel({ id: 2861436, date: '2026-09-20' }),
-          spiel({ id: 2861439, date: '2026-09-25' }),
+        season([
+          game({ id: 2861436, date: '2026-09-20' }),
+          game({ id: 2861439, date: '2026-09-25' }),
         ])
       )
     );
 
     expect(
-      spielZeilen(page).map((zeile) => zeile.closest('a')?.getAttribute('href'))
+      gameRows(page).map((row) => row.closest('a')?.getAttribute('href'))
     ).toEqual(['/spiel/2861436', '/spiel/2861439']);
   });
 
   describe('the next Spiel', () => {
-    const MIT_NAECHSTEM = saison([
-      spiel({
+    const WITH_NEXT = season([
+      game({
         id: 1,
         date: '2026-10-03',
         status: {
@@ -576,18 +577,18 @@ describe('TeamComponent', () => {
           confirmed: true,
         },
       }),
-      spiel({ id: 2, date: '2026-11-21', time: '11:00' }),
-      spiel({ id: 3, date: '2026-11-28' }),
+      game({ id: 2, date: '2026-11-21', time: '11:00' }),
+      game({ id: 3, date: '2026-11-28' }),
     ]);
 
-    function naechstes(page: HTMLElement): HTMLElement | null {
-      return page.querySelector('[data-qa="team-naechstes"]');
+    function next(page: HTMLElement): HTMLElement | null {
+      return page.querySelector('[data-qa="team-next"]');
     }
 
     it('shows it with its Halle and a link that opens navigation', async () => {
-      const page = await render(fakeData(async () => MIT_NAECHSTEM));
+      const page = await render(fakeData(async () => WITH_NEXT));
 
-      const block = naechstes(page);
+      const block = next(page);
       expect(block?.textContent).toContain('Nächstes Spiel');
       expect(block?.textContent).toContain('Sa., 21.11.2026');
       expect(
@@ -605,27 +606,27 @@ describe('TeamComponent', () => {
     });
 
     it("reads only the next Spiel's Halle", async () => {
-      const data = fakeData(async () => MIT_NAECHSTEM);
+      const data = fakeData(async () => WITH_NEXT);
 
       await render(data);
 
-      expect(data.game.mock.calls.map(([spielId]) => spielId)).toEqual([2]);
+      expect(data.game.mock.calls.map(([gameId]) => gameId)).toEqual([2]);
     });
 
     it('shows none and reads no Halle once every Spiel is played', async () => {
-      const data = fakeData(async () => saison([MIT_NAECHSTEM.games[0]]));
+      const data = fakeData(async () => season([WITH_NEXT.games[0]]));
 
       const page = await render(data);
 
-      expect(naechstes(page)).toBeNull();
+      expect(next(page)).toBeNull();
       expect(data.game).not.toHaveBeenCalled();
     });
 
     it('keeps the Spiele when its Halle cannot be read', async () => {
       const page = await render(
         fakeData(
-          async () => MIT_NAECHSTEM,
-          keineZeilen,
+          async () => WITH_NEXT,
+          noRows,
           async () => {
             throw new BasketballDataError('unavailable', 'DBB: nope');
           }
@@ -633,18 +634,18 @@ describe('TeamComponent', () => {
       );
 
       expect(
-        naechstes(page)?.querySelector('[data-qa="venue-error"]')?.textContent
+        next(page)?.querySelector('[data-qa="venue-error"]')?.textContent
       ).toContain('Der DBB ist gerade nicht erreichbar.');
-      expect(spielZeilen(page)).toHaveLength(3);
+      expect(gameRows(page)).toHaveLength(3);
       expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
     });
   });
 
   it('offers to follow the Team', async () => {
-    const page = await render(fakeData(async () => saison([])));
+    const page = await render(fakeData(async () => season([])));
 
     expect(
-      page.querySelector('[data-qa="team-folgen"]')?.textContent
+      page.querySelector('[data-qa="follow-team"]')?.textContent
     ).toContain('Team folgen');
   });
 
@@ -655,12 +656,12 @@ describe('TeamComponent', () => {
       })
     );
 
-    expect(page.querySelector('[data-qa="team-folgen"]')).toBeNull();
+    expect(page.querySelector('[data-qa="follow-team"]')).toBeNull();
   });
 
   it('offers to unfollow a followed Team whose read fails', async () => {
-    const auswahl = new LocalSelection(undefined);
-    await auswahl.follow(313036);
+    const selection = new LocalSelection(undefined);
+    await selection.follow(313036);
     TestBed.configureTestingModule({
       providers: [
         ...providers(
@@ -668,26 +669,26 @@ describe('TeamComponent', () => {
             throw new BasketballDataError('not-found', 'DBB: nope');
           })
         ),
-        { provide: AUSWAHL, useValue: auswahl },
+        { provide: AUSWAHL, useValue: selection },
       ],
     });
     const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     await fixture.whenStable();
-    const knopf = (fixture.nativeElement as HTMLElement).querySelector(
-      '[data-qa="team-folgen"]'
+    const button = (fixture.nativeElement as HTMLElement).querySelector(
+      '[data-qa="follow-team"]'
     ) as HTMLButtonElement | null;
-    expect(knopf?.textContent).toContain('Nicht mehr folgen');
+    expect(button?.textContent).toContain('Nicht mehr folgen');
 
-    knopf?.click();
+    button?.click();
     await new Promise((resolve) => setTimeout(resolve));
     await fixture.whenStable();
 
-    expect(auswahl.teams()).toEqual([]);
+    expect(selection.teams()).toEqual([]);
   });
 
   it('names the Team in the breadcrumb, below the overview', async () => {
-    await render(fakeData(async () => saison([])));
+    await render(fakeData(async () => season([])));
 
     const levels = TestBed.inject(Breadcrumb).levels();
     expect(levels.map((level) => level.title)).toEqual([
@@ -710,7 +711,7 @@ describe('TeamComponent', () => {
   });
 
   it('says so when the Team has no Spiele', async () => {
-    const page = await render(fakeData(async () => saison([])));
+    const page = await render(fakeData(async () => season([])));
 
     expect(page.textContent).toContain('Noch keine Spiele in dieser Saison.');
   });
@@ -742,13 +743,13 @@ describe('TeamComponent', () => {
     );
 
     expect(page.querySelector('[role="alert"]')?.textContent).toContain(text);
-    expect(spielZeilen(page)).toEqual([]);
+    expect(gameRows(page)).toEqual([]);
   });
 
   it.each(['313036abc', '-1', '0'])(
     'shows no Team for the id %s, without asking the DBB',
     async (teamId) => {
-      const data = fakeData(async () => saison([]));
+      const data = fakeData(async () => season([]));
 
       const page = await render(data, teamId);
 
@@ -765,7 +766,7 @@ describe('TeamComponent', () => {
     const fixture = TestBed.createComponent(TeamComponent);
     fixture.componentRef.setInput('teamId', '313036');
     fixture.detectChanges();
-    const erster = data.teamGames.mock.calls[0][1]?.signal;
+    const first = data.teamGames.mock.calls[0][1]?.signal;
 
     fixture.componentRef.setInput('teamId', '201500');
     fixture.detectChanges();
@@ -774,164 +775,162 @@ describe('TeamComponent', () => {
       201500,
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
-    expect(erster?.aborted).toBe(true);
+    expect(first?.aborted).toBe(true);
   });
   describe('Tabellen', () => {
-    const ZWEI_LIGEN = saison([
-      spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
-      spiel({ id: 2, date: '2026-09-12' }),
-      spiel({ id: 3, date: '2026-11-08' }),
+    const TWO_LEAGUES = season([
+      game({ id: 1, date: '2026-08-29', leagueId: FRIENDLIES.id }),
+      game({ id: 2, date: '2026-09-12' }),
+      game({ id: 3, date: '2026-11-08' }),
     ]);
 
-    function tabellen(page: HTMLElement): HTMLElement[] {
-      return [...page.querySelectorAll<HTMLElement>('[data-qa="tabelle"]')];
+    function standings(page: HTMLElement): HTMLElement[] {
+      return [...page.querySelectorAll<HTMLElement>('[data-qa="standings"]')];
     }
 
-    function ueberschrift(tabelle: HTMLElement): string | undefined {
-      return tabelle.querySelector('h3')?.textContent?.trim();
+    function heading(standings: HTMLElement): string | undefined {
+      return standings.querySelector('h3')?.textContent?.trim();
     }
 
-    const VORRUNDE_TABELLE: Standings = {
-      league: VORRUNDE,
+    const FIRST_ROUND_STANDINGS: Standings = {
+      league: FIRST_ROUND,
       rows: [
-        tabellenZeile(1, { id: 201500, name: 'MTV Gifhorn', clubId: 201500 }),
-        tabellenZeile(2, UNSER_TEAM),
+        standingsRow(1, { id: 201500, name: 'MTV Gifhorn', clubId: 201500 }),
+        standingsRow(2, OUR_TEAM),
       ],
     };
 
     it('shows one Tabelle per Liga of its Spiele, the current Liga first', async () => {
-      const data = fakeData(async () => ZWEI_LIGEN);
+      const data = fakeData(async () => TWO_LEAGUES);
 
       const page = await render(data);
 
-      expect(tabellen(page).map(ueberschrift)).toEqual([
-        VORRUNDE.name,
-        TESTSPIELE.name,
+      expect(standings(page).map(heading)).toEqual([
+        FIRST_ROUND.name,
+        FRIENDLIES.name,
       ]);
-      expect(data.standings.mock.calls.map(([ligaId]) => ligaId)).toEqual([
-        VORRUNDE.id,
-        TESTSPIELE.id,
+      expect(data.standings.mock.calls.map(([leagueId]) => leagueId)).toEqual([
+        FIRST_ROUND.id,
+        FRIENDLIES.id,
       ]);
     });
 
     it('puts the next Liga first once the day of the last Spiel of the current one has passed', async () => {
-      const heute = signal('2026-11-08');
+      const today = signal('2026-11-08');
       TestBed.configureTestingModule({
         providers: providers(
           fakeData(async () =>
-            saison([
-              spiel({ id: 1, date: '2026-08-29', leagueId: TESTSPIELE.id }),
-              spiel({ id: 2, date: '2026-11-08' }),
-              spiel({ id: 3, date: '2026-11-21', leagueId: TESTSPIELE.id }),
+            season([
+              game({ id: 1, date: '2026-08-29', leagueId: FRIENDLIES.id }),
+              game({ id: 2, date: '2026-11-08' }),
+              game({ id: 3, date: '2026-11-21', leagueId: FRIENDLIES.id }),
             ])
           ),
-          heute
+          today
         ),
       });
       const fixture = TestBed.createComponent(TeamComponent);
       fixture.componentRef.setInput('teamId', '313036');
       await fixture.whenStable();
       const page = fixture.nativeElement as HTMLElement;
-      expect(tabellen(page).map(ueberschrift)).toEqual([
-        VORRUNDE.name,
-        TESTSPIELE.name,
+      expect(standings(page).map(heading)).toEqual([
+        FIRST_ROUND.name,
+        FRIENDLIES.name,
       ]);
 
-      heute.set('2026-11-09');
+      today.set('2026-11-09');
       await fixture.whenStable();
 
-      expect(tabellen(page).map(ueberschrift)).toEqual([
-        TESTSPIELE.name,
-        VORRUNDE.name,
+      expect(standings(page).map(heading)).toEqual([
+        FRIENDLIES.name,
+        FIRST_ROUND.name,
       ]);
     });
 
     it('highlights the Team in its Tabelle', async () => {
       const page = await render(
         fakeData(
-          async () => ZWEI_LIGEN,
-          async (ligaId) =>
-            ligaId === VORRUNDE.id
-              ? VORRUNDE_TABELLE
-              : { league: TESTSPIELE, rows: [] }
+          async () => TWO_LEAGUES,
+          async (leagueId) =>
+            leagueId === FIRST_ROUND.id
+              ? FIRST_ROUND_STANDINGS
+              : { league: FRIENDLIES, rows: [] }
         )
       );
 
-      const eigene = page.querySelector('[aria-current="true"]');
-      expect(eigene?.textContent).toContain('MTV Wasbüttel');
-      expect(eigene?.textContent).toContain('(dein Team)');
+      const own = page.querySelector('[aria-current="true"]');
+      expect(own?.textContent).toContain('MTV Wasbüttel');
+      expect(own?.textContent).toContain('(dein Team)');
     });
 
     it('keeps the Spiele and the other Tabelle when one Tabelle fails', async () => {
       const page = await render(
         fakeData(
-          async () => ZWEI_LIGEN,
-          async (ligaId) => {
-            if (ligaId === TESTSPIELE.id) {
+          async () => TWO_LEAGUES,
+          async (leagueId) => {
+            if (leagueId === FRIENDLIES.id) {
               throw new BasketballDataError('unavailable', 'DBB: nope');
             }
-            return VORRUNDE_TABELLE;
+            return FIRST_ROUND_STANDINGS;
           }
         )
       );
 
-      expect(spielZeilen(page)).toHaveLength(3);
-      const [vorrunde, testspiele] = tabellen(page);
+      expect(gameRows(page)).toHaveLength(3);
+      const [firstRound, friendlies] = standings(page);
       expect(
-        vorrunde.querySelectorAll('[data-qa="tabelle-zeile"]')
+        firstRound.querySelectorAll('[data-qa="standings-row"]')
       ).toHaveLength(2);
       expect(
-        testspiele.querySelector('[data-qa="tabelle-fehler"]')?.textContent
+        friendlies.querySelector('[data-qa="standings-error"]')?.textContent
       ).toContain('Der DBB ist gerade nicht erreichbar.');
     });
 
     it('raises no alert per Tabelle when the DBB fails them all', async () => {
       const page = await render(
         fakeData(
-          async () => ZWEI_LIGEN,
+          async () => TWO_LEAGUES,
           async () => {
             throw new BasketballDataError('unavailable', 'DBB: nope');
           }
         )
       );
 
-      expect(page.querySelectorAll('[data-qa="tabelle-fehler"]')).toHaveLength(
+      expect(page.querySelectorAll('[data-qa="standings-error"]')).toHaveLength(
         2
       );
       expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);
     });
 
     it('shows no Tabelle for a Team without Spiele', async () => {
-      const data = fakeData(async () => saison([]));
+      const data = fakeData(async () => season([]));
 
       const page = await render(data);
 
-      expect(tabellen(page)).toEqual([]);
+      expect(standings(page)).toEqual([]);
       expect(data.standings).not.toHaveBeenCalled();
     });
   });
 
   describe('weitere Teams des Vereins', () => {
-    const MIT_VEREIN = (spiele: readonly Game[]) =>
+    const WITH_CLUB = (games: readonly Game[]) =>
       fakeData(
-        async () => saison(spiele),
-        keineZeilen,
-        inDerSchulsporthalle,
-        async () => UNSER_VEREIN
+        async () => season(games),
+        noRows,
+        inTheSchoolGym,
+        async () => OUR_CLUB
       );
 
-    function feldIn(zeile: HTMLElement, qa: string): string | undefined {
-      return zeile.querySelector(`[data-qa="${qa}"]`)?.textContent?.trim();
+    function fieldIn(row: HTMLElement, qa: string): string | undefined {
+      return row.querySelector(`[data-qa="${qa}"]`)?.textContent?.trim();
     }
 
     function clubTeams(page: HTMLElement): HTMLElement[] {
-      return [
-        ...page.querySelectorAll<HTMLElement>('[data-qa="vereins-team"]'),
-      ];
+      return [...page.querySelectorAll<HTMLElement>('[data-qa="club-team"]')];
     }
 
     it("reads the Teams of the Team's Verein", async () => {
-      const data = MIT_VEREIN([]);
+      const data = WITH_CLUB([]);
 
       await render(data);
 
@@ -942,30 +941,30 @@ describe('TeamComponent', () => {
     });
 
     it('lists the other Teams with their Ligen, each linking to its page, the Team itself left out', async () => {
-      const page = await render(MIT_VEREIN([]));
+      const page = await render(WITH_CLUB([]));
 
       expect(
-        clubTeams(page).map((zeile) => [
-          feldIn(zeile, 'vereins-team-name'),
-          feldIn(zeile, 'vereins-team-ligen'),
+        clubTeams(page).map((row) => [
+          fieldIn(row, 'club-team-name'),
+          fieldIn(row, 'club-team-leagues'),
         ])
       ).toEqual([
         ['MTV Wasbüttel 2', 'Regionsvorrunde Nordwest mu14'],
         ['MTV Wasbüttel', 'Regionsliga Braunschweig mu16'],
       ]);
       expect(
-        clubTeams(page).map((zeile) =>
-          zeile.querySelector('a')?.getAttribute('href')
+        clubTeams(page).map((row) =>
+          row.querySelector('a')?.getAttribute('href')
         )
       ).toEqual(['/team/317618', '/team/270037']);
     });
 
     it('follows another Team of the Verein from its line', async () => {
-      const auswahl = new LocalSelection(undefined);
+      const selection = new LocalSelection(undefined);
       TestBed.configureTestingModule({
         providers: [
-          ...providers(MIT_VEREIN([])),
-          { provide: AUSWAHL, useValue: auswahl },
+          ...providers(WITH_CLUB([])),
+          { provide: AUSWAHL, useValue: selection },
         ],
       });
       const fixture = TestBed.createComponent(TeamComponent);
@@ -973,41 +972,41 @@ describe('TeamComponent', () => {
       await fixture.whenStable();
       const page = fixture.nativeElement as HTMLElement;
 
-      const knopf = clubTeams(page)[0].querySelector('button');
-      expect(knopf?.getAttribute('aria-label')).toBe(
+      const button = clubTeams(page)[0].querySelector('button');
+      expect(button?.getAttribute('aria-label')).toBe(
         'Team folgen: MTV Wasbüttel 2'
       );
-      knopf?.click();
+      button?.click();
       await new Promise((resolve) => setTimeout(resolve));
       await fixture.whenStable();
 
-      expect(auswahl.teams()).toEqual([317618]);
-      expect(knopf?.getAttribute('aria-label')).toBe(
+      expect(selection.teams()).toEqual([317618]);
+      expect(button?.getAttribute('aria-label')).toBe(
         'Nicht mehr folgen: MTV Wasbüttel 2'
       );
     });
 
     it('reads the Verein once when switching to a sibling Team of it', async () => {
-      const geschwister: Team = {
+      const siblings: Team = {
         id: 317618,
         name: 'MTV Wasbüttel 2',
         clubId: 1837,
       };
       const data = fakeData(
         async (teamId) => ({
-          ...saison([]),
-          team: teamId === geschwister.id ? geschwister : UNSER_TEAM,
+          ...season([]),
+          team: teamId === siblings.id ? siblings : OUR_TEAM,
         }),
-        keineZeilen,
-        inDerSchulsporthalle,
-        async () => UNSER_VEREIN
+        noRows,
+        inTheSchoolGym,
+        async () => OUR_CLUB
       );
       TestBed.configureTestingModule({ providers: providers(data) });
       const fixture = TestBed.createComponent(TeamComponent);
       fixture.componentRef.setInput('teamId', '313036');
       await fixture.whenStable();
 
-      fixture.componentRef.setInput('teamId', String(geschwister.id));
+      fixture.componentRef.setInput('teamId', String(siblings.id));
       await fixture.whenStable();
 
       const page = fixture.nativeElement as HTMLElement;
@@ -1016,14 +1015,14 @@ describe('TeamComponent', () => {
       );
       expect(data.clubTeams).toHaveBeenCalledTimes(1);
       expect(
-        clubTeams(page).map((zeile) =>
-          zeile.querySelector('a')?.getAttribute('href')
+        clubTeams(page).map((row) =>
+          row.querySelector('a')?.getAttribute('href')
         )
       ).toEqual(['/team/313036', '/team/270037']);
     });
 
     it('says so where the Verein shows no other Team', async () => {
-      const page = await render(fakeData(async () => saison([])));
+      const page = await render(fakeData(async () => season([])));
 
       expect(clubTeams(page)).toEqual([]);
       expect(
@@ -1034,16 +1033,16 @@ describe('TeamComponent', () => {
     it('keeps the Spiele when the Verein cannot be read', async () => {
       const page = await render(
         fakeData(
-          async () => saison([spiel({ id: 1, date: '2026-11-21' })]),
-          keineZeilen,
-          inDerSchulsporthalle,
+          async () => season([game({ id: 1, date: '2026-11-21' })]),
+          noRows,
+          inTheSchoolGym,
           async () => {
             throw new BasketballDataError('unavailable', 'DBB: nope');
           }
         )
       );
 
-      expect(spielZeilen(page)).toHaveLength(1);
+      expect(gameRows(page)).toHaveLength(1);
       expect(
         page.querySelector('[data-qa="vereins-teams-fehler"]')?.textContent
       ).toContain('Der DBB ist gerade nicht erreichbar.');
@@ -1052,38 +1051,36 @@ describe('TeamComponent', () => {
   });
 
   describe('the end of the Saison', () => {
-    const GESPIELT: Game['status'] = {
+    const PLAYED_GAME: Game['status'] = {
       kind: 'played',
       result: { home: 78, away: 47 },
       confirmed: true,
     };
 
-    function mitLetztemSpielAm(datum: string) {
+    function withLastGameOn(date: string) {
       return fakeData(
-        async () => saison([spiel({ id: 1, date: datum, status: GESPIELT })]),
-        keineZeilen,
-        inDerSchulsporthalle,
-        async () => UNSER_VEREIN
+        async () => season([game({ id: 1, date, status: PLAYED_GAME })]),
+        noRows,
+        inTheSchoolGym,
+        async () => OUR_CLUB
       );
     }
 
-    function hinweis(page: HTMLElement): HTMLElement | null {
-      return page.querySelector('[data-qa="saison-beendet"]');
+    function hint(page: HTMLElement): HTMLElement | null {
+      return page.querySelector('[data-qa="season-over"]');
     }
 
     it("asks whether the Saison is over and suggests the Verein's current Teams", async () => {
       // more than two weeks before 8 November
-      const page = await render(mitLetztemSpielAm('2026-10-24'));
+      const page = await render(withLastGameOn('2026-10-24'));
 
-      expect(hinweis(page)?.textContent).toContain(
+      expect(hint(page)?.textContent).toContain(
         'Keine Spiele mehr angesetzt. Ist die Saison vorbei?'
       );
-      expect(hinweis(page)?.textContent).not.toContain('Saison ist vorbei');
+      expect(hint(page)?.textContent).not.toContain('Saison ist vorbei');
       expect(
         [
-          ...(hinweis(page)?.querySelectorAll(
-            '[data-qa="vereins-team-name"]'
-          ) ?? []),
+          ...(hint(page)?.querySelectorAll('[data-qa="club-team-name"]') ?? []),
         ].map((name) => name.textContent?.trim())
       ).toEqual(['MTV Wasbüttel 2', 'MTV Wasbüttel']);
       expect(page.querySelectorAll('[data-qa="vereins-teams"]')).toHaveLength(
@@ -1092,23 +1089,23 @@ describe('TeamComponent', () => {
     });
 
     it('says nothing exactly two weeks after the last Spiel', async () => {
-      const page = await render(mitLetztemSpielAm('2026-10-25'));
+      const page = await render(withLastGameOn('2026-10-25'));
 
-      expect(hinweis(page)).toBeNull();
+      expect(hint(page)).toBeNull();
       expect(page.querySelector('[data-qa="vereins-teams"]')).not.toBeNull();
     });
 
     it('says nothing while a Spiel is still to come', async () => {
       const page = await render(
         fakeData(async () =>
-          saison([
-            spiel({ id: 1, date: '2026-09-20', status: GESPIELT }),
-            spiel({ id: 2, date: '2026-12-05' }),
+          season([
+            game({ id: 1, date: '2026-09-20', status: PLAYED_GAME }),
+            game({ id: 2, date: '2026-12-05' }),
           ])
         )
       );
 
-      expect(hinweis(page)).toBeNull();
+      expect(hint(page)).toBeNull();
     });
   });
 });
