@@ -28,7 +28,7 @@ test.describe('Title bar', () => {
     await expect(titleBar.levels).toHaveText(['Korbjäger']);
     await expect(titleBar.current).toHaveText('Korbjäger');
 
-    await startPage.team(TEAM).getByTestId('ueberblick-name').click();
+    await startPage.team(TEAM).getByTestId('overview-name').click();
     await expect(titleBar.levels).toHaveText(['Korbjäger', TEAM]);
     await teamPage.spielGegen(GAST).click();
     await expect(page).toHaveURL(SPIEL_URL);

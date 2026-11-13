@@ -13,7 +13,7 @@ describe('childStep', () => {
       '2026-11-08'
     );
 
-    expect(step).toEqual({ kind: 'mark', spielId: 2 });
+    expect(step).toEqual({ kind: 'mark', gameId: 2 });
   });
 
   it('passes over cancelled and forfeited Spiele, which have no Kader', () => {
@@ -26,7 +26,7 @@ describe('childStep', () => {
       '2026-11-08'
     );
 
-    expect(step).toEqual({ kind: 'mark', spielId: 1 });
+    expect(step).toEqual({ kind: 'mark', gameId: 1 });
   });
 
   it('waits for the first Spiel where none was played', () => {
@@ -46,7 +46,7 @@ describe('childStep', () => {
 });
 
 describe('checkedChildStep', () => {
-  const LIGA: League = {
+  const LEAGUE: League = {
     id: 54862,
     name: 'Regionsvorrunde Nord',
     association: { id: 7, name: 'Niedersachsen' },
@@ -55,9 +55,9 @@ describe('checkedChildStep', () => {
     division: 'Kreisliga',
   };
 
-  function detailsOf(spielId: number, league: League): GameDetails {
+  function detailsOf(gameId: number, league: League): GameDetails {
     return {
-      game: gameOn(spielId, '2026-10-04'),
+      game: gameOn(gameId, '2026-10-04'),
       league,
       quarters: [],
       overtimes: [],
@@ -67,28 +67,28 @@ describe('checkedChildStep', () => {
   it("offers no link where the Spiel's Liga keeps no Spielberichte", () => {
     expect(
       checkedChildStep(
-        { kind: 'mark', spielId: 2 },
-        detailsOf(2, { ...LIGA, withoutGameReports: true })
+        { kind: 'mark', gameId: 2 },
+        detailsOf(2, { ...LEAGUE, withoutGameReports: true })
       )
     ).toEqual({ kind: 'no-game-reports' });
   });
 
   it('keeps the link where the Liga keeps them', () => {
     expect(
-      checkedChildStep({ kind: 'mark', spielId: 2 }, detailsOf(2, LIGA))
-    ).toEqual({ kind: 'mark', spielId: 2 });
+      checkedChildStep({ kind: 'mark', gameId: 2 }, detailsOf(2, LEAGUE))
+    ).toEqual({ kind: 'mark', gameId: 2 });
   });
 
   it('keeps the link while the details are not read, or are of another Spiel', () => {
-    const without = detailsOf(1, { ...LIGA, withoutGameReports: true });
+    const without = detailsOf(1, { ...LEAGUE, withoutGameReports: true });
 
-    expect(checkedChildStep({ kind: 'mark', spielId: 2 }, undefined)).toEqual({
+    expect(checkedChildStep({ kind: 'mark', gameId: 2 }, undefined)).toEqual({
       kind: 'mark',
-      spielId: 2,
+      gameId: 2,
     });
-    expect(checkedChildStep({ kind: 'mark', spielId: 2 }, without)).toEqual({
+    expect(checkedChildStep({ kind: 'mark', gameId: 2 }, without)).toEqual({
       kind: 'mark',
-      spielId: 2,
+      gameId: 2,
     });
   });
 

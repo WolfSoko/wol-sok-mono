@@ -15,9 +15,9 @@ export class StartPage {
   public readonly searchFurtherTeam: Locator;
 
   public constructor(private readonly page: Page) {
-    this.kinder = page.getByTestId('ueberblick-kind');
-    this.teams = page.getByTestId('ueberblick-team');
-    this.leer = page.getByTestId('ueberblick-leer');
+    this.kinder = page.getByTestId('overview-child');
+    this.teams = page.getByTestId('overview-team');
+    this.leer = page.getByTestId('overview-empty');
     this.searchTeam = this.leer.getByRole('link', { name: 'Team suchen' });
     this.searchFurtherTeam = page.getByRole('link', {
       name: 'Weiteres Team suchen',
@@ -28,8 +28,8 @@ export class StartPage {
   public traegtVereinsfarben(team: Locator): Promise<boolean> {
     return team.evaluate(
       (karte) =>
-        // the card's host, korb-ueberblick-team, holds the tokens
-        (karte.closest('korb-ueberblick-team') as HTMLElement | null)?.style
+        // the card's host, korb-overview-team, holds the tokens
+        (karte.closest('korb-overview-team') as HTMLElement | null)?.style
           .getPropertyValue('--mat-sys-primary')
           .startsWith('light-dark(') ?? false
     );
@@ -42,7 +42,7 @@ export class StartPage {
   /** The overview's entry of the Team named `name`. */
   public team(name: string): Locator {
     return this.teams.filter({
-      has: this.page.getByTestId('ueberblick-name').getByText(name, {
+      has: this.page.getByTestId('overview-name').getByText(name, {
         exact: true,
       }),
     });
@@ -51,7 +51,7 @@ export class StartPage {
   /** The overview's entry of the Kind called `name` (Spitzname or first name). */
   public kind(name: string): Locator {
     return this.kinder.filter({
-      has: this.page.getByTestId('ueberblick-kind-name').getByText(name, {
+      has: this.page.getByTestId('overview-child-name').getByText(name, {
         exact: true,
       }),
     });
@@ -59,17 +59,17 @@ export class StartPage {
 
   /** The Teams a Kind plays for, as `kind(name)` finds it. */
   public kindTeams(kind: Locator): Locator {
-    return kind.getByTestId('ueberblick-kind-teams');
+    return kind.getByTestId('overview-child-teams');
   }
 
   /** Whether a Kind was on the Kader of its last Spiel. */
   public kaderFlagge(kind: Locator): Locator {
-    return kind.getByTestId('ueberblick-kader');
+    return kind.getByTestId('overview-roster');
   }
 
   /** The next Spiel of an entry, as `team(name)` or `kind(name)` finds it. */
   public naechstesSpiel(team: Locator): Locator {
-    return team.getByTestId('ueberblick-naechstes');
+    return team.getByTestId('overview-next');
   }
 
   /** The control that unfollows the Team `name`, on its card or a Kind's. */
@@ -84,6 +84,6 @@ export class StartPage {
 
   /** The last result of an entry, as `team(name)` or `kind(name)` finds it. */
   public letztesErgebnis(team: Locator): Locator {
-    return team.getByTestId('ueberblick-letztes');
+    return team.getByTestId('overview-last');
   }
 }

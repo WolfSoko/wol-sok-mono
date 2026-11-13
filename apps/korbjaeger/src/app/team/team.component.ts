@@ -34,9 +34,9 @@ import { ClubTeamsComponent } from '../club/club-teams.component';
 import { oldestAsOf } from '../basketball-data/as-of';
 import { AsOfComponent } from '../as-of/as-of.component';
 import { TeamStandingsComponent } from './team-standings.component';
-import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
+import { applyClubColors } from '../club-colors/apply-club-colors';
 import { breadcrumb } from '../navigation/breadcrumb';
-import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
+import { ClubColorsButtonComponent } from '../club-colors/club-colors-button.component';
 
 /**
  * The Team page: its next Spiel with its Halle, its Spiele of the Saison
@@ -59,7 +59,7 @@ import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knop
     AsOfComponent,
     FollowTeamComponent,
     TeamStandingsComponent,
-    VereinsfarbenKnopfComponent,
+    ClubColorsButtonComponent,
     ClubTeamsComponent,
   ],
   templateUrl: './team.component.html',
@@ -168,7 +168,7 @@ export class TeamComponent {
 
   public constructor() {
     // this Team's Verein only: `clubId` keeps the last one while the next loads
-    vereinsfarbenAnwenden(() =>
+    applyClubColors(() =>
       this.season.hasValue() ? this.season.value().club.id : undefined
     );
     breadcrumb(() => [

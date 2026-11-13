@@ -1,0 +1,23 @@
+.overview {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.empty {
+  margin-block-end: 1rem;
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.overview + h3 {
+  margin-block-start: 1.5rem;
+}
+
+.other-team {
+  margin-block-start: 1.5rem;
+}

@@ -36,7 +36,7 @@ import type { ClubTeamsState } from './club-teams-state';
         />
       }
       @case ('error') {
-        <p class="fehler" data-qa="vereins-teams-fehler">
+        <p class="fehler" data-qa="club-teams-error">
           {{ vereinsTeams.text }}
         </p>
       }

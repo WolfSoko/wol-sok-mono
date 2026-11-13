@@ -17,7 +17,7 @@ import { ClubTeamsComponent } from './club-teams.component';
       aktuellen Teams des Vereins:
     </p>
     @if (state(); as vereinsTeams) {
-      <korb-club-teams data-qa="vereins-teams" [state]="vereinsTeams" />
+      <korb-club-teams data-qa="club-teams" [state]="vereinsTeams" />
     }
   `,
   styles: `

@@ -44,7 +44,9 @@ export class TeamStandingsComponent {
   public readonly teamId = input.required<TeamId>();
 
   protected readonly columns = COLUMNS;
-  protected readonly headingId = computed(() => `tabelle-${this.league().id}`);
+  protected readonly headingId = computed(
+    () => `standings-${this.league().id}`
+  );
 
   protected readonly standings = standingsResource(() => this.league().id);
 

@@ -58,7 +58,7 @@ import { Breadcrumb } from './breadcrumb';
           matIconButton
           routerLink="/suchen"
           aria-label="Suchen"
-          data-qa="suchen"
+          data-qa="search"
         >
           <mat-icon>search</mat-icon>
         </a>

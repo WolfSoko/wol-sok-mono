@@ -1,0 +1,55 @@
+<h2 korbFocusAfterUnfollow tabindex="-1">Meine Teams</h2>
+@if (view(); as view) {
+  @let leer = view.children.length === 0 && view.teams.length === 0;
+  @if (leer) {
+    <div class="empty" data-qa="overview-empty">
+      <p>
+        Du folgst noch keinem Team. Such das Team deines Kindes über seinen
+        Verein oder seine Liga, dann steht es hier mit seinem nächsten Spiel.
+      </p>
+      <a matButton="filled" routerLink="/suchen">Team suchen</a>
+    </div>
+  }
+  @switch (view.hint) {
+    @case ("after-first-game") {
+      <p class="hint" data-qa="overview-hint">
+        {{ afterFirstGameHint }} Öffne dann das Spiel und markiere es im Kader.
+      </p>
+    }
+    @case ("open-game") {
+      <p class="hint" data-qa="overview-hint">
+        Öffne ein gespieltes Spiel, um dein Kind im Kader zu markieren, sobald
+        sein Spielbericht da ist.
+      </p>
+    }
+  }
+  @if (view.children.length > 0) {
+    <ul class="overview" data-qa="overview-children">
+      @for (kind of view.children; track kind.personId) {
+        <li><korb-overview-child [section]="kind" /></li>
+      }
+    </ul>
+    @if (view.teams.length > 0) {
+      <h3 data-qa="overview-others">Weitere Teams</h3>
+    }
+  }
+  <ul class="overview">
+    @for (karte of view.teams; track karte.teamId) {
+      <li><korb-overview-team [card]="karte" /></li>
+    }
+  </ul>
+  @if (!leer) {
+    <a
+      class="other-team"
+      matButton="outlined"
+      routerLink="/suchen"
+      data-qa="overview-other-team"
+      >Weiteres Team suchen</a
+    >
+  }
+} @else if (unreadable()) {
+  <p class="hint" role="alert" data-qa="overview-unreadable">
+    Meine Teams und Kinder lassen sich gerade nicht lesen. Bitte die App neu
+    laden.
+  </p>
+}

@@ -16,7 +16,7 @@ import { recordedDbbTransport } from '@wolsok/feat-shared-basketball-data/testin
 import { seasonOf, gameOn, WASBUETTEL_RST } from '../../testing/team-season';
 import { ChildStepComponent } from './child-step.component';
 
-type TeamSpieleRead = KorbjaegerData['teamGames'];
+type TeamGamesRead = KorbjaegerData['teamGames'];
 type GameRead = KorbjaegerData['game'];
 
 const RECORDED = new DbbBasketballData(recordedDbbTransport);
@@ -30,43 +30,43 @@ const GAME_WITHOUT_REPORTS = 2930311;
  * The Spiel asked for, in the Liga of the recorded Spiel `recorded` as its
  * details name it: the fixtures hold no Team of such a Liga.
  */
-function inLigaOf(recorded: number): GameRead {
-  return async (spiel, options) => {
+function inLeagueOf(recorded: number): GameRead {
+  return async (game, options) => {
     const details = await RECORDED.game(recorded, options);
-    return { ...details, game: { ...details.game, id: spiel } };
+    return { ...details, game: { ...details.game, id: game } };
   };
 }
 
-const JETZT_IM_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
+const NOW_IN_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 const WASBUETTEL = WASBUETTEL_RST;
 
 /** A Spiel the DBB does not know, so its Liga stays unknown. */
-const unknownSpiel: GameRead = async () => {
+const unknownGame: GameRead = async () => {
   throw new BasketballDataError('not-found', 'no such Spiel');
 };
 
 async function render(
-  read: TeamSpieleRead,
+  read: TeamGamesRead,
   {
     followed = true,
-    game = unknownSpiel,
+    game = unknownGame,
   }: { followed?: boolean; game?: GameRead } = {}
 ): Promise<{
   page: HTMLElement;
-  teamGames: ReturnType<typeof vi.fn<TeamSpieleRead>>;
+  teamGames: ReturnType<typeof vi.fn<TeamGamesRead>>;
 }> {
-  const teamGames = vi.fn<TeamSpieleRead>(read);
+  const teamGames = vi.fn<TeamGamesRead>(read);
   // in memory: nothing reaches the device's storage
-  const auswahl = new LocalSelection(undefined);
+  const selection = new LocalSelection(undefined);
   if (followed) {
-    await auswahl.follow(WASBUETTEL.id);
+    await selection.follow(WASBUETTEL.id);
   }
   TestBed.configureTestingModule({
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: { teamGames, game } },
-      { provide: AUSWAHL, useValue: auswahl },
-      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
+      { provide: AUSWAHL, useValue: selection },
+      { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(ChildStepComponent);
@@ -114,20 +114,20 @@ describe('ChildStepComponent', () => {
   describe('on the recorded DBB answers', () => {
     // Team 313036's recorded Spiele, whose Ligen never say whether they
     // keep Spielberichte (`statisticType` null), as the DBB answers them.
-    const recordedSaison: TeamSpieleRead = (team, options) =>
+    const recordedSeason: TeamGamesRead = (team, options) =>
       RECORDED.teamGames(team, options);
 
     it("knows nothing of the Liga's Spielberichte from the Team's Spiele", async () => {
-      const saison = await RECORDED.teamGames(WASBUETTEL.id);
+      const season = await RECORDED.teamGames(WASBUETTEL.id);
 
-      expect(saison.leagues.some((liga) => liga.withoutGameReports)).toBe(
+      expect(season.leagues.some((league) => league.withoutGameReports)).toBe(
         false
       );
     });
 
     it("says the Kind cannot be marked where the Spiel's details name a Liga without Spielberichte", async () => {
-      const { page } = await render(recordedSaison, {
-        game: inLigaOf(GAME_WITHOUT_REPORTS),
+      const { page } = await render(recordedSeason, {
+        game: inLeagueOf(GAME_WITHOUT_REPORTS),
       });
 
       expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
@@ -139,8 +139,8 @@ describe('ChildStepComponent', () => {
     });
 
     it('links the last played Spiel where its Liga keeps Spielberichte', async () => {
-      const game = vi.fn<GameRead>(inLigaOf(GAME_WITH_REPORTS));
-      const { page } = await render(recordedSaison, { game });
+      const game = vi.fn<GameRead>(inLeagueOf(GAME_WITH_REPORTS));
+      const { page } = await render(recordedSeason, { game });
 
       expect(game).toHaveBeenCalledWith(2861445, expect.anything());
       expect(
@@ -167,13 +167,13 @@ describe('ChildStepComponent', () => {
   it('says how old the Spiele are where the last good answer stood in', async () => {
     const { page } = await render(async (_, options) => {
       options?.reading?.replaced({
-        storedAt: JETZT_IM_SPEC - 2 * 60 * 60_000,
+        storedAt: NOW_IN_SPEC - 2 * 60 * 60_000,
         reason: 'no-connection',
       });
       return seasonOf(gameOn(2861436, '2026-09-20'));
     });
 
-    expect(text(page.querySelector('[data-qa="child-step-stand"]'))).toContain(
+    expect(text(page.querySelector('[data-qa="child-step-as-of"]'))).toContain(
       'Stand: vor 2 Std.'
     );
     expect(

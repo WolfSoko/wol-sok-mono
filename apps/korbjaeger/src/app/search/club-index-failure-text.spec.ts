@@ -21,8 +21,8 @@ describe('clubIndexFailureText', () => {
 
   it.each(['unavailable', 'unexpected-shape', 'not-found'] as const)(
     'names the list, not the DBB, for %s',
-    (kind) => {
-      expect(clubIndexFailureText(new BasketballDataError(kind, 'x'))).toBe(
+    (child) => {
+      expect(clubIndexFailureText(new BasketballDataError(child, 'x'))).toBe(
         CLUB_INDEX_UNAVAILABLE
       );
     }
