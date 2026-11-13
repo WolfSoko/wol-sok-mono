@@ -11,6 +11,7 @@ import { describe, it } from 'node:test';
 import {
   isVersionBumpOnly,
   keepsNxVerdict,
+  ownerRoot,
   selectReleaseAffected,
   tsconfigBaseChanges,
 } from './release-affected.mjs';
@@ -24,12 +25,23 @@ const INPUTS = {
   portfolio: ['apps/portfolio/src/main.ts', 'libs/shared/legal/index.ts'],
 };
 
+const PROJECTS = {
+  wolsok: { root: '.', dependencies: [] },
+  pacetrainer: { root: 'apps/pacetrainer', dependencies: ['tools-federation'] },
+  korbjaeger: { root: 'apps/korbjaeger', dependencies: ['shared-legal'] },
+  portfolio: { root: 'apps/portfolio', dependencies: ['shared-legal'] },
+  'shared-legal': { root: 'libs/shared/legal', dependencies: [] },
+  tools: { root: 'tools', dependencies: [] },
+  'tools-federation': { root: 'tools/federation', dependencies: [] },
+};
+
 function select(changedFiles, deletedFiles = []) {
   return selectReleaseAffected({
     candidates: Object.keys(INPUTS),
     changedFiles,
     deletedFiles,
     inputsOf: (project) => new Set(INPUTS[project]),
+    projects: PROJECTS,
   }).selected;
 }
 
@@ -75,11 +87,89 @@ void describe('selectReleaseAffected', () => {
     });
   });
 
-  void it("keeps Nx's verdict for a deleted file, which no input set lists", () => {
+  void it("keeps Nx's verdict for a file deleted outside every project", () => {
+    for (const file of ['firebase.old.json', 'docs/old.md']) {
+      assert.deepEqual(select([], [file]), Object.keys(INPUTS), file);
+    }
+  });
+
+  // Its files would fall to an enclosing root its readers need not read.
+  void it("keeps Nx's verdict for a deleted project.json", () => {
     assert.deepEqual(
-      select([], ['apps/pacetrainer/src/old.ts']),
+      select([], ['apps/pacetrainer/project.json']),
       Object.keys(INPUTS)
     );
+  });
+
+  void it('counts a file deleted in a project only for the candidates reading its files', () => {
+    assert.deepEqual(select([], ['apps/pacetrainer/src/old.ts']), [
+      'pacetrainer',
+    ]);
+    // No dependency on tools: only the read file under its root keeps one.
+    assert.deepEqual(
+      selectReleaseAffected({
+        candidates: ['pacetrainer', 'portfolio'],
+        changedFiles: [],
+        deletedFiles: ['tools/old.mjs'],
+        inputsOf: (project) =>
+          new Set([
+            ...INPUTS[project],
+            ...(project === 'portfolio' ? ['tools/x.mjs'] : []),
+          ]),
+        projects: PROJECTS,
+      }).reasons,
+      {
+        pacetrainer: 'reads none of the changed files',
+        portfolio: 'reads tools/, where tools/old.mjs was deleted',
+      }
+    );
+    assert.deepEqual(
+      select(['firebase.pacetrainer.json'], ['apps/portfolio/src/old.ts']),
+      ['pacetrainer', 'portfolio']
+    );
+  });
+
+  // The filter only drops a candidate reading nothing of the owner: one
+  // importing from it reads the owner's files, so it stays.
+  void it("keeps every dependent of the deleted file's project", () => {
+    assert.deepEqual(select([], ['libs/shared/legal/src/old.ts']), [
+      'korbjaeger',
+      'portfolio',
+    ]);
+  });
+
+  // Its only file it read is gone, so it reads nothing there any more; its
+  // dependency on the owner keeps it, as Nx's own affected does.
+  void it('keeps a dependent of the owner that read only the deleted file', () => {
+    assert.deepEqual(select([], ['tools/federation/workspace-federation.js']), [
+      'pacetrainer',
+    ]);
+  });
+
+  void it("keeps Nx's verdict where the project graph could not be read", () => {
+    const { selected } = selectReleaseAffected({
+      candidates: Object.keys(INPUTS),
+      changedFiles: [],
+      deletedFiles: ['apps/pacetrainer/src/old.ts'],
+      inputsOf: (project) => new Set(INPUTS[project]),
+      projects: undefined,
+    });
+    assert.deepEqual(selected, Object.keys(INPUTS));
+  });
+
+  void it('says which deletion a candidate was kept for', () => {
+    const { reasons } = selectReleaseAffected({
+      candidates: ['korbjaeger', 'pacetrainer'],
+      changedFiles: [],
+      deletedFiles: ['libs/shared/legal/src/old.ts'],
+      inputsOf: (project) => new Set(INPUTS[project]),
+      projects: PROJECTS,
+    });
+    assert.deepEqual(reasons, {
+      korbjaeger:
+        'depends on shared-legal, where libs/shared/legal/src/old.ts was deleted',
+      pacetrainer: 'reads none of the changed files',
+    });
   });
 
   void it('selects nothing without candidates', () => {
@@ -105,6 +195,27 @@ void describe('selectReleaseAffected', () => {
       pacetrainer: 'reads firebase.pacetrainer.json',
       korbjaeger: 'reads none of the changed files',
     });
+  });
+});
+
+void describe('ownerRoot', () => {
+  const roots = ['.', 'tools', 'tools/federation', 'libs/a'];
+
+  void it('takes the longest root holding the file', () => {
+    assert.equal(ownerRoot('tools/federation/x.js', roots), 'tools/federation');
+    assert.equal(ownerRoot('tools/ci/x.mjs', roots), 'tools');
+    assert.equal(ownerRoot('libs/a/src/x.ts', roots), 'libs/a');
+  });
+
+  // The root project would own every file.
+  void it('finds none for a file outside every project but the root one', () => {
+    assert.equal(ownerRoot('package.json', roots), undefined);
+    assert.equal(ownerRoot('docs/x.md', roots), undefined);
+  });
+
+  void it('matches a root only up to a slash', () => {
+    assert.equal(ownerRoot('libs/ab/x.ts', roots), undefined);
+    assert.equal(ownerRoot('libs/a', roots), undefined);
   });
 });
 
@@ -268,6 +379,30 @@ void describe('release-affected on the workspace', () => {
       runScript('--files=.browserslistrc', '--target=deploy', NON_CDK).includes(
         'korbjaeger'
       )
+    );
+  });
+
+  // A path missing at the head counts as deleted.
+  void it('deploys only the app a file was deleted from', () => {
+    assert.deepEqual(
+      runScript(
+        '--files=apps/pacetrainer/src/deleted-by-3054.ts',
+        '--target=deploy',
+        NON_CDK
+      ),
+      ['pacetrainer']
+    );
+  });
+
+  // #3029's deletion beside a lint-only change kept all three packages.
+  void it('versions only the package a file was deleted from', () => {
+    assert.deepEqual(
+      runScript(
+        '--files=libs/public/nx-aws-cdk-v2/src/utils/testing.ts,.oxlintrc.json',
+        '--target=build',
+        '--projects=tag:published'
+      ),
+      ['nx-aws-cdk-v2']
     );
   });
 
