@@ -5,7 +5,7 @@ import { MatSnackBarHarness } from '@angular/material/snack-bar/testing';
 import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { mapSpeicher } from '../../testing/speicher';
+import { mapStorage } from '../../testing/storage';
 import { AUSWAHL } from '../auswahl/auswahl';
 import {
   type Selection,
@@ -159,7 +159,7 @@ describe('TeamFolgenComponent', () => {
 
     it('puts the Team back at its place in Meine Teams, not at the end', async () => {
       const MTV_GIFHORN = 201500;
-      const auswahl = new LocalSelection(mapSpeicher());
+      const auswahl = new LocalSelection(mapStorage());
       await auswahl.follow(MTV_WASBUETTEL);
       await auswahl.follow(MTV_GIFHORN);
       const { leisten, klicken } = await render(auswahl, {

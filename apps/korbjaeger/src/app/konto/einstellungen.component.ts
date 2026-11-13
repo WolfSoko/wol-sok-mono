@@ -11,7 +11,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { DarstellungWahlComponent } from '../darstellung/darstellung-wahl.component';
 import { SelectionTooNewError } from '@wolsok/feat-korbjaeger-selection';
-import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
+import { selectionErrorText } from '../errors/selection-error-text';
 import { KONTO_SITZUNG } from './konto';
 import { nichtUebernommenText } from './nicht-uebernommen-text';
 import {
@@ -304,6 +304,6 @@ function fehlerText(schritt: Schritt, fehler: unknown): string | undefined {
     return NICHT_ALLES_GESENDET;
   }
   return fehler instanceof SelectionTooNewError
-    ? auswahlFehlerText(fehler)
+    ? selectionErrorText(fehler)
     : FEHLER[schritt];
 }

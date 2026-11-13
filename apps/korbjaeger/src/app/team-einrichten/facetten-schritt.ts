@@ -5,8 +5,8 @@ import {
   type LeagueSearchFacets,
   type LeagueSearchFilter,
 } from '@wolsok/feat-shared-basketball-data';
-import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
-import { fehlerText, KEINE_LIGEN } from '../fehler/fehler-text';
+import { leagueSearchResource } from '../basketball-data/league-search-resource';
+import { errorText, NO_LEAGUES } from '../errors/error-text';
 
 /** One step of the Team wizard: the choices of one facet of a search. */
 export interface FacettenSchritt<Id> {
@@ -34,7 +34,7 @@ export function facettenSchritt<K extends keyof LeagueSearchFacets>(
   keineText: string,
   injector: Injector = inject(Injector)
 ): FacettenSchritt<FacettenId<K>> {
-  const suche = ligaSucheResource(filter, injector);
+  const suche = leagueSearchResource(filter, injector);
   const facetten = computed((): readonly Facet<FacettenId<K>>[] =>
     suche.hasValue()
       ? offered<FacettenId<K>>(suche.value().facets[facette])
@@ -45,7 +45,7 @@ export function facettenSchritt<K extends keyof LeagueSearchFacets>(
     leer: computed(() =>
       suche.hasValue() && facetten().length === 0 ? keineText : undefined
     ),
-    fehler: computed(() => fehlerText(suche.error(), KEINE_LIGEN)),
+    fehler: computed(() => errorText(suche.error(), NO_LEAGUES)),
     laedt: suche.isLoading,
   };
 }

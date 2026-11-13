@@ -4,8 +4,8 @@ import {
   Component,
   input,
 } from '@angular/core';
-import type { HallenStand } from '../halle/hallen-stand';
-import { SpielHalleComponent } from '../halle/spiel-halle.component';
+import type { VenueState } from '../venue/venue-state';
+import { GameVenueComponent } from '../venue/game-venue.component';
 import { SpielLinkComponent } from './spiel-link.component';
 import type { SpielZeile } from './spiel-zeile';
 
@@ -18,7 +18,7 @@ import type { SpielZeile } from './spiel-zeile';
   selector: 'korb-naechstes-spiel',
   // on the scoreboard, wherever it shows (`.anzeigetafel` in styles.scss)
   host: { class: 'anzeigetafel' },
-  imports: [SpielHalleComponent, SpielLinkComponent],
+  imports: [GameVenueComponent, SpielLinkComponent],
   template: `
     <korb-spiel-link
       [titel]="titel()"
@@ -26,7 +26,7 @@ import type { SpielZeile } from './spiel-zeile';
       [mitLiga]="mitLiga()"
     />
     @if (halle(); as stand) {
-      <korb-spiel-halle [stand]="stand" />
+      <korb-game-venue [state]="stand" />
     }
   `,
   styles: `
@@ -40,7 +40,7 @@ import type { SpielZeile } from './spiel-zeile';
 export class NaechstesSpielComponent {
   public readonly zeile = input.required<SpielZeile>();
   /** The read of its Halle; none before it started. */
-  public readonly halle = input<HallenStand>();
+  public readonly halle = input<VenueState>();
   /** Whether to name the Spiel's Liga. */
   public readonly mitLiga = input(false, { transform: booleanAttribute });
   /** The heading above it, e.g. naming the Team that plays it. */

@@ -1,10 +1,10 @@
 import type { RulesTestEnvironment } from '@firebase/rules-unit-testing';
 import {
-  alsGeraet,
-  APP_REGELN,
-  emulatorProjekt,
-  gespeichert as gespeichertIn,
-  vorhanden as vorhandenIn,
+  asDevice,
+  APP_RULES,
+  emulatorProject,
+  stored as gespeichertIn,
+  seed as vorhandenIn,
 } from '../../testing/firestore-emulator';
 import {
   contentOf,
@@ -20,13 +20,13 @@ let env: RulesTestEnvironment;
 let naechsteUid = 0;
 
 beforeAll(async () => {
-  env = await emulatorProjekt('demo-korbjaeger-uebernahme', APP_REGELN);
+  env = await emulatorProject('demo-korbjaeger-uebernahme', APP_RULES);
 });
 
 afterAll(() => env.cleanup());
 
 const konto = () => `konto-${naechsteUid++}`;
-const db = (uid: string) => alsGeraet(env, uid);
+const db = (uid: string) => asDevice(env, uid);
 const vorhanden = (uid: string, daten: object) => vorhandenIn(env, uid, daten);
 const gespeichert = (uid: string) => gespeichertIn(env, uid);
 

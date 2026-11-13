@@ -1,9 +1,9 @@
 import { SELECTION_KEY } from '@wolsok/feat-korbjaeger-selection';
 import {
-  ANGEMELDET_SCHLUESSEL,
-  DARSTELLUNG_SCHLUESSEL,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from './geraete-speicher';
+  SIGNED_IN_KEY,
+  APPEARANCE_KEY,
+  CLEAR_CACHE_KEY,
+} from './device-storage';
 import {
   dropKeysBeforeEnglishNames,
   KEYS_BEFORE_ENGLISH_NAMES as OLD,
@@ -35,21 +35,21 @@ describe('dropKeysBeforeEnglishNames', () => {
     dropKeysBeforeEnglishNames(localStorage);
 
     expect(Object.keys(localStorage).sort()).toEqual(
-      [ANGEMELDET_SCHLUESSEL, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL].sort()
+      [SIGNED_IN_KEY, CLEAR_CACHE_KEY].sort()
     );
-    expect(localStorage.getItem(ANGEMELDET_SCHLUESSEL)).toBe('1');
-    expect(localStorage.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL)).toBe('1');
+    expect(localStorage.getItem(SIGNED_IN_KEY)).toBe('1');
+    expect(localStorage.getItem(CLEAR_CACHE_KEY)).toBe('1');
   });
 
   it('leaves the keys of this version alone', () => {
     localStorage.setItem(SELECTION_KEY, '{"version":3}');
-    localStorage.setItem(DARSTELLUNG_SCHLUESSEL, 'light');
+    localStorage.setItem(APPEARANCE_KEY, 'light');
 
     dropKeysBeforeEnglishNames(localStorage);
 
     expect(localStorage.getItem(SELECTION_KEY)).toBe('{"version":3}');
-    expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBe('light');
-    expect(localStorage.getItem(ANGEMELDET_SCHLUESSEL)).toBeNull();
+    expect(localStorage.getItem(APPEARANCE_KEY)).toBe('light');
+    expect(localStorage.getItem(SIGNED_IN_KEY)).toBeNull();
   });
 
   it('never throws where the storage is withheld or refuses', () => {

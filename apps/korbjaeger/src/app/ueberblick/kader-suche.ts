@@ -6,7 +6,7 @@ import {
 } from '@wolsok/feat-shared-basketball-data';
 import {
   basketballDataResource,
-  type DatenResource,
+  type DataResource,
 } from '../basketball-data/basketball-data-resource';
 import { sameSequence } from '@wolsok/feat-korbjaeger-selection';
 
@@ -25,7 +25,7 @@ export const KADER_SUCHE_SPIELE = 5;
 export function kaderSucheResource(
   auftrag: () => RosterSearchJob | undefined,
   injector: Injector = inject(Injector)
-): DatenResource<RosterFinds | undefined> {
+): DataResource<RosterFinds | undefined> {
   return basketballDataResource(auftrag, searchRosters, injector);
 }
 

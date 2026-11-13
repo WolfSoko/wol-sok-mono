@@ -4,9 +4,9 @@ import {
   type BasketballData,
 } from '@wolsok/feat-shared-basketball-data';
 import type { ProxyKind } from '../../shared/dbb-proxy-routes';
-import { SPEICHER_FREIGEBEN } from '../geraete-speicher';
-import { LETZTE_ANTWORTEN } from './letzte-antworten-pflege';
-import type { KorbReadOptions } from './lesung';
+import { FREE_STORAGE } from '../device-storage';
+import { ANSWER_CACHE } from './answer-cache-maintenance';
+import type { KorbReadOptions } from './reading';
 import { proxyTransport } from './proxy-transport';
 
 /**
@@ -42,9 +42,9 @@ export const BASKETBALL_DATA = new InjectionToken<KorbjaegerData>(
 /**
  * The DBB's data, read through the app's own proxy, the last good answer
  * of each read without persons kept in the device's storage for when the
- * network or the DBB fails (`LETZTE_ANTWORTEN`, kept clear of answers too
+ * network or the DBB fails (`ANSWER_CACHE`, kept clear of answers too
  * old); those give way when Meine Teams need the room
- * (`SPEICHER_FREIGEBEN`).
+ * (`FREE_STORAGE`).
  */
 export function provideBasketballData(): Provider[] {
   return [
@@ -53,15 +53,15 @@ export function provideBasketballData(): Provider[] {
       useFactory: (): KorbjaegerData =>
         new DbbBasketballData<KorbReadOptions>(
           proxyTransport((url, init) => fetch(url, init), {
-            antworten: inject(LETZTE_ANTWORTEN),
+            answers: inject(ANSWER_CACHE),
           })
         ),
     },
     {
-      provide: SPEICHER_FREIGEBEN,
+      provide: FREE_STORAGE,
       useFactory: (): (() => void) => {
-        const antworten = inject(LETZTE_ANTWORTEN);
-        return () => antworten.clear();
+        const answers = inject(ANSWER_CACHE);
+        return () => answers.clear();
       },
     },
   ];

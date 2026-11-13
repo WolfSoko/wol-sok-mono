@@ -11,9 +11,9 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import { JETZT } from '../jetzt';
+import { NOW } from '../now';
 import { recordedDbbTransport } from '@wolsok/feat-shared-basketball-data/testing';
-import { saisonOf, spielOn, WASBUETTEL_RST } from '../../testing/team-saison';
+import { seasonOf, gameOn, WASBUETTEL_RST } from '../../testing/team-season';
 import { ChildStepComponent } from './child-step.component';
 
 type TeamSpieleRead = KorbjaegerData['teamGames'];
@@ -66,7 +66,7 @@ async function render(
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: { teamGames, game } },
       { provide: AUSWAHL, useValue: auswahl },
-      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(ChildStepComponent);
@@ -83,10 +83,10 @@ function text(element: Element | null | undefined): string {
 describe('ChildStepComponent', () => {
   it("links a followed Team's last played Spiel, to mark the Kind there", async () => {
     const { page, teamGames } = await render(async () =>
-      saisonOf(
-        spielOn(2861436, '2026-09-20'),
-        spielOn(2861440, '2026-10-04'),
-        spielOn(2861450, '2026-11-15', { kind: 'scheduled' })
+      seasonOf(
+        gameOn(2861436, '2026-09-20'),
+        gameOn(2861440, '2026-10-04'),
+        gameOn(2861450, '2026-11-15', { kind: 'scheduled' })
       )
     );
 
@@ -100,7 +100,7 @@ describe('ChildStepComponent', () => {
 
   it('says the Kind can be marked after its first Spiel where none was played', async () => {
     const { page } = await render(async () =>
-      saisonOf(spielOn(2861450, '2026-11-15', { kind: 'scheduled' }))
+      seasonOf(gameOn(2861450, '2026-11-15', { kind: 'scheduled' }))
     );
 
     expect(page.querySelector('[data-qa="child-step-mark"]')).toBeNull();
@@ -151,7 +151,7 @@ describe('ChildStepComponent', () => {
 
   it('links the Spiel where its details could not be read', async () => {
     const { page } = await render(
-      async () => saisonOf(spielOn(2861436, '2026-09-20')),
+      async () => seasonOf(gameOn(2861436, '2026-09-20')),
       {
         game: async () => {
           throw new BasketballDataError('unavailable', 'DBB down');
@@ -166,11 +166,11 @@ describe('ChildStepComponent', () => {
 
   it('says how old the Spiele are where the last good answer stood in', async () => {
     const { page } = await render(async (_, options) => {
-      options?.lesung?.ersetzt({
-        gespeichertAm: JETZT_IM_SPEC - 2 * 60 * 60_000,
-        grund: 'keine-verbindung',
+      options?.reading?.replaced({
+        storedAt: JETZT_IM_SPEC - 2 * 60 * 60_000,
+        reason: 'no-connection',
       });
-      return saisonOf(spielOn(2861436, '2026-09-20'));
+      return seasonOf(gameOn(2861436, '2026-09-20'));
     });
 
     expect(text(page.querySelector('[data-qa="child-step-stand"]'))).toContain(
@@ -192,7 +192,7 @@ describe('ChildStepComponent', () => {
   });
 
   it('shows and reads nothing for a Team not followed', async () => {
-    const { page, teamGames } = await render(async () => saisonOf(), {
+    const { page, teamGames } = await render(async () => seasonOf(), {
       followed: false,
     });
 

@@ -34,11 +34,7 @@ import {
   type NotTakenOver,
 } from '@wolsok/feat-korbjaeger-selection';
 import { deviceStorage } from '@wolsok/utils-browser-storage';
-import {
-  flagGesetzt,
-  flagSetzen,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from '../geraete-speicher';
+import { isFlagSet, setFlag, CLEAR_CACHE_KEY } from '../device-storage';
 import {
   AnmeldungAbgebrochen,
   KontoGewechselt,
@@ -60,7 +56,7 @@ const ABGEBROCHEN = new Set([
 /** The Firebase app's name: the app's own, apart from any default one. */
 const APP_NAME = 'korbjaeger';
 
-export { ZWISCHENSPEICHER_LEEREN_SCHLUESSEL } from '../geraete-speicher';
+export { CLEAR_CACHE_KEY } from '../device-storage';
 
 /** How long signing out waits for the device's changes to be sent. */
 const SENDEN_WARTEN_MS = 5000;
@@ -84,10 +80,10 @@ class FirebaseKontoDienst implements KontoDienst {
   private firestore?: Promise<Firestore>;
 
   public constructor(private readonly environment: Environment) {
-    const { emulatoren } = environment;
+    const { emulators: emulatoren } = environment;
     this.app = initializeApp(
       emulatoren
-        ? { ...environment.firebase, projectId: emulatoren.projektId }
+        ? { ...environment.firebase, projectId: emulatoren.projectId }
         : environment.firebase,
       APP_NAME
     );
@@ -208,7 +204,7 @@ class FirebaseKontoDienst implements KontoDienst {
 
   /**
    * Clears Firestore's copy on the device; where another tab holds it,
-   * leaves that for the next start (`ZWISCHENSPEICHER_LEEREN_SCHLUESSEL`).
+   * leaves that for the next start (`CLEAR_CACHE_KEY`).
    */
   private async speicherLeeren(firestore: Firestore): Promise<void> {
     try {
@@ -225,7 +221,7 @@ class FirebaseKontoDienst implements KontoDienst {
         tabManager: persistentMultipleTabManager(),
       }),
     });
-    const { emulatoren } = this.environment;
+    const { emulators: emulatoren } = this.environment;
     if (emulatoren) {
       connectFirestoreEmulator(
         firestore,
@@ -263,12 +259,12 @@ async function mitPopup<T>(popup: () => Promise<T>): Promise<T> {
 
 /** Whether a sign-out left Firestore's copy on the device to clear. */
 function leerenAusstehend(): boolean {
-  return flagGesetzt(deviceStorage(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL);
+  return isFlagSet(deviceStorage(), CLEAR_CACHE_KEY);
 }
 
 /** Marks the copy as left to clear, or cleared; blocked: the next sign-out tries again. */
 function leerenAusstehendSetzen(offen: boolean): void {
-  flagSetzen(deviceStorage(), ZWISCHENSPEICHER_LEEREN_SCHLUESSEL, offen);
+  setFlag(deviceStorage(), CLEAR_CACHE_KEY, offen);
 }
 
 function benutzerAus(user: User | null): Benutzer | null {

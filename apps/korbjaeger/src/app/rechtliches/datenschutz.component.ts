@@ -6,7 +6,7 @@ import {
 } from '@wolsok/shared-legal';
 import {
   CLUB_INDEX_CACHE_SECONDS,
-  PROXY_CACHE_SEKUNDEN,
+  PROXY_CACHE_SECONDS,
 } from '../../shared/proxy-cache';
 import { REGIONS } from '../../shared/regions';
 import { SITE_HOST, SITE_URL } from '../../shared/site';
@@ -47,7 +47,7 @@ export class DatenschutzComponent {
   protected readonly seite = SITE_URL;
   protected readonly host = SITE_HOST;
   protected readonly regions = REGIONS;
-  protected readonly cache = PROXY_CACHE_SEKUNDEN;
+  protected readonly cache = PROXY_CACHE_SECONDS;
   /** How long section 3 says the club index is kept and when it is renewed. */
   protected readonly clubIndex = {
     cache: CLUB_INDEX_CACHE_SECONDS,

@@ -2,8 +2,8 @@ import analog from '@analogjs/platform';
 import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
 import { workspaceFile } from '../../tools/vite/workspace-file';
 import browserslist from 'browserslist';
-import { buildKonfigurationMerken } from './deploy/build-configuration';
-import { cssZiele } from './deploy/css-ziele';
+import { rememberBuildConfiguration } from './deploy/build-configuration';
+import { cssTargets } from './deploy/css-targets';
 import { FUNCTION_REGION } from './src/shared/function-region';
 import { ConfigEnv, defineConfig } from 'vite';
 
@@ -23,7 +23,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
       target: ['es2020'],
       // the CSS for the browsers .browserslistrc names, not for es2020: so
       // light-dark() stays native and a part of a page can set a scheme
-      cssTarget: cssZiele(browserslist()),
+      cssTarget: cssTargets(browserslist()),
     },
     resolve: {
       // the workspace's @wolsok/* aliases (tsconfig.base.json)
@@ -79,7 +79,7 @@ export default defineConfig(({ mode }: ConfigEnv): ViteUserConfig => {
         },
       }),
       // the deploy refuses a build of any other mode than production
-      buildKonfigurationMerken(workspaceFile('dist/apps/korbjaeger')),
+      rememberBuildConfiguration(workspaceFile('dist/apps/korbjaeger')),
     ],
     test: {
       globals: true,

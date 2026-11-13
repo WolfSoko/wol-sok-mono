@@ -11,13 +11,13 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
-import { aeltesterStand } from '../basketball-data/stand';
-import { teamSaisonResource } from '../basketball-data/team-saison-resource';
-import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
-import { HEUTE } from '../heute';
+import { gameDetailsResource } from '../basketball-data/game-details-resource';
+import { oldestAsOf } from '../basketball-data/as-of';
+import { teamSeasonResource } from '../basketball-data/team-season-resource';
+import { errorText, NO_TEAM } from '../errors/error-text';
+import { TODAY } from '../today';
 import { AFTER_FIRST_GAME_HINT } from '../kind/child-hints';
-import { StandComponent } from '../stand/stand.component';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { checkedChildStep, childStep } from './child-step';
 
 /**
@@ -35,7 +35,7 @@ import { checkedChildStep, childStep } from './child-step';
     MatIconModule,
     MatProgressBarModule,
     RouterLink,
-    StandComponent,
+    AsOfComponent,
   ],
   template: `
     @if (followed()) {
@@ -47,7 +47,7 @@ import { checkedChildStep, childStep } from './child-step';
       } @else if (failure(); as text) {
         <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
       } @else if (shown(); as step) {
-        <korb-stand data-qa="child-step-stand" [stand]="stand()" />
+        <korb-as-of data-qa="child-step-stand" [asOf]="stand()" />
         @switch (step.kind) {
           @case ('mark') {
             <a
@@ -101,18 +101,18 @@ export class ChildStepComponent {
   protected readonly afterFirstGame = AFTER_FIRST_GAME_HINT;
 
   private readonly myTeams = inject(AUSWAHL).teams;
-  private readonly today = inject(HEUTE);
+  private readonly today = inject(TODAY);
 
   protected readonly followed = computed(
     () => this.myTeams()?.includes(this.teamId()) ?? false
   );
 
-  protected readonly saison = teamSaisonResource(() =>
+  protected readonly saison = teamSeasonResource(() =>
     this.followed() ? this.teamId() : undefined
   );
 
   protected readonly failure = computed(() =>
-    fehlerText(this.saison.error(), KEIN_TEAM)
+    errorText(this.saison.error(), NO_TEAM)
   );
 
   private readonly step = computed(() =>
@@ -122,7 +122,7 @@ export class ChildStepComponent {
   );
 
   /** The details of the Spiel the step leads to, for its Liga. */
-  protected readonly details = spielDetailsResource(() => {
+  protected readonly details = gameDetailsResource(() => {
     const step = this.step();
     return step?.kind === 'mark' ? step.spielId : undefined;
   });
@@ -134,7 +134,7 @@ export class ChildStepComponent {
 
   /** The oldest of the reads the step stands on. */
   protected readonly stand = computed(() =>
-    aeltesterStand(this.saison.stand(), this.details.stand())
+    oldestAsOf(this.saison.asOf(), this.details.asOf())
   );
 
   protected readonly shown = computed(() => {

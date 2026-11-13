@@ -3,7 +3,7 @@ import {
   isBasketballDataError,
   type IndexedClub,
 } from '@wolsok/feat-shared-basketball-data';
-import { KeinInternetError } from '../basketball-data/kein-internet-error';
+import { NoInternetError } from '../basketball-data/no-internet-error';
 import type { ProxyFetch } from '../basketball-data/proxy-fetch';
 import { CLUB_INDEX_FETCH, ClubIndex, type ClubIndexState } from './club-index';
 
@@ -138,7 +138,7 @@ describe('ClubIndex', () => {
     const state = await settled(index);
 
     expect(state.kind === 'failed' && state.error).toBeInstanceOf(
-      KeinInternetError
+      NoInternetError
     );
     expect(fetchProxy).not.toHaveBeenCalled();
   });

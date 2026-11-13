@@ -3,9 +3,9 @@ import type {
   ClubId,
   ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
-import type { DatenResource } from '../basketball-data/basketball-data-resource';
-import { aeltesterStand } from '../basketball-data/stand';
-import { hallenStand } from '../halle/hallen-stand';
+import type { DataResource } from '../basketball-data/basketball-data-resource';
+import { oldestAsOf } from '../basketball-data/as-of';
+import { venueState } from '../venue/venue-state';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { NICHT_LESBAR } from './kader-funde';
 import { fehlerKarte, geladeneKarte } from './team-karte';
@@ -24,7 +24,7 @@ export function teamImUeberblick(
   lesung: TeamLesungen | undefined,
   vereinsTeamsVon: (
     verein: ClubId
-  ) => DatenResource<ClubTeams | undefined> | undefined,
+  ) => DataResource<ClubTeams | undefined> | undefined,
   mitKindern: boolean
 ): TeamImUeberblick {
   const saison = lesung?.saison;
@@ -42,11 +42,11 @@ export function teamImUeberblick(
   const verein = lesung.saisonEndeVerein();
   const vereinsTeams =
     verein === undefined ? undefined : vereinsTeamsVon(verein);
-  const halle = hallenStand(lesung.naechsteDetails);
-  const stand = aeltesterStand(saison.stand(), lesung.naechsteDetails.stand());
+  const halle = venueState(lesung.naechsteDetails);
+  const stand = oldestAsOf(saison.asOf(), lesung.naechsteDetails.asOf());
   const karte = geladeneKarte(saison.value(), ueberblick, {
     // the oldest of what the card shows
-    stand: aeltesterStand(stand, vereinsTeams?.stand()),
+    stand: oldestAsOf(stand, vereinsTeams?.asOf()),
     halle,
     saisonBeendet: verein !== undefined,
     vereinsTeams: vereinsTeams && vereinsTeamsStand(vereinsTeams, teamId),

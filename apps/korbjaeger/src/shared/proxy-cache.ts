@@ -5,10 +5,10 @@
  * once its result and Kader are in. The proxy's headers and the privacy
  * policy both take them from here.
  */
-export const PROXY_CACHE_SEKUNDEN = {
+export const PROXY_CACHE_SECONDS = {
   browser: 60,
   cdn: 300,
-  cdnFertigerSpielbericht: 3600,
+  cdnFinishedGameReport: 3600,
 } as const;
 
 /**
@@ -23,7 +23,7 @@ export const PROXY_CACHE_SEKUNDEN = {
 export const CLUB_INDEX_CACHE_SECONDS = {
   complete: { browser: 3600, cdn: 86_400 },
   filling: {
-    browser: PROXY_CACHE_SEKUNDEN.browser,
-    cdn: PROXY_CACHE_SEKUNDEN.cdn,
+    browser: PROXY_CACHE_SECONDS.browser,
+    cdn: PROXY_CACHE_SECONDS.cdn,
   },
 } as const;

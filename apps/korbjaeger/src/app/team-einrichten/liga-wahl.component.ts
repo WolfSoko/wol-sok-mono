@@ -9,7 +9,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import type { League } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText, KEINE_LIGEN } from '../fehler/fehler-text';
+import { errorText, NO_LEAGUES } from '../errors/error-text';
 import { ligaBeschreibung } from './liga-beschreibung';
 import type { LigenSeiten } from './ligen-seiten';
 
@@ -63,6 +63,6 @@ export class LigaWahlComponent {
   protected readonly beschreibung = ligaBeschreibung;
 
   protected readonly fehler = computed(() =>
-    fehlerText(this.seiten().fehler(), KEINE_LIGEN)
+    errorText(this.seiten().fehler(), NO_LEAGUES)
   );
 }

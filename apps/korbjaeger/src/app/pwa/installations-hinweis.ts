@@ -11,11 +11,7 @@ import {
   type Signal,
 } from '@angular/core';
 import { deviceStorage } from '@wolsok/utils-browser-storage';
-import {
-  flagGesetzt,
-  flagSetzen,
-  INSTALLATION_ABGELEHNT_SCHLUESSEL,
-} from '../geraete-speicher';
+import { isFlagSet, setFlag, INSTALL_DISMISSED_KEY } from '../device-storage';
 
 /**
  * What the install hint offers: nothing, the browser's own install
@@ -242,11 +238,7 @@ export class InstallationsHinweis {
   public ablehnen(): void {
     this.abgelehnt.set(true);
     // storage full or blocked: hidden for this visit only
-    flagSetzen(
-      this.umgebung?.speicher(),
-      INSTALLATION_ABGELEHNT_SCHLUESSEL,
-      true
-    );
+    setFlag(this.umgebung?.speicher(), INSTALL_DISMISSED_KEY, true);
   }
 
   /** Whether the hint would offer the browser's dialog on a page now. */
@@ -261,10 +253,7 @@ export class InstallationsHinweis {
   }
 
   private liesAbgelehnt(): boolean {
-    return flagGesetzt(
-      this.umgebung?.speicher(),
-      INSTALLATION_ABGELEHNT_SCHLUESSEL
-    );
+    return isFlagSet(this.umgebung?.speicher(), INSTALL_DISMISSED_KEY);
   }
 
   private laeuftInstalliert(): boolean {

@@ -19,7 +19,7 @@
         <p class="fehler" data-qa="ueberblick-fehler">{{ team.text }}</p>
       }
       @case ("geladen") {
-        <korb-stand data-qa="ueberblick-stand" [stand]="team.stand" />
+        <korb-as-of data-qa="ueberblick-stand" [asOf]="team.stand" />
         @for (ausfall of team.ausfaelle; track ausfall.id) {
           <korb-spiel-link
             titel="Fällt aus"

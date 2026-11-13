@@ -12,9 +12,9 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import type { LeagueId, Team } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { ligaTeamsResource } from '../basketball-data/liga-teams-resource';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
-import { fehlerText, KEINE_LIGA } from '../fehler/fehler-text';
+import { leagueTeamsResource } from '../basketball-data/league-teams-resource';
+import { selectionChange } from '../errors/selection-change';
+import { errorText, NO_LEAGUE } from '../errors/error-text';
 import { FokusNachEntfolgenDirective } from '../team/fokus-nach-entfolgen.directive';
 import { NachEntfolgen } from '../team/nach-entfolgen';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
@@ -85,7 +85,7 @@ import { TeamFolgenComponent } from '../team/team-folgen.component';
         </mat-action-list>
       }
     }
-    @if (aenderung.fehler(); as text) {
+    @if (aenderung.error(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
     }
   `,
@@ -119,12 +119,12 @@ export class LigaTeamsComponent {
   protected readonly gefolgteTeams = computed(
     () => new Set(this.meineTeams() ?? [])
   );
-  protected readonly teams = ligaTeamsResource(() => this.ligaId());
-  protected readonly aenderung = auswahlAenderung();
+  protected readonly teams = leagueTeamsResource(() => this.ligaId());
+  protected readonly aenderung = selectionChange();
   /** Whether a tap is following a Team and opening it: no second one. */
   protected readonly folgtGerade = signal(false);
   protected readonly fehler = computed(() =>
-    fehlerText(this.teams.error(), KEINE_LIGA)
+    errorText(this.teams.error(), NO_LEAGUE)
   );
 
   protected async folgenUndOeffnen(team: Team): Promise<void> {
@@ -133,7 +133,7 @@ export class LigaTeamsComponent {
     }
     this.folgtGerade.set(true);
     try {
-      if (await this.aenderung.ausfuehren(() => this.auswahl.follow(team.id))) {
+      if (await this.aenderung.run(() => this.auswahl.follow(team.id))) {
         await this.router.navigate(['/team', team.id]);
       }
     } finally {

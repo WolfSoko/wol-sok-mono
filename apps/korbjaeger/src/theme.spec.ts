@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
-import { appQuellen, INLINE_TEMPLATE, treffer } from './testing/app-quellen';
+import { appSources, INLINE_TEMPLATE, hits } from './testing/app-sources';
 
 /**
  * The look is set once, in `styles.scss` (#2918): the components take their
@@ -10,56 +10,56 @@ import { appQuellen, INLINE_TEMPLATE, treffer } from './testing/app-quellen';
  * dark mode reach every screen.
  */
 
-const GLOBALE_STILE = readFileSync(
+const GLOBAL_STYLES = readFileSync(
   new URL('./styles.scss', import.meta.url),
   'utf8'
 );
 
 /** A string literal in TypeScript: single, double or back quotes. */
-const ZEICHENKETTE = String.raw`'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|\`[^\`]*\``;
+const STRING_LITERAL = String.raw`'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*"|\`[^\`]*\``;
 /** A component's inline styles: one template literal, or an array of strings. */
-const INLINE_STILE = new RegExp(
-  String.raw`\bstyles:\s*(\`[^\`]*\`|\[(?:\s*(?:${ZEICHENKETTE})\s*,?)*\s*\])`,
+const INLINE_STYLES = new RegExp(
+  String.raw`\bstyles:\s*(\`[^\`]*\`|\[(?:\s*(?:${STRING_LITERAL})\s*,?)*\s*\])`,
   'g'
 );
 /** A style set in a template: `style`, `[style…]` or `[ngStyle]`, either quotes. */
-const STIL_IM_TEMPLATE =
+const STYLE_IN_TEMPLATE =
   /\[?(?:style|ngStyle)(?:\.([\w-]+)(?:\.[\w-]+)?)?\]?\s*=\s*(?:"([^"]*)"|'([^']*)')/g;
 
 /** Every CSS colour name (CSS Color 4), from `color-name`. */
-const FARBNAMEN = new Set(
+const COLOR_NAMES = new Set(
   Object.keys(
     createRequire(import.meta.url)('color-name') as Record<string, unknown>
   )
 );
 /** A declaration's value: what follows `property:` up to its end. */
-const WERT = /(?:^|[;{\s(])[\w-]+\s*:\s*([^;{}]+)/g;
-const HEX_ODER_FUNKTION =
+const VALUE = /(?:^|[;{\s(])[\w-]+\s*:\s*([^;{}]+)/g;
+const HEX_OR_FUNCTION =
   /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?|hwb|lab|lch|oklab|oklch|color)\(/g;
-const WORT = /(?<![\w-])[a-zA-Z]+(?![\w-])/g;
+const WORD = /(?<![\w-])[a-zA-Z]+(?![\w-])/g;
 
 const KORB_TOKEN = /var\(\s*(--korb-[\w-]+)/g;
 
 /** Styles a template sets on its elements. */
-function stileImTemplate(template: string): string[] {
-  return [...template.matchAll(STIL_IM_TEMPLATE)].map(
-    ([, eigenschaft, doppelt, einfach]) => {
-      const wert = doppelt ?? einfach;
+function stylesInTemplate(template: string): string[] {
+  return [...template.matchAll(STYLE_IN_TEMPLATE)].map(
+    ([, property, doubleQuoted, singleQuoted]) => {
+      const value = doubleQuoted ?? singleQuoted;
       // `[style.background]="…"` binds one property: read it as its declaration
-      return eigenschaft ? `${eigenschaft}: ${wert}` : wert;
+      return property ? `${property}: ${value}` : value;
     }
   );
 }
 
 /** A string or a `url(…)`, else a block or line comment. */
-const STRING_ODER_KOMMENTAR =
+const STRING_OR_COMMENT =
   /("(?:[^"\\\n]|\\.)*"|'(?:[^'\\\n]|\\.)*'|\burl\([^)]*\))|\/\*[\s\S]*?\*\/|(?<!:)\/\/.*$/gm;
 
-/** `stil` without comments; strings and `url(…)` stay as they are. */
-function ohneKommentare(stil: string): string {
-  return stil.replace(
-    STRING_ODER_KOMMENTAR,
-    (_treffer, zeichenkette?: string) => zeichenkette ?? ''
+/** `style` without comments; strings and `url(…)` stay as they are. */
+function withoutComments(style: string): string {
+  return style.replace(
+    STRING_OR_COMMENT,
+    (_hits, stringLiteral?: string) => stringLiteral ?? ''
   );
 }
 
@@ -67,62 +67,62 @@ function ohneKommentare(stil: string): string {
  * The styles of a source file: an `.scss` file itself; a component's inline
  * styles and those its inline template sets; those an `.html` template sets.
  */
-function stileIn(pfad: string, inhalt: string): string[] {
-  if (pfad.endsWith('.scss')) {
-    return [inhalt];
+function stylesIn(path: string, content: string): string[] {
+  if (path.endsWith('.scss')) {
+    return [content];
   }
-  if (pfad.endsWith('.html')) {
-    return stileImTemplate(inhalt);
+  if (path.endsWith('.html')) {
+    return stylesInTemplate(content);
   }
   return [
-    ...treffer(inhalt, INLINE_STILE),
-    ...treffer(inhalt, INLINE_TEMPLATE).flatMap(stileImTemplate),
+    ...hits(content, INLINE_STYLES),
+    ...hits(content, INLINE_TEMPLATE).flatMap(stylesInTemplate),
   ];
 }
 
 /** Every component style of the app, with the file it is in, read once. */
-const APP_STILE = appQuellen(['ts', 'scss', 'html']).flatMap(
-  ({ datei, inhalt }) =>
-    stileIn(datei, inhalt).map((stil) => ({
-      datei,
-      stil: ohneKommentare(stil),
+const APP_STYLES = appSources(['ts', 'scss', 'html']).flatMap(
+  ({ file, content }) =>
+    stylesIn(file, content).map((style) => ({
+      file,
+      style: withoutComments(style),
     }))
 );
 
-/** The colours written out in the declarations' values of `stil`. */
-function farbenIn(stil: string): string[] {
-  return treffer(stil, WERT).flatMap((wert) => [
-    ...[...wert.matchAll(HEX_ODER_FUNKTION)].map((gefunden) => gefunden[0]),
-    ...[...wert.matchAll(WORT)]
-      .map((gefunden) => gefunden[0])
-      .filter((wort) => FARBNAMEN.has(wort.toLowerCase())),
+/** The colours written out in the declarations' values of `style`. */
+function colorsIn(style: string): string[] {
+  return hits(style, VALUE).flatMap((value) => [
+    ...[...value.matchAll(HEX_OR_FUNCTION)].map((found) => found[0]),
+    ...[...value.matchAll(WORD)]
+      .map((found) => found[0])
+      .filter((word) => COLOR_NAMES.has(word.toLowerCase())),
   ]);
 }
 
 describe('the look', () => {
   it('finds component styles to check', () => {
-    expect(APP_STILE.length).toBeGreaterThan(10);
+    expect(APP_STYLES.length).toBeGreaterThan(10);
   });
 
   it('takes every colour of a component from a token', () => {
-    const verstoesse = APP_STILE.flatMap(({ datei, stil }) =>
-      farbenIn(stil).map((farbe) => `${datei}: ${farbe}`)
+    const violations = APP_STYLES.flatMap(({ file, style }) =>
+      colorsIn(style).map((color) => `${file}: ${color}`)
     );
 
-    expect(verstoesse).toEqual([]);
+    expect(violations).toEqual([]);
   });
 
   it('defines in styles.scss every app token a component uses', () => {
-    const definiert = new Set(
-      treffer(ohneKommentare(GLOBALE_STILE), /(--korb-[\w-]+)\s*:/g)
+    const defined = new Set(
+      hits(withoutComments(GLOBAL_STYLES), /(--korb-[\w-]+)\s*:/g)
     );
-    const fehlend = APP_STILE.flatMap(({ datei, stil }) =>
-      treffer(stil, KORB_TOKEN)
-        .filter((token) => !definiert.has(token))
-        .map((token) => `${datei}: ${token}`)
+    const missing = APP_STYLES.flatMap(({ file, style }) =>
+      hits(style, KORB_TOKEN)
+        .filter((token) => !defined.has(token))
+        .map((token) => `${file}: ${token}`)
     );
 
-    expect(fehlend).toEqual([]);
+    expect(missing).toEqual([]);
   });
 
   describe('the colour check itself', () => {
@@ -135,8 +135,8 @@ describe('the look', () => {
       'color: tomato;',
       'background: cyan;',
       'color: color(srgb 1 0 0);',
-    ])('catches %s', (stil) => {
-      expect(farbenIn(stil)).not.toEqual([]);
+    ])('catches %s', (style) => {
+      expect(colorsIn(style)).not.toEqual([]);
     });
 
     it.each([
@@ -146,8 +146,8 @@ describe('the look', () => {
       'grid-template-columns: 1fr auto;',
       '#add { display: block; }',
       'background: url(http://x/y.png) no-repeat;',
-    ])('lets %s pass', (stil) => {
-      expect(farbenIn(stil)).toEqual([]);
+    ])('lets %s pass', (style) => {
+      expect(colorsIn(style)).toEqual([]);
     });
 
     it.each([
@@ -165,26 +165,28 @@ describe('the look', () => {
         'x.html',
       ],
       ['an ngStyle binding', `<p [ngStyle]="{ color: 'red' }">x</p>`, 'x.html'],
-    ])('reads %s', (_art, quelle, datei) => {
-      expect(stileIn(datei, quelle).flatMap(farbenIn)).not.toEqual([]);
+    ])('reads %s', (_kind, source, file) => {
+      expect(stylesIn(file, source).flatMap(colorsIn)).not.toEqual([]);
     });
 
     it('keeps what follows a URL, while leaving comments out', () => {
       expect(
-        farbenIn(
-          ohneKommentare('a { background: url(http://x/y.png); color: #f00; }')
+        colorsIn(
+          withoutComments('a { background: url(http://x/y.png); color: #f00; }')
         )
       ).toEqual(['#f00']);
       expect(
-        farbenIn(ohneKommentare('a { content: "x//y"; color: #f00; }'))
+        colorsIn(withoutComments('a { content: "x//y"; color: #f00; }'))
       ).toEqual(['#f00']);
       expect(
-        farbenIn(
-          ohneKommentare('a { background: url(http://x//y.png); color: #f00; }')
+        colorsIn(
+          withoutComments(
+            'a { background: url(http://x//y.png); color: #f00; }'
+          )
         )
       ).toEqual(['#f00']);
       expect(
-        ohneKommentare('// --korb-weg: 1px\n/* --korb-auch: 2px */')
+        withoutComments('// --korb-weg: 1px\n/* --korb-auch: 2px */')
       ).not.toMatch(/--korb-/);
     });
   });

@@ -15,7 +15,7 @@ import {
   type LeagueSearchFilter,
 } from '@wolsok/feat-shared-basketball-data';
 import { BASKETBALL_DATA } from '../basketball-data/basketball-data.provider';
-import { ligaSucheResource } from '../basketball-data/liga-suche-resource';
+import { leagueSearchResource } from '../basketball-data/league-search-resource';
 
 /** The Ligen a filter finds, page by page. */
 export interface LigenSeiten {
@@ -55,7 +55,7 @@ export function ligenSeiten(
   injector: Injector = inject(Injector)
 ): LigenSeiten {
   const data = injector.get(BASKETBALL_DATA);
-  const suche = ligaSucheResource(filter, injector);
+  const suche = leagueSearchResource(filter, injector);
   const aktuellerFilter = computed(filter);
   const folgende = linkedSignal<LeagueSearchFilter | undefined, FolgeSeiten>({
     source: aktuellerFilter,

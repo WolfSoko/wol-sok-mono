@@ -1,6 +1,6 @@
 import { isBasketballDataError } from '@wolsok/feat-shared-basketball-data';
-import { KeinInternetError } from '../basketball-data/kein-internet-error';
-import { KEIN_INTERNET, KEINE_VERBINDUNG } from '../fehler/fehler-text';
+import { NoInternetError } from '../basketball-data/no-internet-error';
+import { NO_INTERNET, NO_CONNECTION } from '../errors/error-text';
 
 /**
  * What the search says where the club list could not be loaded: the
@@ -15,11 +15,11 @@ export const CLUB_INDEX_UNAVAILABLE =
  * so), no server reached, else that the list is not available.
  */
 export function clubIndexFailureText(error: unknown): string {
-  if (error instanceof KeinInternetError) {
-    return KEIN_INTERNET;
+  if (error instanceof NoInternetError) {
+    return NO_INTERNET;
   }
   if (isBasketballDataError(error, 'offline')) {
-    return KEINE_VERBINDUNG;
+    return NO_CONNECTION;
   }
   return CLUB_INDEX_UNAVAILABLE;
 }

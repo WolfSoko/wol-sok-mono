@@ -7,7 +7,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   CLUB_INDEX_CACHE_SECONDS,
-  PROXY_CACHE_SEKUNDEN,
+  PROXY_CACHE_SECONDS,
 } from '../../shared/proxy-cache';
 import {
   CLUB_INDEX_CACHE_CONTROL,
@@ -88,8 +88,8 @@ describe('GET /api/clubs', () => {
     );
 
     expect(CLUB_INDEX_CACHE_SECONDS.filling).toEqual({
-      browser: PROXY_CACHE_SEKUNDEN.browser,
-      cdn: PROXY_CACHE_SEKUNDEN.cdn,
+      browser: PROXY_CACHE_SECONDS.browser,
+      cdn: PROXY_CACHE_SECONDS.cdn,
     });
     expect(response.headers['cache-control']).toBe(
       'public, max-age=60, s-maxage=300'

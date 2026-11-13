@@ -18,9 +18,9 @@ import {
 } from '../basketball-data/basketball-data.provider';
 import { AUSWAHL } from '../auswahl/auswahl';
 import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
-import type { KorbReadOptions } from '../basketball-data/lesung';
-import { HEUTE } from '../heute';
-import { JETZT } from '../jetzt';
+import type { KorbReadOptions } from '../basketball-data/reading';
+import { TODAY } from '../today';
+import { NOW } from '../now';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { TeamComponent } from './team.component';
 
@@ -166,8 +166,8 @@ function providers(
   return [
     provideRouter([]),
     { provide: BASKETBALL_DATA, useValue: data },
-    { provide: HEUTE, useValue: heute },
-    { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+    { provide: TODAY, useValue: heute },
+    { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
     // in memory: nothing reaches the device's storage
     { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
   ];
@@ -200,9 +200,9 @@ describe('TeamComponent', () => {
     it("shows the Team's last good Spiele with their age where the read fell back on them", async () => {
       const page = await render(
         fakeData(async (_team, options?: KorbReadOptions) => {
-          options?.lesung?.ersetzt({
-            gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-            grund: 'kein-internet',
+          options?.reading?.replaced({
+            storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+            reason: 'no-internet',
           });
           return saison([spiel({ id: 1, date: '2026-09-20' })]);
         })
@@ -221,9 +221,9 @@ describe('TeamComponent', () => {
           async () => saison([spiel({ id: 1, date: '2026-11-14' })]),
           keineZeilen,
           async (spielId, options?: KorbReadOptions) => {
-            options?.lesung?.ersetzt({
-              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-              grund: 'unavailable',
+            options?.reading?.replaced({
+              storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              reason: 'unavailable',
             });
             return inDerSchulsporthalle(spielId);
           }
@@ -242,9 +242,9 @@ describe('TeamComponent', () => {
           keineZeilen,
           inDerSchulsporthalle,
           async (verein, options?: KorbReadOptions) => {
-            options?.lesung?.ersetzt({
-              gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-              grund: 'kein-internet',
+            options?.reading?.replaced({
+              storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+              reason: 'no-internet',
             });
             return OHNE_TEAMS(verein);
           }
@@ -255,14 +255,14 @@ describe('TeamComponent', () => {
         page.querySelector('[data-qa="vereins-stand"]')?.textContent
       ).toContain('Offline · Stand: vor 2 Std.');
       expect(
-        page.querySelector('[data-qa="team-stand"] [data-qa="stand"]')
+        page.querySelector('[data-qa="team-stand"] [data-qa="as-of"]')
       ).toBeNull();
     });
 
     it('labels no Stand for Spiele just read', async () => {
       const page = await render(fakeData(async () => saison([])));
 
-      expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+      expect(page.querySelector('[data-qa="as-of"]')).toBeNull();
     });
   });
 
@@ -591,9 +591,9 @@ describe('TeamComponent', () => {
       expect(block?.textContent).toContain('Nächstes Spiel');
       expect(block?.textContent).toContain('Sa., 21.11.2026');
       expect(
-        block?.querySelector('[data-qa="halle-name"]')?.textContent?.trim()
+        block?.querySelector('[data-qa="venue-name"]')?.textContent?.trim()
       ).toBe('Schulsporthalle');
-      const navigation = block?.querySelector('[data-qa="halle-navigation"]');
+      const navigation = block?.querySelector('[data-qa="venue-navigation"]');
       expect(navigation?.getAttribute('target')).toBe('_blank');
       expect(navigation?.getAttribute('rel')).toBe('noopener');
       expect(navigation?.getAttribute('href')).toBe(
@@ -633,7 +633,7 @@ describe('TeamComponent', () => {
       );
 
       expect(
-        naechstes(page)?.querySelector('[data-qa="halle-fehler"]')?.textContent
+        naechstes(page)?.querySelector('[data-qa="venue-error"]')?.textContent
       ).toContain('Der DBB ist gerade nicht erreichbar.');
       expect(spielZeilen(page)).toHaveLength(3);
       expect(page.querySelectorAll('[role="alert"]')).toHaveLength(0);

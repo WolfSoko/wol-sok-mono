@@ -76,7 +76,7 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
   ),
   schedule: idRoute(
     '/api/dbb/liga/:ligaId/spielplan',
-    (ligaId) => ({ kind: 'schedule', leagueId: ligaId }),
+    (leagueId) => ({ kind: 'schedule', leagueId }),
     ({ leagueId }) => leagueId
   ),
   'team-games': idRoute(
@@ -86,26 +86,26 @@ export const PROXY_ROUTES: { readonly [K in ProxyKind]: ProxyRoute<K> } = {
   ),
   'club-games': idRoute(
     '/api/dbb/verein/:vereinId/spiele',
-    (vereinId) => ({
+    (clubId) => ({
       kind: 'club-games',
-      clubId: vereinId,
+      clubId,
       days: CLUB_GAMES_DAYS,
     }),
-    vereinMitFesterSpanne
+    clubWithFixedSpan
   ),
   standings: idRoute(
     '/api/dbb/liga/:ligaId/tabelle',
-    (ligaId) => ({ kind: 'standings', leagueId: ligaId }),
+    (leagueId) => ({ kind: 'standings', leagueId }),
     ({ leagueId }) => leagueId
   ),
   'game-info': idRoute(
     '/api/dbb/spiel/:spielId',
-    (spielId) => ({ kind: 'game-info', gameId: spielId }),
+    (gameId) => ({ kind: 'game-info', gameId }),
     ({ gameId }) => gameId
   ),
   'game-report': idRoute(
     '/api/dbb/spiel/:spielId/bericht',
-    (spielId) => ({ kind: 'game-report', gameId: spielId }),
+    (gameId) => ({ kind: 'game-report', gameId }),
     ({ gameId }) => gameId
   ),
 };
@@ -120,10 +120,7 @@ export function proxyUrl(request: DbbRequest): string {
  * to the adapter's (`CLUB_GAMES_DAYS`), so each Verein has one URL to
  * cache; a read of another range has none and throws a `RangeError`.
  */
-function vereinMitFesterSpanne({
-  clubId,
-  days,
-}: ProxyRead<'club-games'>): number {
+function clubWithFixedSpan({ clubId, days }: ProxyRead<'club-games'>): number {
   if (days !== CLUB_GAMES_DAYS) {
     throw new RangeError(
       `the proxy reads a Verein's Spiele of ${CLUB_GAMES_DAYS} days only, not ${days}`
@@ -208,14 +205,14 @@ function filterOf(
   if ([...query.keys()].some((key) => !known.has(key))) {
     return undefined;
   }
-  const verbandIds = dbbIdsOf(query.getAll(FILTER_PARAMS.verband));
-  const altersklasseIds = dbbIdsOf(query.getAll(FILTER_PARAMS.altersklasse));
-  if (verbandIds === undefined || altersklasseIds === undefined) {
+  const associationIds = dbbIdsOf(query.getAll(FILTER_PARAMS.verband));
+  const ageGroupIds = dbbIdsOf(query.getAll(FILTER_PARAMS.altersklasse));
+  if (associationIds === undefined || ageGroupIds === undefined) {
     return undefined;
   }
   return {
-    associationIds: verbandIds,
-    ageGroupIds: altersklasseIds,
+    associationIds,
+    ageGroupIds,
     ageGroupGenderIds: query.getAll(FILTER_PARAMS.geschlecht),
   };
 }

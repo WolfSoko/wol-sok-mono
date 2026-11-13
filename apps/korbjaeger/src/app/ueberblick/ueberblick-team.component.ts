@@ -9,7 +9,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
-import { StandComponent } from '../stand/stand.component';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knopf.component';
@@ -36,7 +36,7 @@ import { kartenName, type TeamKarte } from './team-karte';
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielLinkComponent,
-    StandComponent,
+    AsOfComponent,
     TeamFolgenComponent,
     VereinsfarbenKnopfComponent,
   ],

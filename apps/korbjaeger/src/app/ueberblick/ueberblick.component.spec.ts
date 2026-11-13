@@ -28,9 +28,9 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { KorbReadOptions } from '../basketball-data/lesung';
-import { HEUTE } from '../heute';
-import { JETZT } from '../jetzt';
+import type { KorbReadOptions } from '../basketball-data/reading';
+import { TODAY } from '../today';
+import { NOW } from '../now';
 import { MEIN_KIND } from './ueberblick-ansicht';
 import { UeberblickComponent } from './ueberblick.component';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
@@ -193,8 +193,8 @@ async function render(
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
-      { provide: HEUTE, useValue: signal(HEUTE_IM_SPEC) },
-      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: TODAY, useValue: signal(HEUTE_IM_SPEC) },
+      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
       { provide: AUSWAHL, useValue: auswahl },
     ],
   });
@@ -321,9 +321,9 @@ describe('UeberblickComponent', () => {
     const data = fakeData([]);
     data.teamGames.mockImplementation(
       async (_team, options?: KorbReadOptions) => {
-        options?.lesung?.ersetzt({
-          gespeichertAm: JETZT_IM_SPEC - 3 * 60 * 60_000,
-          grund: 'kein-internet',
+        options?.reading?.replaced({
+          storedAt: JETZT_IM_SPEC - 3 * 60 * 60_000,
+          reason: 'no-internet',
         });
         return saison(WASBUETTEL);
       }
@@ -339,17 +339,17 @@ describe('UeberblickComponent', () => {
   it("labels a card with the oldest Stand of what it shows, its next Spiel's Halle too", async () => {
     const STUNDE = 60 * 60_000;
     const data = fakeData([], async (spielId, options?: KorbReadOptions) => {
-      options?.lesung?.ersetzt({
-        gespeichertAm: JETZT_IM_SPEC - 3 * STUNDE,
-        grund: 'unavailable',
+      options?.reading?.replaced({
+        storedAt: JETZT_IM_SPEC - 3 * STUNDE,
+        reason: 'unavailable',
       });
       return inDerSporthalle(spielId);
     });
     data.teamGames.mockImplementation(
       async (_team, options?: KorbReadOptions) => {
-        options?.lesung?.ersetzt({
-          gespeichertAm: JETZT_IM_SPEC - STUNDE,
-          grund: 'kein-internet',
+        options?.reading?.replaced({
+          storedAt: JETZT_IM_SPEC - STUNDE,
+          reason: 'no-internet',
         });
         return saison(WASBUETTEL, spiel(GIFHORN, WASBUETTEL, '2026-11-14'));
       }
@@ -580,11 +580,11 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       const naechstes = teil(eintraege(seite)[0], 'naechstes');
-      expect(text(naechstes?.querySelector('[data-qa="halle-name"]'))).toBe(
+      expect(text(naechstes?.querySelector('[data-qa="venue-name"]'))).toBe(
         'Sporthalle am Wasserturm'
       );
       const navigation = naechstes?.querySelector(
-        '[data-qa="halle-navigation"]'
+        '[data-qa="venue-navigation"]'
       );
       expect(navigation?.getAttribute('rel')).toBe('noopener');
       expect(navigation?.getAttribute('href')).toBe(
@@ -637,10 +637,10 @@ describe('UeberblickComponent', () => {
       await stabil();
 
       const [wasbuettel, gifhorn] = eintraege(seite);
-      expect(text(wasbuettel.querySelector('[data-qa="halle-name"]'))).toBe(
+      expect(text(wasbuettel.querySelector('[data-qa="venue-name"]'))).toBe(
         'Sporthalle am Wasserturm'
       );
-      expect(text(gifhorn.querySelector('[data-qa="halle-fehler"]'))).toContain(
+      expect(text(gifhorn.querySelector('[data-qa="venue-error"]'))).toContain(
         'Der DBB ist gerade nicht erreichbar.'
       );
       expect(text(teil(gifhorn, 'naechstes'))).toContain(

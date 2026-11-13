@@ -23,9 +23,9 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { KorbReadOptions } from '../basketball-data/lesung';
-import type { Stand } from '../basketball-data/stand';
-import { JETZT } from '../jetzt';
+import type { KorbReadOptions } from '../basketball-data/reading';
+import type { AsOf } from '../basketball-data/as-of';
+import { NOW } from '../now';
 import { SpielComponent } from './spiel.component';
 import { Breadcrumb } from '../navigation/breadcrumb';
 
@@ -177,7 +177,7 @@ async function renderMit(
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
-      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
       { provide: AUSWAHL, useValue: auswahl },
       // the dialogs close at once, without waiting for an animation
       { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
@@ -222,16 +222,16 @@ function kopfzellen(tabelle: HTMLElement | null): string[] {
 
 describe('SpielComponent', () => {
   describe('the last good data', () => {
-    const VOR_EINER_STUNDE: Stand = {
-      gespeichertAm: JETZT_IM_SPEC - 60 * 60_000,
-      grund: 'unavailable',
+    const VOR_EINER_STUNDE: AsOf = {
+      storedAt: JETZT_IM_SPEC - 60 * 60_000,
+      reason: 'unavailable',
     };
 
     it('labels the Spiel with the age of its last good data', async () => {
       const page = await render(
         fakeData(
           async (_spiel, options?: KorbReadOptions) => {
-            options?.lesung?.ersetzt(VOR_EINER_STUNDE);
+            options?.reading?.replaced(VOR_EINER_STUNDE);
             return GESPIELT;
           },
           async () => bericht(MIT_WERTEN, OHNE_WERTE)
@@ -253,7 +253,7 @@ describe('SpielComponent', () => {
         )
       );
 
-      expect(page.querySelector('[data-qa="stand"]')).toBeNull();
+      expect(page.querySelector('[data-qa="as-of"]')).toBeNull();
     });
   });
 
@@ -347,7 +347,7 @@ describe('SpielComponent', () => {
       expect.objectContaining({ signal: expect.any(AbortSignal) })
     );
     expect(teil(seite, 'spiel-ergebnis')).toBeNull();
-    expect(teil(seite, 'halle')).toBeNull();
+    expect(teil(seite, 'venue')).toBeNull();
     expect(alle(seite, 'kader')).toEqual([]);
     expect(text(seite.querySelector('h1'))).toBe('Spiel');
   });
@@ -644,9 +644,9 @@ describe('SpielComponent', () => {
         )
       );
 
-      const halle = teil(seite, 'halle');
-      expect(text(teil(halle ?? seite, 'halle-name'))).toBe('Schulsporthalle');
-      expect(text(teil(halle ?? seite, 'halle-adresse'))).toBe(
+      const halle = teil(seite, 'venue');
+      expect(text(teil(halle ?? seite, 'venue-name'))).toBe('Schulsporthalle');
+      expect(text(teil(halle ?? seite, 'venue-address'))).toBe(
         'Schulstr. 12, 38553 Wasbüttel'
       );
       const link = halle?.querySelector('a');
@@ -666,10 +666,10 @@ describe('SpielComponent', () => {
         )
       );
 
-      expect(text(teil(seite, 'halle'))).toBe(
+      expect(text(teil(seite, 'venue'))).toBe(
         'Die Halle steht noch nicht fest.'
       );
-      expect(teil(seite, 'halle')?.querySelector('a')).toBeNull();
+      expect(teil(seite, 'venue')?.querySelector('a')).toBeNull();
     });
   });
 

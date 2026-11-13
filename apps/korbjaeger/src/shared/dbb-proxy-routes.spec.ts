@@ -172,8 +172,8 @@ describe('DBB proxy routes', () => {
   });
 
   describe('the Liga search', () => {
-    const suche = PROXY_ROUTES['league-search'];
-    const seite = PROXY_ROUTES['league-page'];
+    const search = PROXY_ROUTES['league-search'];
+    const page = PROXY_ROUTES['league-page'];
 
     it.each([
       ['a non-numeric Verband', 'verband=abc'],
@@ -187,7 +187,7 @@ describe('DBB proxy routes', () => {
       ['a start index, which only a later page takes', 'start=10'],
       ['a parameter it does not know', 'verband=7&sort=1'],
     ])('names no search for %s', (_case, query) => {
-      expect(readAt(suche, `/api/dbb/ligen?${query}`)).toBeUndefined();
+      expect(readAt(search, `/api/dbb/ligen?${query}`)).toBeUndefined();
     });
 
     it.each([
@@ -198,11 +198,11 @@ describe('DBB proxy routes', () => {
       ['two start indexes', 'start=10&start=20'],
       ['a bad filter', 'start=10&geschlecht=2'],
     ])('names no later page for %s', (_case, query) => {
-      expect(readAt(seite, `/api/dbb/ligen/seite?${query}`)).toBeUndefined();
+      expect(readAt(page, `/api/dbb/ligen/seite?${query}`)).toBeUndefined();
     });
 
     it('takes the first page as a page too', () => {
-      expect(readAt(seite, '/api/dbb/ligen/seite?start=0')).toEqual({
+      expect(readAt(page, '/api/dbb/ligen/seite?start=0')).toEqual({
         kind: 'league-page',
         filter: NO_LEAGUE_FILTER,
         startIndex: 0,

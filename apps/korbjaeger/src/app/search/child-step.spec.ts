@@ -1,14 +1,14 @@
 import type { GameDetails, League } from '@wolsok/feat-shared-basketball-data';
 import { checkedChildStep, childStep } from './child-step';
-import { PLAYED, saisonOf, spielOn } from '../../testing/team-saison';
+import { PLAYED, seasonOf, gameOn } from '../../testing/team-season';
 
 describe('childStep', () => {
   it('leads to the last played Spiel', () => {
     const step = childStep(
-      saisonOf(
-        spielOn(1, '2026-09-20', PLAYED),
-        spielOn(2, '2026-10-04', PLAYED),
-        spielOn(3, '2026-11-15', { kind: 'scheduled' })
+      seasonOf(
+        gameOn(1, '2026-09-20', PLAYED),
+        gameOn(2, '2026-10-04', PLAYED),
+        gameOn(3, '2026-11-15', { kind: 'scheduled' })
       ),
       '2026-11-08'
     );
@@ -18,10 +18,10 @@ describe('childStep', () => {
 
   it('passes over cancelled and forfeited Spiele, which have no Kader', () => {
     const step = childStep(
-      saisonOf(
-        spielOn(1, '2026-09-20', PLAYED),
-        spielOn(2, '2026-10-04', { kind: 'cancelled' }),
-        spielOn(3, '2026-10-11', { kind: 'forfeited', forfeitedBy: ['away'] })
+      seasonOf(
+        gameOn(1, '2026-09-20', PLAYED),
+        gameOn(2, '2026-10-04', { kind: 'cancelled' }),
+        gameOn(3, '2026-10-11', { kind: 'forfeited', forfeitedBy: ['away'] })
       ),
       '2026-11-08'
     );
@@ -31,7 +31,7 @@ describe('childStep', () => {
 
   it('waits for the first Spiel where none was played', () => {
     const step = childStep(
-      saisonOf(spielOn(1, '2026-11-15', { kind: 'scheduled' })),
+      seasonOf(gameOn(1, '2026-11-15', { kind: 'scheduled' })),
       '2026-11-08'
     );
 
@@ -39,7 +39,7 @@ describe('childStep', () => {
   });
 
   it('waits for the first Spiel of a Saison without Spiele', () => {
-    expect(childStep(saisonOf(), '2026-11-08')).toEqual({
+    expect(childStep(seasonOf(), '2026-11-08')).toEqual({
       kind: 'after-first-game',
     });
   });
@@ -57,7 +57,7 @@ describe('checkedChildStep', () => {
 
   function detailsOf(spielId: number, league: League): GameDetails {
     return {
-      game: spielOn(spielId, '2026-10-04'),
+      game: gameOn(spielId, '2026-10-04'),
       league,
       quarters: [],
       overtimes: [],

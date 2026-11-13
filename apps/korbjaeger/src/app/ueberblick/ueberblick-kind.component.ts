@@ -5,7 +5,7 @@ import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielLinkComponent } from '../spiel/spiel-link.component';
-import { StandComponent } from '../stand/stand.component';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { TeamFolgenComponent } from '../team/team-folgen.component';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import type { KindAbschnitt } from './ueberblick-ansicht';
@@ -28,7 +28,7 @@ import type { KindAbschnitt } from './ueberblick-ansicht';
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielLinkComponent,
-    StandComponent,
+    AsOfComponent,
     TeamFolgenComponent,
   ],
   templateUrl: './ueberblick-kind.component.html',

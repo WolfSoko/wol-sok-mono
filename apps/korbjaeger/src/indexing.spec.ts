@@ -36,13 +36,13 @@ describe('indexing', () => {
   it('answers a missing file with a German 404 page of its own, noindex', () => {
     // Hosting serves it with status 404 for a path with an extension the
     // rewrite leaves alone (/gibtsnicht.html); a missing chunk stays a 404
-    const seite = appFile('src/public/404.html');
+    const page = appFile('src/public/404.html');
 
-    expect(seite).toMatch(/<html lang="de">/);
-    expect(seite).toMatch(/<meta name="robots" content="noindex" \/>/);
-    expect(seite).toContain('<title>Seite nicht gefunden · Korbjäger</title>');
-    expect(seite).toContain('Diese Seite gibt es nicht (mehr).');
-    expect(seite).toMatch(/<a href="\/">Zur Startseite<\/a>/);
+    expect(page).toMatch(/<html lang="de">/);
+    expect(page).toMatch(/<meta name="robots" content="noindex" \/>/);
+    expect(page).toContain('<title>Seite nicht gefunden · Korbjäger</title>');
+    expect(page).toContain('Diese Seite gibt es nicht (mehr).');
+    expect(page).toMatch(/<a href="\/">Zur Startseite<\/a>/);
   });
 
   it('lets crawlers in, so they can read the noindex', () => {

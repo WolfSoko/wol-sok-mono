@@ -16,10 +16,10 @@ import {
   type AssociationId,
 } from '@wolsok/feat-shared-basketball-data';
 import {
-  KEINE_LIGEN_IM_VERBAND,
-  KEINE_LIGEN_IN_ALTERSKLASSE,
-  KEINE_VERBAENDE,
-} from '../fehler/fehler-text';
+  NO_LEAGUES_IN_ASSOCIATION,
+  NO_LEAGUES_IN_AGE_GROUP,
+  NO_ASSOCIATIONS,
+} from '../errors/error-text';
 import { FacettenSelectComponent } from './facetten-select.component';
 import { facettenSchritt } from './facetten-schritt';
 import { ligenSeiten } from './ligen-seiten';
@@ -84,17 +84,17 @@ export class TeamEinrichtenComponent {
   protected readonly verbaende = facettenSchritt(
     () => NO_LEAGUE_FILTER,
     'associations',
-    KEINE_VERBAENDE
+    NO_ASSOCIATIONS
   );
   protected readonly altersklassen = facettenSchritt(
     () => this.verbandFilter(),
     'ageGroups',
-    KEINE_LIGEN_IM_VERBAND
+    NO_LEAGUES_IN_ASSOCIATION
   );
   protected readonly geschlechter = facettenSchritt(
     () => this.altersklasseFilter(),
     'ageGroupGenders',
-    KEINE_LIGEN_IN_ALTERSKLASSE
+    NO_LEAGUES_IN_AGE_GROUP
   );
 
   protected readonly laedt = computed(() =>

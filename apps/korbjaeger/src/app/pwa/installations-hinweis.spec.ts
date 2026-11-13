@@ -9,8 +9,8 @@ import {
   type InstallationsNavigator,
   type InstallationsUmgebung,
 } from './installations-hinweis';
-import { INSTALLATION_ABGELEHNT_SCHLUESSEL } from '../geraete-speicher';
-import { GESPERRTER_SPEICHER, mapSpeicher } from '../../testing/speicher';
+import { INSTALL_DISMISSED_KEY } from '../device-storage';
+import { BLOCKED_STORAGE, mapStorage } from '../../testing/storage';
 
 const CHROME_ANDROID =
   'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36';
@@ -314,8 +314,8 @@ describe('InstallationsHinweis', () => {
     });
 
     it('is left alone once the hint was dismissed', () => {
-      const geraet = mapSpeicher();
-      geraet.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
+      const geraet = mapStorage();
+      geraet.setItem(INSTALL_DISMISSED_KEY, '1');
       const { hinweis, aufforderungsEreignis } = starten({ speicher: geraet });
       hinweis.anzeigen();
 
@@ -344,19 +344,19 @@ describe('InstallationsHinweis', () => {
 
   describe('dismissed', () => {
     it('hides the hint and remembers it on the device', () => {
-      const geraet = mapSpeicher();
+      const geraet = mapStorage();
       const { hinweis, auffordern } = starten({ speicher: geraet });
       auffordern();
 
       hinweis.ablehnen();
 
       expect(hinweis.angebot()).toBe('keins');
-      expect(geraet.getItem(INSTALLATION_ABGELEHNT_SCHLUESSEL)).toBe('1');
+      expect(geraet.getItem(INSTALL_DISMISSED_KEY)).toBe('1');
     });
 
     it('stays hidden at the next start', () => {
-      const geraet = mapSpeicher();
-      geraet.setItem(INSTALLATION_ABGELEHNT_SCHLUESSEL, '1');
+      const geraet = mapStorage();
+      geraet.setItem(INSTALL_DISMISSED_KEY, '1');
       const { hinweis, auffordern } = starten({
         userAgent: SAFARI_IPHONE,
         speicher: geraet,
@@ -369,7 +369,7 @@ describe('InstallationsHinweis', () => {
 
     it('hides the hint for the visit where the device keeps nothing', () => {
       const { hinweis, auffordern } = starten({
-        speicher: GESPERRTER_SPEICHER,
+        speicher: BLOCKED_STORAGE,
       });
       auffordern();
       expect(hinweis.angebot()).toBe('installieren');

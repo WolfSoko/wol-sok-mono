@@ -14,10 +14,10 @@ import type {
   CachedAnswer,
   AnswerCache,
 } from '@wolsok/feat-korbjaeger-answers';
-import { Lesung, type KorbReadOptions } from './lesung';
-import { KeinInternetError } from './kein-internet-error';
-import { proxyTransport, SPEICHERBARE_ARTEN } from './proxy-transport';
-import { PROXY_ZEITLIMIT_MS, type ProxyFetch } from './proxy-fetch';
+import { Reading, type KorbReadOptions } from './reading';
+import { NoInternetError } from './no-internet-error';
+import { proxyTransport, STORABLE_KINDS } from './proxy-transport';
+import { PROXY_TIMEOUT_MS, type ProxyFetch } from './proxy-fetch';
 
 /** The DBB as the fake DBB server answers it, from the recorded fixtures. */
 const recordedDbb: DbbUpstream = async (call) => {
@@ -50,7 +50,7 @@ function recordedProxy(): ReturnType<typeof vi.fn<ProxyFetch>> {
 }
 
 /** A proxy that never answers, until the call is cancelled. */
-const haengend: ProxyFetch = (_url, init) =>
+const hanging: ProxyFetch = (_url, init) =>
   new Promise((_resolve, reject) =>
     init.signal?.addEventListener('abort', () => reject(init.signal?.reason))
   );
@@ -82,15 +82,15 @@ describe('proxyTransport', () => {
     const data = new DbbBasketballData(proxyTransport(proxy));
     const filter = NIEDERSACHSEN_U12_JUGEND_MAENNLICH;
 
-    const suche = await data.leagueSearch(filter);
-    const seite = await data.leaguePage(filter, 10);
+    const search = await data.leagueSearch(filter);
+    const page = await data.leaguePage(filter, 10);
 
     expect(proxy.mock.calls.map(([url]) => url)).toEqual([
       '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1',
       '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1',
     ]);
-    expect(suche.firstPage.leagues).toHaveLength(10);
-    expect(seite.leagues.map((liga) => liga.id)).toContain(54862);
+    expect(search.firstPage.leagues).toHaveLength(10);
+    expect(page.leagues.map((league) => league.id)).toContain(54862);
   });
 
   it("reads the Teams of a Liga from the app's proxy", async () => {
@@ -114,49 +114,49 @@ describe('proxyTransport', () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));
 
-    const saison = await data.teamGames(313036);
+    const season = await data.teamGames(313036);
 
     expect(proxy).toHaveBeenCalledWith(
       '/api/dbb/team/313036/spiele',
       expect.objectContaining({ headers: { accept: 'application/json' } })
     );
-    expect(saison.team.id).toBe(313036);
-    expect(saison.games).toHaveLength(6);
+    expect(season.team.id).toBe(313036);
+    expect(season.games).toHaveLength(6);
   });
 
   it("reads a Verein's Teams from the app's proxy", async () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));
 
-    const vereinsTeams = await data.clubTeams(1837);
+    const clubTeams = await data.clubTeams(1837);
 
     expect(proxy).toHaveBeenCalledWith(
       '/api/dbb/verein/1837/spiele',
       expect.objectContaining({ headers: { accept: 'application/json' } })
     );
-    expect(vereinsTeams.club.name).toBe('MTV Wasbüttel');
-    expect(vereinsTeams.teams.map(({ team }) => team.id)).toContain(313036);
+    expect(clubTeams.club.name).toBe('MTV Wasbüttel');
+    expect(clubTeams.teams.map(({ team }) => team.id)).toContain(313036);
   });
 
   it("reads a Liga's Tabelle from the app's proxy", async () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));
 
-    const tabelle = await data.standings(54862);
+    const standings = await data.standings(54862);
 
     expect(proxy).toHaveBeenCalledWith(
       '/api/dbb/liga/54862/tabelle',
       expect.objectContaining({ headers: { accept: 'application/json' } })
     );
-    expect(tabelle.league.id).toBe(54862);
-    expect(tabelle.rows).toHaveLength(6);
+    expect(standings.league.id).toBe(54862);
+    expect(standings.rows).toHaveLength(6);
   });
 
   it("reads a Spiel and its Spielbericht from the app's proxy", async () => {
     const proxy = recordedProxy();
     const data = new DbbBasketballData(proxyTransport(proxy));
 
-    const [details, bericht] = await Promise.all([
+    const [details, report] = await Promise.all([
       data.game(2861436),
       data.gameReport(2861436),
     ]);
@@ -166,7 +166,7 @@ describe('proxyTransport', () => {
       '/api/dbb/spiel/2861436/bericht',
     ]);
     expect(details.venue?.name).toBe('Schulsporthalle');
-    expect(bericht?.home.entries).toHaveLength(9);
+    expect(report?.home.entries).toHaveLength(9);
   });
 
   it('reads a Spiel without Spielbericht yet as such', async () => {
@@ -216,12 +216,12 @@ describe('proxyTransport', () => {
     );
 
     expect(isBasketballDataError(error, 'offline')).toBe(true);
-    expect(error).toBeInstanceOf(KeinInternetError);
+    expect(error).toBeInstanceOf(NoInternetError);
     expect(proxy).not.toHaveBeenCalled();
   });
 
   it('gives up on a proxy that does not answer within 8 seconds, as unreachable', async () => {
-    const transport = proxyTransport(haengend, { zeitlimitMs: 20 });
+    const transport = proxyTransport(hanging, { timeoutMs: 20 });
 
     const error = await transport({ kind: 'team-games', teamId: 313036 }).then(
       () => undefined,
@@ -229,8 +229,8 @@ describe('proxyTransport', () => {
     );
 
     expect(isBasketballDataError(error, 'offline')).toBe(true);
-    expect(error).not.toBeInstanceOf(KeinInternetError);
-    expect(PROXY_ZEITLIMIT_MS).toBe(8_000);
+    expect(error).not.toBeInstanceOf(NoInternetError);
+    expect(PROXY_TIMEOUT_MS).toBe(8_000);
   });
 
   it('reads a body that is no JSON as unavailable', async () => {
@@ -307,74 +307,74 @@ describe('proxyTransport', () => {
   });
 
   describe('the last good answer', () => {
-    const TEAM_SPIELE = '/api/dbb/team/313036/spiele';
+    const TEAM_GAMES = '/api/dbb/team/313036/spiele';
 
     /** `AnswerCache` in memory, with what was stored and its kind. */
-    class GemerkteAntworten implements AnswerCache {
-      public readonly gemerkt = new Map<
+    class RememberedAnswers implements AnswerCache {
+      public readonly remembered = new Map<
         string,
-        CachedAnswer & { art: DbbRequestKind }
+        CachedAnswer & { kind: DbbRequestKind }
       >();
 
-      public read(pfad: string): CachedAnswer | undefined {
-        return this.gemerkt.get(pfad);
+      public read(path: string): CachedAnswer | undefined {
+        return this.remembered.get(path);
       }
 
       public store(
-        pfad: string,
-        art: DbbRequestKind,
-        antwort: CachedAnswer
+        path: string,
+        kind: DbbRequestKind,
+        answer: CachedAnswer
       ): void {
-        this.gemerkt.set(pfad, { ...antwort, art });
+        this.remembered.set(path, { ...answer, kind });
       }
     }
 
     /** The proxy as recorded, until told to answer otherwise. */
-    function proxyMit(): {
+    function proxyWith(): {
       proxy: ProxyFetch;
-      antwortet: (proxy: ProxyFetch) => void;
+      answer: (proxy: ProxyFetch) => void;
     } {
-      let aktuell: ProxyFetch = recordedProxy();
+      let current: ProxyFetch = recordedProxy();
       return {
-        proxy: (url, init) => aktuell(url, init),
-        antwortet: (proxy) => {
-          aktuell = proxy;
+        proxy: (url, init) => current(url, init),
+        answer: (proxy) => {
+          current = proxy;
         },
       };
     }
 
-    const nichtErreichbar: ProxyFetch = async () => {
+    const unreachable: ProxyFetch = async () => {
       throw new TypeError('Failed to fetch');
     };
 
-    function transportMit(proxy: ProxyFetch, antworten: AnswerCache) {
-      let jetzt = 1_000;
+    function transportWith(proxy: ProxyFetch, answers: AnswerCache) {
+      let now = 1_000;
       const data = new DbbBasketballData<KorbReadOptions>(
         proxyTransport(proxy, {
-          antworten,
-          jetzt: () => jetzt,
-          zeitlimitMs: 20,
+          answers,
+          now: () => now,
+          timeoutMs: 20,
         })
       );
       return {
         data,
-        spaeter: (ms: number): void => {
-          jetzt += ms;
+        later: (ms: number): void => {
+          now += ms;
         },
         /** A read as a resource makes it: kept once it was read. */
-        lesen: async <T>(
+        readAnswer: async <T>(
           read: (options: KorbReadOptions) => Promise<T>
-        ): Promise<{ wert: T; lesung: Lesung }> => {
-          const lesung = new Lesung();
-          const wert = await read({ lesung });
-          lesung.abschliessen();
-          return { wert, lesung };
+        ): Promise<{ value: T; reading: Reading }> => {
+          const reading = new Reading();
+          const value = await read({ reading });
+          reading.complete();
+          return { value, reading };
         },
       };
     }
 
     it('keeps only the kinds of read without persons in them', () => {
-      expect([...SPEICHERBARE_ARTEN].sort()).toEqual([
+      expect([...STORABLE_KINDS].sort()).toEqual([
         'club-games',
         'game-info',
         'standings',
@@ -383,40 +383,40 @@ describe('proxyTransport', () => {
     });
 
     it.each([
-      ['keine-verbindung', nichtErreichbar],
-      ['keine-verbindung', haengend],
+      ['no-connection', unreachable],
+      ['no-connection', hanging],
       ['unavailable', proxyAnswering(502, '{"error":"dbb-unavailable"}')],
       ['unavailable', proxyAnswering(200, '<html>captive portal</html>')],
     ] as const)(
       'answers a read that fails as %s from the last good answer, with when it came',
-      async (grund, danach) => {
-        const { proxy, antwortet } = proxyMit();
-        const { data, lesen, spaeter } = transportMit(
+      async (reason, afterwards) => {
+        const { proxy, answer: answers } = proxyWith();
+        const { data, readAnswer, later } = transportWith(
           proxy,
-          new GemerkteAntworten()
+          new RememberedAnswers()
         );
-        const frisch = await lesen((o) => data.teamGames(313036, o));
-        antwortet(danach);
-        spaeter(7_200_000);
+        const fresh = await readAnswer((o) => data.teamGames(313036, o));
+        answers(afterwards);
+        later(7_200_000);
 
-        const veraltet = await lesen((o) => data.teamGames(313036, o));
+        const stale = await readAnswer((o) => data.teamGames(313036, o));
 
-        expect(veraltet.wert).toEqual(frisch.wert);
-        expect(veraltet.lesung.stand).toEqual({ gespeichertAm: 1_000, grund });
-        expect(frisch.lesung.stand).toBeUndefined();
+        expect(stale.value).toEqual(fresh.value);
+        expect(stale.reading.asOf).toEqual({ storedAt: 1_000, reason });
+        expect(fresh.reading.asOf).toBeUndefined();
       }
     );
 
     it('stores an answer only once the read is done with it', async () => {
-      const antworten = new GemerkteAntworten();
-      const { data } = transportMit(recordedProxy(), antworten);
-      const lesung = new Lesung();
+      const answers = new RememberedAnswers();
+      const { data } = transportWith(recordedProxy(), answers);
+      const reading = new Reading();
 
-      await data.teamGames(313036, { lesung });
-      expect(antworten.gemerkt.size).toBe(0);
+      await data.teamGames(313036, { reading });
+      expect(answers.remembered.size).toBe(0);
 
-      lesung.abschliessen();
-      expect([...antworten.gemerkt.keys()]).toEqual([TEAM_SPIELE]);
+      reading.complete();
+      expect([...answers.remembered.keys()]).toEqual([TEAM_GAMES]);
     });
 
     it.each([
@@ -448,22 +448,22 @@ describe('proxyTransport', () => {
           o: KorbReadOptions
         ) => Promise<unknown>,
       ]
-    >)('never stores %s', async (_was, read) => {
-      const antworten = new GemerkteAntworten();
-      const { data, lesen } = transportMit(recordedProxy(), antworten);
+    >)('never stores %s', async (_what, read) => {
+      const answers = new RememberedAnswers();
+      const { data, readAnswer } = transportWith(recordedProxy(), answers);
 
-      await lesen((o) => read(data, o));
+      await readAnswer((o) => read(data, o));
 
-      expect(antworten.gemerkt.size).toBe(0);
+      expect(answers.remembered.size).toBe(0);
     });
 
     it.each(['team-games', 'standings', 'game-info', 'club-games'] as const)(
       'stores a read of kind %s with its kind',
-      async (art) => {
-        const antworten = new GemerkteAntworten();
-        const { data, lesen } = transportMit(recordedProxy(), antworten);
+      async (kind) => {
+        const answers = new RememberedAnswers();
+        const { data, readAnswer } = transportWith(recordedProxy(), answers);
         const reads: Readonly<
-          Record<typeof art, (o: KorbReadOptions) => Promise<unknown>>
+          Record<typeof kind, (o: KorbReadOptions) => Promise<unknown>>
         > = {
           'team-games': (o: KorbReadOptions) => data.teamGames(313036, o),
           standings: (o: KorbReadOptions) => data.standings(54862, o),
@@ -471,101 +471,112 @@ describe('proxyTransport', () => {
           'club-games': (o: KorbReadOptions) => data.clubTeams(1837, o),
         };
 
-        await lesen(reads[art]);
+        await readAnswer(reads[kind]);
 
-        expect([...antworten.gemerkt.values()].map((g) => g.art)).toEqual([
-          art,
+        expect([...answers.remembered.values()].map((g) => g.kind)).toEqual([
+          kind,
         ]);
       }
     );
 
     it("stores a Spiel's match info without its persons, players and referees (ADR 0019)", async () => {
-      const antworten = new GemerkteAntworten();
-      const { data, lesen } = transportMit(recordedProxy(), antworten);
+      const answers = new RememberedAnswers();
+      const { data, readAnswer } = transportWith(recordedProxy(), answers);
 
-      await lesen((o) => data.game(2861436, o));
+      await readAnswer((o) => data.game(2861436, o));
 
-      const gespeichert = JSON.stringify(
-        antworten.gemerkt.get('/api/dbb/spiel/2861436')?.answer
+      const stored = JSON.stringify(
+        answers.remembered.get('/api/dbb/spiel/2861436')?.answer
       );
-      expect(gespeichert).toContain('Schulsporthalle');
-      expect(gespeichert).not.toMatch(
+      expect(stored).toContain('Schulsporthalle');
+      expect(stored).not.toMatch(
         /vorname|nachname|"person|playerId|topPerformances/
       );
     });
 
     it('answers from the last good answer while the browser says it is offline', async () => {
-      const antworten = new GemerkteAntworten();
-      const lesung = new Lesung();
+      const answers = new RememberedAnswers();
+      const reading = new Reading();
       await new DbbBasketballData<KorbReadOptions>(
-        proxyTransport(recordedProxy(), { antworten, jetzt: () => 1_000 })
-      ).teamGames(313036, { lesung });
-      lesung.abschliessen();
-      const offline = new Lesung();
+        proxyTransport(recordedProxy(), { answers, now: () => 1_000 })
+      ).teamGames(313036, { reading });
+      reading.complete();
+      const offline = new Reading();
 
       await new DbbBasketballData<KorbReadOptions>(
-        proxyTransport(recordedProxy(), { antworten, online: () => false })
-      ).teamGames(313036, { lesung: offline });
+        proxyTransport(recordedProxy(), { answers, online: () => false })
+      ).teamGames(313036, { reading: offline });
 
-      expect(offline.stand).toEqual({
-        gespeichertAm: 1_000,
-        grund: 'kein-internet',
+      expect(offline.asOf).toEqual({
+        storedAt: 1_000,
+        reason: 'no-internet',
       });
     });
 
     it('answers a read that can show no Stand without its last good answer', async () => {
-      const { proxy, antwortet } = proxyMit();
-      const { data, lesen } = transportMit(proxy, new GemerkteAntworten());
-      await lesen((o) => data.teamGames(313036, o));
-      antwortet(nichtErreichbar);
+      const { proxy, answer } = proxyWith();
+      const { data, readAnswer } = transportWith(
+        proxy,
+        new RememberedAnswers()
+      );
+      await readAnswer((o) => data.teamGames(313036, o));
+      answer(unreachable);
 
       expect(await rejectionKind(data.teamGames(313036))).toBe('offline');
     });
 
     it('stores successes only, never an error', async () => {
-      const antworten = new GemerkteAntworten();
-      const { proxy, antwortet } = proxyMit();
-      const { data, lesen, spaeter } = transportMit(proxy, antworten);
-      await lesen((o) => data.teamGames(313036, o));
-      await lesen((o) => data.teamGames(7, o)).catch(() => undefined);
-      spaeter(60_000);
-      antwortet(proxyAnswering(502, '{"error":"dbb-unavailable"}'));
-      await lesen((o) => data.teamGames(313036, o));
+      const answers = new RememberedAnswers();
+      const { proxy, answer } = proxyWith();
+      const { data, readAnswer, later } = transportWith(proxy, answers);
+      await readAnswer((o) => data.teamGames(313036, o));
+      await readAnswer((o) => data.teamGames(7, o)).catch(() => undefined);
+      later(60_000);
+      answer(proxyAnswering(502, '{"error":"dbb-unavailable"}'));
+      await readAnswer((o) => data.teamGames(313036, o));
 
-      expect([...antworten.gemerkt.keys()]).toEqual([TEAM_SPIELE]);
-      expect(antworten.gemerkt.get(TEAM_SPIELE)?.storedAt).toBe(1_000);
+      expect([...answers.remembered.keys()]).toEqual([TEAM_GAMES]);
+      expect(answers.remembered.get(TEAM_GAMES)?.storedAt).toBe(1_000);
     });
 
     it('answers a 404 as not found, whatever answer it had before', async () => {
-      const { proxy, antwortet } = proxyMit();
-      const { data, lesen } = transportMit(proxy, new GemerkteAntworten());
-      await lesen((o) => data.teamGames(313036, o));
-      antwortet(proxyAnswering(404, '{"error":"not-found"}'));
+      const { proxy, answer } = proxyWith();
+      const { data, readAnswer } = transportWith(
+        proxy,
+        new RememberedAnswers()
+      );
+      await readAnswer((o) => data.teamGames(313036, o));
+      answer(proxyAnswering(404, '{"error":"not-found"}'));
 
       expect(
-        await rejectionKind(data.teamGames(313036, { lesung: new Lesung() }))
+        await rejectionKind(data.teamGames(313036, { reading: new Reading() }))
       ).toBe('not-found');
     });
 
     it.each([
-      ['offline', nichtErreichbar],
+      ['offline', unreachable],
       ['unavailable', proxyAnswering(502, '{"error":"dbb-unavailable"}')],
     ] as const)(
       'fails as %s without a last good answer',
       async (kind, proxy) => {
-        const { data } = transportMit(proxy, new GemerkteAntworten());
+        const { data } = transportWith(proxy, new RememberedAnswers());
 
         expect(
-          await rejectionKind(data.teamGames(313036, { lesung: new Lesung() }))
+          await rejectionKind(
+            data.teamGames(313036, { reading: new Reading() })
+          )
         ).toBe(kind);
       }
     );
 
     it('answers a cancelled read with its cancellation, not the last good answer', async () => {
-      const { proxy, antwortet } = proxyMit();
-      const { data, lesen } = transportMit(proxy, new GemerkteAntworten());
-      await lesen((o) => data.teamGames(313036, o));
-      antwortet(
+      const { proxy, answer } = proxyWith();
+      const { data, readAnswer } = transportWith(
+        proxy,
+        new RememberedAnswers()
+      );
+      await readAnswer((o) => data.teamGames(313036, o));
+      answer(
         (_url, init) =>
           new Promise((_resolve, reject) =>
             init.signal?.addEventListener('abort', () =>
@@ -574,16 +585,16 @@ describe('proxyTransport', () => {
           )
       );
       const controller = new AbortController();
-      const lesung = new Lesung();
+      const reading = new Reading();
 
       const read = data.teamGames(313036, {
         signal: controller.signal,
-        lesung,
+        reading,
       });
       controller.abort(new Error('navigated away'));
 
       await expect(read).rejects.toThrow('navigated away');
-      expect(lesung.stand).toBeUndefined();
+      expect(reading.asOf).toBeUndefined();
     });
   });
 });

@@ -27,8 +27,8 @@ export class SpielPage {
     this.vorlaeufig = page.getByTestId('spiel-vorlaeufig');
     this.status = page.getByTestId('spiel-status');
     this.viertel = page.getByTestId('viertel-zeile');
-    this.halle = page.getByTestId('halle');
-    this.navigation = page.getByTestId('halle-navigation');
+    this.halle = page.getByTestId('venue');
+    this.navigation = page.getByTestId('venue-navigation');
     this.kader = page.getByTestId('kader');
     this.berichtFehlt = page.getByTestId('spielbericht-fehlt');
   }

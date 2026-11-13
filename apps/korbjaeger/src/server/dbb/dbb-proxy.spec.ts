@@ -293,11 +293,11 @@ describe('DBB proxy', () => {
   });
 
   describe('the Liga search', () => {
-    const SUCHE = '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1';
-    const SEITE =
+    const SEARCH = '/api/dbb/ligen?verband=7&altersklasse=12&geschlecht=2_1';
+    const PAGE =
       '/api/dbb/ligen/seite?start=10&verband=7&altersklasse=12&geschlecht=2_1';
 
-    /** The DBB's Liga search body for the filter of `SUCHE` and `SEITE`. */
+    /** The DBB's Liga search body for the filter of `SEARCH` and `PAGE`. */
     const BODY = {
       token: 0,
       verbandIds: [7],
@@ -324,7 +324,7 @@ describe('DBB proxy', () => {
     it('turns the query into the POST body of the DBB’s search', async () => {
       const dbb = recordedDbb();
 
-      const response = await proxy(dbb)(SUCHE);
+      const response = await proxy(dbb)(SEARCH);
 
       expect(response.status).toBe(200);
       expect(callOf(dbb)).toEqual({
@@ -338,7 +338,7 @@ describe('DBB proxy', () => {
     it('asks a later page of the DBB’s separate list call', async () => {
       const dbb = recordedDbb();
 
-      const response = await proxy(dbb)(SEITE);
+      const response = await proxy(dbb)(PAGE);
 
       expect(response.status).toBe(200);
       expect(callOf(dbb)).toEqual({
@@ -369,7 +369,7 @@ describe('DBB proxy', () => {
       });
     });
 
-    it.each([SUCHE, SEITE])(
+    it.each([SEARCH, PAGE])(
       'passes the DBB body of %s through, cached as any read',
       async (path) => {
         const response = await proxy(recordedDbb())(path);
@@ -403,7 +403,7 @@ describe('DBB proxy', () => {
       expect(dbb).not.toHaveBeenCalled();
     });
 
-    it.each([SUCHE, SEITE])(
+    it.each([SEARCH, PAGE])(
       'answers a POST to %s with 404: the proxy builds the body itself',
       async (path) => {
         const dbb = recordedDbb();
@@ -419,7 +419,7 @@ describe('DBB proxy', () => {
     );
 
     it('answers a filter the DBB fails on with 502, not stored', async () => {
-      const response = await proxy(dbbAnswering('oops', 503))(SUCHE);
+      const response = await proxy(dbbAnswering('oops', 503))(SEARCH);
 
       expect(response.status).toBe(502);
       expect(response.headers.get('cache-control')).toBe('no-store');
@@ -430,9 +430,9 @@ describe('DBB proxy', () => {
     it.each([
       ['with Spielerwerte', 2911141],
       ['with the Kader only', 2843811],
-    ])('lets the CDN keep it an hour, %s', async (_case, spielId) => {
+    ])('lets the CDN keep it an hour, %s', async (_case, gameId) => {
       const response = await proxy(recordedDbb())(
-        `/api/dbb/spiel/${spielId}/bericht`
+        `/api/dbb/spiel/${gameId}/bericht`
       );
 
       expect(response.status).toBe(200);

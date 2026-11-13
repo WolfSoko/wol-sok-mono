@@ -8,7 +8,7 @@ import {
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import { istGefolgt } from './gefolgter-verein';
-import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
+import { errorText, NO_GAME } from '../errors/error-text';
 
 /** One Kader with what heads it on the page. */
 export interface KaderTeil {
@@ -54,7 +54,7 @@ export function spielberichtTeil(
         ? undefined
         : {
             art: 'fehler',
-            text: fehlerText(bericht.error(), KEIN_SPIEL) ?? '',
+            text: errorText(bericht.error(), NO_GAME) ?? '',
           };
     case 'resolved':
     case 'local': {

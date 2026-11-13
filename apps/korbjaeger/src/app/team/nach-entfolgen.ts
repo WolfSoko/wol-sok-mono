@@ -3,7 +3,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
-import { auswahlFehlerText } from '../fehler/auswahl-fehler-text';
+import { selectionErrorText } from '../errors/selection-error-text';
 
 /** How long the offer to undo stays, long enough to read and tap it. */
 const RUECKGAENGIG_MS = 8000;
@@ -82,7 +82,7 @@ export class NachEntfolgen {
         return;
       }
       this.auswahl.follow(team, platz).catch((grund: unknown) => {
-        this.snackBar.open(auswahlFehlerText(grund), 'Schließen', {
+        this.snackBar.open(selectionErrorText(grund), 'Schließen', {
           duration: RUECKGAENGIG_MS,
         });
       });

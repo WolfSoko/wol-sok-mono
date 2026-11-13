@@ -17,9 +17,9 @@ import {
   type TeamOverview,
   type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
-import type { DatenResource } from '../basketball-data/basketball-data-resource';
-import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
-import { teamSaisonResource } from '../basketball-data/team-saison-resource';
+import type { DataResource } from '../basketball-data/basketball-data-resource';
+import { gameDetailsResource } from '../basketball-data/game-details-resource';
+import { teamSeasonResource } from '../basketball-data/team-season-resource';
 import { fundeNach, suchEnde, sucht, type SuchEnde } from './kader-funde';
 import {
   gleicherAuftrag,
@@ -34,12 +34,12 @@ import {
  * whose Teams to suggest once its Saison looks over.
  */
 export interface TeamLesungen {
-  readonly saison: DatenResource<TeamSeason | undefined>;
+  readonly saison: DataResource<TeamSeason | undefined>;
   /** Its overview (`teamOverview`) on `heute`, once its Saison is read. */
   readonly ueberblick: Signal<TeamOverview | undefined>;
-  readonly naechsteDetails: DatenResource<GameDetails | undefined>;
+  readonly naechsteDetails: DataResource<GameDetails | undefined>;
   /** None while no Kind is marked. */
-  readonly kaderSuche: DatenResource<RosterFinds | undefined>;
+  readonly kaderSuche: DataResource<RosterFinds | undefined>;
   /** Whether its Kader is still searched, or has yet to be. */
   readonly sucht: Signal<boolean>;
   /**
@@ -53,7 +53,7 @@ export interface TeamLesungen {
 
 /** What a Team's reads follow beside the Team. */
 export interface LesungsUmgebung {
-  /** The German calendar day (`HEUTE`). */
+  /** The German calendar day (`TODAY`). */
   readonly heute: () => string;
   /** The marked Kinder's persons; none, and no Kader is searched. */
   readonly kinder: () => readonly PersonId[];
@@ -70,8 +70,8 @@ export function teamLesungen(
   teamId: TeamId,
   { heute, kinder, injector }: LesungsUmgebung
 ): TeamLesungen {
-  const saison = teamSaisonResource(() => teamId, injector);
-  const naechsteDetails = spielDetailsResource(
+  const saison = teamSeasonResource(() => teamId, injector);
+  const naechsteDetails = gameDetailsResource(
     () =>
       saison.hasValue() ? nextGame(saison.value(), heute())?.id : undefined,
     injector

@@ -8,7 +8,7 @@
   <h1>{{ saison.value().team.name }}</h1>
   <p class="verein">{{ saison.value().club.name }} · Spiele der Saison</p>
   <korb-vereinsfarben-knopf class="farben" [verein]="saison.value().club" />
-  <korb-stand data-qa="team-stand" [stand]="kopfStand()" />
+  <korb-as-of data-qa="team-stand" [asOf]="kopfStand()" />
 }
 @if (folgbar(); as teamId) {
   <!-- also where the read fails, so a followed Team can be unfollowed -->
@@ -52,6 +52,6 @@
 }
 @if (saison.hasValue() && !beendet() && weitereTeams(); as stand) {
   <h2>Weitere Teams des Vereins</h2>
-  <korb-stand data-qa="vereins-stand" [stand]="vereinsTeams.stand()" />
+  <korb-as-of data-qa="vereins-stand" [asOf]="vereinsTeams.asOf()" />
   <korb-vereins-teams data-qa="vereins-teams" [stand]="stand" />
 }

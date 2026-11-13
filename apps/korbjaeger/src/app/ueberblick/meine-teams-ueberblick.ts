@@ -15,11 +15,11 @@ import type {
   ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import type { DatenResource } from '../basketball-data/basketball-data-resource';
-import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
+import type { DataResource } from '../basketball-data/basketball-data-resource';
+import { clubTeamsResource } from '../basketball-data/club-teams-resource';
 import { sameSequence } from '@wolsok/feat-korbjaeger-selection';
-import { HEUTE } from '../heute';
-import { abgleichen } from '../abgleichen';
+import { TODAY } from '../today';
+import { reconcile } from '../reconcile';
 import { teamImUeberblick } from './team-im-ueberblick';
 import {
   lesungenBeenden,
@@ -36,7 +36,7 @@ import {
  * the Teams of each Verein one of them suggests from (one read per
  * Verein, however many of its Teams look done). A Team followed is read
  * once; one unfollowed has its reads cancelled and dropped, the others'
- * stay as they are (`abgleichen`).
+ * stay as they are (`reconcile`).
  */
 @Injectable()
 export class MeineTeamsUeberblick {
@@ -48,13 +48,13 @@ export class MeineTeamsUeberblick {
     () => (this.auswahl.children() ?? []).map(({ personId }) => personId),
     { equal: sameSequence }
   );
-  private readonly heute = inject(HEUTE);
+  private readonly heute = inject(TODAY);
   private readonly injector = inject(Injector);
   private readonly lesungen = signal<ReadonlyMap<TeamId, TeamLesungen>>(
     new Map()
   );
   private readonly vereinsLesungen = signal<
-    ReadonlyMap<ClubId, DatenResource<ClubTeams | undefined>>
+    ReadonlyMap<ClubId, DataResource<ClubTeams | undefined>>
   >(new Map());
 
   /** The Vereine to suggest Teams from: of each Team whose Saison looks over. */
@@ -99,7 +99,7 @@ export class MeineTeamsUeberblick {
       const teams = this.auswahl.teams() ?? [];
       untracked(() =>
         this.lesungen.update((vorher) =>
-          abgleichen(
+          reconcile(
             vorher,
             teams,
             (teamId) => teamLesungen(teamId, umgebung),
@@ -112,10 +112,10 @@ export class MeineTeamsUeberblick {
       const vereine = this.gesuchteVereine();
       untracked(() =>
         this.vereinsLesungen.update((vorher) =>
-          abgleichen(
+          reconcile(
             vorher,
             vereine,
-            (verein) => vereinsTeamsResource(() => verein, this.injector),
+            (verein) => clubTeamsResource(() => verein, this.injector),
             (read) => read.destroy()
           )
         )
