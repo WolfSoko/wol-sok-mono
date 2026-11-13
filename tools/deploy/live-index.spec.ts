@@ -90,7 +90,7 @@ describe('checkLiveIndex', () => {
     });
   });
 
-  it('fails after the last mismatch, naming URL, last-modified, lengths and the first differing line', async () => {
+  it('fails after the last mismatch, naming URL, last-modified, lengths and the differing lines', async () => {
     const { given, pauses } = deps([
       answer(STALE),
       answer(STALE),
@@ -109,6 +109,21 @@ describe('checkLiveIndex', () => {
     expect(message).toContain('line 2');
     expect(message).toContain('main-OLD é.js');
     expect(message).toContain('main-NEW.js');
+  });
+
+  it('lists at most five differing lines, each with both sides', async () => {
+    const lines = (tag: string) =>
+      Array.from({ length: 8 }, (_, i) => `chunk-${i}-${tag}.js`).join('\n');
+    const { given } = deps([answer(lines('OLD'))], 1);
+
+    const result = await checkLiveIndex(SITE, Buffer.from(lines('NEW')), given);
+
+    const message = result.ok ? '' : result.message;
+    expect(message).toContain(
+      'line 1: live "chunk-0-OLD.js", built "chunk-0-NEW.js"'
+    );
+    expect(message).toContain('line 5:');
+    expect(message).not.toContain('line 6:');
   });
 
   it('names the error when the last attempt could not fetch', async () => {

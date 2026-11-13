@@ -30,6 +30,8 @@ const PAUSE_MS = 10_000;
 const HTTP_OK = 200;
 /** Enough of a differing line to name the chunk it points to. */
 const LINE_EXCERPT = 160;
+/** Enough to see which chunks a stale release points to. */
+const SHOWN_LINES = 5;
 
 /**
  * Fetches the live site until it serves the built `index.html` byte for
@@ -78,7 +80,7 @@ async function mismatchOf(
   return [
     `last-modified ${live.lastModified ?? 'none'}`,
     `${live.body.length} bytes live, ${built.length} bytes built`,
-    firstDifference(live.body.toString('utf8'), built.toString('utf8')),
+    differingLines(live.body.toString('utf8'), built.toString('utf8')),
   ].join('; ');
 }
 
@@ -88,12 +90,19 @@ function cacheBusted(siteUrl: string, time: number): string {
   return url.toString();
 }
 
-function firstDifference(live: string, built: string): string {
+function differingLines(live: string, built: string): string {
   const liveLines = live.split('\n');
   const builtLines = built.split('\n');
-  const index = liveLines.findIndex((line, i) => line !== builtLines[i]);
-  const at = index === -1 ? liveLines.length : index;
-  return `first difference in line ${at + 1}: live ${excerpt(liveLines[at])}, built ${excerpt(builtLines[at])}`;
+  const lineCount = Math.max(liveLines.length, builtLines.length);
+  const differing: string[] = [];
+  for (let i = 0; i < lineCount && differing.length < SHOWN_LINES; i++) {
+    if (liveLines[i] !== builtLines[i]) {
+      differing.push(
+        `line ${i + 1}: live ${excerpt(liveLines[i])}, built ${excerpt(builtLines[i])}`
+      );
+    }
+  }
+  return `differing lines (at most ${SHOWN_LINES}): ${differing.join('; ')}`;
 }
 
 /** The line quoted and escaped, so a `\r` or trailing space shows. */
