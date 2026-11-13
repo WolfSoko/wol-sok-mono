@@ -311,6 +311,7 @@ describe('UeberblickComponent', () => {
     expect(text(link)).toBe('Team suchen');
     expect(link?.getAttribute('href')).toBe('/suchen');
     expect(link?.getAttribute('matButton')).toBe('filled');
+    expect(link?.classList).toContain('mat-mdc-button-base');
     expect(
       seite.querySelector('[data-qa="ueberblick-weiteres-team"]')
     ).toBeNull();
@@ -383,6 +384,7 @@ describe('UeberblickComponent', () => {
     expect([...links].map(text)).toEqual(['Weiteres Team suchen']);
     const [link] = links;
     expect(link.getAttribute('matButton')).toBe('outlined');
+    expect(link.classList).toContain('mat-mdc-button-base');
     expect(link.closest('[data-qa="ueberblick-leer"]')).toBeNull();
     const karte = eintraege(seite)[0];
     expect(
@@ -1109,6 +1111,33 @@ describe('UeberblickComponent', () => {
         'Weitere Teams'
       );
       expect(teamNamen(seite)).toEqual(['SV Groß Oesingen']);
+    });
+
+    it('offers to search a further Team after the Kind, where every Team is its', async () => {
+      const letztesWas = spiel(WASBUETTEL, GIFHORN, '2026-11-01', {
+        status: GESPIELT_78_47,
+      });
+      const data = fakeData(
+        [saison(WASBUETTEL, letztesWas)],
+        inDerSporthalle,
+        OHNE_TEAMS,
+        berichte({ [letztesWas.id]: [LUMI] })
+      );
+
+      const { seite } = await render(
+        data,
+        await mitKindern([WASBUETTEL.id], [[LUMI, 'Lu']])
+      );
+
+      expect(teamNamen(seite)).toEqual([]);
+      const [lumi] = kinderAbschnitte(seite);
+      const links =
+        seite.querySelectorAll<HTMLAnchorElement>('a[href="/suchen"]');
+      expect([...links].map(text)).toEqual(['Weiteres Team suchen']);
+      expect(
+        lumi.compareDocumentPosition(links[0]) &
+          Node.DOCUMENT_POSITION_FOLLOWING
+      ).toBeTruthy();
     });
 
     it("unfollows a Kind's Team from its card, focus on the overview", async () => {
