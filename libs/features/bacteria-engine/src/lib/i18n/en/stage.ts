@@ -15,6 +15,8 @@ export const stage = {
     giveUp: 'Give up',
     giveUpAgain: 'Tap again to give up: the ranked attempt counts as played',
   },
+  /** Read out each second before a match, with the number left. */
+  countdown: 'The match starts in {seconds}',
   waitingForPeer: 'Waiting for your opponent…',
   /** The spinner while a tap's work is under way. */
   busy: 'Loading…',

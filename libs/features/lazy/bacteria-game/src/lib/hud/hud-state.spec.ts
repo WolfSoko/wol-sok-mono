@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { I18nService } from '../i18n/i18n.service';
 import { ArenaStage } from '../stage/arena-stage';
 import { GameStateService } from '../state/game-state.service';
-import { GameStateStore } from '../state/game.states';
+import { GameState, GameStateStore } from '../state/game.states';
 import { HudState } from './hud-state';
 
 describe('HudState', () => {
@@ -36,6 +36,24 @@ describe('HudState', () => {
     expect(hud.clockLabel()).toBe('Game time');
     expect(hud.clockText()).toBe('0:00');
     expect(hud.timeRunningOut()).toBe(false);
+  });
+
+  describe('the countdown before a match', () => {
+    it('shows the number left while a match counts down, not playing yet', () => {
+      store.update({ currentState: GameState.COUNTDOWN, countdown: 2 });
+
+      expect(hud.countdown()).toBe(2);
+      expect(hud.countingDown()).toBe(true);
+      expect(hud.running()).toBe(true);
+      expect(hud.playing()).toBe(false);
+    });
+
+    it('shows no number once the match runs', () => {
+      store.update({ currentState: GameState.RUNNING, countdown: 1 });
+
+      expect(hud.countdown()).toBeNull();
+      expect(hud.playing()).toBe(true);
+    });
   });
 
   describe('online', () => {

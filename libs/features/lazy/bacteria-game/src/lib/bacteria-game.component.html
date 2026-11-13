@@ -16,7 +16,7 @@
 >
   <feat-lazy-bac-game-touch-pads
     [colonies]="hud.humanStats()"
-    [disabled]="!hud.running()"
+    [disabled]="!hud.running() || hud.countingDown()"
     [over]="hud.matchOver()"
     [zooms]="arenaStage.cameraFollows()"
     [outOfReach]="flow.screenOpen()"
@@ -32,6 +32,10 @@
       <mat-icon aria-hidden="true">school</mat-icon>
       {{ goal | t }}
     </p>
+  }
+
+  @if (hud.countdown(); as count) {
+    <feat-lazy-bac-game-match-countdown [count]="count" />
   }
 
   @if (hud.playing() && hud.waitingForPeer()) {

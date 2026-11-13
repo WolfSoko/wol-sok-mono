@@ -32,6 +32,7 @@ import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gl/gpu-self-test.service';
 import { SimulationOverrideService } from './gl/simulation-override.service';
 import { GameHapticsService } from './haptics.service';
+import { MatchCountdownComponent } from './countdown/match-countdown.component';
 import { HudBarComponent } from './hud-bar.component';
 import { HudState } from './hud/hud-state';
 import { I18nService } from './i18n/i18n.service';
@@ -102,6 +103,7 @@ import { WinnerComponent } from './winner-info/winner.component';
     TranslatePipe,
     ArenaViewComponent,
     StageBusyComponent,
+    MatchCountdownComponent,
   ],
   templateUrl: './bacteria-game.component.html',
   // One of each per stage: they hold its view of the arena and its way
@@ -173,8 +175,9 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * of a match.
    */
   private readonly soundtrack = computed<Soundtrack | null>(() => {
-    const { running, playing, matchOver, level } = this.hud;
-    if (playing()) {
+    const { running, playing, countingDown, matchOver, level } = this.hud;
+    // The level's music starts with the countdown, on the tap.
+    if (playing() || countingDown()) {
       return levelMusic(level().id);
     }
     const inMenu = !running() && !matchOver() && !this.flow.resetting();
@@ -307,8 +310,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    * from the main menu leaves fullscreen for the page.
    */
   private onEscape(): void {
-    const { playing, paused, matchOver } = this.hud;
-    if (matchOver() || this.flow.resetting()) {
+    const { playing, paused, matchOver, countingDown } = this.hud;
+    if (matchOver() || countingDown() || this.flow.resetting()) {
       return;
     }
     if (playing()) {

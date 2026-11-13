@@ -53,8 +53,14 @@ export class HudState {
   /** True while a match is on, paused or not. */
   public readonly running = this.store.isMatchOn;
   public readonly paused = this.store.isPaused;
-  /** True while a match is on and not paused: the war plays. */
-  public readonly playing = computed(() => this.running() && !this.paused());
+  /** The number the match counts down from to its start - null outside it. */
+  public readonly countdown = this.store.countdownLeft;
+  /** True while the match counts down to its first tick. */
+  public readonly countingDown = computed(() => this.countdown() !== null);
+  /** True while a match is on, not paused and past its countdown: the war plays. */
+  public readonly playing = computed(
+    () => this.running() && !this.paused() && !this.countingDown()
+  );
   /** True once a match is over and its result is shown, until the next one. */
   public readonly matchOver = this.store.matchEnded;
   /** True while an online match waits for the other device. */

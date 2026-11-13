@@ -1,0 +1,44 @@
+@use '@angular/cdk';
+
+// The announcement for a screen reader; the big number is what the eye sees.
+@include cdk.a11y-visually-hidden;
+
+// Over the middle of the arena; the pointer goes through it.
+:host {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.number {
+  color: #fff;
+  font-size: clamp(4rem, 22vmin, 10rem);
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 0.05em 0.2em rgb(0 0 0 / 70%);
+  animation: count-in 1s ease-out both;
+}
+
+@keyframes count-in {
+  from {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.85;
+    transform: scale(0.9);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .number {
+    animation: none;
+  }
+}

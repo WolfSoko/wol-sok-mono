@@ -1542,9 +1542,12 @@ As built in the client and on the privacy page (2026-10-26):
      ranked play is offered only on a device whose GPU passed the
      self-test and that has the integer GPU passes
      (`RankedService.deviceReady`); `IntSimulation` stands in only should
-     the GPU fail to start in the match. The countdown the deadline
-     allows for does not exist in the game: the match starts once the
-     declaration is read back, inside the deadline's slack.
+     the GPU fail to start in the match. Since
+     [#3066](https://github.com/WolfSoko/wol-sok-mono/issues/3066) every
+     match the stage starts counts down 3 seconds once the declaration is
+     read back (`MATCH_COUNTDOWN_SECONDS` in the game lib's
+     `state/match-countdown.ts`), within the 5 s the deadline allows for;
+     a spec keeps it there.
    - As built in the client, the bans and notices: `ModerationService`
      (`moderation/`) behind the `GameModeration` port
      (`FirestoreGameModeration`, `GameCloud.moderation()`): the player's
