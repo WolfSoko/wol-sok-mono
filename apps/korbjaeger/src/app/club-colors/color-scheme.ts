@@ -97,7 +97,7 @@ export type ColorSchemeTokens = Readonly<
  * colour's tone: at 0, rounding to `#rrggbb` leaves some just below
  * (`#33ffdd` dark: on-primary-container 4.47:1). At 0.1, a one-off probe of
  * every eighth value per channel (32,768 colours) stayed at 4.53:1 or more;
- * `colorScheme.spec.ts` checks 216 of them, and the hard cases, on every run.
+ * `color-scheme.spec.ts` checks 216 of them, and the hard cases, on every run.
  * A sample, not a proof for all 16.7 million.
  */
 const CONTRAST_LEVEL = 0.1;
@@ -116,7 +116,7 @@ export function colorScheme(colors: ClubColors, dark: boolean): ColorScheme {
 
 /**
  * The `--mat-sys-*` declarations of a Verein's colours for light and dark at
- * once, so a scope's own `color-scheme` (`.anzeigetafel`) still turns them.
+ * once, so a scope's own `color-scheme` (`.scoreboard`) still turns them.
  */
 export function colorSchemeTokens(colors: ClubColors): ColorSchemeTokens {
   const light = colorScheme(colors, false);

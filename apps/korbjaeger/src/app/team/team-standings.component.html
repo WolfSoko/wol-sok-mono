@@ -6,7 +6,7 @@
   @if (error(); as text) {
     <!-- no live region: on a DBB outage every Tabelle fails at once, and
          one alert each would repeat the same text; it sits under its Liga -->
-    <p class="fehler" data-qa="standings-error">{{ text }}</p>
+    <p class="error" data-qa="standings-error">{{ text }}</p>
   }
   @if (standings.hasValue()) {
     <korb-as-of [asOf]="standings.asOf()" />

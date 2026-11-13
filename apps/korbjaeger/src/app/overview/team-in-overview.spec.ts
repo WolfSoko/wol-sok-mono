@@ -28,12 +28,12 @@ const SEASON: TeamSeason = {
 
 const OVERVIEW: TeamOverview = { cancellations: [] };
 
-const FUNDE: RosterFinds = {
+const FINDS: RosterFinds = {
   games: new Map([[3, new Map([[4711, 'Lumi']])]]),
   incomplete: false,
 };
 
-const ALT: AsOf = { storedAt: 1000, reason: 'no-internet' };
+const OLD: AsOf = { storedAt: 1000, reason: 'no-internet' };
 const OLDER: AsOf = { storedAt: 500, reason: 'unavailable' };
 
 interface Readings {
@@ -99,7 +99,7 @@ describe('teamInOverview', () => {
 
   it('gives a read Team its card and Saison, and its finds only where a Kind is marked', () => {
     const read = reading({
-      finds: FUNDE,
+      finds: FINDS,
     });
 
     const withChildren = teamInOverview(TEAM, read, noClubs, true);
@@ -115,24 +115,26 @@ describe('teamInOverview', () => {
       season: SEASON,
       overview: OVERVIEW,
     });
-    expect(withChildren.finds).toBe(FUNDE);
+    expect(withChildren.finds).toBe(FINDS);
     expect(withChildren.searching).toBe(false);
     expect(without.finds).toBeUndefined();
     expect(without.searching).toBe(false);
   });
 
   it('says a Team is still searched while its search runs', () => {
-    const suchend = reading({ searching: true });
+    const searching = reading({ searching: true });
 
-    expect(teamInOverview(TEAM, suchend, noClubs, true).searching).toBe(true);
-    expect(teamInOverview(TEAM, suchend, noClubs, false).searching).toBe(false);
+    expect(teamInOverview(TEAM, searching, noClubs, true).searching).toBe(true);
+    expect(teamInOverview(TEAM, searching, noClubs, false).searching).toBe(
+      false
+    );
   });
 
   it("reads its Verein's Teams only once its Saison looks over", () => {
     const clubTeamsOf = vi.fn(noClubs);
 
     teamInOverview(TEAM, reading(), clubTeamsOf, false);
-    const beendet = teamInOverview(
+    const over = teamInOverview(
       TEAM,
       reading({ seasonOverClub: CLUB }),
       clubTeamsOf,
@@ -140,7 +142,7 @@ describe('teamInOverview', () => {
     );
 
     expect(clubTeamsOf).toHaveBeenCalledExactlyOnceWith(CLUB);
-    expect(beendet.card).toMatchObject({ seasonOver: true });
+    expect(over.card).toMatchObject({ seasonOver: true });
   });
 
   it("dates the card by its Verein's Teams too, the Team itself by its own reads", () => {
@@ -153,7 +155,7 @@ describe('teamInOverview', () => {
     const team = teamInOverview(
       TEAM,
       reading({
-        season: { status: 'resolved', value: SEASON, asOf: ALT },
+        season: { status: 'resolved', value: SEASON, asOf: OLD },
         seasonOverClub: CLUB,
       }),
       () => clubTeams,
@@ -161,6 +163,6 @@ describe('teamInOverview', () => {
     );
 
     expect(team.card).toMatchObject({ asOf: OLDER });
-    expect(team.asOf).toBe(ALT);
+    expect(team.asOf).toBe(OLD);
   });
 });

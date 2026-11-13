@@ -11,7 +11,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { Router } from '@angular/router';
 import type { LeagueId, Team } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { leagueTeamsResource } from '../basketball-data/league-teams-resource';
 import { selectionChange } from '../errors/selection-change';
 import { errorText, NO_LEAGUE } from '../errors/error-text';
@@ -46,13 +46,13 @@ import { FollowTeamComponent } from '../team/follow-team.component';
       />
     }
     @if (error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
     @if (teams.hasValue()) {
       @if (teams.value().length === 0) {
         <p>In dieser Liga stehen noch keine Teams fest.</p>
       } @else {
-        <mat-action-list class="umbrechende-liste">
+        <mat-action-list class="wrapping-list">
           @for (team of teams.value(); track team.id) {
             @let followed = followedTeamIds().has(team.id);
             <div class="row">
@@ -86,7 +86,7 @@ import { FollowTeamComponent } from '../team/follow-team.component';
       }
     }
     @if (change.error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
   `,
   providers: [AfterUnfollow],
@@ -111,7 +111,7 @@ export class LeagueTeamsComponent {
   /** The Liga to list the Teams of. */
   public readonly leagueId = input.required<LeagueId>();
 
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
   private readonly router = inject(Router);
 
   protected readonly followedTeams = this.selection.teams;

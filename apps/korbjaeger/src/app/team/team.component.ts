@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { gameDetailsResource } from '../basketball-data/game-details-resource';
 import { teamSeasonResource } from '../basketball-data/team-season-resource';
 import { clubTeamsResource } from '../basketball-data/club-teams-resource';
@@ -71,7 +71,7 @@ export class TeamComponent {
   public readonly teamId = input.required<string>();
 
   private readonly today = inject(TODAY);
-  private readonly followedTeams = inject(AUSWAHL).teams;
+  private readonly followedTeams = inject(SELECTION).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
   protected readonly season = teamSeasonResource(() => this.team());

@@ -1,17 +1,17 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { TitleBarComponent } from './navigation/title-bar.component';
-import { FusszeileComponent } from './rechtliches/fusszeile.component';
+import { FooterComponent } from './legal/footer.component';
 
 @Component({
   selector: 'korb-root',
-  imports: [FusszeileComponent, RouterOutlet, TitleBarComponent],
+  imports: [FooterComponent, RouterOutlet, TitleBarComponent],
   template: `
     <korb-title-bar />
     <main>
       <router-outlet />
     </main>
-    <korb-fusszeile />
+    <korb-footer />
   `,
   styles: `
     main {

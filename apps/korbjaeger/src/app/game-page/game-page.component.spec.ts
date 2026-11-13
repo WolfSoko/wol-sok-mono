@@ -11,7 +11,7 @@ import {
   type PlayerStats,
 } from '@wolsok/feat-shared-basketball-data';
 import { playerStatsOf } from '@wolsok/feat-shared-basketball-data/testing';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   type Selection,
   SelectionTooNewError,
@@ -178,7 +178,7 @@ async function renderWith(
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: data },
       { provide: NOW, useValue: signal(NOW_IN_SPEC) },
-      { provide: AUSWAHL, useValue: selection },
+      { provide: SELECTION, useValue: selection },
       // the dialogs close at once, without waiting for an animation
       { provide: MATERIAL_ANIMATIONS, useValue: { animationsDisabled: true } },
     ],
@@ -656,7 +656,7 @@ describe('GamePageComponent', () => {
     });
 
     it('says so where the DBB names no Halle yet', async () => {
-      const { venue: _keine, ...withoutVenue } = PLAYED_GAME;
+      const { venue: _none, ...withoutVenue } = PLAYED_GAME;
       const page = await render(
         fakeData(
           async () => withoutVenue,

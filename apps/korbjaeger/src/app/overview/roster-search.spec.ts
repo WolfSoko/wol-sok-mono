@@ -39,14 +39,14 @@ describe('sameJob', () => {
     ['another Spiel', { ...job, games: [game(3), game(2)] }],
     ['another Kind', { ...job, children: [LUMI, MORVO] }],
     ['none', undefined],
-  ])('tells an order for %s apart', (_fall, anderer) => {
-    expect(sameJob(job, anderer)).toBe(false);
+  ])('tells an order for %s apart', (_fall, other) => {
+    expect(sameJob(job, other)).toBe(false);
   });
 
   it('searches no more for a Kind unmarked: the others were looked for', () => {
-    const beide = { ...job, children: [LUMI, MORVO] };
+    const both = { ...job, children: [LUMI, MORVO] };
 
-    expect(sameJob(beide, job)).toBe(true);
-    expect(sameJob(beide, { ...job, children: [MORVO] })).toBe(true);
+    expect(sameJob(both, job)).toBe(true);
+    expect(sameJob(both, { ...job, children: [MORVO] })).toBe(true);
   });
 });

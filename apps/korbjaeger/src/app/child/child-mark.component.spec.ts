@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { ChildMarkComponent } from './child-mark.component';
 
@@ -13,7 +13,7 @@ describe('ChildMarkComponent', () => {
     TestBed.configureTestingModule({
       providers: [
         {
-          provide: AUSWAHL,
+          provide: SELECTION,
           useValue: fakeSelection({
             mark: () => Promise.reject(new Error('voll')),
           }),

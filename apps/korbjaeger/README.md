@@ -55,9 +55,9 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   holds its own read, `FollowedTeamsOverview` one per followed Team, and
   `NextGameComponent` (`src/app/game/`) shows the Spiel with its
   Halle on both, so each loads and fails on its own.
-- **Meine Teams** (`src/app/auswahl/`): the `Auswahl` port (`AUSWAHL`),
-  Meine Teams as a signal (`undefined` until read) with `folgen` and
-  `entfolgen`. Its local adapter
+- **Meine Teams** (`src/app/selection/`): the `Selection` port (`SELECTION`),
+  Meine Teams as a signal (`undefined` until read) with `follow` and
+  `unfollow`. Its local adapter
   `LocalSelection` keeps them in `localStorage` (`korbjaeger-selection`) as
   `{ version: 3, teams, children, clubColors }` (`selection-document.ts`: ids
   only; English field names since #2966). It reads the document again

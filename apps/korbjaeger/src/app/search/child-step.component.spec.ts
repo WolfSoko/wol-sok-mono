@@ -6,7 +6,7 @@ import {
   DbbBasketballData,
 } from '@wolsok/feat-shared-basketball-data';
 import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -65,7 +65,7 @@ async function render(
     providers: [
       provideRouter([]),
       { provide: BASKETBALL_DATA, useValue: { teamGames, game } },
-      { provide: AUSWAHL, useValue: selection },
+      { provide: SELECTION, useValue: selection },
       { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     ],
   });

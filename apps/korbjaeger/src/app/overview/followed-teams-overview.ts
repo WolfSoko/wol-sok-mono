@@ -14,7 +14,7 @@ import type {
   ClubId,
   ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import type { DataResource } from '../basketball-data/basketball-data-resource';
 import { clubTeamsResource } from '../basketball-data/club-teams-resource';
 import { sameSequence } from '@wolsok/feat-korbjaeger-selection';
@@ -33,7 +33,7 @@ import { overviewView, type OverviewView } from './overview-view';
  */
 @Injectable()
 export class FollowedTeamsOverview {
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
   /** Whether Meine Teams and the Kinder cannot be read: no overview then. */
   public readonly unreadable = this.selection.unreadable;
   /** The marked Kinder's persons: a new Spitzname starts no search. */

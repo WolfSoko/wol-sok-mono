@@ -1,7 +1,7 @@
 import { effect, inject, Injectable, Injector } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
 import { selectionErrorText } from '../errors/selection-error-text';
 
@@ -27,7 +27,7 @@ export interface FocusTarget {
 @Injectable()
 export class AfterUnfollow {
   private readonly snackBar = inject(MatSnackBar);
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
   private readonly injector = inject(Injector);
   private readonly targets = new Set<FocusTarget>();
 

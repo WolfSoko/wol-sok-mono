@@ -16,7 +16,7 @@ import {
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
 import { recordedDbbTransport } from '@wolsok/feat-shared-basketball-data/testing';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   type Selection,
   LocalSelection,
@@ -112,7 +112,7 @@ async function render(
     providers: [
       provideRouter([{ path: 'team/:id', component: TeamPageStub }]),
       { provide: BASKETBALL_DATA, useValue: data },
-      { provide: AUSWAHL, useValue: selection },
+      { provide: SELECTION, useValue: selection },
     ],
   });
   const fixture = TestBed.createComponent(TeamSetupComponent);
@@ -210,7 +210,7 @@ async function untilLeague(wizard: Wizard): Promise<void> {
 }
 
 /** Opens the second page of Ligen and picks Team 313036's Vorrunde. */
-async function bisZumTeam(wizard: Wizard): Promise<void> {
+async function untilTeam(wizard: Wizard): Promise<void> {
   await untilLeague(wizard);
   await (await wizard.button('Weitere Ligen'))?.click();
   await wizard.settled();
@@ -277,7 +277,7 @@ describe('TeamSetupComponent', () => {
   it('lists every Team of the picked Liga', async () => {
     const wizard = await render();
 
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     expect(wizard.entries('league')).toEqual([]);
     expect(
@@ -295,7 +295,7 @@ describe('TeamSetupComponent', () => {
 
   it('follows the tapped Team and opens its page', async () => {
     const wizard = await render();
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     await wizard.tap('team', 'MTV Wasbüttel -RST-');
 
@@ -307,7 +307,7 @@ describe('TeamSetupComponent', () => {
     const selection = new LocalSelection(undefined);
     await selection.follow(313036);
     const wizard = await render(undefined, selection);
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     expect(wizard.entries('team')).toContain('MTV Wasbüttel -RST- Gefolgt');
     await wizard.tap('team', 'MTV Wasbüttel -RST-');
@@ -320,7 +320,7 @@ describe('TeamSetupComponent', () => {
     const selection = new LocalSelection(undefined);
     await selection.follow(313036);
     const wizard = await render(undefined, selection);
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
     const button = wizard.page.querySelector<HTMLButtonElement>(
       '[aria-label="Nicht mehr folgen: MTV Wasbüttel -RST-"]'
     );
@@ -355,7 +355,7 @@ describe('TeamSetupComponent', () => {
     const selection = new LocalSelection(undefined);
     await selection.follow(201500);
     const wizard = await render(undefined, selection);
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     const buttons = [
       ...wizard.page.querySelectorAll('[data-qa="follow-team"]'),
@@ -369,7 +369,7 @@ describe('TeamSetupComponent', () => {
       follow: () => Promise.reject(new Error('offline')),
     });
     const wizard = await render(undefined, selection);
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     await wizard.tap('team', 'MTV Wasbüttel -RST-');
 
@@ -383,7 +383,7 @@ describe('TeamSetupComponent', () => {
     });
     const wizard = await render(undefined, selection);
 
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     const buttons = wizard.page.querySelectorAll<HTMLButtonElement>(
       'button[data-qa="team"]'
@@ -394,7 +394,7 @@ describe('TeamSetupComponent', () => {
 
   it('starts over below a pick that changed', async () => {
     const wizard = await render();
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     await wizard.choose('association', 'Bayern');
 
@@ -417,7 +417,7 @@ describe('TeamSetupComponent', () => {
 
   it('follows one Team only when two are tapped at once', async () => {
     const wizard = await render();
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     const buttons = wizard.page.querySelectorAll<HTMLButtonElement>(
       'button[data-qa="team"]'
@@ -456,7 +456,7 @@ describe('TeamSetupComponent', () => {
 
   it('keeps the pages of Ligen read when another Liga is wanted', async () => {
     const wizard = await render();
-    await bisZumTeam(wizard);
+    await untilTeam(wizard);
 
     await (await wizard.button('Andere Liga'))?.click();
     await wizard.settled();

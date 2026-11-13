@@ -21,17 +21,17 @@
           "/favicon.ico",
           "/assets/*.js",
           "/assets/*.css",
-          "!/assets/firebase-konto-dienst-*.js",
+          "!/assets/firebase-account-service-*.js",
           "!/**/*.map"
         ]
       }
     },
     {
-      "name": "konto",
+      "name": "account",
       "installMode": "lazy",
       "updateMode": "prefetch",
       "resources": {
-        "files": ["/assets/firebase-konto-dienst-*.js"]
+        "files": ["/assets/firebase-account-service-*.js"]
       }
     },
     {

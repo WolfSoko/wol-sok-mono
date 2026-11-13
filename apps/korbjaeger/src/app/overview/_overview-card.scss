@@ -2,7 +2,7 @@
 // Kind's (`korb-overview-child`).
 // a court line along the top of each card
 mat-card {
-  border-block-start: var(--korb-linie-breite) solid var(--mat-sys-primary);
+  border-block-start: var(--korb-line-width) solid var(--mat-sys-primary);
 }
 
 mat-card-content {

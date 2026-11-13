@@ -7,7 +7,7 @@ export interface Preset {
 /**
  * The colours the bottom sheet "Vereinsfarben" offers (#2918): those most
  * clubs wear. Every one keeps its text readable once Material derives a
- * scheme from it (`colorScheme.spec.ts`).
+ * scheme from it (`color-scheme.spec.ts`).
  */
 export const PRESETS: readonly Preset[] = [
   { name: 'Rot', color: '#c8102e' },

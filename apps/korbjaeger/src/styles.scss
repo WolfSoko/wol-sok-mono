@@ -56,12 +56,12 @@ html {
 
 // The look "Hallenboden" (#2918), set once here: Material 3's system tokens
 // (`--mat-sys-*`) are the colours; components read them where they use
-// them, so a scope that sets its own scheme (`.anzeigetafel`, later a
+// them, so a scope that sets its own scheme (`.scoreboard`, later a
 // Verein's colours) recolours what it holds. `--korb-*` holds constants
 // only. Components take colours only from tokens (`theme.spec.ts`).
 :root {
   // the width of the court's lines: under the page title, along cards
-  --korb-linie-breite: 4px;
+  --korb-line-width: 4px;
 }
 
 body {
@@ -84,7 +84,7 @@ a {
 }
 
 // what went wrong, on every screen alike
-.fehler {
+.error {
   color: var(--mat-sys-error);
 }
 
@@ -92,7 +92,7 @@ a {
 // rather than cut them off: the items' heights through Material's own
 // tokens, since its fixed heights come with as specific a selector,
 // loaded after this file
-.umbrechende-liste {
+.wrapping-list {
   @include mat.list-overrides(
     (
       list-item-one-line-container-height: auto,
@@ -102,7 +102,7 @@ a {
   );
 }
 
-.umbrechende-liste .mat-mdc-list-item {
+.wrapping-list .mat-mdc-list-item {
   padding-block: 0.5rem;
 
   [matListItemTitle] {
@@ -122,7 +122,7 @@ h1 {
   display: inline-block;
   margin-block: 0.5rem 1rem;
   padding-block-end: 0.25rem;
-  border-block-end: var(--korb-linie-breite) solid var(--mat-sys-primary);
+  border-block-end: var(--korb-line-width) solid var(--mat-sys-primary);
   font: var(--mat-sys-headline-large);
   font-weight: var(--mat-sys-headline-large-weight);
 }
@@ -136,10 +136,10 @@ h2 {
 // both, so every Material token turns for what it holds (Material emits each
 // colour as `light-dark()`, which the browser resolves where it is used;
 // `deploy/css-targets.ts` keeps the build from resolving it on `html` instead).
-.anzeigetafel {
+.scoreboard {
   color-scheme: dark;
   padding: 0.75rem 1rem;
-  border-block-start: var(--korb-linie-breite) solid var(--mat-sys-primary);
+  border-block-start: var(--korb-line-width) solid var(--mat-sys-primary);
   border-radius: var(--mat-sys-corner-small);
   background: var(--mat-sys-surface-container-lowest);
   color: var(--mat-sys-on-surface);

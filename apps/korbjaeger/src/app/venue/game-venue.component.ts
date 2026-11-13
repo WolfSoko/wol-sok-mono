@@ -20,7 +20,7 @@ import type { VenueState } from './venue-state';
         />
       }
       @case ('error') {
-        <p class="fehler" data-qa="venue-error">{{ venueState.text }}</p>
+        <p class="error" data-qa="venue-error">{{ venueState.text }}</p>
       }
       @case ('read') {
         <korb-venue [venue]="venueState.venue" />

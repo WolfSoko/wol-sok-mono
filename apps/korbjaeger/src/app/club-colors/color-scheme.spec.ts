@@ -10,17 +10,17 @@ import { PRESETS } from './presets';
 import { NotAColorError } from '@wolsok/feat-korbjaeger-selection';
 
 /** WCAG 2.x contrast of two `#rrggbb` colours. */
-function kontrast(a: string, b: string): number {
-  const helligkeit = (hex: string): number => {
+function contrast(a: string, b: string): number {
+  const lightness = (hex: string): number => {
     const [r, g, b] = [1, 3, 5].map((i) => {
-      const kanal = parseInt(hex.slice(i, i + 2), 16) / 255;
-      return kanal <= 0.04045
-        ? kanal / 12.92
-        : ((kanal + 0.055) / 1.055) ** 2.4;
+      const channel = parseInt(hex.slice(i, i + 2), 16) / 255;
+      return channel <= 0.04045
+        ? channel / 12.92
+        : ((channel + 0.055) / 1.055) ** 2.4;
     });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
-  const [light, dark] = [helligkeit(a), helligkeit(b)].sort((x, y) => y - x);
+  const [light, dark] = [lightness(a), lightness(b)].sort((x, y) => y - x);
   return (light + 0.05) / (dark + 0.05);
 }
 
@@ -44,16 +44,16 @@ const SURFACES: readonly SystemColor[] = [
 ];
 
 /** Text on a ground: 4.5:1 (WCAG AA for body text). */
-const TEXT_PAARE: readonly (readonly [SystemColor, SystemColor])[] = [
+const TEXT_PAIRS: readonly (readonly [SystemColor, SystemColor])[] = [
   ['on-primary', 'primary'],
   ['on-primary-container', 'primary-container'],
   ['on-secondary', 'secondary'],
   ['on-secondary-container', 'secondary-container'],
   ['on-tertiary', 'tertiary'],
   ['on-tertiary-container', 'tertiary-container'],
-  ...(['primary', 'secondary', 'tertiary'] as const).flatMap((familie) =>
+  ...(['primary', 'secondary', 'tertiary'] as const).flatMap((family) =>
     (['', '-variant'] as const).map(
-      (child) => [`on-${familie}-fixed${child}`, `${familie}-fixed`] as const
+      (child) => [`on-${family}-fixed${child}`, `${family}-fixed`] as const
     )
   ),
   ['on-error', 'error'],
@@ -76,7 +76,7 @@ const TEXT_PAARE: readonly (readonly [SystemColor, SystemColor])[] = [
 ];
 
 /** A control's edge on a ground: 3:1 (WCAG AA for UI components). */
-const UI_PAARE: readonly (readonly [SystemColor, SystemColor])[] = SURFACES.map(
+const UI_PAIRS: readonly (readonly [SystemColor, SystemColor])[] = SURFACES.map(
   (surface) => ['outline', surface] as const
 );
 
@@ -93,32 +93,32 @@ const COLORS = [
 ];
 
 /** Six values per channel, 51 apart. */
-const STUFEN = [0, 51, 102, 153, 204, 255];
+const STEPS = [0, 51, 102, 153, 204, 255];
 
 /** Every combination of `STUFEN`: 216 colours across the whole space. */
-const STREUUNG = STUFEN.flatMap((r) =>
-  STUFEN.flatMap((g) =>
-    STUFEN.map(
+const SPREAD = STEPS.flatMap((r) =>
+  STEPS.flatMap((g) =>
+    STEPS.map(
       (b) =>
-        `#${[r, g, b].map((kanal) => kanal.toString(16).padStart(2, '0')).join('')}`
+        `#${[r, g, b].map((channel) => channel.toString(16).padStart(2, '0')).join('')}`
     )
   )
 );
 
 function checkPairs(
   scheme: ColorScheme,
-  paare: readonly (readonly [SystemColor, SystemColor])[],
-  mindestens: number
+  pairs: readonly (readonly [SystemColor, SystemColor])[],
+  atLeast: number
 ): string[] {
-  return paare
-    .map(([vorne, hinten]) => ({
-      vorne,
-      hinten,
-      value: kontrast(scheme[vorne], scheme[hinten]),
+  return pairs
+    .map(([front, back]) => ({
+      front,
+      back,
+      value: contrast(scheme[front], scheme[back]),
     }))
-    .filter(({ value }) => value < mindestens)
+    .filter(({ value }) => value < atLeast)
     .map(
-      ({ vorne, hinten, value }) => `${vorne} on ${hinten}: ${value.toFixed(2)}`
+      ({ front, back, value }) => `${front} on ${back}: ${value.toFixed(2)}`
     );
 }
 
@@ -126,17 +126,17 @@ describe('colorScheme', () => {
   it.each([false, true])(
     'keeps every text readable for a spread of 216 colours, first and second (dark: %s)',
     (dark) => {
-      const error = STREUUNG.flatMap((color) => {
-        const erste = colorScheme({ primary: color }, dark);
+      const error = SPREAD.flatMap((color) => {
+        const first = colorScheme({ primary: color }, dark);
         const secondary = colorScheme(
           { primary: '#c8102e', secondary: color },
           dark
         );
         return [
-          ...checkPairs(erste, TEXT_PAARE, 4.5),
-          ...checkPairs(erste, UI_PAARE, 3),
-          ...checkPairs(secondary, TEXT_PAARE, 4.5),
-        ].map((paar) => `${color}: ${paar}`);
+          ...checkPairs(first, TEXT_PAIRS, 4.5),
+          ...checkPairs(first, UI_PAIRS, 3),
+          ...checkPairs(secondary, TEXT_PAIRS, 4.5),
+        ].map((pair) => `${color}: ${pair}`);
       });
 
       expect(error).toEqual([]);
@@ -149,8 +149,8 @@ describe('colorScheme', () => {
       (dark) => {
         const scheme = colorScheme({ primary }, dark);
 
-        expect(checkPairs(scheme, TEXT_PAARE, 4.5)).toEqual([]);
-        expect(checkPairs(scheme, UI_PAARE, 3)).toEqual([]);
+        expect(checkPairs(scheme, TEXT_PAIRS, 4.5)).toEqual([]);
+        expect(checkPairs(scheme, UI_PAIRS, 3)).toEqual([]);
       }
     );
   });
@@ -161,8 +161,8 @@ describe('colorScheme', () => {
       (dark) => {
         const scheme = colorScheme({ primary: '#c8102e', secondary }, dark);
 
-        expect(checkPairs(scheme, TEXT_PAARE, 4.5)).toEqual([]);
-        expect(checkPairs(scheme, UI_PAARE, 3)).toEqual([]);
+        expect(checkPairs(scheme, TEXT_PAIRS, 4.5)).toEqual([]);
+        expect(checkPairs(scheme, UI_PAIRS, 3)).toEqual([]);
       }
     );
   });
@@ -184,21 +184,21 @@ describe('colorScheme', () => {
   });
 
   it('keeps the club’s hue', () => {
-    const rot = colorScheme({ primary: '#c8102e' }, false).primary;
+    const red = colorScheme({ primary: '#c8102e' }, false).primary;
 
-    expect(hueDistance(rot, '#c8102e')).toBeLessThan(5);
+    expect(hueDistance(red, '#c8102e')).toBeLessThan(5);
   });
 
   it('takes the second colour for the secondary family', () => {
     const without = colorScheme({ primary: '#c8102e' }, false);
-    const mit = colorScheme(
+    const withSecondary = colorScheme(
       { primary: '#c8102e', secondary: '#1d4ed8' },
       false
     );
 
-    expect(mit.primary).toBe(without.primary);
-    expect(mit.secondary).not.toBe(without.secondary);
-    expect(hueDistance(mit.secondary, '#1d4ed8')).toBeLessThan(5);
+    expect(withSecondary.primary).toBe(without.primary);
+    expect(withSecondary.secondary).not.toBe(without.secondary);
+    expect(hueDistance(withSecondary.secondary, '#1d4ed8')).toBeLessThan(5);
   });
 
   it('refuses what is no #rrggbb colour', () => {

@@ -10,7 +10,7 @@ import { MatDialog, type MatDialogRef } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import type { Child, MarkablePlayer } from '@wolsok/feat-korbjaeger-selection';
 import { selectionChange } from '../errors/selection-change';
 import { CHILD_CHANGE } from './child-change';
@@ -67,7 +67,7 @@ import {
       </button>
     }
     @if (ownError?.(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
   `,
   styles: `
@@ -76,7 +76,7 @@ import {
       flex-wrap: wrap;
       align-items: center;
     }
-    .fehler {
+    .error {
       margin: 0;
       white-space: normal;
     }
@@ -90,7 +90,7 @@ export class ChildMarkComponent {
   /** The player as a marked Kind; none while unmarked. */
   public readonly child = input<Child>();
 
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
   private readonly dialog = inject(MatDialog);
 
   private readonly pageChange = inject(CHILD_CHANGE, { optional: true });

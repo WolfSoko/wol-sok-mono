@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import type { TeamCard } from './team-card';
 import { OverviewTeamComponent } from './overview-team.component';
@@ -20,7 +20,7 @@ async function show(card: TeamCard): Promise<HTMLElement> {
     providers: [
       provideRouter([]),
       {
-        provide: AUSWAHL,
+        provide: SELECTION,
         useValue: fakeSelection({
           clubColors: signal([{ clubId: 4242, primary: '#007a3d' }]),
         }),

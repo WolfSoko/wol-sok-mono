@@ -15,7 +15,7 @@ import {
   type Team,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { gameDetailsResource } from '../basketball-data/game-details-resource';
 import { gameReportResource } from '../basketball-data/game-report-resource';
 import { errorText, NO_GAME } from '../errors/error-text';
@@ -57,7 +57,7 @@ export class GamePageComponent {
 
   private readonly game = computed(() => parseDbbId(this.gameId()));
 
-  private readonly followed = inject(AUSWAHL).teams;
+  private readonly followed = inject(SELECTION).teams;
 
   /** What the page says when marking a Kind failed. */
   protected readonly childError = inject(CHILD_CHANGE).error;

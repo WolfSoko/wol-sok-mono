@@ -4,11 +4,11 @@ import { expect, test } from './fixtures/pages.fixture';
 const MTV_WASBUETTEL = 313036;
 const TEAM_URL = new RegExp(`/team/${MTV_WASBUETTEL}$`);
 /** MTV Wasbüttel against MTV Gifhorn. */
-const SPIEL_URL = /\/spiel\/2861436$/;
+const GAME_URL = /\/spiel\/2861436$/;
 const TEAM = 'MTV Wasbüttel';
 /** How the Spiel names the Team, which the Spiel page's breadcrumb shows. */
-const TEAM_AS_SPIEL_NAMES_IT = 'MTV Wasbüttel -RST-';
-const GAST = 'MTV Gifhorn';
+const TEAM_AS_GAME_NAMES_IT = 'MTV Wasbüttel -RST-';
+const AWAY = 'MTV Gifhorn';
 
 test.describe('Title bar', () => {
   test.beforeEach(async ({ page }) => {
@@ -23,23 +23,23 @@ test.describe('Title bar', () => {
     titleBar,
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
-    await teamPage.folgen.click();
+    await teamPage.follow.click();
     await startPage.goto();
     await expect(titleBar.levels).toHaveText(['Korbjäger']);
     await expect(titleBar.current).toHaveText('Korbjäger');
 
     await startPage.team(TEAM).getByTestId('overview-name').click();
     await expect(titleBar.levels).toHaveText(['Korbjäger', TEAM]);
-    await teamPage.spielGegen(GAST).click();
-    await expect(page).toHaveURL(SPIEL_URL);
+    await teamPage.gameAgainst(AWAY).click();
+    await expect(page).toHaveURL(GAME_URL);
     await expect(titleBar.levels).toHaveText([
       'Korbjäger',
-      TEAM_AS_SPIEL_NAMES_IT,
+      TEAM_AS_GAME_NAMES_IT,
       'Spiel',
     ]);
     await expect(titleBar.current).toHaveText('Spiel');
 
-    await titleBar.level(TEAM_AS_SPIEL_NAMES_IT).click();
+    await titleBar.level(TEAM_AS_GAME_NAMES_IT).click();
     await expect(page).toHaveURL(TEAM_URL);
     await titleBar.level('Korbjäger').click();
     await expect(page).toHaveURL(/\/$/);
@@ -51,8 +51,8 @@ test.describe('Title bar', () => {
     titleBar,
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
-    await teamPage.spielGegen(GAST).click();
-    await expect(page).toHaveURL(SPIEL_URL);
+    await teamPage.gameAgainst(AWAY).click();
+    await expect(page).toHaveURL(GAME_URL);
     await expect(titleBar.forward).toBeDisabled();
 
     await titleBar.back.click();
@@ -60,7 +60,7 @@ test.describe('Title bar', () => {
     await expect(titleBar.forward).toBeEnabled();
 
     await titleBar.forward.click();
-    await expect(page).toHaveURL(SPIEL_URL);
+    await expect(page).toHaveURL(GAME_URL);
     await expect(titleBar.forward).toBeDisabled();
 
     // a second round finds the entries again
@@ -102,7 +102,7 @@ test.describe('Title bar', () => {
   }) => {
     await page.setViewportSize({ width: 360, height: 740 });
     await teamPage.goto(MTV_WASBUETTEL);
-    await teamPage.spielGegen(GAST).click();
+    await teamPage.gameAgainst(AWAY).click();
     await expect(titleBar.current).toHaveText('Spiel');
 
     const overflow = await page.evaluate(

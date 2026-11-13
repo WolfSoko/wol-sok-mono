@@ -6,7 +6,7 @@ import type { HarnessLoader } from '@angular/cdk/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { mapStorage } from '../../testing/storage';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   type Selection,
   SelectionTooNewError,
@@ -41,7 +41,7 @@ async function render(
 ): Promise<Rendered> {
   TestBed.configureTestingModule({
     providers: [
-      { provide: AUSWAHL, useValue: selection },
+      { provide: SELECTION, useValue: selection },
       ...((afterUnfollow ?? disappears) ? [AfterUnfollow] : []),
     ],
   });
@@ -275,7 +275,7 @@ describe('FollowTeamComponent', () => {
   it('takes whether the Team is followed from the screen, where it knows', async () => {
     TestBed.configureTestingModule({
       providers: [
-        { provide: AUSWAHL, useValue: new LocalSelection(undefined) },
+        { provide: SELECTION, useValue: new LocalSelection(undefined) },
       ],
     });
     const fixture = TestBed.createComponent(FollowTeamComponent);

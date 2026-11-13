@@ -12,16 +12,13 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { provideServiceWorker, SwUpdate } from '@angular/service-worker';
 
 /** Reloads the page; specs pass a fake. */
-export const SEITE_NEU_LADEN = new InjectionToken<() => void>(
-  'SEITE_NEU_LADEN',
-  {
-    providedIn: 'root',
-    factory: () => {
-      const document = inject(DOCUMENT);
-      return () => document.location.reload();
-    },
-  }
-);
+export const RELOAD_PAGE = new InjectionToken<() => void>('SEITE_NEU_LADEN', {
+  providedIn: 'root',
+  factory: () => {
+    const document = inject(DOCUMENT);
+    return () => document.location.reload();
+  },
+});
 
 /**
  * Angular's service worker (`ngsw-config.json`), which keeps the app shell
@@ -41,10 +38,10 @@ export function provideAppServiceWorker(): EnvironmentProviders {
       if (!swUpdate.isEnabled) {
         return;
       }
-      const neuLaden = inject(SEITE_NEU_LADEN);
+      const reload = inject(RELOAD_PAGE);
       swUpdate.unrecoverable
         .pipe(takeUntilDestroyed(inject(DestroyRef)))
-        .subscribe(() => neuLaden());
+        .subscribe(() => reload());
     }),
   ]);
 }

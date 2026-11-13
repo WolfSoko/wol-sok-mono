@@ -142,7 +142,7 @@ describe('the look', () => {
     it.each([
       'white-space: nowrap;',
       'color: var(--mat-sys-primary);',
-      'border-width: var(--korb-linie-breite);',
+      'border-width: var(--korb-line-width);',
       'grid-template-columns: 1fr auto;',
       '#add { display: block; }',
       'background: url(http://x/y.png) no-repeat;',
@@ -186,7 +186,7 @@ describe('the look', () => {
         )
       ).toEqual(['#f00']);
       expect(
-        withoutComments('// --korb-weg: 1px\n/* --korb-auch: 2px */')
+        withoutComments('// --korb-gone: 1px\n/* --korb-also: 2px */')
       ).not.toMatch(/--korb-/);
     });
   });

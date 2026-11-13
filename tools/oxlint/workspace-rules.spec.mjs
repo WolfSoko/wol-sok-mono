@@ -164,7 +164,7 @@ void describe('wolsok/no-testing-import', () => {
     'test-setup.ts',
     'testing.ts',
     'testing/fake-game-cloud.ts',
-    'app/konto/testing/fake-konto-dienst.ts',
+    'app/account/testing/fake-account-service.ts',
   ];
   for (const name of testFiles) {
     void it(`allows testing imports in ${name}`, () => {

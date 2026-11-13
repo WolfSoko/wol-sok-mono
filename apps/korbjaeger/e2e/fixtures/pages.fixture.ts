@@ -1,9 +1,9 @@
 import { test as base } from '@playwright/test';
-import { EinstellungenPage } from '../pos/einstellungen.page';
-import { SpielPage } from '../pos/spiel.page';
+import { SettingsPage } from '../pos/settings.page';
+import { GamePage } from '../pos/game.page';
 import { StartPage } from '../pos/start.page';
 import { SearchPage } from '../pos/search.page';
-import { TeamEinrichtenPage } from '../pos/team-einrichten.page';
+import { TeamSetupPage } from '../pos/team-setup.page';
 import { TeamPage } from '../pos/team.page';
 import { TitleBar } from '../pos/title-bar';
 
@@ -14,10 +14,10 @@ import { TitleBar } from '../pos/title-bar';
 export const test = base.extend<{
   startPage: StartPage;
   searchPage: SearchPage;
-  teamEinrichtenPage: TeamEinrichtenPage;
+  teamSetupPage: TeamSetupPage;
   teamPage: TeamPage;
-  spielPage: SpielPage;
-  einstellungenPage: EinstellungenPage;
+  gamePage: GamePage;
+  settingsPage: SettingsPage;
   titleBar: TitleBar;
 }>({
   startPage: async ({ page }, use) => {
@@ -26,17 +26,17 @@ export const test = base.extend<{
   searchPage: async ({ page }, use) => {
     await use(new SearchPage(page));
   },
-  teamEinrichtenPage: async ({ page }, use) => {
-    await use(new TeamEinrichtenPage(page));
+  teamSetupPage: async ({ page }, use) => {
+    await use(new TeamSetupPage(page));
   },
   teamPage: async ({ page }, use) => {
     await use(new TeamPage(page));
   },
-  spielPage: async ({ page }, use) => {
-    await use(new SpielPage(page));
+  gamePage: async ({ page }, use) => {
+    await use(new GamePage(page));
   },
-  einstellungenPage: async ({ page }, use) => {
-    await use(new EinstellungenPage(page));
+  settingsPage: async ({ page }, use) => {
+    await use(new SettingsPage(page));
   },
   titleBar: async ({ page }, use) => {
     await use(new TitleBar(page));

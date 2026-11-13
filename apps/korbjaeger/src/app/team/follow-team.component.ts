@@ -9,7 +9,7 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
 import { selectionChange } from '../errors/selection-change';
 import { AfterUnfollow } from './after-unfollow';
@@ -46,7 +46,7 @@ import { AfterUnfollow } from './after-unfollow';
       {{ label() }}
     </button>
     @if (change.error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
   `,
   styles: `
@@ -91,7 +91,7 @@ export class FollowTeamComponent {
     transform: booleanAttribute,
   });
 
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
 
   /** Whether the Team is in Meine Teams; `undefined` until they are read. */
   protected readonly follows = computed(
