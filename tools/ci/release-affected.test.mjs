@@ -91,6 +91,14 @@ void describe('selectReleaseAffected', () => {
     }
   });
 
+  // Its files would fall to an enclosing root its readers need not read.
+  void it("keeps Nx's verdict for a deleted project.json", () => {
+    assert.deepEqual(
+      select([], ['apps/pacetrainer/project.json']),
+      Object.keys(INPUTS)
+    );
+  });
+
   void it('counts a file deleted in a project only for the candidates reading its files', () => {
     assert.deepEqual(select([], ['apps/pacetrainer/src/old.ts']), [
       'pacetrainer',

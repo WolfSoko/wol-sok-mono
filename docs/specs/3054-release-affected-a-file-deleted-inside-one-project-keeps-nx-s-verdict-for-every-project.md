@@ -30,7 +30,11 @@ the deletion.
 - Matching a deletion against each task's own input globs (`production`
   excluding specs, say). The resolved input sets name files, not globs, so a
   deleted spec still counts for a candidate reading its project's sources.
-  That over-selects a little, never under-selects.
+  That over-selects a little. It under-selects only where a candidate's glob
+  reached into the owner for the deleted files alone and nothing else in the
+  range changed (say all of `tools/version-handling/**` deleted with no edit
+  to the command reading it): the change that stops using such files keeps
+  the candidate in practice.
 - Changing how renames, root files or `tsconfig.base.json` count.
 
 ## Decisions
@@ -47,8 +51,10 @@ the deletion.
   for. The reason reads `reads <root>/, where <file> was deleted`.
 - **Nx's verdict stays for a deletion without an owner**: a file at the
   workspace root or outside every project, or one of a project gone at the
-  head (a whole lib deleted, so no root at the head holds it). Conservative,
-  as before.
+  head (a whole lib deleted, so no root at the head holds it). A deleted
+  `project.json` keeps it too: the roots come from the head, so the files of
+  a removed nested project (`tools/vite`) would fall to the enclosing root
+  (`tools`), which its readers need not read. Conservative, as before.
 - **The project roots are read only when something was deleted**, through
   one `nx graph --file=<tmp>.json`; a failing read keeps Nx's verdict, as a
   failing input read does today.

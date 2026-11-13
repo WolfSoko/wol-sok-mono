@@ -168,14 +168,24 @@ const DROPPED = 'reads none of the changed files';
 /**
  * Each deleted file with the root of the project it lay in: a deleted file
  * is in no input set, but a task whose inputs reach into its project would
- * have read it. `owner` stays `undefined` without the roots.
+ * have read it. `owner` stays `undefined` without the roots and for a
+ * deletion that removed a project.
  */
 function placeDeletions(deletedFiles, projectRoots) {
   const roots = projectRoots ? Object.values(projectRoots) : undefined;
   return deletedFiles.map((file) => ({
     file,
-    owner: roots && ownerRoot(file, roots),
+    owner: roots && !removesProject(file) ? ownerRoot(file, roots) : undefined,
   }));
+}
+
+/**
+ * Whether the deleted file was a project's configuration: the project is
+ * gone at the head, so its files would fall to an enclosing project's root
+ * (`tools/vite` to `tools`) that its readers need not read.
+ */
+function removesProject(file) {
+  return file === 'project.json' || file.endsWith('/project.json');
 }
 
 function nxVerdictReason(changedFiles, deletions) {
@@ -190,8 +200,8 @@ function inputReason(inputs, changedFiles, deletions) {
   if (!inputs) return "Nx's verdict: its inputs could not be read";
   const read = changedFiles.find((file) => inputs.has(file));
   if (read) return `reads ${read}`;
-  const deletion = deletions.find(({ owner }) =>
-    readsUnder(inputs, `${owner}/`)
+  const deletion = deletions.find(
+    ({ owner }) => owner && readsUnder(inputs, `${owner}/`)
   );
   return deletion
     ? `reads ${deletion.owner}/, where ${deletion.file} was deleted`
