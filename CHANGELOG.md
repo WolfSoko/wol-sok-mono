@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.169.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.168.0...v74.169.0) (2026-11-13)
+
+### Features
+
+* **korbjaeger:** drop the Team id input, offer the search as a link button ([#3008](https://github.com/WolfSoko/wol-sok-mono/issues/3008)) ([0f406fe](https://github.com/WolfSoko/wol-sok-mono/commit/0f406fe4b0baa696744f229b515e05bad89e48f0)), closes [#3007](https://github.com/WolfSoko/wol-sok-mono/issues/3007), references [#3007](https://github.com/WolfSoko/wol-sok-mono/issues/3007)
+
 ## [74.168.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.167.7...v74.168.0) (2026-11-12)
 
 ### Features
