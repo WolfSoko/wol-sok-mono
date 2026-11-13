@@ -34,6 +34,11 @@ test.describe('Meine Teams', () => {
       'Heim gegen TV Jahn Wolfsburg Honeybadgers -RST-'
     );
     await expect(startPage.letztesErgebnis(team)).toContainText('58:67');
+    await expect(startPage.searchTeam).toHaveCount(0);
+    await expect(startPage.searchFurtherTeam).toHaveAttribute(
+      'href',
+      '/suchen'
+    );
 
     await page.reload();
     await expect(startPage.teams).toHaveCount(1);
@@ -47,6 +52,7 @@ test.describe('Meine Teams', () => {
     await expect(teamPage.folgen).toBeVisible();
     await startPage.goto();
     await expect(startPage.leer).toBeVisible();
+    await expect(startPage.searchFurtherTeam).toHaveCount(0);
   });
 
   test('a Team unfollowed from its card is gone, after a reload too, unless undone', async ({

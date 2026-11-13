@@ -87,8 +87,8 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   `src/app/fehler/`. Both screens
   show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
   link to its Spiel page (`SpielLinkComponent` on the cards). While
-  Meine Teams is empty it offers "Team einrichten"; the Team-id form
-  below opens a Team to follow, with a link to the wizard beside it.
+  Meine Teams is empty it offers "Team suchen" (`/suchen`); once a Team
+  is followed, "Weiteres Team suchen" below the cards.
 - **Team einrichten** (`/team-einrichten`, `src/app/team-einrichten/`):
   finds a Team without its id, step by step. A Verband, then an age group
   and a gender, each offering only what the Liga search finds for the
