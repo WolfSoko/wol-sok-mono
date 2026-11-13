@@ -1,8 +1,5 @@
 import type { Environment } from '../../environments/environment.type';
-import {
-  firebaseKontoDienst,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from './firebase-konto-dienst';
+import { firebaseKontoDienst, CLEAR_CACHE_KEY } from './firebase-konto-dienst';
 
 /** Firebase, as far as the service calls it; each spec steers it. */
 const firebase = vi.hoisted(() => ({
@@ -65,9 +62,7 @@ describe('FirebaseKontoDienst', () => {
         firebaseKontoDienst(UMGEBUNG).zwischenspeicherLeeren()
       ).resolves.toBeUndefined();
 
-      expect(localStorage.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL)).toBe(
-        '1'
-      );
+      expect(localStorage.getItem(CLEAR_CACHE_KEY)).toBe('1');
       expect(warnen).toHaveBeenCalled();
       warnen.mockRestore();
     });
@@ -75,9 +70,7 @@ describe('FirebaseKontoDienst', () => {
     it('marks nothing left to clear once it cleared', async () => {
       await firebaseKontoDienst(UMGEBUNG).zwischenspeicherLeeren();
 
-      expect(
-        localStorage.getItem(ZWISCHENSPEICHER_LEEREN_SCHLUESSEL)
-      ).toBeNull();
+      expect(localStorage.getItem(CLEAR_CACHE_KEY)).toBeNull();
     });
   });
 

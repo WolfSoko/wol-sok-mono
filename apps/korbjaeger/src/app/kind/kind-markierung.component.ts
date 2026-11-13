@@ -12,7 +12,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { firstValueFrom } from 'rxjs';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { Child, MarkablePlayer } from '@wolsok/feat-korbjaeger-selection';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
+import { selectionChange } from '../errors/selection-change';
 import { KIND_AENDERUNG } from './kind-aenderung';
 import {
   SpitznameDialogComponent,
@@ -94,11 +94,11 @@ export class KindMarkierungComponent {
   private readonly dialog = inject(MatDialog);
 
   private readonly seite = inject(KIND_AENDERUNG, { optional: true });
-  private readonly aenderung = this.seite ?? auswahlAenderung();
+  private readonly aenderung = this.seite ?? selectionChange();
   /** The failures it shows itself: where no page does (`KIND_AENDERUNG`). */
   protected readonly eigenerFehler = this.seite
     ? undefined
-    : this.aenderung.fehler;
+    : this.aenderung.error;
   /** The dialog open now, closed with the control. */
   private offenerDialog?: MatDialogRef<
     SpitznameDialogComponent,
@@ -120,7 +120,7 @@ export class KindMarkierungComponent {
     });
     if (antwort) {
       const spieler = this.spieler();
-      await this.aenderung.ausfuehren(() =>
+      await this.aenderung.run(() =>
         this.auswahl.mark(spieler, antwort.spitzname)
       );
     }
@@ -134,7 +134,7 @@ export class KindMarkierungComponent {
     });
     if (antwort) {
       const person = this.spieler().personId;
-      await this.aenderung.ausfuehren(() =>
+      await this.aenderung.run(() =>
         this.auswahl.setNickname(person, antwort.spitzname)
       );
     }
@@ -142,7 +142,7 @@ export class KindMarkierungComponent {
 
   protected entmarkieren(): Promise<boolean> {
     const person = this.spieler().personId;
-    return this.aenderung.ausfuehren(() => this.auswahl.unmark(person));
+    return this.aenderung.run(() => this.auswahl.unmark(person));
   }
 
   /**

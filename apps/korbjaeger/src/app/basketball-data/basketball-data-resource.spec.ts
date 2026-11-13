@@ -7,66 +7,66 @@ import {
 import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing';
 import { BASKETBALL_DATA } from './basketball-data.provider';
 import { LocalAnswerCache } from '@wolsok/feat-korbjaeger-answers';
-import type { KorbReadOptions } from './lesung';
+import type { KorbReadOptions } from './reading';
 import type { ProxyFetch } from './proxy-fetch';
 import { proxyTransport } from './proxy-transport';
-import { teamSaisonResource } from './team-saison-resource';
+import { teamSeasonResource } from './team-season-resource';
 
-const TEAM_SPIELE = '/api/dbb/team/313036/spiele';
+const TEAM_GAMES = '/api/dbb/team/313036/spiele';
 
 /** The proxy answering the Team's Spiele as recorded, until told otherwise. */
-function proxyMit(): {
+function proxyWith(): {
   proxy: ProxyFetch;
   /** `undefined`: as recorded again. */
-  antwortet: (proxy: ProxyFetch | undefined) => void;
+  answer: (proxy: ProxyFetch | undefined) => void;
 } {
-  const aufgezeichnet: ProxyFetch = async () =>
+  const recorded: ProxyFetch = async () =>
     new Response(
       JSON.stringify(fakeDbbAnswer('GET', 'team/id/313036/matches')),
       { status: 200 }
     );
-  let aktuell = aufgezeichnet;
+  let current = recorded;
   return {
-    proxy: (url, init) => aktuell(url, init),
-    antwortet: (proxy) => {
-      aktuell = proxy ?? aufgezeichnet;
+    proxy: (url, init) => current(url, init),
+    answer: (proxy) => {
+      current = proxy ?? recorded;
     },
   };
 }
 
-const NICHT_ERREICHBAR: ProxyFetch = async () => {
+const UNREACHABLE: ProxyFetch = async () => {
   throw new TypeError('Failed to fetch');
 };
 
 /** A 200 the adapter cannot read: a Team's Spiele of the wrong shape. */
-const FALSCHE_FORM: ProxyFetch = async () =>
+const WRONG_SHAPE: ProxyFetch = async () =>
   new Response('{"status":"0","data":{"matches":"keine Liste"}}', {
     status: 200,
   });
 
-function lesen(proxy: ProxyFetch) {
-  let jetzt = 1_000;
-  const antworten = new LocalAnswerCache(localStorage);
+function read(proxy: ProxyFetch) {
+  let now = 1_000;
+  const answers = new LocalAnswerCache(localStorage);
   TestBed.configureTestingModule({
     providers: [
       {
         provide: BASKETBALL_DATA,
         useValue: new DbbBasketballData<KorbReadOptions>(
-          proxyTransport(proxy, { antworten, jetzt: () => jetzt })
+          proxyTransport(proxy, { answers, now: () => now })
         ),
       },
     ],
   });
-  const saison = TestBed.runInInjectionContext(() =>
-    teamSaisonResource(() => 313036)
+  const season = TestBed.runInInjectionContext(() =>
+    teamSeasonResource(() => 313036)
   );
   return {
-    saison,
-    antworten,
-    spaeter: (ms: number) => {
-      jetzt += ms;
+    season,
+    answers,
+    later: (ms: number) => {
+      now += ms;
     },
-    stabil: () => TestBed.inject(ApplicationRef).whenStable(),
+    settled: () => TestBed.inject(ApplicationRef).whenStable(),
   };
 }
 
@@ -74,60 +74,60 @@ describe('basketballDataResource', () => {
   beforeEach(() => localStorage.clear());
 
   it("gives a read's value its Stand while it is the last good data, and none once read afresh", async () => {
-    const zustand = proxyMit();
-    const { saison, spaeter, stabil } = lesen(zustand.proxy);
-    await stabil();
-    expect(saison.stand()).toBeUndefined();
+    const state = proxyWith();
+    const { season, later, settled } = read(state.proxy);
+    await settled();
+    expect(season.asOf()).toBeUndefined();
 
-    zustand.antwortet(NICHT_ERREICHBAR);
-    spaeter(60_000);
-    saison.reload();
-    await stabil();
-    expect(saison.hasValue()).toBe(true);
-    expect(saison.stand()).toEqual({
-      gespeichertAm: 1_000,
-      grund: 'keine-verbindung',
+    state.answer(UNREACHABLE);
+    later(60_000);
+    season.reload();
+    await settled();
+    expect(season.hasValue()).toBe(true);
+    expect(season.asOf()).toEqual({
+      storedAt: 1_000,
+      reason: 'no-connection',
     });
 
-    zustand.antwortet(undefined);
-    saison.reload();
-    await stabil();
-    expect(saison.hasValue()).toBe(true);
-    expect(saison.stand()).toBeUndefined();
+    state.answer(undefined);
+    season.reload();
+    await settled();
+    expect(season.hasValue()).toBe(true);
+    expect(season.asOf()).toBeUndefined();
   });
 
   it('keeps the Stand while a reload is under way and the value it belongs to still shows', async () => {
-    const zustand = proxyMit();
-    const { saison, stabil } = lesen(zustand.proxy);
-    await stabil();
-    zustand.antwortet(NICHT_ERREICHBAR);
-    saison.reload();
-    await stabil();
-    const stand = saison.stand();
-    expect(stand).toBeDefined();
+    const state = proxyWith();
+    const { season, settled } = read(state.proxy);
+    await settled();
+    state.answer(UNREACHABLE);
+    season.reload();
+    await settled();
+    const asOf = season.asOf();
+    expect(asOf).toBeDefined();
 
-    zustand.antwortet(() => new Promise<Response>(() => undefined));
-    saison.reload();
+    state.answer(() => new Promise<Response>(() => undefined));
+    season.reload();
     TestBed.tick();
     await Promise.resolve();
 
-    expect(saison.status()).toBe('reloading');
-    expect(saison.stand()).toEqual(stand);
+    expect(season.status()).toBe('reloading');
+    expect(season.asOf()).toEqual(asOf);
   });
 
   it('keeps the last good answer when a later 200 is of a shape the adapter cannot read', async () => {
-    const zustand = proxyMit();
-    const { saison, antworten, stabil, spaeter } = lesen(zustand.proxy);
-    await stabil();
+    const state = proxyWith();
+    const { season, answers, settled, later } = read(state.proxy);
+    await settled();
 
-    zustand.antwortet(FALSCHE_FORM);
-    spaeter(60_000);
-    saison.reload();
-    await stabil();
+    state.answer(WRONG_SHAPE);
+    later(60_000);
+    season.reload();
+    await settled();
 
-    expect(isBasketballDataError(saison.error(), 'unexpected-shape')).toBe(
+    expect(isBasketballDataError(season.error(), 'unexpected-shape')).toBe(
       true
     );
-    expect(antworten.read(TEAM_SPIELE, 61_000)?.storedAt).toBe(1_000);
+    expect(answers.read(TEAM_GAMES, 61_000)?.storedAt).toBe(1_000);
   });
 });

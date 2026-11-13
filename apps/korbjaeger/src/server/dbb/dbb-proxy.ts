@@ -17,9 +17,9 @@ import {
 } from './dbb-proxy-response';
 import type { DbbUpstream } from './dbb-upstream';
 import type { AnyProxyRoute } from '../../shared/dbb-proxy-routes';
-import { PROXY_CACHE_SEKUNDEN } from '../../shared/proxy-cache';
+import { PROXY_CACHE_SECONDS } from '../../shared/proxy-cache';
 
-const { browser, cdn, cdnFertigerSpielbericht } = PROXY_CACHE_SEKUNDEN;
+const { browser, cdn, cdnFinishedGameReport } = PROXY_CACHE_SECONDS;
 
 /**
  * How long a successful read may be reused, in the browser and in Firebase
@@ -33,7 +33,7 @@ export const DBB_PROXY_CACHE_CONTROL = publicCacheControl(browser, cdn);
  */
 export const FINISHED_BOXSCORE_CACHE_CONTROL = publicCacheControl(
   browser,
-  cdnFertigerSpielbericht
+  cdnFinishedGameReport
 );
 
 /**

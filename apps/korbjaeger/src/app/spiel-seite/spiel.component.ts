@@ -16,16 +16,16 @@ import {
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
-import { spielberichtResource } from '../basketball-data/spielbericht-resource';
-import { fehlerText, KEIN_SPIEL } from '../fehler/fehler-text';
-import { HalleComponent } from '../halle/halle.component';
+import { gameDetailsResource } from '../basketball-data/game-details-resource';
+import { gameReportResource } from '../basketball-data/game-report-resource';
+import { errorText, NO_GAME } from '../errors/error-text';
+import { VenueComponent } from '../venue/venue.component';
 import { KIND_AENDERUNG, provideKindAenderung } from '../kind/kind-aenderung';
 import { VORLAEUFIG } from '../spiel/spiel-format';
 import { KaderComponent } from './kader.component';
 import { spielKopf } from './spiel-kopf';
 import { spielberichtTeil } from './spielbericht-teil';
-import { StandComponent } from '../stand/stand.component';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { breadcrumb } from '../navigation/breadcrumb';
 import { followedSide } from './gefolgter-verein';
@@ -39,12 +39,12 @@ import { followedSide } from './gefolgter-verein';
 @Component({
   selector: 'korb-spiel',
   imports: [
-    HalleComponent,
+    VenueComponent,
     KaderComponent,
     MatProgressBarModule,
     MatTableModule,
     RouterLink,
-    StandComponent,
+    AsOfComponent,
   ],
   providers: [provideKindAenderung()],
   templateUrl: './spiel.component.html',
@@ -60,12 +60,12 @@ export class SpielComponent {
   private readonly gefolgt = inject(AUSWAHL).teams;
 
   /** What the page says when marking a Kind failed. */
-  protected readonly kindFehler = inject(KIND_AENDERUNG).fehler;
+  protected readonly kindFehler = inject(KIND_AENDERUNG).error;
   protected readonly vorlaeufigText = VORLAEUFIG;
 
-  protected readonly details = spielDetailsResource(() => this.spiel());
+  protected readonly details = gameDetailsResource(() => this.spiel());
 
-  protected readonly bericht = spielberichtResource(() => this.spiel());
+  protected readonly bericht = gameReportResource(() => this.spiel());
 
   protected readonly kopf = computed(() =>
     this.details.hasValue() ? spielKopf(this.details.value()) : undefined
@@ -80,8 +80,8 @@ export class SpielComponent {
 
   protected readonly fehler = computed(() =>
     this.spiel() === undefined
-      ? KEIN_SPIEL
-      : fehlerText(this.details.error(), KEIN_SPIEL)
+      ? NO_GAME
+      : errorText(this.details.error(), NO_GAME)
   );
 
   protected readonly spielbericht = computed(() =>

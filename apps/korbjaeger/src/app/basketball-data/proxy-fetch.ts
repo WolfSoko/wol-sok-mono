@@ -2,7 +2,7 @@ import {
   BasketballDataError,
   type ReadSignal,
 } from '@wolsok/feat-shared-basketball-data';
-import { KeinInternetError } from './kein-internet-error';
+import { NoInternetError } from './no-internet-error';
 
 /** The `fetch` the browser calls the app's server with; specs pass a fake. */
 export type ProxyFetch = (url: string, init: RequestInit) => Promise<Response>;
@@ -15,7 +15,7 @@ export const HTTP_OK = 200;
  * `navigator.onLine` says nothing of a Halle's dead reception, where a
  * call would hang. Above the proxy's own 5 s for the DBB.
  */
-export const PROXY_ZEITLIMIT_MS = 8_000;
+export const PROXY_TIMEOUT_MS = 8_000;
 
 /** How one call to the app's server goes. */
 export interface ProxyCall {
@@ -23,36 +23,36 @@ export interface ProxyCall {
   readonly online: () => boolean;
   /** Cancels the call with the read it belongs to. */
   readonly signal: ReadSignal | undefined;
-  /** How long the call may take; `PROXY_ZEITLIMIT_MS`. */
-  readonly zeitlimitMs: number;
+  /** How long the call may take; `PROXY_TIMEOUT_MS`. */
+  readonly timeoutMs: number;
 }
 
 /**
  * The server's response at `path`, whatever its status. A device the
- * browser calls offline (`KeinInternetError`, no call made), or a call the
- * server never answered within `zeitlimitMs`, is `offline` (no server
+ * browser calls offline (`NoInternetError`, no call made), or a call the
+ * server never answered within `timeoutMs`, is `offline` (no server
  * reached); one the read cancelled rejects as `fetch` did, so the caller
  * rejects with the read's reason.
  */
 export async function reachProxy(
   path: string,
   fetchProxy: ProxyFetch,
-  { online, signal, zeitlimitMs }: ProxyCall
+  { online, signal, timeoutMs }: ProxyCall
 ): Promise<Response> {
   if (!online()) {
-    throw new KeinInternetError(path);
+    throw new NoInternetError(path);
   }
-  const abbruch = abortSignalOf(signal);
+  const abort = abortSignalOf(signal);
   try {
     return await fetchProxy(path, {
       headers: { accept: 'application/json' },
       signal: AbortSignal.any([
-        ...(abbruch === undefined ? [] : [abbruch]),
-        AbortSignal.timeout(zeitlimitMs),
+        ...(abort === undefined ? [] : [abort]),
+        AbortSignal.timeout(timeoutMs),
       ]),
     });
   } catch (error) {
-    if (abbruch?.aborted) {
+    if (abort?.aborted) {
       throw error;
     }
     throw new BasketballDataError('offline', `${path}: proxy not reachable`, {

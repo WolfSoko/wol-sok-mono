@@ -5,13 +5,13 @@ import {
   input,
 } from '@angular/core';
 import { parseDbbId } from '@wolsok/feat-shared-basketball-data';
-import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
-import { KEIN_VEREIN } from '../fehler/fehler-text';
+import { clubTeamsResource } from '../basketball-data/club-teams-resource';
+import { NO_CLUB } from '../errors/error-text';
 import { breadcrumb } from '../navigation/breadcrumb';
 import { VereinsTeamDetailDirective } from '../verein/vereins-team-detail.directive';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
-import { StandComponent } from '../stand/stand.component';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { ChildStepComponent } from './child-step.component';
 import { CHILD_SEARCH_LEVEL, SEARCH_LEVEL } from './search-level';
 
@@ -27,14 +27,14 @@ const CLUB_TITLE = 'Verein';
   selector: 'korb-club-page',
   imports: [
     ChildStepComponent,
-    StandComponent,
+    AsOfComponent,
     VereinsTeamDetailDirective,
     VereinsTeamsComponent,
   ],
   template: `
     <h1 data-qa="club-name">{{ title() }}</h1>
     @if (stand(); as stand) {
-      <korb-stand data-qa="vereins-stand" [stand]="teams.stand()" />
+      <korb-as-of data-qa="vereins-stand" [asOf]="teams.asOf()" />
       @if (forChild() && stand.art === 'gelesen' && stand.teams.length > 0) {
         <p data-qa="child-search-follow-first">
           Folge zuerst dem Team deines Kindes, dann markierst du es im Kader.
@@ -73,10 +73,10 @@ export class ClubPageComponent {
   /** Shown in the search "Über mein Kind", leading on to marking it. */
   public readonly forChild = input(false);
 
-  protected readonly unknownClub = KEIN_VEREIN;
+  protected readonly unknownClub = NO_CLUB;
 
   private readonly club = computed(() => parseDbbId(this.clubId()));
-  protected readonly teams = vereinsTeamsResource(() => this.club());
+  protected readonly teams = clubTeamsResource(() => this.club());
 
   /** The read's stand; none for an id that is no DBB id. */
   protected readonly stand = computed(() =>

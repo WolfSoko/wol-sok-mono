@@ -13,7 +13,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import { JETZT } from '../jetzt';
+import { NOW } from '../now';
 import { Breadcrumb } from '../navigation/breadcrumb';
 import { ClubPageComponent } from './club-page.component';
 
@@ -68,7 +68,7 @@ async function render(
       },
       // in memory: nothing reaches the device's storage
       { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
-      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(ClubPageComponent);
@@ -104,9 +104,9 @@ describe('ClubPageComponent', () => {
 
   it('says how old the Teams are where the last good answer stood in', async () => {
     const { page } = await render(async (_, options) => {
-      options?.lesung?.ersetzt({
-        gespeichertAm: JETZT_IM_SPEC - ZWEI_STUNDEN,
-        grund: 'keine-verbindung',
+      options?.reading?.replaced({
+        storedAt: JETZT_IM_SPEC - ZWEI_STUNDEN,
+        reason: 'no-connection',
       });
       return WASBUETTEL;
     });

@@ -10,8 +10,8 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import type { KorbReadOptions } from '../basketball-data/lesung';
-import { JETZT } from '../jetzt';
+import type { KorbReadOptions } from '../basketball-data/reading';
+import { NOW } from '../now';
 import { TeamTabelleComponent } from './team-tabelle.component';
 
 const UNSER_TEAM_ID = 313036;
@@ -69,7 +69,7 @@ function create(
   TestBed.configureTestingModule({
     providers: [
       { provide: BASKETBALL_DATA, useValue: data },
-      { provide: JETZT, useValue: signal(JETZT_IM_SPEC) },
+      { provide: NOW, useValue: signal(JETZT_IM_SPEC) },
     ],
   });
   const fixture = TestBed.createComponent(TeamTabelleComponent);
@@ -100,15 +100,15 @@ describe('TeamTabelleComponent', () => {
   it('shows its last good Tabelle with its age where the read fell back on it', async () => {
     const page = await render(
       fakeData(async (_liga, options?: KorbReadOptions) => {
-        options?.lesung?.ersetzt({
-          gespeichertAm: JETZT_IM_SPEC - 30 * 60_000,
-          grund: 'unavailable',
+        options?.reading?.replaced({
+          storedAt: JETZT_IM_SPEC - 30 * 60_000,
+          reason: 'unavailable',
         });
         return TABELLE;
       })
     );
 
-    expect(page.querySelector('[data-qa="stand"]')?.textContent).toContain(
+    expect(page.querySelector('[data-qa="as-of"]')?.textContent).toContain(
       'DBB nicht erreichbar · Stand: vor 30 Min.'
     );
     expect(zeilen(page)).toHaveLength(3);

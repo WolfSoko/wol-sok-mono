@@ -1,11 +1,11 @@
 import { SELECTION_KEY } from '@wolsok/feat-korbjaeger-selection';
 import { ANSWER_INDEX, ANSWER_PREFIX } from '@wolsok/feat-korbjaeger-answers';
 import {
-  ANGEMELDET_SCHLUESSEL,
-  DARSTELLUNG_SCHLUESSEL,
-  INSTALLATION_ABGELEHNT_SCHLUESSEL,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from '../geraete-speicher';
+  SIGNED_IN_KEY,
+  APPEARANCE_KEY,
+  INSTALL_DISMISSED_KEY,
+  CLEAR_CACHE_KEY,
+} from '../device-storage';
 
 /**
  * Every key (or key prefix) the app itself keeps in `localStorage`, as the
@@ -17,8 +17,8 @@ export const GERAETE_SCHLUESSEL = {
   auswahl: SELECTION_KEY,
   antwortPraefix: ANSWER_PREFIX,
   antwortIndex: ANSWER_INDEX,
-  angemeldet: ANGEMELDET_SCHLUESSEL,
-  zwischenspeicherLeeren: ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-  installationAbgelehnt: INSTALLATION_ABGELEHNT_SCHLUESSEL,
-  darstellung: DARSTELLUNG_SCHLUESSEL,
+  angemeldet: SIGNED_IN_KEY,
+  zwischenspeicherLeeren: CLEAR_CACHE_KEY,
+  installationAbgelehnt: INSTALL_DISMISSED_KEY,
+  darstellung: APPEARANCE_KEY,
 } as const;

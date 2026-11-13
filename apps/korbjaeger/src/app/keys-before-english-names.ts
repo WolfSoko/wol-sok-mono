@@ -1,7 +1,4 @@
-import {
-  ANGEMELDET_SCHLUESSEL,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from './geraete-speicher';
+import { SIGNED_IN_KEY, CLEAR_CACHE_KEY } from './device-storage';
 
 /**
  * The keys the app kept in `localStorage` before #2966 renamed them. #2983
@@ -21,9 +18,9 @@ export const KEYS_BEFORE_ENGLISH_NAMES = {
 
 /** The flags that still matter, by the key that replaced each. */
 const FLAGS_KEPT: readonly (readonly [string, string])[] = [
-  [KEYS_BEFORE_ENGLISH_NAMES.signedIn, ANGEMELDET_SCHLUESSEL],
+  [KEYS_BEFORE_ENGLISH_NAMES.signedIn, SIGNED_IN_KEY],
   // the privacy policy promises the pending clearing at the next start
-  [KEYS_BEFORE_ENGLISH_NAMES.clearCache, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL],
+  [KEYS_BEFORE_ENGLISH_NAMES.clearCache, CLEAR_CACHE_KEY],
 ];
 
 /**

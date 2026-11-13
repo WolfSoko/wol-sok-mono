@@ -135,7 +135,7 @@ h2 {
 // The scoreboard for the next Spiel and the last result: the dark scheme in
 // both, so every Material token turns for what it holds (Material emits each
 // colour as `light-dark()`, which the browser resolves where it is used;
-// `css-ziele.ts` keeps the build from resolving it on `html` instead).
+// `deploy/css-targets.ts` keeps the build from resolving it on `html` instead).
 .anzeigetafel {
   color-scheme: dark;
   padding: 0.75rem 1rem;

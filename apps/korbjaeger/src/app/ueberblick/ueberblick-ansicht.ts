@@ -9,8 +9,8 @@ import {
   type Game,
 } from '@wolsok/feat-shared-basketball-data';
 import type { Child } from '@wolsok/feat-korbjaeger-selection';
-import { aeltesterStand, type Stand } from '../basketball-data/stand';
-import type { HallenStand } from '../halle/hallen-stand';
+import { oldestAsOf, type AsOf } from '../basketball-data/as-of';
+import type { VenueState } from '../venue/venue-state';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 import { kartenName, type TeamKarte } from './team-karte';
 
@@ -20,9 +20,9 @@ export interface TeamImUeberblick {
   /** Its Saison with its overview (`teamOverview`), once read. */
   readonly saison?: SeasonWithOverview;
   /** The read of its next Spiel's Halle, once it started. */
-  readonly halle?: HallenStand;
+  readonly halle?: VenueState;
   /** The oldest Stand of its Saison and next Spiel. */
-  readonly stand?: Stand;
+  readonly stand?: AsOf;
   /**
    * What its Kader told of the marked Kinder, the last finds kept while it
    * is searched again; none before the first search ended.
@@ -60,7 +60,7 @@ export interface KindAbschnitt {
   /** The heading of `naechstes`, naming its Team where the Kind has several. */
   readonly naechstesTitel: string;
   /** The read of that Spiel's Halle. */
-  readonly halle?: HallenStand;
+  readonly halle?: VenueState;
   /** What falls through before `naechstes` (all of it where none is next). */
   readonly ausfaelle: readonly SpielZeile[];
   /** What falls through after `naechstes`, shown below it. */
@@ -75,7 +75,7 @@ export interface KindAbschnitt {
    */
   readonly imKader?: boolean;
   /** The oldest Stand of its Teams' reads. */
-  readonly stand?: Stand;
+  readonly stand?: AsOf;
   /** Why it shows no Team, once no Kader is still read. */
   readonly nichtGefunden?: NichtGefunden;
   /**
@@ -176,7 +176,7 @@ function kindAbschnitt(
     }),
     ...(letztes && { letztes: zeile(letztes) }),
     ...(imKader !== undefined && { imKader }),
-    stand: aeltesterStand(...seine.map(({ stand }) => stand)),
+    stand: oldestAsOf(...seine.map(({ stand }) => stand)),
     ...(nichtGefunden && { nichtGefunden }),
     vielleichtMehrTeams:
       seine.length > 0 &&

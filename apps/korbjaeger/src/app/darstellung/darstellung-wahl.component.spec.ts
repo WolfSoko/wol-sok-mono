@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleGroupHarness } from '@angular/material/button-toggle/testing';
 import { MATERIAL_ANIMATIONS } from '@angular/material/core';
 import { ThemeService } from '@wolsok/shared-theme';
-import { DARSTELLUNG_SCHLUESSEL } from '../geraete-speicher';
+import { APPEARANCE_KEY } from '../device-storage';
 import { provideDarstellung } from './darstellung';
 import { DarstellungWahlComponent } from './darstellung-wahl.component';
 
@@ -55,17 +55,17 @@ describe('DarstellungWahlComponent', () => {
 
     expect(TestBed.inject(ThemeService).choice()).toBe('dark');
     expect(document.documentElement.getAttribute('data-theme')).toBe('dark');
-    expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBe('dark');
+    expect(localStorage.getItem(APPEARANCE_KEY)).toBe('dark');
     expect(await gewaehlt(gruppe)).toEqual(['Dunkel']);
 
     await (await gruppe.getToggles({ text: 'System' }))[0].check();
 
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
-    expect(localStorage.getItem(DARSTELLUNG_SCHLUESSEL)).toBeNull();
+    expect(localStorage.getItem(APPEARANCE_KEY)).toBeNull();
   });
 
   it('shows the look kept on the device', async () => {
-    localStorage.setItem(DARSTELLUNG_SCHLUESSEL, 'light');
+    localStorage.setItem(APPEARANCE_KEY, 'light');
 
     expect(await gewaehlt(await oeffnen())).toEqual(['Hell']);
   });

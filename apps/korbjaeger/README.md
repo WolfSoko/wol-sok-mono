@@ -18,7 +18,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   page), then one Tabelle per Liga of those Spiele, the Team's own line
   highlighted. The current Liga comes first, by the lib's
   `leaguesCurrentFirst`: the Liga of the Team's next Spiel from today on
-  (`HEUTE` in `src/app/heute.ts`, read again when the page comes back
+  (`TODAY` in `src/app/today.ts`, read again when the page comes back
   into view; specs replace it), or of its last
   Spiel once none is left (a cancelled Spiel decides nothing, a forfeited
   one does); the others follow by their last Spiel, newest first. Each
@@ -27,7 +27,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   Teams or takes it out (`team-folgen.component.ts`).
   Below, "Weitere Teams des Vereins": the Verein's other Teams as its
   Spiele of four weeks either way show them (the lib's `vereinsTeams`,
-  `vereinsTeamsResource`), each with its Ligen, a link to its page and the
+  `clubTeamsResource`), each with its Ligen, a link to its page and the
   same follow button; `VereinsTeamsComponent` (`src/app/verein/`) only
   shows the read's stand (it keeps them while a sibling Team of the same
   Verein loads, so that reads the Verein no second time). Once the Team's
@@ -46,12 +46,12 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   while there is none. The Spiel and its Spielbericht load and fail on
   their own; the view models are pure (`spiel-kopf.ts`,
   `kader-zeilen.ts`, `spielbericht-teil.ts`).
-- **Halle** (`src/app/halle/`): `HalleComponent` shows a Halle with a
+- **Halle** (`src/app/venue/`): `VenueComponent` shows a Halle with a
   link that opens navigation in a tab of its own (the lib's
-  `venueNavigationUrl`); `SpielHalleComponent` shows where a Halle's read
-  stands (`HallenStand`: loading, failed, read) and reads nothing itself.
-  Only the next Spiel's details are read (`spielDetailsResource` in
-  `src/app/basketball-data/`, beside `teamSaisonResource`): the Team page
+  `venueNavigationUrl`); `GameVenueComponent` shows where a Halle's read
+  stands (`VenueState`: loading, failed, read) and reads nothing itself.
+  Only the next Spiel's details are read (`gameDetailsResource` in
+  `src/app/basketball-data/`, beside `teamSeasonResource`): the Team page
   holds its own read, `MeineTeamsUeberblick` one per followed Team, and
   `NaechstesSpielComponent` (`src/app/spiel/`) shows the Spiel with its
   Halle on both, so each loads and fails on its own.
@@ -75,16 +75,16 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   that plays first first and Teams without a next Spiel last
   (`byNextGame`), each linking to its Team page.
   `MeineTeamsUeberblick` holds the reads of each followed Team: its Saison
-  (`teamSaisonResource`, as the Team page) and, once its next Spiel is
-  known, that Spiel's details for the Halle (`spielDetailsResource`), both
+  (`teamSeasonResource`, as the Team page) and, once its next Spiel is
+  known, that Spiel's details for the Halle (`gameDetailsResource`), both
   ended when the Team is unfollowed. A card whose Team's Saison looks
   over (`seasonOver`) shows the same hint with its Verein's current
-  Teams; only then is the Verein read (`vereinsTeamsResource`), once per
+  Teams; only then is the Verein read (`clubTeamsResource`), once per
   Verein however many of its Teams are followed. So each card loads and fails
   on its own and a follow or unfollow reads no other Team again; the cards
   (`ueberblick-team.component.ts`) only show what they are given, and one
   whose read fails offers "Entfernen". Error texts are in
-  `src/app/fehler/`. Both screens
+  `src/app/errors/`. Both screens
   show a Spiel through `SpielZeileComponent` (`src/app/spiel/`), as a
   link to its Spiel page (`SpielLinkComponent` on the cards). While
   Meine Teams is empty it offers "Team suchen" (`/suchen`); once a Team
@@ -97,7 +97,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   nothing); then a Liga of the paged list (`ligenSeiten`: the first page
   with the search, every later one through the DBB's list call,
   "Weitere Ligen", the lib's `nextStartIndex`); then every Team of
-  that Liga (`ligaTeamsResource`, the lib's `leagueTeams` from its
+  that Liga (`leagueTeamsResource`, the lib's `leagueTeams` from its
   Spielplan), by the DBB's Team name, which carries the Verein's team
   number ("TSV X 2"). One tap follows the Team (`Auswahl.folgen`) and
   opens its Team page. Changing a pick starts over below it.
@@ -126,7 +126,7 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
 - **Last good data** (`src/app/basketball-data/`): the browser transport
   keeps the last good answer of a Team's Spiele, a Tabelle, a Spiel's
   match info and a Verein's Spiele by its proxy path
-  (`SPEICHERBARE_ARTEN`, `LocalAnswerCache`, `localStorage` keys
+  (`STORABLE_KINDS`, `LocalAnswerCache`, `localStorage` keys
   `korbjaeger-answer:/api/dbb/...` as `{ v: 2, am, art, antwort }`, with
   an index `korbjaeger-answers` of each one's size, time and kind). Each
   is kept without the persons it names (the lib's `dbbWithoutPersons`: a
@@ -134,17 +134,17 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   (its Kader name children, ADR 0019), the wizard's Liga search and Liga
   Teams (browsing them would evict what Meine Teams need), errors, and an
   answer the adapter could not map: the transport only notes an answer in
-  the read's `Lesung`, and the resource keeps it once the read mapped it.
-  A read with a `Lesung` that fails as `offline` (fetch throws or the
-  proxy does not answer within 8 s, `PROXY_ZEITLIMIT_MS`; or
-  `navigator.onLine` is false, `KeinInternetError`, when the proxy is not
+  the read's `Reading`, and the resource keeps it once the read mapped it.
+  A read with a `Reading` that fails as `offline` (fetch throws or the
+  proxy does not answer within 8 s, `PROXY_TIMEOUT_MS`; or
+  `navigator.onLine` is false, `NoInternetError`, when the proxy is not
   called at all) or `unavailable` (the proxy's 502) is answered from it,
   never a 404 or a cancelled read. An answer older than 7 days
-  (`MAX_ALTER_MS`) is neither served nor kept; `LETZTE_ANTWORTEN`
-  (`letzte-antworten-pflege.ts`) drops those and answers of kinds no
+  (`MAX_AGE_MS`) is neither served nor kept; `ANSWER_CACHE`
+  (`answer-cache-maintenance.ts`) drops those and answers of kinds no
   longer kept at the start, when the page comes back into view and hourly
   while it stays open. When Meine Teams find the storage full, the
-  answers give way (`SPEICHER_FREIGEBEN`) and `LocalSelection` writes once
+  answers give way (`FREE_STORAGE`) and `LocalSelection` writes once
   more. At most 60 answers and 1,000,000 characters
   (`ANTWORT_GRENZEN`, so Meine Teams always find room): a write beyond
   either evicts the oldest answers first, once the new one is stored (a
@@ -156,13 +156,13 @@ only (`ssr: false`); Nitro serves the shell and the DBB proxy.
   rebuilt from them when it cannot be read. The read's options are typed
   (`KorbReadOptions`, `DbbBasketballData<KorbReadOptions>` hands them to
   the transport as they are). Each resource of `basketballDataResource`
-  (a `DatenResource`) has a `stand` beside its value, changing with it (a
-  value shown while reloading keeps its Stand); `korb-stand` (`src/app/stand/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `JETZT` (`src/app/jetzt.ts`, the screens' one
-  clock, read every minute and on visibility changes; `HEUTE` is its
+  (a `DataResource`) has an `asOf` beside its value, changing with it (a
+  value shown while reloading keeps its Stand); `korb-as-of` (`src/app/as-of/`) shows it as "Offline · Stand: vor 2 Std." ("Offline" only where the browser says so, else "Keine Verbindung" or "DBB nicht erreichbar"), aging with `NOW` (`src/app/now.ts`, the screens' one
+  clock, read every minute and on visibility changes; `TODAY` is its
   German date). The Team page's head, its "Weitere Teams des Vereins",
   each Tabelle, the Spiel page and each overview card show one Stand, the
   oldest of the reads they show (the next Spiel's Halle included).
-- **Errors** (`src/app/fehler/`): `fehlerText` tells the three failures
+- **Errors** (`src/app/errors/`): `errorText` tells the three failures
   apart: no connection ("Kein Internet" where the browser says it is
   offline, else "Keine Verbindung. Internet oder Server nicht
   erreichbar"), the DBB unreachable

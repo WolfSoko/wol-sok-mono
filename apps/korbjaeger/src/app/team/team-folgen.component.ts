@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
 import { AUSWAHL } from '../auswahl/auswahl';
 import type { TeamPlace } from '@wolsok/feat-korbjaeger-selection';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
+import { selectionChange } from '../errors/selection-change';
 import { NachEntfolgen } from './nach-entfolgen';
 
 /**
@@ -45,7 +45,7 @@ import { NachEntfolgen } from './nach-entfolgen';
       <mat-icon aria-hidden="true">{{ folgt() ? 'remove' : 'add' }}</mat-icon>
       {{ label() }}
     </button>
-    @if (aenderung.fehler(); as text) {
+    @if (aenderung.error(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
     }
   `,
@@ -102,7 +102,7 @@ export class TeamFolgenComponent {
     this.folgt() ? 'Nicht mehr folgen' : 'Team folgen'
   );
 
-  protected readonly aenderung = auswahlAenderung();
+  protected readonly aenderung = selectionChange();
   /** The screen's, where this control disappears with its Team. */
   private readonly nachEntfolgen = inject(NachEntfolgen, { optional: true });
 
@@ -112,14 +112,14 @@ export class TeamFolgenComponent {
 
   private folgen(): Promise<boolean> {
     const team = this.teamId();
-    return this.aenderung.ausfuehren(() => this.auswahl.follow(team));
+    return this.aenderung.run(() => this.auswahl.follow(team));
   }
 
   private async entfolgen(): Promise<void> {
     const team = this.teamId();
     const name = this.teamName();
     let platz: TeamPlace | undefined;
-    const entfolgt = await this.aenderung.ausfuehren(async () => {
+    const entfolgt = await this.aenderung.run(async () => {
       platz = await this.auswahl.unfollow(team);
     });
     // a control that disappears is one of a list: it has the Team's name

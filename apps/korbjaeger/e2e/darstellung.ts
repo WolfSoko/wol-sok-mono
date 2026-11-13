@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import { DARSTELLUNG_SCHLUESSEL } from '../src/app/geraete-speicher';
+import { APPEARANCE_KEY } from '../src/app/device-storage';
 
 /** Starts every page of `page` with the look `wahl` kept on the device. */
 export async function mitDarstellung(
@@ -8,7 +8,7 @@ export async function mitDarstellung(
 ): Promise<void> {
   await page.addInitScript(
     ([schluessel, wert]) => localStorage.setItem(schluessel, wert),
-    [DARSTELLUNG_SCHLUESSEL, wahl] as const
+    [APPEARANCE_KEY, wahl] as const
   );
 }
 

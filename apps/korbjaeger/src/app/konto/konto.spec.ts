@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import { GESPERRTER_SPEICHER } from '../../testing/speicher';
-import { ANGEMELDET_SCHLUESSEL, geraeteMerker, KONTO_SITZUNG } from './konto';
+import { BLOCKED_STORAGE } from '../../testing/storage';
+import { SIGNED_IN_KEY, geraeteMerker, KONTO_SITZUNG } from './konto';
 
 describe('geraeteMerker', () => {
   afterEach(() => localStorage.clear());
@@ -12,7 +12,7 @@ describe('geraeteMerker', () => {
     expect(geraeteMerker(localStorage).gesetzt()).toBe(true);
 
     merker.loeschen();
-    expect(localStorage.getItem(ANGEMELDET_SCHLUESSEL)).toBeNull();
+    expect(localStorage.getItem(SIGNED_IN_KEY)).toBeNull();
     expect(merker.gesetzt()).toBe(false);
   });
 
@@ -21,9 +21,7 @@ describe('geraeteMerker', () => {
     let gehoert = 0;
     geraeteMerker(localStorage, fenster).beobachten(() => gehoert++);
 
-    fenster.dispatchEvent(
-      new StorageEvent('storage', { key: ANGEMELDET_SCHLUESSEL })
-    );
+    fenster.dispatchEvent(new StorageEvent('storage', { key: SIGNED_IN_KEY }));
     fenster.dispatchEvent(new StorageEvent('storage', { key: 'anderes' }));
     fenster.dispatchEvent(new StorageEvent('storage', { key: null }));
 
@@ -31,7 +29,7 @@ describe('geraeteMerker', () => {
   });
 
   it('knows of no sign-in where the storage is blocked', () => {
-    const merker = geraeteMerker(GESPERRTER_SPEICHER);
+    const merker = geraeteMerker(BLOCKED_STORAGE);
 
     merker.setzen();
 

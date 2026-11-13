@@ -11,7 +11,7 @@ import { FUNCTION_REGION } from './shared/function-region';
 import { SITE_URL } from './shared/site';
 import {
   assertDeployableBuild,
-  buildKonfigurationMerken,
+  rememberBuildConfiguration,
   recordBuildConfiguration,
 } from '../deploy/build-configuration';
 
@@ -125,7 +125,7 @@ describe('the Firebase deploy', () => {
     });
 
     it('records the mode the build ran in once Vite wrote the build', () => {
-      const plugin = buildKonfigurationMerken(dist);
+      const plugin = rememberBuildConfiguration(dist);
 
       (plugin.configResolved as (c: { mode: string }) => void)({
         mode: 'development',
@@ -142,10 +142,10 @@ describe('the Firebase deploy', () => {
       ['development', 1],
     ])(
       'lets the deploy command go on only for a %s build',
-      (konfiguration, code) => {
-        recordBuildConfiguration(dist, konfiguration);
+      (configuration, code) => {
+        recordBuildConfiguration(dist, configuration);
 
-        const pruefung = spawnSync(
+        const check = spawnSync(
           'npx',
           [
             'tsx',
@@ -156,7 +156,7 @@ describe('the Firebase deploy', () => {
           { cwd: WORKSPACE, encoding: 'utf8' }
         );
 
-        expect(pruefung.status).toBe(code);
+        expect(check.status).toBe(code);
       }
     );
 
@@ -304,7 +304,7 @@ describe('the Firebase deploy', () => {
   );
 
   /** Whether Hosting sends `path` with `Cache-Control: no-cache`. */
-  const revalidiert = (path: string): boolean =>
+  const revalidated = (path: string): boolean =>
     cacheRules.some(
       (rule) =>
         configMatcher(path, rule) &&
@@ -333,7 +333,7 @@ describe('the Firebase deploy', () => {
     '/index.html',
     ...SERVICE_WORKER_FILES,
   ])('revalidates %s, so none asks for chunks a release removed', (path) => {
-    expect(revalidiert(path)).toBe(true);
+    expect(revalidated(path)).toBe(true);
   });
 
   /**

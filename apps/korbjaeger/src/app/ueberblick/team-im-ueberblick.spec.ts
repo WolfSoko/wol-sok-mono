@@ -8,10 +8,10 @@ import type {
   ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import {
-  FakeDatenResource,
-  type FakeLesung,
-} from '../basketball-data/testing/fake-daten-resource';
-import type { Stand } from '../basketball-data/stand';
+  FakeDataResource,
+  type FakeReading,
+} from '../basketball-data/testing/fake-data-resource';
+import type { AsOf } from '../basketball-data/as-of';
 import { NICHT_LESBAR } from './kader-funde';
 import { teamImUeberblick } from './team-im-ueberblick';
 import type { TeamLesungen } from './team-lesungen';
@@ -33,11 +33,11 @@ const FUNDE: RosterFinds = {
   incomplete: false,
 };
 
-const ALT: Stand = { gespeichertAm: 1000, grund: 'kein-internet' };
-const AELTER: Stand = { gespeichertAm: 500, grund: 'unavailable' };
+const ALT: AsOf = { storedAt: 1000, reason: 'no-internet' };
+const AELTER: AsOf = { storedAt: 500, reason: 'unavailable' };
 
 interface Lesungen {
-  readonly saison?: FakeLesung<TeamSeason>;
+  readonly saison?: FakeReading<TeamSeason>;
   readonly sucht?: boolean;
   readonly funde?: RosterFinds;
   readonly saisonEndeVerein?: ClubId;
@@ -51,10 +51,10 @@ function lesung({
   saisonEndeVerein,
 }: Lesungen = {}): TeamLesungen {
   return {
-    saison: new FakeDatenResource(saison),
+    saison: new FakeDataResource(saison),
     ueberblick: signal(saison.value && UEBERBLICK),
-    naechsteDetails: new FakeDatenResource<GameDetails>({ status: 'idle' }),
-    kaderSuche: new FakeDatenResource<RosterFinds>({ status: 'idle' }),
+    naechsteDetails: new FakeDataResource<GameDetails>({ status: 'idle' }),
+    kaderSuche: new FakeDataResource<RosterFinds>({ status: 'idle' }),
     sucht: signal(sucht),
     funde: signal(funde),
     saisonEndeVerein: signal(saisonEndeVerein),
@@ -148,16 +148,16 @@ describe('teamImUeberblick', () => {
   });
 
   it("dates the card by its Verein's Teams too, the Team itself by its own reads", () => {
-    const vereinsTeams = new FakeDatenResource<ClubTeams>({
+    const vereinsTeams = new FakeDataResource<ClubTeams>({
       status: 'resolved',
       value: { club: SAISON.club, teams: [] },
-      stand: AELTER,
+      asOf: AELTER,
     });
 
     const team = teamImUeberblick(
       TEAM,
       lesung({
-        saison: { status: 'resolved', value: SAISON, stand: ALT },
+        saison: { status: 'resolved', value: SAISON, asOf: ALT },
         saisonEndeVerein: VEREIN,
       }),
       () => vereinsTeams,

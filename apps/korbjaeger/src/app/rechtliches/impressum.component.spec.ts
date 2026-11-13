@@ -1,10 +1,10 @@
 import { SITE_OWNER } from '@wolsok/shared-legal';
-import { zeigen } from '../../testing/zeigen';
+import { show } from '../../testing/show';
 import { ImpressumComponent } from './impressum.component';
 
 describe('ImpressumComponent', () => {
   it('names the provider from SITE_OWNER, with the VAT ID', () => {
-    const seite = zeigen(ImpressumComponent);
+    const seite = show(ImpressumComponent);
 
     expect(seite.querySelector('h1')?.textContent?.trim()).toBe('Impressum');
     const anbieter = seite
@@ -19,7 +19,7 @@ describe('ImpressumComponent', () => {
   });
 
   it('says where the data comes from and links the privacy policy', () => {
-    const seite = zeigen(ImpressumComponent);
+    const seite = show(ImpressumComponent);
 
     expect(seite.textContent).toContain('Deutschen Basketball Bund');
     expect(seite.querySelector('a[href="/privacy"]')?.textContent).toContain(

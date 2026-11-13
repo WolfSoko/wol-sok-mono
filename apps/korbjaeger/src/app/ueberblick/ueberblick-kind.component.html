@@ -24,7 +24,7 @@
       />
     }
     @if (kind.teams.length > 0) {
-      <korb-stand data-qa="ueberblick-stand" [stand]="kind.stand" />
+      <korb-as-of data-qa="ueberblick-stand" [asOf]="kind.stand" />
     }
     @for (ausfall of kind.ausfaelle; track ausfall.id) {
       <korb-spiel-link

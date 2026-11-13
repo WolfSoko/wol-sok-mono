@@ -9,11 +9,11 @@ import {
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { AUSWAHL } from '../auswahl/auswahl';
-import { spielDetailsResource } from '../basketball-data/spiel-details-resource';
-import { teamSaisonResource } from '../basketball-data/team-saison-resource';
-import { vereinsTeamsResource } from '../basketball-data/vereins-teams-resource';
-import { hallenStand } from '../halle/hallen-stand';
-import { HEUTE } from '../heute';
+import { gameDetailsResource } from '../basketball-data/game-details-resource';
+import { teamSeasonResource } from '../basketball-data/team-season-resource';
+import { clubTeamsResource } from '../basketball-data/club-teams-resource';
+import { venueState } from '../venue/venue-state';
+import { TODAY } from '../today';
 import { RouterLink } from '@angular/router';
 import {
   leaguesCurrentFirst,
@@ -26,13 +26,13 @@ import {
 import { NaechstesSpielComponent } from '../spiel/naechstes-spiel.component';
 import { SpielZeileComponent } from '../spiel/spiel-zeile.component';
 import { spielZeile, spielZeilen } from '../spiel/spiel-zeile';
-import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
+import { errorText, NO_TEAM } from '../errors/error-text';
 import { TeamFolgenComponent } from './team-folgen.component';
 import { vereinsTeamsStand } from '../verein/vereins-teams-stand';
 import { SaisonEndeHinweisComponent } from '../verein/saison-ende-hinweis.component';
 import { VereinsTeamsComponent } from '../verein/vereins-teams.component';
-import { aeltesterStand } from '../basketball-data/stand';
-import { StandComponent } from '../stand/stand.component';
+import { oldestAsOf } from '../basketball-data/as-of';
+import { AsOfComponent } from '../as-of/as-of.component';
 import { TeamTabelleComponent } from './team-tabelle.component';
 import { vereinsfarbenAnwenden } from '../vereinsfarben/vereinsfarben-anwenden';
 import { breadcrumb } from '../navigation/breadcrumb';
@@ -56,7 +56,7 @@ import { VereinsfarbenKnopfComponent } from '../vereinsfarben/vereinsfarben-knop
     RouterLink,
     SaisonEndeHinweisComponent,
     SpielZeileComponent,
-    StandComponent,
+    AsOfComponent,
     TeamFolgenComponent,
     TeamTabelleComponent,
     VereinsfarbenKnopfComponent,
@@ -70,11 +70,11 @@ export class TeamComponent {
   /** The Team's DBB id, as the route gives it. */
   public readonly teamId = input.required<string>();
 
-  private readonly heute = inject(HEUTE);
+  private readonly heute = inject(TODAY);
   private readonly meineTeams = inject(AUSWAHL).teams;
   private readonly team = computed(() => parseDbbId(this.teamId()));
 
-  protected readonly saison = teamSaisonResource(() => this.team());
+  protected readonly saison = teamSeasonResource(() => this.team());
 
   /**
    * The Team to offer following: one the DBB knows, or one of Meine Teams
@@ -107,12 +107,12 @@ export class TeamComponent {
   });
 
   /** The next Spiel's details, for its Halle: that Spiel's only. */
-  private readonly naechsteDetails = spielDetailsResource(
+  private readonly naechsteDetails = gameDetailsResource(
     () => this.kommendesSpiel()?.id
   );
 
   protected readonly naechsteHalle = computed(() =>
-    hallenStand(this.naechsteDetails)
+    venueState(this.naechsteDetails)
   );
 
   protected readonly ligen = computed(() =>
@@ -139,7 +139,7 @@ export class TeamComponent {
     computation: (saison, vorher) => saison?.club.id ?? vorher?.value,
   });
 
-  protected readonly vereinsTeams = vereinsTeamsResource(() => this.vereinId());
+  protected readonly vereinsTeams = clubTeamsResource(() => this.vereinId());
 
   /** The Verein's Teams other than this one, as their read stands. */
   protected readonly weitereTeams = computed(() => {
@@ -154,18 +154,18 @@ export class TeamComponent {
    * Halle, and the Verein's Teams while the hint offers them up there.
    */
   protected readonly kopfStand = computed(() =>
-    aeltesterStand(
-      this.saison.stand(),
-      this.naechsteDetails.stand(),
-      this.beendet() ? this.vereinsTeams.stand() : undefined
+    oldestAsOf(
+      this.saison.asOf(),
+      this.naechsteDetails.asOf(),
+      this.beendet() ? this.vereinsTeams.asOf() : undefined
     )
   );
 
   protected readonly fehler = computed(() => {
     if (this.team() === undefined) {
-      return KEIN_TEAM;
+      return NO_TEAM;
     }
-    return fehlerText(this.saison.error(), KEIN_TEAM);
+    return errorText(this.saison.error(), NO_TEAM);
   });
 
   public constructor() {

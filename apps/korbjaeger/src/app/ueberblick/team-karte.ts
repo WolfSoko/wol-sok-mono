@@ -5,18 +5,18 @@ import type {
   TeamOverview,
   Club,
 } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText, KEIN_TEAM } from '../fehler/fehler-text';
-import type { Stand } from '../basketball-data/stand';
-import type { HallenStand } from '../halle/hallen-stand';
+import { errorText, NO_TEAM } from '../errors/error-text';
+import type { AsOf } from '../basketball-data/as-of';
+import type { VenueState } from '../venue/venue-state';
 import { spielZeile, type SpielZeile } from '../spiel/spiel-zeile';
 import type { VereinsTeamsStand } from '../verein/vereins-teams-stand';
 
 /** What a card shows beside a Team's Saison, from the overview's reads. */
 export interface KartenZusatz {
   /** Where the Saison is its last good data: since when, and why. */
-  readonly stand?: Stand;
+  readonly stand?: AsOf;
   /** The read of the next Spiel's Halle, once it started. */
-  readonly halle?: HallenStand;
+  readonly halle?: VenueState;
   /** Whether the Team's Saison looks over (`seasonOver`). */
   readonly saisonBeendet: boolean;
   /** The read of the Verein's Teams to suggest, once it started. */
@@ -70,6 +70,6 @@ export function geladeneKarte(
 /** The card of a Team whose read failed with `fehler`. */
 export function fehlerKarte(teamId: TeamId, fehler: unknown): TeamKarte {
   // a read rejected without a reason failed all the same
-  const text = fehlerText(fehler ?? new Error('rejected'), KEIN_TEAM) ?? '';
+  const text = errorText(fehler ?? new Error('rejected'), NO_TEAM) ?? '';
   return { art: 'fehler', teamId, text };
 }

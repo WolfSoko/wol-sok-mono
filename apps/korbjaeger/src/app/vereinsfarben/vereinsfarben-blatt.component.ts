@@ -18,7 +18,7 @@ import {
   clubColorsOf,
   type ClubColors,
 } from '@wolsok/feat-korbjaeger-selection';
-import { auswahlAenderung } from '../fehler/auswahl-aenderung';
+import { selectionChange } from '../errors/selection-change';
 import { FarbwahlComponent } from './farbwahl.component';
 import { FarbschemaDirective } from './vereinsfarben-anwenden';
 
@@ -62,7 +62,7 @@ export interface VereinsfarbenBlattDaten {
       <span class="vorschau-zweite">Zweite Farbe</span>
       <p class="anzeigetafel vorschau-tafel">Nächstes Spiel</p>
     </div>
-    @if (aenderung.fehler(); as text) {
+    @if (aenderung.error(); as text) {
       <p class="fehler" role="alert">{{ text }}</p>
     }
     <div class="aktionen">
@@ -170,7 +170,7 @@ export class VereinsfarbenBlattComponent {
       : clubColorsOf(primaer, this.zweite());
   });
 
-  protected readonly aenderung = auswahlAenderung();
+  protected readonly aenderung = selectionChange();
   /** Whether a change runs: the buttons wait for it, so a double tap writes once. */
   protected readonly laeuft = signal(false);
 
@@ -195,7 +195,7 @@ export class VereinsfarbenBlattComponent {
       return;
     }
     this.laeuft.set(true);
-    const erledigt = await this.aenderung.ausfuehren(aenderung);
+    const erledigt = await this.aenderung.run(aenderung);
     this.laeuft.set(false);
     if (erledigt) {
       this.schliessen();

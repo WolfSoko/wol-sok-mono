@@ -329,3 +329,121 @@ collections and the Verbände of the fixtures (`BAYERN`, `BERLIN`,
   `datenschutz.component.spec.ts`, `CLAUDE.md`'s Korbjäger section.
 - Tests: the check step.
 - Commit: folded into C2's (the PR squashes).
+
+## Part D: the app
+
+Issue [#3012](https://github.com/WolfSoko/wol-sok-mono/issues/3012), spec
+[docs/specs/3012-…](../specs/3012-korbjaeger-english-identifiers-part-d-the-app.md).
+Four PRs by folder group (D1 to D4, the spec's order); each runs the
+"Steps of every part" on its group, its map below, and only D4 closes
+#3012.
+
+### Task D0: spec and plan
+
+- Files: the spec of #3012, this section.
+- Commit: `docs(korbjaeger): spec and plan for part D of the English identifiers (#3012)`, in D1's PR.
+
+### Task D1: data and plumbing
+
+Types, components and their members:
+
+| Old                                                                                        | New                                                                                |
+| ------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------- |
+| `DatenResource`, `LesendeResource`, `gelesenerStand`                                       | `DataResource`, `ReadingResource`, `readAsOf`                                      |
+| `Lesung` (`stand`, `ersetzt`, `vormerken`, `abschliessen`), `KorbReadOptions.lesung`       | `Reading` (`asOf`, `replaced`, `defer`, `complete`), `KorbReadOptions.reading`     |
+| `Stand` (`gespeichertAm`, `grund`), `StandGrund` (`'kein-internet'`, `'keine-verbindung'`) | `AsOf` (`storedAt`, `reason`), `AsOfReason` (`'no-internet'`, `'no-connection'`)   |
+| `KeinInternetError`                                                                        | `NoInternetError`                                                                  |
+| `ProxyCall.zeitlimitMs`, `ProxyTransportOptions` (`antworten`, `jetzt`, `zeitlimitMs`)     | `timeoutMs`; (`answers`, `now`, `timeoutMs`)                                       |
+| `AuswahlAenderung` (`fehler`, `ausfuehren`)                                                | `SelectionChange` (`error`, `run`)                                                 |
+| `HalleComponent` (`korb-halle`, `halle`), `SpielHalleComponent` (`korb-spiel-halle`)       | `VenueComponent` (`korb-venue`, `venue`), `GameVenueComponent` (`korb-game-venue`) |
+| `HallenStand` (`art`: `'laedt'`, `'fehler'`, `'gelesen'`; `halle`)                         | `VenueState` (`kind`: `'loading'`, `'error'`, `'read'`; `venue`)                   |
+| `StandComponent` (`korb-stand`, `stand`, `jetzt`)                                          | `AsOfComponent` (`korb-as-of`, `asOf`, `now`)                                      |
+| `FirebaseEmulatoren`, `Environment` (`projektId`, `anmeldung`, `emulatoren`)               | `FirebaseEmulators`, (`projectId`, `signIn`, `emulators`)                          |
+| testing: `FakeLesung`, `FakeDatenResource`, `AppQuelle`                                    | `FakeReading`, `FakeDataResource`, `AppSource`                                     |
+
+Functions and constants:
+
+| Old                                                                                                                                                                                                            | New                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `aelterer`, `aeltesterStand`                                                                                                                                                                                   | `older`, `oldestAsOf`                                                                                                                                                                    |
+| `LETZTE_ANTWORTEN`                                                                                                                                                                                             | `ANSWER_CACHE`                                                                                                                                                                           |
+| `ligaSucheResource`, `ligaTeamsResource`, `spielDetailsResource`, `spielberichtResource`, `tabelleResource`, `teamSaisonResource`, `vereinsTeamsResource`                                                      | `leagueSearchResource`, `leagueTeamsResource`, `gameDetailsResource`, `gameReportResource`, `standingsResource`, `teamSeasonResource`, `clubTeamsResource`                               |
+| `PROXY_ZEITLIMIT_MS`, `SPEICHERBARE_ARTEN`, `KEINE_ANTWORTEN`, `letzteAntwortStatt`, `standGrundVon`                                                                                                           | `PROXY_TIMEOUT_MS`, `STORABLE_KINDS`, `NO_ANSWERS`, `cachedAnswerInstead`, `asOfReasonOf`                                                                                                |
+| `auswahlAenderung`, `VOLL`, `auswahlFehlerText`, `fehlerText`                                                                                                                                                  | `selectionChange`, `FULL`, `selectionErrorText`, `errorText`                                                                                                                             |
+| `KEIN_TEAM`, `KEIN_VEREIN`, `KEINE_LIGA`, `KEINE_VERBAENDE`, `KEINE_LIGEN_IM_VERBAND`, `KEINE_LIGEN_IN_ALTERSKLASSE`, `KEINE_LIGEN`, `KEIN_SPIEL`, `KEIN_INTERNET`, `KEINE_VERBINDUNG`, `DBB_NICHT_ERREICHBAR` | `NO_TEAM`, `NO_CLUB`, `NO_LEAGUE`, `NO_ASSOCIATIONS`, `NO_LEAGUES_IN_ASSOCIATION`, `NO_LEAGUES_IN_AGE_GROUP`, `NO_LEAGUES`, `NO_GAME`, `NO_INTERNET`, `NO_CONNECTION`, `DBB_UNREACHABLE` |
+| `hallenStand`                                                                                                                                                                                                  | `venueState`                                                                                                                                                                             |
+| `STUNDE`, `TAG`, `ZEIT`, `standAlter`, `standZeit`, `STAND_GRUENDE`, `standGrundText`, `alterText`                                                                                                             | `HOUR`, `DAY`, `TIME_OF_DAY`, `asOfAge`, `asOfTime`, `AS_OF_REASONS`, `asOfReasonText`, `ageText`                                                                                        |
+| `abgleichen`                                                                                                                                                                                                   | `reconcile`                                                                                                                                                                              |
+| `ANGEMELDET_SCHLUESSEL`, `ZWISCHENSPEICHER_LEEREN_SCHLUESSEL`, `INSTALLATION_ABGELEHNT_SCHLUESSEL`, `DARSTELLUNG_SCHLUESSEL`, `flagGesetzt`, `flagSetzen`, `SPEICHER_FREIGEBEN`                                | `SIGNED_IN_KEY`, `CLEAR_CACHE_KEY`, `INSTALL_DISMISSED_KEY`, `APPEARANCE_KEY`, `isFlagSet`, `setFlag`, `FREE_STORAGE`                                                                    |
+| `HEUTE`, `JETZT`, `TAKT_MS`                                                                                                                                                                                    | `TODAY`, `NOW`, `TICK_MS`                                                                                                                                                                |
+| `EMULATOREN`, `environmentFuer`                                                                                                                                                                                | `EMULATORS`, `environmentFor`                                                                                                                                                            |
+| `PROXY_CACHE_SEKUNDEN`, `vereinMitFesterSpanne`, `cdnFertigerSpielbericht`                                                                                                                                     | `PROXY_CACHE_SECONDS`, `clubWithFixedSpan`, `cdnFinishedGameReport`                                                                                                                      |
+| `buildKonfigurationMerken`, `cssZiele`                                                                                                                                                                         | `rememberBuildConfiguration`, `cssTargets`                                                                                                                                               |
+| testing: `APP_ORDNER`, `EIGENE_LIB_ORDNER`, `appQuellen`, `quellenIn`, `dateienIn`                                                                                                                             | `APP_FOLDER`, `OWN_LIB_FOLDERS`, `appSources`, `sourcesIn`, `filesIn`                                                                                                                    |
+| testing: `APP_REGELN`, `OFFENE_REGELN`, `emulatorProjekt`, `alsGeraet`, `ohneRegeln`                                                                                                                           | `APP_RULES`, `OPEN_RULES`, `emulatorProject`, `asDevice`, `withoutRules`                                                                                                                 |
+| testing: `mapSpeicher`, `GESPERRTER_SPEICHER`, `spielOn`, `saisonOf`, `zeigen`                                                                                                                                 | `mapStorage`, `BLOCKED_STORAGE`, `gameOn`, `seasonOf`, `show`                                                                                                                            |
+| specs in `src/`: `ENGLISCHE_WOERTER`, `GLOBALE_STILE`, `TEAMS_HOECHSTENS`, `KINDER_HOECHSTENS`, `VEREINE_HOECHSTENS`, `ELTERNTEIL`, `GUELTIG`, `UNGUELTIG`                                                     | `ENGLISH_WORDS`, `GLOBAL_STYLES`, `MAX_TEAMS`, `MAX_CHILDREN`, `MAX_CLUBS`, `PARENT`, `VALID`, `INVALID`                                                                                 |
+
+Files and folders (`src/` unless named): `app/fehler/` → `app/errors/`
+(`auswahl-aenderung.ts` → `selection-change.ts`, `auswahl-fehler-text.ts`
+→ `selection-error-text.ts`, `fehler-text.ts` → `error-text.ts`),
+`app/stand/` → `app/as-of/` (`stand-text.ts` → `as-of-text.ts`,
+`stand.component.ts` → `as-of.component.ts`), `app/halle/` → `app/venue/`
+(`halle.component.ts` → `venue.component.ts`, `hallen-stand.ts` →
+`venue-state.ts`, `spiel-halle.component.ts` → `game-venue.component.ts`);
+in `app/basketball-data/`: `kein-internet-error.ts` →
+`no-internet-error.ts`, `lesung.ts` → `reading.ts`, `stand.ts` →
+`as-of.ts`, `letzte-antworten-pflege.ts` → `answer-cache-maintenance.ts`,
+`liga-suche-resource.ts` → `league-search-resource.ts`,
+`liga-teams-resource.ts` → `league-teams-resource.ts`,
+`spiel-details-resource.ts` → `game-details-resource.ts`,
+`spielbericht-resource.ts` → `game-report-resource.ts`,
+`tabelle-resource.ts` → `standings-resource.ts`, `team-saison-resource.ts`
+→ `team-season-resource.ts`, `vereins-teams-resource.ts` →
+`club-teams-resource.ts`, `testing/fake-daten-resource.ts` →
+`fake-data-resource.ts`; `app/abgleichen.ts` → `reconcile.ts`,
+`app/geraete-speicher.ts` → `device-storage.ts`, `app/heute.ts` →
+`today.ts`, `app/jetzt.ts` → `now.ts`; `testing/app-quellen.ts` →
+`app-sources.ts`, `testing/speicher.ts` → `storage.ts`,
+`testing/team-saison.ts` → `team-season.ts`, `testing/zeigen.ts` →
+`show.ts`; `deutsche-texte.spec.ts` → `german-texts.spec.ts`,
+`emulatoren.spec.ts` → `emulators.spec.ts`, `css-ziele.spec.ts` →
+`css-targets.spec.ts`; `deploy/css-ziele.ts` → `deploy/css-targets.ts`;
+specs with their file. The proxy's route files keep their names and
+parameters.
+
+Parameters, locals and private helpers follow the vocabulary and the
+spec's new words (`stand` → `asOf`, `lesung` → `reading`, `grund` →
+`reason`, `gespeichertAm` → `storedAt`, `jetzt` → `now`, `heute` →
+`today`, `vorher` → `before`, `eintrag` → `entry`, `speicher` →
+`storage`, `schluessel` → `key`, `abbruch` → `abort`, `inhalt` →
+`content`, `pfad` → `path`, `datei` → `file`, `treffer` → `hits`, …); the
+fixtures' proper names stay.
+
+- Tests: every spec of the app, unchanged in substance; `korbjaeger:e2e`
+  (the `korb-stand`, `korb-halle` selectors).
+- Commit: `refactor(korbjaeger): English identifiers, part D1: data and plumbing (#3012)`.
+
+### Tasks D2 to D4
+
+Each adds its map here in its PR's first commit (step 1), by the
+vocabulary and the spec's decisions, and names the words it translated
+that the vocabulary did not hold:
+
+- **D2, Spiel and Team** (`app/spiel/` → `game/`, `app/spiel-seite/` →
+  `game-page/`, `app/kind/` → `child/`, `app/team/`, `app/verein/` →
+  `club/`; `VereinsTeamDetailDirective` → `ClubTeamDetailDirective`,
+  `korbVereinsTeamDetail` → `korbClubTeamDetail`). Commit:
+  `refactor(korbjaeger): English identifiers, part D2: Spiel and Team (#3012)`.
+- **D3, overview, colours and search** (`app/ueberblick/` → `overview/`,
+  `app/vereinsfarben/` → `club-colors/`, `app/search/`,
+  `app/team-einrichten/` → `team-setup/`; the ids `ueber-den-verein`,
+  `ueber-die-liga`, `ueber-mein-kind` and the `data-qa` values of PR
+  #3006). Commit:
+  `refactor(korbjaeger): English identifiers, part D3: overview, colours and search (#3012)`.
+- **D4, account and frame** (`app/konto/` → `account/`, `app/auswahl/` →
+  `selection/`, `app/darstellung/` → `appearance/`, `app/pwa/`,
+  `src/pwa/`, `app/rechtliches/` → `legal/`, `app/navigation/`,
+  `app/app.*`, the contents of `app/pages/`, `e2e/`; `CLAUDE.md`'s "until
+  #2967" note; the final `list` review). Commit:
+  `refactor(korbjaeger): English identifiers, part D4: account and frame (#3012)`.

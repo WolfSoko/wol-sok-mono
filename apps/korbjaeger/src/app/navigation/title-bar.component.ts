@@ -134,7 +134,7 @@ export class TitleBarComponent {
   protected readonly breadcrumb = inject(Breadcrumb);
 
   /** Whether this build offers the sign-in, and with it the settings. */
-  protected readonly signInBuilt = environment.anmeldung;
+  protected readonly signInBuilt = environment.signIn;
 
   /** Back, or up where nothing lies behind; the overview opened first has neither. */
   protected readonly canGoBack = computed(

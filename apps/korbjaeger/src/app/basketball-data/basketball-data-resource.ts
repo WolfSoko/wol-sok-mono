@@ -14,19 +14,19 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from './basketball-data.provider';
-import { Lesung, type KorbReadOptions } from './lesung';
-import type { Stand } from './stand';
+import { Reading, type KorbReadOptions } from './reading';
+import type { AsOf } from './as-of';
 
 /**
- * A read's resource, with the `Stand` of its value: `undefined` while the
+ * A read's resource, with the `AsOf` of its value: `undefined` while the
  * value was just read, else when its last good answer came and why it was
- * shown instead (`korb-stand` shows it).
+ * shown instead (`korb-as-of` shows it).
  */
-export interface DatenResource<T> extends Resource<T> {
-  readonly stand: Signal<Stand | undefined>;
+export interface DataResource<T> extends Resource<T> {
+  readonly asOf: Signal<AsOf | undefined>;
   hasValue(
     this: T extends undefined ? this : never
-  ): this is DatenResource<Exclude<T, undefined>>;
+  ): this is DataResource<Exclude<T, undefined>>;
   hasValue(): boolean;
   /** Reads again; see `ResourceRef.reload`. */
   reload(): boolean;
@@ -34,18 +34,18 @@ export interface DatenResource<T> extends Resource<T> {
   destroy(): void;
 }
 
-/** A `DatenResource` over Angular's `resource`, with a `stand` of its own. */
-class LesendeResource<T> implements DatenResource<T> {
+/** A `DataResource` over Angular's `resource`, with an `asOf` of its own. */
+class ReadingResource<T> implements DataResource<T> {
   public readonly value: Signal<T>;
   public readonly status: Signal<ResourceStatus>;
   public readonly error: Signal<Error | undefined>;
   public readonly isLoading: Signal<boolean>;
   public readonly snapshot: Signal<ResourceSnapshot<T>>;
-  public readonly stand: Signal<Stand | undefined>;
+  public readonly asOf: Signal<AsOf | undefined>;
 
   public constructor(
     private readonly ref: ResourceRef<T>,
-    gelesenerStand: Signal<Stand | undefined>
+    readAsOf: Signal<AsOf | undefined>
   ) {
     this.value = ref.value.asReadonly();
     this.status = ref.status;
@@ -53,14 +53,12 @@ class LesendeResource<T> implements DatenResource<T> {
     this.isLoading = ref.isLoading;
     this.snapshot = ref.snapshot;
     // a Stand belongs to the value it came with
-    this.stand = computed(() =>
-      ref.hasValue() ? gelesenerStand() : undefined
-    );
+    this.asOf = computed(() => (ref.hasValue() ? readAsOf() : undefined));
   }
 
   public hasValue(
     this: T extends undefined ? this : never
-  ): this is DatenResource<Exclude<T, undefined>>;
+  ): this is DataResource<Exclude<T, undefined>>;
   public hasValue(): boolean;
   public hasValue(): boolean {
     return this.ref.hasValue();
@@ -78,9 +76,9 @@ class LesendeResource<T> implements DatenResource<T> {
 /**
  * A resource making one read of `BASKETBALL_DATA` for the params `params`
  * gives, none while it gives none; new params cancel the read of the last
- * (`options.signal`). Each load is one `Lesung`: the answers the read
+ * (`options.signal`). Each load is one `Reading`: the answers the read
  * mapped are kept as its last good ones, and where the transport answered
- * from those instead, `stand` says so; it changes with the value, once a
+ * from those instead, `asOf` says so; it changes with the value, once a
  * load has its own, so a value shown while reloading keeps its Stand.
  * Created in an injection context, or on `injector`.
  */
@@ -92,26 +90,26 @@ export function basketballDataResource<P, T>(
     options: KorbReadOptions
   ) => Promise<T>,
   injector: Injector = inject(Injector)
-): DatenResource<T | undefined> {
+): DataResource<T | undefined> {
   const data = injector.get(BASKETBALL_DATA);
-  const gelesenerStand = signal<Stand | undefined>(undefined);
+  const readAsOf = signal<AsOf | undefined>(undefined);
   const ref = resource({
     params,
-    loader: async ({ params: gegeben, abortSignal }) => {
-      const lesung = new Lesung();
-      const wert = await read(data, gegeben, {
+    loader: async ({ params: given, abortSignal }) => {
+      const reading = new Reading();
+      const value = await read(data, given, {
         signal: abortSignal,
-        lesung,
+        reading,
       });
       if (!abortSignal.aborted) {
-        lesung.abschliessen();
+        reading.complete();
         // with the value it belongs to: the old one keeps its Stand while
         // it still shows, reloading
-        gelesenerStand.set(lesung.stand);
+        readAsOf.set(reading.asOf);
       }
-      return wert;
+      return value;
     },
     injector,
   });
-  return new LesendeResource(ref, gelesenerStand);
+  return new ReadingResource(ref, readAsOf);
 }

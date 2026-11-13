@@ -12,19 +12,19 @@ import type {
   CachedAnswer,
   AnswerCache,
 } from '@wolsok/feat-korbjaeger-answers';
-import { KeinInternetError } from './kein-internet-error';
-import type { KorbReadOptions, Lesung } from './lesung';
+import { NoInternetError } from './no-internet-error';
+import type { KorbReadOptions, Reading } from './reading';
 import {
   browserOnline,
   HTTP_OK,
-  PROXY_ZEITLIMIT_MS,
+  PROXY_TIMEOUT_MS,
   reachProxy,
   readProxyJson,
   unavailableError,
   type ProxyCall,
   type ProxyFetch,
 } from './proxy-fetch';
-import type { StandGrund } from './stand';
+import type { AsOfReason } from './as-of';
 
 const HTTP_NOT_FOUND = 404;
 
@@ -33,11 +33,11 @@ export interface ProxyTransportOptions {
   /** Whether the browser believes it is online (`navigator.onLine`). */
   readonly online?: () => boolean;
   /** Where the last good answer of each path is kept; none by default. */
-  readonly antworten?: AnswerCache;
+  readonly answers?: AnswerCache;
   /** The time an answer is stored with, in ms since the epoch. */
-  readonly jetzt?: () => number;
-  /** How long a call to the proxy may take; `PROXY_ZEITLIMIT_MS`. */
-  readonly zeitlimitMs?: number;
+  readonly now?: () => number;
+  /** How long a call to the proxy may take; `PROXY_TIMEOUT_MS`. */
+  readonly timeoutMs?: number;
 }
 
 /**
@@ -46,7 +46,7 @@ export interface ProxyTransportOptions {
  * nor the wizard's Liga search and Liga Teams, so browsing it evicts no
  * answer Meine Teams need offline.
  */
-export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
+export const STORABLE_KINDS: ReadonlySet<DbbRequestKind> = new Set([
   'team-games',
   'standings',
   'game-info',
@@ -54,7 +54,7 @@ export const SPEICHERBARE_ARTEN: ReadonlySet<DbbRequestKind> = new Set([
 ]);
 
 /** Keeps nothing: a read that fails has no answer to fall back on. */
-const KEINE_ANTWORTEN: AnswerCache = {
+const NO_ANSWERS: AnswerCache = {
   read: () => undefined,
   store: () => undefined,
 };
@@ -64,14 +64,14 @@ const KEINE_ANTWORTEN: AnswerCache = {
  * headers (ADR 0018). Hands the DBB envelope of a 200 or 404 to the
  * adapter, which reads its status; a 404 of the proxy itself (no such
  * read or id) is `not-found`. A device the browser calls offline
- * (`KeinInternetError`), or a call that reaches no proxy within
- * `PROXY_ZEITLIMIT_MS`, is `offline`; anything else (a 502, no JSON) is
+ * (`NoInternetError`), or a call that reaches no proxy within
+ * `PROXY_TIMEOUT_MS`, is `offline`; anything else (a 502, no JSON) is
  * `unavailable`.
  *
- * The 200 of a read of `SPEICHERBARE_ARTEN` is kept in `antworten` by its
- * proxy path, without the persons in it (`dbbWithoutPersons`), once its `Lesung` (`KorbReadOptions`) says the read mapped
- * it. A read with a `Lesung` that then fails as `offline` or
- * `unavailable` is answered from it instead, and the `Lesung` hears when
+ * The 200 of a read of `STORABLE_KINDS` is kept in `answers` by its
+ * proxy path, without the persons in it (`dbbWithoutPersons`), once its `Reading` (`KorbReadOptions`) says the read mapped
+ * it. A read with a `Reading` that then fails as `offline` or
+ * `unavailable` is answered from it instead, and the `Reading` hears when
  * it came and why; a 404 (the thing is gone) and a cancelled read never
  * are.
  */
@@ -79,39 +79,39 @@ export function proxyTransport(
   fetchProxy: ProxyFetch,
   {
     online = browserOnline,
-    antworten = KEINE_ANTWORTEN,
-    jetzt = Date.now,
-    zeitlimitMs = PROXY_ZEITLIMIT_MS,
+    answers = NO_ANSWERS,
+    now = Date.now,
+    timeoutMs = PROXY_TIMEOUT_MS,
   }: ProxyTransportOptions = {}
 ): DbbTransport<KorbReadOptions> {
   return async (request, options) => {
     const path = proxyUrl(request);
-    const lesung = SPEICHERBARE_ARTEN.has(request.kind)
-      ? options?.lesung
+    const reading = STORABLE_KINDS.has(request.kind)
+      ? options?.reading
       : undefined;
     try {
       return await readProxy(
         path,
         fetchProxy,
-        { online, signal: options?.signal, zeitlimitMs },
+        { online, signal: options?.signal, timeoutMs },
         (body) => {
-          const gespeichertAm = jetzt();
-          lesung?.vormerken(() =>
-            antworten.store(path, request.kind, {
+          const storedAt = now();
+          reading?.defer(() =>
+            answers.store(path, request.kind, {
               answer: dbbWithoutPersons(body),
-              storedAt: gespeichertAm,
+              storedAt,
             })
           );
         }
       );
     } catch (error) {
-      if (lesung === undefined) {
+      if (reading === undefined) {
         throw error;
       }
-      return letzteAntwortStatt(
+      return cachedAnswerInstead(
         error,
-        antworten.read(path, jetzt()),
-        lesung,
+        answers.read(path, now()),
+        reading,
         options?.signal
       );
     }
@@ -119,40 +119,40 @@ export function proxyTransport(
 }
 
 /**
- * `letzte`'s answer for a read that failed with `error`, where it may take
- * one (telling its `lesung`); else throws `error`.
+ * `last`'s answer for a read that failed with `error`, where it may take
+ * one (telling its `reading`); else throws `error`.
  */
-function letzteAntwortStatt(
+function cachedAnswerInstead(
   error: unknown,
-  letzte: CachedAnswer | undefined,
-  lesung: Lesung,
+  last: CachedAnswer | undefined,
+  reading: Reading,
   signal: ReadSignal | undefined
 ): unknown {
-  if (letzte === undefined || !ersetzbar(error, signal)) {
+  if (last === undefined || !replaceable(error, signal)) {
     throw error;
   }
-  lesung.ersetzt({
-    gespeichertAm: letzte.storedAt,
-    grund: standGrundVon(error),
+  reading.replaced({
+    storedAt: last.storedAt,
+    reason: asOfReasonOf(error),
   });
-  return letzte.answer;
+  return last.answer;
 }
 
 /**
- * The proxy's answer at `path`: the body of a 200 (handed to `gelesen`)
+ * The proxy's answer at `path`: the body of a 200 (handed to `read`)
  * or a 404's DBB envelope; throws a `BasketballDataError` for the rest.
  */
 async function readProxy(
   path: string,
   fetchProxy: ProxyFetch,
   call: ProxyCall,
-  gelesen: (body: unknown) => void
+  read: (body: unknown) => void
 ): Promise<unknown> {
   const response = await reachProxy(path, fetchProxy, call);
   switch (response.status) {
     case HTTP_OK: {
       const body = await readProxyJson(path, response);
-      gelesen(body);
+      read(body);
       return body;
     }
     case HTTP_NOT_FOUND:
@@ -163,7 +163,7 @@ async function readProxy(
 }
 
 /** Whether a read that failed with `error` may take its last good answer. */
-function ersetzbar(
+function replaceable(
   error: unknown,
   signal: ReadSignal | undefined
 ): error is BasketballDataError {
@@ -175,11 +175,11 @@ function ersetzbar(
 }
 
 /** Why a read that failed with `error` took its last good answer. */
-function standGrundVon(error: BasketballDataError): StandGrund {
-  if (error instanceof KeinInternetError) {
-    return 'kein-internet';
+function asOfReasonOf(error: BasketballDataError): AsOfReason {
+  if (error instanceof NoInternetError) {
+    return 'no-internet';
   }
-  return error.kind === 'offline' ? 'keine-verbindung' : 'unavailable';
+  return error.kind === 'offline' ? 'no-connection' : 'unavailable';
 }
 
 /** The DBB's not-found envelope, or the proxy's own 404 as `not-found`. */

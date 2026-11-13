@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { readFileSync } from 'node:fs';
-import { environment, environmentFuer } from './environment';
+import { environment, environmentFor } from './environment';
 
 /** A file of the workspace, as JSON. */
 function workspaceJson<T>(path: string): T {
@@ -31,31 +31,31 @@ describe('the environment', () => {
     const { emulators } = workspaceJson<{
       emulators: Record<string, { host: string; port: number }>;
     }>('apps/korbjaeger/firebase.emulatoren.json');
-    const emulatoren = environment.emulatoren;
+    const configured = environment.emulators;
 
-    expect(environment.anmeldung).toBe(true);
-    expect(emulatoren?.projektId).toMatch(/^demo-/);
-    expect(emulatoren?.authUrl).toBe(
+    expect(environment.signIn).toBe(true);
+    expect(configured?.projectId).toMatch(/^demo-/);
+    expect(configured?.authUrl).toBe(
       `http://${emulators['auth'].host}:${emulators['auth'].port}`
     );
-    expect(emulatoren?.firestore).toEqual({
+    expect(configured?.firestore).toEqual({
       host: emulators['firestore'].host,
       port: emulators['firestore'].port,
     });
   });
 
   it('offers the sign-in in production, on the real project, no emulator near it', () => {
-    const produktion = environmentFuer('production');
+    const production = environmentFor('production');
 
-    expect(produktion.anmeldung).toBe(true);
-    expect(produktion.emulatoren).toBeUndefined();
-    expect(produktion.firebase).toEqual(environment.firebase);
+    expect(production.signIn).toBe(true);
+    expect(production.emulators).toBeUndefined();
+    expect(production.firebase).toEqual(environment.firebase);
   });
 
   it.each(['development', 'e2e'])(
     'signs in against the emulators in %s',
-    (modus) => {
-      expect(environmentFuer(modus)).toEqual(environment);
+    (mode) => {
+      expect(environmentFor(mode)).toEqual(environment);
     }
   );
 });

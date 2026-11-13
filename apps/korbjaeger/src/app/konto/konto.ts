@@ -8,16 +8,16 @@ import {
   watchStored,
 } from '@wolsok/utils-browser-storage';
 import {
-  ANGEMELDET_SCHLUESSEL,
-  flagGesetzt,
-  flagSetzen,
-  SPEICHER_FREIGEBEN,
-  ZWISCHENSPEICHER_LEEREN_SCHLUESSEL,
-} from '../geraete-speicher';
+  SIGNED_IN_KEY,
+  isFlagSet,
+  setFlag,
+  FREE_STORAGE,
+  CLEAR_CACHE_KEY,
+} from '../device-storage';
 import type { KontoDienst } from './konto-dienst';
 import { KontoSitzung, type AnmeldeMerker } from './konto-sitzung';
 
-export { ANGEMELDET_SCHLUESSEL } from '../geraete-speicher';
+export { SIGNED_IN_KEY } from '../device-storage';
 
 /**
  * Loads Firebase for the account: its own chunk, fetched only to sign in
@@ -39,13 +39,11 @@ export function geraeteMerker(
 ): AnmeldeMerker {
   return {
     // blocked: the sign-in lasts for this visit, as Auth's session may
-    gesetzt: () => flagGesetzt(speicher, ANGEMELDET_SCHLUESSEL),
-    aufraeumenOffen: () =>
-      flagGesetzt(speicher, ZWISCHENSPEICHER_LEEREN_SCHLUESSEL),
-    setzen: () => flagSetzen(speicher, ANGEMELDET_SCHLUESSEL, true),
-    loeschen: () => flagSetzen(speicher, ANGEMELDET_SCHLUESSEL, false),
-    beobachten: (rueckruf) =>
-      watchStored(ANGEMELDET_SCHLUESSEL, rueckruf, fenster),
+    gesetzt: () => isFlagSet(speicher, SIGNED_IN_KEY),
+    aufraeumenOffen: () => isFlagSet(speicher, CLEAR_CACHE_KEY),
+    setzen: () => setFlag(speicher, SIGNED_IN_KEY, true),
+    loeschen: () => setFlag(speicher, SIGNED_IN_KEY, false),
+    beobachten: (rueckruf) => watchStored(SIGNED_IN_KEY, rueckruf, fenster),
   };
 }
 
@@ -55,15 +53,11 @@ export const KONTO_SITZUNG = new InjectionToken<KontoSitzung>('KontoSitzung', {
   factory: () => {
     const speicher = deviceStorage();
     const fenster = inject(DOCUMENT).defaultView ?? undefined;
-    const lokal = new LocalSelection(
-      speicher,
-      fenster,
-      inject(SPEICHER_FREIGEBEN)
-    );
+    const lokal = new LocalSelection(speicher, fenster, inject(FREE_STORAGE));
     inject(DestroyRef).onDestroy(() => lokal.stop());
     const sitzung = new KontoSitzung(
       lokal,
-      environment.anmeldung ? kontoDienstLaden : undefined,
+      environment.signIn ? kontoDienstLaden : undefined,
       geraeteMerker(speicher, fenster)
     );
     void sitzung.starten();

@@ -1,6 +1,6 @@
 /**
  * Which mode Korbjäger's `build-app` built in, recorded beside its output
- * by the build itself (`buildKonfigurationMerken`, a Vite plugin), so the
+ * by the build itself (`rememberBuildConfiguration`, a Vite plugin), so the
  * deploy can refuse anything but a production build.
  *
  * Nx hands a command's `--configuration` to every dependency that has one,
@@ -27,15 +27,15 @@ export function recordBuildConfiguration(
 }
 
 /** The Vite plugin that records the build's mode in `distDir` once written. */
-export function buildKonfigurationMerken(distDir: string): Plugin {
-  let modus = 'unknown';
+export function rememberBuildConfiguration(distDir: string): Plugin {
+  let mode = 'unknown';
   return {
     name: 'korbjaeger-build-configuration',
     apply: 'build',
     configResolved: (config) => {
-      modus = config.mode;
+      mode = config.mode;
     },
-    writeBundle: () => recordBuildConfiguration(distDir, modus),
+    writeBundle: () => recordBuildConfiguration(distDir, mode),
   };
 }
 

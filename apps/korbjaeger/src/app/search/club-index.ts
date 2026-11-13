@@ -7,7 +7,7 @@ import {
 import {
   browserOnline,
   HTTP_OK,
-  PROXY_ZEITLIMIT_MS,
+  PROXY_TIMEOUT_MS,
   reachProxy,
   readProxyJson,
   unavailableError,
@@ -79,7 +79,7 @@ async function readClubIndex(
   const response = await reachProxy(CLUB_INDEX_PATH, fetchProxy, {
     online: browserOnline,
     signal: undefined,
-    zeitlimitMs: PROXY_ZEITLIMIT_MS,
+    timeoutMs: PROXY_TIMEOUT_MS,
   });
   if (response.status !== HTTP_OK) {
     throw unavailableError(CLUB_INDEX_PATH, `HTTP ${response.status}`);

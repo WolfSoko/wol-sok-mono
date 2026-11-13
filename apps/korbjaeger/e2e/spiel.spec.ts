@@ -26,10 +26,10 @@ test.describe('Spiel page', () => {
     await expect(spielPage.viertel).toHaveCount(0);
     await expect(spielPage.vorlaeufig).toHaveText('vorläufig');
     await expect(spielPage.status).toHaveText('Ergebnis noch nicht bestätigt');
-    await expect(spielPage.halle.getByTestId('halle-name')).toHaveText(
+    await expect(spielPage.halle.getByTestId('venue-name')).toHaveText(
       'Schulsporthalle'
     );
-    await expect(spielPage.halle.getByTestId('halle-adresse')).toHaveText(
+    await expect(spielPage.halle.getByTestId('venue-address')).toHaveText(
       'Schulstr. 12, 38553 Wasbüttel'
     );
     await expect(spielPage.navigation).toHaveAttribute('target', '_blank');

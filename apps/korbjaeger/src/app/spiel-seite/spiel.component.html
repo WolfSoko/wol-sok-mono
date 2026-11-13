@@ -26,7 +26,7 @@
     <br />
     <span data-qa="spiel-liga">{{ spiel.liga }}</span>
   </p>
-  <korb-stand data-qa="spiel-stand" [stand]="details.stand()" />
+  <korb-as-of data-qa="spiel-stand" [asOf]="details.asOf()" />
   @if (spiel.ergebnis) {
     <p class="ergebnis">
       <span data-qa="spiel-ergebnis">{{ spiel.ergebnis }}</span>
@@ -79,8 +79,8 @@
     </div>
   }
   <h2>Halle</h2>
-  <korb-halle
-    [halle]="details.hasValue() ? details.value().venue : undefined"
+  <korb-venue
+    [venue]="details.hasValue() ? details.value().venue : undefined"
   />
 }
 @if (spielbericht(); as teil) {

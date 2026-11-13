@@ -1,8 +1,8 @@
 import { InjectionToken, type Provider } from '@angular/core';
 import {
-  auswahlAenderung,
-  type AuswahlAenderung,
-} from '../fehler/auswahl-aenderung';
+  selectionChange,
+  type SelectionChange,
+} from '../errors/selection-change';
 
 /**
  * The changes to the Kinder that a page's mark controls make
@@ -11,11 +11,11 @@ import {
  * away (a newer version's selection shows no followed Team), and its
  * reload hint must stay.
  */
-export const KIND_AENDERUNG = new InjectionToken<AuswahlAenderung>(
+export const KIND_AENDERUNG = new InjectionToken<SelectionChange>(
   'KindAenderung'
 );
 
 /** One `KIND_AENDERUNG` for the page that provides it. */
 export function provideKindAenderung(): Provider {
-  return { provide: KIND_AENDERUNG, useFactory: auswahlAenderung };
+  return { provide: KIND_AENDERUNG, useFactory: selectionChange };
 }

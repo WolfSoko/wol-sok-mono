@@ -7,13 +7,13 @@ import {
   waitForPendingWrites,
 } from 'firebase/firestore';
 import {
-  alsGeraet,
-  APP_REGELN,
-  emulatorProjekt,
-  gespeichert,
-  OFFENE_REGELN,
-  ohneRegeln,
-  vorhanden,
+  asDevice,
+  APP_RULES,
+  emulatorProject,
+  stored,
+  OPEN_RULES,
+  withoutRules,
+  seed,
 } from '../../testing/firestore-emulator';
 import {
   contentOf,
@@ -39,11 +39,11 @@ let regelProjekt: RulesTestEnvironment;
 let naechsteUid = 0;
 
 beforeAll(async () => {
-  vertragsProjekt = await emulatorProjekt(
+  vertragsProjekt = await emulatorProject(
     'demo-korbjaeger-vertrag',
-    OFFENE_REGELN
+    OPEN_RULES
   );
-  regelProjekt = await emulatorProjekt('demo-korbjaeger-auswahl', APP_REGELN);
+  regelProjekt = await emulatorProject('demo-korbjaeger-auswahl', APP_RULES);
 });
 
 afterAll(async () => {
@@ -64,19 +64,19 @@ selectionContract('Firestore', () => {
   return {
     open: async () => {
       await allesGesendet();
-      const firestore = alsGeraet(vertragsProjekt, uid);
+      const firestore = asDevice(vertragsProjekt, uid);
       geraete.push(firestore);
       const auswahl = new FirestoreSelection(firestore, uid);
       offen.push(auswahl);
       await auswahl.loaded();
       return auswahl;
     },
-    writeRaw: (dokument) => vorhanden(vertragsProjekt, uid, dokument),
+    writeRaw: (dokument) => seed(vertragsProjekt, uid, dokument),
     // a change resolves once on the device: what it sent is on the server
     // once every device's writes are
     readRaw: async () => {
       await allesGesendet();
-      return gespeichert(vertragsProjekt, uid);
+      return stored(vertragsProjekt, uid);
     },
     untilSettled: async () => {
       await allesGesendet();
@@ -93,7 +93,7 @@ describe('FirestoreSelection', () => {
 
   async function oeffnen(
     uid: string,
-    firestore = alsGeraet(regelProjekt, uid)
+    firestore = asDevice(regelProjekt, uid)
   ): Promise<FirestoreSelection> {
     const auswahl = new FirestoreSelection(firestore, uid);
     offen.push(auswahl);
@@ -104,14 +104,14 @@ describe('FirestoreSelection', () => {
   /** What the account's stored document holds, as the app reads it. */
   async function gespeicherterInhalt(uid: string): Promise<SelectionContent> {
     const { teams, children, clubColors } = contentOf(
-      readSelectionDocument(await gespeichert(regelProjekt, uid))
+      readSelectionDocument(await stored(regelProjekt, uid))
     );
     return { teams, children, clubColors };
   }
 
   it("writes what the app's rules take, entry by entry", async () => {
     const uid = 'regeln-schreiben';
-    const firestore = alsGeraet(regelProjekt, uid);
+    const firestore = asDevice(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
 
     await auswahl.follow(313036);
@@ -133,7 +133,7 @@ describe('FirestoreSelection', () => {
     // every write was taken: a refused one would be gone again
     await waitForPendingWrites(firestore);
 
-    expect(await gespeichert(regelProjekt, uid)).toEqual({
+    expect(await stored(regelProjekt, uid)).toEqual({
       version: 3,
       teams: { 201500: expect.any(Number) },
       children: { [OTTO.personId]: { since: expect.any(Number) } },
@@ -142,7 +142,7 @@ describe('FirestoreSelection', () => {
 
   it('keeps both of two changes made at once, in their order', async () => {
     const uid = 'zugleich';
-    const firestore = alsGeraet(regelProjekt, uid);
+    const firestore = asDevice(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
 
     await Promise.all([
@@ -162,7 +162,7 @@ describe('FirestoreSelection', () => {
 
   it('changes offline at once, each change on the one before, and sends them once online', async () => {
     const uid = 'offline';
-    const firestore = alsGeraet(regelProjekt, uid);
+    const firestore = asDevice(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
     await auswahl.follow(313036);
     await waitForPendingWrites(firestore);
@@ -189,8 +189,8 @@ describe('FirestoreSelection', () => {
   describe('offline on one device while another changes the document', () => {
     /** Device A, which goes offline, and device B, online throughout. */
     async function zweiGeraete(uid: string) {
-      const geraetA = alsGeraet(regelProjekt, uid);
-      const geraetB = alsGeraet(regelProjekt, uid);
+      const geraetA = asDevice(regelProjekt, uid);
+      const geraetB = asDevice(regelProjekt, uid);
       const a = await oeffnen(uid, geraetA);
       const b = await oeffnen(uid, geraetB);
       return {
@@ -306,7 +306,7 @@ describe('FirestoreSelection', () => {
     it('refuses, rather than cuts, a Team the other filled the last place for', async () => {
       const uid = 'offline-voll';
       const vorher = Array.from({ length: 49 }, (_, i) => 300000 + i);
-      await vorhanden(regelProjekt, uid, {
+      await seed(regelProjekt, uid, {
         version: 3,
         teams: Object.fromEntries(vorher.map((id, i) => [id, i + 1])),
       });
@@ -328,10 +328,7 @@ describe('FirestoreSelection', () => {
 
   it('keeps the changes two devices make at the same time', async () => {
     const uid = 'zwei-geraete';
-    const geraete = [
-      alsGeraet(regelProjekt, uid),
-      alsGeraet(regelProjekt, uid),
-    ];
+    const geraete = [asDevice(regelProjekt, uid), asDevice(regelProjekt, uid)];
     const erstes = await oeffnen(uid, geraete[0]);
     const zweites = await oeffnen(uid, geraete[1]);
 
@@ -360,8 +357,8 @@ describe('FirestoreSelection', () => {
 
   it("merges a change made offline by a device that never read the account's document", async () => {
     const uid = 'nie-gelesen';
-    await vorhanden(regelProjekt, uid, { version: 3, teams: { 313036: 1 } });
-    const firestore = alsGeraet(regelProjekt, uid);
+    await seed(regelProjekt, uid, { version: 3, teams: { 313036: 1 } });
+    const firestore = asDevice(regelProjekt, uid);
     await disableNetwork(firestore);
     const auswahl = await oeffnen(uid, firestore);
 
@@ -379,7 +376,7 @@ describe('FirestoreSelection', () => {
   it("can't be read, and says so, where the rules refuse it", async () => {
     let gehoert: unknown;
     const auswahl = new FirestoreSelection(
-      alsGeraet(regelProjekt, 'regeln-fremd'),
+      asDevice(regelProjekt, 'regeln-fremd'),
       'regeln-andere',
       { onError: (fehler) => (gehoert = fehler) }
     );
@@ -395,12 +392,12 @@ describe('FirestoreSelection', () => {
 
   it('shows the selection gone once the document is deleted', async () => {
     const uid = 'regeln-geloescht';
-    const firestore = alsGeraet(regelProjekt, uid);
+    const firestore = asDevice(regelProjekt, uid);
     const auswahl = await oeffnen(uid, firestore);
     await auswahl.follow(313036);
     await waitForPendingWrites(firestore);
 
-    await ohneRegeln(regelProjekt, (firestore) =>
+    await withoutRules(regelProjekt, (firestore) =>
       deleteDoc(selectionDocumentOf(firestore, uid))
     );
     await zuhoeren();

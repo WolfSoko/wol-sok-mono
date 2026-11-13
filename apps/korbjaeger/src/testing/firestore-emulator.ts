@@ -25,63 +25,63 @@ export const FIRESTORE_EMULATOR: FirestoreEmulator = (
 ).emulators.firestore;
 
 /** The app's Firestore rules (`firestore.rules`), as the deploy takes them. */
-export const APP_REGELN = readFileSync(
+export const APP_RULES = readFileSync(
   new URL('../../firestore.rules', import.meta.url),
   'utf8'
 );
 
 /** Rules that let everything through, for documents the app's would refuse. */
-export const OFFENE_REGELN = `rules_version = '2';
+export const OPEN_RULES = `rules_version = '2';
   service cloud.firestore {
     match /{document=**} { allow read, write: if true; }
   }`;
 
 /**
- * A project of its own on the specs' emulator, under `regeln`; the denials
+ * A project of its own on the specs' emulator, under `rules`; the denials
  * the specs expect are not logged.
  */
-export function emulatorProjekt(
+export function emulatorProject(
   projectId: string,
-  regeln: string
+  rules: string
 ): Promise<RulesTestEnvironment> {
-  return rulesTestEnvironment(projectId, regeln, FIRESTORE_EMULATOR);
+  return rulesTestEnvironment(projectId, rules, FIRESTORE_EMULATOR);
 }
 
 /** A device signed in as `uid`: a Firestore instance of its own. */
-export function alsGeraet(env: RulesTestEnvironment, uid: string): Firestore {
+export function asDevice(env: RulesTestEnvironment, uid: string): Firestore {
   return env.authenticatedContext(uid).firestore() as unknown as Firestore;
 }
 
-/** Does `tun` past the rules, as an earlier write or another version did. */
-export async function ohneRegeln<T>(
+/** Does `act` past the rules, as an earlier write or another version did. */
+export async function withoutRules<T>(
   env: RulesTestEnvironment,
-  tun: (firestore: Firestore) => Promise<T>
+  act: (firestore: Firestore) => Promise<T>
 ): Promise<T> {
-  let ergebnis!: T;
+  let result!: T;
   await env.withSecurityRulesDisabled(async (context: RulesTestContext) => {
-    ergebnis = await tun(context.firestore() as unknown as Firestore);
+    result = await act(context.firestore() as unknown as Firestore);
   });
-  return ergebnis;
+  return result;
 }
 
-/** Stores `daten` as the `SelectionDocument` of `uid`, past the rules. */
-export function vorhanden(
+/** Stores `data` as the `SelectionDocument` of `uid`, past the rules. */
+export function seed(
   env: RulesTestEnvironment,
   uid: string,
-  daten: unknown
+  data: unknown
 ): Promise<void> {
-  return ohneRegeln(env, (firestore) =>
-    setDoc(selectionDocumentOf(firestore, uid), daten as object)
+  return withoutRules(env, (firestore) =>
+    setDoc(selectionDocumentOf(firestore, uid), data as object)
   );
 }
 
 /** What the `SelectionDocument` of `uid` holds, read past the rules; `null` for none. */
-export function gespeichert(
+export function stored(
   env: RulesTestEnvironment,
   uid: string
 ): Promise<unknown> {
-  return ohneRegeln(env, async (firestore) => {
-    const stand = await getDoc(selectionDocumentOf(firestore, uid));
-    return stand.exists() ? stand.data() : null;
+  return withoutRules(env, async (firestore) => {
+    const snapshot = await getDoc(selectionDocumentOf(firestore, uid));
+    return snapshot.exists() ? snapshot.data() : null;
   });
 }

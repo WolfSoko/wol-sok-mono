@@ -1,6 +1,6 @@
 import type { Resource } from '@angular/core';
 import type { TeamId, ClubTeams } from '@wolsok/feat-shared-basketball-data';
-import { fehlerText, KEIN_VEREIN } from '../fehler/fehler-text';
+import { errorText, NO_CLUB } from '../errors/error-text';
 
 /** One Team of a Verein as `VereinsTeamsComponent` lists it. */
 export interface VereinsTeamZeile {
@@ -28,7 +28,7 @@ export function vereinsTeamsStand(
   if (read.status() === 'idle') {
     return undefined;
   }
-  const text = fehlerText(read.error(), KEIN_VEREIN);
+  const text = errorText(read.error(), NO_CLUB);
   if (text !== undefined) {
     return { art: 'fehler', text };
   }
