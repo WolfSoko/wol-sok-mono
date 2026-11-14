@@ -3,7 +3,7 @@
 // (`jest.preset.js` for `jest.preset.cjs`) or a renamed file silently drops
 // the input. Nx also leaves `{projectName}` unresolved in inputs (#2904).
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
@@ -11,6 +11,10 @@ import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
 const WORKSPACE_ROOT = '{workspaceRoot}/';
 const PROJECT_ROOT = '{projectRoot}/';
 const PROJECT_NAME = '{projectName}';
+// A renamed file makes only its own project affected, never `tools`, so CI
+// runs this guard on every run as a step of its own, outside Nx (#3051).
+const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
+const GUARD_STEP = /^\s+run: node --test tools\/ci\/target-inputs\.test\.mjs$/m;
 // A path holding one of these is a pattern, not a single file.
 const GLOB_CHARACTERS = /[*?{}[\]!]/;
 
@@ -142,5 +146,12 @@ void describe('target inputs', () => {
       ({ where, input }) => `${where}: ${input}`
     );
     assert.deepEqual(missing, []);
+  });
+});
+
+void describe('the CI workflow', () => {
+  void it('runs this guard on every run, outside the affected tasks', () => {
+    const workflow = readFileSync(join(ROOT, CI_WORKFLOW), 'utf8');
+    assert.match(workflow, GUARD_STEP);
   });
 });

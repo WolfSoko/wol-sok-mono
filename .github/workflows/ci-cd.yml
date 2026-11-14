@@ -77,6 +77,11 @@ jobs:
       - name: Sync check
         run: npx nx sync:check
 
+      # Outside Nx on purpose: renaming a file a target input names makes only
+      # that file's project affected, never tools, so tools:test would miss it.
+      - name: Target inputs name existing files
+        run: node --test tools/ci/target-inputs.test.mjs
+
       - name: run-checks in parallel on nx cloud workers
         run: |
           npx nx affected -t="lint,lint-templates,typecheck-specs,typecheck-tools,test,test-emulator,build,e2e-ci,perf,lighthouse" -c=ci
