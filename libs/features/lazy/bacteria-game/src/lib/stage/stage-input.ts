@@ -3,7 +3,7 @@ import { StageBusy } from '../busy/stage-busy';
 import { humanForBoostKey, humanForWeaponKey } from '../colony-stats';
 import { SteeringVector } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateService } from '../state/game-state.service';
-import { GameState, GameStateStore } from '../state/game.states';
+import { GameStateStore, isMatchUnderway } from '../state/game.states';
 import { PlayerService } from '../state/player.service';
 import { clientPoint, nearestFreeCrosshair, Pinch } from '../touch-controls';
 import { ArenaStage } from './arena-stage';
@@ -62,8 +62,10 @@ export class StageInput {
     // Enter on "Reset" expects a reset, not a boost. Outside of a match
     // Space still scrolls. A weapon key counts only for a human who carries
     // a weapon; anyone else's E or Shift does what it did before.
+    // A countdown counts too: Space must not scroll then, and the boost and
+    // the weapon wait for the match to run by themselves.
     const inMatch =
-      this.store.snapshot().currentState === GameState.RUNNING &&
+      isMatchUnderway(this.store.snapshot().currentState) &&
       !isInteractiveTarget(event.target);
     const humans = this.stage.humans();
     const boosted = inMatch ? humanForBoostKey(humans, event.key) : null;

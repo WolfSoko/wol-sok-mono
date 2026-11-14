@@ -16,6 +16,7 @@ export const stage: Translation<typeof en> = {
     giveUpAgain:
       'Zum Aufgeben noch einmal tippen: der gewertete Versuch zählt als gespielt',
   },
+  countdown: 'Das Match beginnt in {seconds}',
   waitingForPeer: 'Warte auf deinen Gegner …',
   busy: 'Wird geladen …',
   pause: {

@@ -16,7 +16,7 @@
 >
   <feat-lazy-bac-game-touch-pads
     [colonies]="hud.humanStats()"
-    [disabled]="!hud.running()"
+    [disabled]="!hud.running() || hud.countingDown()"
     [over]="hud.matchOver()"
     [zooms]="arenaStage.cameraFollows()"
     [outOfReach]="flow.screenOpen()"
@@ -33,6 +33,8 @@
       {{ goal | t }}
     </p>
   }
+
+  <feat-lazy-bac-game-match-countdown [count]="hud.countdown()" />
 
   @if (hud.playing() && hud.waitingForPeer()) {
     <p class="peer-wait" role="status">
