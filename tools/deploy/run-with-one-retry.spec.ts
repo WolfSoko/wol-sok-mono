@@ -20,6 +20,7 @@ describe('runWithOneRetry', () => {
       pauses.push(ms);
     },
     log: (line: string) => lines.push(line),
+    cancelledBy: () => null,
   });
 
   beforeEach(() => {
@@ -90,6 +91,29 @@ describe('runWithOneRetry', () => {
     expect(command.runs()).toBe(1);
     expect(lines).toContainEqual(
       expect.stringMatching(/^::error::.*could not start: firebase: ENOENT/)
+    );
+  });
+
+  it('does not retry when the job was cancelled during the pause', async () => {
+    const command = scripted(
+      { kind: 'exit', code: 1 },
+      { kind: 'exit', code: 0 }
+    );
+    let cancelled: NodeJS.Signals | null = null;
+
+    const code = runWithOneRetry(command.run, {
+      ...deps(),
+      pause: async (ms: number) => {
+        pauses.push(ms);
+        cancelled = 'SIGTERM';
+      },
+      cancelledBy: () => cancelled,
+    });
+
+    await expect(code).resolves.toBe(128 + 15);
+    expect(command.runs()).toBe(1);
+    expect(lines).toContainEqual(
+      expect.stringMatching(/^::error::Deploy ended by SIGTERM, not retried/)
     );
   });
 
