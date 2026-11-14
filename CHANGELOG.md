@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.171.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.4...v74.171.0) (2026-11-14)
+
+### Features
+
+* **feat-lazy-bacteria-game:** count down 3, 2, 1 before a match starts ([#3084](https://github.com/WolfSoko/wol-sok-mono/issues/3084)) ([8b9a2be](https://github.com/WolfSoko/wol-sok-mono/commit/8b9a2be2386978e116d9c4fc6f7df6d183af6729)), closes [#3066](https://github.com/WolfSoko/wol-sok-mono/issues/3066)
+
 ## [74.170.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.3...v74.170.4) (2026-11-14)
 
 ### Bug Fixes
