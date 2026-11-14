@@ -55,6 +55,7 @@ async function main(): Promise<number> {
     pause: sleep,
     log: console.log,
     pauseMs: pauseOverride(),
+    cancelledBy: () => cancelledBy,
   });
 }
 

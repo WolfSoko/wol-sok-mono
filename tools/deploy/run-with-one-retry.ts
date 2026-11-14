@@ -11,6 +11,8 @@ export interface RetryDeps {
   log: (line: string) => void;
   /** Time between the failed first attempt and the retry. */
   pauseMs?: number;
+  /** The signal that cancelled the job meanwhile, if one did. */
+  cancelledBy: () => NodeJS.Signals | null;
 }
 
 /** Long enough for a hiccup of Google's API to pass, short beside a deploy. */
@@ -22,11 +24,11 @@ const START_ERROR_CODE = 1;
  * Runs a deploy and, when it fails, once more after a pause: a transient
  * error of the platform heals on the retry, a real one fails both attempts.
  * A deploy ended by a signal (a cancelled job) or one that could not start
- * is not retried. Resolves to the exit code the caller should exit with.
+ * is not retried, nor is one whose job was cancelled during the pause. Resolves to the exit code the caller should exit with.
  */
 export async function runWithOneRetry(
   run: () => Promise<RunOutcome>,
-  { pause, log, pauseMs = RETRY_PAUSE_MS }: RetryDeps
+  { pause, log, pauseMs = RETRY_PAUSE_MS, cancelledBy }: RetryDeps
 ): Promise<number> {
   const first = await run();
   if (first.kind !== 'exit' || first.code === 0) {
@@ -36,6 +38,10 @@ export async function runWithOneRetry(
     `::warning::Deploy attempt 1 of 2 failed with exit code ${first.code}; retrying in ${pauseMs / 1000} s.`
   );
   await pause(pauseMs);
+  const cancel = cancelledBy();
+  if (cancel) {
+    return exitCodeOf({ kind: 'signal', signal: cancel }, log);
+  }
 
   const second = await run();
   if (second.kind === 'exit' && second.code === 0) {
