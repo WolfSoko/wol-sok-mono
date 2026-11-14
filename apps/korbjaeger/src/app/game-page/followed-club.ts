@@ -4,7 +4,6 @@ import {
   type Participant,
   type Team,
   type TeamId,
-  type ClubId,
 } from '@wolsok/feat-shared-basketball-data';
 
 /** Whether `participant` is one of the followed Teams `followed`. */
@@ -30,12 +29,4 @@ export function followedSide(
     }
   }
   return undefined;
-}
-
-/** The Verein whose colours the Spiel page wears: that of `followedSide`. */
-export function followedClub(
-  game: Game,
-  followed: readonly TeamId[] | undefined
-): ClubId | undefined {
-  return followedSide(game, followed)?.clubId;
 }

@@ -1,35 +1,10 @@
 import type { Game } from '@wolsok/feat-shared-basketball-data';
-import { followedSide, followedClub } from './followed-club';
+import { followedSide } from './followed-club';
 
 const GAME = {
   home: { kind: 'team', team: { id: 1, name: 'Heim', clubId: 10 } },
   away: { kind: 'team', team: { id: 2, name: 'Gast', clubId: 20 } },
 } as unknown as Game;
-
-describe('followedClub', () => {
-  it('names the Verein of the side whose Team is followed', () => {
-    expect(followedClub(GAME, [2])).toBe(20);
-    expect(followedClub(GAME, [1])).toBe(10);
-  });
-
-  it('takes the home side where both are followed', () => {
-    expect(followedClub(GAME, [2, 1])).toBe(10);
-  });
-
-  it('names none where no side is followed, or Meine Teams are not read', () => {
-    expect(followedClub(GAME, [3])).toBeUndefined();
-    expect(followedClub(GAME, undefined)).toBeUndefined();
-  });
-
-  it('skips a side the Liga fills later', () => {
-    const openSide = {
-      ...GAME,
-      home: { kind: 'open', label: 'Nord 1. Platz' },
-    } as unknown as Game;
-
-    expect(followedClub(openSide, [1, 2])).toBe(20);
-  });
-});
 
 describe('followedSide', () => {
   it('names the Team of the side whose Team is followed, the home side where both are', () => {
@@ -40,5 +15,14 @@ describe('followedSide', () => {
   it('names none where no side is followed, or Meine Teams are not read', () => {
     expect(followedSide(GAME, [3])).toBeUndefined();
     expect(followedSide(GAME, undefined)).toBeUndefined();
+  });
+
+  it('skips a side the Liga fills later', () => {
+    const openSide = {
+      ...GAME,
+      home: { kind: 'open', label: 'Nord 1. Platz' },
+    } as unknown as Game;
+
+    expect(followedSide(openSide, [1, 2])?.name).toBe('Gast');
   });
 });
