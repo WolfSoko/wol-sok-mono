@@ -79,13 +79,19 @@ function allInputs() {
 
 /** The workspace path an input names, or `null` when it names no one file. */
 function namedFile({ projectRoot, input }) {
-  let path = null;
-  if (input.startsWith(WORKSPACE_ROOT)) {
-    path = input.slice(WORKSPACE_ROOT.length);
-  } else if (input.startsWith(PROJECT_ROOT) && projectRoot !== null) {
-    path = join(projectRoot, input.slice(PROJECT_ROOT.length));
+  // Tested before `join`, which would normalise `**/..` away with the glob.
+  if (
+    GLOB_CHARACTERS.test(input.replace(/^\{(workspace|project)Root\}\//, ''))
+  ) {
+    return null;
   }
-  return path === null || GLOB_CHARACTERS.test(path) ? null : path;
+  if (input.startsWith(WORKSPACE_ROOT)) {
+    return input.slice(WORKSPACE_ROOT.length);
+  }
+  if (input.startsWith(PROJECT_ROOT) && projectRoot !== null) {
+    return join(projectRoot, input.slice(PROJECT_ROOT.length));
+  }
+  return null;
 }
 
 function namesMissingFile(located) {
@@ -136,6 +142,7 @@ void describe('the input check', () => {
   void it('leaves out globs, negations, named inputs and nx.json project roots', () => {
     for (const input of [
       '{projectRoot}/**/*.ts',
+      '{projectRoot}/**/../missing.json',
       '!{projectRoot}/missing.ts',
       '{workspaceRoot}/missing/*.json',
       'production',
