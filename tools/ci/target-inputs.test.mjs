@@ -14,7 +14,22 @@ const PROJECT_NAME = '{projectName}';
 // A renamed file makes only its own project affected, never `tools`, so CI
 // runs this guard on every run as a step of its own, outside Nx (#3051).
 const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
-const GUARD_STEP = /^\s+run: node --test tools\/ci\/target-inputs\.test\.mjs$/m;
+const GUARD_STEP_NAME = '- name: Target inputs name existing files';
+const GUARD_COMMAND = 'run: node --test tools/ci/target-inputs.test.mjs';
+// Keys that would let the step be skipped or fail without failing the run.
+const SKIPPING_KEYS = /^\s+(if|continue-on-error):/m;
+
+/** The lines of the step named `name`, up to the next step or job. */
+function stepBlock(workflow, name) {
+  const lines = workflow.split('\n');
+  const start = lines.findIndex((line) => line.trim() === name);
+  if (start === -1) return null;
+  const indent = lines[start].indexOf('-');
+  const end = lines.findIndex(
+    (line, i) => i > start && line.trim() !== '' && line.search(/\S/) <= indent
+  );
+  return lines.slice(start, end === -1 ? undefined : end).join('\n');
+}
 // A path holding one of these is a pattern, not a single file.
 const GLOB_CHARACTERS = /[*?{}[\]!]/;
 
@@ -38,15 +53,21 @@ function located(where, projectRoot, inputs) {
   return filePatterns(inputs).map((input) => ({ where, projectRoot, input }));
 }
 
-/** Every file pattern as `{ where, projectRoot, input }`. */
+/**
+ * Every file pattern as `{ where, projectRoot, input }`, from the targets
+ * and named inputs of each project.json and from nx.json.
+ */
 function allInputs() {
   const nx = readJson('nx.json');
   return [
-    ...readProjects().flatMap(({ path, json }) =>
-      Object.entries(json.targets ?? {}).flatMap(([name, target]) =>
+    ...readProjects().flatMap(({ path, json }) => [
+      ...Object.entries(json.targets ?? {}).flatMap(([name, target]) =>
         located(`${path} ${name}`, dirname(path), target.inputs)
-      )
-    ),
+      ),
+      ...Object.entries(json.namedInputs ?? {}).flatMap(([name, inputs]) =>
+        located(`${path} namedInputs ${name}`, dirname(path), inputs)
+      ),
+    ]),
     ...Object.entries(nx.targetDefaults ?? {}).flatMap(([name, target]) =>
       located(`nx.json targetDefaults ${name}`, null, target.inputs)
     ),
@@ -151,7 +172,12 @@ void describe('target inputs', () => {
 
 void describe('the CI workflow', () => {
   void it('runs this guard on every run, outside the affected tasks', () => {
-    const workflow = readFileSync(join(ROOT, CI_WORKFLOW), 'utf8');
-    assert.match(workflow, GUARD_STEP);
+    const step = stepBlock(
+      readFileSync(join(ROOT, CI_WORKFLOW), 'utf8'),
+      GUARD_STEP_NAME
+    );
+    assert.ok(step, `${CI_WORKFLOW} has no step "${GUARD_STEP_NAME}"`);
+    assert.ok(step.includes(GUARD_COMMAND), step);
+    assert.doesNotMatch(step, SKIPPING_KEYS);
   });
 });

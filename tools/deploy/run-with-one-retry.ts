@@ -24,7 +24,8 @@ const START_ERROR_CODE = 1;
  * Runs a deploy and, when it fails, once more after a pause: a transient
  * error of the platform heals on the retry, a real one fails both attempts.
  * A deploy ended by a signal (a cancelled job) or one that could not start
- * is not retried, nor is one whose job was cancelled during the pause. Resolves to the exit code the caller should exit with.
+ * is not retried, nor is one whose job was cancelled during the pause.
+ * Resolves to the exit code the caller should exit with.
  */
 export async function runWithOneRetry(
   run: () => Promise<RunOutcome>,
