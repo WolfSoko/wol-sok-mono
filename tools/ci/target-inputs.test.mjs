@@ -4,50 +4,130 @@
 // the input. Nx also leaves `{projectName}` unresolved in inputs (#2904).
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import {
-  ROOT,
-  readJson,
-  readProjects,
-  stringInputs,
-} from './workspace-projects.mjs';
+import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
 
 const WORKSPACE_ROOT = '{workspaceRoot}/';
+const PROJECT_ROOT = '{projectRoot}/';
 const PROJECT_NAME = '{projectName}';
 // A path holding one of these is a pattern, not a single file.
 const GLOB_CHARACTERS = /[*?{}[\]!]/;
 
-/** The string inputs of one list, each with where it was found. */
-function located(where, inputs) {
-  return stringInputs(inputs).map((input) => ({ where, input }));
+/**
+ * The file patterns of an inputs list: its strings and the patterns of its
+ * `fileset` objects. Other object inputs (`runtime`, `env`, …) name no file.
+ */
+function filePatterns(inputs) {
+  return (inputs ?? []).flatMap((input) => {
+    if (typeof input === 'string') return [input];
+    return typeof input?.fileset === 'string' ? [input.fileset] : [];
+  });
 }
 
-/** Every string input as `{ where, input }`, from projects and nx.json. */
+/**
+ * The file patterns of one list, each with where it was found and the
+ * project root `{projectRoot}` stands for (`null` in nx.json, where it
+ * resolves per project).
+ */
+function located(where, projectRoot, inputs) {
+  return filePatterns(inputs).map((input) => ({ where, projectRoot, input }));
+}
+
+/** Every file pattern as `{ where, projectRoot, input }`. */
 function allInputs() {
   const nx = readJson('nx.json');
   return [
     ...readProjects().flatMap(({ path, json }) =>
       Object.entries(json.targets ?? {}).flatMap(([name, target]) =>
-        located(`${path} ${name}`, target.inputs)
+        located(`${path} ${name}`, dirname(path), target.inputs)
       )
     ),
     ...Object.entries(nx.targetDefaults ?? {}).flatMap(([name, target]) =>
-      located(`nx.json targetDefaults ${name}`, target.inputs)
+      located(`nx.json targetDefaults ${name}`, null, target.inputs)
     ),
     ...Object.entries(nx.namedInputs ?? {}).flatMap(([name, inputs]) =>
-      located(`nx.json namedInputs ${name}`, inputs)
+      located(`nx.json namedInputs ${name}`, null, inputs)
     ),
   ];
 }
 
-function namesMissingFile(input) {
-  if (!input.startsWith(WORKSPACE_ROOT)) return false;
-  const path = input.slice(WORKSPACE_ROOT.length);
-  return !GLOB_CHARACTERS.test(path) && !existsSync(join(ROOT, path));
+/** The workspace path an input names, or `null` when it names no one file. */
+function namedFile({ projectRoot, input }) {
+  let path = null;
+  if (input.startsWith(WORKSPACE_ROOT)) {
+    path = input.slice(WORKSPACE_ROOT.length);
+  } else if (input.startsWith(PROJECT_ROOT) && projectRoot !== null) {
+    path = join(projectRoot, input.slice(PROJECT_ROOT.length));
+  }
+  return path === null || GLOB_CHARACTERS.test(path) ? null : path;
+}
+
+function namesMissingFile(located) {
+  const path = namedFile(located);
+  return path !== null && !existsSync(join(ROOT, path));
 }
 
 const INPUTS = allInputs();
+
+void describe('the input check', () => {
+  const inProject = (input) => ({ where: 'x', projectRoot: 'tools', input });
+
+  void it('takes the patterns of strings and filesets, not other objects', () => {
+    assert.deepEqual(
+      filePatterns([
+        'production',
+        { fileset: '{projectRoot}/a.json' },
+        { runtime: 'node -v' },
+        { env: 'CI' },
+      ]),
+      ['production', '{projectRoot}/a.json']
+    );
+  });
+
+  void it('resolves {projectRoot} against the project folder', () => {
+    assert.equal(
+      namedFile(inProject('{projectRoot}/project.json')),
+      join('tools', 'project.json')
+    );
+    assert.equal(
+      namesMissingFile(inProject('{projectRoot}/project.json')),
+      false
+    );
+    assert.equal(
+      namesMissingFile(inProject('{projectRoot}/no-such-file.json')),
+      true
+    );
+  });
+
+  void it('resolves {workspaceRoot} against the workspace', () => {
+    assert.equal(namesMissingFile(inProject('{workspaceRoot}/nx.json')), false);
+    assert.equal(
+      namesMissingFile(inProject('{workspaceRoot}/no-such-file.json')),
+      true
+    );
+  });
+
+  void it('leaves out globs, negations, named inputs and nx.json project roots', () => {
+    for (const input of [
+      '{projectRoot}/**/*.ts',
+      '!{projectRoot}/missing.ts',
+      '{workspaceRoot}/missing/*.json',
+      'production',
+      '^production',
+    ]) {
+      assert.equal(namedFile(inProject(input)), null, input);
+    }
+    assert.equal(
+      namedFile({
+        where: 'nx.json',
+        projectRoot: null,
+        input: '{projectRoot}/missing.json',
+      }),
+      null
+    );
+  });
+});
 
 void describe('target inputs', () => {
   void it('never use {projectName}, which Nx leaves unresolved in inputs', () => {
@@ -57,8 +137,8 @@ void describe('target inputs', () => {
     assert.deepEqual(unresolved, []);
   });
 
-  void it('name only workspace files that exist', () => {
-    const missing = INPUTS.filter(({ input }) => namesMissingFile(input)).map(
+  void it('name only files that exist', () => {
+    const missing = INPUTS.filter(namesMissingFile).map(
       ({ where, input }) => `${where}: ${input}`
     );
     assert.deepEqual(missing, []);
