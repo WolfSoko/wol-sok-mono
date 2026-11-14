@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.170.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.3...v74.170.4) (2026-11-14)
+
+### Bug Fixes
+
+* **tools:** fail fast in every inline init step of the Nx Cloud workers ([#3093](https://github.com/WolfSoko/wol-sok-mono/issues/3093)) ([45c046c](https://github.com/WolfSoko/wol-sok-mono/commit/45c046c4bd2eba2b5e64f6c7b71f018294c664af)), closes [#3067](https://github.com/WolfSoko/wol-sok-mono/issues/3067), references [#3067](https://github.com/WolfSoko/wol-sok-mono/issues/3067)
+
+### Refactorings
+
+* **korbjaeger:** English identifiers, part D4: account and frame ([#3012](https://github.com/WolfSoko/wol-sok-mono/issues/3012)) ([#3092](https://github.com/WolfSoko/wol-sok-mono/issues/3092)) ([9ccedeb](https://github.com/WolfSoko/wol-sok-mono/commit/9ccedeb2494f885fb9e22203327539cdfd6cd92f))
+
 ## [74.170.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.2...v74.170.3) (2026-11-13)
 
 ### Refactorings
