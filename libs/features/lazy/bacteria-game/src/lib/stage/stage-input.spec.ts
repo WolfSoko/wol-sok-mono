@@ -8,7 +8,7 @@ import {
 } from '../../testing/fullscreen-stubs';
 import { StageBusy } from '../busy/stage-busy';
 import { GameStateService } from '../state/game-state.service';
-import { GameStateStore } from '../state/game.states';
+import { GameState, GameStateStore } from '../state/game.states';
 import { PlayerService } from '../state/player.service';
 import { PlayerStore } from '../state/player.store';
 import { ArenaStage } from './arena-stage';
@@ -136,6 +136,18 @@ describe('StageInput', () => {
 
       expect(event.preventDefault).toHaveBeenCalled();
       expect(store.snapshot().keysPressed).not.toContain(' ');
+    });
+
+    it('keeps Space from scrolling while the match counts down, boosting nothing', () => {
+      create();
+      startMatch('two-players');
+      store.update({ currentState: GameState.COUNTDOWN, countdown: 3 });
+      const event = keyEvent(' ', document.body);
+
+      input.keyDown(event);
+
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(boostOf(0)).toBe(0);
     });
 
     it('ignores a held key', () => {

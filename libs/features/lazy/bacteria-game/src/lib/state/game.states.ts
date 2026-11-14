@@ -58,11 +58,28 @@ export enum GameState {
   PAUSED,
   END,
   START,
+  /** The match is set up and counts down to its first tick. */
+  COUNTDOWN,
 }
 
-/** True while a match is on - a paused match is still a match. */
+/**
+ * True while a match is on and not paused: it runs, or counts down to its
+ * first tick - the keys belong to the match then.
+ */
+export function isMatchUnderway(state: GameState): boolean {
+  return state === GameState.RUNNING || state === GameState.COUNTDOWN;
+}
+
+/**
+ * True while a match is on - a paused match is still a match, and so is
+ * one counting down to its first tick.
+ */
 export function isMatchOn(state: GameState): boolean {
-  return state === GameState.RUNNING || state === GameState.PAUSED;
+  return (
+    state === GameState.RUNNING ||
+    state === GameState.PAUSED ||
+    state === GameState.COUNTDOWN
+  );
 }
 
 export interface GameStateState {
@@ -117,6 +134,11 @@ export interface GameStateState {
   online: OnlineSeat | null;
   /** True while an online match waits for the other device's inputs. */
   waitingForPeer: boolean;
+  /**
+   * The whole seconds left of the countdown before the match - 3, 2, 1 -
+   * read only while the state is `COUNTDOWN`.
+   */
+  countdown: number | null;
 }
 
 export function createInitialState(): GameStateState {
@@ -144,6 +166,7 @@ export function createInitialState(): GameStateState {
     endlessRanked: null,
     online: null,
     waitingForPeer: false,
+    countdown: null,
   };
 }
 
@@ -166,6 +189,7 @@ export const GameStateStore = signalStore(
       endedBy,
       online,
       colors,
+      countdown,
     }) => {
       const nextMatch = computed(() => nextMatchOf(next(), online()));
       const rules = computed(() =>
@@ -191,6 +215,15 @@ export const GameStateStore = signalStore(
         isMatchOn: computed(() => isMatchOn(currentState())),
         /** True while the match is paused. */
         isPaused: computed(() => currentState() === GameState.PAUSED),
+        /** True while the match counts down to its first tick. */
+        isCountingDown: computed(() => currentState() === GameState.COUNTDOWN),
+        /**
+         * The seconds the match counts down before it starts - null
+         * outside the countdown.
+         */
+        countdownLeft: computed(() =>
+          currentState() === GameState.COUNTDOWN ? countdown() : null
+        ),
         /** Whole seconds of the match played, as the match clock shows them. */
         gameSeconds,
         /**

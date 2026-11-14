@@ -409,12 +409,19 @@ export class PlayFlow {
     this.haptics.matchStart();
     this.stageFrame.newMatch();
     this.gameStateService.startMatch(this.arenaStage.arena());
+    // The countdown shows the new match's start, not the last board.
+    if (this.hud.countingDown()) {
+      this.arenaStage.draw();
+    }
   }
 
   /** Toggles pause - the touch equivalent of the P key. */
   public togglePause(): void {
-    // A ranked match plays through: the music too.
-    if (!this.hud.paused() && !this.hud.canPause()) {
+    // A ranked match plays through: the music too. A countdown has no pause.
+    if (
+      this.hud.countingDown() ||
+      (!this.hud.paused() && !this.hud.canPause())
+    ) {
       return;
     }
     this.stageFullscreen.requestNative();

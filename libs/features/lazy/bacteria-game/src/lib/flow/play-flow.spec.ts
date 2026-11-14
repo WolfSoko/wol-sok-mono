@@ -223,6 +223,31 @@ describe('PlayFlow', () => {
     });
   });
 
+  describe('the countdown before a match', () => {
+    it('offers no pause while the match counts down', () => {
+      const pause = jest.spyOn(TestBed.inject(GameStateService), 'togglePause');
+      store.update({ currentState: GameState.COUNTDOWN, countdown: 3 });
+
+      flow.togglePause();
+
+      expect(pause).not.toHaveBeenCalled();
+      expect(store.snapshot().currentState).toBe(GameState.COUNTDOWN);
+    });
+
+    it('paints the start of the new match for the countdown', () => {
+      const draw = jest.spyOn(TestBed.inject(ArenaStage), 'draw');
+      jest
+        .spyOn(TestBed.inject(GameStateService), 'startMatch')
+        .mockImplementation(() =>
+          store.update({ currentState: GameState.COUNTDOWN, countdown: 3 })
+        );
+
+      flow.startGame();
+
+      expect(draw).toHaveBeenCalled();
+    });
+  });
+
   describe('giving a ranked match up', () => {
     function armed(): jest.SpyInstance {
       return jest.spyOn(flow, 'quitToMenu').mockImplementation(() => undefined);
@@ -242,6 +267,9 @@ describe('PlayFlow', () => {
 
     it('does not carry a first tap over into the next match', () => {
       const quit = armed();
+      jest
+        .spyOn(TestBed.inject(GameStateService), 'startMatch')
+        .mockImplementation(() => undefined);
 
       flow.giveUp();
       flow.startGame();

@@ -32,6 +32,7 @@ import { GameStateService } from './game-state.service';
 import { MatchRecorder } from './match-recorder';
 import { GameState, GameStateStore } from './game.states';
 import { SETUP_MATCH } from './match-rules';
+import { MATCH_COUNTDOWN_SECONDS } from './match-countdown';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
@@ -42,6 +43,9 @@ import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { GameReplays } from '../storage/game-replays';
 import { onlineIdOf } from '../storage/replay-records';
 import type { NetMessage } from '../net/net-message';
+
+/** Most specs drive the match tick by tick from its start. */
+const NO_COUNTDOWN = { provide: MATCH_COUNTDOWN_SECONDS, useValue: 0 };
 
 const WIDTH = 320;
 const HEIGHT = 140;
@@ -54,7 +58,10 @@ describe('GameStateService', () => {
   beforeEach(() => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [{ provide: GameReplays, useValue: new FakeGameReplays() }],
+      providers: [
+        { provide: GameReplays, useValue: new FakeGameReplays() },
+        NO_COUNTDOWN,
+      ],
     });
     service = TestBed.inject(GameStateService);
     store = TestBed.inject(GameStateStore);
@@ -235,6 +242,115 @@ describe('GameStateService', () => {
       const [human, computer] = startingCounts();
 
       expect(human).toBe(computer);
+    });
+  });
+
+  describe('the countdown before a match', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameReplays, useValue: new FakeGameReplays() },
+          { provide: MATCH_COUNTDOWN_SECONDS, useValue: 3 },
+        ],
+      });
+      service = TestBed.inject(GameStateService);
+      store = TestBed.inject(GameStateStore);
+      service.setArenaSize(WIDTH, HEIGHT);
+    });
+
+    afterEach(() => {
+      service.cleanup();
+      jest.useRealTimers();
+    });
+
+    it('counts 3, 2, 1 down, a second each, then runs the match', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      const seen = [store.countdownLeft()];
+      for (let second = 0; second < 3; second++) {
+        jest.advanceTimersByTime(1000);
+        seen.push(store.countdownLeft());
+      }
+
+      expect(seen).toEqual([3, 2, 1, null]);
+      expect(store.snapshot().currentState).toBe(GameState.RUNNING);
+    });
+
+    it('sets the match up when it begins, as a match that is on', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+
+      expect(store.snapshot().currentState).toBe(GameState.COUNTDOWN);
+      expect(store.isMatchOn()).toBe(true);
+      expect(store.isPaused()).toBe(false);
+      expect(store.snapshot().timePassed).toBe(0);
+      expect(store.snapshot().winner).toBeNull();
+    });
+
+    it('plays no tick before the countdown is over', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      const tick = jest.spyOn(TestBed.inject(PlayerService), 'tick');
+
+      service.advance(WIDTH, HEIGHT, 5);
+      jest.advanceTimersByTime(2999);
+      service.advance(WIDTH, HEIGHT, 5);
+
+      expect(tick).not.toHaveBeenCalled();
+      expect(store.snapshot().timePassed).toBe(0);
+
+      jest.advanceTimersByTime(1);
+      service.advance(WIDTH, HEIGHT, 1);
+
+      expect(tick).toHaveBeenCalledTimes(1);
+    });
+
+    it('takes no boost and no pause during the countdown', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      const boost = jest.spyOn(TestBed.inject(PlayerService), 'boost');
+
+      service.boost(0);
+      service.togglePause();
+      service.addKeyPress('p');
+
+      expect(boost).not.toHaveBeenCalled();
+      expect(store.snapshot().currentState).toBe(GameState.COUNTDOWN);
+    });
+
+    it('starts no match once a reset took the countdown over', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      jest.advanceTimersByTime(1000);
+
+      service.reset();
+      jest.advanceTimersByTime(5000);
+
+      expect(store.snapshot().currentState).toBe(GameState.START);
+      expect(store.countdownLeft()).toBeNull();
+    });
+
+    it('starts no match after a pause while it counts down', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+
+      service.pause();
+      jest.advanceTimersByTime(5000);
+
+      expect(store.snapshot().currentState).toBe(GameState.PAUSED);
+    });
+
+    it('counts a new start down from the beginning', () => {
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      jest.advanceTimersByTime(2000);
+
+      service.startMatch({ width: WIDTH, height: HEIGHT });
+      jest.advanceTimersByTime(1000);
+
+      expect(store.countdownLeft()).toBe(2);
+      expect(store.snapshot().currentState).toBe(GameState.COUNTDOWN);
+    });
+
+    it('starts at once without a countdown from start()', () => {
+      service.start();
+
+      expect(store.snapshot().currentState).toBe(GameState.RUNNING);
     });
   });
 
@@ -777,6 +893,7 @@ describe('GameStateService online', () => {
       providers: [
         { provide: OnlineMatchService, useValue: online },
         { provide: GameReplays, useValue: replays },
+        NO_COUNTDOWN,
       ],
     });
     service = TestBed.inject(GameStateService);
@@ -1003,7 +1120,7 @@ describe('GameStateService local recordings', () => {
     TestBed.resetTestingModule();
     replays = new FakeGameReplays();
     TestBed.configureTestingModule({
-      providers: [{ provide: GameReplays, useValue: replays }],
+      providers: [{ provide: GameReplays, useValue: replays }, NO_COUNTDOWN],
     });
     service = TestBed.inject(GameStateService);
     recorder = TestBed.inject(MatchRecorder);
@@ -1178,7 +1295,7 @@ describe('GameStateService ranked matches', () => {
     TestBed.resetTestingModule();
     replays = new FakeGameReplays();
     TestBed.configureTestingModule({
-      providers: [{ provide: GameReplays, useValue: replays }],
+      providers: [{ provide: GameReplays, useValue: replays }, NO_COUNTDOWN],
     });
     service = TestBed.inject(GameStateService);
     recorder = TestBed.inject(MatchRecorder);

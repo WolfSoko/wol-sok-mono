@@ -4,12 +4,15 @@ import {
   animationFrames,
   defer,
   filter,
+  interval,
   map,
   Observable,
   Subject,
   Subscription,
   switchMap,
+  take,
   takeUntil,
+  takeWhile,
 } from 'rxjs';
 import {
   addSeriesMatch,
@@ -71,6 +74,7 @@ import {
   OnlineSeat,
 } from './game.states';
 import { MatchRecorder, MatchRecording } from './match-recorder';
+import { COUNTDOWN_STEP_MS, MATCH_COUNTDOWN_SECONDS } from './match-countdown';
 import { PlayerStore } from './player.store';
 import { PlayerService } from './player.service';
 import { ProgressService } from '../progress.service';
@@ -116,6 +120,7 @@ export class GameStateService {
   private readonly seatSync = inject(OnlineSeatSync);
   private matchAnalytics = inject(MatchAnalytics);
   private readonly recorder = inject(MatchRecorder);
+  private readonly countdownSeconds = inject(MATCH_COUNTDOWN_SECONDS);
   /** What the colonies on the board were spawned from - see `initPlayers`. */
   private plan: MatchPlan | null = null;
   /** Frames in a row an online match could not go on, waiting for the other device. */
@@ -248,12 +253,44 @@ export class GameStateService {
   /**
    * Starts the next match on an arena of that size: the frame loop of the
    * last one stops, a fresh one waits for the match to run, and the match
-   * starts - in that order, which only this method keeps.
+   * is set up and counts down to its first tick - in that order, which
+   * only this method keeps.
    */
   public startMatch(arena: { width: number; height: number }): void {
     this.cleanup();
     this.init(arena.width, arena.height);
-    this.start();
+    const seconds = Math.max(0, this.countdownSeconds);
+    if (this.setUpMatch(seconds)) {
+      this.countDown(seconds);
+    }
+  }
+
+  /**
+   * Counts the match set up down to its first tick, a second a number. The
+   * match runs only from the countdown: a reset, a quit or a forfeit
+   * meanwhile took the state elsewhere, which ends the count. Part of the
+   * match's subscriptions, so `cleanup` stops it too.
+   */
+  private countDown(seconds: number): void {
+    this.subscriptions?.add(
+      interval(COUNTDOWN_STEP_MS)
+        .pipe(
+          takeWhile(
+            () =>
+              this.gameStateStore.snapshot().currentState ===
+              GameState.COUNTDOWN
+          ),
+          map((step) => seconds - step - 1),
+          take(seconds)
+        )
+        .subscribe((left) =>
+          this.gameStateStore.update(
+            left > 0
+              ? { countdown: left }
+              : { countdown: null, currentState: GameState.RUNNING }
+          )
+        )
+    );
   }
 
   /** Sets the arena up for a match and runs the frame loop while it runs. */
@@ -813,12 +850,21 @@ export class GameStateService {
    * match alone, for callers that advance it themselves (the specs).
    */
   public start(): void {
+    this.setUpMatch(0);
+  }
+
+  /**
+   * Sets the next match up: running at once, or counting `countdownSeconds`
+   * down to its first tick. False when there is no match to set up: an
+   * online match the other device has left.
+   */
+  private setUpMatch(countdownSeconds: number): boolean {
     // Online wins over a one-match setting still set (see `nextMatch`).
     const next = this.gameStateStore.nextMatch();
     if (next.kind === 'online') {
       const match = this.seatSync.matchStart(next.seat);
       if (match === null) {
-        return;
+        return false;
       }
       if (match.seat !== next.seat) {
         this.gameStateStore.update({ online: match.seat });
@@ -840,18 +886,23 @@ export class GameStateService {
       );
     }
     const { inSeries, kind } = this.gameStateStore.matchRules();
-    this.gameStateStore.update((state) => ({
-      currentState: GameState.RUNNING,
-      series: inSeries ? nextSeries(state.series, state.seriesLength) : null,
+    this.gameStateStore.update((current) => ({
+      currentState:
+        countdownSeconds > 0 ? GameState.COUNTDOWN : GameState.RUNNING,
+      countdown: countdownSeconds > 0 ? countdownSeconds : null,
+      series: inSeries
+        ? nextSeries(current.series, current.seriesLength)
+        : null,
       // Any match but the run's leaves the endless run.
-      endless: kind === 'endless' ? state.endless : null,
-      endlessRanked: kind === 'endless' ? state.endlessRanked : null,
+      endless: kind === 'endless' ? current.endless : null,
+      endlessRanked: kind === 'endless' ? current.endlessRanked : null,
       // Restart from the pause menu starts without a reset in between.
       timePassed: 0,
       winner: null,
       endedBy: null,
       earnings: null,
     }));
+    return true;
   }
 
   /**

@@ -161,6 +161,16 @@ describe('BacteriaGameComponent', () => {
       expect(component['stageFullscreen'].fullscreen()).toBe(true);
     });
 
+    it('pauses a match counting down when the browser leaves fullscreen', () => {
+      const arena = create();
+      startMatch('vs-computer');
+      store.update({ currentState: GameState.COUNTDOWN, countdown: 2 });
+
+      screenTakenOffStage(arena);
+
+      expect(component['hud'].paused()).toBe(true);
+    });
+
     /** A player inside the stage, which takes the screen for itself. */
     function playerInside(arena: StubStage): Element {
       const player = document.createElement('div');
