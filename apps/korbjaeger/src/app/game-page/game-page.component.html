@@ -6,7 +6,7 @@
   <mat-progress-bar mode="indeterminate" aria-label="Spiel wird geladen" />
 }
 @if (error(); as text) {
-  <p class="fehler" role="alert" data-qa="game-error">{{ text }}</p>
+  <p class="error" role="alert" data-qa="game-error">{{ text }}</p>
 }
 @if (head(); as game) {
   <h1>
@@ -86,7 +86,7 @@
 @if (gameReport(); as part) {
   <h2>Kader</h2>
   @if (childError(); as text) {
-    <p class="fehler" role="alert" data-qa="child-error">{{ text }}</p>
+    <p class="error" role="alert" data-qa="child-error">{{ text }}</p>
   }
   @switch (part.kind) {
     @case ("loading") {
@@ -96,7 +96,7 @@
       />
     }
     @case ("error") {
-      <p class="fehler" data-qa="game-report-error">{{ part.text }}</p>
+      <p class="error" data-qa="game-report-error">{{ part.text }}</p>
     }
     @case ("missing") {
       <p data-qa="game-report-missing">{{ part.text }}</p>

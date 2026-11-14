@@ -9,7 +9,7 @@ import { RouterLink } from '@angular/router';
  * exist and leads back to the overview.
  */
 @Component({
-  selector: 'korb-nicht-gefunden-page',
+  selector: 'korb-not-found-page',
   imports: [MatButtonModule, RouterLink],
   template: `
     <h1>Seite nicht gefunden</h1>
@@ -18,7 +18,7 @@ import { RouterLink } from '@angular/router';
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export default class NichtGefundenPage {
+export default class NotFoundPage {
   public constructor() {
     breadcrumb(() => [{ title: 'Seite nicht gefunden' }]);
   }

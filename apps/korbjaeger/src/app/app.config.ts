@@ -7,10 +7,10 @@ import {
   withComponentInputBinding,
   withInMemoryScrolling,
 } from '@angular/router';
-import { provideDarstellung } from './darstellung/darstellung';
+import { provideAppearance } from './appearance/appearance';
 import { provideBasketballData } from './basketball-data/basketball-data.provider';
 import { provideAppServiceWorker } from './pwa/app-service-worker';
-import { provideInstallationsHinweis } from './pwa/installations-hinweis';
+import { provideInstallHint } from './pwa/install-hint';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -24,7 +24,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideBasketballData(),
     provideAppServiceWorker(),
-    provideInstallationsHinweis(),
-    provideDarstellung(),
+    provideInstallHint(),
+    provideAppearance(),
   ],
 };

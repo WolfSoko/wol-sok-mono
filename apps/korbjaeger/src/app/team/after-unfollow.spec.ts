@@ -8,7 +8,7 @@ import {
   LocalSelection,
   type Selection,
 } from '@wolsok/feat-korbjaeger-selection';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import { FocusAfterUnfollowDirective } from './focus-after-unfollow.directive';
 import { AfterUnfollow } from './after-unfollow';
@@ -34,7 +34,7 @@ async function render(
   selection: Selection = new LocalSelection(undefined)
 ): Promise<Setup> {
   TestBed.configureTestingModule({
-    providers: [{ provide: AUSWAHL, useValue: selection }],
+    providers: [{ provide: SELECTION, useValue: selection }],
   });
   const fixture = TestBed.createComponent(Screen);
   await fixture.whenStable();

@@ -8,7 +8,7 @@ import {
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import type { Roster } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { ChildMarkComponent } from '../child/child-mark.component';
 import { statsColumns } from './roster-columns';
 import { rosterRows } from './roster-rows';
@@ -40,7 +40,7 @@ export class RosterComponent {
   /** Whether the Team is one of Meine Teams, so its Kinder can be marked. */
   public readonly followed = input(false);
 
-  private readonly children = inject(AUSWAHL).children;
+  private readonly children = inject(SELECTION).children;
 
   protected readonly rows = computed(() => {
     const children = this.children();

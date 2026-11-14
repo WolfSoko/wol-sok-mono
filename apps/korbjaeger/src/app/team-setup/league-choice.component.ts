@@ -24,7 +24,7 @@ import type { LeaguePages } from './league-pages';
   template: `
     @let leaguePages = pages();
     @if (leaguePages.leagues().length > 0) {
-      <mat-action-list class="umbrechende-liste">
+      <mat-action-list class="wrapping-list">
         @for (league of leaguePages.leagues(); track league.id) {
           <button
             mat-list-item
@@ -53,7 +53,7 @@ import type { LeaguePages } from './league-pages';
       </button>
     }
     @if (error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

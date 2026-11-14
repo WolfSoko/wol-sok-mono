@@ -18,7 +18,7 @@ interface Region {
 
 /**
  * The collection of the Elternteile's choices (Meine Teams, Kinder,
- * Vereinsfarben), one `AuswahlDokument` per uid. Persisted: renamed only with
+ * Vereinsfarben), one `SelectionDocument` per uid. Persisted: renamed only with
  * a migration (#2966 renamed it from `LEGACY_CHOICES_COLLECTION`).
  */
 export const CHOICES_COLLECTION = 'selections';

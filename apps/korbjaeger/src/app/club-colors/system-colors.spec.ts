@@ -12,12 +12,12 @@ describe('the system colours a Verein’s colours set', () => {
       importers: [new NodePackageImporter(WORKSPACE)],
       loadPaths: [`${WORKSPACE}node_modules`],
     });
-    const imTheme = new Set(
+    const inTheme = new Set(
       [...css.matchAll(/--mat-sys-([\w-]+):\s*light-dark\(/g)].map(
         ([, name]) => name
       )
     );
 
-    expect([...imTheme].sort()).toEqual([...SYSTEM_COLORS].sort());
+    expect([...inTheme].sort()).toEqual([...SYSTEM_COLORS].sort());
   });
 });

@@ -1,35 +1,35 @@
 import type { Locator, Page } from '@playwright/test';
-import { folgenKnopf } from './folgen';
+import { followButton } from './follow';
 
 /** `/`: the overview of Meine Teams and Kinder. */
 export class StartPage {
   /** One per marked Kind, the one that plays first first. */
-  public readonly kinder: Locator;
+  public readonly children: Locator;
   /** One per followed Team without a Kind, the one that plays first first. */
   public readonly teams: Locator;
   /** What the overview says while no Team is followed. */
-  public readonly leer: Locator;
+  public readonly empty: Locator;
   /** Opens the search, offered while no Team is followed. */
   public readonly searchTeam: Locator;
   /** Opens the search, offered below the cards once a Team is followed. */
   public readonly searchFurtherTeam: Locator;
 
   public constructor(private readonly page: Page) {
-    this.kinder = page.getByTestId('overview-child');
+    this.children = page.getByTestId('overview-child');
     this.teams = page.getByTestId('overview-team');
-    this.leer = page.getByTestId('overview-empty');
-    this.searchTeam = this.leer.getByRole('link', { name: 'Team suchen' });
+    this.empty = page.getByTestId('overview-empty');
+    this.searchTeam = this.empty.getByRole('link', { name: 'Team suchen' });
     this.searchFurtherTeam = page.getByRole('link', {
       name: 'Weiteres Team suchen',
     });
   }
 
   /** Whether the card `team` wears a Verein's colours (its own `--mat-sys-*` tokens). */
-  public traegtVereinsfarben(team: Locator): Promise<boolean> {
+  public wearsClubColors(team: Locator): Promise<boolean> {
     return team.evaluate(
-      (karte) =>
+      (card) =>
         // the card's host, korb-overview-team, holds the tokens
-        (karte.closest('korb-overview-team') as HTMLElement | null)?.style
+        (card.closest('korb-overview-team') as HTMLElement | null)?.style
           .getPropertyValue('--mat-sys-primary')
           .startsWith('light-dark(') ?? false
     );
@@ -49,8 +49,8 @@ export class StartPage {
   }
 
   /** The overview's entry of the Kind called `name` (Spitzname or first name). */
-  public kind(name: string): Locator {
-    return this.kinder.filter({
+  public child(name: string): Locator {
+    return this.children.filter({
       has: this.page.getByTestId('overview-child-name').getByText(name, {
         exact: true,
       }),
@@ -58,32 +58,32 @@ export class StartPage {
   }
 
   /** The Teams a Kind plays for, as `kind(name)` finds it. */
-  public kindTeams(kind: Locator): Locator {
-    return kind.getByTestId('overview-child-teams');
+  public childTeams(child: Locator): Locator {
+    return child.getByTestId('overview-child-teams');
   }
 
   /** Whether a Kind was on the Kader of its last Spiel. */
-  public kaderFlagge(kind: Locator): Locator {
-    return kind.getByTestId('overview-roster');
+  public rosterFlag(child: Locator): Locator {
+    return child.getByTestId('overview-roster');
   }
 
   /** The next Spiel of an entry, as `team(name)` or `kind(name)` finds it. */
-  public naechstesSpiel(team: Locator): Locator {
+  public nextGame(team: Locator): Locator {
     return team.getByTestId('overview-next');
   }
 
   /** The control that unfollows the Team `name`, on its card or a Kind's. */
-  public nichtMehrFolgen(name: string): Locator {
-    return folgenKnopf(this.page, name, { gefolgt: true });
+  public unfollow(name: string): Locator {
+    return followButton(this.page, name, { followed: true });
   }
 
   /** The snackbar's "Rückgängig", offered once a card unfollowed its Team. */
-  public get rueckgaengig(): Locator {
+  public get undo(): Locator {
     return this.page.getByRole('button', { name: 'Rückgängig' });
   }
 
   /** The last result of an entry, as `team(name)` or `kind(name)` finds it. */
-  public letztesErgebnis(team: Locator): Locator {
+  public lastResult(team: Locator): Locator {
     return team.getByTestId('overview-last');
   }
 }

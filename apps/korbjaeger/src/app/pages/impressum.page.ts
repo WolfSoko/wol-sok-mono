@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { breadcrumb } from '../navigation/breadcrumb';
-import { ImpressumComponent } from '../rechtliches/impressum.component';
+import { ImpressumComponent } from '../legal/impressum.component';
 
 /** `/impressum`: the legal notice, linked from the footer. */
 @Component({

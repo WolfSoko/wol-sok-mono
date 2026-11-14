@@ -16,8 +16,8 @@ import type { GameRow } from './game-row';
  */
 @Component({
   selector: 'korb-next-game',
-  // on the scoreboard, wherever it shows (`.anzeigetafel` in styles.scss)
-  host: { class: 'anzeigetafel' },
+  // on the scoreboard, wherever it shows (`.scoreboard` in styles.scss)
+  host: { class: 'scoreboard' },
   imports: [GameVenueComponent, GameLinkComponent],
   template: `
     <korb-game-link

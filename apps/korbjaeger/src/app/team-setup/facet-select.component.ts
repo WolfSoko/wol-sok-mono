@@ -18,7 +18,7 @@ import type { FacetStep } from './facet-step';
   template: `
     @let facets = step().facets();
     @if (step().error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     } @else if (step().empty(); as text) {
       <p>{{ text }}</p>
     }

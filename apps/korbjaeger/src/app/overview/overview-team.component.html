@@ -16,7 +16,7 @@
         />
       }
       @case ("error") {
-        <p class="fehler" data-qa="overview-error">{{ team.text }}</p>
+        <p class="error" data-qa="overview-error">{{ team.text }}</p>
       }
       @case ("loaded") {
         <korb-as-of data-qa="overview-as-of" [asOf]="team.asOf" />
@@ -36,7 +36,7 @@
         }
         @if (team.last; as last) {
           <korb-game-link
-            class="anzeigetafel"
+            class="scoreboard"
             heading="Letztes Ergebnis"
             [row]="last"
             data-qa="overview-last"

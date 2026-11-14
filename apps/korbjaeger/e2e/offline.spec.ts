@@ -19,17 +19,17 @@ test.describe('Without a network', () => {
   test("shows the Team's last good Spiele with their Stand, and says what it never read", async ({
     context,
     page,
-    spielPage,
+    gamePage,
     startPage,
     teamPage,
   }) => {
     await teamPage.goto(MTV_WASBUETTEL);
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
-    await expect(teamPage.stand).toBeEmpty();
-    await teamPage.folgen.click();
+    await expect(teamPage.asOf).toBeEmpty();
+    await teamPage.follow.click();
     // the Spiel page once, so its code is loaded before the network goes
-    await teamPage.spielGegen('MTV Gifhorn').click();
-    await expect(spielPage.heading).toContainText('MTV Gifhorn');
+    await teamPage.gameAgainst('MTV Gifhorn').click();
+    await expect(gamePage.heading).toContainText('MTV Gifhorn');
     await page.getByRole('link', { name: 'Korbjäger' }).click();
     await expect(startPage.teams).toHaveCount(1);
 
@@ -38,10 +38,10 @@ test.describe('Without a network', () => {
     await startPage.team('MTV Wasbüttel').getByTestId('overview-name').click();
 
     await expect(teamPage.heading).toHaveText('MTV Wasbüttel');
-    await expect(teamPage.spiele).toHaveCount(6);
-    await expect(teamPage.stand).toHaveText(/Offline · Stand: vor 2 Std\./);
+    await expect(teamPage.games).toHaveCount(6);
+    await expect(teamPage.asOf).toHaveText(/Offline · Stand: vor 2 Std\./);
 
-    await teamPage.spielGegen('SV Groß Schwülper').first().click();
-    await expect(spielPage.fehler).toHaveText(/^Kein Internet\./);
+    await teamPage.gameAgainst('SV Groß Schwülper').first().click();
+    await expect(gamePage.error).toHaveText(/^Kein Internet\./);
   });
 });

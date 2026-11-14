@@ -12,7 +12,7 @@ import {
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   clubColorsFor,
   clubColorsOf,
@@ -60,10 +60,10 @@ export interface ClubColorsSheetData {
       <p class="preview-title">Vorschau</p>
       <span class="preview-button">Team folgen</span>
       <span class="preview-secondary">Zweite Farbe</span>
-      <p class="anzeigetafel preview-board">Nächstes Spiel</p>
+      <p class="scoreboard preview-board">Nächstes Spiel</p>
     </div>
     @if (change.error(); as text) {
-      <p class="fehler" role="alert">{{ text }}</p>
+      <p class="error" role="alert">{{ text }}</p>
     }
     <div class="actions">
       <button
@@ -109,7 +109,7 @@ export interface ClubColorsSheetData {
       border-radius: var(--mat-sys-corner-medium);
       background: var(--mat-sys-surface-container);
       color: var(--mat-sys-on-surface);
-      border-block-start: var(--korb-linie-breite) solid var(--mat-sys-primary);
+      border-block-start: var(--korb-line-width) solid var(--mat-sys-primary);
     }
     .preview-title {
       flex-basis: 100%;
@@ -134,7 +134,7 @@ export interface ClubColorsSheetData {
       flex-basis: 100%;
       padding: 0.75rem;
     }
-    .fehler {
+    .error {
       color: var(--mat-sys-error);
     }
     .actions {
@@ -148,7 +148,7 @@ export interface ClubColorsSheetData {
 export class ClubColorsSheetComponent {
   protected readonly data = inject<ClubColorsSheetData>(MAT_BOTTOM_SHEET_DATA);
   private readonly sheet = inject(MatBottomSheetRef);
-  private readonly selection = inject(AUSWAHL);
+  private readonly selection = inject(SELECTION);
 
   /** The colours the Verein has now; `undefined` for none. */
   protected readonly stored = computed(() =>

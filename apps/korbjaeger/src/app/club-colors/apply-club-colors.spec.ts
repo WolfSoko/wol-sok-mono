@@ -1,7 +1,7 @@
 import { Component, input, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
 import type {
   ClubColorsChoice,
@@ -32,13 +32,13 @@ class Page {
   public readonly colors = signal<ClubColors | undefined>(undefined);
 }
 
-const ROT: ClubColorsChoice = { clubId: 4242, primary: '#c8102e' };
+const RED: ClubColorsChoice = { clubId: 4242, primary: '#c8102e' };
 
-async function openPage(clubColors: readonly ClubColorsChoice[] = [ROT]) {
+async function openPage(clubColors: readonly ClubColorsChoice[] = [RED]) {
   const colors = signal<readonly ClubColorsChoice[] | undefined>(clubColors);
   TestBed.configureTestingModule({
     providers: [
-      { provide: AUSWAHL, useValue: fakeSelection({ clubColors: colors }) },
+      { provide: SELECTION, useValue: fakeSelection({ clubColors: colors }) },
     ],
   });
   const fixture = TestBed.createComponent(Page);
@@ -60,7 +60,7 @@ describe('applyClubColors', () => {
   it("sets every system colour of the Verein's colours, light and dark", async () => {
     const { part } = await openPage();
 
-    const tokens = colorSchemeTokens(ROT);
+    const tokens = colorSchemeTokens(RED);
     const style = part('club').style;
     for (const [name, value] of Object.entries(tokens)) {
       expect(style.getPropertyValue(name)).toBe(value);
@@ -96,7 +96,7 @@ describe('applyClubColors', () => {
   it('follows another Verein, and a change of the colours', async () => {
     const { fixture, colors, settled, part } = await openPage();
 
-    colors.set([ROT, { clubId: 4343, primary: '#1d4ed8' }]);
+    colors.set([RED, { clubId: 4343, primary: '#1d4ed8' }]);
     fixture.componentInstance.club.set(4343);
     await settled();
 

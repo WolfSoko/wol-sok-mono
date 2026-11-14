@@ -19,7 +19,7 @@ import {
   type TeamSeason,
   type ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   type Selection,
   LocalSelection,
@@ -34,18 +34,18 @@ import { NOW } from '../now';
 import { MY_CHILD } from './overview-view';
 import { OverviewComponent } from './overview.component';
 import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';
-import { KontoSitzung } from '../konto/konto-sitzung';
+import { AccountSession } from '../account/account-session';
 import {
-  FakeKontoDienst,
-  MerkerImSpec,
-} from '../konto/testing/fake-konto-dienst';
+  FakeAccountService,
+  FakeFlag,
+} from '../account/testing/fake-account-service';
 
 /** The day the specs run on. */
 const TODAY_IN_SPEC = '2026-11-08';
 /** Noon of `TODAY_IN_SPEC` in Germany. */
 const NOW_IN_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
 
-const VORRUNDE: League = {
+const FIRST_ROUND: League = {
   id: 54862,
   name: 'U12 Vorrunde Nord',
   association: { id: 7, name: 'Niedersachsen' },
@@ -84,7 +84,7 @@ function game(
 ): Game {
   return {
     id: nextGameId++,
-    leagueId: VORRUNDE.id,
+    leagueId: FIRST_ROUND.id,
     matchday: 1,
     date,
     time: '10:00',
@@ -95,11 +95,11 @@ function game(
   };
 }
 
-function season(von: Team, ...games: Game[]): TeamSeason {
+function season(ofTeam: Team, ...games: Game[]): TeamSeason {
   return {
-    team: von,
-    club: { id: von.clubId, name: von.name },
-    leagues: [VORRUNDE],
+    team: ofTeam,
+    club: { id: ofTeam.clubId, name: ofTeam.name },
+    leagues: [FIRST_ROUND],
     games,
   };
 }
@@ -136,7 +136,7 @@ const SPORTS_HALL: Venue = {
 /** Every Spiel's details, in the Sporthalle. */
 const inTheSportsHall: GameRead = async (gameId) => ({
   game: game(WASBUETTEL, GIFHORN, '2026-11-14', { id: gameId }),
-  league: VORRUNDE,
+  league: FIRST_ROUND,
   venue: SPORTS_HALL,
   quarters: [],
   overtimes: [],
@@ -195,7 +195,7 @@ async function render(
       { provide: BASKETBALL_DATA, useValue: data },
       { provide: TODAY, useValue: signal(TODAY_IN_SPEC) },
       { provide: NOW, useValue: signal(NOW_IN_SPEC) },
-      { provide: AUSWAHL, useValue: selection },
+      { provide: SELECTION, useValue: selection },
     ],
   });
   const fixture = TestBed.createComponent(OverviewComponent);
@@ -203,7 +203,7 @@ async function render(
   const settled = async (): Promise<void> => {
     // the Kader search starts once a Saison is read, reading on a Spiel
     // at a time: a few rounds let it settle
-    for (let runde = 0; runde < 8; runde++) {
+    for (let round = 0; round < 8; round++) {
       fixture.detectChanges();
       await new Promise((resolve) => setTimeout(resolve));
     }
@@ -261,22 +261,22 @@ describe('OverviewComponent', () => {
   });
 
   it('says the account cannot be read, rather than show what it read before', async () => {
-    const dienst = new FakeKontoDienst();
-    const sitzung = new KontoSitzung(
+    const service = new FakeAccountService();
+    const session = new AccountSession(
       new LocalSelection(undefined),
-      async () => dienst,
-      new MerkerImSpec()
+      async () => service,
+      new FakeFlag()
     );
-    await sitzung.starten();
-    await sitzung.anmelden();
-    await dienst.kontoAuswahl.follow(WASBUETTEL.id);
+    await session.start();
+    await session.signIn();
+    await service.accountSelection.follow(WASBUETTEL.id);
     const { page, settled } = await render(
       fakeData([season(WASBUETTEL)]),
-      sitzung.auswahl
+      session.selection
     );
     expect(teamNames(page)).toEqual(['MTV Wasbüttel']);
 
-    dienst.lesefehler?.({ code: 'unavailable' });
+    service.onReadFailure?.({ code: 'unavailable' });
     await settled();
 
     expect(text(page.querySelector('[data-qa="overview-unreadable"]'))).toBe(
@@ -331,10 +331,10 @@ describe('OverviewComponent', () => {
   });
 
   it("labels a card with the oldest Stand of what it shows, its next Spiel's Halle too", async () => {
-    const STUNDE = 60 * 60_000;
+    const HOUR = 60 * 60_000;
     const data = fakeData([], async (gameId, options?: KorbReadOptions) => {
       options?.reading?.replaced({
-        storedAt: NOW_IN_SPEC - 3 * STUNDE,
+        storedAt: NOW_IN_SPEC - 3 * HOUR,
         reason: 'unavailable',
       });
       return inTheSportsHall(gameId);
@@ -342,7 +342,7 @@ describe('OverviewComponent', () => {
     data.teamGames.mockImplementation(
       async (_team, options?: KorbReadOptions) => {
         options?.reading?.replaced({
-          storedAt: NOW_IN_SPEC - STUNDE,
+          storedAt: NOW_IN_SPEC - HOUR,
           reason: 'no-internet',
         });
         return season(WASBUETTEL, game(GIFHORN, WASBUETTEL, '2026-11-14'));
@@ -490,11 +490,11 @@ describe('OverviewComponent', () => {
     );
 
     const [entry] = entries(page);
-    const abgesagt = text(part(entry, 'cancellation'));
-    expect(abgesagt).toContain('Fällt aus');
-    expect(abgesagt).toContain('abgesagt');
-    expect(abgesagt).toContain('Sa., 14.11.2026');
-    expect(abgesagt).toContain('gegen SV Groß Oesingen');
+    const cancelled = text(part(entry, 'cancellation'));
+    expect(cancelled).toContain('Fällt aus');
+    expect(cancelled).toContain('abgesagt');
+    expect(cancelled).toContain('Sa., 14.11.2026');
+    expect(cancelled).toContain('gegen SV Groß Oesingen');
     expect(text(part(entry, 'next'))).toContain('gegen MTV Gifhorn');
   });
 
@@ -659,8 +659,8 @@ describe('OverviewComponent', () => {
   });
 
   describe('each Team on its own', () => {
-    const NIE: Promise<TeamSeason> = new Promise(() => undefined);
-    const NIE_DETAILS: Promise<GameDetails> = new Promise(() => undefined);
+    const NEVER: Promise<TeamSeason> = new Promise(() => undefined);
+    const NEVER_DETAILS: Promise<GameDetails> = new Promise(() => undefined);
 
     it('shows a Team while another still loads', async () => {
       const { page } = await render(
@@ -670,7 +670,7 @@ describe('OverviewComponent', () => {
           gameReport: WITHOUT_REPORT,
           teamGames: async (teamId) =>
             teamId === GIFHORN.id
-              ? NIE
+              ? NEVER
               : season(WASBUETTEL, game(WASBUETTEL, GIFHORN, '2026-11-14')),
         },
         [GIFHORN.id, WASBUETTEL.id]
@@ -707,7 +707,7 @@ describe('OverviewComponent', () => {
 
     it('cancels the read of a Team unfollowed while it loads', async () => {
       const data = fakeData([]);
-      data.teamGames.mockImplementation(() => NIE);
+      data.teamGames.mockImplementation(() => NEVER);
       const { selection, settled } = await render(data, [GIFHORN.id]);
       const reading = data.teamGames.mock.calls[0][1]?.signal;
 
@@ -720,7 +720,7 @@ describe('OverviewComponent', () => {
     it("cancels the next Spiel's Halle read of a Team unfollowed", async () => {
       const data = fakeData(
         [season(GIFHORN, game(GIFHORN, OESINGEN, '2026-11-21'))],
-        () => NIE_DETAILS
+        () => NEVER_DETAILS
       );
       const { selection, settled } = await render(data, [GIFHORN.id]);
       await settled();
@@ -735,7 +735,7 @@ describe('OverviewComponent', () => {
 
     it("reads no Halle before a Team's next Spiel is known", async () => {
       const data = fakeData([]);
-      data.teamGames.mockImplementation(() => NIE);
+      data.teamGames.mockImplementation(() => NEVER);
 
       await render(data, [GIFHORN.id]);
 
@@ -835,10 +835,10 @@ describe('OverviewComponent', () => {
     const WASBUETTELS_CLUB: ClubTeams = {
       club: { id: WASBUETTEL.clubId, name: 'MTV Wasbüttel' },
       teams: [
-        { team: WASBUETTEL, leagues: [VORRUNDE] },
+        { team: WASBUETTEL, leagues: [FIRST_ROUND] },
         {
           team: WASBUETTEL_U14,
-          leagues: [{ ...VORRUNDE, id: 54900, name: 'U14 Regionsliga' }],
+          leagues: [{ ...FIRST_ROUND, id: 54900, name: 'U14 Regionsliga' }],
         },
       ],
     };
@@ -1058,7 +1058,7 @@ describe('OverviewComponent', () => {
       ({ status: PLAYED_78_47, time: '10:00', date }) as const;
 
     it('groups the overview by Kind, with the Teams it plays for, and lists the others below', async () => {
-      const letztesWas = game(WASBUETTEL, GIFHORN, '2026-11-01', {
+      const lastWasbuettel = game(WASBUETTEL, GIFHORN, '2026-11-01', {
         status: PLAYED_78_47,
       });
       const lastOesingen = game(OESINGEN, GIFHORN, '2026-11-01', {
@@ -1068,14 +1068,14 @@ describe('OverviewComponent', () => {
         [
           season(
             WASBUETTEL,
-            letztesWas,
+            lastWasbuettel,
             game(WASBUETTEL, OESINGEN, '2026-11-21')
           ),
           season(OESINGEN, lastOesingen, game(OESINGEN, GIFHORN, '2026-11-14')),
         ],
         inTheSportsHall,
         WITHOUT_TEAMS,
-        reports({ [letztesWas.id]: [LUMI], [lastOesingen.id]: [NELKA] })
+        reports({ [lastWasbuettel.id]: [LUMI], [lastOesingen.id]: [NELKA] })
       );
 
       const { page } = await render(
@@ -1098,14 +1098,14 @@ describe('OverviewComponent', () => {
     });
 
     it('offers to search a further Team after the Kind, where every Team is its', async () => {
-      const letztesWas = game(WASBUETTEL, GIFHORN, '2026-11-01', {
+      const lastWasbuettel = game(WASBUETTEL, GIFHORN, '2026-11-01', {
         status: PLAYED_78_47,
       });
       const data = fakeData(
-        [season(WASBUETTEL, letztesWas)],
+        [season(WASBUETTEL, lastWasbuettel)],
         inTheSportsHall,
         WITHOUT_TEAMS,
-        reports({ [letztesWas.id]: [LUMI] })
+        reports({ [lastWasbuettel.id]: [LUMI] })
       );
 
       const { page } = await render(
@@ -1125,14 +1125,14 @@ describe('OverviewComponent', () => {
     });
 
     it("unfollows a Kind's Team from its card, focus on the overview", async () => {
-      const letztesWas = game(WASBUETTEL, GIFHORN, '2026-11-01', {
+      const lastWasbuettel = game(WASBUETTEL, GIFHORN, '2026-11-01', {
         status: PLAYED_78_47,
       });
       const data = fakeData(
-        [season(WASBUETTEL, letztesWas), season(OESINGEN)],
+        [season(WASBUETTEL, lastWasbuettel), season(OESINGEN)],
         inTheSportsHall,
         WITHOUT_TEAMS,
-        reports({ [letztesWas.id]: [LUMI] })
+        reports({ [lastWasbuettel.id]: [LUMI] })
       );
       const { page, selection, settled } = await render(
         data,
@@ -1157,28 +1157,24 @@ describe('OverviewComponent', () => {
     });
 
     it('shows the same Kind once across two Teams, with the first next Spiel of both', async () => {
-      const letztesU12 = game(WASBUETTEL, GIFHORN, '2026-10-31', {
+      const lastU12 = game(WASBUETTEL, GIFHORN, '2026-10-31', {
         status: PLAYED_78_47,
       });
-      const letztesU14 = game(WASBUETTEL_U14, GIFHORN, '2026-11-07', {
+      const lastU14 = game(WASBUETTEL_U14, GIFHORN, '2026-11-07', {
         status: PLAYED_78_47,
       });
       const data = fakeData(
         [
-          season(
-            WASBUETTEL,
-            letztesU12,
-            game(WASBUETTEL, GIFHORN, '2026-11-21')
-          ),
+          season(WASBUETTEL, lastU12, game(WASBUETTEL, GIFHORN, '2026-11-21')),
           season(
             WASBUETTEL_U14,
-            letztesU14,
+            lastU14,
             game(WASBUETTEL_U14, OESINGEN, '2026-11-14')
           ),
         ],
         inTheSportsHall,
         WITHOUT_TEAMS,
-        reports({ [letztesU12.id]: [LUMI], [letztesU14.id]: [LUMI] })
+        reports({ [lastU12.id]: [LUMI], [lastU14.id]: [LUMI] })
       );
 
       const { page } = await render(
@@ -1196,9 +1192,9 @@ describe('OverviewComponent', () => {
       // each Team's "Nicht mehr folgen" beside its name, for all to see
       expect(
         [...lumi.querySelectorAll('[data-qa="overview-child-action"]')].map(
-          (aktion) => [
-            text(aktion.querySelector('.team-name')),
-            aktion
+          (action) => [
+            text(action.querySelector('.team-name')),
+            action
               .querySelector('[data-qa="follow-team"]')
               ?.getAttribute('aria-label'),
           ]
@@ -1222,8 +1218,8 @@ describe('OverviewComponent', () => {
     });
 
     it('orders the Kinder by their next Spiel, a Kind without one last', async () => {
-      const played = [WASBUETTEL, GIFHORN, OESINGEN].map((von) =>
-        game(von, WASBUETTEL_U14, '2026-11-01', { status: PLAYED_78_47 })
+      const played = [WASBUETTEL, GIFHORN, OESINGEN].map((ofTeam) =>
+        game(ofTeam, WASBUETTEL_U14, '2026-11-01', { status: PLAYED_78_47 })
       );
       const data = fakeData(
         [
@@ -1259,14 +1255,14 @@ describe('OverviewComponent', () => {
       const previous = game(WASBUETTEL, GIFHORN, '2026-10-25', {
         status: PLAYED_78_47,
       });
-      const zuletzt = game(WASBUETTEL, OESINGEN, '2026-11-01', {
+      const latest = game(WASBUETTEL, OESINGEN, '2026-11-01', {
         status: PLAYED_78_47,
       });
       const data = fakeData(
-        [season(WASBUETTEL, previous, zuletzt)],
+        [season(WASBUETTEL, previous, latest)],
         inTheSportsHall,
         WITHOUT_TEAMS,
-        reports({ [previous.id]: [LUMI], [zuletzt.id]: [MORVO] })
+        reports({ [previous.id]: [LUMI], [latest.id]: [MORVO] })
       );
 
       const { page } = await render(
@@ -1537,19 +1533,19 @@ describe('OverviewComponent', () => {
       const read = game(WASBUETTEL, GIFHORN, '2026-11-01', {
         status: PLAYED_78_47,
       });
-      const fehlt = game(OESINGEN, GIFHORN, '2026-11-01', {
+      const missing = game(OESINGEN, GIFHORN, '2026-11-01', {
         status: PLAYED_78_47,
       });
-      const finden = reports({ [read.id]: [LUMI] });
+      const find = reports({ [read.id]: [LUMI] });
       const data = fakeData(
-        [season(WASBUETTEL, read), season(OESINGEN, fehlt)],
+        [season(WASBUETTEL, read), season(OESINGEN, missing)],
         inTheSportsHall,
         WITHOUT_TEAMS,
         async (gameId, options) => {
-          if (gameId === fehlt.id) {
+          if (gameId === missing.id) {
             throw new BasketballDataError('unavailable', 'DBB down');
           }
-          return finden(gameId, options);
+          return find(gameId, options);
         }
       );
 
@@ -1591,8 +1587,8 @@ describe('OverviewComponent', () => {
     });
 
     it('shows what falls through around the next Spiel in tip-off order', async () => {
-      const played = [WASBUETTEL, WASBUETTEL_U14].map((von) =>
-        game(von, GIFHORN, '2026-11-01', { status: PLAYED_78_47 })
+      const played = [WASBUETTEL, WASBUETTEL_U14].map((ofTeam) =>
+        game(ofTeam, GIFHORN, '2026-11-01', { status: PLAYED_78_47 })
       );
       const earlierOff = game(WASBUETTEL_U14, OESINGEN, '2026-11-14', {
         status: { kind: 'cancelled' },

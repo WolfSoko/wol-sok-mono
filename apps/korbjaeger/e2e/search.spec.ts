@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures/pages.fixture';
-import { folgenKnopf } from './pos/folgen';
+import { followButton } from './pos/follow';
 
 /**
  * The club index as `/api/clubs` serves it. The e2e's server reads no
@@ -68,10 +68,12 @@ test.describe('Search', () => {
       'Suchen',
       'MTV Wasbüttel',
     ]);
-    const team = teamPage.vereinsTeam('Regionsliga Braunschweig mu10');
-    await folgenKnopf(team, 'MTV Wasbüttel -RST-', { gefolgt: false }).click();
+    const team = teamPage.clubTeam('Regionsliga Braunschweig mu10');
+    await followButton(team, 'MTV Wasbüttel -RST-', {
+      followed: false,
+    }).click();
     await expect(
-      folgenKnopf(team, 'MTV Wasbüttel -RST-', { gefolgt: true })
+      followButton(team, 'MTV Wasbüttel -RST-', { followed: true })
     ).toBeVisible();
 
     await titleBar.back.click();
@@ -90,7 +92,7 @@ test.describe('Search', () => {
     page,
     startPage,
     searchPage: search,
-    spielPage,
+    gamePage,
     teamPage,
     titleBar,
   }) => {
@@ -123,20 +125,20 @@ test.describe('Search', () => {
     await expect(search.followFirst).toBeVisible();
 
     const teamName = 'MTV Wasbüttel -RST-';
-    const team = teamPage.vereinsTeam('Regionsliga Braunschweig mu12');
+    const team = teamPage.clubTeam('Regionsliga Braunschweig mu12');
     await expect(search.markChild(team, teamName)).toHaveCount(0);
-    await folgenKnopf(team, teamName, { gefolgt: false }).click();
+    await followButton(team, teamName, { followed: false }).click();
     await search.markChild(team, teamName).click();
 
     await expect(page).toHaveURL(/\/spiel\/2861436$/);
-    await spielPage.alsKindMarkieren(
-      spielPage.kaderVon(teamName),
+    await gamePage.markAsChild(
+      gamePage.rosterOf(teamName),
       'Fenja Ahornwiese',
       'Fenni'
     );
 
     await titleBar.level('Korbjäger').click();
-    await expect(startPage.kind('Fenni')).toHaveCount(1);
+    await expect(startPage.child('Fenni')).toHaveCount(1);
     expect(requests.filter((url) => url.includes('wasbuttel'))).toEqual([]);
   });
 
@@ -144,7 +146,7 @@ test.describe('Search', () => {
     page,
     startPage,
     searchPage: search,
-    teamEinrichtenPage: wizard,
+    teamSetupPage: wizard,
     titleBar,
   }) => {
     const index = await clubIndex(page, CLUB_INDEX);
@@ -203,15 +205,15 @@ test.describe('Search', () => {
     await expect(search.club('Post SV Nürnberg')).toHaveCount(1);
   });
 
-  for (const pfad of [
+  for (const path of [
     '/suchen',
     '/suchen/verein/1837',
     '/suchen/kind',
     '/suchen/kind/verein/1837',
   ]) {
-    test(`${pfad} opens directly and is noindex`, async ({ page }) => {
+    test(`${path} opens directly and is noindex`, async ({ page }) => {
       await clubIndex(page, CLUB_INDEX);
-      await page.goto(pfad);
+      await page.goto(path);
 
       await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
       await expect(page.locator('meta[name="robots"]')).toHaveAttribute(

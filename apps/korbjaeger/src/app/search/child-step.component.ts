@@ -10,7 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { RouterLink } from '@angular/router';
 import type { TeamId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { gameDetailsResource } from '../basketball-data/game-details-resource';
 import { oldestAsOf } from '../basketball-data/as-of';
 import { teamSeasonResource } from '../basketball-data/team-season-resource';
@@ -45,7 +45,7 @@ import { checkedChildStep, childStep } from './child-step';
           [attr.aria-label]="'Spiele von ' + teamName() + ' werden geladen'"
         />
       } @else if (failure(); as text) {
-        <p class="fehler" data-qa="child-step-failure">{{ text }}</p>
+        <p class="error" data-qa="child-step-failure">{{ text }}</p>
       } @else if (shown(); as step) {
         <korb-as-of data-qa="child-step-as-of" [asOf]="asOf()" />
         @switch (step.kind) {
@@ -100,7 +100,7 @@ export class ChildStepComponent {
 
   protected readonly afterFirstGame = AFTER_FIRST_GAME_HINT;
 
-  private readonly myTeams = inject(AUSWAHL).teams;
+  private readonly myTeams = inject(SELECTION).teams;
   private readonly today = inject(TODAY);
 
   protected readonly followed = computed(

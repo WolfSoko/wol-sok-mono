@@ -19,7 +19,7 @@ class TeamPage {
 }
 
 @Component({ template: '' })
-class SpielPage {
+class GamePage {
   public constructor() {
     breadcrumb(() => [
       { title: 'MTV Wasbüttel U12', link: ['/team', '1'] },
@@ -42,7 +42,7 @@ async function setup(start: string): Promise<Setup> {
       provideRouter([
         { path: '', component: OverviewPage },
         { path: 'team/:id', component: TeamPage },
-        { path: 'spiel/:id', component: SpielPage },
+        { path: 'spiel/:id', component: GamePage },
       ]),
       provideLocationMocks(),
     ],

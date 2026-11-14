@@ -8,7 +8,7 @@ import {
   linkedSignal,
 } from '@angular/core';
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   clubColorsFor,
   type ClubColorsChoice,
@@ -25,7 +25,7 @@ const sameOrNone = (
 /**
  * Sets the tokens of `colors()` on the element being created as custom
  * properties, each a `light-dark()`, so they reach everything inside and a
- * dark scope (`.anzeigetafel`) still turns them; takes them away where
+ * dark scope (`.scoreboard`) still turns them; takes them away where
  * there are no colours, or their chunk could not load (the app's own apply
  * then). A newer choice wins over a load still running. Call it in an
  * injection context.
@@ -78,7 +78,7 @@ function applyColors(colors: () => ClubColors | undefined): void {
  * Call it in an injection context.
  */
 export function applyClubColors(club: () => ClubId | undefined): void {
-  const selection = inject(AUSWAHL);
+  const selection = inject(SELECTION);
   const list = linkedSignal<
     readonly ClubColorsChoice[] | undefined,
     readonly ClubColorsChoice[] | undefined

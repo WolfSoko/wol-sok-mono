@@ -8,7 +8,7 @@ import {
   type ClubTeams,
 } from '@wolsok/feat-shared-basketball-data';
 import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   BASKETBALL_DATA,
   type KorbjaegerData,
@@ -20,9 +20,9 @@ import { ClubPageComponent } from './club-page.component';
 type ClubTeamsRead = KorbjaegerData['clubTeams'];
 
 const NOW_IN_SPEC = Date.parse('2026-11-08T12:00:00+01:00');
-const ZWEI_STUNDEN = 2 * 60 * 60_000;
+const TWO_HOURS = 2 * 60 * 60_000;
 
-const VORRUNDE: League = {
+const FIRST_ROUND: League = {
   id: 54862,
   name: 'Regionsvorrunde Nord Braunschweig mu12',
   association: { id: 7, name: 'Niedersachsen' },
@@ -36,7 +36,7 @@ const WASBUETTEL: ClubTeams = {
   teams: [
     {
       team: { id: 313036, name: 'MTV Wasbüttel -RST-', clubId: 1837 },
-      leagues: [VORRUNDE],
+      leagues: [FIRST_ROUND],
     },
   ],
 };
@@ -44,7 +44,7 @@ const WASBUETTEL: ClubTeams = {
 const NO_GAMES_YET: TeamSeason = {
   team: WASBUETTEL.teams[0].team,
   club: WASBUETTEL.club,
-  leagues: [VORRUNDE],
+  leagues: [FIRST_ROUND],
   games: [],
 };
 
@@ -67,7 +67,7 @@ async function render(
         useValue: { clubTeams, teamGames: async () => NO_GAMES_YET },
       },
       // in memory: nothing reaches the device's storage
-      { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
+      { provide: SELECTION, useFactory: () => new LocalSelection(undefined) },
       { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     ],
   });
@@ -105,7 +105,7 @@ describe('ClubPageComponent', () => {
   it('says how old the Teams are where the last good answer stood in', async () => {
     const { page } = await render(async (_, options) => {
       options?.reading?.replaced({
-        storedAt: NOW_IN_SPEC - ZWEI_STUNDEN,
+        storedAt: NOW_IN_SPEC - TWO_HOURS,
         reason: 'no-connection',
       });
       return WASBUETTEL;

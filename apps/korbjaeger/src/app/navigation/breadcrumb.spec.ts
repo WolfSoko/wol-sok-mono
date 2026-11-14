@@ -12,7 +12,7 @@ class TeamPage {
 }
 
 @Component({ template: '' })
-class SpielPage {
+class GamePage {
   public constructor() {
     breadcrumb(() => [
       { title: 'MTV Wasbüttel', link: ['/team', '1'] },
@@ -39,7 +39,7 @@ describe('Breadcrumb', () => {
   });
 
   it("shows a page's levels below the root while the page lives", () => {
-    const page = TestBed.createComponent(SpielPage);
+    const page = TestBed.createComponent(GamePage);
 
     expect(titles(service.levels())).toEqual([
       'Korbjäger',
@@ -71,7 +71,7 @@ describe('Breadcrumb', () => {
 
   it("keeps the next page's levels when the previous page goes after it came", () => {
     const team = TestBed.createComponent(TeamPage);
-    TestBed.createComponent(SpielPage);
+    TestBed.createComponent(GamePage);
 
     team.destroy();
 

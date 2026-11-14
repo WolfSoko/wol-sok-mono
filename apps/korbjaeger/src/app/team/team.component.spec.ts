@@ -16,7 +16,7 @@ import {
   BASKETBALL_DATA,
   type KorbjaegerData,
 } from '../basketball-data/basketball-data.provider';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import { LocalSelection } from '@wolsok/feat-korbjaeger-selection';
 import type { KorbReadOptions } from '../basketball-data/reading';
 import { TODAY } from '../today';
@@ -170,7 +170,7 @@ function providers(
     { provide: TODAY, useValue: today },
     { provide: NOW, useValue: signal(NOW_IN_SPEC) },
     // in memory: nothing reaches the device's storage
-    { provide: AUSWAHL, useFactory: () => new LocalSelection(undefined) },
+    { provide: SELECTION, useFactory: () => new LocalSelection(undefined) },
   ];
 }
 
@@ -669,7 +669,7 @@ describe('TeamComponent', () => {
             throw new BasketballDataError('not-found', 'DBB: nope');
           })
         ),
-        { provide: AUSWAHL, useValue: selection },
+        { provide: SELECTION, useValue: selection },
       ],
     });
     const fixture = TestBed.createComponent(TeamComponent);
@@ -964,7 +964,7 @@ describe('TeamComponent', () => {
       TestBed.configureTestingModule({
         providers: [
           ...providers(WITH_CLUB([])),
-          { provide: AUSWAHL, useValue: selection },
+          { provide: SELECTION, useValue: selection },
         ],
       });
       const fixture = TestBed.createComponent(TeamComponent);

@@ -2,7 +2,7 @@
   <mat-progress-bar mode="indeterminate" aria-label="Spiele werden geladen" />
 }
 @if (error(); as text) {
-  <p class="fehler" role="alert">{{ text }}</p>
+  <p class="error" role="alert">{{ text }}</p>
 }
 @if (season.hasValue()) {
   <h1>{{ season.value().team.name }}</h1>
@@ -35,7 +35,7 @@
     <p>Noch keine Spiele in dieser Saison.</p>
   } @else {
     <h2>Spiele</h2>
-    <mat-nav-list class="umbrechende-liste">
+    <mat-nav-list class="wrapping-list">
       @for (row of rows(); track row.id) {
         <a mat-list-item data-qa="game" [routerLink]="['/spiel', row.id]">
           <korb-game-row matListItemTitle [row]="row" withLeague />

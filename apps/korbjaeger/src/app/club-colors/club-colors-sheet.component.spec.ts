@@ -5,7 +5,7 @@ import {
   MatBottomSheetRef,
 } from '@angular/material/bottom-sheet';
 import type { ClubId } from '@wolsok/feat-shared-basketball-data';
-import { AUSWAHL } from '../auswahl/auswahl';
+import { SELECTION } from '../selection/selection';
 import {
   SelectionFullError,
   type ClubColorsChoice,
@@ -23,19 +23,19 @@ const CLUB: ClubColorsSheetData = {
 };
 
 async function openSheet(
-  vorhanden: readonly ClubColorsChoice[] = [],
-  setzen: (club: ClubId, colors: ClubColors) => Promise<void> = () =>
+  existing: readonly ClubColorsChoice[] = [],
+  store: (club: ClubId, colors: ClubColors) => Promise<void> = () =>
     Promise.resolve()
 ) {
-  const set = vi.fn(setzen);
+  const set = vi.fn(store);
   const reset = vi.fn(() => Promise.resolve());
   const close = vi.fn();
   TestBed.configureTestingModule({
     providers: [
       {
-        provide: AUSWAHL,
+        provide: SELECTION,
         useValue: fakeSelection({
-          clubColors: signal(vorhanden),
+          clubColors: signal(existing),
           setClubColors: set,
           resetClubColors: reset,
         }),
@@ -48,26 +48,26 @@ async function openSheet(
   await fixture.whenStable();
   const element = fixture.nativeElement as HTMLElement;
   /** A button by its label, or its text where it has none. */
-  const benannt = (name: string) => (b: Element) =>
+  const named = (name: string) => (b: Element) =>
     b.getAttribute('aria-label') === name || b.textContent?.trim() === name;
   const button = (name: string) =>
-    [...element.querySelectorAll('button')].find(benannt(name));
+    [...element.querySelectorAll('button')].find(named(name));
   const click = async (name: string) => {
     button(name)?.click();
     await fixture.whenStable();
   };
   /** One colour group's buttons: one radio group each. */
-  const inGruppe = (gruppe: string) => [
+  const inGroup = (group: string) => [
     ...element.querySelectorAll<HTMLButtonElement>(
-      `[data-qa="${gruppe}"] button`
+      `[data-qa="${group}"] button`
     ),
   ];
-  const choose = async (gruppe: string, name: string) => {
-    inGruppe(gruppe).find(benannt(name))?.click();
+  const choose = async (group: string, name: string) => {
+    inGroup(group).find(named(name))?.click();
     await fixture.whenStable();
   };
-  const chosen = (gruppe: string) =>
-    inGruppe(gruppe)
+  const chosen = (group: string) =>
+    inGroup(group)
       .filter((b) => b.getAttribute('aria-checked') === 'true')
       .map((b) => b.getAttribute('aria-label') ?? b.textContent?.trim());
   return {
@@ -123,12 +123,12 @@ describe('ClubColorsSheetComponent', () => {
 
   it('takes an own colour from the colour picker', async () => {
     const { element, fixture, click, set } = await openSheet();
-    const eigene = element.querySelector<HTMLInputElement>(
+    const own = element.querySelector<HTMLInputElement>(
       '[data-qa="primary-color"] input[type="color"]'
     );
 
-    eigene!.value = '#123456';
-    eigene!.dispatchEvent(new Event('change'));
+    own!.value = '#123456';
+    own!.dispatchEvent(new Event('change'));
     await fixture.whenStable();
     await click('Übernehmen');
 

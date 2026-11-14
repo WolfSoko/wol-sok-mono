@@ -67,7 +67,7 @@ import { Breadcrumb } from './breadcrumb';
             matIconButton
             routerLink="/einstellungen"
             aria-label="Einstellungen"
-            data-qa="einstellungen"
+            data-qa="settings"
           >
             <mat-icon>settings</mat-icon>
           </a>
