@@ -4,6 +4,10 @@
   "sourceRoot": "tools/oxlint",
   "projectType": "library",
   "tags": ["tools"],
+  "namedInputs": {
+    "default": [],
+    "production": []
+  },
   "targets": {
     "test": {
       "executor": "nx:run-commands",
