@@ -344,10 +344,29 @@ function runScript(...args) {
     .filter((line) => line !== '');
 }
 
+function taskInputFiles(task) {
+  return JSON.parse(
+    execFileSync('npx', ['nx', 'show', 'target', 'inputs', task, '--json'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    })
+  ).files;
+}
+
 const NON_CDK = '--exclude=tag:cdk,tag:published,tag:type:android';
 
 void describe('release-affected on the workspace', () => {
-  for (const file of ['.oxlintrc.json', 'eslint.config.mjs']) {
+  // The workspace's oxlint rules reach every project through the implicit edge
+  // @nx/oxlint adds to their project; they ship in nothing (#3015).
+  const LINT_ONLY_FILES = [
+    '.oxlintrc.json',
+    'eslint.config.mjs',
+    'tools/oxlint/workspace-rules.mjs',
+    'tools/oxlint/workspace-rules.spec.mjs',
+    'tools/oxlint/project.json',
+  ];
+  for (const file of LINT_ONLY_FILES) {
     void it(`deploys and publishes nothing for ${file}`, () => {
       assert.deepEqual(runScript(`--files=${file}`, '--target=deploy'), []);
       assert.deepEqual(
@@ -360,6 +379,26 @@ void describe('release-affected on the workspace', () => {
       );
     });
   }
+
+  // Kept out of releases, the rules still rerun every project's lint, and
+  // their own targets, which their empty named inputs no longer feed, still
+  // read their files.
+  void it('still lints every project with the workspace rules', () => {
+    const rules = 'tools/oxlint/workspace-rules.mjs';
+    const spec = 'tools/oxlint/workspace-rules.spec.mjs';
+    const expected = {
+      'pacetrainer:lint': [rules],
+      'korbjaeger-cdk:lint': [rules],
+      'oxlint-workspace-rules:lint': [rules, spec],
+      'oxlint-workspace-rules:test': [rules, spec],
+    };
+    for (const [task, files] of Object.entries(expected)) {
+      const inputs = taskInputFiles(task);
+      for (const file of files) {
+        assert.ok(inputs.includes(file), `${task} no longer reads ${file}`);
+      }
+    }
+  });
 
   void it('deploys an app whose root Firebase config changed', () => {
     assert.deepEqual(
