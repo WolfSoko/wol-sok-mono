@@ -65,7 +65,9 @@ Reasons:
    for the project's own targets, so each must list its inputs explicitly.
    Checked: `test` lists `{projectRoot}/**/*`, and `lint` (inferred by
    `@nx/oxlint`) its lintable filesets plus the rules file; neither takes
-   `default` or `production`, so neither needs a change.
+   `default` or `production`, so neither needs a change. A target added to
+   the project later names its inputs explicitly too; the spec checks every
+   target the project has.
 4. A spec in `tools/ci/release-affected.test.mjs` keeps 1, 2 and 3.
 5. `CLAUDE.md` names the empty named inputs and why, beside the rules
    plugin.
