@@ -59,9 +59,11 @@ describe('the Hosting deploys', () => {
       expect(parallel).toBe(false);
       expect(commands?.at(-2)).toMatch(
         new RegExp(
-          `^${literal(`${RETRIED} firebase --config=firebase.${app}.json --project=${app} deploy`)}( |$)`
+          `^${literal(`${RETRIED} firebase --config=firebase.${app}.json --project=${app} deploy`)} `
         )
       );
+      // a prompt in CI would hang the deploy and its retry
+      expect(commands?.at(-2)).toMatch(/ --non-interactive$/);
       expect(commands?.at(-1)).toBe(
         `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.${app}.json ${PUBLIC_URLS[app]}`
       );
@@ -78,7 +80,7 @@ describe('the Hosting deploys', () => {
     const { command, commands } = targets['deploy'].options;
 
     for (const line of [command, ...(commands ?? [])]) {
-      expect(line ?? '').not.toMatch(/\bnx run\b/);
+      expect(line ?? '').not.toMatch(/\bnx\b/);
     }
   });
 });
