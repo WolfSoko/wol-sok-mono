@@ -164,6 +164,8 @@ void describe('wolsok/no-testing-import', () => {
     'game.component.spec.ts',
     'replay.test.ts',
     'boards.emulator.ts',
+    'src/boards/boards.emulator.ts',
+    'src/myenvironments/boards.emulator.ts',
     'draw-digit.component.cy.ts',
     'repository.factory.mock.ts',
     'test-setup.ts',
@@ -187,7 +189,8 @@ void describe('wolsok/no-testing-import', () => {
   void it('allows a test-only lib in a testing folder', () => {
     deepStrictEqual(
       reportedCodes(
-        "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';",
+        "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';\n" +
+          "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
         'src/testing/emulator.ts'
       ),
       []

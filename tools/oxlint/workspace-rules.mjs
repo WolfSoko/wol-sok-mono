@@ -26,7 +26,8 @@ const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
 /**
  * Workspace libs that are test-only as a whole, every entry included, though
- * none of their entries is named `testing` (`@wolsok/<name>`).
+ * none of their entries is named `testing` (`@wolsok/<name>`). Plain
+ * kebab-case names: each goes into a regular expression unescaped.
  */
 const TEST_ONLY_LIBS = ['shared-firebase-emulator'];
 /** Module specifiers of the workspace's test-only code. */
@@ -210,10 +211,10 @@ function propertyName(member) {
 
 /**
  * The `/testing` entries and `testing/` folders hold fakes that call
- * `jest.fn` or `vi.fn` at module load, and the test-only libs
- * (`TEST_ONLY_LIBS`) bring the emulators' test tooling: pulled into a production chunk, they
+ * `jest.fn` or `vi.fn` at module load: pulled into a production chunk, they
  * break it at runtime. The boundary rule cannot see this, since it counts
- * `<lib>/testing` as `<lib>`. Enabled for production sources (`apps/*\/src`,
+ * `<lib>/testing` as `<lib>`. The test-only libs (`TEST_ONLY_LIBS`) bring the
+ * emulators' test tooling and count with every entry. Enabled for production sources (`apps/*\/src`,
  * `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
  * recognised by their path (`TEST_FILES`).
  */
