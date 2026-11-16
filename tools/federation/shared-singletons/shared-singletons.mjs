@@ -31,19 +31,21 @@ export function missingSingletons(shellShared, remotesShared) {
       .map((entry) => [entry.packageName, entry.version])
   );
   return Object.entries(remotesShared).flatMap(([remote, shared]) =>
-    shared
-      .filter((entry) => entry.singleton)
-      .filter(
-        (entry) =>
-          !shellVersions.has(entry.packageName) ||
-          shellVersions.get(entry.packageName) !== entry.version
-      )
-      .map((entry) => ({
-        remote,
-        packageName: entry.packageName,
-        remoteVersion: entry.version,
-        shellVersion: shellVersions.get(entry.packageName),
-      }))
+    shared.flatMap(({ packageName, version, singleton }) => {
+      const covered =
+        shellVersions.has(packageName) &&
+        shellVersions.get(packageName) === version;
+      return singleton && !covered
+        ? [
+            {
+              remote,
+              packageName,
+              remoteVersion: version,
+              shellVersion: shellVersions.get(packageName),
+            },
+          ]
+        : [];
+    })
   );
 }
 
@@ -58,8 +60,8 @@ export function describeFinding({
   remoteVersion,
   shellVersion,
 }) {
-  const shared = `${remote} shares the singleton ${named(packageName, remoteVersion)}`;
+  const prefix = `${remote} shares the singleton ${named(packageName, remoteVersion)}, but the shell (${SHELL})`;
   return shellVersion === undefined
-    ? `${shared}, but the shell (${SHELL}) does not share it as a singleton: inside the shell the remote loads a copy of its own.`
-    : `${shared}, but the shell (${SHELL}) shares ${shellVersion}: the versions disagree, so the remote cannot use the shell's copy.`;
+    ? `${prefix} does not share it as a singleton: inside the shell the remote loads a copy of its own.`
+    : `${prefix} shares ${shellVersion}: the versions disagree, so the remote cannot use the shell's copy.`;
 }
