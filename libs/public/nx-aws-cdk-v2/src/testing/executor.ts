@@ -40,11 +40,23 @@ export function mockExecutorContext(
 export class FakeChildProcess extends EventEmitter {
   /** The signals the process was killed with, in order. */
   public readonly killSignals: Array<NodeJS.Signals | number | undefined> = [];
+  /** Whether `close` was emitted, so cleanup closes only a running process. */
+  public closed = false;
+
+  public constructor() {
+    super();
+    this.once('close', () => (this.closed = true));
+  }
 
   public kill(signal?: NodeJS.Signals | number): boolean {
     this.killSignals.push(signal);
     return true;
   }
+}
+
+/** The options `runCommandProcess` spawns every command with. */
+export function expectedSpawnOptions(cwd: string) {
+  return { cwd, env: process.env, shell: true, stdio: 'inherit' };
 }
 
 /** A mock implementation for `spawn` that hands out a new `FakeChildProcess`. */

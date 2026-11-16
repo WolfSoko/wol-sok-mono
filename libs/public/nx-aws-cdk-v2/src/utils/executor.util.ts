@@ -134,6 +134,14 @@ export function runCommandProcess(
     });
     const parentBinding = bindToParentProcess(childProcess);
 
+    // A spawn that fails (a missing cwd or shell) emits `error`, and maybe
+    // no `close`: without this listener the error would crash the task.
+    childProcess.on('error', (error) => {
+      logger.error(`Could not run the command: ${error.message}`);
+      parentBinding.unbind();
+      resolve(false);
+    });
+
     childProcess.on('close', (code) => {
       parentBinding.unbind();
       if (parentBinding.terminated) {

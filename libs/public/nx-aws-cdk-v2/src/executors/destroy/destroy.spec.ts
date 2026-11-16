@@ -6,6 +6,7 @@ import { DestroyExecutorSchema } from './schema';
 import executor from './destroy';
 import { generateCommandString } from '../../utils/executor.util';
 import {
+  expectedSpawnOptions,
   mockExecutorContext,
   runExecutorToExit,
   spawnFakeChildProcess,
@@ -38,12 +39,7 @@ describe('aws-cdk-v2 Destroy Executor', () => {
     await runExecutorToExit(spawnMock, () => executor(options, context));
     expect(childProcess.spawn).toHaveBeenCalledWith(
       nodeCommandWithRelativePath,
-      expect.objectContaining({
-        cwd: context.root,
-        env: process.env,
-        shell: true,
-        stdio: 'inherit',
-      })
+      expectedSpawnOptions(context.root)
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
       `Executing command: ${nodeCommandWithRelativePath}`
@@ -57,11 +53,7 @@ describe('aws-cdk-v2 Destroy Executor', () => {
     await runExecutorToExit(spawnMock, () => executor(option, context));
     expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${stackName}`,
-      expect.objectContaining({
-        env: process.env,
-        shell: true,
-        stdio: 'inherit',
-      })
+      expectedSpawnOptions(context.root)
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
       `Executing command: ${nodeCommandWithRelativePath} ${stackName}`

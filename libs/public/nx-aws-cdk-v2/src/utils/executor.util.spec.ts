@@ -3,6 +3,7 @@ import { getEventListeners } from 'events';
 
 import { runCommandProcess } from './executor.util';
 import {
+  expectedSpawnOptions,
   FakeChildProcess,
   lastSpawned,
   spawnFakeChildProcess,
@@ -30,7 +31,10 @@ describe('runCommandProcess', () => {
   afterEach(async () => {
     // Closes a process a failed expectation left running, so its listeners
     // do not leak into the next spec.
-    lastSpawned(spawnMock)?.emit('close', 0, null);
+    const spawned = lastSpawned(spawnMock);
+    if (spawned && !spawned.closed) {
+      spawned.emit('close', 0, null);
+    }
     await Promise.resolve();
     jest.restoreAllMocks();
     jest.clearAllMocks();
@@ -67,12 +71,10 @@ describe('runCommandProcess', () => {
   it('runs the command in a shell that shares the parent stdio', async () => {
     const { result, spawned } = start();
 
-    expect(spawnMock).toHaveBeenCalledWith('cdk deploy', {
-      shell: true,
-      stdio: 'inherit',
-      cwd: '/root',
-      env: process.env,
-    });
+    expect(spawnMock).toHaveBeenCalledWith(
+      'cdk deploy',
+      expectedSpawnOptions('/root')
+    );
     spawned.emit('close', 0, null);
     await result;
   });
@@ -98,6 +100,16 @@ describe('runCommandProcess', () => {
       expect(parentListenerCounts()).toEqual(before);
     }
   );
+
+  it('resolves false and leaves no listener behind when the spawn fails', async () => {
+    const before = parentListenerCounts();
+    const { result, spawned } = start();
+
+    spawned.emit('error', new Error('spawn /bin/sh ENOENT'));
+
+    await expect(result).resolves.toBe(false);
+    expect(parentListenerCounts()).toEqual(before);
+  });
 
   it('kills the process when the parent exits', async () => {
     const before = parentListeners('exit');
