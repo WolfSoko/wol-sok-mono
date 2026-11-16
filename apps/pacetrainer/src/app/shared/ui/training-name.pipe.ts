@@ -8,6 +8,8 @@ import { TrainingName } from '../model/training/training-name';
   name: 'trainingName',
 })
 export class TrainingNamePipe implements PipeTransform {
+  transform(name: TrainingName): string;
+  transform(name: TrainingName | null | undefined): string | null | undefined;
   transform(name: TrainingName | null | undefined): string | null | undefined {
     if (name == null) {
       return name;
