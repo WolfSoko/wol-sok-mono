@@ -2,6 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { milliseconds } from '@wolsok/utils-time';
+import { TrainingName } from '../model/training/training-name';
 import { IntervalCountdownService } from './interval-countdown.service';
 
 class FakeUtterance {
@@ -46,13 +47,21 @@ describe('IntervalCountdownService', () => {
   let service: IntervalCountdownService;
   let spoken: string[];
 
-  function countDown(timeLeft: number): void {
+  function countDown(
+    timeLeft: number,
+    countdownTo: TrainingName = 'sprint'
+  ): void {
     service.updateCountdown(
       milliseconds(5000),
       milliseconds(timeLeft),
-      'sprint'
+      countdownTo
     );
     TestBed.tick();
+  }
+
+  function forgetSounds(): void {
+    spoken.length = 0;
+    FakeAudioContext.frequencies.length = 0;
   }
 
   beforeEach(() => {
@@ -73,7 +82,7 @@ describe('IntervalCountdownService', () => {
     vi.unstubAllGlobals();
   });
 
-  it('says "Jetzt" one lead before the Intervall, not a second before it', () => {
+  it('says "Jetzt" below 1000 ms left, not at 1000 ms', () => {
     countDown(1000);
     expect(spoken).toEqual([]);
 
@@ -92,9 +101,42 @@ describe('IntervalCountdownService', () => {
     ]);
   });
 
-  it('stays silent once the countdown ended', () => {
+  it('repeats nothing while the training is paused', () => {
+    countDown(2999);
+    forgetSounds();
+
+    countDown(2999);
+    countDown(2999);
+
+    expect(FakeAudioContext.frequencies).toEqual([]);
+  });
+
+  it('sounds the same second again for the next Intervall', () => {
+    countDown(2999, 'recovery');
+    forgetSounds();
+
+    countDown(2999, 'sprint');
+
+    expect(FakeAudioContext.frequencies).toEqual([880]);
+  });
+
+  it('counts the end of the training down and praises the runner', () => {
+    countDown(5999, 'finished');
+    countDown(999, 'finished');
+
+    expect(spoken).toEqual([
+      'Noch 5 Sekunden!',
+      'Training beendet. Gut gemacht!',
+    ]);
+  });
+
+  it('stays silent while the countdown is ended', () => {
+    countDown(2999);
+    forgetSounds();
+
     service.endCountdown();
     TestBed.tick();
+    countDown(2999);
 
     expect(spoken).toEqual([]);
     expect(FakeAudioContext.frequencies).toEqual([]);

@@ -55,7 +55,7 @@ describe('countdownCue', () => {
   it('announces the next Intervall a lead before the window', () => {
     expect(cueAt(5999)).toEqual({
       kind: 'announcement',
-      second: 5,
+      secondsLeft: 5,
       countdownTo: 'sprint',
     });
   });
@@ -68,7 +68,7 @@ describe('countdownCue', () => {
   ])('beeps at %i ms left for second %i', (timeLeft, second) => {
     expect(cueAt(timeLeft)).toEqual({
       kind: 'beep',
-      second,
+      secondsLeft: second,
       countdownTo: 'sprint',
     });
   });
@@ -77,7 +77,7 @@ describe('countdownCue', () => {
     expect(cueAt(1000)?.kind).toBe('beep');
     expect(cueAt(999)).toEqual({
       kind: 'start',
-      second: 0,
+      secondsLeft: 0,
       countdownTo: 'sprint',
     });
   });
@@ -89,7 +89,11 @@ describe('countdownCue', () => {
         timeLeft: milliseconds(400),
         countdownTo: 'recovery',
       })
-    ).toEqual({ kind: 'announcement', second: 0, countdownTo: 'recovery' });
+    ).toEqual({
+      kind: 'announcement',
+      secondsLeft: 0,
+      countdownTo: 'recovery',
+    });
   });
 });
 
@@ -97,7 +101,7 @@ describe('cueSound', () => {
   it('names the next Intervall in its announcement', () => {
     expect(
       cueSound(
-        { kind: 'announcement', second: 5, countdownTo: 'sprint' },
+        { kind: 'announcement', secondsLeft: 5, countdownTo: 'sprint' },
         'Sprinten'
       )
     ).toEqual({
@@ -109,14 +113,17 @@ describe('cueSound', () => {
 
   it('beeps without words', () => {
     expect(
-      cueSound({ kind: 'beep', second: 3, countdownTo: 'sprint' }, 'Sprinten')
+      cueSound(
+        { kind: 'beep', secondsLeft: 3, countdownTo: 'sprint' },
+        'Sprinten'
+      )
     ).toEqual({ frequency: 880, length: seconds(0.4), text: undefined });
   });
 
   it('calls the runner to the Intervall', () => {
     expect(
       cueSound(
-        { kind: 'start', second: 0, countdownTo: 'recovery' },
+        { kind: 'start', secondsLeft: 0, countdownTo: 'recovery' },
         'Erholung'
       )
     ).toEqual({
@@ -129,7 +136,7 @@ describe('cueSound', () => {
   it('counts the last seconds of the training down', () => {
     expect(
       cueSound(
-        { kind: 'announcement', second: 5, countdownTo: 'finished' },
+        { kind: 'announcement', secondsLeft: 5, countdownTo: 'finished' },
         'Fertig'
       ).text
     ).toBe('Noch 5 Sekunden!');
@@ -137,14 +144,20 @@ describe('cueSound', () => {
 
   it('ends the training with praise', () => {
     expect(
-      cueSound({ kind: 'start', second: 0, countdownTo: 'finished' }, 'Fertig')
-        .text
+      cueSound(
+        { kind: 'start', secondsLeft: 0, countdownTo: 'finished' },
+        'Fertig'
+      ).text
     ).toBe('Training beendet. Gut gemacht!');
   });
 });
 
 describe('sameCue', () => {
-  const beep: CountdownCue = { kind: 'beep', second: 3, countdownTo: 'sprint' };
+  const beep: CountdownCue = {
+    kind: 'beep',
+    secondsLeft: 3,
+    countdownTo: 'sprint',
+  };
 
   it('matches the same cue of the same countdown', () => {
     expect(sameCue(beep, { ...beep })).toBe(true);
@@ -152,7 +165,7 @@ describe('sameCue', () => {
   });
 
   it('tells cues of another second or Intervall apart', () => {
-    expect(sameCue(beep, { ...beep, second: 2 })).toBe(false);
+    expect(sameCue(beep, { ...beep, secondsLeft: 2 })).toBe(false);
     expect(sameCue(beep, { ...beep, countdownTo: 'recovery' })).toBe(false);
     expect(sameCue(null, beep)).toBe(false);
   });

@@ -23,7 +23,7 @@ export type CueKind = 'announcement' | 'beep' | 'start';
 export interface CountdownCue {
   readonly kind: CueKind;
   /** the seconds left that this cue stands for */
-  readonly second: number;
+  readonly secondsLeft: number;
   readonly countdownTo: TrainingName;
 }
 
@@ -50,20 +50,20 @@ export function countdownCue({
   timeLeft,
   countdownTo,
 }: CountdownModel): CountdownCue | null {
-  const second = cueSecond(timeLeft);
+  const secondsLeft = cueSecond(timeLeft);
   const windowSeconds = Math.round(div(countdownTime, SECOND_IN_MS));
-  const kind = cueKindOf(second, windowSeconds);
-  return kind ? { kind, second, countdownTo } : null;
+  const kind = cueKindOf(secondsLeft, windowSeconds);
+  return kind ? { kind, secondsLeft, countdownTo } : null;
 }
 
-function cueKindOf(second: number, windowSeconds: number): CueKind | null {
-  if (second === windowSeconds) {
+function cueKindOf(secondsLeft: number, windowSeconds: number): CueKind | null {
+  if (secondsLeft === windowSeconds) {
     return 'announcement';
   }
-  if (second === 0) {
+  if (secondsLeft === 0) {
     return 'start';
   }
-  if (second > 0 && second < windowSeconds) {
+  if (secondsLeft > 0 && secondsLeft < windowSeconds) {
     return 'beep';
   }
   return null;
@@ -75,15 +75,15 @@ export function cueSound(cue: CountdownCue, name: string): CueSound {
 }
 
 function cueText(
-  { kind, second, countdownTo }: CountdownCue,
+  { kind, secondsLeft, countdownTo }: CountdownCue,
   name: string
 ): string | undefined {
   const isEnd = countdownTo === 'finished';
   switch (kind) {
     case 'announcement':
       return isEnd
-        ? `Noch ${second} Sekunden!`
-        : `${name} in ${second} Sekunden!`;
+        ? `Noch ${secondsLeft} Sekunden!`
+        : `${name} in ${secondsLeft} Sekunden!`;
     case 'start':
       return isEnd ? 'Training beendet. Gut gemacht!' : `Jetzt ${name}!`;
     case 'beep':
@@ -91,13 +91,14 @@ function cueText(
   }
 }
 
+/** whether both stand for the same cue of the same countdown (or both for none) */
 export function sameCue(
   previous: CountdownCue | null,
   next: CountdownCue | null
 ): boolean {
   return (
     previous?.kind === next?.kind &&
-    previous?.second === next?.second &&
+    previous?.secondsLeft === next?.secondsLeft &&
     previous?.countdownTo === next?.countdownTo
   );
 }

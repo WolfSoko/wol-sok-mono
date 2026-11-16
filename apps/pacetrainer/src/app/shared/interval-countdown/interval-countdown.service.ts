@@ -31,9 +31,7 @@ export class IntervalCountdownService {
         filter((cue): cue is CountdownCue => cue != null)
       )
       .subscribe((cue) =>
-        this.play(
-          cueSound(cue, trainingNamePipe.transform(cue.countdownTo) ?? '')
-        )
+        this.play(cueSound(cue, trainingNamePipe.transform(cue.countdownTo)))
       );
   }
 
