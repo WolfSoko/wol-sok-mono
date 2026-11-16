@@ -45,7 +45,8 @@ down: the ring is cut and sits off the backdrop's centre.
    existing `stage.busy` label. With `prefers-reduced-motion: reduce` the bacteria stand still in
    their ring and only the ring's opacity breathes slowly.
 5. The game passes the opponent's colour to the indicator as it does the player's
-   (`hud.colonyCss()[1]`), with fallbacks for both, so the menu (no match yet) shows the defaults.
+   (`hud.colonyCss()[1]`); the stage always knows both colonies' colours, so the spinner's own
+   fallbacks only matter where it is used on its own.
 
 ## Acceptance
 

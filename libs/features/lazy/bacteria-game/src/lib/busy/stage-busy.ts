@@ -8,8 +8,9 @@ import { inject, Injectable, PendingTasks, signal } from '@angular/core';
  * nothing meanwhile - the tap seemed to do nothing.
  *
  * {@link run} therefore shows the indicator first, lets the browser paint
- * it and only then does the work. The spinner turns on the compositor, so
- * it keeps turning while the work blocks the page.
+ * it and only then does the work. Its spinner (`BacteriaSpinnerComponent`)
+ * animates on the compositor only, so it keeps turning while the work
+ * blocks the page.
  */
 @Injectable({ providedIn: 'root' })
 export class StageBusy {

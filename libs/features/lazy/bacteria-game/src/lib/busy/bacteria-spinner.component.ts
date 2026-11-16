@@ -84,12 +84,12 @@ const CELLS: readonly SpinnerCell[] = Array.from(
       width: 0.2em;
       height: 0.2em;
       border-radius: 50%;
-      /* The arena's look: a lighter nucleus in a body that darkens outwards. */
+      /* The swarm's lit sphere (glossy() in menu/swarm.component.ts). */
       background: radial-gradient(
-        circle at 40% 40%,
-        color-mix(in srgb, var(--color), white 55%) 0 18%,
-        var(--color) 30%,
-        color-mix(in srgb, var(--color), black 35%) 100%
+        circle at 35% 30%,
+        color-mix(in srgb, var(--color), white 60%),
+        var(--color) 45%,
+        color-mix(in srgb, var(--color), black 35%)
       );
       animation: eat var(--wave) ease-in-out infinite;
       /* The wave runs clockwise: each one swells a step after the one behind. */
@@ -127,6 +127,7 @@ const CELLS: readonly SpinnerCell[] = Array.from(
     @media (prefers-reduced-motion: reduce) {
       .cell {
         animation: none;
+        will-change: auto;
       }
 
       .ring {

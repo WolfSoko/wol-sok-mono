@@ -1,12 +1,17 @@
 import { TestBed } from '@angular/core/testing';
+import { I18nService } from '../i18n/i18n.service';
 import { StageBusy } from './stage-busy';
 import { StageBusyComponent } from './stage-busy.component';
 
 describe('StageBusyComponent', () => {
+  let finishWork: () => void = () => undefined;
+
+  afterEach(() => finishWork());
+
   function render(active: boolean): HTMLElement {
     const busy = TestBed.inject(StageBusy);
     if (active) {
-      busy.run(() => new Promise<void>(() => undefined));
+      busy.run(() => new Promise<void>((resolve) => (finishWork = resolve)));
     }
     const fixture = TestBed.createComponent(StageBusyComponent);
     fixture.detectChanges();
@@ -19,7 +24,9 @@ describe('StageBusyComponent', () => {
     );
 
     expect(spinner?.getAttribute('role')).toBe('progressbar');
-    expect(spinner?.getAttribute('aria-label')).toBeTruthy();
+    const label = TestBed.inject(I18nService).t('stage.busy');
+    expect(label).not.toBe('stage.busy');
+    expect(spinner?.getAttribute('aria-label')).toBe(label);
   });
 
   it('shows nothing while the stage is idle', () => {
