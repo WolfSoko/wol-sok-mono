@@ -180,6 +180,17 @@ describe('TrainingRun', () => {
       run = createRun();
     });
 
+    it('names the first Intervall as what follows the Vorlauf', () => {
+      run.start(
+        createTrainingWithDuration([
+          createRecoveryExercise(sToMs(seconds(5))),
+          createSprintExercise(sToMs(seconds(10))),
+        ])
+      );
+
+      expect(run.state()).toMatchObject({ phase: 'leadIn', next: 'recovery' });
+    });
+
     it('starts with a 5 s Vorlauf, then runs the first Intervall', () => {
       expect(run.state()).toEqual({ phase: 'ready' });
 
@@ -188,6 +199,7 @@ describe('TrainingRun', () => {
         phase: 'leadIn',
         left: milliseconds(5000),
         total: milliseconds(5000),
+        next: 'sprint',
       });
 
       advance(2000);

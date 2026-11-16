@@ -58,7 +58,7 @@ export class SprintTrainingComponent {
       const run = this.run();
       switch (run.phase) {
         case 'leadIn':
-          this.countdownService.updateCountdown(run.total, run.left, 'leadIn');
+          this.countdownService.updateCountdown(run.total, run.left, run.next);
           break;
         case 'running':
         case 'paused':
