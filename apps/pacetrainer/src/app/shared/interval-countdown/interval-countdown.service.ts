@@ -1,24 +1,17 @@
 import { inject, Injectable, signal } from '@angular/core';
 import { toObservable } from '@angular/core/rxjs-interop';
-import {
-  distinctUntilChanged,
-  filter,
-  map,
-  NEVER,
-  Observable,
-  of,
-  switchMap,
-} from 'rxjs';
-import {
-  div,
-  Milliseconds,
-  SECOND_IN_MS,
-  Seconds,
-  seconds,
-} from '@wolsok/utils-time';
+import { distinctUntilChanged, filter, map } from 'rxjs';
+import { Milliseconds, Seconds, seconds } from '@wolsok/utils-time';
 import { CountdownModel } from '../model/training/countdown.model';
 import { TrainingName } from '../model/training/training-name';
 import { TrainingNamePipe } from '../ui/training-name.pipe';
+import {
+  CountdownCue,
+  countdownCue,
+  CueSound,
+  cueSound,
+  sameCue,
+} from './countdown-cue';
 
 @Injectable({
   providedIn: 'root',
@@ -30,56 +23,16 @@ export class IntervalCountdownService {
   constructor() {
     const trainingNamePipe = inject(TrainingNamePipe);
 
-    const countdownPeeps$ = toObservable(this.countdown).pipe(
-      filter((countdown) => countdown != null),
-      map(
-        (countdown) =>
-          [
-            countdown,
-            Math.floor(div(countdown.timeLeft, SECOND_IN_MS)),
-            Math.round(div(countdown.countdownTime, SECOND_IN_MS)),
-          ] as [CountdownModel, number, number]
-      ),
-      distinctUntilChanged(
-        ([cPrev, pPrev, maxBeepsPrev], [cNext, pNext, maxBeepsNext]) =>
-          cNext.countdownTo === cPrev.countdownTo &&
-          pPrev === pNext &&
-          maxBeepsPrev === maxBeepsNext
-      ),
-      switchMap(([countdown, secondsLeft, maxBeeps]) => {
-        const isEnd = countdown.countdownTo === 'finished';
-        const trainingName = trainingNamePipe.transform(countdown.countdownTo);
-        if (secondsLeft === maxBeeps) {
-          const announcement = isEnd
-            ? `Noch ${secondsLeft} Sekunden!`
-            : `${trainingName} in ${secondsLeft} Sekunden!`;
-          return of([440, seconds(0.4), announcement]) as Observable<
-            [number, Seconds, string | undefined]
-          >;
-        }
-        if (secondsLeft === 0) {
-          const announcement = isEnd
-            ? 'Training beendet. Gut gemacht!'
-            : `Jetzt ${trainingName}!`;
-          return of([660, seconds(0.8), announcement]) as Observable<
-            [number, Seconds, string | undefined]
-          >;
-        }
-        if (secondsLeft < maxBeeps && secondsLeft > 0) {
-          return of([880, seconds(0.4), undefined]) as Observable<
-            [number, Seconds, string | undefined]
-          >;
-        }
-        return NEVER;
-      })
-    );
-
-    countdownPeeps$.subscribe(([freq, beepDuration, textToSpeak]) => {
-      if (textToSpeak) {
-        this.textToSpeech(textToSpeak);
-      }
-      this.playBeep(freq, beepDuration);
-    });
+    toObservable(this.countdown)
+      .pipe(
+        filter((countdown) => countdown != null),
+        map(countdownCue),
+        distinctUntilChanged(sameCue),
+        filter((cue): cue is CountdownCue => cue != null)
+      )
+      .subscribe((cue) =>
+        this.play(cueSound(cue, trainingNamePipe.transform(cue.countdownTo)))
+      );
   }
 
   /**
@@ -108,6 +61,14 @@ export class IntervalCountdownService {
   public endCountdown(): void {
     this.countdown.set(null);
   }
+
+  private play({ frequency, length, text }: CueSound): void {
+    if (text) {
+      this.textToSpeech(text);
+    }
+    this.playBeep(frequency, length);
+  }
+
   private playBeep(frequency = 440, length: Seconds = seconds(0.2)): void {
     const audioCtx = this.getAudioContext();
     if (!audioCtx) {
