@@ -11,9 +11,13 @@
  * links it from the pinned architecture issue.
  */
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { join, matchesGlob, resolve } from 'node:path';
+import { createProjectGraphAsync } from '@nx/devkit';
+// Nx's public file map carries no dependencies per file; its cache does.
+import { readFileMapCache } from 'nx/src/project-graph/nx-deps-cache.js';
+
+const BOUNDARY_RULE = '@nx/enforce-module-boundaries';
 
 const ROOT = resolve(import.meta.dirname, '../..');
 const OUT_FILE = join(ROOT, 'docs/architecture/README.md');
@@ -54,32 +58,55 @@ const GROUPS = [
   { id: 'other', label: 'libs (other)', match: () => true },
 ];
 
-function readProjectGraph() {
-  const dir = mkdtempSync(join(tmpdir(), 'nx-graph-'));
-  const file = join(dir, 'graph.json');
-  try {
-    execFileSync('npx', ['nx', 'graph', `--file=${file}`], {
-      cwd: ROOT,
-      stdio: ['ignore', 'ignore', 'inherit'],
-      env: { ...process.env, NX_DAEMON: 'false' },
-    });
-    return JSON.parse(readFileSync(file, 'utf8')).graph;
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
+/** The project graph, and for each project the files that import another. */
+async function readProjectGraph() {
+  process.chdir(ROOT);
+  process.env.NX_DAEMON = 'false';
+  const graph = await createProjectGraphAsync();
+  const fileMap = readFileMapCache()?.fileMap.projectFileMap;
+  if (!fileMap) {
+    throw new Error('Nx wrote no file map, so no import can be traced.');
   }
+  return { graph, fileMap };
 }
 
-function readDepConstraints() {
+function readBoundaryRules() {
   const config = JSON.parse(readFileSync(join(ROOT, '.oxlintrc.json'), 'utf8'));
-  const rule = config.rules?.['@nx/enforce-module-boundaries'];
+  const rule = config.rules?.[BOUNDARY_RULE];
   const constraints = Array.isArray(rule) ? rule[1]?.depConstraints : undefined;
   // Without rules every boundary check below would silently pass.
   if (!constraints?.length) {
     throw new Error(
-      'No @nx/enforce-module-boundaries depConstraints found in .oxlintrc.json.'
+      `No ${BOUNDARY_RULE} depConstraints found in .oxlintrc.json.`
     );
   }
-  return constraints;
+  // An override that sets the rule again replaces the workspace's constraints
+  // for its files: that is how an exception is recorded (see CLAUDE.md).
+  const exceptionGlobs = (config.overrides ?? [])
+    .filter((override) => override.rules?.[BOUNDARY_RULE])
+    .flatMap((override) => override.files ?? []);
+  return { constraints, exceptionGlobs };
+}
+
+/** A file's dependency is `target`, `[target, type]` or `[source, target, type]`. */
+function targetOf(dep) {
+  if (typeof dep === 'string') return dep;
+  return dep.length === 2 ? dep[0] : dep[1];
+}
+
+/** `source->target` to the files of `source` that import `target`. */
+function importingFiles(fileMap) {
+  const files = new Map();
+  for (const [source, projectFiles] of Object.entries(fileMap)) {
+    for (const { file, deps } of projectFiles) {
+      for (const dep of deps ?? []) {
+        const target = targetOf(dep);
+        const key = `${source}->${target}`;
+        files.set(key, [...(files.get(key) ?? []), file]);
+      }
+    }
+  }
+  return files;
 }
 
 function readFederationRemotes() {
@@ -175,7 +202,34 @@ function findCycles(projects, edges) {
   return sccs;
 }
 
-function findBoundaryViolations(projects, edges, constraints) {
+/**
+ * Edges the tag constraints forbid, split into those every importing file of
+ * which an override of `.oxlintrc.json` covers (recorded exceptions) and the
+ * rest (violations lint would report).
+ */
+function findBoundaryViolations(projects, edges, rules, fileMap) {
+  const candidates = edgesAgainstConstraints(
+    projects,
+    edges,
+    rules.constraints
+  );
+  const importers = importingFiles(fileMap);
+  const isException = (edge) => {
+    const files = importers.get(`${edge.source}->${edge.target}`) ?? [];
+    return (
+      files.length > 0 &&
+      files.every((file) =>
+        rules.exceptionGlobs.some((glob) => matchesGlob(file, glob))
+      )
+    );
+  };
+  return {
+    violations: candidates.filter((edge) => !isException(edge)),
+    exceptions: candidates.filter(isException),
+  };
+}
+
+function edgesAgainstConstraints(projects, edges, constraints) {
   const byName = new Map(projects.map((p) => [p.name, p]));
   const violations = [];
   // Implicit dependencies (e.g. a CDK stack deploying an app) are not imports,
@@ -314,7 +368,7 @@ function layerTagProblem(p) {
   return null;
 }
 
-function findings(projects, cycles, violations) {
+function findings(projects, cycles, { violations, exceptions }) {
   const out = [];
   const list = (items) => items.map((i) => `  - ${i}`).join('\n');
 
@@ -329,8 +383,19 @@ function findings(projects, cycles, violations) {
       : '- **Tag constraint violations** (`.oxlintrc.json`): none'
   );
 
+  if (exceptions.length) {
+    out.push(
+      `- **Recorded boundary exceptions** (imports only from files an override in \`.oxlintrc.json\` covers): ${exceptions.length}\n${list(exceptions.map((e) => `\`${e.source}\` → \`${e.target}\``))}`
+    );
+  }
+
+  // The scripts under tools/ are run by path from a target's command, so no
+  // import edge shows their use.
   const orphans = projects.filter(
-    (p) => p.in === 0 && !['apps', 'infra', 'public'].includes(p.group)
+    (p) =>
+      p.in === 0 &&
+      !['apps', 'infra', 'public'].includes(p.group) &&
+      !p.root.startsWith('tools/')
   );
   out.push(
     orphans.length
@@ -363,13 +428,14 @@ function findings(projects, cycles, violations) {
   return out.join('\n');
 }
 
-function render() {
-  const graph = readProjectGraph();
-  const constraints = readDepConstraints();
+async function render() {
+  const { graph, fileMap } = await readProjectGraph();
+  const rules = readBoundaryRules();
+  const { constraints } = rules;
   const remotes = readFederationRemotes();
   const { projects, edges } = buildModel(graph);
   const cycles = findCycles(projects, edges);
-  const violations = findBoundaryViolations(projects, edges, constraints);
+  const boundaries = findBoundaryViolations(projects, edges, rules, fileMap);
 
   return `<!-- Generated by tools/architecture/generate-diagrams.mjs. Do not edit by hand: run \`npm run arch:diagrams\`. -->
 
@@ -430,7 +496,7 @@ ${metricsTable(projects)}
 
 ## Automated findings
 
-${findings(projects, cycles, violations)}
+${findings(projects, cycles, boundaries)}
 `;
 }
 
@@ -438,7 +504,7 @@ function format(file) {
   execFileSync('npx', ['oxfmt', file], { cwd: ROOT, stdio: 'ignore' });
 }
 
-const content = render();
+const content = await render();
 if (CHECK) {
   // Formatted next to the real file so oxfmt picks up the workspace config.
   const tmpFile = join(ROOT, 'docs/architecture/.README.check.md');
