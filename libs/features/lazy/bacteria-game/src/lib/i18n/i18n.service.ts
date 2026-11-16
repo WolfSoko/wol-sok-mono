@@ -7,8 +7,7 @@ import {
   translate,
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { DICTIONARIES, EN } from './texts/dictionaries';
-import { TranslationKey } from './game-texts';
+import { DICTIONARIES, EN, type TranslationKey } from './texts/dictionaries';
 
 /**
  * The language the game speaks, switched at runtime: the player's choice,

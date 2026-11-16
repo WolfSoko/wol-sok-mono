@@ -13,8 +13,6 @@ import {
   type SeriesLength,
   type ZoneKind,
   type GameText as EngineGameText,
-  type GameTextParams as EngineGameTextParams,
-  type Translate as EngineTranslate,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { TranslationKey } from './texts/dictionaries';
 
@@ -26,12 +24,6 @@ export type { TranslationKey };
  * game's. Every text the engine builds is one too.
  */
 export type GameText = EngineGameText<TranslationKey>;
-
-/** The values a {@link GameText}'s placeholders are filled with. */
-export type GameTextParams = EngineGameTextParams<TranslationKey>;
-
-/** Translates one of the game's keys, as `I18nService.t` does. */
-export type Translate = EngineTranslate<TranslationKey>;
 
 /*
  * The keys of the game data's texts, by the ids the state keeps: the state

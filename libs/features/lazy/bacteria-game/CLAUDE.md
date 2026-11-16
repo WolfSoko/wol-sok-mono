@@ -526,8 +526,8 @@ play each other.
   `dictionaries.ts`). The English of the areas the engine renders into its
   state (`achievements`, `game`, `levels`, `training`) is the engine's
   (`ENGINE_EN`, its `src/lib/i18n/en/`); their German is here. A key the
-  engine builds goes into one of those four areas. The game's `GameText`,
-  `GameTextParams`, `Translate` and `TranslationKey` come from
+  engine builds goes into one of those four areas. The game's `GameText` and
+  `TranslationKey` come from
   `i18n/game-texts.ts` (the engine's `GameText` widened to every key of the
   game); a text the engine builds is one too. Keeping the texts here keeps
   a copy edit out of the engine's gates and the functions' deploy ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103)).

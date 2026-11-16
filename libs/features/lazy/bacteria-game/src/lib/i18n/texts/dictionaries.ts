@@ -46,16 +46,16 @@ import { moderation as enModeration } from './en/moderation';
 
 /*
  * The game's texts, one area per screen or topic, so areas grow apart. The
- * English of `levels`, `achievements`, `game` and `training` is the
- * engine's (`ENGINE_EN`), since the engine renders it into its state; a
- * text the engine builds goes there, every other one here. A new area
- * takes three lines:
+ * English areas the engine renders into its state are the engine's
+ * (`ENGINE_EN`, spread in first); a text the engine builds goes there,
+ * every other one here. A new area takes three lines:
  *   1. `en/<area>.ts` exports `<area>`, a plain object of English texts;
  *   2. `de/<area>.ts` exports `<area>: Translation<typeof en>` with the
  *      German ones - a missing or an extra key fails to compile;
  *   3. one import and one entry per language below.
  */
 export const EN = {
+  ...ENGINE_EN,
   stage: enStage,
   match: enMatch,
   controls: enControls,
@@ -66,14 +66,10 @@ export const EN = {
   profile: enProfile,
   online: enOnline,
   common: enCommon,
-  levels: ENGINE_EN.levels,
-  achievements: ENGINE_EN.achievements,
-  game: ENGINE_EN.game,
   settings: enSettings,
   colony: enColony,
   support: enSupport,
   evolution: enEvolution,
-  training: ENGINE_EN.training,
   boards: enBoards,
   replay: enReplay,
   moderation: enModeration,

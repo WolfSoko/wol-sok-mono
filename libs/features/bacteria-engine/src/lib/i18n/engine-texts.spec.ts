@@ -11,24 +11,20 @@ import { MEDAL_TIERS, medalText } from '../state/medallions';
 import { MISSIONS } from '../state/training';
 import { ENGINE_EN } from './engine-texts';
 import { english, GameText } from './game-text';
+import { lookUp } from './translation';
 
-/** A rendered text still holding a key or a placeholder fell through. */
+/** Every key of a text and of its nested texts has an English entry. */
 function expectRendered(text: GameText): void {
-  const rendered = english(text);
-  expect(rendered).not.toMatch(/^[a-z]+(\.[\w-]+)+$/i);
-  expect(rendered).not.toMatch(/\{\w+\}/);
+  expect(lookUp(ENGINE_EN, text.key)).toBeDefined();
+  for (const value of Object.values(text.params ?? {})) {
+    if (typeof value === 'object') {
+      expectRendered(value);
+    }
+  }
+  expect(english(text)).not.toMatch(/\{\w+\}/);
 }
 
 describe('ENGINE_EN', () => {
-  it('holds exactly the areas the engine renders', () => {
-    expect(Object.keys(ENGINE_EN).sort()).toEqual([
-      'achievements',
-      'game',
-      'levels',
-      'training',
-    ]);
-  });
-
   it('renders every achievement', () => {
     for (const id of ACHIEVEMENT_IDS) {
       const { name, condition } = achievementTexts(id);

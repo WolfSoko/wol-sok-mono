@@ -11,9 +11,8 @@
  * `engine-bundle.spec.ts` bundles this file to prove it.
  */
 export { ENGINE_EN } from './lib/i18n/engine-texts';
-export type { EngineTextKey } from './lib/i18n/engine-texts';
 export { english, renderGameText } from './lib/i18n/game-text';
-export type { GameText, GameTextParams, Translate } from './lib/i18n/game-text';
+export type { GameText } from './lib/i18n/game-text';
 export {
   detectLanguage,
   isLanguage,
