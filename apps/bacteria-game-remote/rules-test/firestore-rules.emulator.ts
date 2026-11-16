@@ -1,7 +1,6 @@
 import {
   assertFails,
   assertSucceeds,
-  initializeTestEnvironment,
   type RulesTestContext,
   type RulesTestEnvironment,
 } from '@firebase/rules-unit-testing';
@@ -19,12 +18,12 @@ import {
   query,
   serverTimestamp,
   setDoc,
-  setLogLevel,
   startAfter,
   Timestamp,
   updateDoc,
   where,
 } from 'firebase/firestore';
+import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -43,14 +42,10 @@ const OWNER_TOKEN = {
 };
 
 beforeAll(async () => {
-  // Every refused write would log its denial - the refusals are expected.
-  setLogLevel('silent');
-  env = await initializeTestEnvironment({
-    projectId: 'demo-bacteria-rules',
-    firestore: {
-      rules: readFileSync(join(__dirname, '../firestore.rules'), 'utf8'),
-    },
-  });
+  env = await rulesTestEnvironment(
+    'demo-bacteria-rules',
+    readFileSync(join(__dirname, '../firestore.rules'), 'utf8')
+  );
 });
 
 afterAll(() => env.cleanup());
