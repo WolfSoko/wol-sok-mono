@@ -28,6 +28,8 @@
         "{workspaceRoot}/.github/workflows/ci-cd.yml",
         "{workspaceRoot}/.github/workflows/deploy.yml",
         "{workspaceRoot}/.github/workflows/release.yml",
+        "{workspaceRoot}/**/vite.config.*",
+        "{workspaceRoot}/**/vitest.config.*",
         "{workspaceRoot}/**/*.json",
         "{workspaceRoot}/**/LICENSE"
       ]

@@ -20,9 +20,9 @@ import {
 } from '../colony-colors/colony-colors.component';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
 import {

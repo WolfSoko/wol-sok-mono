@@ -167,8 +167,12 @@ carries the active language as its `lang`.
 Templates take the `t` pipe, `{{ 'settings.title' | t }}` or
 `{{ 'lobby.waiting' | t: { name } }}`; code calls `I18nService.t(key, params)`
 inside a `computed` or right where it builds a text. The texts are plain
-objects per area, `en/<area>.ts` and `de/<area>.ts`, merged in
-[`dictionaries.ts`](./src/lib/i18n/dictionaries.ts). The German object is
+objects per area, `en/<area>.ts` and `de/<area>.ts` under
+`src/lib/i18n/texts/`, merged in
+[`dictionaries.ts`](./src/lib/i18n/texts/dictionaries.ts). The English of
+`achievements`, `game`, `levels` and `training` is the engine's own
+(`ENGINE_EN`), since the engine renders it into its state; their German is
+here. The German object is
 typed against the English one, so a missing or an extra key fails to
 compile, and so does a key that names no text. A text holds `{name}`
 placeholders, and a plural is `{ one, other }`, picked by the `count` param

@@ -24,15 +24,13 @@ import {
   type Ruleset,
   SCREEN_RESOLUTIONS,
   SIM_RESOLUTIONS,
-} from '@wolsok/feat-shared-bacteria-engine';
-import {
   Language,
   LANGUAGES,
-  TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
 import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';

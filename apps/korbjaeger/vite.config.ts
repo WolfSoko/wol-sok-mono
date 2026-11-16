@@ -1,10 +1,10 @@
 import analog from '@analogjs/platform';
-import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases';
-import { workspaceFile } from '../../tools/vite/workspace-file';
+import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases.ts';
+import { workspaceFile } from '../../tools/vite/workspace-file.ts';
 import browserslist from 'browserslist';
-import { rememberBuildConfiguration } from './deploy/build-configuration';
-import { cssTargets } from './deploy/css-targets';
-import { FUNCTION_REGION } from './src/shared/function-region';
+import { rememberBuildConfiguration } from './deploy/build-configuration.ts';
+import { cssTargets } from './deploy/css-targets.ts';
+import { FUNCTION_REGION } from './src/shared/function-region.ts';
 import { ConfigEnv, defineConfig } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';

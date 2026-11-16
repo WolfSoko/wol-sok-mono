@@ -3,6 +3,7 @@
   "title": "Bootstrap executor",
   "description": "Prepare (bootstrap) an AWS environment so CDK stacks of this project can be deployed into it.",
   "type": "object",
+  "outputCapture": "pipe",
   "properties": {
     "profile": {
       "type": "string",

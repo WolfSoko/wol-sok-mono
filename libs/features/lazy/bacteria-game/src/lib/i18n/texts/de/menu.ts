@@ -1,0 +1,25 @@
+import type { menu as en } from '../en/menu';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
+
+export const menu: Translation<typeof en> = {
+  tagline:
+    'Steuere deine Kolonie, verschling die anderen. {levels} Schalen, jeden Tag ein neues Level, Endlos-Läufe – und Freunde, die du schlagen kannst.',
+  newGameNote:
+    'Training, Kampagne, Tageslevel, Endlos, Frei, Zwei Spieler, Online',
+  more: 'Mehr',
+  gallery: 'Matches des Tages',
+  admin: 'Verwaltung',
+  friendRequests: {
+    one: '{count} Freundschaftsanfrage',
+    other: '{count} Freundschaftsanfragen',
+  },
+  card: {
+    label: 'Deine Kampagne',
+    campaign: 'Kampagne',
+    levelsOpen: 'von {total} Levels offen',
+    levelsOpenBar: 'Offene Levels',
+    medals: 'Medaillen',
+    achievements: 'Erfolge',
+    continue: 'Kampagne fortsetzen',
+  },
+};

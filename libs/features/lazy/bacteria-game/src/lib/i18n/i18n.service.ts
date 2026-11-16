@@ -2,14 +2,12 @@ import { DOCUMENT } from '@angular/common';
 import { computed, inject, Injectable, signal } from '@angular/core';
 import {
   detectLanguage,
-  DICTIONARIES,
-  EN,
   Language,
   LOCALES,
   translate,
-  TranslationKey,
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { DICTIONARIES, EN, type TranslationKey } from './texts/dictionaries';
 
 /**
  * The language the game speaks, switched at runtime: the player's choice,

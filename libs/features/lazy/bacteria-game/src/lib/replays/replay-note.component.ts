@@ -20,8 +20,8 @@ import {
   scan,
   switchMap,
 } from 'rxjs';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { GameSettingsService } from '../settings.service';
 import {
   canPlayBack,

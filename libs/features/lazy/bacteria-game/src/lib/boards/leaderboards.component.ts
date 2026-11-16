@@ -10,9 +10,9 @@ import {
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
 import {
   BOARD_KINDS,

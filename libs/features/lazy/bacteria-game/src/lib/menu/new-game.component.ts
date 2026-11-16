@@ -30,6 +30,7 @@ import {
   ruleNoteText,
   seriesKey,
   zoneKey,
+  type TranslationKey,
 } from '../i18n/game-texts';
 import { EvolutionService } from '../evolution.service';
 import { I18nService } from '../i18n/i18n.service';
@@ -89,7 +90,6 @@ import {
 } from './play-modes';
 import { ScreenHeaderComponent } from './screen-header.component';
 import type { RankedKind, RankedOffer } from '../ranked/ranked.service';
-import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * A new game, step by step: first the mode - the training, the campaign,

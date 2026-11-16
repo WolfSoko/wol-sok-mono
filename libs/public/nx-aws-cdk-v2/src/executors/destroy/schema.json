@@ -3,6 +3,7 @@
   "title": "Destroy executor",
   "description": "Destroy the deployed CDK stacks of this project.",
   "type": "object",
+  "outputCapture": "pipe",
   "properties": {
     "stacks": {
       "type": "string",

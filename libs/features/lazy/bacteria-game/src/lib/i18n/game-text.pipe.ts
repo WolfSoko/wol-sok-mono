@@ -1,6 +1,7 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import { GameText, renderGameText } from '@wolsok/feat-shared-bacteria-engine';
+import { renderGameText } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from './i18n.service';
+import type { GameText } from './game-texts';
 
 /**
  * A game text in the active language, for templates:

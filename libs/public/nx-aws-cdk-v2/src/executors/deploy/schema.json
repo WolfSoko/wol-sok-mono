@@ -3,6 +3,7 @@
   "title": "Deploy executor",
   "description": "Deploy the CDK stacks of this project to AWS.",
   "type": "object",
+  "outputCapture": "pipe",
   "properties": {
     "stacks": {
       "type": "string",

@@ -10,8 +10,8 @@ import {
  * The words of the public replay pages (ADR 0011), English and German: a
  * small dictionary of the server's own - the game's I18nService is
  * Angular's. The ladder's English titles come from the engine's levels;
- * the German ones are the game's (`i18n/de/levels.ts`), which a spec keeps
- * complete.
+ * the German ones are the game's (`i18n/texts/de/levels.ts`); the spec
+ * checks the ids, not the game's German.
  */
 export type Lang = 'en' | 'de';
 
