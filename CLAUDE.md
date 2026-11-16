@@ -88,6 +88,7 @@ Long-term, strategic software engineering is required. A change that works but l
 4. **OnPush everywhere** — `changeDetection: ChangeDetectionStrategy.OnPush`
 5. **Angular Material** — use AM components consistently; don't roll custom UI that AM already covers
    - Exception (pacetrainer): the countdown ring (`pace-countdown-circle`) is a custom SVG, since `mat-progress-spinner` has no track ring
+   - Exception (bacteria game): the stage's busy indicator (`feat-lazy-bac-game-bacteria-spinner`) is plain HTML and CSS, since it must keep moving on the compositor while the work it covers blocks the main thread
 6. **Modern control flow** — `@if`, `@for`, `@switch` (not `*ngIf`, `*ngFor`, `*ngSwitch`)
 7. **2-space indentation**, kebab-case filenames, `*.spec.ts` for tests
 8. **Explicit `public`/`private`** in class members

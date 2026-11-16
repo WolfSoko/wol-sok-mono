@@ -337,7 +337,10 @@
     />
   }
   <!-- Over everything while a tap's work is under way: a spinner. -->
-  <feat-lazy-bac-game-stage-busy [style.--bw-player]="hud.colonyCss()[0]" />
+  <feat-lazy-bac-game-stage-busy
+    [style.--bw-player]="hud.colonyCss()[0]"
+    [style.--bw-opponent]="hud.colonyCss()[1]"
+  />
   <!-- Only a glance: small, in the top right corner below the HUD. -->
   @if (arenaStage.cameraFollows()) {
     <canvas
