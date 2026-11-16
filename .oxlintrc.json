@@ -305,7 +305,7 @@
           "error",
           {
             "allow": [
-              "^\\.\\./\\.\\./tools/vite/(nitro-ts-path-aliases|workspace-file)$"
+              "^\\.\\./\\.\\./tools/vite/(nitro-ts-path-aliases|workspace-file)\\.ts$"
             ],
             "depConstraints": [
               {
