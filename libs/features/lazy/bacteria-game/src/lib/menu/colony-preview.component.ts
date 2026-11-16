@@ -10,16 +10,20 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import type { Rgb } from '../arena/arena-theme';
-import { mix, rgba } from '../arena/canvas-math';
-import { prefersReducedMotion } from '../reduced-motion';
+import {
+  type Rgb,
+  mix,
+  rgba,
+  prefersReducedMotion,
+  WEAPON_COLORS,
+} from '@wolsok/feat-bacteria-rendering';
 import {
   geneLevel,
   Loadout,
   MAX_GENE_LEVEL,
   seeded,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GENE_COLORS, MAXED_COLOR, WEAPON_COLORS } from './evolution-look';
+import { GENE_COLORS, MAXED_COLOR } from './evolution-look';
 
 /** The preview's size in CSS pixels - drawn sharper on dense screens. */
 const SIZE = 320;

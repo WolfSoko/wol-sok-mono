@@ -17,10 +17,15 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSliderModule } from '@angular/material/slider';
-import type { ArenaLayout, ArenaPainter } from '../arena/arena-painter';
-import { arenaTheme } from '../arena/arena-theme';
-import { ArenaScene, ArenaViewComponent } from '../arena/arena-view.component';
-import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
+import {
+  type ArenaLayout,
+  type ArenaPainter,
+  arenaTheme,
+  ArenaScene,
+  ArenaViewComponent,
+  GlArenaPainter,
+  prefersReducedMotion,
+} from '@wolsok/feat-bacteria-rendering';
 import {
   exitFullscreen,
   fitInside,
@@ -30,7 +35,6 @@ import {
 } from '../fullscreen';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import type { TranslationKey } from '../i18n/game-texts';
-import { prefersReducedMotion } from '../reduced-motion';
 import {
   type BacteriaLook,
   clock,
@@ -100,7 +104,7 @@ export const CHROME_HIDE_MS = 3000;
         role="img"
         (click)="onArenaClick()"
       >
-        <feat-lazy-bac-game-arena-view
+        <feat-bac-render-arena-view
           [layout]="layout()"
           [scene]="scene"
           [theme]="theme()"

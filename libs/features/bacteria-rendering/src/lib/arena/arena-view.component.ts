@@ -87,7 +87,7 @@ const MAX_FRAME_MS = 3 * TICK_MS;
  * the template reads while frames are painted.
  */
 @Component({
-  selector: 'feat-lazy-bac-game-arena-view',
+  selector: 'feat-bac-render-arena-view',
   template: `
     @for (key of canvasKey(); track key) {
       <canvas

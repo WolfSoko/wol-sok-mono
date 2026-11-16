@@ -19,8 +19,10 @@ import { GameState, GameStateStore } from './game.states';
 import { Lockstep } from '../net/lockstep';
 import { PlayerStore } from './player.store';
 import { PlayerService, PlayerSpawn } from './player.service';
-import { chooseSimulation } from '../gl/simulation-choice';
-import type { GpuSimulationOptions } from '../gl/gpu-simulation';
+import {
+  chooseSimulation,
+  type GpuSimulationOptions,
+} from '@wolsok/feat-bacteria-rendering';
 
 const WIDTH = 320;
 const HEIGHT = 140;

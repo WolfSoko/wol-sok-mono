@@ -7,9 +7,12 @@ import {
 } from '@angular/core/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Observable, Subject } from 'rxjs';
-import type { ArenaFrame, ArenaPainter } from './arena/arena-painter';
-import { arenaTheme } from './arena/arena-theme';
-import { ARENA_PAINTER_FACTORY } from './arena/arena-view.component';
+import {
+  type ArenaFrame,
+  type ArenaPainter,
+  arenaTheme,
+  ARENA_PAINTER_FACTORY,
+} from '@wolsok/feat-bacteria-rendering';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { CampaignService } from './campaign.service';
 import { I18nService } from './i18n/i18n.service';

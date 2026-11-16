@@ -4,8 +4,8 @@ import { FakeGameAccount } from '../../testing/fake-game-account';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { FakeGameRanked } from '../../testing/fake-game-ranked';
-import type { GpuSelfTestResult } from '../gl/gpu-self-test';
-import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import type { GpuSelfTestResult } from '@wolsok/feat-bacteria-rendering';
+import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import {
   attemptSeed,
   cpuSimulation,

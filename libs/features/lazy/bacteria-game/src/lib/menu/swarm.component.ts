@@ -4,8 +4,7 @@ import {
   computed,
   input,
 } from '@angular/core';
-import { Rgb } from '../arena/arena-theme';
-import { mix, rgba } from '../arena/canvas-math';
+import { Rgb, mix, rgba } from '@wolsok/feat-bacteria-rendering';
 import { seeded } from '@wolsok/feat-shared-bacteria-engine';
 
 /** One drifting bacterium of the swarm, in the units its styles take. */

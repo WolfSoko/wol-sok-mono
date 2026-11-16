@@ -34,5 +34,6 @@ determinism, replays, balance and texts hold here too.
 - The targets `balance-check`, `balance` (ADR 0016) and `perf` (ADR 0014,
   `tools/perf/engine-bench.mjs`) live here, since they play the engine.
 - The goldens (`state/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded
-  by their specs here; the GPU cross-check, which needs `gl/`, stays in the
-  game lib (`gpu-crosscheck/`) and imports the engine.
+  by their specs here; the GPU cross-check, which needs `gl/`, lives in
+  `feat-bacteria-rendering` (`libs/features/bacteria-rendering/gpu-crosscheck/`)
+  and imports the engine.

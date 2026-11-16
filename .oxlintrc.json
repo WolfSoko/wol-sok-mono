@@ -64,6 +64,7 @@
               "feature",
               "feature:lazy",
               "feature:admin",
+              "feature:game-kit",
               "feat-shared",
               "api",
               "type:remote"
@@ -102,6 +103,7 @@
           {
             "sourceTag": "feature:lazy",
             "onlyDependOnLibsWithTags": [
+              "feature:game-kit",
               "feat-shared",
               "shared",
               "utils",
@@ -112,10 +114,27 @@
             "sourceTag": "feature:admin",
             "onlyDependOnLibsWithTags": [
               "feature:lazy",
+              "feature:game-kit",
               "feat-shared",
               "shared",
               "utils",
               "api"
+            ]
+          },
+          {
+            "sourceTag": "feature:game-kit",
+            "onlyDependOnLibsWithTags": [
+              "feat-shared",
+              "shared",
+              "utils",
+              "api"
+            ],
+            "bannedExternalImports": [
+              "firebase",
+              "firebase/*",
+              "@angular/fire",
+              "@angular/fire/*",
+              "@ngrx/*"
             ]
           },
           {
@@ -200,11 +219,9 @@
                   "rxjs/*",
                   "firebase",
                   "firebase/*",
-                  "**/arena/*",
-                  "**/gl/*",
                   "**/sound/*"
                 ],
-                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, arena/, gl/ or sound/ imports."
+                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase or sound/ imports."
               }
             ]
           }
@@ -243,9 +260,7 @@
       "files": [
         "libs/features/lazy/bacteria-game/src/watch.ts",
         "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene,watch-gpu}.ts",
-        "libs/features/lazy/bacteria-game/src/lib/gl/stored-self-test.ts",
         "libs/features/lazy/bacteria-game/src/lib/storage/public-replays.ts",
-        "libs/features/lazy/bacteria-game/src/lib/arena/arena-content.ts",
         "libs/features/lazy/bacteria-game/src/lib/fullscreen.ts"
       ],
       "rules": {

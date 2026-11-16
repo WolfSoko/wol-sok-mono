@@ -1,4 +1,4 @@
-import { arenaTheme, cssTriple } from '../arena/arena-theme';
+import { arenaTheme, cssTriple } from '@wolsok/feat-bacteria-rendering';
 import type { GameText } from '../i18n/game-texts';
 import { DAILY_ATTEMPTS } from '@wolsok/feat-shared-bacteria-engine';
 

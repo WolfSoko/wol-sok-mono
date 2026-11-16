@@ -3,13 +3,13 @@ import {
   GPU_SELF_TEST_VERSION,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { KeyValueStorage } from '@wolsok/utils-browser-storage';
-import type { GpuSelfTestResult } from '../gl/gpu-self-test';
 import {
+  type GpuSelfTestResult,
   GPU_SELF_TEST_STORAGE_KEY,
   SELF_TEST_MAX_AGE_MS,
   SelfTestDevice,
   StoredSelfTest,
-} from '../gl/stored-self-test';
+} from '@wolsok/feat-bacteria-rendering';
 import { WatchGpu } from './watch-gpu';
 
 const NOW = 1_800_000_000_000;

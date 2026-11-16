@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { ArenaViewComponent } from '../arena/arena-view.component';
-import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
+import {
+  ArenaViewComponent,
+  GlArenaPainter,
+} from '@wolsok/feat-bacteria-rendering';
 import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';
 import {
   RecordingPainter,
@@ -253,7 +255,7 @@ describe('ReplayViewerComponent', () => {
   it('plays the replay on an arena view, with pause and speeds', () => {
     const { fixture, page } = view();
 
-    expect(page.querySelector('feat-lazy-bac-game-arena-view')).not.toBeNull();
+    expect(page.querySelector('feat-bac-render-arena-view')).not.toBeNull();
     expect(painters).toHaveLength(1);
     expect(page.getAttribute('tabindex')).toBe('0');
     const button = playPause(page);
@@ -622,7 +624,7 @@ describe('ReplayViewerComponent', () => {
     expect(page.querySelector('[role="alert"]')?.textContent).toContain(
       'older version'
     );
-    expect(page.querySelector('feat-lazy-bac-game-arena-view')).toBeNull();
+    expect(page.querySelector('feat-bac-render-arena-view')).toBeNull();
   });
 
   it('lets go of the painter and the engine when it goes', () => {

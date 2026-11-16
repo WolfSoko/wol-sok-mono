@@ -7,16 +7,21 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AdaptiveQuality } from '../arena/adaptive-quality';
-import { DishAmbience } from '../arena/ambience';
-import { arenaContent, SeatColors } from '../arena/arena-content';
-import type { ArenaPainter } from '../arena/arena-painter';
-import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
-import { Camera, CameraShake } from '../arena/camera';
-import { FramePerf } from '../arena/frame-perf';
-import { MinimapPainter } from '../arena/minimap';
+import {
+  AdaptiveQuality,
+  DishAmbience,
+  arenaContent,
+  SeatColors,
+  type ArenaPainter,
+  type ArenaContent,
+  type ArenaScene,
+  Camera,
+  CameraShake,
+  FramePerf,
+  MinimapPainter,
+  type GpuTimer,
+} from '@wolsok/feat-bacteria-rendering';
 import { EvolutionService } from '../evolution.service';
-import type { GpuTimer } from '../gl/gpu-timer';
 import { GameHapticsService } from '../haptics.service';
 import { HudPerf, simulationLabel } from '../hud-perf';
 import { GameSettingsService } from '../settings.service';

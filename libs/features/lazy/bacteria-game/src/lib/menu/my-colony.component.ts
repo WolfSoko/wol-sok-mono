@@ -10,8 +10,10 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { LookPreviewComponent } from '../arena/look-preview.component';
-import { HERO_PREVIEW } from '../arena/look-preview';
+import {
+  LookPreviewComponent,
+  HERO_PREVIEW,
+} from '@wolsok/feat-bacteria-rendering';
 import {
   ColonyColorsComponent,
   ColorChange,

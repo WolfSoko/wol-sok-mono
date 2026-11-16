@@ -1,4 +1,4 @@
-import type { Rgb } from '../arena/arena-theme';
+import type { Rgb } from '@wolsok/feat-bacteria-rendering';
 import {
   clamp,
   Gene,
@@ -13,8 +13,6 @@ import type { TranslationKey } from '../i18n/game-texts';
  * each gene, the texts of both by id, and what a gene's levels do in per
  * cent - "+12 % division".
  */
-
-export { WEAPON_COLORS } from '../arena/arena-theme';
 
 /** Each gene's colour, for its card's icon and the particles bought with. */
 export const GENE_COLORS: Readonly<Record<GeneId, Rgb>> = {

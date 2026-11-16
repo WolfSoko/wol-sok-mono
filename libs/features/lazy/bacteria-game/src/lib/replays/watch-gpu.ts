@@ -5,9 +5,9 @@ import {
   readStoredJson,
   writeStoredJson,
 } from '@wolsok/utils-browser-storage';
-import { type GpuSelfTestResult, runGpuSelfTest } from '../gl/gpu-self-test';
-import { gpuTrusted } from '../gl/simulation-check';
 import {
+  type GpuSelfTestResult,
+  runGpuSelfTest,
   GPU_SELF_TEST_STORAGE_KEY,
   keepsSelfTest,
   parseStoredSelfTest,
@@ -17,7 +17,8 @@ import {
   thisDevice,
   verdictOf,
   whenIdle,
-} from '../gl/stored-self-test';
+} from '@wolsok/feat-bacteria-rendering';
+import { gpuTrusted } from '../gpu-choice/simulation-check';
 
 /** What `WatchGpu` reaches the device through - specs pass their own. */
 export interface WatchGpuDevice {
