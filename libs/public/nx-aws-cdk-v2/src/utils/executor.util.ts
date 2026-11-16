@@ -117,7 +117,8 @@ export function createCommand(
 /**
  * Runs the command in a shell that shares the task's stdin, stdout and stderr,
  * so cdk reads its prompts' answers from the terminal itself and its output
- * lands wherever the task's does. Resolves whether the command exited with 0.
+ * lands wherever the task's does. Resolves whether the command exited with 0,
+ * and never after a SIGTERM it passed on: the re-raised signal ends the task.
  */
 export function runCommandProcess(
   command: string,
@@ -132,56 +133,50 @@ export function runCommandProcess(
       cwd,
       env: process.env,
     });
-    const parentBinding = bindToParentProcess(childProcess);
+    const forwardedSigterm = bindToParentProcess(childProcess);
 
     // A spawn that fails (a missing cwd or shell) emits `error`, and maybe
     // no `close`: without this listener the error would crash the task.
     childProcess.on('error', (error) => {
       logger.error(`Could not run the command: ${error.message}`);
-      parentBinding.unbind();
       resolve(false);
     });
-
     childProcess.on('close', (code) => {
-      parentBinding.unbind();
-      if (parentBinding.terminated) {
-        // Settles nothing: the re-raised signal ends the parent process.
-        process.kill(process.pid, 'SIGTERM');
-        return;
+      if (!forwardedSigterm()) {
+        resolve(code === 0);
       }
-      resolve(code === 0);
     });
   });
 }
 
 /**
- * Ties the child to the parent process: the child is killed when the parent
- * exits, and a SIGTERM to the parent is passed on to the child. `terminated`
- * tells whether that happened, so the caller re-raises the signal once the
- * child has closed and `unbind` removed these listeners: Node's default then
- * ends the parent as terminated rather than as a failed task.
+ * Ties the child to the parent process until the child closes or fails to
+ * spawn: the child is killed when the parent exits, and a SIGTERM to the
+ * parent is passed on to it. Once a child that got the signal has closed, the
+ * parent's own SIGTERM is raised again, so Node's default ends the parent as
+ * terminated rather than as a failed task. Returns whether that happened.
  */
-function bindToParentProcess(childProcess: ChildProcess): {
-  readonly terminated: boolean;
-  unbind: () => void;
-} {
-  let terminated = false;
+function bindToParentProcess(childProcess: ChildProcess): () => boolean {
+  let forwardedSigterm = false;
   const killChild = () => childProcess.kill();
   const forwardSigterm = () => {
-    terminated = true;
+    forwardedSigterm = true;
     childProcess.kill('SIGTERM');
+  };
+  const unbind = () => {
+    process.removeListener('exit', killChild);
+    process.removeListener('SIGTERM', forwardSigterm);
   };
 
   process.on('exit', killChild);
   process.on('SIGTERM', forwardSigterm);
+  childProcess.once('error', unbind);
+  childProcess.once('close', () => {
+    unbind();
+    if (forwardedSigterm) {
+      process.kill(process.pid, 'SIGTERM');
+    }
+  });
 
-  return {
-    get terminated() {
-      return terminated;
-    },
-    unbind: () => {
-      process.removeListener('exit', killChild);
-      process.removeListener('SIGTERM', forwardSigterm);
-    },
-  };
+  return () => forwardedSigterm;
 }

@@ -14,7 +14,10 @@ jest.mock('child_process', () => ({
   spawn: jest.fn(),
 }));
 
-/** The listeners `runCommandProcess` may add to the parent process. */
+/**
+ * The parent's listeners `runCommandProcess` adds, and the stdin `data`
+ * listeners it must not add.
+ */
 function parentListenerCounts() {
   return {
     exit: process.listenerCount('exit'),
@@ -50,16 +53,9 @@ describe('runCommandProcess', () => {
     return { result, spawned };
   }
 
-  type ParentEvent = 'exit' | 'SIGTERM';
-
-  /** The `event` listeners of the parent process, to compare later. */
-  function parentListeners(event: ParentEvent): readonly unknown[] {
-    return getEventListeners(process, event);
-  }
-
   /** Calls the `event` listeners added to the parent since `before`. */
   function callAddedListeners(
-    event: ParentEvent,
+    event: 'exit' | 'SIGTERM',
     before: readonly unknown[],
     arg: unknown
   ): void {
@@ -112,7 +108,7 @@ describe('runCommandProcess', () => {
   });
 
   it('kills the process when the parent exits', async () => {
-    const before = parentListeners('exit');
+    const before = getEventListeners(process, 'exit');
     const { result, spawned } = start();
 
     callAddedListeners('exit', before, 0);
@@ -124,27 +120,22 @@ describe('runCommandProcess', () => {
 
   it('forwards SIGTERM and re-raises it once the process closed', async () => {
     const kill = jest.spyOn(process, 'kill').mockReturnValue(true);
-    const before = parentListeners('SIGTERM');
+    const countsBefore = parentListenerCounts();
+    const sigtermBefore = getEventListeners(process, 'SIGTERM');
     const { result, spawned } = start();
-    const counts = parentListenerCounts();
+    let settled = false;
+    void result.then(() => (settled = true));
 
-    callAddedListeners('SIGTERM', before, 'SIGTERM');
+    callAddedListeners('SIGTERM', sigtermBefore, 'SIGTERM');
 
     expect(spawned.killSignals).toEqual(['SIGTERM']);
     expect(kill).not.toHaveBeenCalled();
 
     spawned.emit('close', null, 'SIGTERM');
+    await new Promise(setImmediate);
 
-    expect(parentListenerCounts()).toEqual({
-      ...counts,
-      exit: counts.exit - 1,
-      sigterm: counts.sigterm - 1,
-    });
+    expect(parentListenerCounts()).toEqual(countsBefore);
     expect(kill).toHaveBeenCalledWith(process.pid, 'SIGTERM');
-    const settled = await Promise.race([
-      result.then(() => 'settled'),
-      new Promise((resolve) => setTimeout(() => resolve('pending'), 10)),
-    ]);
-    expect(settled).toBe('pending');
+    expect(settled).toBe(false);
   });
 });
