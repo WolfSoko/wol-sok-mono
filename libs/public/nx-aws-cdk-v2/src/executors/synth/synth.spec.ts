@@ -3,7 +3,7 @@ import { logger } from '@nx/devkit';
 
 import executor from './synth';
 import { SynthExecutorSchema } from './schema';
-import { generateCommandString, LARGE_BUFFER } from '../../utils/executor.util';
+import { generateCommandString } from '../../utils/executor.util';
 import {
   mockExecutorContext,
   runExecutorToExit,
@@ -12,7 +12,7 @@ import {
 
 jest.mock('child_process', () => ({
   ...jest.requireActual('child_process'),
-  exec: jest.fn(),
+  spawn: jest.fn(),
 }));
 
 const options: SynthExecutorSchema = {};
@@ -21,23 +21,24 @@ const nodeCommandWithRelativePath = generateCommandString('synth', 'apps/proj');
 
 describe('aws-cdk-v2 synth Executor', () => {
   const context = mockExecutorContext('synth');
-  const execMock = jest.mocked(childProcess.exec);
+  const spawnMock = jest.mocked(childProcess.spawn);
 
   beforeEach(() => {
     jest.spyOn(logger, 'debug');
-    execMock.mockImplementation(spawnFakeChildProcess);
+    spawnMock.mockImplementation(spawnFakeChildProcess);
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk synth command', async () => {
-    await runExecutorToExit(execMock, () => executor(options, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(options, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       nodeCommandWithRelativePath,
       expect.objectContaining({
         cwd: context.root,
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
@@ -49,12 +50,13 @@ describe('aws-cdk-v2 synth Executor', () => {
     const option: SynthExecutorSchema = Object.assign({}, options);
     const stackName = 'test';
     option['stacks'] = stackName;
-    await runExecutorToExit(execMock, () => executor(option, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(option, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${stackName}`,
       expect.objectContaining({
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
 
@@ -67,12 +69,13 @@ describe('aws-cdk-v2 synth Executor', () => {
     const option: SynthExecutorSchema = Object.assign({}, options);
     const contextOptionString = 'key=value';
     option['context'] = contextOptionString;
-    await runExecutorToExit(execMock, () => executor(option, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(option, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} --context ${contextOptionString}`,
       expect.objectContaining({
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
 
@@ -85,15 +88,16 @@ describe('aws-cdk-v2 synth Executor', () => {
     const option: SynthExecutorSchema = Object.assign({}, options);
     const contextOptions = ['firstKey=firstValue', 'secondKey=secondValue'];
     option['context'] = contextOptions;
-    await runExecutorToExit(execMock, () => executor(option, context));
+    await runExecutorToExit(spawnMock, () => executor(option, context));
     const contextCmd = contextOptions
       .map((option) => `--context ${option}`)
       .join(' ');
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${contextCmd}`,
       expect.objectContaining({
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
 
@@ -107,12 +111,13 @@ describe('aws-cdk-v2 synth Executor', () => {
       ...options,
       exclusively: true,
     };
-    await runExecutorToExit(execMock, () => executor(option, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(option, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} --exclusively true`,
       expect.objectContaining({
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
 

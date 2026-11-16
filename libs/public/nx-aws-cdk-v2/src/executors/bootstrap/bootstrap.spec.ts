@@ -4,7 +4,7 @@ import { logger } from '@nx/devkit';
 
 import { BootstrapExecutorSchema } from './schema';
 import executor from './bootstrap';
-import { generateCommandString, LARGE_BUFFER } from '../../utils/executor.util';
+import { generateCommandString } from '../../utils/executor.util';
 import {
   mockExecutorContext,
   runExecutorToExit,
@@ -13,7 +13,7 @@ import {
 
 jest.mock('child_process', () => ({
   ...jest.requireActual('child_process'),
-  exec: jest.fn(),
+  spawn: jest.fn(),
 }));
 
 const options: BootstrapExecutorSchema = {};
@@ -25,23 +25,24 @@ const nodeCommandWithRelativePath = generateCommandString(
 
 describe('aws-cdk-v2 Bootstrap Executor', () => {
   const context = mockExecutorContext('bootstrap');
-  const execMock = jest.mocked(childProcess.exec);
+  const spawnMock = jest.mocked(childProcess.spawn);
 
   beforeEach(() => {
     jest.spyOn(logger, 'debug');
-    execMock.mockImplementation(spawnFakeChildProcess);
+    spawnMock.mockImplementation(spawnFakeChildProcess);
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk bootstrap command', async () => {
-    await runExecutorToExit(execMock, () => executor(options, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(options, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       nodeCommandWithRelativePath,
       expect.objectContaining({
         cwd: expect.stringContaining(context.root),
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
@@ -53,12 +54,13 @@ describe('aws-cdk-v2 Bootstrap Executor', () => {
     const option: BootstrapExecutorSchema = Object.assign({}, options);
     const profile = 'prod';
     option['profile'] = profile;
-    await runExecutorToExit(execMock, () => executor(option, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(option, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} --profile ${profile}`,
       expect.objectContaining({
         env: process.env,
-        maxBuffer: LARGE_BUFFER,
+        shell: true,
+        stdio: 'inherit',
       })
     );
     expect(logger.debug).toHaveBeenLastCalledWith(

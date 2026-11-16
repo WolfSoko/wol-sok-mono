@@ -1,4 +1,4 @@
-import { type ChildProcess, exec } from 'child_process';
+import { type ChildProcess, spawn } from 'child_process';
 
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
@@ -37,7 +37,6 @@ export function resolveProjectPaths(context: ExecutorContext): {
 }
 
 export const executorPropKeys = ['stacks'];
-export const LARGE_BUFFER = 1024 * 1000000;
 
 /**
  * Root of the Nx workspace the executor runs in. Nx sets `NX_WORKSPACE_ROOT`
@@ -115,6 +114,11 @@ export function createCommand(
   return commands.join(' ');
 }
 
+/**
+ * Runs the command in a shell that shares the task's stdin, stdout and stderr,
+ * so cdk reads its prompts' answers from the terminal itself and its output
+ * lands wherever the task's does. Resolves whether the command exited with 0.
+ */
 export function runCommandProcess(
   command: string,
   cwd: string
@@ -122,23 +126,21 @@ export function runCommandProcess(
   return new Promise((resolve) => {
     logger.debug(`Executing command: ${command}`);
 
-    const childProcess = exec(command, {
-      maxBuffer: LARGE_BUFFER,
+    const childProcess = spawn(command, {
+      shell: true,
+      stdio: 'inherit',
+      cwd,
       env: process.env,
-      cwd: cwd,
     });
-    const unbindFromParentProcess = bindToParentProcess(childProcess);
-
-    childProcess.stdout?.on('data', (data) => {
-      process.stdout.write(data);
-    });
-
-    childProcess.stderr?.on('data', (err) => {
-      process.stderr.write(err);
-    });
+    const parentBinding = bindToParentProcess(childProcess);
 
     childProcess.on('close', (code) => {
-      unbindFromParentProcess();
+      parentBinding.unbind();
+      if (parentBinding.terminated) {
+        // Settles nothing: the re-raised signal ends the parent process.
+        process.kill(process.pid, 'SIGTERM');
+        return;
+      }
       resolve(code === 0);
     });
   });
@@ -146,30 +148,32 @@ export function runCommandProcess(
 
 /**
  * Ties the child to the parent process: the child is killed when the parent
- * exits or gets SIGTERM, and the parent's stdin is forwarded to it once.
- * Returns the function that removes every listener this added and pauses
- * stdin again once no other `data` listener is left (Node keeps a stream
- * flowing after its last `data` listener goes, which keeps the process alive).
+ * exits, and a SIGTERM to the parent is passed on to the child. `terminated`
+ * tells whether that happened, so the caller re-raises the signal once the
+ * child has closed and `unbind` removed these listeners: Node's default then
+ * ends the parent as terminated rather than as a failed task.
  */
-function bindToParentProcess(childProcess: ChildProcess): () => void {
+function bindToParentProcess(childProcess: ChildProcess): {
+  readonly terminated: boolean;
+  unbind: () => void;
+} {
+  let terminated = false;
   const killChild = () => childProcess.kill();
-  const forwardStdin = (data: unknown) => {
-    childProcess.stdin?.write(data);
-    childProcess.stdin?.end();
+  const forwardSigterm = () => {
+    terminated = true;
+    childProcess.kill('SIGTERM');
   };
 
   process.on('exit', killChild);
-  process.on('SIGTERM', killChild);
-  // Resumed explicitly: a stream paused by an earlier run's cleanup stays
-  // paused when a `data` listener is added.
-  process.stdin.on('data', forwardStdin).resume();
+  process.on('SIGTERM', forwardSigterm);
 
-  return () => {
-    process.removeListener('exit', killChild);
-    process.removeListener('SIGTERM', killChild);
-    process.stdin.removeListener('data', forwardStdin);
-    if (process.stdin.listenerCount('data') === 0) {
-      process.stdin.pause();
-    }
+  return {
+    get terminated() {
+      return terminated;
+    },
+    unbind: () => {
+      process.removeListener('exit', killChild);
+      process.removeListener('SIGTERM', forwardSigterm);
+    },
   };
 }
