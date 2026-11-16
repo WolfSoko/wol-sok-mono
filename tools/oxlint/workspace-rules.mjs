@@ -215,8 +215,9 @@ function propertyName(member) {
  * break it at runtime. The boundary rule cannot see this, since it counts
  * `<lib>/testing` as `<lib>`. The test-only libs (`TEST_ONLY_LIBS`) bring the
  * emulators' test tooling and count with every entry. Enabled for
- * production sources (`apps/*\/src`, `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
- * recognised by their path (`TEST_FILES`).
+ * production sources (`apps/*\/src`, `libs/**\/src`) by an override in
+ * `.oxlintrc.json`; test files there are recognised by their path
+ * (`TEST_FILES`).
  */
 const noTestingImport = {
   meta: {
