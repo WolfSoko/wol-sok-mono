@@ -48,7 +48,8 @@ test.describe('Run Sprint Training', () => {
     sprintTraining,
   }) => {
     await sprintTraining.startTraining();
-    await sprintTraining.expectLeadInAnnounced();
+    // the default training starts with a sprint
+    await sprintTraining.expectNextDuringLeadIn('Sprinten');
     await sprintTraining.expectCountdownTimer(5);
     await sprintTraining.expectTrainingStatePausable();
   });

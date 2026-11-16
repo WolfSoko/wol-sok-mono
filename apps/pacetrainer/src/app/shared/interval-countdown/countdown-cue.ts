@@ -7,7 +7,7 @@ import {
   subtract,
 } from '@wolsok/utils-time';
 import { CountdownModel } from '../model/training/countdown.model';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
 
 /**
  * Every cue sounds this long before its second is left. Said at the app's
@@ -24,7 +24,7 @@ export interface CountdownCue {
   readonly kind: CueKind;
   /** the seconds left that this cue stands for */
   readonly secondsLeft: number;
-  readonly countdownTo: TrainingName;
+  readonly countdownTo: CountdownTarget;
 }
 
 export interface CueSound {

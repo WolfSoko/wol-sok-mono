@@ -3,7 +3,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, filter, map } from 'rxjs';
 import { Milliseconds, Seconds, seconds } from '@wolsok/utils-time';
 import { CountdownModel } from '../model/training/countdown.model';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
 import { TrainingNamePipe } from '../ui/training-name.pipe';
 import {
   CountdownCue,
@@ -49,7 +49,7 @@ export class IntervalCountdownService {
   public updateCountdown(
     countdownTime: Milliseconds,
     timeLeft: Milliseconds,
-    countdownTo: TrainingName
+    countdownTo: CountdownTarget
   ): void {
     this.countdown.set({
       countdownTime,

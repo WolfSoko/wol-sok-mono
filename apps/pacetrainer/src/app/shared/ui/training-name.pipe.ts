@@ -1,5 +1,5 @@
 import { Injectable, Pipe, PipeTransform } from '@angular/core';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
 
 @Injectable({
   providedIn: 'root',
@@ -8,9 +8,13 @@ import { TrainingName } from '../model/training/training-name';
   name: 'trainingName',
 })
 export class TrainingNamePipe implements PipeTransform {
-  transform(name: TrainingName): string;
-  transform(name: TrainingName | null | undefined): string | null | undefined;
-  transform(name: TrainingName | null | undefined): string | null | undefined {
+  public transform(name: CountdownTarget): string;
+  public transform(
+    name: CountdownTarget | null | undefined
+  ): string | null | undefined;
+  public transform(
+    name: CountdownTarget | null | undefined
+  ): string | null | undefined {
     if (name == null) {
       return name;
     }
@@ -18,14 +22,17 @@ export class TrainingNamePipe implements PipeTransform {
     switch (name) {
       case 'running':
         return 'Joggen';
-      case 'leadIn':
-        return 'Bereit';
       case 'sprint':
         return 'Sprinten';
       case 'recovery':
         return 'Erholung';
       case 'finished':
         return 'Fertig';
+      default: {
+        // a new CountdownTarget without a German name fails to compile here
+        const unnamed: never = name;
+        return String(unnamed);
+      }
     }
   }
 }
