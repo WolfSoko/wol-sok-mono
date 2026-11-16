@@ -344,10 +344,32 @@ function runScript(...args) {
     .filter((line) => line !== '');
 }
 
+function taskInputFiles(task) {
+  return JSON.parse(
+    execFileSync('npx', ['nx', 'show', 'target', 'inputs', task, '--json'], {
+      cwd: ROOT,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    })
+  ).files;
+}
+
 const NON_CDK = '--exclude=tag:cdk,tag:published,tag:type:android';
 
 void describe('release-affected on the workspace', () => {
-  for (const file of ['.oxlintrc.json', 'eslint.config.mjs']) {
+  // The workspace's oxlint rules reach every project through the implicit edge
+  // @nx/oxlint adds to their project; they ship in nothing (#3015). The
+  // selection is a union over the changed files, so one case covers them all.
+  const LINT_ONLY_CHANGES = [
+    '.oxlintrc.json',
+    'eslint.config.mjs',
+    [
+      'tools/oxlint/workspace-rules.mjs',
+      'tools/oxlint/workspace-rules.spec.mjs',
+      'tools/oxlint/project.json',
+    ].join(','),
+  ];
+  for (const file of LINT_ONLY_CHANGES) {
     void it(`deploys and publishes nothing for ${file}`, () => {
       assert.deepEqual(runScript(`--files=${file}`, '--target=deploy'), []);
       assert.deepEqual(
@@ -360,6 +382,36 @@ void describe('release-affected on the workspace', () => {
       );
     });
   }
+
+  // Kept out of releases, the rules still rerun every project's lint. Their
+  // project's empty named inputs feed none of its own targets either, so each
+  // of them must name its files.
+  void it('still lints every project with the workspace rules', () => {
+    const rules = 'tools/oxlint/workspace-rules.mjs';
+    for (const task of ['pacetrainer:lint', 'korbjaeger-cdk:lint']) {
+      assert.ok(
+        taskInputFiles(task).includes(rules),
+        `${task} misses ${rules}`
+      );
+    }
+    const ownTargets = Object.keys(
+      JSON.parse(
+        execFileSync(
+          'npx',
+          ['nx', 'show', 'project', 'oxlint-workspace-rules', '--json'],
+          { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }
+        )
+      ).targets
+    );
+    assert.ok(ownTargets.length > 0);
+    for (const target of ownTargets) {
+      const task = `oxlint-workspace-rules:${target}`;
+      const inputs = taskInputFiles(task);
+      for (const file of [rules, 'tools/oxlint/workspace-rules.spec.mjs']) {
+        assert.ok(inputs.includes(file), `${task} misses ${file}`);
+      }
+    }
+  });
 
   void it('deploys an app whose root Firebase config changed', () => {
     assert.deepEqual(
