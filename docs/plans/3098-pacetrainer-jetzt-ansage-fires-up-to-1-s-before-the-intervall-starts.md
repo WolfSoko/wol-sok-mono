@@ -10,7 +10,7 @@ Spec: [docs/specs/3098-pacetrainer-jetzt-ansage-fires-up-to-1-s-before-the-inter
   `countdownCue` for announcement, beeps, start and nothing outside the
   window, `cueSound` for an Intervall and for the end of the training.
 - Then `CUE_LEAD`, `cueSecond`, `countdownCue`, `cueSound`.
-- Commit: `fix(pacetrainer): name the one-second lead of the countdown cues (#3098)`
+- Commit: `refactor(pacetrainer): name the one-second lead of the countdown cues (#3098)`
   (together with task 2, so no unused code lands alone).
 
 ## 2. Service on the pure functions
