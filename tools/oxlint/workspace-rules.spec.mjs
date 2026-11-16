@@ -178,24 +178,15 @@ void describe('wolsok/no-testing-import', () => {
     void it(`allows testing imports in ${name}`, () => {
       deepStrictEqual(
         reportedCodes(
-          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
+          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';\n" +
+            "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';\n" +
+            "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
           name
         ),
         []
       );
     });
   }
-
-  void it('allows a test-only lib in a testing folder', () => {
-    deepStrictEqual(
-      reportedCodes(
-        "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';\n" +
-          "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
-        'src/testing/emulator.ts'
-      ),
-      []
-    );
-  });
 
   // An `environments/` folder holds build configurations, never emulator
   // specs: `environment.emulator.ts` ships in a build.

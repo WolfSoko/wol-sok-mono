@@ -39,7 +39,10 @@ const TESTING_MODULES = [
   // A relative path through a `testing` folder or to a `testing` module.
   /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/,
 ];
-/** A file naming none of these imports no test-only code. */
+/**
+ * A file naming none of these imports no test-only code. Each pattern of
+ * `TESTING_MODULES` needs a needle here, or the rule skips its imports.
+ */
 const TESTING_NEEDLES = ['testing', ...TEST_ONLY_LIBS];
 /** Test code under a project's `src/`, by its path inside the workspace. */
 const TEST_FILES = [
