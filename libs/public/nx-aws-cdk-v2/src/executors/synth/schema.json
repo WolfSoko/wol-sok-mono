@@ -3,6 +3,7 @@
   "title": "Synth executor",
   "description": "Synthesize the CDK app of this project into a CloudFormation template.",
   "type": "object",
+  "outputCapture": "pipe",
   "properties": {
     "stacks": {
       "type": "string",

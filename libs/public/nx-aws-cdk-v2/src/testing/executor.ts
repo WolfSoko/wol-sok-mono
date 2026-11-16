@@ -33,62 +33,64 @@ export function mockExecutorContext(
   };
 }
 
-/** Stands in for the cdk process a mocked `child_process.exec` spawns. */
+/**
+ * Stands in for the cdk process a mocked `child_process.spawn` starts. Its
+ * stdio is the parent's (`stdio: 'inherit'`), so it has no streams of its own.
+ */
 export class FakeChildProcess extends EventEmitter {
-  public readonly stdout = new EventEmitter();
-  public readonly stderr = new EventEmitter();
-  /** What reached the process' stdin, and whether it was closed. */
-  public readonly stdinWritten: unknown[] = [];
-  public stdinEnded = false;
-  public killed = false;
-  public readonly stdin = {
-    write: (data: unknown): boolean => {
-      this.stdinWritten.push(data);
-      return true;
-    },
-    end: (): void => {
-      this.stdinEnded = true;
-    },
-  };
+  /** The signals the process was killed with, in order. */
+  public readonly killSignals: Array<NodeJS.Signals | number | undefined> = [];
+  /** Whether `close` was emitted, so cleanup closes only a running process. */
+  public closed = false;
 
-  public kill(): boolean {
-    this.killed = true;
+  public constructor() {
+    super();
+    this.once('close', () => (this.closed = true));
+  }
+
+  public kill(signal?: NodeJS.Signals | number): boolean {
+    this.killSignals.push(signal);
     return true;
   }
 }
 
-/** A mock implementation for `exec` that hands out a new `FakeChildProcess`. */
+/** The options `runCommandProcess` spawns every command with. */
+export function expectedSpawnOptions(cwd: string) {
+  return { cwd, env: process.env, shell: true, stdio: 'inherit' };
+}
+
+/** A mock implementation for `spawn` that hands out a new `FakeChildProcess`. */
 export function spawnFakeChildProcess(): ChildProcess {
   return new FakeChildProcess() as unknown as ChildProcess;
 }
 
-/** The part of a mocked `exec` that tells which processes it returned. */
+/** The part of a mocked `spawn` that tells which processes it returned. */
 interface SpawningMock {
   mock: { results: ReadonlyArray<{ value: unknown }> };
 }
 
 /**
- * Starts an executor, then lets the process the mocked `exec` spawned last
+ * Starts an executor, then lets the process the mocked `spawn` started last
  * close with `exitCode`, and returns the executor's result. The executor has
- * to call `exec` before its first `await`, as `runCommandProcess` does.
+ * to call `spawn` before its first `await`, as `runCommandProcess` does.
  */
 export async function runExecutorToExit<T>(
-  exec: SpawningMock,
+  spawn: SpawningMock,
   run: () => Promise<T>,
   exitCode = 0
 ): Promise<T> {
   const result = run();
-  const spawned = lastSpawned(exec);
+  const spawned = lastSpawned(spawn);
   if (!spawned) {
     await result;
-    throw new Error('The executor spawned no FakeChildProcess through exec.');
+    throw new Error('The executor spawned no FakeChildProcess through spawn.');
   }
   spawned.emit('close', exitCode);
   return result;
 }
 
-/** The `FakeChildProcess` the mocked `exec` returned last, if any. */
-export function lastSpawned(exec: SpawningMock): FakeChildProcess | undefined {
-  const spawned = exec.mock.results.at(-1)?.value;
+/** The `FakeChildProcess` the mocked `spawn` returned last, if any. */
+export function lastSpawned(spawn: SpawningMock): FakeChildProcess | undefined {
+  const spawned = spawn.mock.results.at(-1)?.value;
   return spawned instanceof FakeChildProcess ? spawned : undefined;
 }

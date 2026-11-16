@@ -1,4 +1,4 @@
-import { type ChildProcess, exec } from 'child_process';
+import { type ChildProcess, spawn } from 'child_process';
 
 import { DeployExecutorSchema } from '../executors/deploy/schema';
 import { ParsedExecutorInterface } from '../interfaces/parsed-executor.interface';
@@ -37,7 +37,6 @@ export function resolveProjectPaths(context: ExecutorContext): {
 }
 
 export const executorPropKeys = ['stacks'];
-export const LARGE_BUFFER = 1024 * 1000000;
 
 /**
  * Root of the Nx workspace the executor runs in. Nx sets `NX_WORKSPACE_ROOT`
@@ -115,6 +114,12 @@ export function createCommand(
   return commands.join(' ');
 }
 
+/**
+ * Runs the command in a shell that shares the task's stdin, stdout and stderr,
+ * so cdk reads its prompts' answers from the terminal itself and its output
+ * lands wherever the task's does. Resolves whether the command exited with 0,
+ * and never after a SIGTERM it passed on: the re-raised signal ends the task.
+ */
 export function runCommandProcess(
   command: string,
   cwd: string
@@ -122,54 +127,56 @@ export function runCommandProcess(
   return new Promise((resolve) => {
     logger.debug(`Executing command: ${command}`);
 
-    const childProcess = exec(command, {
-      maxBuffer: LARGE_BUFFER,
+    const childProcess = spawn(command, {
+      shell: true,
+      stdio: 'inherit',
+      cwd,
       env: process.env,
-      cwd: cwd,
     });
-    const unbindFromParentProcess = bindToParentProcess(childProcess);
+    const forwardedSigterm = bindToParentProcess(childProcess);
 
-    childProcess.stdout?.on('data', (data) => {
-      process.stdout.write(data);
+    // A spawn that fails (a missing cwd or shell) emits `error`, and maybe
+    // no `close`: without this listener the error would crash the task.
+    childProcess.on('error', (error) => {
+      logger.error(`Could not run the command: ${error.message}`);
+      resolve(false);
     });
-
-    childProcess.stderr?.on('data', (err) => {
-      process.stderr.write(err);
-    });
-
     childProcess.on('close', (code) => {
-      unbindFromParentProcess();
-      resolve(code === 0);
+      if (!forwardedSigterm()) {
+        resolve(code === 0);
+      }
     });
   });
 }
 
 /**
- * Ties the child to the parent process: the child is killed when the parent
- * exits or gets SIGTERM, and the parent's stdin is forwarded to it once.
- * Returns the function that removes every listener this added and pauses
- * stdin again once no other `data` listener is left (Node keeps a stream
- * flowing after its last `data` listener goes, which keeps the process alive).
+ * Ties the child to the parent process until the child closes or fails to
+ * spawn: the child is killed when the parent exits, and a SIGTERM to the
+ * parent is passed on to it. Once a child that got the signal has closed, the
+ * parent's own SIGTERM is raised again, so Node's default ends the parent as
+ * terminated rather than as a failed task. Returns whether that happened.
  */
-function bindToParentProcess(childProcess: ChildProcess): () => void {
+function bindToParentProcess(childProcess: ChildProcess): () => boolean {
+  let forwardedSigterm = false;
   const killChild = () => childProcess.kill();
-  const forwardStdin = (data: unknown) => {
-    childProcess.stdin?.write(data);
-    childProcess.stdin?.end();
+  const forwardSigterm = () => {
+    forwardedSigterm = true;
+    childProcess.kill('SIGTERM');
+  };
+  const unbind = () => {
+    process.removeListener('exit', killChild);
+    process.removeListener('SIGTERM', forwardSigterm);
   };
 
   process.on('exit', killChild);
-  process.on('SIGTERM', killChild);
-  // Resumed explicitly: a stream paused by an earlier run's cleanup stays
-  // paused when a `data` listener is added.
-  process.stdin.on('data', forwardStdin).resume();
-
-  return () => {
-    process.removeListener('exit', killChild);
-    process.removeListener('SIGTERM', killChild);
-    process.stdin.removeListener('data', forwardStdin);
-    if (process.stdin.listenerCount('data') === 0) {
-      process.stdin.pause();
+  process.on('SIGTERM', forwardSigterm);
+  childProcess.once('error', unbind);
+  childProcess.once('close', () => {
+    unbind();
+    if (forwardedSigterm) {
+      process.kill(process.pid, 'SIGTERM');
     }
-  };
+  });
+
+  return () => forwardedSigterm;
 }

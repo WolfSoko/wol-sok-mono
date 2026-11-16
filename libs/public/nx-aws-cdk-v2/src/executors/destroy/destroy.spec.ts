@@ -4,8 +4,9 @@ import { logger } from '@nx/devkit';
 
 import { DestroyExecutorSchema } from './schema';
 import executor from './destroy';
-import { generateCommandString, LARGE_BUFFER } from '../../utils/executor.util';
+import { generateCommandString } from '../../utils/executor.util';
 import {
+  expectedSpawnOptions,
   mockExecutorContext,
   runExecutorToExit,
   spawnFakeChildProcess,
@@ -13,7 +14,7 @@ import {
 
 jest.mock('child_process', () => ({
   ...jest.requireActual('child_process'),
-  exec: jest.fn(),
+  spawn: jest.fn(),
 }));
 
 const options: DestroyExecutorSchema = {};
@@ -25,24 +26,20 @@ const nodeCommandWithRelativePath = generateCommandString(
 
 describe('aws-cdk-v2 Destroy Executor', () => {
   const context = mockExecutorContext('destroy');
-  const execMock = jest.mocked(childProcess.exec);
+  const spawnMock = jest.mocked(childProcess.spawn);
 
   beforeEach(() => {
     jest.spyOn(logger, 'debug');
-    execMock.mockImplementation(spawnFakeChildProcess);
+    spawnMock.mockImplementation(spawnFakeChildProcess);
   });
 
   afterEach(() => jest.clearAllMocks());
 
   it('run cdk destroy command', async () => {
-    await runExecutorToExit(execMock, () => executor(options, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(options, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       nodeCommandWithRelativePath,
-      expect.objectContaining({
-        cwd: context.root,
-        env: process.env,
-        maxBuffer: LARGE_BUFFER,
-      })
+      expectedSpawnOptions(context.root)
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
       `Executing command: ${nodeCommandWithRelativePath}`
@@ -53,13 +50,10 @@ describe('aws-cdk-v2 Destroy Executor', () => {
     const option: DestroyExecutorSchema = Object.assign({}, options);
     const stackName = 'test';
     option['stacks'] = stackName;
-    await runExecutorToExit(execMock, () => executor(option, context));
-    expect(childProcess.exec).toHaveBeenCalledWith(
+    await runExecutorToExit(spawnMock, () => executor(option, context));
+    expect(childProcess.spawn).toHaveBeenCalledWith(
       `${nodeCommandWithRelativePath} ${stackName}`,
-      expect.objectContaining({
-        env: process.env,
-        maxBuffer: LARGE_BUFFER,
-      })
+      expectedSpawnOptions(context.root)
     );
     expect(logger.debug).toHaveBeenLastCalledWith(
       `Executing command: ${nodeCommandWithRelativePath} ${stackName}`

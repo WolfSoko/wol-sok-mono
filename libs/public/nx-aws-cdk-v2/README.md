@@ -244,6 +244,12 @@ All four executors build the same shape of command and run it **from the workspa
 
 Run any target with `--verbose` to see the exact command that is executed.
 
+`cdk` runs in a shell that shares the task's stdin, stdout and stderr: it answers its own prompts
+(`--require-approval`) from the terminal, and its output goes wherever the task's does. When Nx
+stops a task (Ctrl-C, a cancelled CI job), it ends the task's whole process tree, `cdk` included. A
+`SIGTERM` sent to the executor process alone is passed on to the command's shell; once that has
+exited, the executor ends by the same signal rather than as a failed task.
+
 ## Upgrading
 
 Update the plugin with `nx migrate`, so its migrations run on your workspace:
