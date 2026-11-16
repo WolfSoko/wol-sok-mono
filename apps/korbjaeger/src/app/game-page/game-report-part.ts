@@ -7,7 +7,7 @@ import {
   type GameReport,
   type TeamId,
 } from '@wolsok/feat-shared-basketball-data';
-import { isFollowed } from './followed-club';
+import { isFollowed } from './followed-side';
 import { errorText, NO_GAME } from '../errors/error-text';
 
 /** One Kader with what heads it on the page. */
