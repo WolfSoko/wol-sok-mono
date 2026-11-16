@@ -23,16 +23,11 @@ import {
   SERIES_LENGTHS,
   ZONE_NAMES,
   ZoneKind,
-} from '@wolsok/feat-shared-bacteria-engine';
-import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
-import {
-  DICTIONARIES,
-  EN,
   Language,
   lookUp,
   translate,
-  TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { GameTextPipe } from './game-text.pipe';
 import {
   achievementKeys,
@@ -57,8 +52,10 @@ import {
   ruleNoteText,
   seriesKey,
   zoneKey,
+  TranslationKey,
 } from './game-texts';
 import { I18nService } from './i18n.service';
+import { DICTIONARIES, EN } from './texts/dictionaries';
 
 /** The text of a key in a language - its own, without falling back. */
 function own(language: Language, key: TranslationKey): string | undefined {

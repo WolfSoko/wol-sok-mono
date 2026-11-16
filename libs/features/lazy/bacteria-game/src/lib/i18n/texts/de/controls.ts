@@ -1,5 +1,5 @@
 import type { controls as en } from '../en/controls';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const controls: Translation<typeof en> = {
   joystick: 'Joystick {name}',

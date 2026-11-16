@@ -16,13 +16,7 @@ import { rgba } from '../arena/canvas-math';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
 import {
-  TranslationKey,
   TranslationParams,
-} from '@wolsok/feat-shared-bacteria-engine';
-import { I18nService } from '../i18n/i18n.service';
-import { TranslatePipe } from '../i18n/translate.pipe';
-import { GameSoundService } from '../sound/game-sound.service';
-import {
   GeneId,
   GENES,
   MAX_GENE_LEVEL,
@@ -30,6 +24,10 @@ import {
   WeaponId,
   WEAPONS,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
+import { GameSoundService } from '../sound/game-sound.service';
 import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
 import { DnaCounterComponent } from './dna-counter.component';

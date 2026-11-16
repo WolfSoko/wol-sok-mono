@@ -1,4 +1,7 @@
-import type { ArrivalReason, OnlineReason } from '../../state/replay-reasons';
+import type {
+  ArrivalReason,
+  OnlineReason,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /** Recorded matches: saving them, "My matches" and watching one again. */
 export const replay = {

@@ -1,5 +1,5 @@
 import type { colony as en } from '../en/colony';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const colony: Translation<typeof en> = {
   title: 'Meine Kolonie',

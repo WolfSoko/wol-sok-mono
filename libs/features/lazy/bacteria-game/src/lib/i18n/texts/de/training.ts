@@ -1,7 +1,9 @@
-import type { training as en } from '../en/training';
-import type { Translation } from '../translation';
+import type {
+  ENGINE_EN,
+  Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
-export const training: Translation<typeof en> = {
+export const training: Translation<(typeof ENGINE_EN)['training']> = {
   title: 'Training',
   pick: 'Fünf kurze Missionen, die dir das Spiel beibringen – eins nach dem anderen.',
   progress: '{done} von {total} Missionen geschafft',

@@ -29,6 +29,7 @@ import {
   requestFullscreen,
 } from '../fullscreen';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import type { TranslationKey } from '../i18n/game-texts';
 import { prefersReducedMotion } from '../reduced-motion';
 import {
   type BacteriaLook,
@@ -44,7 +45,6 @@ import {
   simResolutionOf,
   simScale,
   TICKS_PER_SEC,
-  type TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { ReplayScene, type ReplayLook } from './replay-scene';
 

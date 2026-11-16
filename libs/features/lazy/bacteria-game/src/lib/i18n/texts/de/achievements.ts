@@ -1,7 +1,9 @@
-import type { achievements as en } from '../en/achievements';
-import type { Translation } from '../translation';
+import type {
+  ENGINE_EN,
+  Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
-export const achievements: Translation<typeof en> = {
+export const achievements: Translation<(typeof ENGINE_EN)['achievements']> = {
   'first-blood': {
     name: 'Erstes Blut',
     condition: 'Gewinne ein Match gegen den Computer',

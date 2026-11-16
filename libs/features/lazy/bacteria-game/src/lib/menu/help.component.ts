@@ -10,17 +10,19 @@ import { MatButtonModule } from '@angular/material/button';
 import { rgba } from '../arena/canvas-math';
 import { ZONE_COLORS } from '../arena/zone-look';
 import {
-  TranslationKey,
   TranslationParams,
-} from '@wolsok/feat-shared-bacteria-engine';
-import { playerNameText, renderGameText, zoneKey } from '../i18n/game-texts';
-import { I18nService } from '../i18n/i18n.service';
-import { TranslatePipe } from '../i18n/translate.pipe';
-import {
   PRIVACY_POLICY_URL,
   ZONE_EFFECTS,
   ZoneKind,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  playerNameText,
+  renderGameText,
+  zoneKey,
+  TranslationKey,
+} from '../i18n/game-texts';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
 import { AdSlotComponent } from '../support/ads/ad-slot.component';
 import { GameAds } from '../support/ads/game-ads.service';
 import { GameSupport } from '../support/game-support.service';

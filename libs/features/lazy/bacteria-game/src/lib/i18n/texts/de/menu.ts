@@ -1,5 +1,5 @@
 import type { menu as en } from '../en/menu';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const menu: Translation<typeof en> = {
   tagline:

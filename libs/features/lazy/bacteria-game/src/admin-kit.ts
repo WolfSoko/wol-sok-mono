@@ -31,7 +31,7 @@ export type {
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
 export type { Language } from '@wolsok/feat-shared-bacteria-engine';
-export type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
+export type { TranslationKey } from './lib/i18n/game-texts';
 
 // Players.
 export { AvatarComponent } from './lib/social/avatar.component';

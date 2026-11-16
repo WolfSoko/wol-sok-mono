@@ -1,17 +1,18 @@
 /**
  * The game's engine without Angular: the match, its simulation, replays,
- * levels, progress and the texts (ADR 0011). The game's UI, its Cloud
- * Functions and its admin area import it as
- * `@wolsok/feat-shared-bacteria-engine`; nothing imports a path inside it.
+ * levels, progress, the English texts it renders itself and the
+ * translation mechanics (ADR 0011); the game's other texts live in the
+ * game lib. The game's UI, its Cloud Functions and its admin area import
+ * it as `@wolsok/feat-shared-bacteria-engine`; nothing imports a path
+ * inside it.
  *
  * Everything here stays free of Angular, NgRx, RxJS, Firebase and the DOM:
  * an oxlint override guards the imports, Jest runs the specs in Node, and
  * `engine-bundle.spec.ts` bundles this file to prove it.
  */
-export { DE, DICTIONARIES, EN } from './lib/i18n/dictionaries';
-export type { TranslationKey } from './lib/i18n/dictionaries';
+export { ENGINE_EN } from './lib/i18n/engine-texts';
 export { english, renderGameText } from './lib/i18n/game-text';
-export type { GameText, GameTextParams, Translate } from './lib/i18n/game-text';
+export type { GameText } from './lib/i18n/game-text';
 export {
   detectLanguage,
   isLanguage,

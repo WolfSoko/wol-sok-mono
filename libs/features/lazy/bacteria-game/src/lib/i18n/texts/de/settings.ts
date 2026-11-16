@@ -1,4 +1,4 @@
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 import type { settings as en } from '../en/settings';
 
 export const settings: Translation<typeof en> = {

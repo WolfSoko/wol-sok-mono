@@ -1,5 +1,5 @@
 import type { evolution as en } from '../en/evolution';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const evolution: Translation<typeof en> = {
   title: 'Evolution',

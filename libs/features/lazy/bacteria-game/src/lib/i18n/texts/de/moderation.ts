@@ -1,5 +1,5 @@
 import type { moderation as en } from '../en/moderation';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 /** Das Sperrbanner und die Hinweise des Betreibers (ADR 0012). */
 export const moderation: Translation<typeof en> = {

@@ -1,5 +1,5 @@
 import type { newGame as en } from '../en/new-game';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const newGame: Translation<typeof en> = {
   title: 'Neues Spiel',

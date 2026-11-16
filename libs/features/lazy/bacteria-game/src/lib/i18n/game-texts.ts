@@ -12,11 +12,18 @@ import {
   type RecipeId,
   type SeriesLength,
   type ZoneKind,
+  type GameText as EngineGameText,
 } from '@wolsok/feat-shared-bacteria-engine';
-import type {
-  GameText,
-  TranslationKey,
-} from '@wolsok/feat-shared-bacteria-engine';
+import type { TranslationKey } from './texts/dictionaries';
+
+export type { TranslationKey };
+
+/**
+ * A text the game shows, by any key of its dictionaries: the engine's
+ * `GameText` widened from the keys the engine renders to all of the
+ * game's. Every text the engine builds is one too.
+ */
+export type GameText = EngineGameText<TranslationKey>;
 
 /*
  * The keys of the game data's texts, by the ids the state keeps: the state
@@ -155,11 +162,6 @@ export function playerNameText(name: string): GameText | null {
 }
 
 export { english, renderGameText } from '@wolsok/feat-shared-bacteria-engine';
-export type {
-  GameText,
-  GameTextParams,
-  Translate,
-} from '@wolsok/feat-shared-bacteria-engine';
 export { GameTextPipe } from './game-text.pipe';
 export { achievementTexts } from '@wolsok/feat-shared-bacteria-engine';
 export {
