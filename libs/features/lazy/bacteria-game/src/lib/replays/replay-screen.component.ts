@@ -6,7 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { EvolutionService } from '../evolution.service';
-import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
 import { MatchRecorder } from '../state/match-recorder';

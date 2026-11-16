@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleHarness } from '@angular/material/button-toggle/testing';
 import { MatSlideToggleHarness } from '@angular/material/slide-toggle/testing';
 import { TestbedHarnessEnvironment } from '@angular/cdk/testing/testbed';
-import { SimulationOverrideService } from '../gl/simulation-override.service';
+import { SimulationOverrideService } from '../gpu-choice/simulation-override.service';
 import { I18nService } from '../i18n/i18n.service';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';

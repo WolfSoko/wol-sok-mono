@@ -14,9 +14,9 @@ import { MatSliderModule } from '@angular/material/slider';
 import { StatsConsent } from '../analytics/stats-consent.service';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { Size } from '../fullscreen';
-import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import { simulationCheckLines } from '../gl/simulation-check';
-import { SimulationOverrideService } from '../gl/simulation-override.service';
+import { SimulationOverrideService } from '../gpu-choice/simulation-override.service';
 import {
   arenaLockText,
   levelNameText,

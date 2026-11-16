@@ -25,7 +25,7 @@ import {
 } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { EvolutionService } from '../evolution.service';
-import { GpuSelfTestService } from '../gl/gpu-self-test.service';
+import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';

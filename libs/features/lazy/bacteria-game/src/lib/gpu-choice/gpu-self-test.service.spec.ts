@@ -5,14 +5,14 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
 import { LateGameStorage } from '../../testing/late-game-storage';
-import { GpuSelfTestResult } from './gpu-self-test';
+import { GpuSelfTestResult } from '../gl/gpu-self-test';
 import { GpuSelfTestService } from './gpu-self-test.service';
 import {
   GPU_SELF_TEST_STORAGE_KEY,
   SELF_TEST_MAX_AGE_MS,
   SelfTestDevice,
   StoredSelfTest,
-} from './stored-self-test';
+} from '../gl/stored-self-test';
 
 const NOW = 1_800_000_000_000;
 
