@@ -1,0 +1,42 @@
+{
+  "name": "federation-shared-singletons",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "tools/federation/shared-singletons",
+  "projectType": "library",
+  "tags": ["tools"],
+  "implicitDependencies": [
+    "angular-examples",
+    "bacteria-game-remote",
+    "fourier-analysis-remote",
+    "shader-examples-remote"
+  ],
+  "namedInputs": {
+    "default": [],
+    "production": []
+  },
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "dependsOn": [
+        "^build",
+        { "projects": ["bacteria-game-remote"], "target": "build-federation" }
+      ],
+      "inputs": [
+        "{projectRoot}/**/*",
+        "{workspaceRoot}/apps/angular-examples/src/assets/federation.manifest.prod.json",
+        {
+          "dependentTasksOutputFiles": "**/remoteEntry.json",
+          "transitive": true
+        }
+      ],
+      "options": {
+        "commands": [
+          "node --test tools/federation/shared-singletons/shared-singletons.spec.mjs",
+          "node tools/federation/shared-singletons/check-shared-singletons.mjs"
+        ],
+        "parallel": false
+      }
+    }
+  }
+}
