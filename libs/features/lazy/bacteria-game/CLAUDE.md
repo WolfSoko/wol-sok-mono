@@ -11,6 +11,16 @@ Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
 `match-recorder.ts`, `player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
 through `@wolsok/feat-shared-bacteria-engine`.
 
+The arena rendering and the GPU simulation (`gl/`, `arena/`, `player-color.ts`,
+`reduced-motion.ts`, the GPU cross-check in `gpu-crosscheck/`) are the lib
+`feat-bacteria-rendering` (`libs/features/bacteria-rendering`, #3102); paths
+below starting with `gl/` or `arena/` are in its `src/lib/`. It imports
+nothing of the game, and the game takes it only through
+`@wolsok/feat-bacteria-rendering`. The services that tie the GPU choice to the
+game's device storage and analytics, `GpuSelfTestService` and
+`SimulationOverrideService`, stay here in `gpu-choice/`, with
+`simulation-check.ts`, whose lines are the game's settings texts.
+
 ## Persistence: local storage or Firebase, behind ports
 
 The game keeps the player's progress (medallions, campaign, XP, achievements,
@@ -461,7 +471,7 @@ play each other.
   check, `FEATURE_TOGGLES`; read as each match starts and in each online
   `hello`), the integer
   GPU passes on a GPU that passed `GpuSelfTestService`'s self-test on
-  hardware (`gpuTrusted`, `gl/simulation-check.ts`), the `cpu` ruleset
+  hardware (`gpuTrusted`, `gpu-choice/simulation-check.ts`), the `cpu` ruleset
   otherwise. A software renderer (SwiftShader, llvmpipe) passes the test
   but takes hundreds of ms a tick, so it plays `cpu`; CI has only
   SwiftShader, and its GPU e2e opts in with `?sim=gpu-int`. Switched off, the float GPU simulation would
@@ -493,7 +503,7 @@ play each other.
   changes what local matches play, also with the owner's
   `deterministicSimulation` off, never what the device offers online.
   The settings show the ruleset local matches play and the self-test's
-  verdict (`gl/simulation-check.ts`).
+  verdict (`gpu-choice/simulation-check.ts`).
 
 ## Usage statistics
 

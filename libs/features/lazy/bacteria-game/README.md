@@ -87,7 +87,7 @@ CSS animation, still for players who ask for less motion):
   furthest open level right away.
 - **My Colony** ([`my-colony.component.ts`](./src/lib/menu/my-colony.component.ts)) -
   the player's colony as it will look in the dish, drawn by the game's own
-  painter ([`look-preview.ts`](./src/lib/arena/look-preview.ts)), the skin
+  painter ([`look-preview.ts`](../../bacteria-rendering/src/lib/arena/look-preview.ts)), the skin
   it wears - a gallery of every look, each on a sample colony in the
   player's colour - and the colonies' colours. The slime and the pixels
   are free; every other skin is bought with the DNA of the Evolution screen
@@ -548,7 +548,7 @@ The CPU simulation keeps a zone code per cell; the GPU one keeps it above
 the wall bit of its wall mask, so no texture is added. A level lays its
 zones out as puddles - overlapping round blobs (`puddle`) - not boxes. The
 painters show them as a layer of their own over the floor
-([`zone-decal.ts`](./src/lib/arena/zone-decal.ts)), painted once per level
+([`zone-decal.ts`](../../bacteria-rendering/src/lib/arena/zone-decal.ts)), painted once per level
 as fine as the canvas shows it and softened by a pixel, so the edges are
 smooth: each zone tinted in its colour with a bright rim, and strewn with
 what tells it apart at a glance - pills on antibiotic, bubbles of food on
@@ -571,7 +571,7 @@ cells). Bigger is more room, not smaller bacteria, so two factors stay apart
   cells along each side (`arenaSize(resolution, size)`), and the colonies
   room for `size`² times the bacteria (`levelBalance`).
 
-A [`Camera`](./src/lib/arena/camera.ts) shows part of a big map: it
+A [`Camera`](../../bacteria-rendering/src/lib/arena/camera.ts) shows part of a big map: it
 follows the crosshair of the one human in a match on a soft spring, zooms
 with the wheel or a pinch between the whole map and the size of a base one,
 and never looks past the arena's edge. A second finger on the arena with no
@@ -588,7 +588,7 @@ zooms (`detailScale`), the pointer maps through the view
 instead of fading into a trail that lies elsewhere. Every match starts on
 the whole map.
 While the camera shows part of the map, a
-[minimap](./src/lib/arena/minimap.ts) in the arena's top right corner shows
+[minimap](../../bacteria-rendering/src/lib/arena/minimap.ts) in the arena's top right corner shows
 all of it: the walls, laid once per map, the colonies block by block - each
 block of `influenceCellSize` cells in the colour of the colony with the most
 bacteria in it (`minimapPixels`) - and a frame around the camera's view. Both
@@ -600,7 +600,7 @@ view frame on every frame.
 
 Empty space costs the GPU simulation little: its cell passes - crush,
 combat, feed, the claim and apply pairs - run only over the
-[active area](./src/lib/gl/active-area.ts), the colonies' boxes from the
+[active area](../../bacteria-rendering/src/lib/gl/active-area.ts), the colonies' boxes from the
 report grown by how far a bacterium gets in the ticks since (a step per
 move, one for a child, one to spare), together with the area of the last
 three ticks, so a spot a colony left is written empty in every state
