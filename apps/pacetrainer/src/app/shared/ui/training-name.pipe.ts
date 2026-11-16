@@ -1,5 +1,13 @@
 import { Injectable, Pipe, PipeTransform } from '@angular/core';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
+
+/** a new CountdownTarget without a German name fails to compile here */
+const GERMAN_NAMES: Record<CountdownTarget, string> = {
+  running: 'Joggen',
+  sprint: 'Sprinten',
+  recovery: 'Erholung',
+  finished: 'Fertig',
+};
 
 @Injectable({
   providedIn: 'root',
@@ -8,22 +16,13 @@ import { TrainingName } from '../model/training/training-name';
   name: 'trainingName',
 })
 export class TrainingNamePipe implements PipeTransform {
-  transform(name: TrainingName | null | undefined): string | null | undefined {
-    if (name == null) {
-      return name;
-    }
-
-    switch (name) {
-      case 'running':
-        return 'Joggen';
-      case 'leadIn':
-        return 'Bereit';
-      case 'sprint':
-        return 'Sprinten';
-      case 'recovery':
-        return 'Erholung';
-      case 'finished':
-        return 'Fertig';
-    }
+  public transform(name: CountdownTarget): string;
+  public transform(
+    name: CountdownTarget | null | undefined
+  ): string | null | undefined;
+  public transform(
+    name: CountdownTarget | null | undefined
+  ): string | null | undefined {
+    return name == null ? name : GERMAN_NAMES[name];
   }
 }

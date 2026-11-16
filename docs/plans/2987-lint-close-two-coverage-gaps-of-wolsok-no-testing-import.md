@@ -1,0 +1,7 @@
+# Plan: close two coverage gaps of wolsok/no-testing-import
+
+Spec: [docs/specs/2987-lint-close-two-coverage-gaps-of-wolsok-no-testing-import.md](../specs/2987-lint-close-two-coverage-gaps-of-wolsok-no-testing-import.md)
+
+1. **Test-only libs.** Add spec cases (red): `@wolsok/shared-firebase-emulator` and `/rules` reported, a lookalike name allowed, both allowed below `testing/`. Then add `TEST_ONLY_LIBS` to `tools/oxlint/workspace-rules.mjs` and build a pattern for each into `TESTING_MODULES`; update the rule's doc comment. Files: `tools/oxlint/workspace-rules.mjs`, `tools/oxlint/workspace-rules.spec.mjs`. Check: `npx nx test oxlint-workspace-rules`. Commit: `fix(oxlint-workspace-rules): report test-only libs in production code`.
+2. **Environment files.** Add spec cases (red): a testing import in `src/environments/environment.emulator.ts` reported, in `src/environments/environment.spec.ts` allowed. Then split the emulator suffix out of the first `TEST_FILES` pattern into one that skips paths through an `environments/` folder. Files: same two. Check: same. Commit: `fix(oxlint-workspace-rules): stop exempting emulator environment files`.
+3. **Docs.** Update the rule's paragraph in `CLAUDE.md`. Check: `npx nx format:write`, `npx nx run-many -t lint --projects=oxlint-workspace-rules,bacteria-game-remote,korbjaeger,korbjaeger-functions,bacteria-wars-functions`. Commit: `docs(oxlint-workspace-rules): name the test-only libs and the environment exception`.

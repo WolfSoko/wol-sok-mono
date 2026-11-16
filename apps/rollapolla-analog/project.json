@@ -100,7 +100,7 @@
       "dependsOn": ["build"],
       "options": {
         "commands": [
-          "nx run {projectName}:firebase deploy",
+          "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts firebase --config=firebase.rollapolla-analog.json --project=rollapolla-analog deploy --non-interactive",
           "tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.rollapolla-analog.json https://rollapolla.com/"
         ],
         "parallel": false

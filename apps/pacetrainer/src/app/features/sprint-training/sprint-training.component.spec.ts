@@ -51,15 +51,18 @@ describe('SprintTrainingComponent Ansagen', () => {
     expect(countdown()).toBeNull();
   });
 
-  it('counts the Vorlauf down to its own end', () => {
+  it('counts the Vorlauf down to the first Intervall', () => {
     clickPrimary();
     advance(2000);
 
     expect(countdown()).toEqual({
       countdownTime: 5000,
       timeLeft: 3000,
-      countdownTo: 'leadIn',
+      countdownTo: 'sprint',
     });
+    expect(fixture.nativeElement.textContent).toContain(
+      'als Nächstes: Sprinten'
+    );
   });
 
   it('counts down to the next Intervall within at most 5 s', () => {
