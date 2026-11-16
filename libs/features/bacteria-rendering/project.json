@@ -28,8 +28,7 @@
         "default",
         "^production",
         "{workspaceRoot}/jest.preset.cjs",
-        "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/.codecov.yml"
+        "{workspaceRoot}/jest.config.ts"
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-rendering"],
       "options": {

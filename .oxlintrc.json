@@ -128,6 +128,13 @@
               "shared",
               "utils",
               "api"
+            ],
+            "bannedExternalImports": [
+              "firebase",
+              "firebase/*",
+              "@angular/fire",
+              "@angular/fire/*",
+              "@ngrx/*"
             ]
           },
           {
@@ -212,32 +219,9 @@
                   "rxjs/*",
                   "firebase",
                   "firebase/*",
-                  "@wolsok/feat-bacteria-rendering",
                   "**/sound/*"
                 ],
-                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, rendering or sound/ imports."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["libs/features/bacteria-rendering/src/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "firebase",
-                  "firebase/*",
-                  "@angular/fire",
-                  "@angular/fire/*",
-                  "@ngrx/*"
-                ],
-                "message": "The rendering (feat-bacteria-rendering) paints and simulates only: no Firebase or NgRx. The public replay viewer (watch entry, ADR 0011) loads it without them."
+                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase or sound/ imports."
               }
             ]
           }
