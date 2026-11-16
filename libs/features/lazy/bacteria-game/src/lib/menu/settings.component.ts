@@ -1,4 +1,3 @@
-import { simulationCheckLines } from '../gpu-choice/simulation-check';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -16,7 +15,7 @@ import { StatsConsent } from '../analytics/stats-consent.service';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { Size } from '../fullscreen';
 import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
-
+import { simulationCheckLines } from '../gpu-choice/simulation-check';
 import { SimulationOverrideService } from '../gpu-choice/simulation-override.service';
 import {
   arenaLockText,
