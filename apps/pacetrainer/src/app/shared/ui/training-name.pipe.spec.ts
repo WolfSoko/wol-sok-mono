@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { CountdownTarget } from '../model/training/training-name';
 import { TrainingNamePipe } from './training-name.pipe';
 
-const GERMAN_NAMES: Record<CountdownTarget, string> = {
+const EXPECTED_NAMES: Record<CountdownTarget, string> = {
   running: 'Joggen',
   sprint: 'Sprinten',
   recovery: 'Erholung',
@@ -12,7 +12,7 @@ const GERMAN_NAMES: Record<CountdownTarget, string> = {
 describe('TrainingNamePipe', () => {
   const pipe = new TrainingNamePipe();
 
-  it.each(Object.entries(GERMAN_NAMES) as [CountdownTarget, string][])(
+  it.each(Object.entries(EXPECTED_NAMES) as [CountdownTarget, string][])(
     'names %s "%s"',
     (name, text) => {
       expect(pipe.transform(name)).toBe(text);
