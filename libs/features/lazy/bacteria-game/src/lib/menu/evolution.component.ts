@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { type Rgb, rgba } from '@wolsok/feat-bacteria-rendering';
+import { type Rgb, rgba, WEAPON_COLORS } from '@wolsok/feat-bacteria-rendering';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
 import {
@@ -39,7 +39,6 @@ import {
   genePercent,
   geneKeys,
   MAXED_COLOR,
-  WEAPON_COLORS,
   weaponKeys,
 } from './evolution-look';
 import { ScreenHeaderComponent } from './screen-header.component';

@@ -11,7 +11,6 @@
     "src/test-setup.ts",
     "**/*.spec.ts",
     "jest.config.ts",
-    "**/*.test.ts",
     "gpu-crosscheck/**",
     "playwright.config.ts"
   ],

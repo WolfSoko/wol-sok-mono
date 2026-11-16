@@ -24,16 +24,8 @@
     },
     "test": {
       "executor": "@nx/jest:jest",
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.cjs",
-        "{workspaceRoot}/jest.config.ts"
-      ],
-      "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-rendering"],
       "options": {
         "jestConfig": "libs/features/bacteria-rendering/jest.config.ts",
-        "codeCoverage": true,
         "tsConfig": "libs/features/bacteria-rendering/tsconfig.spec.json"
       }
     }

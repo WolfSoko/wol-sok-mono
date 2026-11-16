@@ -15,6 +15,7 @@ import {
   mix,
   rgba,
   prefersReducedMotion,
+  WEAPON_COLORS,
 } from '@wolsok/feat-bacteria-rendering';
 import {
   geneLevel,
@@ -22,7 +23,7 @@ import {
   MAX_GENE_LEVEL,
   seeded,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { GENE_COLORS, MAXED_COLOR, WEAPON_COLORS } from './evolution-look';
+import { GENE_COLORS, MAXED_COLOR } from './evolution-look';
 
 /** The preview's size in CSS pixels - drawn sharper on dense screens. */
 const SIZE = 320;

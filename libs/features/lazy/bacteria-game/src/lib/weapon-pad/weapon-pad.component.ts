@@ -9,11 +9,11 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { rgba } from '@wolsok/feat-bacteria-rendering';
+import { rgba, WEAPON_COLORS } from '@wolsok/feat-bacteria-rendering';
 import { WeaponStats } from '../colony-stats';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { WEAPON_COLORS, weaponKeys } from '../menu/evolution-look';
+import { weaponKeys } from '../menu/evolution-look';
 import { weaponOf } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The weapon button in CSS pixels; its recharge ring runs just outside it. */

@@ -2,6 +2,7 @@
   "name": "@wolsok/feat-bacteria-rendering",
   "version": "0.0.1",
   "license": "MIT",
+  "sideEffects": false,
   "peerDependencies": {
     "@angular/core": "22.2.5",
     "rxjs": "7.8.2"

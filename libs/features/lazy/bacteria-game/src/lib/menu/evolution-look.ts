@@ -14,8 +14,6 @@ import {
  * cent - "+12 % division".
  */
 
-export { WEAPON_COLORS } from '@wolsok/feat-bacteria-rendering';
-
 /** Each gene's colour, for its card's icon and the particles bought with. */
 export const GENE_COLORS: Readonly<Record<GeneId, Rgb>> = {
   mitosis: [120, 230, 140],
