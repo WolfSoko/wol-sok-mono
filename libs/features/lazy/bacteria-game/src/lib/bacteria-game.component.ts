@@ -19,7 +19,10 @@ import { WsThanosDirective } from '@wolsok/thanos';
 import { ElemResizedDirective } from '@wolsok/ui-kit';
 import { trackScreenViews } from './analytics/screen-views';
 import { reportUserProperties } from './analytics/user-properties';
-import { ArenaViewComponent } from './arena/arena-view.component';
+import {
+  ArenaViewComponent,
+  type GpuSelfTestResult,
+} from '@wolsok/feat-bacteria-rendering';
 import { StageBusyComponent } from './busy/stage-busy.component';
 import { CampaignService } from './campaign.service';
 import { EvolutionService } from './evolution.service';
@@ -28,7 +31,6 @@ import { MatchEnd } from './flow/match-end';
 import { MatchSetup } from './flow/match-setup';
 import { OnlineFlow } from './flow/online-flow';
 import { PlayFlow } from './flow/play-flow';
-import type { GpuSelfTestResult } from './gl/gpu-self-test';
 import { GpuSelfTestService } from './gpu-choice/gpu-self-test.service';
 import { SimulationOverrideService } from './gpu-choice/simulation-override.service';
 import { GameHapticsService } from './haptics.service';

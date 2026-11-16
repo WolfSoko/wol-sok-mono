@@ -12,18 +12,24 @@ import type { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { ResizedEvent } from '@wolsok/ui-kit';
 import { asapScheduler, firstValueFrom, Observable, of, timer } from 'rxjs';
 import { filter, map, takeUntil, timeout } from 'rxjs/operators';
-import { ArenaLayout, ArenaPainter, layoutKey } from '../arena/arena-painter';
-import { ArenaTheme, arenaTheme, cssTriple } from '../arena/arena-theme';
-import type { ArenaViewComponent } from '../arena/arena-view.component';
-import { GlArenaPainter } from '../arena/gl/gl-arena-painter';
+import {
+  ArenaLayout,
+  ArenaPainter,
+  layoutKey,
+  ArenaTheme,
+  arenaTheme,
+  cssTriple,
+  type ArenaViewComponent,
+  GlArenaPainter,
+  chooseSimulation,
+  prefersReducedMotion,
+} from '@wolsok/feat-bacteria-rendering';
 import { CampaignService } from '../campaign.service';
 import { FeatureTogglesService } from '../feature-toggles.service';
 import { fitInside, Size } from '../fullscreen';
 import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
-import { gpuTrusted } from '../gl/simulation-check';
-import { chooseSimulation } from '../gl/simulation-choice';
+import { gpuTrusted } from '../gpu-choice/simulation-check';
 import { SimulationOverrideService } from '../gpu-choice/simulation-override.service';
-import { prefersReducedMotion } from '../reduced-motion';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
 import {

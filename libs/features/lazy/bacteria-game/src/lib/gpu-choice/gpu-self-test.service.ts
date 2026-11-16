@@ -2,9 +2,9 @@ import { computed, inject, Injectable, signal } from '@angular/core';
 import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { DeviceStorage } from '../storage/game-storage';
-import { GpuSelfTestResult, runGpuSelfTest } from '../gl/gpu-self-test';
-import { gpuTrusted } from '../gl/simulation-check';
 import {
+  GpuSelfTestResult,
+  runGpuSelfTest,
   GPU_SELF_TEST_STORAGE_KEY,
   keepsSelfTest,
   parseStoredSelfTest,
@@ -14,7 +14,8 @@ import {
   thisDevice,
   verdictOf,
   whenIdle,
-} from '../gl/stored-self-test';
+} from '@wolsok/feat-bacteria-rendering';
+import { gpuTrusted } from './simulation-check';
 
 /**
  * Whether this device's GPU computes the deterministic simulation as every

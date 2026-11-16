@@ -1,7 +1,9 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import type { ArenaPainter } from '../arena/arena-painter';
-import type { ArenaViewComponent } from '../arena/arena-view.component';
+import {
+  type ArenaPainter,
+  type ArenaViewComponent,
+} from '@wolsok/feat-bacteria-rendering';
 import { GameStateService } from '../state/game-state.service';
 import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';

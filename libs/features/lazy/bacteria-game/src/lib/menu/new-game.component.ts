@@ -13,8 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatStepperModule } from '@angular/material/stepper';
 import { StageBusy } from '../busy/stage-busy';
-import { rgba } from '../arena/canvas-math';
-import { ZONE_COLORS } from '../arena/zone-look';
+import { rgba, ZONE_COLORS } from '@wolsok/feat-bacteria-rendering';
 import {
   difficultyKeys,
   GameText,

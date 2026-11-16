@@ -1,0 +1,42 @@
+{
+  "name": "feat-bacteria-rendering",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/features/bacteria-rendering/src",
+  "prefix": "feat-bac-render",
+  "tags": ["feature:game-kit"],
+  "targets": {
+    "typecheck-specs": {},
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/libs/features/bacteria-rendering"],
+      "options": {
+        "project": "libs/features/bacteria-rendering/ng-package.json",
+        "tsConfig": "libs/features/bacteria-rendering/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/bacteria-rendering/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.cjs",
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/.codecov.yml"
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-rendering"],
+      "options": {
+        "jestConfig": "libs/features/bacteria-rendering/jest.config.ts",
+        "codeCoverage": true,
+        "tsConfig": "libs/features/bacteria-rendering/tsconfig.spec.json"
+      }
+    }
+  }
+}

@@ -25,6 +25,7 @@ const selectorPrefixes = {
   'apps/portfolio': ['wolsok', 'wolsok'],
   'apps/rollapolla-analog': ['rap', 'rap'],
   'libs/features/api/auth': ['ftApiAuth', 'ft-api-auth'],
+  'libs/features/bacteria-rendering': ['featBacRender', 'feat-bac-render'],
   'libs/features/lazy/bacteria-game': ['featLazyBacGame', 'feat-lazy-bac-game'],
   'libs/features/lazy/bacteria-wars-admin': [
     'featLazyBacAdmin',

@@ -10,7 +10,7 @@ import {
   TICKS_PER_SEC,
   type WeaponId,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { cssColor } from './player-color';
+import { cssColor } from '@wolsok/feat-bacteria-rendering';
 
 /** Statistics of one colony, ready to be rendered by the template. */
 export interface ColonyStats {

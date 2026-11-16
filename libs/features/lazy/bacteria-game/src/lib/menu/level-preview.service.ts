@@ -13,8 +13,8 @@ import {
   PREVIEW_HEIGHT,
   PREVIEW_WIDTH,
   zonePixels,
-} from '../arena/level-preview';
-import { putPixels } from '../arena/canvas-math';
+  putPixels,
+} from '@wolsok/feat-bacteria-rendering';
 
 /** Draws the preview image of a level. */
 export interface LevelPreviewRenderer {

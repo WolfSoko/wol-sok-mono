@@ -1,4 +1,4 @@
-import type { Rgb } from '../arena/arena-theme';
+import type { Rgb } from '@wolsok/feat-bacteria-rendering';
 import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import {
   clamp,
@@ -14,7 +14,7 @@ import {
  * cent - "+12 % division".
  */
 
-export { WEAPON_COLORS } from '../arena/arena-theme';
+export { WEAPON_COLORS } from '@wolsok/feat-bacteria-rendering';
 
 /** Each gene's colour, for its card's icon and the particles bought with. */
 export const GENE_COLORS: Readonly<Record<GeneId, Rgb>> = {

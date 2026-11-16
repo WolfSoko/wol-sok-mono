@@ -24,7 +24,7 @@ const FRAME_MS = 66;
  * with it.
  */
 @Component({
-  selector: 'feat-lazy-bac-game-look-preview',
+  selector: 'feat-bac-render-look-preview',
   template: `<canvas
     #canvas
     role="img"

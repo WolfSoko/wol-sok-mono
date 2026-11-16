@@ -30,6 +30,9 @@ coverage:
       feat-shared-bacteria-engine:
         flags:
           - feat-shared-bacteria-engine
+      feat-bacteria-rendering:
+        flags:
+          - feat-bacteria-rendering
       feat-lazy-fourier-analysis:
         flags:
           - feat-lazy-fourier-analysis
@@ -88,6 +91,9 @@ flags:
   feat-shared-bacteria-engine:
     paths:
       - libs/features/bacteria-engine
+  feat-bacteria-rendering:
+    paths:
+      - libs/features/bacteria-rendering
   feat-lazy-fourier-analysis:
     paths:
       - libs/features/lazy/fourier-analysis

@@ -3,8 +3,10 @@ import type {
   TranslationParams,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
-import type { GpuSelfTestResult } from './gpu-self-test';
-import { isSoftwareRenderer } from './renderer';
+import {
+  type GpuSelfTestResult,
+  isSoftwareRenderer,
+} from '@wolsok/feat-bacteria-rendering';
 
 /** One line of the settings' simulation check, a text to translate. */
 export interface SimulationCheckLine {

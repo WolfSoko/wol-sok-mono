@@ -1,6 +1,5 @@
 import { computed, inject, Injectable, Signal } from '@angular/core';
-import { cssTriple } from '../arena/arena-theme';
-import { rgba } from '../arena/canvas-math';
+import { cssTriple, rgba } from '@wolsok/feat-bacteria-rendering';
 import { CampaignService } from '../campaign.service';
 import { ColonyStats, sameColonyStats, toColonyStats } from '../colony-stats';
 import type { HudGoal } from '../hud-bar.component';

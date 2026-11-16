@@ -1,7 +1,11 @@
-import { arenaContent, SeatColors } from '../arena/arena-content';
-import type { GlArenaPainter } from '../arena/gl/gl-arena-painter';
-import { gpuSimulationsOf } from '../gl/simulation-choice';
-import type { ArenaContent, ArenaScene } from '../arena/arena-view.component';
+import {
+  arenaContent,
+  SeatColors,
+  type GlArenaPainter,
+  gpuSimulationsOf,
+  type ArenaContent,
+  type ArenaScene,
+} from '@wolsok/feat-bacteria-rendering';
 import {
   type BacteriaLook,
   canPlayBack,

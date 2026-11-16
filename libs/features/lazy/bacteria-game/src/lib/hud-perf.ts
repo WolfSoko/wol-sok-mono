@@ -1,4 +1,4 @@
-import type { FramePerfReport } from './arena/frame-perf';
+import type { FramePerfReport } from '@wolsok/feat-bacteria-rendering';
 import type { SimulationVariant } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The breakdown of a frame the HUD shows beside the frame rate. */

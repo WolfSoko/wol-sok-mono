@@ -28,7 +28,7 @@ import { GameStateStore } from './game.states';
 import { PlayerStore } from './player.store';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import type { Lockstep } from '../net/lockstep';
-import type { DeviceSimulations } from '../gl/simulation-choice';
+import type { DeviceSimulations } from '@wolsok/feat-bacteria-rendering';
 
 export type {
   FrameEvents,

@@ -1,5 +1,8 @@
-import type { ArenaFrame, ArenaPainter } from '../lib/arena/arena-painter';
-import { ARENA_PAINTER_FACTORY } from '../lib/arena/arena-view.component';
+import {
+  type ArenaFrame,
+  type ArenaPainter,
+  ARENA_PAINTER_FACTORY,
+} from '@wolsok/feat-bacteria-rendering';
 
 /** A painter that keeps what it was asked to paint - jsdom draws nothing. */
 export class RecordingPainter implements ArenaPainter {

@@ -7,8 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { rgba } from '../arena/canvas-math';
-import { ZONE_COLORS } from '../arena/zone-look';
+import { rgba, ZONE_COLORS } from '@wolsok/feat-bacteria-rendering';
 import {
   TranslationKey,
   TranslationParams,

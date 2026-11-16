@@ -11,8 +11,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import type { Rgb } from '../arena/arena-theme';
-import { rgba } from '../arena/canvas-math';
+import { type Rgb, rgba } from '@wolsok/feat-bacteria-rendering';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
 import {

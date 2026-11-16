@@ -1,6 +1,9 @@
-import type { Rgb } from '../arena/arena-theme';
-import { mix, rgba } from '../arena/canvas-math';
-import { reducedMotionNow } from '../reduced-motion';
+import {
+  type Rgb,
+  mix,
+  rgba,
+  reducedMotionNow,
+} from '@wolsok/feat-bacteria-rendering';
 import type { Point } from '@wolsok/feat-shared-bacteria-engine';
 import { MAXED_COLOR } from './evolution-look';
 

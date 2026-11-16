@@ -15,9 +15,7 @@
     "**/*.spec.ts",
     "jest.config.ts",
     "**/*.test.ts",
-    "gpu-crosscheck/**",
-    "perf/**",
-    "playwright.config.ts"
+    "perf/**"
   ],
   "include": ["**/*.ts"]
 }

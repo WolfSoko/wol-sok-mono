@@ -1,0 +1,20 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "../../../dist/out-tsc",
+    "declaration": true,
+    "declarationMap": true,
+    "inlineSources": true,
+    "types": [],
+    "moduleResolution": "bundler"
+  },
+  "exclude": [
+    "src/test-setup.ts",
+    "**/*.spec.ts",
+    "jest.config.ts",
+    "**/*.test.ts",
+    "gpu-crosscheck/**",
+    "playwright.config.ts"
+  ],
+  "include": ["**/*.ts"]
+}

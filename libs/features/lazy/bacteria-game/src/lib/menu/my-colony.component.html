@@ -13,7 +13,7 @@
 <p class="cdk-visually-hidden" role="status">{{ announced() }}</p>
 <p class="tagline">{{ "colony.tagline" | t }}</p>
 <div class="hero">
-  <feat-lazy-bac-game-look-preview
+  <feat-bac-render-look-preview
     class="hero-preview"
     [look]="worn()"
     [color]="playerRgb()"
@@ -42,7 +42,7 @@
           [class.picked]="picked"
           [class.locked]="!skin.owned"
         >
-          <feat-lazy-bac-game-look-preview
+          <feat-bac-render-look-preview
             class="skin-preview"
             [look]="skin.id"
             [color]="playerRgb()"

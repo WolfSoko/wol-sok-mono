@@ -1,8 +1,9 @@
+import { gpuTrusted } from '../gpu-choice/simulation-check';
 import { computed, inject, Injectable, signal, untracked } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { distinctUntilChanged, map } from 'rxjs';
 import { FeatureTogglesService } from '../feature-toggles.service';
-import { gpuTrusted } from '../gl/simulation-check';
+
 import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import type { GameText } from '../i18n/game-texts';
 import { ModerationService } from '../moderation/moderation.service';

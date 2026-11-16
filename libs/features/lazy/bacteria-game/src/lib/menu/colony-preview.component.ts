@@ -10,9 +10,12 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import type { Rgb } from '../arena/arena-theme';
-import { mix, rgba } from '../arena/canvas-math';
-import { prefersReducedMotion } from '../reduced-motion';
+import {
+  type Rgb,
+  mix,
+  rgba,
+  prefersReducedMotion,
+} from '@wolsok/feat-bacteria-rendering';
 import {
   geneLevel,
   Loadout,
