@@ -4,7 +4,7 @@ Spec: [docs/specs/3104-bacteria-wars-loading-spinner-not-centered.md](../specs/3
 
 1. **Spinner component, test first.** `busy/bacteria-spinner.component.spec.ts`: renders six
    bacteria alternating player and opponent, `role="progressbar"` with its label input.
-   Then `busy/bacteria-spinner.component.ts` (inline SVG, CSS keyframes on `transform` and
+   Then `busy/bacteria-spinner.component.ts` (HTML elements, CSS keyframes on `transform` and
    `opacity` only, reduced-motion rule, `--spinner-size`).
    Commit: `feat(feat-lazy-bacteria-game): bacteria spinner for the busy stage`.
 2. **Busy veil uses it.** `busy/stage-busy.component.ts`: replace `mat-progress-spinner` and its

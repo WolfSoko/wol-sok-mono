@@ -26,20 +26,21 @@ down: the ring is cut and sits off the backdrop's centre.
 
 ## Decisions
 
-1. **A CSS-animated inline SVG, not the simulation's shaders.** The indicator is up exactly while
+1. **CSS-animated HTML elements, not the simulation's shaders.** The indicator is up exactly while
    the main thread is blocked (`StageBusy.run` paints it, then runs the work). Anything drawn per
    frame from JavaScript (WebGL shaders, a canvas like `ColonyPreviewComponent`) freezes for that
    time, and creating a WebGL context costs more main-thread time on the slow phones it is for.
    Only `transform` and `opacity` animations run on the compositor and keep moving, so the spinner
-   animates those alone. It takes the shaders' look instead: the arena's colony colours.
+   animates those alone, on plain HTML elements: browsers do not reliably composite CSS animations
+   of elements inside an SVG. It takes the shaders' look instead: the arena's colony colours.
 2. **The picture:** six bacteria on a ring, alternating the player's colour (`--bw-player`) and the
    opponent's (`--bw-opponent`). The ring turns; each bacterium swells while it closes in on the one
    ahead and shrinks back as the next one swells, a wave running round the ring, so each one seems
    to swallow the next. Each cell has a body and a lighter nucleus, as in the arena.
 3. **Its own component** `feat-lazy-bac-game-bacteria-spinner` (`busy/bacteria-spinner.component.ts`),
    presentational and size-driven by a `--spinner-size` custom property (default 4rem), so the busy
-   veil only places it. The backdrop disc is the spinner's own element, sized with the SVG, so
-   nothing can overflow it again.
+   veil only places it. The backdrop disc is the spinner's own host, and every part is sized in
+   shares of it, so nothing can overflow it again.
 4. **Accessibility:** the spinner is `role="progressbar"` (indeterminate, as Material's) with the
    existing `stage.busy` label. With `prefers-reduced-motion: reduce` the bacteria stand still in
    their ring and only the ring's opacity breathes slowly.
@@ -49,10 +50,11 @@ down: the ring is cut and sits off the backdrop's centre.
 ## Acceptance
 
 1. With the indicator up, the spinner and its backdrop are fully visible and centred on the stage
-   (centre of the spinner within 1px of the stage's centre; the SVG's box inside the backdrop's box),
+   (centre of the spinner within 1px of the stage's centre; every bacterium inside the backdrop's box),
    embedded and fullscreen, on a phone-sized and a desktop viewport.
 2. It shows six bacteria in alternating player and opponent colours, turning and swelling in turn.
-3. Its animations use only `transform` and `opacity`.
+3. Its animations use only `transform` and `opacity`, and keep moving while the main thread is
+   blocked (checked by hand in Chromium and Firefox or WebKit).
 4. It has `role="progressbar"` and the translated `stage.busy` label.
 5. Reduced motion: no turning or swelling.
 6. `StageBusy`'s behaviour and specs are unchanged; lint, template lint and the lib's tests pass; the
