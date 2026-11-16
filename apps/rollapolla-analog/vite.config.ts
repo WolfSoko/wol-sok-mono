@@ -1,5 +1,5 @@
 import analog from '@analogjs/platform';
-import { workspaceFile } from '../../tools/vite/workspace-file';
+import { workspaceFile } from '../../tools/vite/workspace-file.ts';
 import { ConfigEnv, defineConfig, Plugin } from 'vite';
 
 import { ViteUserConfig } from 'vitest/config';
