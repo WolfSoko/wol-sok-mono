@@ -9,25 +9,22 @@ describe('BacteriaSpinnerComponent', () => {
     return fixture.nativeElement;
   }
 
-  it('puts six bacteria on the ring, player and opponent in turn', () => {
-    const cells = Array.from(render().querySelectorAll('.cell'));
-
-    expect(cells.map((cell) => cell.classList.contains('opponent'))).toEqual([
-      false,
-      true,
-      false,
-      true,
-      false,
-      true,
-    ]);
-  });
-
-  it('gives each bacterium its own place on the ring', () => {
+  it('seats six bacteria round the ring, player and opponent in turn', () => {
     const seats = Array.from(
       render().querySelectorAll<HTMLElement>('.seat')
-    ).map((seat) => seat.style.getPropertyValue('--index'));
+    ).map((seat) => [
+      seat.style.getPropertyValue('--index'),
+      seat.querySelector('.cell')?.classList.contains('opponent'),
+    ]);
 
-    expect(seats).toEqual(['0', '1', '2', '3', '4', '5']);
+    expect(seats).toEqual([
+      ['0', false],
+      ['1', true],
+      ['2', false],
+      ['3', true],
+      ['4', false],
+      ['5', true],
+    ]);
   });
 
   it('tells screen readers it is busy', () => {

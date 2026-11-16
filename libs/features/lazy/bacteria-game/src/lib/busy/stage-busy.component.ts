@@ -4,10 +4,10 @@ import { BacteriaSpinnerComponent } from './bacteria-spinner.component';
 import { StageBusy } from './stage-busy';
 
 /**
- * Bacteria eating each other round a ring (see
- * {@link BacteriaSpinnerComponent}), over the stage while a tap's work is
- * under way (see {@link StageBusy}). It fades in only after a moment, so a quick tap
- * shows none, and its veil keeps another tap from landing meanwhile.
+ * The {@link BacteriaSpinnerComponent} over the stage while a tap's work
+ * is under way (see {@link StageBusy}). It fades in only after a moment,
+ * so a quick tap shows none, and its veil keeps another tap from landing
+ * meanwhile.
  */
 @Component({
   selector: 'feat-lazy-bac-game-stage-busy',

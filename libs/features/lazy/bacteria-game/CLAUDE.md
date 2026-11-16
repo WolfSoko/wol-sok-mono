@@ -533,10 +533,9 @@ play each other.
 
 - A tap that sets heavy work off runs it through `StageBusy.run`
   (`busy/stage-busy.ts`): the stage shows its spinner
-  (`StageBusyComponent` with `BacteriaSpinnerComponent`: bacteria eating
-  each other round a ring, animating only `transform` and `opacity`, so it
-  keeps moving while the work blocks the main thread), the browser paints
-  it, and only then the work runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
+  (`StageBusyComponent` with `BacteriaSpinnerComponent`, which keeps
+  moving while the work blocks the main thread), the browser paints it,
+  and only then the work runs; a tap meanwhile is dropped, a key ignored (`StageInput.keyDown`). The menus
   wrap their steps (New game, the training, a mode, a mission, a level,
   Next); a match is started by the stage through `PlayFlow.startOnTap`, which asks
   for the fullscreen on the tap itself first (WebKit takes it nowhere

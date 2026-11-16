@@ -3,19 +3,6 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 /** How many bacteria chase each other round the ring. */
 const CELL_COUNT = 6;
 
-/** One bacterium of the ring: where it sits and whose colony it is. */
-interface SpinnerCell {
-  /** Its place on the ring, counted clockwise from the top. */
-  index: number;
-  /** The opponent's colony; the others are the player's. */
-  opponent: boolean;
-}
-
-const CELLS: readonly SpinnerCell[] = Array.from(
-  { length: CELL_COUNT },
-  (_, index) => ({ index, opponent: index % 2 === 1 })
-);
-
 /**
  * A busy indicator of the game's own: bacteria of both colonies on a
  * turning ring, each swelling as it closes in on the one ahead and
@@ -34,9 +21,10 @@ const CELLS: readonly SpinnerCell[] = Array.from(
   selector: 'feat-lazy-bac-game-bacteria-spinner',
   template: `
     <div class="ring">
-      @for (cell of cells; track cell.index) {
-        <span class="seat" [style.--index]="cell.index">
-          <span class="cell" [class.opponent]="cell.opponent"></span>
+      <!-- Clockwise from the top, the opponent's in every other seat. -->
+      @for (seat of seats; track $index) {
+        <span class="seat" [style.--index]="$index">
+          <span class="cell" [class.opponent]="$odd"></span>
         </span>
       }
     </div>
@@ -96,7 +84,6 @@ const CELLS: readonly SpinnerCell[] = Array.from(
       animation-delay: calc(
         var(--index) * var(--wave) / var(--cell-count) - var(--wave)
       );
-      will-change: transform;
     }
 
     .cell.opponent {
@@ -127,7 +114,6 @@ const CELLS: readonly SpinnerCell[] = Array.from(
     @media (prefers-reduced-motion: reduce) {
       .cell {
         animation: none;
-        will-change: auto;
       }
 
       .ring {
@@ -147,5 +133,5 @@ export class BacteriaSpinnerComponent {
   /** What the spinner says to screen readers. */
   public readonly label = input.required<string>();
 
-  protected readonly cells = CELLS;
+  protected readonly seats = Array.from({ length: CELL_COUNT });
 }
