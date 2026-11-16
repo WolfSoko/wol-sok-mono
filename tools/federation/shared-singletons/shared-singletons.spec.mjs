@@ -4,7 +4,9 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import {
+  DEV_MANIFEST_PATH,
   MANIFEST_PATH,
+  describeFinding,
   SHELL,
   missingSingletons,
 } from './shared-singletons.mjs';
@@ -66,24 +68,64 @@ describe('missingSingletons', () => {
     assert.deepEqual(findings, []);
   });
 
+  it('reports a singleton the shell shares only as a non-singleton', () => {
+    const findings = missingSingletons([entry('p5', '2.0.0', false)], {
+      game: [entry('p5', '2.0.0')],
+    });
+
+    assert.deepEqual(findings, [
+      {
+        remote: 'game',
+        packageName: 'p5',
+        remoteVersion: '2.0.0',
+        shellVersion: undefined,
+      },
+    ]);
+  });
+
   it('reports nothing for remotes that share nothing', () => {
     assert.deepEqual(missingSingletons([entry('rxjs')], { game: [] }), []);
   });
 });
 
-describe('federation-shared-singletons project', () => {
-  it('depends on the shell and every remote of its production manifest', () => {
-    const root = join(import.meta.dirname, '../../..');
-    const manifest = JSON.parse(
-      readFileSync(join(root, MANIFEST_PATH), 'utf8')
+describe('describeFinding', () => {
+  it('names a missing singleton, without a version it lacks', () => {
+    assert.match(
+      describeFinding({ remote: 'game', packageName: 'rxjs' }),
+      /^game shares the singleton rxjs, but the shell .* does not share it as a singleton/
     );
+  });
+
+  it('names both versions of a mismatch', () => {
+    assert.match(
+      describeFinding({
+        remote: 'game',
+        packageName: 'rxjs',
+        remoteVersion: '7.8.2',
+        shellVersion: '7.8.1',
+      }),
+      /rxjs@7\.8\.2, but the shell .* shares 7\.8\.1: the versions disagree/
+    );
+  });
+});
+
+describe('federation-shared-singletons project', () => {
+  const root = join(import.meta.dirname, '../../..');
+  const remotesOf = (path) =>
+    Object.keys(JSON.parse(readFileSync(join(root, path), 'utf8'))).sort();
+
+  it('checks the same remotes the development manifest lists', () => {
+    assert.deepEqual(remotesOf(DEV_MANIFEST_PATH), remotesOf(MANIFEST_PATH));
+  });
+
+  it('depends on the shell and every remote of its production manifest', () => {
     const project = JSON.parse(
       readFileSync(join(import.meta.dirname, 'project.json'), 'utf8')
     );
 
     assert.deepEqual(
       [...project.implicitDependencies].sort(),
-      [SHELL, ...Object.keys(manifest)].sort()
+      [SHELL, ...remotesOf(MANIFEST_PATH)].sort()
     );
   });
 });

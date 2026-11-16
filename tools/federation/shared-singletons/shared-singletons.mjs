@@ -1,17 +1,18 @@
 /**
  * The rule behind `federation-shared-singletons:test` (#3085): every singleton
- * a remote shares has to be shared by the shell at the same version. Where the
- * shell lacks it, the remote brings its own copy into the shell (for a
- * `firebase/*` entry with its own `@firebase/app`, a second component
- * registry), since `ignoreUnusedDeps` in `workspace-federation.js` prunes the
- * shell's shared entries to what the shell itself imports.
+ * a remote shares has to be shared by the shell as a singleton at the same
+ * version. Where the shell lacks it, the remote brings its own copy into the
+ * shell (for a `firebase/*` entry with its own `@firebase/app`, a second
+ * component registry), since `ignoreUnusedDeps` in `workspace-federation.js`
+ * prunes the shell's shared entries to what the shell itself imports.
  */
 
 /** The federation shell; the remotes are the keys of its prod manifest. */
 export const SHELL = 'angular-examples';
 
-/** The shell's production manifest, relative to the workspace root. */
+/** The shell's manifests, relative to the workspace root. */
 export const MANIFEST_PATH = `apps/${SHELL}/src/assets/federation.manifest.prod.json`;
+export const DEV_MANIFEST_PATH = `apps/${SHELL}/src/assets/federation.manifest.json`;
 
 /**
  * @typedef {{ packageName: string, version?: string, singleton: boolean }} SharedEntry
@@ -25,7 +26,9 @@ export const MANIFEST_PATH = `apps/${SHELL}/src/assets/federation.manifest.prod.
  */
 export function missingSingletons(shellShared, remotesShared) {
   const shellVersions = new Map(
-    shellShared.map((entry) => [entry.packageName, entry.version])
+    shellShared
+      .filter((entry) => entry.singleton)
+      .map((entry) => [entry.packageName, entry.version])
   );
   return Object.entries(remotesShared).flatMap(([remote, shared]) =>
     shared
@@ -44,6 +47,10 @@ export function missingSingletons(shellShared, remotesShared) {
   );
 }
 
+/** @param {string} packageName @param {string | undefined} version */
+const named = (packageName, version) =>
+  version === undefined ? packageName : `${packageName}@${version}`;
+
 /** @param {Finding} finding */
 export function describeFinding({
   remote,
@@ -51,9 +58,8 @@ export function describeFinding({
   remoteVersion,
   shellVersion,
 }) {
-  const shell =
-    shellVersion === undefined
-      ? `the shell (${SHELL}) does not share it`
-      : `the shell (${SHELL}) shares ${shellVersion}`;
-  return `${remote} shares the singleton ${packageName}@${remoteVersion}, but ${shell}: inside the shell it loads a second copy.`;
+  const shared = `${remote} shares the singleton ${named(packageName, remoteVersion)}`;
+  return shellVersion === undefined
+    ? `${shared}, but the shell (${SHELL}) does not share it as a singleton: inside the shell the remote loads a copy of its own.`
+    : `${shared}, but the shell (${SHELL}) shares ${shellVersion}: the versions disagree, so the remote cannot use the shell's copy.`;
 }
