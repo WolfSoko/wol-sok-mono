@@ -13,11 +13,12 @@ const BUILD_TSCONFIG = join(
  * does: it emits CommonJS for a package without `"type": "module"` and refuses
  * an ES module output with extensionless relative imports (#3100).
  */
-const NODE_MODULE_KINDS = [ts.ModuleKind.Node16, ts.ModuleKind.NodeNext];
-const NODE_RESOLUTION_KINDS = [
-  ts.ModuleResolutionKind.Node16,
-  ts.ModuleResolutionKind.NodeNext,
-];
+const NODE_MODULE_KINDS = ['Node16', 'Node18', 'Node20', 'NodeNext'];
+const NODE_RESOLUTION_KINDS = ['Node16', 'NodeNext'];
+
+function formatDiagnostic(diagnostic: ts.Diagnostic): string {
+  return ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n');
+}
 
 function buildCompilerOptions(): ts.CompilerOptions {
   const parsed = ts.getParsedCommandLineOfConfigFile(
@@ -26,14 +27,15 @@ function buildCompilerOptions(): ts.CompilerOptions {
     {
       ...ts.sys,
       onUnRecoverableConfigFileDiagnostic: (diagnostic) => {
-        throw new Error(
-          ts.flattenDiagnosticMessageText(diagnostic.messageText, '\n')
-        );
+        throw new Error(formatDiagnostic(diagnostic));
       },
     }
   );
   if (!parsed) {
     throw new Error(`Cannot read ${BUILD_TSCONFIG}`);
+  }
+  if (parsed.errors.length > 0) {
+    throw new Error(parsed.errors.map(formatDiagnostic).join('\n'));
   }
   return parsed.options;
 }
@@ -42,10 +44,18 @@ describe('the published package format', () => {
   const options = buildCompilerOptions();
 
   it('is built with a Node module kind, so Node loads what tsc emits', () => {
-    expect(NODE_MODULE_KINDS).toContain(options.module);
+    const moduleKind =
+      options.module === undefined ? 'default' : ts.ModuleKind[options.module];
+
+    expect(NODE_MODULE_KINDS).toContain(moduleKind);
   });
 
   it('resolves modules as Node does, so NodeNext consumers find its types', () => {
-    expect(NODE_RESOLUTION_KINDS).toContain(options.moduleResolution);
+    const resolutionKind =
+      options.moduleResolution === undefined
+        ? 'default'
+        : ts.ModuleResolutionKind[options.moduleResolution];
+
+    expect(NODE_RESOLUTION_KINDS).toContain(resolutionKind);
   });
 });
