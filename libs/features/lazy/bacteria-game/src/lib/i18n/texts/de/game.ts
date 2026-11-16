@@ -1,7 +1,9 @@
-import type { game as en } from '../en/game';
-import type { Translation } from '../translation';
+import type {
+  ENGINE_EN,
+  Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
-export const game: Translation<typeof en> = {
+export const game: Translation<(typeof ENGINE_EN)['game']> = {
   medals: {
     bronze: 'Bronze',
     silver: 'Silber',

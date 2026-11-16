@@ -20,7 +20,6 @@ import {
   levelNameText,
   renderGameText,
   type Replay,
-  TranslationKey,
   WATCH_PARAM,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
@@ -29,6 +28,7 @@ import { dismissSplash } from '../splash';
 import { PublicReplayError, PublicReplays } from './public-replays';
 import { ReplayViewerComponent } from './replay-viewer.component';
 import { WatchGpu } from './watch-gpu';
+import { TranslationKey } from '../i18n/game-texts';
 
 const ERRORS: Readonly<Record<PublicReplayError, TranslationKey>> = {
   'not-found': 'replay.watchPage.notFound',

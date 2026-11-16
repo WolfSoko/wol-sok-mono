@@ -1,5 +1,5 @@
 import type { match as en } from '../en/match';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const match: Translation<typeof en> = {
   headline: {

@@ -1,7 +1,9 @@
-import type { levels as en } from '../en/levels';
-import type { Translation } from '../translation';
+import type {
+  ENGINE_EN,
+  Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
-export const levels: Translation<typeof en> = {
+export const levels: Translation<(typeof ENGINE_EN)['levels']> = {
   name: '{number} · {title}',
   titles: {
     'petri-dish': 'Petrischale',

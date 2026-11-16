@@ -16,7 +16,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import {
   achievementTexts,
   colonyColorText,
@@ -64,6 +63,7 @@ import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
 import { canRaceAsGhost } from '../state/match-rules';
+import { TranslationKey } from '../i18n/game-texts';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =

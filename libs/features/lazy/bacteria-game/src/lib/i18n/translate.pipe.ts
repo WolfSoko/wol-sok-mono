@@ -1,9 +1,7 @@
 import { inject, Pipe, PipeTransform } from '@angular/core';
-import {
-  TranslationKey,
-  TranslationParams,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { TranslationParams } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from './i18n.service';
+import { TranslationKey } from './game-texts';
 
 /**
  * A text in the active language, for templates:

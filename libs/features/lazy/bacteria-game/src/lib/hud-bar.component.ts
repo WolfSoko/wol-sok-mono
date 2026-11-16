@@ -10,10 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { ColonyStats } from './colony-stats';
-import {
-  TranslationKey,
-  type TranslationParams,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { type TranslationParams } from '@wolsok/feat-shared-bacteria-engine';
 import {
   GameText,
   GameTextPipe,
@@ -23,6 +20,7 @@ import {
 import { I18nService } from './i18n/i18n.service';
 import { HudPerf, perfMs } from './hud-perf';
 import { TranslatePipe } from './i18n/translate.pipe';
+import { TranslationKey } from './i18n/game-texts';
 
 /**
  * What a colony counts up towards on a level won by reaching a goal - the

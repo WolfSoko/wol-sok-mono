@@ -1,5 +1,5 @@
 import type { help as en } from '../en/help';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 export const help: Translation<typeof en> = {
   title: 'Spielanleitung',

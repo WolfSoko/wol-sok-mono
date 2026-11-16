@@ -1,5 +1,5 @@
 import type { support as en } from '../en/support';
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 
 /** Tips and ads, the offer to install the game, the legal lines under the menu. */
 export const support: Translation<typeof en> = {

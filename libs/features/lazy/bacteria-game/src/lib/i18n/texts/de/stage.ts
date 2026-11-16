@@ -1,4 +1,4 @@
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 import type { stage as en } from '../en/stage';
 
 export const stage: Translation<typeof en> = {

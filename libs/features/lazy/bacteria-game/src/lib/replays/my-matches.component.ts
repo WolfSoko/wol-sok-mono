@@ -26,7 +26,6 @@ import {
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { EvolutionService } from '../evolution.service';
 import { GpuSelfTestService } from '../gl/gpu-self-test.service';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { GameTextPipe } from '../i18n/game-text.pipe';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -47,6 +46,7 @@ import { isCounted, type ReplayListing } from '../storage/replay-records';
 import { armedTap } from '../armed-tap';
 import { ReplayViewerComponent } from './replay-viewer.component';
 import { GuestSignInComponent } from '../guest/guest-sign-in.component';
+import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * How long "My matches" waits for the server to carry a command out before

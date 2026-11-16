@@ -1,4 +1,4 @@
-import type { Translation } from '../translation';
+import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 import type { common as en } from '../en/common';
 
 export const common: Translation<typeof en> = {

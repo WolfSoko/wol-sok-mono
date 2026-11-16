@@ -90,7 +90,7 @@ import {
 } from './play-modes';
 import { ScreenHeaderComponent } from './screen-header.component';
 import type { RankedKind, RankedOffer } from '../ranked/ranked.service';
-import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
+import { type TranslationKey } from '../i18n/game-texts';
 
 /**
  * A new game, step by step: first the mode - the training, the campaign,

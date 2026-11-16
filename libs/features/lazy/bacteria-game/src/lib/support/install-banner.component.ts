@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { InstallOffer } from './install-offer.service';
+import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * The offer to play the game as an app, on the main menu of the game's own

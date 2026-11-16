@@ -14,9 +14,26 @@ import {
   type ZoneKind,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type {
-  GameText,
-  TranslationKey,
+  GameText as EngineGameText,
+  GameTextParams as EngineGameTextParams,
+  Translate as EngineTranslate,
 } from '@wolsok/feat-shared-bacteria-engine';
+import type { TranslationKey } from './texts/dictionaries';
+
+export type { TranslationKey } from './texts/dictionaries';
+
+/**
+ * A text the game shows, by any key of its dictionaries: the engine's
+ * `GameText` widened from the keys the engine renders to all of the
+ * game's. Every text the engine builds is one too.
+ */
+export type GameText = EngineGameText<TranslationKey>;
+
+/** The values a {@link GameText}'s placeholders are filled with. */
+export type GameTextParams = EngineGameTextParams<TranslationKey>;
+
+/** Translates one of the game's keys, as `I18nService.t` does. */
+export type Translate = EngineTranslate<TranslationKey>;
 
 /*
  * The keys of the game data's texts, by the ids the state keeps: the state
@@ -155,11 +172,6 @@ export function playerNameText(name: string): GameText | null {
 }
 
 export { english, renderGameText } from '@wolsok/feat-shared-bacteria-engine';
-export type {
-  GameText,
-  GameTextParams,
-  Translate,
-} from '@wolsok/feat-shared-bacteria-engine';
 export { GameTextPipe } from './game-text.pipe';
 export { achievementTexts } from '@wolsok/feat-shared-bacteria-engine';
 export {

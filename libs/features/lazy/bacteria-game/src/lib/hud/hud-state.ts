@@ -14,7 +14,6 @@ import {
   ONLINE_LOCKS,
   readableOn,
   rivalryScore,
-  type TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { difficultyKeys, levelNameText, missionKeys } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
@@ -29,6 +28,7 @@ import {
   matchClockLabel,
   matchClockText,
 } from './match-clock';
+import { type TranslationKey } from '../i18n/game-texts';
 
 /** An RGB triple of a colony colour. */
 type Rgb = readonly [number, number, number];

@@ -20,7 +20,6 @@ import {
   scan,
   switchMap,
 } from 'rxjs';
-import { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { GameSettingsService } from '../settings.service';
 import {
@@ -31,6 +30,7 @@ import {
 import { MatchRecorder } from '../state/match-recorder';
 import { GameStateStore } from '../state/game.states';
 import { GameReplays } from '../storage/game-replays';
+import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * The line under a match's result about its recording (ADR 0011): whether

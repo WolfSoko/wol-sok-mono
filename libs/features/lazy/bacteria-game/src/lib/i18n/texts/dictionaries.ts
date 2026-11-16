@@ -3,10 +3,7 @@ import { common as deCommon } from './de/common';
 import { game as deGame } from './de/game';
 import { levels as deLevels } from './de/levels';
 import { settings as deSettings } from './de/settings';
-import { achievements as enAchievements } from './en/achievements';
 import { common as enCommon } from './en/common';
-import { game as enGame } from './en/game';
-import { levels as enLevels } from './en/levels';
 import { settings as enSettings } from './en/settings';
 import { colony as deColony } from './de/colony';
 import { colony as enColony } from './en/colony';
@@ -33,18 +30,25 @@ import { support as enSupport } from './en/support';
 import { evolution as deEvolution } from './de/evolution';
 import { evolution as enEvolution } from './en/evolution';
 import { training as deTraining } from './de/training';
-import { training as enTraining } from './en/training';
 import { boards as deBoards } from './de/boards';
 import { boards as enBoards } from './en/boards';
 import { replay as deReplay } from './de/replay';
 import { replay as enReplay } from './en/replay';
 import { moderation as deModeration } from './de/moderation';
 import { moderation as enModeration } from './en/moderation';
-import type { Language } from './language';
-import type { Dictionary, EntryPath, Translation } from './translation';
+import {
+  type Dictionary,
+  ENGINE_EN,
+  type EntryPath,
+  type Language,
+  type Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /*
- * The texts, one area per screen or topic, so areas grow apart. A new area
+ * The game's texts, one area per screen or topic, so areas grow apart. The
+ * English of `levels`, `achievements`, `game` and `training` is the
+ * engine's (`ENGINE_EN`), since the engine renders it into its state; a
+ * text the engine builds goes there, every other one here. A new area
  * takes three lines:
  *   1. `en/<area>.ts` exports `<area>`, a plain object of English texts;
  *   2. `de/<area>.ts` exports `<area>: Translation<typeof en>` with the
@@ -62,14 +66,14 @@ export const EN = {
   profile: enProfile,
   online: enOnline,
   common: enCommon,
-  levels: enLevels,
-  achievements: enAchievements,
-  game: enGame,
+  levels: ENGINE_EN.levels,
+  achievements: ENGINE_EN.achievements,
+  game: ENGINE_EN.game,
   settings: enSettings,
   colony: enColony,
   support: enSupport,
   evolution: enEvolution,
-  training: enTraining,
+  training: ENGINE_EN.training,
   boards: enBoards,
   replay: enReplay,
   moderation: enModeration,

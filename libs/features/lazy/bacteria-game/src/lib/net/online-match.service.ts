@@ -2,7 +2,6 @@ import { inject, Injectable, InjectionToken, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, Observable, Subject } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
-import type { GameText } from '@wolsok/feat-shared-bacteria-engine';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';
 import type { OpenRoom } from '../storage/game-rooms';
@@ -21,6 +20,7 @@ import type { PeerConnection, PeerTransport } from './peer-transport';
 import { PlayerService } from '../state/player.service';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
+import { type GameText } from '../i18n/game-texts';
 
 /** Where the lobby of an online match stands. */
 export type OnlinePhase =

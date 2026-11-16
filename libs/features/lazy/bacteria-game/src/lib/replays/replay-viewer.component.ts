@@ -44,9 +44,9 @@ import {
   simResolutionOf,
   simScale,
   TICKS_PER_SEC,
-  type TranslationKey,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { ReplayScene, type ReplayLook } from './replay-scene';
+import { type TranslationKey } from '../i18n/game-texts';
 
 /** The speeds the viewer offers. */
 export const REPLAY_SPEEDS = [1, 2, 4] as const;

@@ -15,7 +15,6 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { catchError, map, of, switchMap } from 'rxjs';
-import type { TranslationKey } from '@wolsok/feat-shared-bacteria-engine';
 import { rankKey } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -41,6 +40,7 @@ import {
   type OwnStanding,
   ownPlace,
 } from './boards.service';
+import { type TranslationKey } from '../i18n/game-texts';
 
 /** A row as the board shows it. */
 interface RowView {

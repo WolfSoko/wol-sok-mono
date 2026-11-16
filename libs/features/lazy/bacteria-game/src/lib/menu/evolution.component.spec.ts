@@ -8,7 +8,8 @@ import { GENES, WEAPONS } from '@wolsok/feat-shared-bacteria-engine';
 import { colonyLook } from './colony-preview.component';
 import { EvolutionComponent } from './evolution.component';
 import { geneKeys, weaponKeys } from './evolution-look';
-import { DE, EN, lookUp } from '@wolsok/feat-shared-bacteria-engine';
+import { lookUp } from '@wolsok/feat-shared-bacteria-engine';
+import { DE, EN } from '../i18n/texts/dictionaries';
 
 describe('EvolutionComponent', () => {
   let fixture: ComponentFixture<EvolutionComponent>;

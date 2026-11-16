@@ -1,6 +1,7 @@
 /**
  * The game's engine without Angular: the match, its simulation, replays,
- * levels, progress and the texts (ADR 0011). The game's UI, its Cloud
+ * levels, progress, the texts it renders itself and the translation
+ * mechanics (ADR 0011); the game's other texts are the game's. The game's UI, its Cloud
  * Functions and its admin area import it as
  * `@wolsok/feat-shared-bacteria-engine`; nothing imports a path inside it.
  *
@@ -8,8 +9,8 @@
  * an oxlint override guards the imports, Jest runs the specs in Node, and
  * `engine-bundle.spec.ts` bundles this file to prove it.
  */
-export { DE, DICTIONARIES, EN } from './lib/i18n/dictionaries';
-export type { TranslationKey } from './lib/i18n/dictionaries';
+export { ENGINE_EN } from './lib/i18n/engine-texts';
+export type { EngineTextKey } from './lib/i18n/engine-texts';
 export { english, renderGameText } from './lib/i18n/game-text';
 export type { GameText, GameTextParams, Translate } from './lib/i18n/game-text';
 export {
