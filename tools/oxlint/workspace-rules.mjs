@@ -24,17 +24,33 @@ const PATH_EXPRESSIONS = new Set([
 const EXPRESSION_PLACEHOLDER = '\0';
 const DISABLE_DIRECTIVE =
   /^\s*(?:eslint|oxlint)-disable(?:-next-line|-line)?\b/;
+/**
+ * Workspace libs that are test-only as a whole, every entry included, though
+ * none of their entries is named `testing` (`@wolsok/<name>`). Plain
+ * kebab-case names: each goes into a regular expression unescaped.
+ */
+const TEST_ONLY_LIBS = ['shared-firebase-emulator'];
 /** Module specifiers of the workspace's test-only code. */
 const TESTING_MODULES = [
   // A workspace lib's testing entry: `@wolsok/<lib>/testing` and below it.
   /^@wolsok\/[^/]+\/testing(?:\/|$)/,
+  // A test-only lib and every entry below it.
+  ...TEST_ONLY_LIBS.map((name) => new RegExp(`^@wolsok/${name}(?:/|$)`)),
   // A relative path through a `testing` folder or to a `testing` module.
   /^\.{1,2}\/(?:.*\/)?testing(?:\.[cm]?[jt]s)?(?:\/|$)/,
 ];
+/**
+ * A file naming none of these imports no test-only code. Each pattern of
+ * `TESTING_MODULES` needs a needle here, or the rule skips its imports.
+ */
+const TESTING_NEEDLES = ['testing', ...TEST_ONLY_LIBS];
 /** Test code under a project's `src/`, by its path inside the workspace. */
 const TEST_FILES = [
-  // Specs, emulator specs, Cypress component tests and mocks.
-  /\.(?:spec|test|emulator|cy|mock)\.[cm]?[jt]sx?$/,
+  // Specs, Cypress component tests and mocks.
+  /\.(?:spec|test|cy|mock)\.[cm]?[jt]sx?$/,
+  // Emulator specs, but no build environment (`environments/` folder, say
+  // `environment.emulator.ts`), which a build swaps in.
+  /^(?!(?:.*\/)?environments\/).*\.emulator\.[cm]?[jt]sx?$/,
   // Jest's setup and a lib's `testing.ts` entry.
   /(?:^|\/)(?:test-setup|testing)\.[cm]?[jt]s$/,
   // Everything below a `testing/` folder.
@@ -200,9 +216,11 @@ function propertyName(member) {
  * The `/testing` entries and `testing/` folders hold fakes that call
  * `jest.fn` or `vi.fn` at module load: pulled into a production chunk, they
  * break it at runtime. The boundary rule cannot see this, since it counts
- * `<lib>/testing` as `<lib>`. Enabled for production sources (`apps/*\/src`,
- * `libs/**\/src`) by an override in `.oxlintrc.json`; test files there are
- * recognised by their path (`TEST_FILES`).
+ * `<lib>/testing` as `<lib>`. The test-only libs (`TEST_ONLY_LIBS`) bring the
+ * emulators' test tooling and count with every entry. Enabled for
+ * production sources (`apps/*\/src`, `libs/**\/src`) by an override in
+ * `.oxlintrc.json`; test files there are recognised by their path
+ * (`TEST_FILES`).
  */
 const noTestingImport = {
   meta: {
@@ -223,7 +241,9 @@ const noTestingImport = {
     // Most files name no testing module at all: skip their nodes.
     if (
       TEST_FILES.some((pattern) => pattern.test(file)) ||
-      !context.sourceCode.text.includes('testing')
+      !TESTING_NEEDLES.some((needle) =>
+        context.sourceCode.text.includes(needle)
+      )
     ) {
       return {};
     }

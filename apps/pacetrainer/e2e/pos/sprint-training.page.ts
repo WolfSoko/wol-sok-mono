@@ -183,8 +183,11 @@ export class SprintTrainingPage {
     await this.toggleTrainingCta.click();
   }
 
-  async expectLeadInAnnounced(): Promise<void> {
-    await expect(this.sprintTraining).toContainText('als Nächstes: Bereit');
+  /** during the Vorlauf the screen names the first Intervall, in German */
+  async expectNextDuringLeadIn(firstIntervall: string): Promise<void> {
+    await expect(this.sprintTraining).toContainText(
+      `als Nächstes: ${firstIntervall}`
+    );
   }
 
   async expectCountdownTimer(number: number): Promise<void> {

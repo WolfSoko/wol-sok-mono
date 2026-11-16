@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { milliseconds } from '@wolsok/utils-time';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
 import { IntervalCountdownService } from './interval-countdown.service';
 
 class FakeUtterance {
@@ -49,7 +49,7 @@ describe('IntervalCountdownService', () => {
 
   function countDown(
     timeLeft: number,
-    countdownTo: TrainingName = 'sprint'
+    countdownTo: CountdownTarget = 'sprint'
   ): void {
     service.updateCountdown(
       milliseconds(5000),

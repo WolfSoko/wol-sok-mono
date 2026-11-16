@@ -16,7 +16,7 @@ import {
 import { ExerciseType } from '../model/training/exercise';
 import { RepositoryFactory } from '../repository/repository.factory';
 import { TrainingConfigWithDuration } from '../model/training/training-config-with.duration';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget, TrainingName } from '../model/training/training-name';
 
 export type RunPhase = 'ready' | 'leadIn' | 'running' | 'paused' | 'finished';
 
@@ -38,11 +38,17 @@ export interface Summary {
 
 export type TrainingRunView =
   | { phase: 'ready' }
-  | { phase: 'leadIn'; left: Milliseconds; total: Milliseconds }
+  | {
+      phase: 'leadIn';
+      left: Milliseconds;
+      total: Milliseconds;
+      /** the first Intervall, which starts once the Vorlauf ends */
+      next: TrainingName;
+    }
   | {
       phase: 'running' | 'paused';
       current: IntervalView;
-      next: TrainingName | 'finished';
+      next: CountdownTarget;
       elapsed: Milliseconds;
     }
   | { phase: 'finished'; summary: Summary };
@@ -287,6 +293,7 @@ function project(run: Run): TrainingRunView {
         phase: 'leadIn',
         left: subtract(LEAD_IN, run.elapsed),
         total: LEAD_IN,
+        next: trainingName(run.intervals[0].type),
       };
     case 'running':
     case 'paused': {
