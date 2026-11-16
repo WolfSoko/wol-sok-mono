@@ -34,6 +34,15 @@ const PUBLIC_URLS: Record<string, string> = {
   'rollapolla-analog': 'https://rollapolla.com/',
 };
 
+/** The one-retry helper every Firebase CLI call of a deploy runs through. */
+const RETRIED =
+  'tsx --tsconfig tools/tsconfig.tools.json tools/deploy/retry-once.ts';
+
+/** Escapes `text` for use as a literal in a regular expression. */
+function literal(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 describe('the Hosting deploys', () => {
   it('know the public domain of every Hosting config', () => {
     expect(HOSTING_APPS).toEqual(Object.keys(PUBLIC_URLS).sort());
@@ -48,10 +57,30 @@ describe('the Hosting deploys', () => {
       const { commands, parallel } = targets['deploy'].options;
 
       expect(parallel).toBe(false);
-      expect(commands?.at(-2)).toMatch(/firebase.* deploy/);
+      expect(commands?.at(-2)).toMatch(
+        new RegExp(
+          `^${literal(`${RETRIED} firebase --config=firebase.${app}.json --project=${app} deploy`)} `
+        )
+      );
+      // a prompt in CI would hang the deploy and its retry
+      expect(commands?.at(-2)).toMatch(/ --non-interactive$/);
       expect(commands?.at(-1)).toBe(
         `tsx --tsconfig tools/tsconfig.tools.json tools/deploy/check-live-index.ts firebase.${app}.json ${PUBLIC_URLS[app]}`
       );
     }
   );
+
+  // a single transient error of Google's API must not fail the release, so
+  // the deploy calls the CLI itself through the helper (#3034): a nested
+  // `nx run <app>:firebase` in the same release failed every functions deploy
+  it.each(HOSTING_APPS)('%s runs no nested Nx task', (app) => {
+    const { targets } = workspaceJson<{
+      targets: Record<string, DeployTarget>;
+    }>(`apps/${app}/project.json`);
+    const { command, commands } = targets['deploy'].options;
+
+    for (const line of [command, ...(commands ?? [])]) {
+      expect(line ?? '').not.toMatch(/\bnx\b/);
+    }
+  });
 });
