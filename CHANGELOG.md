@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.1...v74.172.2) (2026-11-16)
+
+### Refactorings
+
+* **feat-bacteria-rendering:** give the GPU simulation and the arena a lib of their own ([#3117](https://github.com/WolfSoko/wol-sok-mono/issues/3117)) ([c8789e7](https://github.com/WolfSoko/wol-sok-mono/commit/c8789e7ae500c6cd1efb24c56296b972d2c2fb5a)), references [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102)
+
 ## [74.172.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.0...v74.172.1) (2026-11-16)
 
 ### Bug Fixes
