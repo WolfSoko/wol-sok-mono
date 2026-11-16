@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.0...v74.172.1) (2026-11-16)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** bacteria busy spinner, whole and centred ([#3114](https://github.com/WolfSoko/wol-sok-mono/issues/3114)) ([8100b73](https://github.com/WolfSoko/wol-sok-mono/commit/8100b7360b6d9171b9a222e1060097dd88de5cb8)), references [#3104](https://github.com/WolfSoko/wol-sok-mono/issues/3104) [#3104](https://github.com/WolfSoko/wol-sok-mono/issues/3104) [#3104](https://github.com/WolfSoko/wol-sok-mono/issues/3104) [#3104](https://github.com/WolfSoko/wol-sok-mono/issues/3104)
+* **korbjaeger:** give the Vite configs' relative imports their file extension ([#3109](https://github.com/WolfSoko/wol-sok-mono/issues/3109)) ([f33e8b9](https://github.com/WolfSoko/wol-sok-mono/commit/f33e8b90fac3aaf30c2bb0d33a131f60c5950cad)), closes [#3057](https://github.com/WolfSoko/wol-sok-mono/issues/3057), references [#3057](https://github.com/WolfSoko/wol-sok-mono/issues/3057)
+* **nx-aws-cdk-v2:** run cdk with the task's stdio and end on SIGTERM ([#3116](https://github.com/WolfSoko/wol-sok-mono/issues/3116)) ([ca02d18](https://github.com/WolfSoko/wol-sok-mono/commit/ca02d184051afe05b0024ec418a3c93467f9100a)), closes [#3039](https://github.com/WolfSoko/wol-sok-mono/issues/3039), references [#3039](https://github.com/WolfSoko/wol-sok-mono/issues/3039)
+
+### Refactorings
+
+* **bacteria-game-remote:** rules test on rulesTestEnvironment ([#3096](https://github.com/WolfSoko/wol-sok-mono/issues/3096)) ([0a193b1](https://github.com/WolfSoko/wol-sok-mono/commit/0a193b1449a40f73b4dcf0372a12a0e13839faf0)), references [#2981](https://github.com/WolfSoko/wol-sok-mono/issues/2981) [#2981](https://github.com/WolfSoko/wol-sok-mono/issues/2981) [#2981](https://github.com/WolfSoko/wol-sok-mono/issues/2981)
+* **feat-shared-bacteria-engine:** move the UI texts into the game ([#3118](https://github.com/WolfSoko/wol-sok-mono/issues/3118)) ([2f9b38c](https://github.com/WolfSoko/wol-sok-mono/commit/2f9b38c139c578491af6f19aa1f36f46ddc933f4)), references [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103)
+
+### Chore
+
+* **release:** publish ([361498e](https://github.com/WolfSoko/wol-sok-mono/commit/361498e55ff2684ff7054c230ffa502facf068fc))
+
 ## [74.172.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.171.0...v74.172.0) (2026-11-16)
 
 ### Features
