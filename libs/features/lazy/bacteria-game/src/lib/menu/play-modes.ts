@@ -1,5 +1,5 @@
 import type { GameMode } from '../state/game.states';
-import { type TranslationKey } from '../i18n/game-texts';
+import type { TranslationKey } from '../i18n/game-texts';
 
 /** The ways to play a new game offers, each with steps of its own. */
 export type PlayKind =

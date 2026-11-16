@@ -1,3 +1,10 @@
+import {
+  type Dictionary,
+  ENGINE_EN,
+  type EntryPath,
+  type Language,
+  type Translation,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { achievements as deAchievements } from './de/achievements';
 import { common as deCommon } from './de/common';
 import { game as deGame } from './de/game';
@@ -36,13 +43,6 @@ import { replay as deReplay } from './de/replay';
 import { replay as enReplay } from './en/replay';
 import { moderation as deModeration } from './de/moderation';
 import { moderation as enModeration } from './en/moderation';
-import {
-  type Dictionary,
-  ENGINE_EN,
-  type EntryPath,
-  type Language,
-  type Translation,
-} from '@wolsok/feat-shared-bacteria-engine';
 
 /*
  * The game's texts, one area per screen or topic, so areas grow apart. The

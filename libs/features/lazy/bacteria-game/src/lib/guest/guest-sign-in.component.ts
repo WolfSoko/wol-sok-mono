@@ -7,9 +7,9 @@ import {
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { GuestNotice } from './guest-notice.service';
 import { SignIn } from './sign-in.service';
-import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * A line for guests where what they see belongs to their guest account -

@@ -28,6 +28,7 @@ import {
   rankKey,
   renderGameText,
   seriesKey,
+  TranslationKey,
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -63,7 +64,6 @@ import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
 import { canRaceAsGhost } from '../state/match-rules';
-import { TranslationKey } from '../i18n/game-texts';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =

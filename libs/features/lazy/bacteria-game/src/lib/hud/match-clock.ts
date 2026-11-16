@@ -1,5 +1,5 @@
 import { clock } from '@wolsok/feat-shared-bacteria-engine';
-import { type TranslationKey } from '../i18n/game-texts';
+import type { TranslationKey } from '../i18n/game-texts';
 
 /** The last seconds of a timed level, when its clock turns red. */
 export const RUNNING_OUT_SEC = 10;

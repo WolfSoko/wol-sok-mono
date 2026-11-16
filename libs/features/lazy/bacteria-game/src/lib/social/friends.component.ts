@@ -13,10 +13,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { ModerationService } from '../moderation/moderation.service';
 import { AvatarComponent } from './avatar.component';
 import { FriendView, SocialService } from './social.service';
-import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * The player's friends in the lobby - who is online, a challenge for those

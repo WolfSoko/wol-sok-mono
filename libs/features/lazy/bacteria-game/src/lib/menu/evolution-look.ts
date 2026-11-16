@@ -6,7 +6,7 @@ import {
   MAX_GENE_LEVEL,
   WeaponId,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { type TranslationKey } from '../i18n/game-texts';
+import type { TranslationKey } from '../i18n/game-texts';
 
 /**
  * How the menus show evolution: the colour of each weapon's aura and of

@@ -1,9 +1,10 @@
 /**
  * The game's engine without Angular: the match, its simulation, replays,
- * levels, progress, the texts it renders itself and the translation
- * mechanics (ADR 0011); the game's other texts are the game's. The game's UI, its Cloud
- * Functions and its admin area import it as
- * `@wolsok/feat-shared-bacteria-engine`; nothing imports a path inside it.
+ * levels, progress, the English texts it renders itself and the
+ * translation mechanics (ADR 0011); the game's other texts live in the
+ * game lib. The game's UI, its Cloud Functions and its admin area import
+ * it as `@wolsok/feat-shared-bacteria-engine`; nothing imports a path
+ * inside it.
  *
  * Everything here stays free of Angular, NgRx, RxJS, Firebase and the DOM:
  * an oxlint override guards the imports, Jest runs the specs in Node, and

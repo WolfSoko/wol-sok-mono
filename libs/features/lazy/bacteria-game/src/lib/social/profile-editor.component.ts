@@ -13,6 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { ModerationService } from '../moderation/moderation.service';
 import { GameAccount } from '../storage/game-account';
 import { AvatarComponent } from './avatar.component';
@@ -28,7 +29,6 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { shrinkImage } from './shrink-image';
 import { SocialService } from './social.service';
-import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * What other players see of the player - their name, picture and motto -

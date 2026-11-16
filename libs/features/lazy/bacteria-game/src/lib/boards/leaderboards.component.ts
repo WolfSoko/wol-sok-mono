@@ -12,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatTabsModule } from '@angular/material/tabs';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
 import {
   BOARD_KINDS,
@@ -23,7 +24,6 @@ import { DAILY_DAYS_SHOWN } from './board-rows';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';
 import { GuestSignInComponent } from '../guest/guest-sign-in.component';
-import { TranslationKey } from '../i18n/game-texts';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 

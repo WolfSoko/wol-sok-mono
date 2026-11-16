@@ -20,6 +20,7 @@ import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
 import {
@@ -32,7 +33,6 @@ import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { celebrate } from './evolution-fx';
 import { ScreenHeaderComponent } from './screen-header.component';
-import { TranslationKey } from '../i18n/game-texts';
 
 /**
  * The My Colony screen: the player's colony as it will look in the dish,

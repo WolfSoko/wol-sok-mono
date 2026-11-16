@@ -15,11 +15,8 @@ import type { Rgb } from '../arena/arena-theme';
 import { rgba } from '../arena/canvas-math';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { TranslationParams } from '@wolsok/feat-shared-bacteria-engine';
-import { I18nService } from '../i18n/i18n.service';
-import { TranslatePipe } from '../i18n/translate.pipe';
-import { GameSoundService } from '../sound/game-sound.service';
 import {
+  TranslationParams,
   GeneId,
   GENES,
   MAX_GENE_LEVEL,
@@ -27,6 +24,10 @@ import {
   WeaponId,
   WEAPONS,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { I18nService } from '../i18n/i18n.service';
+import { TranslatePipe } from '../i18n/translate.pipe';
+import { TranslationKey } from '../i18n/game-texts';
+import { GameSoundService } from '../sound/game-sound.service';
 import { WeaponDemoComponent } from './weapon-demo.component';
 import { ColonyPreviewComponent } from './colony-preview.component';
 import { DnaCounterComponent } from './dna-counter.component';
@@ -41,7 +42,6 @@ import {
   weaponKeys,
 } from './evolution-look';
 import { ScreenHeaderComponent } from './screen-header.component';
-import { TranslationKey } from '../i18n/game-texts';
 
 /** The level pips of a gene card. */
 const PIPS = Array.from({ length: MAX_GENE_LEVEL }, (_, index) => index);

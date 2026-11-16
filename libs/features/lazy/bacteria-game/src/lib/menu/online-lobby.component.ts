@@ -19,6 +19,7 @@ import {
   GameTextPipe,
   playerNameText,
   renderGameText,
+  type TranslationKey,
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -35,7 +36,6 @@ import { AvatarComponent } from '../social/avatar.component';
 import { FriendsComponent } from '../social/friends.component';
 import { SocialService } from '../social/social.service';
 import { CODE_LENGTH } from '../storage/game-rooms';
-import { type TranslationKey } from '../i18n/game-texts';
 
 /**
  * The lobby of online matches: find an opponent automatically, challenge a

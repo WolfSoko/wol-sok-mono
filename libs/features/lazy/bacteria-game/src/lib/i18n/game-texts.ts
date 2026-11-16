@@ -12,15 +12,13 @@ import {
   type RecipeId,
   type SeriesLength,
   type ZoneKind,
-} from '@wolsok/feat-shared-bacteria-engine';
-import type {
-  GameText as EngineGameText,
-  GameTextParams as EngineGameTextParams,
-  Translate as EngineTranslate,
+  type GameText as EngineGameText,
+  type GameTextParams as EngineGameTextParams,
+  type Translate as EngineTranslate,
 } from '@wolsok/feat-shared-bacteria-engine';
 import type { TranslationKey } from './texts/dictionaries';
 
-export type { TranslationKey } from './texts/dictionaries';
+export type { TranslationKey };
 
 /**
  * A text the game shows, by any key of its dictionaries: the engine's

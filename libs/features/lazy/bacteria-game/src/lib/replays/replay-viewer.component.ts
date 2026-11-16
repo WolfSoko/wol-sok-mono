@@ -29,6 +29,7 @@ import {
   requestFullscreen,
 } from '../fullscreen';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import type { TranslationKey } from '../i18n/game-texts';
 import { prefersReducedMotion } from '../reduced-motion';
 import {
   type BacteriaLook,
@@ -46,7 +47,6 @@ import {
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { ReplayScene, type ReplayLook } from './replay-scene';
-import { type TranslationKey } from '../i18n/game-texts';
 
 /** The speeds the viewer offers. */
 export const REPLAY_SPEEDS = [1, 2, 4] as const;
