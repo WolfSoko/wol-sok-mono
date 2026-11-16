@@ -1,56 +1,94 @@
-// Every relative import of a Vite config names its file extension (#3057):
-// Vite 8's config loader warns about each one without, in every Nx
-// project-graph run, and its planned default `configLoader: 'native'`
-// (Node's ESM loader) refuses them.
+// Every relative import a Vite config loads names its file extension
+// (#3057): Vite 8's config loader warns about each one without, in every
+// Nx project-graph run, and its planned default `configLoader: 'native'`
+// (Node's ESM loader) refuses them. The check follows the configs' relative
+// imports, so a helper they load (`tools/vite/*.ts`) is held to it too.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { extname } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, extname, join } from 'node:path';
 import { describe, it } from 'node:test';
+import { ROOT } from './workspace-projects.mjs';
 
 const CONFIG_PATTERNS = ['*vite.config.*', '*vitest.config.*'];
+
+/** What Node's ESM loader takes as a module's file extension. */
+const MODULE_EXTENSIONS = new Set([
+  '.ts',
+  '.mts',
+  '.cts',
+  '.js',
+  '.mjs',
+  '.cjs',
+  '.json',
+]);
 
 /** Relative specifiers of static imports, re-exports and `import()`. */
 const RELATIVE_SPECIFIER =
   /(?:\bfrom\s*|\bimport\s*\(\s*|^\s*import\s*)(['"])(\.\.?\/[^'"]*)\1/gm;
 
-function extensionlessImports(source) {
-  return [...source.matchAll(RELATIVE_SPECIFIER)]
-    .map(([, , specifier]) => specifier)
-    .filter((specifier) => extname(specifier) === '');
+function relativeSpecifiers(source) {
+  return [...source.matchAll(RELATIVE_SPECIFIER)].map(
+    ([, , specifier]) => specifier
+  );
+}
+
+function hasModuleExtension(specifier) {
+  return MODULE_EXTENSIONS.has(extname(specifier));
+}
+
+/**
+ * Each extensionless relative import of `file` and of every file it loads
+ * through relative imports, as `<file>: <specifier>` (paths from the root).
+ */
+function extensionlessImportsFrom(file, seen = new Set()) {
+  if (seen.has(file) || !existsSync(join(ROOT, file))) {
+    return [];
+  }
+  seen.add(file);
+  const specifiers = relativeSpecifiers(readFileSync(join(ROOT, file), 'utf8'));
+  return specifiers.flatMap((specifier) =>
+    hasModuleExtension(specifier)
+      ? extensionlessImportsFrom(join(dirname(file), specifier), seen)
+      : [`${file}: ${specifier}`]
+  );
 }
 
 function trackedViteConfigs() {
   return execFileSync('git', ['ls-files', '--', ...CONFIG_PATTERNS], {
+    cwd: ROOT,
     encoding: 'utf8',
   })
     .split('\n')
     .filter(Boolean);
 }
 
-describe('extensionlessImports', () => {
-  it('finds a relative import, re-export and import() without extension', () => {
+describe('relativeSpecifiers', () => {
+  it('finds imports, re-exports, side-effect imports and import()', () => {
     const source = [
       "import { a } from './deploy/a';",
-      "export { b } from '../../tools/vite/b';",
+      "export * from '../../tools/vite/b';",
       "const c = await import('./c');",
       "import './d';",
+      'import {\n  e,\n} from "./e.ts";',
+      "import { defineConfig } from 'vite';",
     ].join('\n');
-    assert.deepEqual(extensionlessImports(source), [
+    assert.deepEqual(relativeSpecifiers(source), [
       './deploy/a',
       '../../tools/vite/b',
       './c',
       './d',
+      './e.ts',
     ]);
   });
+});
 
-  it('accepts extensions and package imports', () => {
-    const source = [
-      "import { a } from './deploy/a.ts';",
-      "import analog from '@analogjs/platform';",
-      "import { defineConfig } from 'vite';",
-    ].join('\n');
-    assert.deepEqual(extensionlessImports(source), []);
+describe('hasModuleExtension', () => {
+  it('takes a module extension, not a dotted file name', () => {
+    assert.equal(hasModuleExtension('./a.ts'), true);
+    assert.equal(hasModuleExtension('./a.mjs'), true);
+    assert.equal(hasModuleExtension('./a'), false);
+    assert.equal(hasModuleExtension('./vite.shared'), false);
   });
 });
 
@@ -62,11 +100,11 @@ describe('Vite configs', () => {
   });
 
   for (const config of configs) {
-    it(`${config} names the file extension of each relative import`, () => {
+    it(`${config} and what it loads name each relative import's extension`, () => {
       assert.deepEqual(
-        extensionlessImports(readFileSync(config, 'utf8')),
+        extensionlessImportsFrom(config),
         [],
-        `add the file extension (e.g. '.ts') to these imports of ${config}`
+        `add the file extension (e.g. '.ts') to these imports`
       );
     });
   }

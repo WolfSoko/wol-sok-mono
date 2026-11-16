@@ -21,15 +21,16 @@ The other five Vite configs (`libs/features/korbjaeger-answers`, `libs/features/
 
 ## Decisions
 
-- **`.ts` extensions, not moved helpers.** Vite's bundled loader (today's default) and Node's native type stripping both resolve `./x.ts`; the configs are not type-checked by any tsconfig and type-aware oxlint already accepts them (checked by `nx lint`). Moving the helpers would change nothing about the extension.
-- **Guard by a test** in `tools/ci/vite-config-imports.test.mjs` (run by `nx test tools`): every tracked `vite.config.*` / `vitest.config.*` has a file extension on each relative import (`import … from`, `export … from`, `import()`). The `tools` test target gets the Vite configs among its inputs, so a config change reruns it.
+- **`.ts` extensions, not moved helpers.** Vite's bundled loader (today's default) and Node's native type stripping both resolve `./x.ts`. The same goes for the helpers the configs load (`tools/vite/nitro-ts-path-aliases.ts` imports `./workspace-file`). The configs are type-checked by each app's `tsconfig.editor.json` (`**/*.ts`), the helpers by `tools/tsconfig.tools.json`: both get `allowImportingTsExtensions` (with `noEmit`, which it requires; neither emits), else `tsc` and the editor report TS5097. Moving the helpers would change nothing about the extension.
+- **The oxlint boundary override** for `apps/*/vite.config.ts` allows the `tools/vite` helpers by an anchored regex, which now names the `.ts`.
+- **Guard by a test** in `tools/ci/vite-config-imports.test.mjs` (run by `nx test tools`): every tracked `vite.config.*` / `vitest.config.*`, and every file it loads through relative imports, has a module extension (`.ts`, `.mts`, `.js`, …, not just any dot) on each relative import (`import … from`, `export … from`, `import()`). The `tools` test target gets the Vite configs among its inputs, so a config change reruns it.
 
 ## Acceptance
 
 1. `nx reset && nx show projects` prints no "without a file extension" warning.
 2. `nx build korbjaeger` (its `build-app`), `nx build pacetrainer` and `nx build rollapolla-analog` still load their configs and build.
 3. `nx test tools` passes, and the new test fails on an extensionless relative import in a Vite config.
-4. `nx affected -t lint,lint-templates` passes.
+4. `nx affected -t lint,lint-templates` passes, and `tsc -p apps/<app>/tsconfig.editor.json` reports no TS5097 for the three apps.
 
 ## Open questions
 

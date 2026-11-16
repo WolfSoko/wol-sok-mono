@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { workspaceFile } from './workspace-file';
+import { workspaceFile } from './workspace-file.ts';
 
 /**
  * Nitro aliases for the workspace's `@wolsok/*` path aliases of
