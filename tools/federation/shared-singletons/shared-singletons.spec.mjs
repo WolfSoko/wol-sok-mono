@@ -11,6 +11,9 @@ import {
   missingSingletons,
 } from './shared-singletons.mjs';
 
+/** @param {string} a @param {string} b */
+const byName = (a, b) => a.localeCompare(b);
+
 const entry = (packageName, version = '1.0.0', singleton = true) => ({
   packageName,
   version,
@@ -112,7 +115,9 @@ describe('describeFinding', () => {
 describe('federation-shared-singletons project', () => {
   const root = join(import.meta.dirname, '../../..');
   const remotesOf = (path) =>
-    Object.keys(JSON.parse(readFileSync(join(root, path), 'utf8'))).sort();
+    Object.keys(JSON.parse(readFileSync(join(root, path), 'utf8'))).sort(
+      byName
+    );
 
   it('checks the same remotes the development manifest lists', () => {
     assert.deepEqual(remotesOf(DEV_MANIFEST_PATH), remotesOf(MANIFEST_PATH));
@@ -124,8 +129,8 @@ describe('federation-shared-singletons project', () => {
     );
 
     assert.deepEqual(
-      [...project.implicitDependencies].sort(),
-      [SHELL, ...remotesOf(MANIFEST_PATH)].sort()
+      [...project.implicitDependencies].sort(byName),
+      [SHELL, ...remotesOf(MANIFEST_PATH)].sort(byName)
     );
   });
 });
