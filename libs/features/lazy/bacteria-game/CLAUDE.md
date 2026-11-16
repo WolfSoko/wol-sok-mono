@@ -4,9 +4,9 @@ Rules for working on `libs/features/lazy/bacteria-game`, on top of the repo's
 `CLAUDE.md`.
 
 The engine (the match, its simulation, replays, levels, progress and the
-texts) is the lib `feat-shared-bacteria-engine` (`libs/features/bacteria-engine`,
-see its `CLAUDE.md`). Paths below that start with `state/`, or name the
-dictionaries in `i18n/`, are in that lib unless they name one of the five
+English texts it renders itself) is the lib `feat-shared-bacteria-engine`
+(`libs/features/bacteria-engine`, see its `CLAUDE.md`). Paths below that
+start with `state/` are in that lib unless they name one of the five
 Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
 `match-recorder.ts`, `player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
 through `@wolsok/feat-shared-bacteria-engine`.
@@ -522,12 +522,20 @@ play each other.
 
 - Every text the player sees goes through `I18nService.t` or the `t` pipe
   (`src/lib/i18n/`), with an English and a German entry in the area's
-  `en/` and `de/` files (in the engine lib's `src/lib/i18n/`). No literal user-facing strings in templates or
-  notices.
+  `en/` and `de/` files (`src/lib/i18n/texts/`, merged in its
+  `dictionaries.ts`). The English of the areas the engine renders into its
+  state (`achievements`, `game`, `levels`, `training`) is the engine's
+  (`ENGINE_EN`, its `src/lib/i18n/en/`); their German is here. A key the
+  engine builds goes into one of those four areas. The game's `GameText`,
+  `GameTextParams`, `Translate` and `TranslationKey` come from
+  `i18n/game-texts.ts` (the engine's `GameText` widened to every key of the
+  game); a text the engine builds is one too. Keeping the texts here keeps
+  a copy edit out of the engine's gates and the functions' deploy ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103)).
+  No literal user-facing strings in templates or notices.
 - The state and the engine keep ids, not texts: level names, achievement
   texts, colour names and the like are looked up by their id in the
-  components, never translated by the engine. The engine stays
-  language-free like it stays deterministic.
+  components; the engine renders only the English strings its state
+  carries (`english()`), never another language.
 
 ## Busy indicator
 

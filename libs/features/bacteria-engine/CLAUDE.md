@@ -7,8 +7,16 @@ determinism, replays, balance and texts hold here too.
 
 - The engine is the game without Angular: the match (`state/match-engine.ts`),
   both simulations, replays, levels, progress, achievements and the
-  dictionaries (`i18n/`). The game, its Cloud Functions
+  translation mechanics (`i18n/`). The game, its Cloud Functions
   (`apps/bacteria-wars-functions`) and the admin area play the same code.
+- **Texts:** the engine holds only the English it renders into its state
+  through `english()` (`ENGINE_EN` in `i18n/engine-texts.ts`: the areas
+  `achievements`, `game`, `levels`, `training` under `i18n/en/`). Every
+  other text, and all German, is the game's (`feat-lazy-bacteria-game`,
+  `src/lib/i18n/texts/`), so a copy edit there reruns none of the engine's
+  gates and deploys no function ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103)). A key the engine builds goes into
+  one of its four areas; `GameText<K>` is typed by the engine's keys
+  (`EngineTextKey`) by default, the game widens it to its own.
 - **Node only.** Nothing here imports Angular, NgRx, RxJS, Firebase, the
   DOM or the game's `arena/`, `gl/` and `sound/`. An oxlint override in
   `.oxlintrc.json` guards the imports, Jest runs every spec in Node
