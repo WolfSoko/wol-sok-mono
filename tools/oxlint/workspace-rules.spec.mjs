@@ -133,6 +133,9 @@ void describe('wolsok/no-testing-import', () => {
     "import { useEmulatorDb } from '../testing/emulator';",
     "import { fakeSelection } from './testing';",
     "import { zeigen } from '../../testing/zeigen.ts';",
+    "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';",
+    "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
+    "void import('@wolsok/shared-firebase-emulator');",
   ];
   for (const source of imports) {
     void it(`reports ${source}`, () => {
@@ -148,6 +151,8 @@ void describe('wolsok/no-testing-import', () => {
     "import { testingMode } from './testing-mode';",
     "import { x } from '../attesting/x';",
     "const path = '../testing/emulator';",
+    "import { x } from '@wolsok/shared-firebase-emulator-x';",
+    "import { x } from '@wolsok/shared-firebase';",
   ];
   for (const source of allowedImports) {
     void it(`allows ${source}`, () => {
@@ -159,21 +164,44 @@ void describe('wolsok/no-testing-import', () => {
     'game.component.spec.ts',
     'replay.test.ts',
     'boards.emulator.ts',
+    'src/boards/boards.emulator.ts',
+    'src/myenvironments/boards.emulator.ts',
     'draw-digit.component.cy.ts',
     'repository.factory.mock.ts',
     'test-setup.ts',
     'testing.ts',
     'testing/fake-game-cloud.ts',
     'app/account/testing/fake-account-service.ts',
+    'src/environments/environment.spec.ts',
   ];
   for (const name of testFiles) {
     void it(`allows testing imports in ${name}`, () => {
       deepStrictEqual(
         reportedCodes(
-          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
+          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';\n" +
+            "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';\n" +
+            "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
           name
         ),
         []
+      );
+    });
+  }
+
+  // An `environments/` folder holds build configurations, never emulator
+  // specs: `environment.emulator.ts` ships in a build.
+  const environmentFiles = [
+    'src/environments/environment.emulator.ts',
+    'environments/environment.emulator.ts',
+  ];
+  for (const name of environmentFiles) {
+    void it(`reports testing imports in ${name}`, () => {
+      deepStrictEqual(
+        reportedCodes(
+          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
+          name
+        ),
+        [TESTING_RULE]
       );
     });
   }
