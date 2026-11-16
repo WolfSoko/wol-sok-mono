@@ -28,7 +28,7 @@ import { gameReportPart } from './game-report-part';
 import { AsOfComponent } from '../as-of/as-of.component';
 import { applyClubColors } from '../club-colors/apply-club-colors';
 import { breadcrumb } from '../navigation/breadcrumb';
-import { followedSide } from './followed-club';
+import { followedSide } from './followed-side';
 
 /**
  * The Spiel page: the result and quarter scores, the Halle, and both
