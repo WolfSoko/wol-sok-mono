@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { milliseconds, seconds } from '@wolsok/utils-time';
-import { TrainingName } from '../model/training/training-name';
+import { CountdownTarget } from '../model/training/training-name';
 import {
   CUE_LEAD,
   countdownCue,
@@ -14,7 +14,7 @@ const FIVE_SECOND_WINDOW = milliseconds(5000);
 
 function cueAt(
   timeLeft: number,
-  countdownTo: TrainingName = 'sprint'
+  countdownTo: CountdownTarget = 'sprint'
 ): CountdownCue | null {
   return countdownCue({
     countdownTime: FIVE_SECOND_WINDOW,

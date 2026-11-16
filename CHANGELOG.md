@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.171.0...v74.172.0) (2026-11-16)
+
+### Features
+
+* **federation-shared-singletons:** check the remotes' singletons against the shell ([#3112](https://github.com/WolfSoko/wol-sok-mono/issues/3112)) ([93f6cd8](https://github.com/WolfSoko/wol-sok-mono/commit/93f6cd8592119930099737df5db738eb64e3a0f2)), references [#3085](https://github.com/WolfSoko/wol-sok-mono/issues/3085)
+
+### Bug Fixes
+
+* **oxlint-workspace-rules:** close two coverage gaps of no-testing-import ([#3113](https://github.com/WolfSoko/wol-sok-mono/issues/3113)) ([38be5c7](https://github.com/WolfSoko/wol-sok-mono/commit/38be5c73e13b7cf60dc11e743f85f32402980ff7)), closes [#2987](https://github.com/WolfSoko/wol-sok-mono/issues/2987)
+* **oxlint-workspace-rules:** keep the workspace rules out of every release ([#3099](https://github.com/WolfSoko/wol-sok-mono/issues/3099)) ([3da81ae](https://github.com/WolfSoko/wol-sok-mono/commit/3da81ae68a0253c912a2f239799dfb13855b7a41)), closes [#3015](https://github.com/WolfSoko/wol-sok-mono/issues/3015)
+* **pacetrainer:** count the lead-in down to the first Intervall ([#3119](https://github.com/WolfSoko/wol-sok-mono/issues/3119)) ([0b0ae5e](https://github.com/WolfSoko/wol-sok-mono/commit/0b0ae5e1fc060f8c4b977f4d0bd6dca416f356c8)), closes [#3062](https://github.com/WolfSoko/wol-sok-mono/issues/3062), references [#3062](https://github.com/WolfSoko/wol-sok-mono/issues/3062)
+* **spa-cdk-stack:** publish CommonJS that Node and NodeNext resolve ([#3108](https://github.com/WolfSoko/wol-sok-mono/issues/3108)) ([4c9b9c2](https://github.com/WolfSoko/wol-sok-mono/commit/4c9b9c2b9957ab1f21b265a81b60b99b1735593d)), closes [#3100](https://github.com/WolfSoko/wol-sok-mono/issues/3100), references [#3100](https://github.com/WolfSoko/wol-sok-mono/issues/3100)
+* **tools-deploy:** retry a failed Hosting deploy once for every Hosting app ([#3105](https://github.com/WolfSoko/wol-sok-mono/issues/3105)) ([475d760](https://github.com/WolfSoko/wol-sok-mono/commit/475d760ac4e673c96bf82967fdf76940de8b4744)), references [#3034](https://github.com/WolfSoko/wol-sok-mono/issues/3034) [#3034](https://github.com/WolfSoko/wol-sok-mono/issues/3034) [#3034](https://github.com/WolfSoko/wol-sok-mono/issues/3034) [#3034](https://github.com/WolfSoko/wol-sok-mono/issues/3034)
+* **tools:** close three gaps of the input guard and the deploy retry ([#3097](https://github.com/WolfSoko/wol-sok-mono/issues/3097)) ([d204e1c](https://github.com/WolfSoko/wol-sok-mono/commit/d204e1c4c07cf2421d161f76cac4fb088e98a48a)), references [#3051](https://github.com/WolfSoko/wol-sok-mono/issues/3051) [#3051](https://github.com/WolfSoko/wol-sok-mono/issues/3051)
+
+### Refactorings
+
+* **korbjaeger:** remove the dead followedClub ([#3111](https://github.com/WolfSoko/wol-sok-mono/issues/3111)) ([558cb83](https://github.com/WolfSoko/wol-sok-mono/commit/558cb83eafa8ca7b0c94025dccd9dc8a16c2b3ce)), references [#3090](https://github.com/WolfSoko/wol-sok-mono/issues/3090) [#3090](https://github.com/WolfSoko/wol-sok-mono/issues/3090)
+* **pacetrainer:** name the one-second lead of the countdown cues ([#3115](https://github.com/WolfSoko/wol-sok-mono/issues/3115)) ([3cf1f2f](https://github.com/WolfSoko/wol-sok-mono/commit/3cf1f2f528107d58a7461117787ec683ab574eb5)), references [#3098](https://github.com/WolfSoko/wol-sok-mono/issues/3098) [#3098](https://github.com/WolfSoko/wol-sok-mono/issues/3098) [#3098](https://github.com/WolfSoko/wol-sok-mono/issues/3098)
+
+### Chore
+
+* **release:** publish ([14db8e7](https://github.com/WolfSoko/wol-sok-mono/commit/14db8e7ae080d40b1f944e06fe7a3e9658693ab6))
+
 ## [74.171.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.170.4...v74.171.0) (2026-11-14)
 
 ### Features
