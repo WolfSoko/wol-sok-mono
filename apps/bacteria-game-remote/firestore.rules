@@ -538,8 +538,8 @@ service cloud.firestore {
       return id.matches('[A-Za-z0-9]{1,128}');
     }
 
-    // The value as JSON, kept well below the document limit of 1 MiB.
-    // A stored value (FirestoreGameStorage): its JSON, when it was written
+    // A stored value (FirestoreGameStorage): its JSON, kept well below the
+    // document limit of 1 MiB, when it was written
     // and, once a change was made by its id, the last 20 of those ids, so
     // a change made again on the next visit lands once (#3036).
     function isStoredValue(data) {

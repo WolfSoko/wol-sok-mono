@@ -315,14 +315,27 @@ describe('playerDocument', () => {
       expect(pendingOn(next)).toEqual([{ player: 'ada', value: ['gold'] }]);
     });
 
-    it('leaves the device once the cloud dropped it for good', async () => {
-      await signInToAda(() => {
-        throw new Error('refused');
+    it("stays for the account's next start when the cloud dropped it", async () => {
+      let refused = true;
+      await signInToAda((stored, guest) => {
+        if (refused) {
+          // As the rules refuse it once the account signed out meanwhile.
+          throw new Error('refused');
+        }
+        return union(stored, guest);
       });
-
       await answerAll();
+      expect(pendingOn()).toEqual([{ player: 'ada', value: ['gold'] }]);
 
-      expect(device.stored(ADOPTIONS)).toBeNull();
+      refused = false;
+      const next = new LateGameStorage({
+        [ADOPTIONS]: device.stored(ADOPTIONS),
+      });
+      createOn(next);
+      await answerAll(next);
+
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+      expect(next.stored(ADOPTIONS)).toBeNull();
     });
   });
 

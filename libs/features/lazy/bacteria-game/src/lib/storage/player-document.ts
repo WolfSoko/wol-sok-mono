@@ -120,12 +120,15 @@ export function playerDocument<T>(
 
   /**
    * Lands a pending adoption and takes it off the device once the storage
-   * stored it - or dropped it for good, as nothing could land it then.
+   * stored it. One the storage dropped stays for the account's next start:
+   * the rules refuse it after a sign-out, though the account takes it later.
    */
   const landAdoption = (id: string, guest: T, recorded: Promise<unknown>) => {
-    void Promise.all([adoptOnce(guest, id), recorded]).then(() =>
-      adoptions.remove(id)
-    );
+    void Promise.all([adoptOnce(guest, id), recorded]).then(([stored]) => {
+      if (stored) {
+        adoptions.remove(id);
+      }
+    });
   };
 
   const switchTo = ({ playerId, adoptsGuest }: PlayerSwitch): void => {

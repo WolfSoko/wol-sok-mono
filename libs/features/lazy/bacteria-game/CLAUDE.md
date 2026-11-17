@@ -300,7 +300,10 @@ storage until then. Settings stay with the device either way.
 - Stored values are JSON-plain data with a parser per key (`parseProgress`,
   for example). The parser keeps whatever it can read and drops the rest, so
   a damaged or older entry never throws. Firestore holds each value as a JSON
-  string, `players/{uid}/storage/{key}` = `{ json, updatedAt }`; the rules in
+  string, `players/{uid}/storage/{key}` = `{ json, updatedAt, applied? }`, `applied`
+  being the ids of the last 20 changes made once (`UpdateOptions.once`,
+  `APPLIED_LIMIT`), which every write path must keep (`update` carries it
+  over, `write` merges); the rules in
   `apps/bacteria-game-remote/firestore.rules` let only that player read and
   write it.
 - Data that more than one tab or device writes, such as progress, goes
@@ -322,6 +325,12 @@ storage until then. Settings stay with the device either way.
     is left in and stores it (#2820). That is safe only because `merge` can
     only gain; a document whose changes cannot be merged that way must not
     go through `playerDocument`.
+  - A guest's progress adopted into an account (`adopt`, which adds counts)
+    cannot be merged so: `playerDocument` keeps it under `<key>.adoptions`
+    by an adoption id until the cloud stored it (a dropped one stays), and
+    the account's next start on the device lands what is left with
+    `update(..., { once: id })`, which Firestore skips for an id it listed
+    in `applied` (#3036).
 - A late answer must not undo the player. A setting the storage does not
   hold and one the player changed before it answered keep their value. A
   match under way keeps its setup; the stored setup waits for the menu and is

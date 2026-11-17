@@ -28,8 +28,8 @@ export const APPLIED_LIMIT = 20;
  * Changes queue per key and run as transactions in turn, each on the latest
  * stored value, so a count lands exactly once. A change made once by its id
  * (`UpdateOptions.once`) lists the id in the document beside the JSON
- * (`applied`), in the same transaction, and every later write keeps it. A change that fails offline
- * waits to be online and runs then; one queued as a player signs out is
+ * (`applied`), in the same transaction, and every later write keeps it.
+ * A change that fails offline waits to be online and runs then; one queued as a player signs out is
  * refused by the rules and dropped; `update` resolves once its change is
  * stored or dropped. The queue lives as long as the page: a change not
  * stored when the page closes is lost here - `playerDocument` keeps what

@@ -39,15 +39,18 @@ document (the rules allow only its owner), so nothing can recover it from the cl
    only the transaction that writes the counts can say atomically whether they landed; a marker
    anywhere else (another document, the device) can disagree with the data.
 2. **The rules take the list.** `isStoredValue` in `apps/bacteria-game-remote/firestore.rules`
-   allows `applied` as an optional list of at most 20 strings. It deploys with the hosting deploy,
+   allows `applied` as an optional list of at most 20 ids (1-100 letters, digits, dashes, checked
+   over the joined text; a number passes, as `join()` writes its digits, and the client reads
+   strings only). It deploys with the hosting deploy,
    in the same release as the client.
 3. **A device journal of pending adoptions.** Beside the key, under `<key>.adoptions`
    (`pendingAdoptionsKey`) in `DeviceStorage`: per adoption id `{ player, value }`, the account
    it joins and the guest's value as the page held it. That is the shape of an unsaved change,
    so the journal reuses the pure functions of `unsaved-changes.ts` under its own key rather
    than copying them. `switchTo` records the entry, runs the adoption with `once: id`, and
-   removes the entry once both the record and the update resolved; an update resolving false
-   (dropped for good) removes it too, as nothing could ever land it. The device's privacy
+   removes the entry once the update resolved true. One resolving false stays for the account's
+   next start: the main cause is the rules refusing it after a sign-out, and the account can
+   still take it later; replaying by id is safe. The device's privacy
    policy (section 3, both languages) names this copy.
 4. **Replayed on the account's next start here.** Whenever a player starts with the cloud
    (`account.players`), every pending adoption of that player is run again with its id, and
@@ -59,13 +62,14 @@ document (the rules allow only its owner), so nothing can recover it from the cl
 ## Acceptance
 
 1. A sign-in that adopts records a pending adoption on the device before the adoption is stored,
-   and removes it once `update` resolved (true or false).
+   and removes it once `update` resolved true; a dropped one stays for the next start.
 2. A page that starts as a player with a pending adoption for them runs it with its id and then
    removes it; one of another player stays.
 3. `FirestoreGameStorage.update` with `once` skips a change whose id the document lists, lists the
    id after applying, keeps at most 20 ids, and keeps the list on every later `update` and `write`.
-4. The rules accept a stored value with `applied` (list of up to 20 strings) and refuse one with
-   more than 20, a non-list, or a non-string entry.
+4. The rules accept a stored value with `applied` (list of up to 20 ids), also through a merged
+   write, and refuse one with more than 20, a non-list, an empty id, an id with a comma or one
+   over 100 characters.
 5. Existing specs of `player-document`, `firestore-game-storage` and the rules stay green.
 
 ## Open questions

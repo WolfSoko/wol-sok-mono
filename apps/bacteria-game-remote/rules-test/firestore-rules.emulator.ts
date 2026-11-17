@@ -116,6 +116,23 @@ describe('stored values', () => {
     await assertFails(store({ applied: ['x'.repeat(101)] }));
   });
 
+  it('take a number as an id, which join() writes as its digits', async () => {
+    // Not worth an expression per entry: the client reads strings only.
+    await assertSucceeds(store({ applied: [ID, 7] }));
+  });
+
+  it('keep the ids through a merged write and a later update', async () => {
+    await assertSucceeds(store({ applied: [ID] }));
+    await assertSucceeds(
+      setDoc(
+        doc(db('ada'), PATH),
+        { json: '{"a":1}', updatedAt: serverTimestamp() },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(store({ json: '{"a":2}', applied: [ID, 'next-1'] }));
+  });
+
   it("refuse another player's value and other fields", async () => {
     await assertFails(
       setDoc(doc(db('bob'), PATH), {
