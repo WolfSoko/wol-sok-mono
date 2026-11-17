@@ -29,7 +29,7 @@ import {
   rmSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import { parseArgs, promisify } from 'node:util';
 
 const TSCONFIG_BASE = 'tsconfig.base.json';
@@ -54,15 +54,20 @@ export function keepsNxVerdict(file) {
  * What a change to `tsconfig.base.json` touches. Nx hashes the file into
  * every task, but a change to `compilerOptions.paths` alone matters only
  * through the files its aliases point to: those of every alias added, removed
- * or retargeted, old and new. Any other change touches the file itself, as
- * does one of a wildcard alias or target (holding a `*`), which names no
- * file literally.
+ * or retargeted, old and new, each normalised (`./libs/a/../b/x.ts` is
+ * `libs/b/x.ts`) as Nx's inputs name it. Any other change touches the file
+ * itself, as does one of a wildcard alias or target (holding a `*`), or a
+ * target that is no file at the base or the head (a directory, which
+ * TypeScript resolves to its `index.ts`, or a path outside the workspace):
+ * none of them names an input file literally (#3041).
  *
  * @param {object} before the file's JSON at the base
  * @param {object} after the file's JSON at the head
+ * @param {(path: string) => boolean} isFile whether a workspace-relative
+ *   path is a file at the base or the head
  * @returns {string[]} the files that count as changed
  */
-export function tsconfigBaseChanges(before, after) {
+export function tsconfigBaseChanges(before, after, isFile) {
   const pathsBefore = before.compilerOptions?.paths ?? {};
   const pathsAfter = after.compilerOptions?.paths ?? {};
   if (!sameJson(withoutPaths(before), withoutPaths(after))) {
@@ -82,7 +87,15 @@ export function tsconfigBaseChanges(before, after) {
   if (changed.some(isWildcard) || targets.some(isWildcard)) {
     return [TSCONFIG_BASE];
   }
-  return [...new Set(targets.map((target) => target.replace(/^\.\//, '')))];
+  const files = targets.map(normalisedTarget);
+  if (!files.every(isFile)) {
+    return [TSCONFIG_BASE];
+  }
+  return [...new Set(files)];
+}
+
+function normalisedTarget(target) {
+  return posix.normalize(target.replace(/^\.\//, ''));
 }
 
 function isWildcard(aliasOrTarget) {
@@ -359,6 +372,16 @@ async function jsonAt(ref, file) {
   return JSON.parse(stdout);
 }
 
+/** The files (blobs, never a directory) of a ref's tree. */
+async function filesAt(ref) {
+  const { stdout } = await execFileAsync(
+    'git',
+    ['ls-tree', '-r', '-z', '--name-only', ref],
+    { cwd: ROOT, maxBuffer: 64 * 1024 * 1024 }
+  );
+  return new Set(stdout.split('\0').filter((path) => path !== ''));
+}
+
 /**
  * A changed file as the files that count, from both sides of the diff; the
  * file itself where either side can't be read as JSON.
@@ -375,9 +398,16 @@ async function refineChange(change, refs) {
 async function refinedFiles({ status, file }, { base, head, target }) {
   if (status !== 'M') return [file];
   if (file === TSCONFIG_BASE) {
+    const [before, after, filesBefore, filesAfter] = await Promise.all([
+      jsonAt(base, file),
+      jsonAt(head, file),
+      filesAt(base),
+      filesAt(head),
+    ]);
     return tsconfigBaseChanges(
-      await jsonAt(base, file),
-      await jsonAt(head, file)
+      before,
+      after,
+      (path) => filesBefore.has(path) || filesAfter.has(path)
     );
   }
   if (target === 'deploy' && file.endsWith('/package.json')) {

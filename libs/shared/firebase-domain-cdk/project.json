@@ -1,0 +1,20 @@
+{
+  "name": "shared-firebase-domain-cdk",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/shared/firebase-domain-cdk/src",
+  "projectType": "library",
+  "tags": ["infra-shared"],
+  "namedInputs": {
+    "default": ["{projectRoot}/**/*", "sharedGlobals", "cdkTsconfig"],
+    "cdkTsconfig": ["{workspaceRoot}/tsconfig.cdk.json"]
+  },
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "libs/shared/firebase-domain-cdk/jest.config.ts"
+      }
+    }
+  }
+}
