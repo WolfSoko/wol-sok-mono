@@ -1,5 +1,5 @@
 import { filter, Observable, Subject } from 'rxjs';
-import type { GameStorage } from '../lib/storage/game-storage';
+import type { GameStorage, UpdateOptions } from '../lib/storage/game-storage';
 
 /**
  * A storage for specs that answers late, as a Firebase backend would: no
@@ -12,6 +12,8 @@ export class LateGameStorage implements GameStorage {
   private readonly values = new Map<string, string>();
   private readonly changed = new Subject<string>();
   private pending: (() => void)[] = [];
+  /** Per key, the ids of the changes made once that landed. */
+  private readonly applied = new Map<string, Set<string>>();
 
   public constructor(stored: Record<string, unknown> = {}) {
     for (const [key, value] of Object.entries(stored)) {
@@ -34,16 +36,26 @@ export class LateGameStorage implements GameStorage {
 
   /**
    * Resolves true once `flush()` (or `flushLast()`) answered the change,
-   * false when the change threw.
+   * false when the change threw. A change made `once` lands only for an id
+   * not seen under the key before, as the Firestore backend does.
    */
   public update(
     key: string,
-    change: (stored: unknown) => unknown
+    change: (stored: unknown) => unknown,
+    { once }: UpdateOptions = {}
   ): Promise<boolean> {
     return new Promise((resolve) =>
       this.pending.push(() => {
+        const applied = this.applied.get(key) ?? new Set<string>();
+        if (once !== undefined && applied.has(once)) {
+          resolve(true);
+          return;
+        }
         try {
           this.store(key, change(this.stored(key)));
+          if (once !== undefined) {
+            this.applied.set(key, applied.add(once));
+          }
           resolve(true);
         } catch {
           // As the real backends: a change that fails is dropped.

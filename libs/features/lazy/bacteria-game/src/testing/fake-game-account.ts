@@ -45,7 +45,8 @@ export class FakeGameAccount implements GameAccount {
         )
       ),
     write: (key, value) => this.current().write(key, value),
-    update: (key, change) => this.current().update(key, change),
+    update: (key, change, options) =>
+      this.current().update(key, change, options),
   };
 
   /** The storage of a player. */

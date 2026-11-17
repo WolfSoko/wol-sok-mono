@@ -1,7 +1,7 @@
 import type { DocumentReference, DocumentSnapshot } from 'firebase/firestore';
 import { EMPTY, filter, firstValueFrom, Observable, of, switchMap } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
-import type { GameStorage } from './game-storage';
+import type { GameStorage, UpdateOptions } from './game-storage';
 import { beforeRetry, errorCode } from './retry';
 import { parseJson } from '@wolsok/utils-json';
 
@@ -13,13 +13,22 @@ import { parseJson } from '@wolsok/utils-json';
 const FINAL_ERRORS = new Set(['permission-denied', 'invalid-argument']);
 
 /**
+ * How many ids of changes made once a document remembers (`applied`), the
+ * latest ones. A change made again after this many others were made once
+ * under the key would land twice; the game makes one once a sign-in.
+ */
+export const APPLIED_LIMIT = 20;
+
+/**
  * The game's storage in Firestore, a document per player and key -
  * `players/{uid}/storage/{key}` - holding the value as JSON, so any plain
  * JSON value fits, nested arrays too. It answers for whoever plays
  * (`playerIds`): on a switch, `watch` moves on to the next player's value.
  *
  * Changes queue per key and run as transactions in turn, each on the latest
- * stored value, so a count lands exactly once. A change that fails offline
+ * stored value, so a count lands exactly once. A change made once by its id
+ * (`UpdateOptions.once`) lists the id in the document beside the JSON
+ * (`applied`), in the same transaction, and every later write keeps it. A change that fails offline
  * waits to be online and runs then; one queued as a player signs out is
  * refused by the rules and dropped; `update` resolves once its change is
  * stored or dropped. The queue lives as long as the page: a change not
@@ -57,8 +66,9 @@ export class FirestoreGameStorage implements GameStorage {
         return;
       }
       // Not awaited: offline, Firestore keeps the write and sends it later.
+      // Merged, so the ids of the changes made once stay listed.
       dbSdk
-        .setDoc(ref, stored(dbSdk, json))
+        .setDoc(ref, stored(dbSdk, json), { merge: true })
         .catch((error: unknown) =>
           console.error(`Could not store ${key}`, error)
         );
@@ -67,17 +77,27 @@ export class FirestoreGameStorage implements GameStorage {
 
   public update(
     key: string,
-    change: (stored: unknown) => unknown
+    change: (stored: unknown) => unknown,
+    { once }: UpdateOptions = {}
   ): Promise<boolean> {
     const { db, dbSdk } = this.connection;
     return this.enqueue(key, async (ref) => {
       for (let attempt = 0; ; attempt++) {
         try {
           await dbSdk.runTransaction(db, async (transaction) => {
-            const before = jsonOf(await transaction.get(ref));
+            const snapshot = await transaction.get(ref);
+            const applied = appliedOf(snapshot);
+            if (once !== undefined && applied.includes(once)) {
+              return;
+            }
+            const before = jsonOf(snapshot);
             const after = JSON.stringify(change(parseJson(before)));
             if (after !== undefined && after !== before) {
-              transaction.set(ref, stored(dbSdk, after));
+              const listed = once === undefined ? applied : [...applied, once];
+              transaction.set(
+                ref,
+                stored(dbSdk, after, listed.slice(-APPLIED_LIMIT))
+              );
             }
           });
           return true;
@@ -148,9 +168,25 @@ export class FirestoreGameStorage implements GameStorage {
   }
 }
 
-/** The document as the rules expect it: the JSON and when it was written. */
-function stored(dbSdk: FirebaseConnection['dbSdk'], json: string) {
-  return { json, updatedAt: dbSdk.serverTimestamp() };
+/**
+ * The document as the rules expect it: the JSON, when it was written and
+ * the ids of the changes made once, where there are any.
+ */
+function stored(
+  dbSdk: FirebaseConnection['dbSdk'],
+  json: string,
+  applied: readonly string[] = []
+) {
+  const value = { json, updatedAt: dbSdk.serverTimestamp() };
+  return applied.length === 0 ? value : { ...value, applied };
+}
+
+/** The ids of the changes made once a document lists. */
+function appliedOf(snapshot: DocumentSnapshot): readonly string[] {
+  const applied: unknown = snapshot.get('applied');
+  return Array.isArray(applied)
+    ? applied.filter((id): id is string => typeof id === 'string')
+    : [];
 }
 
 /** The JSON a document holds, null when there is none. */

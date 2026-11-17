@@ -33,7 +33,9 @@ export class LocalGameStorage implements GameStorage {
   /**
    * Reads, changes and writes the value under a lock all tabs share, where
    * the browser has Web Locks: two tabs ending a match at once would both
-   * read the old count, and one match would be lost.
+   * read the old count, and one match would be lost. A change lands at
+   * once, never left for a later visit to make again, so `once` is not
+   * needed here.
    */
   public update(
     key: string,
