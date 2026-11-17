@@ -100,6 +100,9 @@
       "@wolsok/nx-aws-cdk-v2": ["./libs/public/nx-aws-cdk-v2/src/index.ts"],
       "@wolsok/shared-analytics": ["./libs/shared/analytics/src/index.ts"],
       "@wolsok/shared-e2e-server": ["./libs/shared/e2e-server/src/index.ts"],
+      "@wolsok/shared-firebase-domain-cdk": [
+        "./libs/shared/firebase-domain-cdk/src/index.ts"
+      ],
       "@wolsok/shared-firebase-emulator": [
         "./libs/shared/firebase-emulator/src/index.ts"
       ],
