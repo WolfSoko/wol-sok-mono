@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.2...v74.172.3) (2026-11-17)
+
+### Bug Fixes
+
+* **tools:** count tsconfig path targets that name no file as the base ([#3121](https://github.com/WolfSoko/wol-sok-mono/issues/3121)) ([272b2b9](https://github.com/WolfSoko/wol-sok-mono/commit/272b2b96a74c95d2cd6a219996fbee0dd7bbef68)), closes [#3041](https://github.com/WolfSoko/wol-sok-mono/issues/3041), references [#3041](https://github.com/WolfSoko/wol-sok-mono/issues/3041)
+
+### Refactorings
+
+* **bacteria-game-remote-cdk:** move the duplicated firebase-domain.ts into a shared infra lib ([#3123](https://github.com/WolfSoko/wol-sok-mono/issues/3123)) ([45b04cc](https://github.com/WolfSoko/wol-sok-mono/commit/45b04cc15256b96677b6f0afc2796173e039dca4)), references [#2991](https://github.com/WolfSoko/wol-sok-mono/issues/2991) [#2991](https://github.com/WolfSoko/wol-sok-mono/issues/2991) [#2991](https://github.com/WolfSoko/wol-sok-mono/issues/2991) [#2991](https://github.com/WolfSoko/wol-sok-mono/issues/2991)
+
 ## [74.172.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.1...v74.172.2) (2026-11-16)
 
 ### Refactorings
