@@ -23,6 +23,16 @@ export function unsavedKey(key: string): string {
   return `${key}.unsaved`;
 }
 
+/**
+ * The device storage key a document's pending adoptions go under: a guest's
+ * value joining an account, kept as an unsaved change by the adoption's id
+ * until the storage landed it (#3036). Apart from the unsaved changes, as
+ * it lands through `adopt`, once, not through `merge`.
+ */
+export function pendingAdoptionsKey(key: string): string {
+  return `${key}.adoptions`;
+}
+
 /** The entry a page keeps for a player, so two pages never share one. */
 export function unsavedEntry(page: string, player: string): string {
   return `${page}:${player}`;

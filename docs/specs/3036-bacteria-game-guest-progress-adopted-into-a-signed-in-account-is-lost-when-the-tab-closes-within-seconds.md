@@ -41,12 +41,14 @@ document (the rules allow only its owner), so nothing can recover it from the cl
 2. **The rules take the list.** `isStoredValue` in `apps/bacteria-game-remote/firestore.rules`
    allows `applied` as an optional list of at most 20 strings. It deploys with the hosting deploy,
    in the same release as the client.
-3. **A device journal of pending adoptions.** Beside the key, under `<key>.adoptions` in
-   `DeviceStorage`: per adoption id `{ player, value }`, the account it joins and the guest's
-   value as the page held it. Pure functions in `storage/pending-adoptions.ts`, like
-   `unsaved-changes.ts`. `switchTo` records the entry, runs the adoption with `once: id`, and
-   removes the entry once the update resolved true; an update resolving false (dropped for good)
-   removes it too, as nothing could ever land it.
+3. **A device journal of pending adoptions.** Beside the key, under `<key>.adoptions`
+   (`pendingAdoptionsKey`) in `DeviceStorage`: per adoption id `{ player, value }`, the account
+   it joins and the guest's value as the page held it. That is the shape of an unsaved change,
+   so the journal reuses the pure functions of `unsaved-changes.ts` under its own key rather
+   than copying them. `switchTo` records the entry, runs the adoption with `once: id`, and
+   removes the entry once both the record and the update resolved; an update resolving false
+   (dropped for good) removes it too, as nothing could ever land it. The device's privacy
+   policy (section 3, both languages) names this copy.
 4. **Replayed on the account's next start here.** Whenever a player starts with the cloud
    (`account.players`), every pending adoption of that player is run again with its id, and
    removed once stored. Two tabs replaying the same entry, or a tab replaying while the original
