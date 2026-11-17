@@ -86,6 +86,75 @@ function command(uid: string, type: string, extra: object = {}) {
   };
 }
 
+describe('stored values', () => {
+  const PATH = 'players/ada/storage/bacteria-game.progress';
+  const ID = '0f8fad5b-d9cb-469f-a165-70867728950e';
+
+  const store = (data: object) =>
+    setDoc(doc(db('ada'), PATH), {
+      json: '{}',
+      updatedAt: serverTimestamp(),
+      ...data,
+    });
+
+  it('take the JSON alone, and with the ids of changes made once', async () => {
+    await assertSucceeds(store({}));
+    await assertSucceeds(store({ applied: [] }));
+    await assertSucceeds(store({ applied: [ID, 'mz3x1-4k2j9'] }));
+    await assertSucceeds(
+      store({ applied: Array.from({ length: 20 }, (_, i) => `${ID}${i}`) })
+    );
+  });
+
+  it('refuse ids that are too many, not a list or not plain text', async () => {
+    await assertFails(
+      store({ applied: Array.from({ length: 21 }, (_, i) => `id-${i}`) })
+    );
+    await assertFails(store({ applied: ID }));
+    await assertFails(store({ applied: [''] }));
+    await assertFails(store({ applied: ['a,b'] }));
+    await assertFails(store({ applied: ['x'.repeat(101)] }));
+  });
+
+  it('take a number as an id, which join() writes as its digits', async () => {
+    // Not worth an expression per entry: the client reads strings only.
+    await assertSucceeds(store({ applied: [ID, 7] }));
+  });
+
+  it('keep the ids through a merged write and a later update', async () => {
+    await assertSucceeds(store({ applied: [ID] }));
+    await assertSucceeds(
+      setDoc(
+        doc(db('ada'), PATH),
+        { json: '{"a":1}', updatedAt: serverTimestamp() },
+        { merge: true }
+      )
+    );
+    await assertSucceeds(store({ json: '{"a":2}', applied: [ID, 'next-1'] }));
+  });
+
+  it('refuse a write that drops the ids, as a client from before them would', async () => {
+    await assertSucceeds(store({ applied: [ID] }));
+
+    await assertFails(
+      setDoc(doc(db('ada'), PATH), {
+        json: '{"a":1}',
+        updatedAt: serverTimestamp(),
+      })
+    );
+  });
+
+  it("refuse another player's value and other fields", async () => {
+    await assertFails(
+      setDoc(doc(db('bob'), PATH), {
+        json: '{}',
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(store({ extra: true }));
+  });
+});
+
 describe('declared attempts', () => {
   // The rules compare with the server's UTC day, as the client declares.
   const today = () => new Date().toISOString().slice(0, 10);

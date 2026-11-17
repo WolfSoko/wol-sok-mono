@@ -14,6 +14,7 @@ import { DeviceStorage, GameStorage } from './game-storage';
 import {
   droppedEntry,
   parseUnsaved,
+  pendingAdoptionsKey,
   storedUnsaved,
   UnsavedChanges,
   unsavedEntry,
@@ -64,7 +65,10 @@ export interface PlayerDocument<T> {
  * Keeps the player's data under a key of the game storage and follows the
  * player (`GameAccount.players`): on a switch it starts over from the next
  * player's, unless a guest signed in to an account that played elsewhere -
- * then the guest's data joins the account's, once. The first player of a
+ * then the guest's data joins the account's, once: kept on the device as a
+ * pending adoption until the cloud stored it, so a page closed before that
+ * leaves it for the account's next start here, which lands it by its id,
+ * once however often it is made (#3036). The first player of a
  * visit with the cloud also gets what this device kept under the key before
  * the cloud, once: the device's copy goes only once the cloud stored it.
  *
@@ -87,6 +91,7 @@ export function playerDocument<T>(
   const value = signal(empty, { equal });
   const loaded = signal(false);
   const unsaved = unsavedChanges(device, key, account.cloud, merge);
+  const adoptions = pendingAdoptions(device, key);
   /** Whoever plays, null between a sign-out and the next guest. */
   let player: string | null = null;
 
@@ -103,22 +108,59 @@ export function playerDocument<T>(
     void store(next, write);
   };
 
-  const adoptOnce = (guest: T): Promise<boolean> => {
+  /** Adds `guest` to the stored value - once, where it has an `id`. */
+  const adoptOnce = (guest: T, id?: string): Promise<boolean> => {
     if (equal(guest, empty)) {
       return Promise.resolve(true);
     }
-    return storage.update(key, (stored) => adopt(parse(stored), guest));
+    return storage.update(key, (stored) => adopt(parse(stored), guest), {
+      once: id,
+    });
   };
 
-  const switchTo = ({ adoptsGuest }: PlayerSwitch): void => {
+  /**
+   * Lands a pending adoption and takes it off the device once the storage
+   * stored it. One the storage dropped stays for the account's next start:
+   * the rules refuse it after a sign-out, though the account takes it later.
+   */
+  const landAdoption = (id: string, guest: T, recorded: Promise<unknown>) => {
+    void Promise.all([adoptOnce(guest, id), recorded]).then(([stored]) => {
+      if (stored) {
+        adoptions.remove(id);
+      }
+    });
+  };
+
+  const switchTo = ({ playerId, adoptsGuest }: PlayerSwitch): void => {
     const guest = value();
     loaded.set(false);
     value.set(empty);
     onSwitch?.();
-    if (adoptsGuest) {
-      void adoptOnce(guest);
+    if (!adoptsGuest || equal(guest, empty)) {
+      return;
     }
+    if (playerId === null || !account.cloud) {
+      void adoptOnce(guest);
+      return;
+    }
+    const id = uniqueId();
+    landAdoption(id, guest, adoptions.record(id, playerId, guest));
   };
+
+  /**
+   * Lands what is left pending for the player on the device: adoptions of
+   * pages closed before the cloud stored them. Each lands once by its id,
+   * so one that did land, or that another page still lands, adds nothing.
+   */
+  const landPendingAdoptions = (owner: string): Observable<never> =>
+    adoptions.of(owner).pipe(
+      tap((pending) => {
+        for (const [id, { value: guest }] of Object.entries(pending)) {
+          landAdoption(id, parse(guest), Promise.resolve());
+        }
+      }),
+      ignoreElements()
+    );
 
   /**
    * Hands the device's copy to the player, once: kept as an unsaved change
@@ -186,7 +228,9 @@ export function playerDocument<T>(
         }
         const handOver = [
           ...(index === 0 ? [deviceCopy()] : []),
-          ...(player === null ? [] : [replayUnsaved(player)]),
+          ...(player === null
+            ? []
+            : [replayUnsaved(player), landPendingAdoptions(player)]),
         ];
         return mergeStreams(...handOver, stored);
       }),
@@ -229,7 +273,7 @@ function unsavedChanges<T>(
   cloud: boolean,
   merge: (held: T, other: T) => T
 ): UnsavedJournal<T> {
-  const page = pageId();
+  const page = uniqueId();
   const journalKey = unsavedKey(key);
   /** What this page kept per player since the last change stored. */
   const kept = new Map<string, { value: T }>();
@@ -304,8 +348,57 @@ function unsavedChanges<T>(
   };
 }
 
-/** Names this page apart from every other page of the device. */
-function pageId(): string {
+/** The adoptions this page started or found pending on the device. */
+interface PendingAdoptions {
+  /** Keeps an adoption on the device; resolves once the device answered. */
+  record(id: string, player: string, guest: unknown): Promise<boolean>;
+  /**
+   * The player's adoptions on the device, read once - without those this
+   * page started or found before, which it lands already.
+   */
+  of(player: string): Observable<UnsavedChanges>;
+  /** Takes an adoption off the device. */
+  remove(id: string): void;
+}
+
+/** The pending adoptions of a key in the device storage. */
+function pendingAdoptions(device: GameStorage, key: string): PendingAdoptions {
+  const journalKey = pendingAdoptionsKey(key);
+  /** The ids this page lands, so it never starts one twice. */
+  const landing = new Set<string>();
+  const change = (
+    edit: (changes: UnsavedChanges) => UnsavedChanges
+  ): Promise<boolean> =>
+    device.update(journalKey, (stored) =>
+      storedUnsaved(edit(parseUnsaved(stored)))
+    );
+
+  return {
+    record(id, player, guest) {
+      landing.add(id);
+      return change((changes) =>
+        withUnsaved(changes, id, { player, value: guest })
+      );
+    },
+    of(player) {
+      return device.watch(journalKey).pipe(
+        take(1),
+        map((stored) => {
+          const theirs = unsavedOf(parseUnsaved(stored), player);
+          const fresh = withoutUnsaved(theirs, [...landing]);
+          Object.keys(fresh).forEach((id) => landing.add(id));
+          return fresh;
+        })
+      );
+    },
+    remove(id) {
+      void change((changes) => withoutUnsaved(changes, [id]));
+    },
+  };
+}
+
+/** Names this page, or a change, apart from every other of the device. */
+function uniqueId(): string {
   return (
     globalThis.crypto?.randomUUID?.() ??
     `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`

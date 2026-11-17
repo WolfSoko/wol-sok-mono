@@ -3,6 +3,16 @@ import { Observable } from 'rxjs';
 import { GameCloud } from './game-cloud';
 import { LocalGameStorage } from './local-game-storage';
 
+/** How a change is made. */
+export interface UpdateOptions {
+  /**
+   * Names a change that must land once, however often it is made again -
+   * on the next visit, in another tab: the storage remembers the id with
+   * the change it landed, and skips the change for an id it remembers.
+   */
+  once?: string;
+}
+
 /**
  * Where the game keeps what it remembers between visits, value by key: the
  * player's progress. It answers for whoever plays (`GameAccount`) - from the
@@ -49,10 +59,16 @@ export abstract class GameStorage {
    * and false once the backend dropped it for good; it never rejects. A
    * change that waits to be online stays unresolved meanwhile, and one the
    * page leaves behind when it closes never resolves.
+   *
+   * With `once`, a backend shared between devices lands the change only if
+   * no change with that id landed before under the key; one found to have
+   * landed resolves true too. The browser's backend lands every change at
+   * once, so nothing is made again, and ignores it.
    */
   public abstract update(
     key: string,
-    change: (stored: unknown) => unknown
+    change: (stored: unknown) => unknown,
+    options?: UpdateOptions
   ): Promise<boolean>;
 }
 

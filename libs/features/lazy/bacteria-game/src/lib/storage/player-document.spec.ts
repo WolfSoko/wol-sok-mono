@@ -222,6 +222,123 @@ describe('playerDocument', () => {
     });
   });
 
+  describe('an adoption the cloud has not stored yet', () => {
+    const ADOPTIONS = `${KEY}.adoptions`;
+
+    /** The pending adoptions on a device, as their players and values. */
+    function pendingOn(
+      onDevice = device
+    ): { player: string; value: unknown }[] {
+      const adoptions = (onDevice.stored(ADOPTIONS) ?? {}) as Record<
+        string,
+        { player: string; value: unknown }
+      >;
+      return Object.values(adoptions);
+    }
+
+    /** A guest holding gold signs in to ada, who holds silver. */
+    async function signInToAda(
+      adopt: (stored: Badges, guest: Badges) => Badges = union
+    ): Promise<void> {
+      create({ stored: { [KEY]: ['gold'] }, adopt });
+      account.flush();
+      account.seed('ada', { [KEY]: ['silver'] });
+      account.switchTo('ada', true);
+      device.flush();
+      await settle();
+    }
+
+    it('is kept on the device until the account stored it', async () => {
+      await signInToAda();
+
+      expect(pendingOn()).toEqual([{ player: 'ada', value: ['gold'] }]);
+      await answerAll();
+
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+      expect(device.stored(ADOPTIONS)).toBeNull();
+    });
+
+    it("lands on the account's next start here when the page closed before", async () => {
+      await signInToAda();
+      const left = device.stored(ADOPTIONS);
+
+      // The page closes before the cloud answered; the next visit starts.
+      account = new FakeGameAccount('ada');
+      account.seed('ada', { [KEY]: ['silver'] });
+      const next = new LateGameStorage({ [ADOPTIONS]: left });
+      const visit = createOn(next);
+      await answerAll(next);
+
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+      expect(visit.value()).toEqual(['gold', 'silver']);
+      expect(next.stored(ADOPTIONS)).toBeNull();
+    });
+
+    it('lands once when the next start finds it though it landed', async () => {
+      const adopt = jest.fn(union);
+      await signInToAda(adopt);
+      // The account stored it, but the page closed before the device heard.
+      account.flush();
+      await settle();
+      const left = device.stored(ADOPTIONS);
+      expect(left).not.toBeNull();
+
+      const next = new LateGameStorage({ [ADOPTIONS]: left });
+      createOn(next, { adopt });
+      await answerAll(next);
+
+      expect(adopt).toHaveBeenCalledTimes(1);
+      expect(next.stored(ADOPTIONS)).toBeNull();
+    });
+
+    it('lands once though a second page finds it while the first still lands it', async () => {
+      const adopt = jest.fn(union);
+      await signInToAda(adopt);
+
+      createOn(device, { adopt });
+      await answerAll();
+
+      expect(adopt).toHaveBeenCalledTimes(1);
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+    });
+
+    it("waits for its own player, leaving another player's start alone", async () => {
+      await signInToAda();
+      const left = device.stored(ADOPTIONS);
+
+      account = new FakeGameAccount('guest');
+      const next = new LateGameStorage({ [ADOPTIONS]: left });
+      createOn(next);
+      await answerAll(next);
+
+      expect(account.storageOf('guest').stored(KEY)).toBeNull();
+      expect(pendingOn(next)).toEqual([{ player: 'ada', value: ['gold'] }]);
+    });
+
+    it("stays for the account's next start when the cloud dropped it", async () => {
+      let refused = true;
+      await signInToAda((stored, guest) => {
+        if (refused) {
+          // As the rules refuse it once the account signed out meanwhile.
+          throw new Error('refused');
+        }
+        return union(stored, guest);
+      });
+      await answerAll();
+      expect(pendingOn()).toEqual([{ player: 'ada', value: ['gold'] }]);
+
+      refused = false;
+      const next = new LateGameStorage({
+        [ADOPTIONS]: device.stored(ADOPTIONS),
+      });
+      createOn(next);
+      await answerAll(next);
+
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+      expect(next.stored(ADOPTIONS)).toBeNull();
+    });
+  });
+
   describe('the copy this device kept before the cloud', () => {
     it('leaves the device at once, kept as unsaved until the cloud stored it', async () => {
       create({ onDevice: { [KEY]: ['gold'] } });

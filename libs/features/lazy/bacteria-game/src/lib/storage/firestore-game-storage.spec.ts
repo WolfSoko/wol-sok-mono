@@ -1,6 +1,6 @@
 import { BehaviorSubject, Subscription } from 'rxjs';
 import { FakeFirebase, settleSnapshots } from '../../testing/fake-firebase-sdk';
-import { FirestoreGameStorage } from './firestore-game-storage';
+import { APPLIED_LIMIT, FirestoreGameStorage } from './firestore-game-storage';
 
 const KEY = 'bacteria-game.progress';
 
@@ -163,6 +163,93 @@ describe('FirestoreGameStorage', () => {
 
     expect(valueOf(firestore, 'guest')).toEqual({ count: 1 });
     expect(valueOf(firestore, 'alice')).toBeNull();
+  });
+
+  describe('a change made once, by its id', () => {
+    /** The ids of the changes made once that the document lists. */
+    function appliedOf(uid = 'alice'): unknown {
+      return firestore.docs.get(`players/${uid}/storage/${KEY}`)?.['applied'];
+    }
+
+    it('lands and lists its id', async () => {
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
+      expect(appliedOf()).toEqual(['adoption-1']);
+    });
+
+    it('is skipped once its id is listed, however often it comes again', async () => {
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+      await expect(
+        storage.update(KEY, addOne, { once: 'adoption-1' })
+      ).resolves.toBe(true);
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 1 });
+      expect(firestore.writes.length).toBe(1);
+    });
+
+    it('lands beside another change made once', async () => {
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+      await storage.update(KEY, addOne, { once: 'adoption-2' });
+
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 2 });
+      expect(appliedOf()).toEqual(['adoption-1', 'adoption-2']);
+    });
+
+    it(`keeps only the last ${APPLIED_LIMIT} ids`, async () => {
+      for (let i = 0; i <= APPLIED_LIMIT; i++) {
+        await storage.update(KEY, addOne, { once: `adoption-${i}` });
+      }
+
+      const applied = appliedOf() as string[];
+      expect(applied.length).toBe(APPLIED_LIMIT);
+      expect(applied[0]).toBe('adoption-1');
+      expect(applied.at(-1)).toBe(`adoption-${APPLIED_LIMIT}`);
+    });
+
+    it('stays listed after later changes and writes', async () => {
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+      await storage.update(KEY, addOne);
+      watched();
+      storage.write(KEY, { count: 9 });
+      await settleSnapshots();
+
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 9 });
+      expect(appliedOf()).toEqual(['adoption-1']);
+      await storage.update(KEY, addOne, { once: 'adoption-1' });
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 9 });
+    });
+
+    it('is listed though it changed nothing, so a later value keeps it out', async () => {
+      const once = { once: 'adoption-1' };
+      const atMostOne = (stored: unknown) => ({
+        count: Math.min(
+          ((stored as { count?: number } | null)?.count ?? 0) + 1,
+          1
+        ),
+      });
+      await storage.update(KEY, () => ({ count: 1 }));
+      await storage.update(KEY, atMostOne, once);
+      await storage.update(KEY, () => ({ count: 0 }));
+      await storage.update(KEY, atMostOne, once);
+
+      expect(appliedOf()).toEqual(['adoption-1']);
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 0 });
+    });
+
+    it('lists nothing beside a value only ever changed plainly', async () => {
+      await storage.update(KEY, addOne);
+      storage.write('bacteria-game.settings', { sound: true });
+      await settleSnapshots();
+
+      expect(appliedOf()).toBeUndefined();
+      expect(
+        firestore.docs.get('players/alice/storage/bacteria-game.settings')?.[
+          'applied'
+        ]
+      ).toBeUndefined();
+    });
   });
 
   it('holds the writes while a ban holds, and makes them once it ends', async () => {
