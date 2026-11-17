@@ -230,24 +230,32 @@ function withPaths(paths, target = 'ES2022') {
   return { compilerOptions: { target, paths } };
 }
 
+/** The files at the base or the head, as the CLI reads them from git. */
+const FILES = new Set([
+  'libs/a/src/index.ts',
+  'libs/a/src/main.ts',
+  'libs/b/src/index.ts',
+]);
+const isFile = (path) => FILES.has(path);
+
 void describe('tsconfigBaseChanges', () => {
   void it('counts a new alias as the files it points to', () => {
     const after = withPaths({
       '@wolsok/a': ['./libs/a/src/index.ts'],
       '@wolsok/b': ['./libs/b/src/index.ts'],
     });
-    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, after), [
+    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, after, isFile), [
       'libs/b/src/index.ts',
     ]);
   });
 
   void it('counts a retargeted or removed alias by its old and new files', () => {
     const retargeted = withPaths({ '@wolsok/a': ['./libs/a/src/main.ts'] });
-    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retargeted), [
+    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retargeted, isFile), [
       'libs/a/src/index.ts',
       'libs/a/src/main.ts',
     ]);
-    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, withPaths({})), [
+    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, withPaths({}), isFile), [
       'libs/a/src/index.ts',
     ]);
   });
@@ -276,7 +284,40 @@ void describe('tsconfigBaseChanges', () => {
     };
     for (const [name, [before, after]] of Object.entries(cases)) {
       assert.deepEqual(
-        tsconfigBaseChanges(before, after),
+        tsconfigBaseChanges(before, after, isFile),
+        ['tsconfig.base.json'],
+        name
+      );
+    }
+  });
+
+  void it('counts a non-normalised target as the file it names', () => {
+    const after = withPaths({
+      '@wolsok/a': ['./libs/a/src/index.ts'],
+      '@wolsok/b': ['./libs/a/../b/src/./index.ts'],
+    });
+    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, after, isFile), [
+      'libs/b/src/index.ts',
+    ]);
+  });
+
+  // A target naming a directory (TypeScript resolves it to its `index.ts`),
+  // a path outside the workspace or one that exists nowhere matches no input
+  // file, so the change counts as the base itself, which keeps Nx's verdict.
+  void it('counts a target that names no file as the file itself', () => {
+    const cases = {
+      directory: './libs/b/src',
+      'directory with a trailing slash': './libs/b/src/',
+      'outside the workspace': '../elsewhere/src/index.ts',
+      'missing on both sides': './libs/c/src/index.ts',
+    };
+    for (const [name, target] of Object.entries(cases)) {
+      const after = withPaths({
+        '@wolsok/a': ['./libs/a/src/index.ts'],
+        '@wolsok/b': [target],
+      });
+      assert.deepEqual(
+        tsconfigBaseChanges(TSCONFIG, after, isFile),
         ['tsconfig.base.json'],
         name
       );
@@ -285,7 +326,7 @@ void describe('tsconfigBaseChanges', () => {
 
   void it('counts any other change as the file itself', () => {
     const retarget = withPaths(TSCONFIG.compilerOptions.paths, 'ES2024');
-    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retarget), [
+    assert.deepEqual(tsconfigBaseChanges(TSCONFIG, retarget, isFile), [
       'tsconfig.base.json',
     ]);
   });
