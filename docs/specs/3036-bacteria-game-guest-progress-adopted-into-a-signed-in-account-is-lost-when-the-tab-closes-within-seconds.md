@@ -25,9 +25,9 @@ document (the rules allow only its owner), so nothing can recover it from the cl
 - The device's pre-cloud copy (`deviceCopy`) keeps its own handover through the unsaved-changes
   journal.
 - No change to how `adoptProgress`/`adoptEvolution` combine values.
-- Clients of an older release overwrite the document whole and drop the markers below; an
-  adoption replayed after such a write could land twice. Accepted: the window is one release,
-  and needs a pending adoption plus an old client writing the same key meanwhile.
+- A pending adoption still waiting after 20 later adoptions of the same account on other
+  devices could land twice, as the document keeps the last 20 ids only. Accepted: it needs 21
+  sign-ins that adopt, elsewhere, before this device starts the account again.
 
 ## Decisions
 
@@ -41,7 +41,11 @@ document (the rules allow only its owner), so nothing can recover it from the cl
 2. **The rules take the list.** `isStoredValue` in `apps/bacteria-game-remote/firestore.rules`
    allows `applied` as an optional list of at most 20 ids (1-100 letters, digits, dashes, checked
    over the joined text; a number passes, as `join()` writes its digits, and the client reads
-   strings only). It deploys with the hosting deploy,
+   strings only). A write that drops a listed `applied` is refused (`keepsAppliedIds`): a client
+   of an older release replaces the document whole, which would let a pending adoption land
+   twice; its refused change stays in its device's unsaved-changes journal for the next visit.
+   A change made once is listed even where it changed nothing, so a later value it would change
+   does not make it again. It deploys with the hosting deploy,
    in the same release as the client.
 3. **A device journal of pending adoptions.** Beside the key, under `<key>.adoptions`
    (`pendingAdoptionsKey`) in `DeviceStorage`: per adoption id `{ player, value }`, the account

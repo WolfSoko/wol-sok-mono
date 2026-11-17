@@ -303,7 +303,7 @@ storage until then. Settings stay with the device either way.
   string, `players/{uid}/storage/{key}` = `{ json, updatedAt, applied? }`, `applied`
   being the ids of the last 20 changes made once (`UpdateOptions.once`,
   `APPLIED_LIMIT`), which every write path must keep (`update` carries it
-  over, `write` merges); the rules in
+  over, `write` merges, and the rules refuse a write that drops it); the rules in
   `apps/bacteria-game-remote/firestore.rules` let only that player read and
   write it.
 - Data that more than one tab or device writes, such as progress, goes

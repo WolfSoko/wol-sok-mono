@@ -221,6 +221,23 @@ describe('FirestoreGameStorage', () => {
       expect(valueOf(firestore, 'alice')).toEqual({ count: 9 });
     });
 
+    it('is listed though it changed nothing, so a later value keeps it out', async () => {
+      const once = { once: 'adoption-1' };
+      const atMostOne = (stored: unknown) => ({
+        count: Math.min(
+          ((stored as { count?: number } | null)?.count ?? 0) + 1,
+          1
+        ),
+      });
+      await storage.update(KEY, () => ({ count: 1 }));
+      await storage.update(KEY, atMostOne, once);
+      await storage.update(KEY, () => ({ count: 0 }));
+      await storage.update(KEY, atMostOne, once);
+
+      expect(appliedOf()).toEqual(['adoption-1']);
+      expect(valueOf(firestore, 'alice')).toEqual({ count: 0 });
+    });
+
     it('lists nothing beside a value only ever changed plainly', async () => {
       await storage.update(KEY, addOne);
       storage.write('bacteria-game.settings', { sound: true });

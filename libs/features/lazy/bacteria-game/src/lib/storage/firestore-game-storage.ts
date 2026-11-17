@@ -92,7 +92,12 @@ export class FirestoreGameStorage implements GameStorage {
             }
             const before = jsonOf(snapshot);
             const after = JSON.stringify(change(parseJson(before)));
-            if (after !== undefined && after !== before) {
+            // A change made once is listed even where it changed nothing,
+            // so a later value it would change does not make it again.
+            if (
+              after !== undefined &&
+              (after !== before || once !== undefined)
+            ) {
               const listed = once === undefined ? applied : [...applied, once];
               transaction.set(
                 ref,

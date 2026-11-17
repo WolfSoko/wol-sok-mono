@@ -9,7 +9,8 @@ service cloud.firestore {
       allow read: if isPlayer(playerId);
       allow create, update: if isPlayer(playerId) && notBanned() &&
         key.matches('bacteria-game[.][a-z-]+') &&
-        isStoredValue(request.resource.data);
+        isStoredValue(request.resource.data) &&
+        keepsAppliedIds();
       allow delete: if isPlayer(playerId);
     }
 
@@ -548,6 +549,15 @@ service cloud.firestore {
         data.json.size() <= 200000 &&
         data.updatedAt == request.time &&
         (!('applied' in data) || isAppliedIds(data.applied));
+    }
+
+    // A write keeps the ids of the changes made once: a client from before
+    // #3036 replaces the document whole, which would let a change pending
+    // on a device land twice. Refused, its change stays in that device's
+    // journal of unsaved changes (#2820) for the next visit's client.
+    function keepsAppliedIds() {
+      return resource == null || !('applied' in resource.data) ||
+        'applied' in request.resource.data;
     }
 
     // The ids of the changes made once: at most 20, checked at once over

@@ -133,6 +133,17 @@ describe('stored values', () => {
     await assertSucceeds(store({ json: '{"a":2}', applied: [ID, 'next-1'] }));
   });
 
+  it('refuse a write that drops the ids, as a client from before them would', async () => {
+    await assertSucceeds(store({ applied: [ID] }));
+
+    await assertFails(
+      setDoc(doc(db('ada'), PATH), {
+        json: '{"a":1}',
+        updatedAt: serverTimestamp(),
+      })
+    );
+  });
+
   it("refuse another player's value and other fields", async () => {
     await assertFails(
       setDoc(doc(db('bob'), PATH), {
