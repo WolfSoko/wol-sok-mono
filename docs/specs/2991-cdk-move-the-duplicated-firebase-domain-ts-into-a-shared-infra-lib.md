@@ -42,7 +42,8 @@ The synthesized stacks stay byte for byte the same, so the next deploy changes n
   imports `addFirebaseDomain` from the alias.
 - **Cleanup of the touched `main.ts`**: `bacteria-game-remote-cdk` reads `RELEASE_VERSION` with
   a copy of `envOrDie` of its own; it takes `envOrDie` from `@wolsok/spa-cdk-stack` as
-  `korbjaeger-cdk` does (same error text, same behaviour).
+  `korbjaeger-cdk` does (same message; it exits with code 1 instead of throwing, so a synth
+  without `RELEASE_VERSION` still fails).
 - **Proof that nothing changes**: before and after the move, synthesize both apps' `main.ts`
   (`tsx --tsconfig <app>/tsconfig.app.json`, with `RELEASE_VERSION` and `CDK_OUTDIR` set, no AWS
   credentials, so the zone lookup uses CDK's dummy as in the specs) and diff the templates.

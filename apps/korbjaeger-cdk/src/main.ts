@@ -1,6 +1,6 @@
+import { addFirebaseDomain } from '@wolsok/shared-firebase-domain-cdk';
 import { envOrDie } from '@wolsok/spa-cdk-stack';
 import { App, Stack, Tags } from 'aws-cdk-lib';
-import { addFirebaseDomain } from './firebase-domain';
 import { KORBJAEGER_DOMAIN, KORBJAEGER_HOSTING_SITE } from './korbjaeger-site';
 
 const app = new App();
