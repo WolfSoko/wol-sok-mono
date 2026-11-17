@@ -9,11 +9,14 @@ export interface FirebaseDomainProps {
 }
 
 /**
- * The record Firebase Hosting asks for when a subdomain is added: a CNAME to
- * the site's own address, `<site>.web.app`, which also proves the domain is
- * the site's. A CNAME allows no other record of the same name. It sits on the
- * stack itself under a fixed id: a new id would replace the record, and the
- * domain would be down meanwhile.
+ * Adds the record Firebase Hosting asks for when a subdomain is connected: a
+ * CNAME from the domain to `<site>.web.app`, the site's default address, which
+ * also verifies that the domain belongs to the site. No other record may share
+ * a CNAME's name.
+ *
+ * The record is a direct child of the stack with a constant logical id.
+ * Changing the id or the scope makes CloudFormation replace the record, and
+ * the domain stops resolving until the replacement exists.
  */
 export function addFirebaseDomain(
   stack: Stack,

@@ -22,11 +22,12 @@ describe('addFirebaseDomain', () => {
     });
   });
 
-  it('keeps the logical id of the record', () => {
-    // A new id would replace the record: the domain would go offline in
-    // between, as a CNAME may not exist twice.
+  it('creates the record under the logical id the live stacks use', () => {
+    // BacteriaGame and Korbjaeger both deployed their CNAME under this id. A
+    // different id (or scope) would replace the record and take the domain
+    // offline until CloudFormation created the new one.
     expect(Object.keys(template.toJSON()['Resources'])).toEqual([
-      expect.stringMatching(/^FirebaseHostingRecord[0-9A-F]{8}$/),
+      'FirebaseHostingRecord7C7772EA',
     ]);
   });
 });

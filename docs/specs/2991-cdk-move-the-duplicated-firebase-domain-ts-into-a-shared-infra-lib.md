@@ -35,9 +35,13 @@ The synthesized stacks stay byte for byte the same, so the next deploy changes n
 - **One spec in the lib**, covering both things the two specs checked: the domain points at
   `<site>.web.app` as a CNAME, once, and the record keeps its logical id. The stack in the spec is
   neutral (`Stack` id `FirebaseDomainSpec`, an example domain), since the lib knows neither app.
-- **The doc comment** keeps the generic sentence ("under a fixed id"); the game's historical
-  reason ("since the old site shared the stack") moves to the game's `main.ts`, beside the
-  existing comment about the old site.
+- **The doc comment** is written afresh for the lib (the one sentence that existed only in
+  `korbjaeger-cdk`'s copy is not taken over); the game's historical reason ("since the old site
+  shared the stack") moves to the game's `main.ts`, beside the existing comment about the old
+  site.
+- **The spec pins the exact logical id** (`FirebaseHostingRecord7C7772EA`, the id both live
+  templates hold), since it now guards two live records.
+- **The lib's `package.json` declares `aws-cdk-lib` as a peer dependency.**
 - **Both apps' `firebase-domain.ts` and `firebase-domain.spec.ts` are deleted**; each `main.ts`
   imports `addFirebaseDomain` from the alias.
 - **Cleanup of the touched `main.ts`**: `bacteria-game-remote-cdk` reads `RELEASE_VERSION` with
