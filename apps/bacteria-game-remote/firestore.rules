@@ -539,11 +539,28 @@ service cloud.firestore {
     }
 
     // The value as JSON, kept well below the document limit of 1 MiB.
+    // A stored value (FirestoreGameStorage): its JSON, when it was written
+    // and, once a change was made by its id, the last 20 of those ids, so
+    // a change made again on the next visit lands once (#3036).
     function isStoredValue(data) {
-      return data.keys().hasOnly(['json', 'updatedAt']) &&
+      return data.keys().hasOnly(['json', 'updatedAt', 'applied']) &&
         data.json is string &&
         data.json.size() <= 200000 &&
-        data.updatedAt == request.time;
+        data.updatedAt == request.time &&
+        (!('applied' in data) || isAppliedIds(data.applied));
+    }
+
+    // The ids of the changes made once: at most 20, checked at once over
+    // their joined text - each at most 100 letters, digits and dashes, as
+    // crypto.randomUUID() gives them; as many parts as ids, so none holds
+    // a comma. join() writes a number as its digits, so one passes; the
+    // client reads only strings as ids.
+    function isAppliedIds(applied) {
+      return applied is list &&
+        applied.size() <= 20 &&
+        (applied.size() == 0 ||
+          (applied.join(',').split(',').size() == applied.size() &&
+            applied.join(',').matches('[A-Za-z0-9-]{1,100}(,[A-Za-z0-9-]{1,100})*')));
     }
   }
 }
