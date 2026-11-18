@@ -90,7 +90,7 @@ export function computeRun(
     over: false,
     pendingAt: null,
   };
-  // The client's own run rules (`state/endless.ts`), so a run scores here
+  // The client's own run rules (`state/levels/endless.ts`), so a run scores here
   // as it played there.
   let run = newRun(runSeed);
   for (const { i, at } of [...attempts].sort((a, b) => a.i - b.i)) {

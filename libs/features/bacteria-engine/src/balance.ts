@@ -28,4 +28,4 @@ export type {
   LabConfig,
   NamedCell,
 } from './lib/state/balance/report';
-export { SKILL, strengthOf } from './lib/state/difficulty-curve';
+export { SKILL, strengthOf } from './lib/state/match/difficulty-curve';

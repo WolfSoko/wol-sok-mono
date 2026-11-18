@@ -56,13 +56,13 @@ export {
   parseProfile,
 } from './lib/social/profile';
 export type { Avatar, PlayerCard, Profile } from './lib/social/profile';
-export { ACHIEVEMENT_IDS } from './lib/state/achievement-ids';
-export type { AchievementId } from './lib/state/achievement-ids';
+export { ACHIEVEMENT_IDS } from './lib/state/progress/achievement-ids';
+export type { AchievementId } from './lib/state/progress/achievement-ids';
 export {
   ACHIEVEMENTS,
   achievementTexts,
   earnAchievements,
-} from './lib/state/achievements';
+} from './lib/state/progress/achievements';
 export {
   ADMIN_COMMAND_TYPES,
   BAN_REASONS,
@@ -71,40 +71,40 @@ export {
   isUid,
   parseAdminCommand,
   REASON_MAX,
-} from './lib/state/admin-commands';
+} from './lib/state/cloud/admin-commands';
 export type {
   AdminCommand,
   AdminCommandType,
   BanReason,
   EntryTarget,
   PlayerTarget,
-} from './lib/state/admin-commands';
-export { ADMIN_STATS_FIGURES } from './lib/state/cloud-records/admin-stats';
+} from './lib/state/cloud/admin-commands';
+export { ADMIN_STATS_FIGURES } from './lib/state/cloud/records/admin-stats';
 export type {
   AdminStats,
   AdminStatsFigure,
-} from './lib/state/cloud-records/admin-stats';
+} from './lib/state/cloud/records/admin-stats';
 export {
   banHolds,
   mirroredBan,
   parseBan,
   parseMirroredBan,
-} from './lib/state/cloud-records/ban';
-export type { CloudBan, ToMillis } from './lib/state/cloud-records/ban';
-export { HIDE_REASONS } from './lib/state/cloud-records/hide-reasons';
-export type { HideReason } from './lib/state/cloud-records/hide-reasons';
-export { NOTICE_TYPES } from './lib/state/cloud-records/notices';
-export type { NoticeType } from './lib/state/cloud-records/notices';
-export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud-records/replays';
+} from './lib/state/cloud/records/ban';
+export type { CloudBan, ToMillis } from './lib/state/cloud/records/ban';
+export { HIDE_REASONS } from './lib/state/cloud/records/hide-reasons';
+export type { HideReason } from './lib/state/cloud/records/hide-reasons';
+export { NOTICE_TYPES } from './lib/state/cloud/records/notices';
+export type { NoticeType } from './lib/state/cloud/records/notices';
+export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud/records/replays';
 export type {
   ReplayKind,
   ReplayState,
-} from './lib/state/cloud-records/replays';
+} from './lib/state/cloud/records/replays';
 export {
   type StoredPlayback,
   storedPlaybackOf,
   storedPlaybackRefusal,
-} from './lib/state/cloud-records/replay-playback';
+} from './lib/state/cloud/records/replay-playback';
 export {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,
@@ -115,12 +115,12 @@ export {
   parseReplayCommand,
   PLAYER_REPLAY_COMMAND_TYPES,
   REPLAY_COMMAND_TYPES,
-} from './lib/state/command-documents';
+} from './lib/state/cloud/command-documents';
 export type {
   CommandResult,
   CurationCommandType,
   ReplayCommandType,
-} from './lib/state/command-documents';
+} from './lib/state/cloud/command-documents';
 export {
   arenaSize,
   BASE_ARENA,
@@ -134,8 +134,11 @@ export {
   SIM_RESOLUTIONS,
   simResolutionOf,
   simScale,
-} from './lib/state/arena-size';
-export type { ScreenResolution, SimResolution } from './lib/state/arena-size';
+} from './lib/state/simulation/arena-size';
+export type {
+  ScreenResolution,
+  SimResolution,
+} from './lib/state/simulation/arena-size';
 export {
   ARRIVAL_SLACK_MS,
   ATTEMPT_DAYS,
@@ -163,14 +166,17 @@ export {
   runsLeft,
   submissionDeadline,
   UPLOAD_WINDOW_MS,
-} from './lib/state/attempts';
+} from './lib/state/cloud/attempts';
 export type {
   Attempt,
   DailyAttempt,
   EndlessAttempt,
-} from './lib/state/attempts';
-export { BacteriaSimulation } from './lib/state/bacteria-simulation';
-export type { ColonySpawn, Nutrient } from './lib/state/bacteria-simulation';
+} from './lib/state/cloud/attempts';
+export { BacteriaSimulation } from './lib/state/simulation/bacteria-simulation';
+export type {
+  ColonySpawn,
+  Nutrient,
+} from './lib/state/simulation/bacteria-simulation';
 export { fromBase64, toBase64 } from './lib/state/base64';
 export {
   ANONYMOUS_NAME,
@@ -209,7 +215,7 @@ export {
   XP_RISE_PER_HOUR,
   xpRiseCap,
   xpSort,
-} from './lib/state/boards';
+} from './lib/state/cloud/boards';
 export type {
   BoardEntry,
   BoardId,
@@ -218,26 +224,29 @@ export type {
   BoardRow,
   EntryShow,
   EntryStatus,
-} from './lib/state/boards';
+} from './lib/state/cloud/boards';
 export {
   BOT_DIFFICULTIES,
   DEFAULT_DIFFICULTY,
   difficultyOption,
-} from './lib/state/bot-controller';
-export type { BotDifficulty, BotProfile } from './lib/state/bot-controller';
+} from './lib/state/match/bot-controller';
+export type {
+  BotDifficulty,
+  BotProfile,
+} from './lib/state/match/bot-controller';
 export {
   continueText,
   furthestOpenLevel,
   ladderLocks,
   ladderLockText,
   newlyUnlocked,
-} from './lib/state/campaign';
-export type { CampaignSummary } from './lib/state/campaign';
-export { Cells } from './lib/state/cells';
-export type { CellList } from './lib/state/cells';
-export { CHAPTERS } from './lib/state/chapters';
-export type { ChapterId } from './lib/state/chapters';
-export { matchChecksum } from './lib/state/checksum';
+} from './lib/state/levels/campaign';
+export type { CampaignSummary } from './lib/state/levels/campaign';
+export { Cells } from './lib/state/simulation/cells';
+export type { CellList } from './lib/state/simulation/cells';
+export { CHAPTERS } from './lib/state/levels/chapters';
+export type { ChapterId } from './lib/state/levels/chapters';
+export { matchChecksum } from './lib/state/match/checksum';
 export {
   COLONY_COLORS,
   colonyColorText,
@@ -252,14 +261,14 @@ export {
   seatFirst,
   toPlayerColor,
   validColorPair,
-} from './lib/state/colony-colors';
-export type { ColonyColorId } from './lib/state/colony-colors';
+} from './lib/state/progress/colony-colors';
+export type { ColonyColorId } from './lib/state/progress/colony-colors';
 export {
   computerLook,
   NEUTRAL_LOOK,
   seatLooks,
-} from './lib/state/colony-looks';
-export { computerLoadout } from './lib/state/computer-opponent';
+} from './lib/state/progress/colony-looks';
+export { computerLoadout } from './lib/state/match/computer-opponent';
 export {
   attemptsOn,
   DAILY_ATTEMPTS,
@@ -267,21 +276,21 @@ export {
   isDailyLevelId,
   standingStreak,
   utcDay,
-} from './lib/state/daily';
+} from './lib/state/levels/daily';
 export {
   computerProfile,
   LADDER_VERSION,
   targetWinRate,
-} from './lib/state/difficulty-curve';
-export type { MatchEarnings } from './lib/state/earnings';
+} from './lib/state/match/difficulty-curve';
+export type { MatchEarnings } from './lib/state/progress/earnings';
 export {
   afterMatch,
   ENDLESS_LIVES,
   endlessLevelId,
   isRunOver,
   newRun,
-} from './lib/state/endless';
-export type { EndlessRun } from './lib/state/endless';
+} from './lib/state/levels/endless';
+export type { EndlessRun } from './lib/state/levels/endless';
 export {
   adoptEvolution,
   availableDna,
@@ -304,8 +313,8 @@ export {
   withGeneLevel,
   withSkin,
   withWeapon,
-} from './lib/state/evolution-progress';
-export type { EvolutionProgress } from './lib/state/evolution-progress';
+} from './lib/state/progress/evolution-progress';
+export type { EvolutionProgress } from './lib/state/progress/evolution-progress';
 export {
   dnaEarned,
   evolvedTraits,
@@ -317,7 +326,7 @@ export {
   WEAPON_EFFECTS,
   weaponOf,
   WEAPONS,
-} from './lib/state/evolution';
+} from './lib/state/simulation/evolution';
 export type {
   ActiveEffect,
   EvolvedTraits,
@@ -326,16 +335,16 @@ export type {
   Loadout,
   WeaponFire,
   WeaponId,
-} from './lib/state/evolution';
+} from './lib/state/simulation/evolution';
 export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
   featureToggles,
-} from './lib/state/feature-toggles';
+} from './lib/state/cloud/feature-toggles';
 export type {
   FeatureToggle,
   FeatureToggles,
-} from './lib/state/feature-toggles';
+} from './lib/state/cloud/feature-toggles';
 export {
   clock,
   countDown,
@@ -344,20 +353,23 @@ export {
   TickClock,
   TICKS_PER_SEC,
   ticksToMs,
-} from './lib/state/fixed-tick';
-export type { GameFrame } from './lib/state/fixed-tick';
-export { FramePacer } from './lib/state/frame-pacer';
+} from './lib/state/simulation/fixed-tick';
+export type { GameFrame } from './lib/state/simulation/fixed-tick';
+export { FramePacer } from './lib/state/match/frame-pacer';
 export {
   BALANCE_VERSION,
   colonyCapacity,
   gameBalance,
   NEUTRAL_TRAITS,
   PLAIN_TRAITS,
-} from './lib/state/game-balance';
-export type { ColonyTraits, GameBalance } from './lib/state/game-balance';
-export { getMap } from './lib/state/game-maps';
-export { DEFAULT_MODE, isGameMode } from './lib/state/game-mode';
-export type { GameMode } from './lib/state/game-mode';
+} from './lib/state/simulation/game-balance';
+export type {
+  ColonyTraits,
+  GameBalance,
+} from './lib/state/simulation/game-balance';
+export { getMap } from './lib/state/levels/game-maps';
+export { DEFAULT_MODE, isGameMode } from './lib/state/match/game-mode';
+export type { GameMode } from './lib/state/match/game-mode';
 export {
   add,
   clamp,
@@ -377,8 +389,8 @@ export {
   wrap,
 } from './lib/state/geometry';
 export type { CellBounds, Point, SteeringVector } from './lib/state/geometry';
-export { GhostController, NO_INPUT } from './lib/state/ghost';
-export type { GhostInputs, SeatDriver } from './lib/state/ghost';
+export { GhostController, NO_INPUT } from './lib/state/replay/ghost';
+export type { GhostInputs, SeatDriver } from './lib/state/replay/ghost';
 export {
   drawAt,
   frameSeed,
@@ -388,7 +400,7 @@ export {
   SALT_SPREAD,
   STEP_SALT_STRIDE,
   stepSalt,
-} from './lib/state/gpu-int/draws';
+} from './lib/state/simulation/gpu-int/draws';
 export {
   chanceThreshold,
   mulQ14,
@@ -401,17 +413,17 @@ export {
   toQ14,
   toTarget,
   toUnsignedQ14,
-} from './lib/state/gpu-int/fixed-point';
+} from './lib/state/simulation/gpu-int/fixed-point';
 export {
   createIntEffectUniforms,
   INT_EFFECT_RADIUS_MAX,
   INT_MAX_EFFECTS,
   setIntEffect,
-} from './lib/state/gpu-int/int-effects';
+} from './lib/state/simulation/gpu-int/int-effects';
 export type {
   IntEffect,
   IntEffectUniforms,
-} from './lib/state/gpu-int/int-effects';
+} from './lib/state/simulation/gpu-int/int-effects';
 export {
   createIntFrameUniforms,
   DIVIDE_VARIANTS,
@@ -421,48 +433,48 @@ export {
   INT_ATTACK_MAX,
   INT_COLONIES,
   INT_PELLETS,
-} from './lib/state/gpu-int/int-frame-uniforms';
+} from './lib/state/simulation/gpu-int/int-frame-uniforms';
 export type {
   FloatCombatUniforms,
   FloatFrameUniforms,
   IntFrameUniforms,
-} from './lib/state/gpu-int/int-frame-uniforms';
-export { isqrt, unitQ14 } from './lib/state/gpu-int/int-math';
+} from './lib/state/simulation/gpu-int/int-frame-uniforms';
+export { isqrt, unitQ14 } from './lib/state/simulation/gpu-int/int-math';
 export {
   DETERMINISTIC_REPORT_LAG,
   divideBudgetOf,
   readbacksToTake,
-} from './lib/state/gpu-int/int-readback';
+} from './lib/state/simulation/gpu-int/int-readback';
 export {
   INT_KIND,
   INT_RECORD,
   IntPassScratch,
   intStateHash,
-} from './lib/state/gpu-int/int-reference';
+} from './lib/state/simulation/gpu-int/int-reference';
 export type {
   IntCombatUniforms,
   IntGrid,
   IntPassUniforms,
-} from './lib/state/gpu-int/int-reference';
+} from './lib/state/simulation/gpu-int/int-reference';
 export {
   intSimulation,
   IntReferencePasses,
-} from './lib/state/gpu-int/int-reference-passes';
+} from './lib/state/simulation/gpu-int/int-reference-passes';
 export {
   intColonyCounts,
   intReferenceTick,
-} from './lib/state/gpu-int/int-tick';
-export type { IntTickInputs } from './lib/state/gpu-int/int-tick';
+} from './lib/state/simulation/gpu-int/int-tick';
+export type { IntTickInputs } from './lib/state/simulation/gpu-int/int-tick';
 export {
   INT_EFFECTS,
   INT_ENERGY_MAX,
   intMatchUniforms,
-} from './lib/state/gpu-int/int-uniforms';
-export type { IntMatchUniforms } from './lib/state/gpu-int/int-uniforms';
+} from './lib/state/simulation/gpu-int/int-uniforms';
+export type { IntMatchUniforms } from './lib/state/simulation/gpu-int/int-uniforms';
 export {
   GPU_SELF_TEST_VERSION,
   SELF_TEST_GOLDEN,
-} from './lib/state/gpu-int/self-test-golden';
+} from './lib/state/simulation/gpu-int/self-test-golden';
 export {
   playScenario,
   scenarioRandom,
@@ -470,11 +482,11 @@ export {
   selfTestVerdict,
   SIM_SCENARIOS,
   skirmish,
-} from './lib/state/gpu-int/sim-scenarios';
+} from './lib/state/simulation/gpu-int/sim-scenarios';
 export type {
   SelfTestVerdict,
   SimScenario,
-} from './lib/state/gpu-int/sim-scenarios';
+} from './lib/state/simulation/gpu-int/sim-scenarios';
 export {
   ENERGY_SCALE,
   LOSER_SHIFT,
@@ -485,8 +497,8 @@ export {
   RECORD_MASK,
   REPORT_EXTRA_ROWS,
   REPORT_ROWS,
-} from './lib/state/grid-format';
-export { GridWar, READBACK_SLOTS } from './lib/state/grid/grid-war';
+} from './lib/state/simulation/grid-format';
+export { GridWar, READBACK_SLOTS } from './lib/state/simulation/grid/grid-war';
 export type {
   CellPasses,
   CellPassesHost,
@@ -494,7 +506,7 @@ export type {
   GridFrame,
   GridTick,
   ReportSink,
-} from './lib/state/grid/cell-passes';
+} from './lib/state/simulation/grid/cell-passes';
 export { isInteger, isObject } from './lib/state/is-object';
 export {
   GENERATED_ADJECTIVES,
@@ -505,10 +517,10 @@ export {
   parseGeneratedId,
   rollLevelId,
   tuneSeed,
-} from './lib/state/level-generator/generate-level';
-export { RECIPE_IDS, RECIPES } from './lib/state/level-generator/recipes';
-export type { RecipeId } from './lib/state/level-generator/recipes';
-export { Rng } from './lib/state/level-generator/rng';
+} from './lib/state/levels/generator/generate-level';
+export { RECIPE_IDS, RECIPES } from './lib/state/levels/generator/recipes';
+export type { RecipeId } from './lib/state/levels/generator/recipes';
+export { Rng } from './lib/state/levels/generator/rng';
 export {
   getLevel,
   gridScale,
@@ -530,10 +542,10 @@ export {
   ONLINE_LOCK_TEXT,
   ONLINE_LOCKS,
   playableOnline,
-} from './lib/state/levels';
-export type { LadderLevelId, Level } from './lib/state/levels';
-export { coversPoint } from './lib/state/maps';
-export type { DynamicWall, Rect } from './lib/state/maps';
+} from './lib/state/levels/levels';
+export type { LadderLevelId, Level } from './lib/state/levels/levels';
+export { coversPoint } from './lib/state/levels/maps';
+export type { DynamicWall, Rect } from './lib/state/levels/maps';
 export {
   cpuSimulation,
   DRAG_STEPS,
@@ -541,7 +553,7 @@ export {
   noFrameEvents,
   onGrid,
   STEER_STEPS,
-} from './lib/state/match-engine';
+} from './lib/state/match/match-engine';
 export type {
   FrameEvents,
   MatchOptions,
@@ -549,25 +561,28 @@ export type {
   PlayerSpawn,
   SecondSampler,
   SizeSample,
-} from './lib/state/match-engine';
-export { MatchRun } from './lib/state/match-run';
+} from './lib/state/match/match-engine';
+export { MatchRun } from './lib/state/match/match-run';
 export type {
   MatchArena,
   MatchRunResult,
   RunnableEngine,
-} from './lib/state/match-run';
+} from './lib/state/match/match-run';
 export {
   isMatchLevel,
   MATCH_LEVELS,
   pickMatchLevel,
-} from './lib/state/match-level';
-export type { MatchLevelPick, PickedMatchLevel } from './lib/state/match-level';
-export { planMatch } from './lib/state/match-setup';
+} from './lib/state/levels/match-level';
+export type {
+  MatchLevelPick,
+  PickedMatchLevel,
+} from './lib/state/levels/match-level';
+export { planMatch } from './lib/state/match/match-setup';
 export type {
   MatchPlan,
   OnlineSeats,
   PlannedMatch,
-} from './lib/state/match-setup';
+} from './lib/state/match/match-setup';
 export {
   isNewBest,
   judgeMatch,
@@ -579,25 +594,25 @@ export {
   medalGoalText,
   medalRank,
   medalText,
-} from './lib/state/medallions';
+} from './lib/state/progress/medallions';
 export type {
   MatchRecord,
   MedalAward,
   MedalTier,
-} from './lib/state/medallions';
-export { HEART_PERIOD_SEC } from './lib/state/organic-maps';
-export { perfProbeOf } from './lib/state/perf-probe';
+} from './lib/state/progress/medallions';
+export { HEART_PERIOD_SEC } from './lib/state/levels/organic-maps';
+export { perfProbeOf } from './lib/state/match/perf-probe';
 export {
   createPlayer,
   isBoosted,
   isBoostReady,
   isWeaponReady,
-} from './lib/state/player.model';
+} from './lib/state/match/player.model';
 export type {
   Bacteria,
   Player,
   PlayerColorArray,
-} from './lib/state/player.model';
+} from './lib/state/match/player.model';
 export {
   addCouchWin,
   addDailyAttempt,
@@ -612,20 +627,20 @@ export {
   NO_TOTALS,
   parseProgress,
   totalsOf,
-} from './lib/state/progress';
-export type { LifetimeTotals, Progress } from './lib/state/progress';
+} from './lib/state/progress/progress';
+export type { LifetimeTotals, Progress } from './lib/state/progress/progress';
 export type {
   RankedMatch,
   RankedOutcome,
   RankedRun,
   RankedRunOutcome,
   UnrankedReason,
-} from './lib/state/ranked-match';
-export { rankFor, RANKS, xpClimb } from './lib/state/ranks';
-export type { RankId } from './lib/state/ranks';
-export { keepRecent } from './lib/state/recent-cache';
-export { onlineReplayId, PUBLIC_ID } from './lib/state/replay-id';
-export { replayFromHash, replayLink } from './lib/state/replay-link';
+} from './lib/state/cloud/ranked-match';
+export { rankFor, RANKS, xpClimb } from './lib/state/progress/ranks';
+export type { RankId } from './lib/state/progress/ranks';
+export { keepRecent } from './lib/state/match/recent-cache';
+export { onlineReplayId, PUBLIC_ID } from './lib/state/replay/replay-id';
+export { replayFromHash, replayLink } from './lib/state/replay/replay-link';
 export {
   MAX_PACKED_BYTES,
   MAX_UNPACKED_BYTES,
@@ -633,27 +648,27 @@ export {
   replayFromBytes,
   replayToBytes,
   unpackReplay,
-} from './lib/state/replay-pack';
-export type { PackedReplay, PackOptions } from './lib/state/replay-pack';
+} from './lib/state/replay/replay-pack';
+export type { PackedReplay, PackOptions } from './lib/state/replay/replay-pack';
 export {
   ARRIVAL_REASONS,
   DECLARED_REASONS,
   NOT_REPORTED,
   ONLINE_REASONS,
-} from './lib/state/replay-reasons';
+} from './lib/state/replay/replay-reasons';
 export type {
   ArrivalReason,
   DeclaredReason,
   OnlineReason,
-} from './lib/state/replay-reasons';
-export { replayScore } from './lib/state/replay-score';
-export { replayVerdict } from './lib/state/replay-verdict';
-export type { ReplayVerdict } from './lib/state/replay-verdict';
+} from './lib/state/replay/replay-reasons';
+export { replayScore } from './lib/state/replay/replay-score';
+export { replayVerdict } from './lib/state/replay/replay-verdict';
+export type { ReplayVerdict } from './lib/state/replay/replay-verdict';
 export type {
   ReplayReason,
   ReplayScore,
   ReplayScoreInput,
-} from './lib/state/replay-score';
+} from './lib/state/replay/replay-score';
 export {
   canPlayBack,
   EVOLVED_REPLAY_VERSION,
@@ -672,7 +687,7 @@ export {
   replayRun,
   savedRegardless,
   simGridOf,
-} from './lib/state/replay';
+} from './lib/state/replay/replay';
 export type {
   ParseOptions,
   PlayableReplay,
@@ -691,7 +706,7 @@ export type {
   ReplaySeat,
   ReplaySteer,
   ReplayWeapon,
-} from './lib/state/replay';
+} from './lib/state/replay/replay';
 export {
   addSeriesMatch,
   formatScore,
@@ -703,15 +718,23 @@ export {
   SERIES_LENGTHS,
   seriesWinner,
   startScales,
-} from './lib/state/rivalry';
-export type { HeadStart, Series, SeriesLength } from './lib/state/rivalry';
-export { decodeReport } from './lib/state/simulation-report';
-export type { ReportLayout } from './lib/state/simulation-report';
-export { isRuleset, rulesetOf, runsOnGpu } from './lib/state/simulation';
+} from './lib/state/match/rivalry';
+export type {
+  HeadStart,
+  Series,
+  SeriesLength,
+} from './lib/state/match/rivalry';
+export { decodeReport } from './lib/state/simulation/simulation-report';
+export type { ReportLayout } from './lib/state/simulation/simulation-report';
+export {
+  isRuleset,
+  rulesetOf,
+  runsOnGpu,
+} from './lib/state/simulation/simulation';
 export {
   CPU_SIMULATIONS,
   createSimulationProvider,
-} from './lib/state/simulation-provider';
+} from './lib/state/simulation/simulation-provider';
 export type {
   ArenaSize,
   DevicePlay,
@@ -719,7 +742,7 @@ export type {
   SimulationProvider,
   SimulationRequest,
   SimulationSources,
-} from './lib/state/simulation-provider';
+} from './lib/state/simulation/simulation-provider';
 export type {
   BlockCounts,
   CellsLayer,
@@ -731,16 +754,16 @@ export type {
   SimulationFactory,
   SimulationVariant,
   StateLayer,
-} from './lib/state/simulation';
+} from './lib/state/simulation/simulation';
 export {
   BACTERIA_LOOKS,
   BOSS_LOOK,
   isBacteriaLook,
   skinCost,
   SKINS,
-} from './lib/state/skins';
-export type { BacteriaLook, ColonyLook } from './lib/state/skins';
-export type { MissionId } from './lib/state/training-levels';
+} from './lib/state/progress/skins';
+export type { BacteriaLook, ColonyLook } from './lib/state/progress/skins';
+export type { MissionId } from './lib/state/levels/training-levels';
 export {
   addMission,
   firstOpenMission,
@@ -751,8 +774,8 @@ export {
   MISSIONS,
   missionsDone,
   missionShortfall,
-} from './lib/state/training';
-export type { Mission } from './lib/state/training';
+} from './lib/state/levels/training';
+export type { Mission } from './lib/state/levels/training';
 export {
   activeArena,
   arenaLocks,
@@ -760,8 +783,8 @@ export {
   colorLocks,
   colorLockText,
   newCosmeticTexts,
-} from './lib/state/unlocks';
-export { WEAPON_CODE } from './lib/state/weapon-effects';
+} from './lib/state/progress/unlocks';
+export { WEAPON_CODE } from './lib/state/simulation/weapon-effects';
 export {
   ANNIHILATION,
   BOSS_SEAT,
@@ -771,14 +794,14 @@ export {
   ruleNoteText,
   timeLeft,
   winRuleOf,
-} from './lib/state/win-conditions';
+} from './lib/state/match/win-conditions';
 export type {
   EndReason,
   MatchOutcome,
   WinRule,
-} from './lib/state/win-conditions';
-export { COUCH_XP, matchXp, xpGain, xpOf } from './lib/state/xp';
-export type { XpMatch } from './lib/state/xp';
+} from './lib/state/match/win-conditions';
+export { COUCH_XP, matchXp, xpGain, xpOf } from './lib/state/progress/xp';
+export type { XpMatch } from './lib/state/progress/xp';
 export {
   kindOfCode,
   mapZones,
@@ -788,5 +811,5 @@ export {
   ZONE_EFFECTS,
   ZONE_NAMES,
   ZONE_SHIFT,
-} from './lib/state/zones';
-export type { Zone, ZoneKind } from './lib/state/zones';
+} from './lib/state/levels/zones';
+export type { Zone, ZoneKind } from './lib/state/levels/zones';

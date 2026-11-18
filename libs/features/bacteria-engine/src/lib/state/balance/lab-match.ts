@@ -1,20 +1,20 @@
-import { arenaSize, SimResolution } from '../arena-size';
+import { arenaSize, SimResolution } from '../simulation/arena-size';
 import {
   BotDifficulty,
   BotProfile,
   REFERENCE_PROFILE,
-} from '../bot-controller';
-import { DEFAULT_COLORS } from '../colony-colors';
-import { computerLoadout } from '../computer-opponent';
-import { LADDER_VERSION } from '../difficulty-curve';
-import { Loadout } from '../evolution';
-import { TICKS_PER_SEC } from '../fixed-tick';
-import { getLevel, Level, levelSize } from '../levels';
-import { MatchEngine } from '../match-engine';
-import { MatchRun } from '../match-run';
-import { MatchPlan, planMatch } from '../match-setup';
-import { medalFor, MedalTier } from '../medallions';
-import { clockOf, WinRule, winRuleOf } from '../win-conditions';
+} from '../match/bot-controller';
+import { DEFAULT_COLORS } from '../progress/colony-colors';
+import { computerLoadout } from '../match/computer-opponent';
+import { LADDER_VERSION } from '../match/difficulty-curve';
+import { Loadout } from '../simulation/evolution';
+import { TICKS_PER_SEC } from '../simulation/fixed-tick';
+import { getLevel, Level, levelSize } from '../levels/levels';
+import { MatchEngine } from '../match/match-engine';
+import { MatchRun } from '../match/match-run';
+import { MatchPlan, planMatch } from '../match/match-setup';
+import { medalFor, MedalTier } from '../progress/medallions';
+import { clockOf, WinRule, winRuleOf } from '../match/win-conditions';
 import { mean, round } from './stats';
 
 /**

@@ -5,7 +5,7 @@ Rules for working on `libs/features/bacteria-engine`
 game lib's (`libs/features/lazy/bacteria-game/CLAUDE.md`), whose rules on
 determinism, replays, balance and texts hold here too.
 
-- The engine is the game without Angular: the match (`state/match-engine.ts`),
+- The engine is the game without Angular: the match (`state/match/match-engine.ts`),
   both simulations, replays, levels, progress, achievements and the
   translation mechanics (`i18n/`). The game, its Cloud Functions
   (`apps/bacteria-wars-functions`) and the admin area play the same code.
@@ -33,7 +33,7 @@ determinism, replays, balance and texts hold here too.
   only; what they share with the game comes from the main entry.
 - The targets `balance-check`, `balance` (ADR 0016) and `perf` (ADR 0014,
   `tools/perf/engine-bench.mjs`) live here, since they play the engine.
-- The goldens (`state/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded
+- The goldens (`state/replay/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded
   by their specs here; the GPU cross-check, which needs `gl/`, lives in
   `feat-bacteria-rendering` (`libs/features/bacteria-rendering/gpu-crosscheck/`)
   and imports the engine.

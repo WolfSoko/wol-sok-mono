@@ -64,7 +64,7 @@ export const replay = {
   },
   /**
    * Why a match did not count on a board - the functions' reasons
-   * (`state/replay-reasons.ts`) but `counted`, which shows as its own chip.
+   * (`state/replay/replay-reasons.ts`) but `counted`, which shows as its own chip.
    */
   reasons: {
     /** A declared (ranked) match: `ArrivalReason`. */

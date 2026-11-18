@@ -1,14 +1,17 @@
-import { ACHIEVEMENT_IDS } from '../state/achievement-ids';
-import { achievementTexts } from '../state/achievements';
-import { colonyColorText, COLONY_COLORS } from '../state/colony-colors';
+import { ACHIEVEMENT_IDS } from '../state/progress/achievement-ids';
+import { achievementTexts } from '../state/progress/achievements';
+import {
+  colonyColorText,
+  COLONY_COLORS,
+} from '../state/progress/colony-colors';
 import {
   getLevel,
   LEVELS,
   levelDescriptionText,
   levelNameText,
-} from '../state/levels';
-import { MEDAL_TIERS, medalText } from '../state/medallions';
-import { MISSIONS } from '../state/training';
+} from '../state/levels/levels';
+import { MEDAL_TIERS, medalText } from '../state/progress/medallions';
+import { MISSIONS } from '../state/levels/training';
 import { ENGINE_EN } from './engine-texts';
 import { english, GameText } from './game-text';
 import { lookUp } from './translation';

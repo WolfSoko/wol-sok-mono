@@ -34,7 +34,7 @@ const golden = parseReplay(
     readFileSync(
       join(
         __dirname,
-        '../../../../libs/features/bacteria-engine/src/lib/state/golden-replay.json'
+        '../../../../libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json'
       ),
       'utf8'
     )

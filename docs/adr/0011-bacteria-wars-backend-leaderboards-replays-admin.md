@@ -11,10 +11,10 @@
 Players want to watch their matches again, and the best matches should be
 public, on a page anyone can open and share.
 
-Most of a replay system exists already. `state/replay.ts` has a format (a
+Most of a replay system exists already. `state/replay/replay.ts` has a format (a
 `MatchPlan` header plus sparse, change-only steer, drag and boost inputs),
 `playReplay` plays one out headless on the CPU simulation, and
-`state/replay-link.ts` packs a run into a `#ghost=` link for ghost races.
+`state/replay/replay-link.ts` packs a run into a `#ghost=` link for ghost races.
 What is missing:
 
 - **Online matches are not recorded.** Both seats are lockstep drivers. The
@@ -128,7 +128,7 @@ never a public candidate.
 - online only: `roomCode` and `n` (for the id and the room check);
 - `outcome`: `endedBy` and the winner seat as the client saw it;
 - `checksum`: the final `matchChecksum` (moves from `net/lockstep.ts` to
-  `state/checksum.ts`; lockstep imports it from there);
+  `state/match/checksum.ts`; lockstep imports it from there);
 - `client`: the app version, at most 32 characters of `[\w.-]`, never
   rendered;
 - `attempt` (added by ADR 0012), optional: `{ id, at }` of the ranked
@@ -148,7 +148,7 @@ The parser caps the inflated size.
 
 **Packed and compressed.** The packing `replay-link.ts` does today (flat
 delta-coded integer arrays on the steer and drag grids) moves to
-`state/replay-pack.ts`, shared by links and storage. Stored replays are
+`state/replay/replay-pack.ts`, shared by links and storage. Stored replays are
 deflate-raw of the packed JSON, as bytes. `pack(replay, { forPublic: true })`
 drops `roomCode`, `n` and `client`; `#ghost=` links and public replays use
 it.
@@ -299,8 +299,8 @@ a dead end), `verified`, `unverified`, `balance-mismatch`.
 - **It imports the engine through an Angular-free entry point**,
   `libs/features/lazy/bacteria-game/src/engine.ts`, alias
   `@wolsok/feat-lazy-bac-game/engine`:
-  - `GameMode`/`isGameMode` move to `state/game-mode.ts`, `ColonyLayer` moves
-    into `state/`, `matchChecksum` to `state/checksum.ts`.
+  - `GameMode`/`isGameMode` move to `state/match/game-mode.ts`, `ColonyLayer` moves
+    into `state/`, `matchChecksum` to `state/match/checksum.ts`.
   - An oxlint override forbids `@angular/*`, `@ngrx/*`, `rxjs`, Firebase
     and imports of `arena/` from `state/` (apart from its Angular service
     and store files) and from `engine.ts`. A spec bundles `engine.ts` and
@@ -390,7 +390,7 @@ the leaderboard ADR has to weigh it.
 
 ### What makes a match "especially good"
 
-`state/replay-score.ts` (pure, shared by client and function) computes a
+`state/replay/replay-score.ts` (pure, shared by client and function) computes a
 score from 0 to 100 from per-second samples, and the reasons (gallery
 badges, through i18n keys `replay.reason.*`):
 

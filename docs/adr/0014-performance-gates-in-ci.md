@@ -75,7 +75,7 @@ the server all run.
 
 - **What it runs**: `engine.ts`, bundled with esbuild exactly as
   `engine-bundle.spec.ts` does, plays fixed replays to the end:
-  - the golden replay (`state/golden-replay.json`), short and small;
+  - the golden replay (`state/replay/golden-replay.json`), short and small;
   - a heavy fixture: a generated level at the highest daily difficulty, the
     largest map, neutral colonies, the online grid, about 60 s of play. This
     is the same case ADR 0012 benchmarks to set the server's budgets, so
@@ -234,7 +234,7 @@ is decided after a month, like gate 3.
    - As built (2026-10-27): the fixed seed comes from the spec, not the
      game: an init script pins `Math.random` to a seeded generator before
      the page loads, which fixes the match's seed and every other draw. The
-     debug hook is `state/perf-probe.ts`: the spec puts
+     debug hook is `state/match/perf-probe.ts`: the spec puts
      `window.__bacteriaPerfProbe` on the page, and `GameStateService`
      times each tick only when it finds one (one null check per tick in
      play). The match is the campaign's first against the computer, the

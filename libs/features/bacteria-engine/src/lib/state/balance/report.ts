@@ -1,18 +1,18 @@
-import { ONLINE_SIM_RESOLUTION, SimResolution } from '../arena-size';
-import { BOT_DIFFICULTIES, BotDifficulty } from '../bot-controller';
-import { CHAPTERS } from '../chapters';
-import { LADDER_VERSION, targetWinRate } from '../difficulty-curve';
+import { ONLINE_SIM_RESOLUTION, SimResolution } from '../simulation/arena-size';
+import { BOT_DIFFICULTIES, BotDifficulty } from '../match/bot-controller';
+import { CHAPTERS } from '../levels/chapters';
+import { LADDER_VERSION, targetWinRate } from '../match/difficulty-curve';
 import {
   GENES,
   Loadout,
   MAX_GENE_LEVEL,
   PLAIN_LOADOUT,
   WEAPONS,
-} from '../evolution';
-import { expectedDna, expectedLoadout } from '../expected-player';
-import { BALANCE_VERSION } from '../game-balance';
-import { getLevel, isBigMap, LEVELS } from '../levels';
-import { MedalTier } from '../medallions';
+} from '../simulation/evolution';
+import { expectedDna, expectedLoadout } from '../match/expected-player';
+import { BALANCE_VERSION } from '../simulation/game-balance';
+import { getLevel, isBigMap, LEVELS } from '../levels/levels';
+import { MedalTier } from '../progress/medallions';
 import { CHECK_SECONDS, LabCell, LabMatch, SHARE_SEC } from './lab-match';
 import { mean, round } from './stats';
 

@@ -7,7 +7,7 @@ import { BacteriaGamePo } from './pos/bacteria-game.po';
  * against the computer on the CPU simulation, played for up to
  * {@link MATCH_SEC} seconds, and what it cost - the frame interval, long
  * tasks and the engine's time per tick through the game's probe
- * (`state/perf-probe.ts`). It fails only when too little was measured.
+ * (`state/match/perf-probe.ts`). It fails only when too little was measured.
  * Headless Chromium on a shared CI worker with a software renderer says
  * little about a phone: the numbers show trends and catch a regression by
  * an order of magnitude.

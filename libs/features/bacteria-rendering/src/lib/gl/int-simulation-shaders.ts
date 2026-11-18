@@ -3,7 +3,7 @@
  * 2 and 3): the hunt, the claim and apply pair - moving, escaping a wall
  * and dividing - and combat and feeding, with no float on the state's path,
  * so every GPU and the TypeScript reference
- * (`state/gpu-int/int-reference.ts`) compute the same bits. They take the
+ * (`state/simulation/gpu-int/int-reference.ts`) compute the same bits. They take the
  * place of the float passes of the same names when `gpuSimulation` runs
  * deterministic; the coarse counts, the crush and the report are integer
  * already.
@@ -20,7 +20,7 @@
  * The products below note what they come to.
  *
  * The weapons' circles are integers too (`INT_WEAPONS`, step 4): centres
- * and radii in sixteenths of a cell, see `state/gpu-int/int-effects.ts`.
+ * and radii in sixteenths of a cell, see `state/simulation/gpu-int/int-effects.ts`.
  */
 
 import {

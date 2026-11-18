@@ -1,4 +1,4 @@
-import type { MatchRecord } from '../lib/state/medallions';
+import type { MatchRecord } from '../lib/state/progress/medallions';
 
 /**
  * A match record for specs: a plain win on the first level, changed by

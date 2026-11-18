@@ -108,7 +108,7 @@ the recorder against a stub engine instead.
 **Today.** No module answers "which simulation plays this ruleset, and what
 stands in when the GPU fails". The answer is rebuilt in four places:
 
-- `replayEngine` in the engine's `state/replay.ts:396-422`.
+- `replayEngine` in the engine's `state/replay/replay.ts:396-422`.
 - `PlayerService.init` (`state/player.service.ts:137-166`).
 - `PlayerService.createSimulation` (:370-399), which carries out the
   try/dispose/fallback and sets four fields.
@@ -142,7 +142,7 @@ for `playReplay`, the balance lab, the replay viewer and the CPU bench;
 **Today.** Five places write the same loop,
 `while (outcome() == null && tickCount < N) engine.tick(width, height)`:
 
-- `playReplay` (`state/replay.ts:429-452`)
+- `playReplay` (`state/replay/replay.ts:429-452`)
 - the balance lab (`state/balance/lab-match.ts:126-163`)
 - the replay viewer (`replays/replay-scene.ts:231-251`)
 - `GameStateService.advance` (:232-262)
@@ -169,7 +169,7 @@ order, including the per-tick `resize`, is kept.
 **Today.** `playReplay` returns `null` without a reason. So
 `apps/bacteria-wars-functions/src/boards/verify.ts:59-104` checks
 `balanceVersion` again before calling it, repeating a clause of
-`canPlayBack` (`state/replay.ts:374-384`). It then compares the ticks,
+`canPlayBack` (`state/replay/replay.ts:374-384`). It then compares the ticks,
 checksum, `endedBy` and `winnerSeat` against the header field by field,
 which is engine knowledge. Five function modules call `verifyReplay`.
 
@@ -185,7 +185,7 @@ verdict specs on the recorded replay fixture plus a tampered header.
 
 ## 6. Cloud records
 
-**Today.** The engine's `state/admin-commands.ts` already shows the right
+**Today.** The engine's `state/cloud/admin-commands.ts` already shows the right
 shape: one parser that the admin view and the functions share. Most other
 document shapes are written once per side:
 
@@ -204,7 +204,7 @@ document shapes are written once per side:
 - **Other shapes.** `NoticeType`, `ReplayKind`, `AdminStats` and the
   hidden-by reasons each exist twice, client and server.
 
-**Deeper module.** A Node-only `state/cloud-records/` in the engine with
+**Deeper module.** A Node-only `state/cloud/records/` in the engine with
 plain-millisecond types and parsers: `parseBan(data, toMillis)`,
 `banHolds`, the mirrored ban, and the lists of notice types, replay kinds,
 replay states, stats fields and hide reasons. A `toMillis` argument keeps
@@ -440,11 +440,11 @@ is needed (CI has no GPU).
 ## 15. `BotSenses`
 
 **Done** in [#2791](https://github.com/WolfSoko/wol-sok-mono/issues/2791):
-`state/bot-senses.ts`, with `viewFor(player, own, colonies, width, height)`
+`state/match/bot-senses.ts`, with `viewFor(player, own, colonies, width, height)`
 and `routesFrom(from, width, height)`; the line numbers below are those
 before it.
 
-**Today.** `state/match-engine.ts` (1105 lines) builds the bots' world
+**Today.** `state/match/match-engine.ts` (1105 lines) builds the bots' world
 next to input recording, ghosts, weapons and scoring. That world is the nav
 grid, the floods, the hill and the weapon view (:789-981, about 190 lines,
 plus caches at :279-299). `buildBotView` (`bot-controller.ts:524-540`)

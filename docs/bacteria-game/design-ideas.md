@@ -19,21 +19,21 @@ below lists what they changed.
 
 - **One match type.** Two colonies, one or both steered by humans, until one
   colony is gone (`GameState.END`, `matchEnded`). A draw is possible.
-- **Twelve hand-made levels** (`state/levels.ts`): a `GameMap` plus a partial
+- **Twelve hand-made levels** (`state/levels/levels.ts`): a `GameMap` plus a partial
   `GameBalance` and a crosshair speed. Levels 1 to 8 are the classic layouts
-  (walls, gates, sliders, `state/maps.ts`), levels 9 to 12 the organic ones
-  (`state/organic-maps.ts`: Alveoli, Mycelium, Heartbeat, Villi), built from
+  (walls, gates, sliders, `state/levels/maps.ts`), levels 9 to 12 the organic ones
+  (`state/levels/organic-maps.ts`: Alveoli, Mycelium, Heartbeat, Villi), built from
   overlapping round walls (`Rect.round`) that a fixed seed grows over one half.
-  Every map is point symmetric to the centre; `state/game-maps.ts` is the
+  Every map is point symmetric to the centre; `state/levels/game-maps.ts` is the
   registry and scales each layout from the base arena to the grid in use. All
   twelve are listed in order of difficulty but selectable from the start.
-- **A bot in three difficulties** (`state/bot-controller.ts`) that only does
+- **A bot in three difficulties** (`state/match/bot-controller.ts`) that only does
   what a human can do: aim the crosshair, fire the boost.
-- **Two simulations behind one `Simulation` interface** (`state/simulation.ts`):
+- **Two simulations behind one `Simulation` interface** (`state/simulation/simulation.ts`):
   the CPU one (`BacteriaSimulation`, injectable `random`) and the GPU one
   (`gl/gpu-simulation.ts`, WebGL2 shader passes, hash-based per-cell random,
   `MAX_GPU_COLONIES = 2`). The arena is a grid with one bacterium per cell. Its
-  shape is the 16:9 **base arena** of 320 × 180 cells (`state/arena-size.ts`);
+  shape is the 16:9 **base arena** of 320 × 180 cells (`state/simulation/arena-size.ts`);
   a **simulation resolution** setting runs the same arena on 0.8 to 2 cells
   per base cell (256 × 144 up to 640 × 360), and balance lengths, carrying
   capacity, crosshair speed and the bot's distances scale with it
@@ -44,7 +44,7 @@ below lists what they changed.
 - **A seeded random generator** exists: `seeded(seed)` in `state/geometry.ts`
   (mulberry32). The organic maps and the level music use it; the simulation,
   the pellets and the bot still default to `Math.random`.
-- **The game loop runs inside the animation frame** (`state/frame-pacer.ts`):
+- **The game loop runs inside the animation frame** (`state/match/frame-pacer.ts`):
   every display frame on a 60 Hz screen, every second one on a 120 Hz screen,
   so a frame is never shown twice or skipped. The simulation still receives
   the measured frame delta, not a fixed tick.
@@ -203,7 +203,7 @@ Things that exist already can become rewards:
   rest unlock through medallions or achievements).
 - **Looks** (`BACTERIA_LOOKS`: slime and pixels free; cells, honeycomb,
   crystal, neon, ink, bubbles, marbles, lava, galaxy, plasma and chrome for
-  DNA - `state/skins.ts`) and new ones from section 7.
+  DNA - `state/progress/skins.ts`) and new ones from section 7.
 - **Arena patterns** (`ArenaPattern`, twelve of them) usable as an override for
   any level in free play.
 - **Crosshair shapes** and **boost sounds** - small, cheap variations.
@@ -243,7 +243,7 @@ when a better one replaces it.
 
 ### Where it hooks in
 
-- New `state/progress.ts` (types, pure reducers over `FrameEvents` and
+- New `state/progress/progress.ts` (types, pure reducers over `FrameEvents` and
   `ColonySummary`, fully unit-testable) and `progress.service.ts` (storage).
 - `winner.component` reads the match's `MatchRecord` and shows medallion, XP,
   unlocks.
@@ -337,9 +337,9 @@ grid are enough; the themes' colours give each node its look.
 
 ### Where it hooks in
 
-- `state/levels.ts` gets `chapterId`, `winConditionId`, `zones`, optional
+- `state/levels/levels.ts` gets `chapterId`, `winConditionId`, `zones`, optional
   `bossBalance`.
-- `state/win-conditions.ts` (new, pure, tested) replaces the "one colony left"
+- `state/match/win-conditions.ts` (new, pure, tested) replaces the "one colony left"
   check in `PlayerService.gameLoop`.
 - `maps.ts` gets `Zone`, `Membrane` types alongside `Rect` and `DynamicWall`.
 - Both simulations: one zone texture / `Uint8Array`, membranes in the claim
@@ -413,7 +413,7 @@ score (1.8) takes their place. The result screen says so once.
 
 ### Where it hooks in
 
-- `state/medallions.ts`: `Tier`, `medallionFor`, per-level thresholds.
+- `state/progress/medallions.ts`: `Tier`, `medallionFor`, per-level thresholds.
 - `levels.ts`: `medal: { silverSec, goldSec, goldLossShare }` per level.
 - `winner.component`: medallion panel; `progress.service.ts`: persistence.
 - `ui`: a `MedallionComponent` (standalone, OnPush, SVG template).
@@ -540,7 +540,7 @@ on any level.
 
 ### Where it hooks in
 
-- `state/geometry.ts`: the helpers on `seeded`; `state/level-generator/`
+- `state/geometry.ts`: the helpers on `seeded`; `state/levels/generator/`
   (recipes, primitives, validation, scoring, naming, music; all pure, heavy
   unit tests with fixed seeds). The organic primitives move out of
   `organic-maps.ts` into it; the four hand-made organic maps become recipes
@@ -673,10 +673,10 @@ away until the daily leaderboard shows there are enough people online at once.
 
 ### Where it hooks in
 
-- `state/frame-pacer.ts` grows the fixed tick accumulator (or a sibling
+- `state/match/frame-pacer.ts` grows the fixed tick accumulator (or a sibling
   `state/clock.ts` takes the pacer's output); `PlayerService.gameLoop` steps
   the simulation per tick, the component interpolates crosshairs.
-- `state/replay.ts`: recording and `GhostController`.
+- `state/replay/replay.ts`: recording and `GhostController`.
 - `net/` (new folder in the lib): `room.service.ts` (Firestore signalling),
   `peer.ts` (WebRTC), `state-codec.ts` (RLE and delta encoding, pure, tested
   by round trip), `online-mode.ts`.
