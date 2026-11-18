@@ -8,7 +8,7 @@
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "libs/features/korbjaeger-answers/vite.config.ts"
+        "configFile": "libs/features/korbjaeger-answers/vite.config.mts"
       }
     },
     "typecheck-specs": {}
