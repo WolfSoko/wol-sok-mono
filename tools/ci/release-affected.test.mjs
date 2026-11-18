@@ -471,15 +471,17 @@ void describe('release-affected on the workspace', () => {
   // inputs of every task a deploy runs: the game's deploy runs its federation
   // build first, and each of its libraries' builds.
   void it('reads the inputs of the tasks a deploy depends on', async () => {
-    const ids = (await tasksOf('bacteria-game-remote', 'deploy')).map(
-      (task) => task.id
+    const tasks = (await tasksOf('bacteria-game-remote', 'deploy')).map(
+      // The configuration suffix follows each project's settings, not the
+      // closure: match on project and target only.
+      (task) => task.id.split(':').slice(0, 2).join(':')
     );
-    for (const id of [
+    for (const task of [
       'bacteria-game-remote:deploy',
-      'bacteria-game-remote:build-federation:production',
-      'feat-shared-bacteria-engine:build:production',
+      'bacteria-game-remote:build-federation',
+      'feat-shared-bacteria-engine:build',
     ]) {
-      assert.ok(ids.includes(id), `misses ${id}`);
+      assert.ok(tasks.includes(task), `misses ${task}`);
     }
   });
 

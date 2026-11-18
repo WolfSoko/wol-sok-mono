@@ -1,6 +1,6 @@
 # 18. Korbjäger reads the DBB's undocumented API through an allowlisted, caching proxy
 
-- Status: superseded: the Korbjäger app and its libs were removed by
+- Status: deprecated: the Korbjäger app and its libs were removed by
   [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
 - Date: 2026-11-08
 - Scope: `libs/features/basketball-data` (`feat-shared-basketball-data`),
