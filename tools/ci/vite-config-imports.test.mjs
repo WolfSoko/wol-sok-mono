@@ -4,11 +4,10 @@
 // (Node's ESM loader) refuses them. The check follows the configs' relative
 // imports, so a helper they load (`tools/vite/*.ts`) is held to it too.
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import { ROOT } from './workspace-projects.mjs';
+import { ROOT, gitLsFiles } from './workspace-projects.mjs';
 
 const CONFIG_PATTERNS = ['*vite.config.*', '*vitest.config.*'];
 
@@ -55,12 +54,7 @@ function extensionlessImportsFrom(file, seen = new Set()) {
 }
 
 function trackedViteConfigs() {
-  return execFileSync('git', ['ls-files', '--', ...CONFIG_PATTERNS], {
-    cwd: ROOT,
-    encoding: 'utf8',
-  })
-    .split('\n')
-    .filter(Boolean);
+  return gitLsFiles(...CONFIG_PATTERNS);
 }
 
 void describe('relativeSpecifiers', () => {
