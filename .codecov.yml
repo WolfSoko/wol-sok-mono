@@ -33,6 +33,9 @@ coverage:
       feat-bacteria-rendering:
         flags:
           - feat-bacteria-rendering
+      feat-bacteria-sound:
+        flags:
+          - feat-bacteria-sound
       feat-lazy-fourier-analysis:
         flags:
           - feat-lazy-fourier-analysis
@@ -94,6 +97,9 @@ flags:
   feat-bacteria-rendering:
     paths:
       - libs/features/bacteria-rendering
+  feat-bacteria-sound:
+    paths:
+      - libs/features/bacteria-sound
   feat-lazy-fourier-analysis:
     paths:
       - libs/features/lazy/fourier-analysis

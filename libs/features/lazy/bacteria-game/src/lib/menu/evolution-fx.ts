@@ -120,7 +120,7 @@ function flyStrand(
       },
     ],
     {
-      // The last lands as the chime rings (EVOLVE_LAND_SEC).
+      // The last lands as the sound's evolve chime rings.
       duration: 560 + index * 12,
       delay: index * 18,
       easing: 'cubic-bezier(0.45, 0, 0.7, 1)',

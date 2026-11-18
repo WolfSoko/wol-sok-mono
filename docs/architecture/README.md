@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**69 projects · 204 internal dependencies · 3 federated remotes**
+**71 projects · 211 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -28,8 +28,8 @@ flowchart TD
   infra["Infrastructure (CDK)<br/>6 projects"]
   apps["Apps<br/>14 projects"]
   public["libs/public (published)<br/>3 projects"]
-  features["libs/features<br/>20 projects"]
-  shared["libs/shared<br/>8 projects"]
+  features["libs/features<br/>21 projects"]
+  shared["libs/shared<br/>9 projects"]
   utils["libs/utils<br/>9 projects"]
   other["libs (other)<br/>9 projects"]
   apps -- 24 --> features
@@ -37,19 +37,20 @@ flowchart TD
   apps -- 3 --> public
   apps -- 23 --> shared
   apps -- 12 --> utils
-  features -- 31 --> other
+  features -- 32 --> other
   features -- 1 --> public
   features -- 4 --> shared
   features -- 17 --> utils
   infra -- 4 --> apps
   infra -- 6 --> other
-  infra -- 5 --> public
+  infra -- 6 --> public
+  infra -- 2 --> shared
   infra -- 1 --> utils
   other -- 4 --> apps
   other -- 1 --> shared
   other -- 1 --> utils
   public -- 3 --> other
-  shared -- 8 --> other
+  shared -- 9 --> other
   shared -- 2 --> utils
   utils -- 9 --> other
 ```
@@ -193,6 +194,7 @@ flowchart LR
   subgraph features["libs/features"]
     feat_api_auth["feat-api-auth"]
     feat_bacteria_rendering["feat-bacteria-rendering"]
+    feat_bacteria_sound["feat-bacteria-sound"]
     feat_korbjaeger_answers["feat-korbjaeger-answers"]
     feat_korbjaeger_selection["feat-korbjaeger-selection"]
     feat_lazy_bacteria_game["feat-lazy-bacteria-game"]
@@ -217,6 +219,7 @@ flowchart LR
     shared_analytics["shared-analytics"]
     shared_data_access["shared-data-access"]
     shared_e2e_server["shared-e2e-server"]
+    shared_firebase_domain_cdk["shared-firebase-domain-cdk"]
     shared_firebase_emulator["shared-firebase-emulator"]
     shared_legal["shared-legal"]
     shared_theme["shared-theme"]
@@ -278,6 +281,8 @@ flowchart LR
   bacteria_game_remote --> tools_federation
   bacteria_game_remote --> utils_version
   bacteria_game_remote_cdk ==> oxlint_workspace_rules
+  bacteria_game_remote_cdk --> shared_firebase_domain_cdk
+  bacteria_game_remote_cdk --> spa_cdk_stack
   bacteria_wars_functions --> feat_shared_bacteria_engine
   bacteria_wars_functions ==> oxlint_workspace_rules
   bacteria_wars_functions --> shared_firebase_emulator
@@ -285,6 +290,8 @@ flowchart LR
   feat_api_auth ==> oxlint_workspace_rules
   feat_bacteria_rendering --> feat_shared_bacteria_engine
   feat_bacteria_rendering ==> oxlint_workspace_rules
+  feat_bacteria_sound --> feat_shared_bacteria_engine
+  feat_bacteria_sound ==> oxlint_workspace_rules
   feat_korbjaeger_answers --> feat_shared_basketball_data
   feat_korbjaeger_answers ==> oxlint_workspace_rules
   feat_korbjaeger_answers --> utils_browser_storage
@@ -293,6 +300,7 @@ flowchart LR
   feat_korbjaeger_selection ==> oxlint_workspace_rules
   feat_korbjaeger_selection --> utils_browser_storage
   feat_lazy_bacteria_game --> feat_bacteria_rendering
+  feat_lazy_bacteria_game --> feat_bacteria_sound
   feat_lazy_bacteria_game --> feat_shared_bacteria_engine
   feat_lazy_bacteria_game ==> oxlint_workspace_rules
   feat_lazy_bacteria_game --> shared_analytics
@@ -372,6 +380,7 @@ flowchart LR
   korbjaeger --> utils_time
   korbjaeger --> utils_version
   korbjaeger_cdk ==> oxlint_workspace_rules
+  korbjaeger_cdk --> shared_firebase_domain_cdk
   korbjaeger_cdk --> spa_cdk_stack
   korbjaeger_functions --> feat_shared_basketball_data
   korbjaeger_functions --> feat_shared_korbjaeger_account
@@ -417,6 +426,7 @@ flowchart LR
   shared_analytics --> utils_browser_storage
   shared_data_access ==> oxlint_workspace_rules
   shared_e2e_server ==> oxlint_workspace_rules
+  shared_firebase_domain_cdk ==> oxlint_workspace_rules
   shared_firebase_emulator ==> oxlint_workspace_rules
   shared_legal ==> oxlint_workspace_rules
   shared_theme ==> oxlint_workspace_rules
@@ -460,24 +470,24 @@ flowchart LR
 
 | Project                                  | Group    | Tags                                    | Fan-in (Ca) | Fan-out (Ce) | Instability |
 | ---------------------------------------- | -------- | --------------------------------------- | ----------- | ------------ | ----------- |
-| `oxlint-workspace-rules`                 | other    | tools                                   | 67          | 0            | 0           |
+| `oxlint-workspace-rules`                 | other    | tools                                   | 69          | 0            | 0           |
 | `angular-examples`                       | apps     | app, type:host                          | 3           | 19           | 0.86        |
 | `korbjaeger`                             | apps     | app, type:firebase                      | 0           | 13           | 1           |
 | `ui-kit`                                 | other    | shared, ui                              | 10          | 3            | 0.23        |
 | `bacteria-game-remote`                   | apps     | app, type:firebase, type:remote         | 2           | 10           | 0.83        |
-| `feat-lazy-bacteria-game`                | features | feature:lazy                            | 2           | 9            | 0.82        |
+| `feat-lazy-bacteria-game`                | features | feature:lazy                            | 2           | 10           | 0.83        |
 | `utils-browser-storage`                  | utils    | utils                                   | 9           | 2            | 0.18        |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 3           | 5            | 0.63        |
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 6            | 0.86        |
+| `feat-shared-bacteria-engine`            | features | feat-shared                             | 6           | 1            | 0.14        |
 | `fourier-analysis-remote`                | apps     | app, type:remote                        | 3           | 4            | 0.57        |
 | `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 7            | 1           |
 | `shared-e2e-server`                      | shared   | shared                                  | 6           | 1            | 0.14        |
+| `spa-cdk-stack`                          | public   | infra-shared, published                 | 6           | 1            | 0.14        |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 5            | 0.83        |
-| `feat-shared-bacteria-engine`            | features | feat-shared                             | 5           | 1            | 0.17        |
 | `feat-shared-basketball-data`            | features | feat-shared                             | 5           | 1            | 0.17        |
 | `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 6            | 1           |
 | `portfolio`                              | apps     | app, type:portfolio                     | 1           | 5            | 0.83        |
-| `spa-cdk-stack`                          | public   | infra-shared, published                 | 5           | 1            | 0.17        |
 | `utils-measure-fps`                      | utils    | utils                                   | 4           | 2            | 0.33        |
 | `utils-version`                          | utils    | infra-shared, utils                     | 5           | 1            | 0.17        |
 | `feat-korbjaeger-selection`              | features | feature                                 | 1           | 4            | 0.8         |
@@ -507,6 +517,7 @@ flowchart LR
 | `utils-json`                             | utils    | utils                                   | 3           | 1            | 0.25        |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 1            | 0.25        |
 | `feat-bacteria-rendering`                | features | feature:game-kit                        | 1           | 2            | 0.67        |
+| `feat-bacteria-sound`                    | features | feature:game-kit                        | 1           | 2            | 0.67        |
 | `feat-lazy-bacteria-wars-admin`          | features | feature:admin                           | 1           | 2            | 0.67        |
 | `feat-lazy-fourier-analysis`             | features | feature:lazy                            | 1           | 2            | 0.67        |
 | `feat-lazy-web-gl`                       | features | feature:lazy                            | 1           | 2            | 0.67        |
@@ -514,6 +525,7 @@ flowchart LR
 | `fib-wasm-api`                           | other    | api                                     | 1           | 2            | 0.67        |
 | `math`                                   | utils    | utils                                   | 2           | 1            | 0.33        |
 | `neural-networks`                        | features | feature:lazy                            | 1           | 2            | 0.67        |
+| `shared-firebase-domain-cdk`             | shared   | infra-shared                            | 2           | 1            | 0.33        |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 1            | 0.33        |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 3            | 1           |
 | `fib-wasm`                               | other    | shared                                  | 1           | 1            | 0.5         |
@@ -539,8 +551,10 @@ flowchart LR
   - `federation-shared-singletons`
   - `tools-deploy`
 - **Projects without tags:** none
+- **Layer tags too coarse:** 1 projects in `libs/shared`/`libs/utils` do not carry their layer's tag, so the boundary rules cannot tell a utility from a shared domain lib
+  - `shared-firebase-domain-cdk` (missing `shared`)
 - **Libraries with high fan-out (≥ 5):** 4
-  - `feat-lazy-bacteria-game` (9)
+  - `feat-lazy-bacteria-game` (10)
   - `feat-lazy-react-diff` (6)
   - `feat-lazy-some-gpu-calculation` (5)
   - `federation-shared-singletons` (5)

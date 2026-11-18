@@ -62,6 +62,9 @@
       "@wolsok/feat-bacteria-rendering": [
         "./libs/features/bacteria-rendering/src/index.ts"
       ],
+      "@wolsok/feat-bacteria-sound": [
+        "./libs/features/bacteria-sound/src/index.ts"
+      ],
       "@wolsok/feat-shared-bacteria-engine": [
         "./libs/features/bacteria-engine/src/index.ts"
       ],

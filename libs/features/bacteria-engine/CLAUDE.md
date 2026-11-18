@@ -18,11 +18,12 @@ determinism, replays, balance and texts hold here too.
   one of its four areas; `GameText<K>` is typed by the engine's keys
   (`EngineTextKey`) by default, the game widens it to its own.
 - **Node only.** Nothing here imports Angular, NgRx, RxJS, Firebase, the
-  DOM or the game's `arena/`, `gl/` and `sound/`. An oxlint override in
+  DOM, `feat-bacteria-rendering` or `feat-bacteria-sound`. An oxlint override in
   `.oxlintrc.json` guards the imports, Jest runs every spec in Node
   (`testEnvironment: 'node'`), and `engine-bundle.spec.ts` bundles
-  `src/index.ts` to prove it. Browser-only code (WebGL, Web Audio, canvas)
-  stays in the game lib.
+  `src/index.ts` to prove it. Browser-only code goes elsewhere: WebGL and
+  canvas into `feat-bacteria-rendering`, Web Audio into
+  `feat-bacteria-sound`, the rest into the game lib.
 - `src/index.ts` is the main entry (`@wolsok/feat-shared-bacteria-engine`):
   named exports, no `export *`. Nothing outside this lib imports a path
   inside it; a new export goes into the index. Spec fixtures (`aMatchRecord`,

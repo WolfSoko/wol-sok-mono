@@ -154,6 +154,10 @@ settings (one entry each in [`SETTINGS`](./src/lib/settings/setting-table.ts):
 sound, graphics, language, recording, ...) and the match setup in the
 device's storage.
 
+The sound itself, synthesised on the fly with its music, is the lib
+[`feat-bacteria-sound`](../../bacteria-sound/README.md); the game hands it
+these settings.
+
 ## Languages
 
 The game speaks English and German ([`i18n/`](./src/lib/i18n)), switched at

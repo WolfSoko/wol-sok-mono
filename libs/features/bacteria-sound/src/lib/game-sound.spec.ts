@@ -1,13 +1,52 @@
+import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { GameSettingsService } from '../settings.service';
 import { WEAPONS } from '@wolsok/feat-shared-bacteria-engine';
-import { GameSoundService } from './game-sound.service';
+import { GameSound } from './game-sound';
 import { levelMusic } from './level-music';
 import { MusicPlayer } from './music-player';
+import { type SoundSettings } from './sound-settings';
 
-describe('GameSoundService', () => {
+type SettingValues = {
+  [K in keyof SoundSettings]: ReturnType<SoundSettings[K]>;
+};
+
+/** Where the fake's volumes start: neither silent nor full. */
+const START_MUSIC_VOLUME = 0.7;
+const START_EFFECTS_VOLUME = 0.8;
+
+/** Sound settings a test sets, every switch on to start with. */
+class FakeSoundSettings implements SoundSettings {
+  private readonly values: {
+    [K in keyof SettingValues]: WritableSignal<SettingValues[K]>;
+  } = {
+    sound: signal(true),
+    music: signal(true),
+    musicVolume: signal(START_MUSIC_VOLUME),
+    effects: signal(true),
+    effectsVolume: signal(START_EFFECTS_VOLUME),
+  };
+
+  public readonly sound = this.values.sound.asReadonly();
+  public readonly music = this.values.music.asReadonly();
+  public readonly musicVolume = this.values.musicVolume.asReadonly();
+  public readonly effects = this.values.effects.asReadonly();
+  public readonly effectsVolume = this.values.effectsVolume.asReadonly();
+
+  public set<K extends keyof SettingValues>(
+    key: K,
+    value: SettingValues[K]
+  ): void {
+    this.values[key].set(value);
+  }
+}
+
+function newGameSound(settings: SoundSettings): GameSound {
+  return TestBed.runInInjectionContext(() => new GameSound(settings));
+}
+
+describe('GameSound', () => {
   it('stays silent without the Web Audio API instead of throwing', () => {
-    const sound = TestBed.inject(GameSoundService);
+    const sound = newGameSound(new FakeSoundSettings());
 
     expect(() => {
       sound.matchStart(levelMusic('serpentine'));
@@ -37,12 +76,11 @@ describe('GameSoundService', () => {
   });
 
   describe('with the Web Audio API', () => {
-    let sound: GameSoundService;
-    let settings: GameSettingsService;
+    let sound: GameSound;
+    let settings: FakeSoundSettings;
     let context: FakeAudioContext;
 
     beforeEach(() => {
-      localStorage.clear();
       jest.useFakeTimers();
       context = new FakeAudioContext();
       Object.defineProperty(window, 'AudioContext', {
@@ -50,8 +88,8 @@ describe('GameSoundService', () => {
         value: jest.fn(() => context),
       });
       TestBed.resetTestingModule();
-      sound = TestBed.inject(GameSoundService);
-      settings = TestBed.inject(GameSettingsService);
+      settings = new FakeSoundSettings();
+      sound = newGameSound(settings);
       // The gesture that wakes the audio, without waking the services of
       // the tests before, which still listen to the document.
       (sound as unknown as { unlock(): void }).unlock();

@@ -22,7 +22,7 @@ import { ProgressService } from '../progress.service';
 import { RankedService } from '../ranked/ranked.service';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
-import { levelMusic } from '../sound/level-music';
+import { levelMusic } from '@wolsok/feat-bacteria-sound';
 import { ArenaStage } from '../stage/arena-stage';
 import { StageFrame } from '../stage/stage-frame';
 import { StageFullscreen } from '../stage/stage-fullscreen';
