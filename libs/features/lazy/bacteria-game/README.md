@@ -6,14 +6,14 @@ one screen (and keyboard) with a second human.
 
 ## Modes
 
-- **vs Computer** - one human against a [`BotController`](./src/lib/state/bot-controller.ts)
+- **vs Computer** - one human against a [`BotController`](../../bacteria-engine/src/lib/state/match/bot-controller.ts)
   in three difficulties. The bot only does what a human can do: it picks a point
   for its crosshair and fires its boost. Easy reacts slowly and only attacks when
   far ahead, Normal feeds first and attacks when stronger, Hard takes even
   fights, charges the enemy bacteria nearest to its own colony and boosts on
   contact. The human may use WASD or the arrow keys.
 
-  The bot finds its way ([`bot-navigation.ts`](./src/lib/state/bot-navigation.ts)):
+  The bot finds its way ([`bot-navigation.ts`](../../bacteria-engine/src/lib/state/match/bot-navigation.ts)):
   a grid over the arena, a cell per four base cells, blocked by the walls and
   by the gates and sliding walls that are shut or about to shut, with the
   zones as costs (antibiotic dear, ice slow, agar a little cheap). On each
@@ -91,13 +91,13 @@ CSS animation, still for players who ask for less motion):
   it wears - a gallery of every look, each on a sample colony in the
   player's colour - and the colonies' colours. The slime and the pixels
   are free; every other skin is bought with the DNA of the Evolution screen
-  ([`state/skins.ts`](./src/lib/state/skins.ts),
+  ([`state/progress/skins.ts`](../../bacteria-engine/src/lib/state/progress/skins.ts),
   kept in the evolution progress, where they survive a reset) and worn from
   the moment they are bought. The player's colony wears the skin; the
   computer's dresses by its level - the plain slime on the first, then the
   skins to buy in the gallery's order the further up the ladder, so its
   dress tells its skill - and a boss wears the eclipse, a look no skin
-  offers ([`state/colony-looks.ts`](./src/lib/state/colony-looks.ts)).
+  offers ([`state/progress/colony-looks.ts`](../../bacteria-engine/src/lib/state/progress/colony-looks.ts)).
   More of the colony is to be shaped here in time.
 - **New game** ([`new-game.component.ts`](./src/lib/menu/new-game.component.ts)) -
   a Material stepper that goes through only the steps the mode picked needs
@@ -110,7 +110,7 @@ CSS animation, still for players who ask for less motion):
     for the campaign, free play and two players the
     [level map](./src/lib/menu/level-map.component.ts), the ladder in
     chapters (Petri, Laboratory, Body, Reactor -
-    [`state/chapters.ts`](./src/lib/state/chapters.ts)), a card per level in
+    [`state/levels/chapters.ts`](../../bacteria-engine/src/lib/state/levels/chapters.ts)), a card per level in
     its arena's colours with its medallion per difficulty. The campaign keeps
     the ladder's locks; free play and two players open every level and add
     _Generate a level_ - a style and a difficulty from 1 to 10, rolled into a
@@ -241,7 +241,7 @@ the production build against the same emulators, never the real project.
 ## Medallions
 
 A win against the computer earns a medallion for that level and difficulty,
-judged by [`medallions.ts`](./src/lib/state/medallions.ts) on what the
+judged by [`medallions.ts`](../../bacteria-engine/src/lib/state/progress/medallions.ts) on what the
 human's player measured over the match: `PlayerService` keeps the boosts
 fired, the peak colony and the lowest size against the other colony next to
 `captured` and `lost`. `GameStateService` judges the match as it ends and keeps
@@ -255,7 +255,7 @@ for everything the one below does.
 | Gold     | Won within `goldSec`, losing less than `goldLossShare` of the peak |
 | Platinum | Gold without a boost, never below half the computer's size         |
 
-The limits are per level (`medal` in [`levels.ts`](./src/lib/state/levels.ts)),
+The limits are per level (`medal` in [`levels.ts`](../../bacteria-engine/src/lib/state/levels/levels.ts)),
 in seconds of match time, so they hold on every simulation resolution. The
 result screen shows the medallion with what the next one needs, and the level
 list shows the best one of each level at the selected difficulty. Two-player
@@ -276,7 +276,7 @@ device cannot overwrite what the first one won.
 match did - matches and wins against the computer, enemy bacteria captured,
 enemy bacteria the walls crushed (what the computer lost that nobody
 captured), pellets eaten up, matches between two players - and checks the
-fourteen achievements of [`achievements.ts`](./src/lib/state/achievements.ts)
+fourteen achievements of [`achievements.ts`](../../bacteria-engine/src/lib/state/progress/achievements.ts)
 after each one: First Blood, Pacifist, Blitz, Comeback, Siege, Clean Sweep,
 Full Dish, Gatekeeper, Converter, Glutton, Flawless, Petri Scholar, Hard
 Boiled and Couch War. Each is earned once, on the day it is earned; the result
@@ -286,7 +286,7 @@ of two, achievements as the earlier day, so tabs and devices converge.
 
 ## XP and ranks
 
-Every match earns XP ([`xp.ts`](./src/lib/state/xp.ts)), even a lost one,
+Every match earns XP ([`xp.ts`](../../bacteria-engine/src/lib/state/progress/xp.ts)), even a lost one,
 and XP is not stored as such - it follows from the progress. What a match is
 worth on its own (finishing and winning, both times the computer's
 difficulty, or a little for a match between two players) is counted as a
@@ -295,7 +295,7 @@ as it is held - the best medallion of every level and difficulty, 50 per
 achievement. So XP merges as cleanly as the progress, never pays the same
 medallion or achievement twice, and a player who held medallions before XP
 existed has theirs from the start. XP climbs eight ranks named after
-microbiology ([`ranks.ts`](./src/lib/state/ranks.ts)), Spore to Superbug,
+microbiology ([`ranks.ts`](../../bacteria-engine/src/lib/state/progress/ranks.ts)), Spore to Superbug,
 and never unlocks gameplay.
 
 The result screen tells the match in order: the medallion with what the next
@@ -309,7 +309,7 @@ XP to the next one ([`rank/`](./src/lib/rank)).
 ## Unlocks
 
 Cosmetics are earned, never bought, and never make a colony stronger
-([`unlocks.ts`](./src/lib/state/unlocks.ts)). Like XP they follow from the
+([`unlocks.ts`](../../bacteria-engine/src/lib/state/progress/unlocks.ts)). Like XP they follow from the
 progress, so nothing about them is stored:
 
 - **Colony colours** - orange and blue are free; green comes with First
@@ -396,7 +396,7 @@ invitations deploy with the other rules.
 ## Two-player rivalry
 
 Two players on one screen get a loop of their own
-([`rivalry.ts`](./src/lib/state/rivalry.ts)), set up on the level choice:
+([`rivalry.ts`](../../bacteria-engine/src/lib/state/match/rivalry.ts)), set up on the level choice:
 
 - **Series** - single matches, or the best of 3 or 5. The result screen
   shows the score and who took it; the next match after that starts a new
@@ -413,7 +413,7 @@ Two players on one screen get a loop of their own
 ## Campaign ladder
 
 Against the computer, the levels open one by one
-([`campaign.ts`](./src/lib/state/campaign.ts)). The first is open from the
+([`campaign.ts`](../../bacteria-engine/src/lib/state/levels/campaign.ts)). The first is open from the
 start, and every other opens once the level before it has been won at any
 difficulty; a win always earns at least bronze, so the medallions tell which
 levels were won. A locked level shows a lock and what opens it in the level
@@ -424,7 +424,7 @@ game already. Two players always have every level open.
 ## Training
 
 Five short missions teach a new player the game, one thing each
-([`state/training.ts`](./src/lib/state/training.ts)): **Steer** (hold the
+([`state/levels/training.ts`](../../bacteria-engine/src/lib/state/levels/training.ts)): **Steer** (hold the
 white zone for 4 seconds), **Feed** (eat 8 pellets), **Boost** (eat 12
 pellets and boost twice on the way, with a boost that recharges in 3
 seconds), **Attack** (wipe out the dummy) and **First Fight** (be bigger than
@@ -435,7 +435,7 @@ the next one marked, then a briefing with the goal, a tip and the opponent.
 While a mission runs, its goal stays at the top of the arena.
 
 A mission is a level of its own
-([`state/training-levels.ts`](./src/lib/state/training-levels.ts)), apart
+([`state/levels/training-levels.ts`](../../bacteria-engine/src/lib/state/levels/training-levels.ts)), apart
 from the ladder, that names its `mission` and its `opponent`: it is set for
 one match like the daily level (`matchLevel`) and won by an existing win
 rule - hold, harvest, timed or annihilation - with the boosts fired checked
@@ -460,7 +460,7 @@ balance change that makes one unwinnable fails a test.
 ## Win conditions
 
 How a match ends is the level's `win` rule
-([`win-conditions.ts`](./src/lib/state/win-conditions.ts)), judged by the
+([`win-conditions.ts`](../../bacteria-engine/src/lib/state/match/win-conditions.ts)), judged by the
 `MatchEngine` after every tick. Without one it is _annihilation_: the last
 colony left wins, and both gone in the same tick is a draw. A _timed_ level
 also ends once its `limitSec` of match time have passed, and then the bigger
@@ -488,7 +488,7 @@ A level can add neutral colonies (`neutrals` on the level: where each
 starts, as shares of the arena, and its start area): grey colonies no
 player steers. `planMatch` spawns them after the players with `neutral: true`
 and `NEUTRAL_TRAITS` - slow to divide, weak to bite. A
-[`NeutralBrain`](./src/lib/state/neutral-brain.ts) per colony moves it
+[`NeutralBrain`](../../bacteria-engine/src/lib/state/match/neutral-brain.ts) per colony moves it
 (`NEUTRAL_MOVES`): it strolls about the map, goes after a player's colony
 that comes near and is less than 0.4 of its size, and keeps away from one
 more than 1.25 of its size - colonies measured edge to edge, as discs.
@@ -535,7 +535,7 @@ Outbreak chapter with one.
 ## Zones
 
 Besides walls, a map can lay out zones (`createZones`, point symmetric like
-the walls - [`zones.ts`](./src/lib/state/zones.ts)), each a rect or a disc of
+the walls - [`zones.ts`](../../bacteria-engine/src/lib/state/levels/zones.ts)), each a rect or a disc of
 one kind:
 
 - **Antibiotic** (violet) drains 0.5 energy a second and stops regeneration -
@@ -565,7 +565,7 @@ chapter, has all of them.
 A map can be bigger than the base arena: `GameMap.size` times it along each
 side, laid out on that bigger base (`size: 2` lays out on 640 x 360 base
 cells). Bigger is more room, not smaller bacteria, so two factors stay apart
-([`arena-size.ts`](./src/lib/state/arena-size.ts)):
+([`arena-size.ts`](../../bacteria-engine/src/lib/state/simulation/arena-size.ts)):
 
 - the grid's resolution, cells per base cell (`scaleOf(width, size)`,
   `gridScale(level, width)`), which keeps the game the same on every grid:
@@ -630,7 +630,7 @@ to break a frontline or to grab a contested pellet.
 ## Mechanics
 
 The whole simulation lives in
-[`bacteria-simulation.ts`](./src/lib/state/bacteria-simulation.ts) and runs on an
+[`bacteria-simulation.ts`](../../bacteria-engine/src/lib/state/simulation/bacteria-simulation.ts) and runs on an
 occupancy grid with one bacterium per cell. Every tick is processed in fixed
 phases, so the outcome never depends on the order the players are iterated in:
 
@@ -653,7 +653,7 @@ slowly squeezes the weaker one out.
 ## Ticks and seeds
 
 The war advances in fixed ticks of 1/60 second
-([`fixed-tick.ts`](./src/lib/state/fixed-tick.ts)), whatever the display
+([`fixed-tick.ts`](../../bacteria-engine/src/lib/state/simulation/fixed-tick.ts)), whatever the display
 shows: `FramePacer` picks the display frames the game runs on, and a
 `TickClock` turns the time between them into whole ticks. Each tick moves the
 crosshairs, counts the boosts down, lets the bot think and steps the
@@ -669,7 +669,7 @@ seed as well, but its shaders do not come out the same on every device.
 
 ## Replays
 
-A match runs in a [`MatchEngine`](./src/lib/state/match-engine.ts): the
+A match runs in a [`MatchEngine`](../../bacteria-engine/src/lib/state/match/match-engine.ts): the
 players, the bots and the simulation, tick by tick, without Angular or the
 keyboard. `PlayerService` turns the keys and sticks into one steering vector
 per human, and mirrors the engine's players into the store for the UI. The
@@ -680,7 +680,7 @@ once, when it changes: the steering vector from a tick on, a drag target and
 a boost before a tick. The crosshairs follow from those inputs, so a match
 records a few hundred entries rather than a position per tick. When the match
 ends, the game state's `lastReplay` holds it - a ghost match aside - as a
-[`Replay`](./src/lib/state/replay.ts): that recording under a header with
+[`Replay`](../../bacteria-engine/src/lib/state/replay/replay.ts): that recording under a header with
 everything the match was derived from (level, mode, difficulty, colours,
 head start, grid size, seed, balance version and which simulation ran it).
 `planMatch` turns the header back into the colonies and the rules, and
@@ -699,7 +699,7 @@ steered by your own run - the same steering, drag targets and boosts, turned
 through the centre of the arena so the left colony's moves are made by the
 right one, and stretched onto the arena size of the device. The maps are
 point symmetric, so the turned run meets the same walls. A
-[`GhostController`](./src/lib/state/ghost.ts) plays one seat of a recording
+[`GhostController`](../../bacteria-engine/src/lib/state/replay/ghost.ts) plays one seat of a recording
 into another; replays play every human back the same way. The ghost reacts
 to nothing, it only does what you did - beating it means beating your own
 plan. A ghost match earns no medallion and no XP, and it does not replace
@@ -709,7 +709,7 @@ plays on its own level and leaves the player's setup as it was.
 
 A run can be shared too: **Share your run** on the result screen makes a
 link with the run packed into its hash
-([`replay-link.ts`](./src/lib/state/replay-link.ts)) - the inputs as whole
+([`replay-link.ts`](../../bacteria-engine/src/lib/state/replay/replay-link.ts)) - the inputs as whole
 numbers on the engine's grid, ticks as the distance to the input before,
 deflated and written in base64url. A minute of steering a stick all the time
 fits in a few KB, and the run never reaches a server. Opening the link offers
@@ -720,7 +720,7 @@ exactly what the link carries.
 
 ## Level generator
 
-[`state/level-generator/`](./src/lib/state/level-generator) makes levels
+[`state/levels/generator/`](../../bacteria-engine/src/lib/state/levels/generator) makes levels
 from a seed. A **recipe** lays out the left half of the base arena (320 × 180) - _field_ scatters pillars, _corridor_ runs walls from edge to edge
 with gaps, _fortress_ builds a keep with doors around each start spot,
 _cave_ grows round walls like tissue - and the generator mirrors it through
@@ -747,7 +747,7 @@ needs a new recipe name instead.
 ## Daily level
 
 Every day has one generated level, the same for everyone
-([`state/daily.ts`](./src/lib/state/daily.ts)): the seed is the date in UTC,
+([`state/levels/daily.ts`](../../bacteria-engine/src/lib/state/levels/daily.ts)): the seed is the date in UTC,
 the recipe changes from day to day and the difficulty warms up over the week,
 from Monday's 3 to Saturday's 7. The main menu offers it with the attempts
 left and the streak. An attempt counts as its match starts - a restart or
@@ -765,7 +765,7 @@ counts for the day it began.
 
 ## Endless run
 
-An endless run ([`state/endless.ts`](./src/lib/state/endless.ts)) is a
+An endless run ([`state/levels/endless.ts`](../../bacteria-engine/src/lib/state/levels/endless.ts)) is a
 ladder of generated levels from a seed of its own: every level a style of
 its own, the difficulty one step up with every win, up to the hardest. A
 defeat - a draw counts as one - costs one of three lives and the same level
@@ -780,7 +780,7 @@ end of a run.
 ## Tuning
 
 Every number that shapes how the game feels lives in
-[`game-balance.ts`](./src/lib/state/game-balance.ts), together with the wall
+[`game-balance.ts`](../../bacteria-engine/src/lib/state/simulation/game-balance.ts), together with the wall
 layout. The walls are point symmetric to the centre of the arena so neither
 player gets the better half.
 

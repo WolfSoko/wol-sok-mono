@@ -9,7 +9,7 @@
 
 The game has two simulations with different rules:
 
-- **The CPU simulation** (`state/bacteria-simulation.ts`) moves bacteria one
+- **The CPU simulation** (`state/simulation/bacteria-simulation.ts`) moves bacteria one
   after the other. It is deterministic: online lockstep (ADR 0009), replays,
   ranked matches and the server's verification (ADR 0011, 0012) all run on
   it.
@@ -188,7 +188,7 @@ sits behind a flag; step 8 switches it on.
      `intReferenceTick` and `intReport`, the report pass in TypeScript. So
      `IntSimulation` is the `gpu-int` ruleset on the CPU, bit for bit.
    - Since [#2790](https://github.com/WolfSoko/wol-sok-mono/issues/2790)
-     these classes are gone: `GridWar` (`state/grid/grid-war.ts`) runs the
+     these classes are gone: `GridWar` (`state/simulation/grid/grid-war.ts`) runs the
      bookkeeping over the `CellPasses` port, filled by
      `IntReferencePasses` (`intSimulation`) and the game's `GpuCellPasses`
      with integer or float rules (`gpuSimulation`). The names below are

@@ -7,7 +7,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
- * The GLSL twin of `state/gpu-int/` (ADR 0015): the draws, the Q14 products,
+ * The GLSL twin of `state/simulation/gpu-int/` (ADR 0015): the draws, the Q14 products,
  * the integer square root and the unit vector, for the deterministic
  * shaders to include after their uniforms. It expects a `uint uSeed` uniform,
  * the frame seed of `frameSeed`.

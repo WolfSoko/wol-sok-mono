@@ -22,7 +22,7 @@ where it does not.
 
 ### Evolution: DNA, genes and weapons
 
-The shared model is `state/evolution.ts`.
+The shared model is `state/simulation/evolution.ts`.
 
 - **DNA is derived, not stored**: `dnaEarned(xpOf(progress))`, one strand
   per 50 XP. It merges as cleanly as XP does and can never be lost.
@@ -53,7 +53,7 @@ The shared model is `state/evolution.ts`.
 
 ### Skins for DNA (added 2026-10-24)
 
-Every special skin of the My Colony screen (`state/skins.ts`) - all but the
+Every special skin of the My Colony screen (`state/progress/skins.ts`) - all but the
 slime and the pixels - is bought with the same DNA. They are cosmetics, so they do not follow the reset rule: the
 skins bought are kept in the evolution progress, merge as the union of both
 sides whatever their epochs, survive a reset and keep counting as spent -
@@ -66,7 +66,7 @@ they own.
 
 Only the humans' colonies wear the skin (added 2026-10-26). Each colony of
 a frame carries its own look (`PaintedColony`, chosen by seat in
-`state/colony-looks.ts` from what the match made of the seat - `Player.computer`
+`state/progress/colony-looks.ts` from what the match made of the seat - `Player.computer`
 and `Player.boss`, set from the spawns `planMatch` makes, so a replay dresses
 its seats as the match did): the computer's dresses by its level - the plain
 slime on the first, then the skins to buy in the gallery's order at the

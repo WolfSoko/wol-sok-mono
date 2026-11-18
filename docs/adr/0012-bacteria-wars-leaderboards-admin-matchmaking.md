@@ -106,14 +106,14 @@ ADR 0009 and 0011 note that Safari and Firefox may round `Math.sin` and
 - **A daily or endless match longer than 10 minutes is never re-run.** It
   stays provisional (rare).
 - **The ranked setup** is fixed, so entries compare like with like:
-  `rankedPlan(levelId, seed)` in `state/attempts.ts` returns
+  `rankedPlan(levelId, seed)` in `state/cloud/attempts.ts` returns
   `mode: 'vs-computer'`, bot difficulty `normal`, `headStart: 0`, the
   player in seat 0, the level's online grid and the default colours. A
   ranked attempt always plays this plan, whatever the player's setup says,
   and the result screen shows "Ranked setup". `rankReplay` compares the
   replay's whole effective plan with `rankedPlan(...)` and refuses any
   difference (`rankedReason: 'plan-mismatch'`).
-- `state/boards.ts` (pure, shared by the client, the functions and the
+- `state/cloud/boards.ts` (pure, shared by the client, the functions and the
   admin lib) holds the board ids, the sort encodings, the cut sizes, the
   label format and the XP caps. The verification budgets are server-only
   and live in the functions app (`boards/budgets.ts`).
@@ -289,7 +289,7 @@ without limit. Three things make an attempt count:
      if the declaration committed after all.
 2. **The match seed comes from the declaration**:
    `seed = attemptSeed(uid, attemptId, atMillis)` (pure, in
-   `state/attempts.ts`), and the match plays `rankedPlan(levelId, seed)`.
+   `state/cloud/attempts.ts`), and the match plays `rankedPlan(levelId, seed)`.
    - Bots and neutral colonies depend on the seed, so inputs played before
      the declaration do not give the same match.
    - An endless run's level seed is the seed of its attempt `e_<runId>_0`,
@@ -789,7 +789,7 @@ a release (decided 2026-10-25: Remote Config).
 
 - **Where they live**: Remote Config of the game's project, one boolean
   parameter per toggle. Clients fetch them with the Remote Config SDK; the
-  defaults are `FEATURE_TOGGLES` in the game lib (`state/feature-toggles.ts`),
+  defaults are `FEATURE_TOGGLES` in the game lib (`state/cloud/feature-toggles.ts`),
   what the game does without Remote Config, so a client that cannot fetch
   them plays as before.
 - **The toggles**: `rankedDaily`, `rankedEndless`, `matchmaking`,
@@ -941,7 +941,7 @@ chose not to share their status, and the privacy page says so.
     with `seen` and `expireAt`, so changing the choice keeps the place in
     the queue. A level is `null` or a string matching `[a-z0-9-]{1,40}`.
 - **The pick** is `pickMatchLevel(waiting, claimer, random)` in
-  `state/match-level.ts` (pure). It returns the waiting player's level if
+  `state/levels/match-level.ts` (pure). It returns the waiting player's level if
   it is a known level that plays online (`playableOnline`), else the
   claimer's, else a random level that plays online, and says which
   (`pick: 'waiting' | 'claimer' | 'random'`).
@@ -1296,7 +1296,7 @@ As built in the client and on the privacy page (2026-10-26):
 
 1. **Matchmaking level preference**: the client, the queue and claim rule,
    the lobby. It needs no functions and can ship before or with 0011 [2].
-2. **Contracts** (`state/boards.ts`, `attempts.ts` with `rankedPlan`,
+2. **Contracts** (`state/cloud/boards.ts`, `attempts.ts` with `rankedPlan`,
    `admin-commands.ts`). The `attempt` header field ships with replay v2
    itself [3], so the first release that stores v2 replays [5] already
    knows it.

@@ -13,7 +13,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { NetMessage, TickInput } from './net-message';
 
-/** Moved to `state/checksum.ts` (ADR 0011); kept here for the net code. */
+/** Moved to `state/match/checksum.ts` (ADR 0011); kept here for the net code. */
 export { matchChecksum } from '@wolsok/feat-shared-bacteria-engine';
 
 /**

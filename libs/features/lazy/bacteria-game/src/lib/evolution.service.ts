@@ -63,7 +63,7 @@ export const EVOLUTION_WAIT_MS = 3000;
  * Nothing can be bought before both this and the progress have been told by
  * the storage - the DNA left is not known before.
  *
- * The skins (`state/skins.ts`) are bought with the same DNA and kept here
+ * The skins (`state/progress/skins.ts`) are bought with the same DNA and kept here
  * too; which one the colonies wear is the device's setting
  * (`GameSettingsService.value('look')`), worn only once it is owned
  * ({@link wornSkin}).

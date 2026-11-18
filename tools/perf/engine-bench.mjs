@@ -41,11 +41,11 @@ const CALIBRATION_RUNS = 15;
 const FIXTURES = [
   {
     name: 'golden-cpu',
-    file: 'libs/features/bacteria-engine/src/lib/state/golden-replay.json',
+    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
   },
   {
     name: 'golden-gpu-int',
-    file: 'libs/features/bacteria-engine/src/lib/state/golden-replay.json',
+    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
     gpuInt: true,
   },
   { name: 'heavy-cpu', file: 'tools/perf/fixtures/expanse-heavy.json' },

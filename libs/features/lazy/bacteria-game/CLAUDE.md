@@ -118,7 +118,7 @@ storage until then. Settings stay with the device either way.
   and reads its own replays back (`listMine`, one query in `GAME_QUERIES`).
   `listingOf` reads the functions' fields of `replays/{id}` - the seat from
   `seats` (online, host 0), `rankedReason` (`ARRIVAL_REASONS`,
-  `ONLINE_REASONS` in `state/replay-reasons.ts`, exported by the engine,
+  `ONLINE_REASONS` in `state/replay/replay-reasons.ts`, exported by the engine,
   where the functions take their reason types from),
   `galleryOut`, `publicId` - and leaves out what it does not know. A new
   reason needs its text in the `replay.reasons` area (a `satisfies` there
@@ -150,14 +150,14 @@ storage until then. Settings stay with the device either way.
 - A local match against the computer is recorded on every simulation
   resolution (owner's decision of 2026-10-26) and goes to `GameReplays` on
   every one of them too (owner's decision of 2026-10-31): the stored parse
-  takes any grid of the level (`simGridOf`, `state/replay.ts`), an online
+  takes any grid of the level (`simGridOf`, `state/replay/replay.ts`), an online
   or ranked match only the online grid. On the online grid a recorded
   match plays a ruleset (`recordedSeats` in `PlayerService.init`: `cpu`
   where the device would pick the float GPU); on another grid it plays
   what the device picks unrecorded, and a float GPU match leaves no
   recording - recording never moves a match off the GPU there. The viewer
   lays a replay out on its own grid (`simResolutionOf`,
-  the engine's `state/arena-size.ts`); the functions scale a re-run's expected cost by
+  the engine's `state/simulation/arena-size.ts`); the functions scale a re-run's expected cost by
   the arena's cells (`expectedRerunMs`) and count the level statistics
   per grid (`levelStatsKey`, `simGridOf` from the engine lib).
 - Ranked daily attempts and endless runs (ADR 0012) are declared through
@@ -205,7 +205,7 @@ storage until then. Settings stay with the device either way.
   `ReplayScene` (`replay-scene.ts`) on an `ArenaViewComponent` by itself
   (its frames drawn by `arenaContent`, `arena/arena-content.ts`, like the
   game's):
-  its own `MatchEngine` from `replayEngine` (`state/replay.ts`, beside
+  its own `MatchEngine` from `replayEngine` (`state/replay/replay.ts`, beside
   `canPlayBack` and `playReplay`, which the engine's `replayVerdict`,
   the functions' verification, builds on: keep their signatures; which
   parsed replays play back, and why not, is `playbackRefusal` alone, which
@@ -413,8 +413,8 @@ play each other.
 
 - Against the computer on the ladder and on generated levels the menus
   pass loadouts and `ladder: LADDER_VERSION` in the plan: the computer then
-  plays its place on the difficulty curve (`state/difficulty-curve.ts`) and
-  carries `computerLoadout` (`state/computer-opponent.ts`). Such a replay
+  plays its place on the difficulty curve (`state/match/difficulty-curve.ts`) and
+  carries `computerLoadout` (`state/match/computer-opponent.ts`). Such a replay
   is version 4. A change to `SKILL`, `STRENGTH`, the bands or a rule only the ladder's
   profiles switch on (`attacksAtCap`, `pushesAfterCryo`) changes those matches,
   as does one to what the computer buys (its budget, a character, the gene
@@ -430,10 +430,10 @@ play each other.
 
 ## The deterministic simulation (ADR 0015)
 
-- `GridWar` (`state/grid/grid-war.ts`) is the grid war's bookkeeping,
+- `GridWar` (`state/simulation/grid/grid-war.ts`) is the grid war's bookkeeping,
   alike on every processor: walls, zones, pellets, effects, the frame's
   uniforms and what a report means. Change it there, once. It runs over the
-  `CellPasses` port (`state/grid/cell-passes.ts`), whose adapters only run
+  `CellPasses` port (`state/simulation/grid/cell-passes.ts`), whose adapters only run
   the cell passes and render the report: `IntReferencePasses` (the
   TypeScript reference, `intReferenceTick` and `intReport`; built by the
   engine's `intSimulation`) and the game's `GpuCellPasses`
@@ -444,7 +444,7 @@ play each other.
   hand their reports back through the `ReportSink`; `grid-war.spec.ts`
   checks the bookkeeping on a stub port. The map, pellets, effects, moving
   walls and the tick's events are `ArenaFixtures`
-  (`state/arena-fixtures.ts`), shared with `BacteriaSimulation`.
+  (`state/simulation/arena-fixtures.ts`), shared with `BacteriaSimulation`.
 - A change to the integer passes, the report or the uniforms has to land in
   the shaders and in the reference alike, or the GPU cross-check fails.
   Then regenerate the goldens: `golden-gpu-int.json`, `golden-gpu-sim.json`
@@ -458,7 +458,7 @@ play each other.
   new pass that moves one, a longer escape) grows `recentReach` with it;
   the self-test and the cross-check's `roomy` scenario play on the area
   and catch one far too small, not one a tick short.
-- Two rulesets (`Ruleset`, `state/simulation.ts`): `cpu`
+- Two rulesets (`Ruleset`, `state/simulation/simulation.ts`): `cpu`
   (`BacteriaSimulation`) and `gpu-int` (the integer passes: `gpuSimulation`
   with `deterministic`, or `intSimulation`). A simulation names what
   runs it by `Simulation.variant` (`cpu`, `cpu-int`, `gpu-int`,
@@ -466,7 +466,7 @@ play each other.
   none (null) and is never recorded.
 - Which simulation plays a ruleset, and what stands in when the GPU fails
   to start, is the engine's `SimulationProvider`
-  (`state/simulation-provider.ts`, `createSimulationProvider`): a match asks
+  (`state/simulation/simulation-provider.ts`, `createSimulationProvider`): a match asks
   `simulationFor('cpu' | 'gpu-int' | 'device')`; a GPU that fails to start
   or to be sized is let go of and the provider steps down for good (this
   match on `intSimulation` for `gpu-int`, on `BacteriaSimulation` for the
