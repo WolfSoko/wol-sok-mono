@@ -1,12 +1,14 @@
 import {
   dailyLevelId,
   onlineReplayId,
-  parseAttemptId,
   type Replay,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
+  parseAttemptId,
   type ReplayKind,
   type StoredPlayback,
   storedPlaybackOf,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { createHash } from 'node:crypto';
 import { dayOf } from '../limits';
 

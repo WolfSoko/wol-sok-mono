@@ -11,9 +11,9 @@ import {
   BOT_DIFFICULTIES,
   CampaignSummary,
   continueText,
-  type FeatureToggles,
   LEVELS,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';

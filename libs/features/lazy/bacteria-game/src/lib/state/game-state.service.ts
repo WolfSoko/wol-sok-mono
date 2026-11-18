@@ -44,17 +44,12 @@ import {
   newSeries,
   ONLINE_SIM_RESOLUTION,
   onOnlineGrid,
-  parseAttemptId,
   perfProbeOf,
   pickColor,
   PLAIN_LOADOUT,
   planMatch,
   Player,
   randomSeed,
-  type RankedMatch,
-  type RankedOutcome,
-  rankedPlan,
-  type RankedRunOutcome,
   replayFromHash,
   sameColors,
   Series,
@@ -65,6 +60,13 @@ import {
   ticksToMs,
   validColorPair,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  parseAttemptId,
+  type RankedMatch,
+  type RankedOutcome,
+  rankedPlan,
+  type RankedRunOutcome,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   GameMode,
   GameState,

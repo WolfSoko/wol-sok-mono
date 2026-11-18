@@ -2,7 +2,7 @@ import type { Observable } from 'rxjs';
 import {
   attemptExpireAt,
   attemptTaken,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { FirebaseConnection } from './firebase-connection';
 import { millisOf, signedIn } from './firestore-values';
 import {

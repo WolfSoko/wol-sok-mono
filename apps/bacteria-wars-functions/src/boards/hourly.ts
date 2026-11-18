@@ -1,10 +1,9 @@
+import { NOT_REPORTED, utcDay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   atHourOf,
   dailyBoardId,
-  NOT_REPORTED,
   onlineSort,
-  utcDay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,

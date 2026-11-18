@@ -1,15 +1,17 @@
 import {
-  attemptSeed,
   BALANCE_VERSION,
   dailyLevelId,
   ENDLESS_LIVES,
-  endlessAttemptId,
   endlessLevelId,
   GPU_INT_REPLAY_VERSION,
-  rankedPlan,
   type Replay,
   type ReplayHeader,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  attemptSeed,
+  endlessAttemptId,
+  rankedPlan,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 
 /** The player of the specs' ranked daily replays - never bundled. */
 export const UID = 'ada';

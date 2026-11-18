@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { isObservable, type Observable, of } from 'rxjs';
 import { FeatureTogglesService } from '../lib/feature-toggles.service';
-import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine';
+import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameToggles } from '../lib/storage/game-toggles';
 
 /**

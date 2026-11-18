@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import {
-  defaultProfile,
   FEATURE_TOGGLES,
   type FeatureToggles,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { clearBanCache, isBanned } from '../limits';

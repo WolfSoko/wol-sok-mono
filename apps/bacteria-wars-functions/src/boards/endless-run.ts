@@ -2,11 +2,11 @@ import {
   afterMatch,
   ENDLESS_LIVES,
   endlessLevelId,
-  endlessSort,
   isRunOver,
   newRun,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { endlessSort } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { EntryBase } from './entries';
 import type { ArrivalReason } from './declared-match';
 

@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine';
+import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameCloud } from './game-cloud';
 
 /**

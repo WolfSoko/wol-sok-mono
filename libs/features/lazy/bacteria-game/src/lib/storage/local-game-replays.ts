@@ -1,19 +1,21 @@
 import { map, Observable, of } from 'rxjs';
 import {
-  type CommandResult,
   dailyLevelId,
   fromBase64,
   isObject,
   MAX_PACKED_BYTES,
-  type ReplayCommandType,
-  type ReplayKind,
   replayFromBytes,
   replayToBytes,
-  type StoredPlayback,
-  storedPlaybackOf,
   toBase64,
   utcDay,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type CommandResult,
+  type ReplayCommandType,
+  type ReplayKind,
+  type StoredPlayback,
+  storedPlaybackOf,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { GameReplays } from './game-replays';
 import type { GameStorage } from './game-storage';
 import {

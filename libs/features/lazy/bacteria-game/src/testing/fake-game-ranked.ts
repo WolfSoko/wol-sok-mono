@@ -1,4 +1,4 @@
-import { attemptTaken } from '@wolsok/feat-shared-bacteria-engine';
+import { attemptTaken } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type {
   DeclaredAttempt,
   Declaration,

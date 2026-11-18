@@ -1,4 +1,4 @@
-import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine';
+import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { logger } from 'firebase-functions/logger';
 import { useEmulatorDb } from '../testing/emulator';
 import { runCommandDocument } from './run-command-document';

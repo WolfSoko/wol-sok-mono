@@ -1,10 +1,9 @@
+import { type Replay, utcDay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   BOARD_CUT,
   dailyBoardId,
   NEXT_CANDIDATES,
-  type Replay,
-  utcDay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type DocumentReference,
   FieldValue,

@@ -53,7 +53,7 @@ export {
   isUtcDay,
   parseBoardId,
   VISIBLE_STATUSES,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export { utcDay } from '@wolsok/feat-shared-bacteria-engine';
 export { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 export { ONLINE_SIM_RESOLUTION } from '@wolsok/feat-shared-bacteria-engine';
@@ -64,15 +64,15 @@ export type {
   BoardRow,
   EntryShow,
   EntryStatus,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export {
   CURATION_COMMAND_TYPES,
   parseCommandResult,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export type {
   CommandResult,
   CurationCommandType,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export { commandEnvelope } from './lib/storage/command-envelope';
 export {
   ADMIN_COMMAND_TYPES,
@@ -81,31 +81,31 @@ export {
   isUid,
   parseAdminCommand,
   REASON_MAX,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export type {
   AdminCommand,
   AdminCommandType,
   BanReason,
   EntryTarget,
   PlayerTarget,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export {
   ADMIN_STATS_FIGURES,
   banHolds,
   HIDE_REASONS,
   parseBan,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export type {
   AdminStats,
   AdminStatsFigure,
   CloudBan,
   HideReason,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 export type {
   FeatureToggle,
   FeatureToggles,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';

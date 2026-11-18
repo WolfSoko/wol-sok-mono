@@ -2,9 +2,10 @@
  * The game's engine without Angular: the match, its simulation, replays,
  * levels, progress, the English texts it renders itself and the
  * translation mechanics (ADR 0011); the game's other texts live in the
- * game lib. The game's UI, its Cloud Functions and its admin area import
- * it as `@wolsok/feat-shared-bacteria-engine`; nothing imports a path
- * inside it.
+ * game lib, the documents it shares with the server in the `/cloud` entry
+ * (`cloud.ts`). The game's UI, its Cloud Functions and its admin area
+ * import it as `@wolsok/feat-shared-bacteria-engine`; nothing imports a
+ * path inside it.
  *
  * Everything here stays free of Angular, NgRx, RxJS, Firebase and the DOM:
  * an oxlint override guards the imports, Jest runs the specs in Node, and
@@ -64,64 +65,6 @@ export {
   earnAchievements,
 } from './lib/state/progress/achievements';
 export {
-  ADMIN_COMMAND_TYPES,
-  BAN_REASONS,
-  DESTRUCTIVE_COMMAND_TYPES,
-  isAdminCommandType,
-  isUid,
-  parseAdminCommand,
-  REASON_MAX,
-} from './lib/state/cloud/admin-commands';
-export type {
-  AdminCommand,
-  AdminCommandType,
-  BanReason,
-  EntryTarget,
-  PlayerTarget,
-} from './lib/state/cloud/admin-commands';
-export { ADMIN_STATS_FIGURES } from './lib/state/cloud/records/admin-stats';
-export type {
-  AdminStats,
-  AdminStatsFigure,
-} from './lib/state/cloud/records/admin-stats';
-export {
-  banHolds,
-  mirroredBan,
-  parseBan,
-  parseMirroredBan,
-} from './lib/state/cloud/records/ban';
-export type { CloudBan, ToMillis } from './lib/state/cloud/records/ban';
-export { HIDE_REASONS } from './lib/state/cloud/records/hide-reasons';
-export type { HideReason } from './lib/state/cloud/records/hide-reasons';
-export { NOTICE_TYPES } from './lib/state/cloud/records/notices';
-export type { NoticeType } from './lib/state/cloud/records/notices';
-export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud/records/replays';
-export type {
-  ReplayKind,
-  ReplayState,
-} from './lib/state/cloud/records/replays';
-export {
-  type StoredPlayback,
-  storedPlaybackOf,
-  storedPlaybackRefusal,
-} from './lib/state/cloud/records/replay-playback';
-export {
-  COMMAND_ENVELOPE_KEYS,
-  COMMAND_TTL_MS,
-  CURATION_COMMAND_TYPES,
-  hasOnlyCommandKeys,
-  isCurationCommandType,
-  parseCommandResult,
-  parseReplayCommand,
-  PLAYER_REPLAY_COMMAND_TYPES,
-  REPLAY_COMMAND_TYPES,
-} from './lib/state/cloud/command-documents';
-export type {
-  CommandResult,
-  CurationCommandType,
-  ReplayCommandType,
-} from './lib/state/cloud/command-documents';
-export {
   arenaSize,
   BASE_ARENA,
   DEFAULT_SCREEN_RESOLUTION,
@@ -139,92 +82,12 @@ export type {
   ScreenResolution,
   SimResolution,
 } from './lib/state/simulation/arena-size';
-export {
-  ARRIVAL_SLACK_MS,
-  ATTEMPT_DAYS,
-  attemptExpireAt,
-  attemptSeed,
-  attemptTaken,
-  canDeclare,
-  COUNTDOWN_MS,
-  dailyAttemptId,
-  dailyAttemptsLeft,
-  dayAttemptIds,
-  declaredBeforeMatch,
-  endlessAttemptId,
-  endlessRunId,
-  isRankedPlan,
-  nextDailyAttemptId,
-  nextRunId,
-  parseAttemptId,
-  parseRunId,
-  RANKED_DAILY_ATTEMPTS,
-  RANKED_RUNS_PER_DAY,
-  rankedPlan,
-  requiredAttempt,
-  RUN_MATCHES,
-  runsLeft,
-  submissionDeadline,
-  UPLOAD_WINDOW_MS,
-} from './lib/state/cloud/attempts';
-export type {
-  Attempt,
-  DailyAttempt,
-  EndlessAttempt,
-} from './lib/state/cloud/attempts';
 export { BacteriaSimulation } from './lib/state/simulation/bacteria-simulation';
 export type {
   ColonySpawn,
   Nutrient,
 } from './lib/state/simulation/bacteria-simulation';
 export { fromBase64, toBase64 } from './lib/state/base64';
-export {
-  ANONYMOUS_NAME,
-  atHourOf,
-  BOARD_CUT,
-  BOARD_KINDS,
-  boardAvatar,
-  boardTag,
-  CHECKING_ROWS,
-  compareRows,
-  competitionRanks,
-  dailyBoardId,
-  dailySort,
-  DEFAULT_NAME,
-  endlessSort,
-  ENTRY_STATUSES,
-  formatTag,
-  isBoardId,
-  isEntryId,
-  isUtcDay,
-  isVisible,
-  NEXT_CANDIDATES,
-  onlineSort,
-  PAGE_ROWS,
-  parseBoardId,
-  posesAsLabel,
-  showsName,
-  TAG_COUNT,
-  TOP_ROWS,
-  topRows,
-  VISIBLE_STATUSES,
-  XP_FULL_COUNT,
-  XP_FULL_COUNT_BEFORE,
-  XP_RISE_BASE,
-  XP_RISE_PER_DAY,
-  XP_RISE_PER_HOUR,
-  xpRiseCap,
-  xpSort,
-} from './lib/state/cloud/boards';
-export type {
-  BoardEntry,
-  BoardId,
-  BoardKind,
-  BoardRef,
-  BoardRow,
-  EntryShow,
-  EntryStatus,
-} from './lib/state/cloud/boards';
 export {
   BOT_DIFFICULTIES,
   DEFAULT_DIFFICULTY,
@@ -336,15 +199,6 @@ export type {
   WeaponFire,
   WeaponId,
 } from './lib/state/simulation/evolution';
-export {
-  FEATURE_TOGGLE_KEYS,
-  FEATURE_TOGGLES,
-  featureToggles,
-} from './lib/state/cloud/feature-toggles';
-export type {
-  FeatureToggle,
-  FeatureToggles,
-} from './lib/state/cloud/feature-toggles';
 export {
   clock,
   countDown,
@@ -629,13 +483,6 @@ export {
   totalsOf,
 } from './lib/state/progress/progress';
 export type { LifetimeTotals, Progress } from './lib/state/progress/progress';
-export type {
-  RankedMatch,
-  RankedOutcome,
-  RankedRun,
-  RankedRunOutcome,
-  UnrankedReason,
-} from './lib/state/cloud/ranked-match';
 export { rankFor, RANKS, xpClimb } from './lib/state/progress/ranks';
 export type { RankId } from './lib/state/progress/ranks';
 export { keepRecent } from './lib/state/match/recent-cache';

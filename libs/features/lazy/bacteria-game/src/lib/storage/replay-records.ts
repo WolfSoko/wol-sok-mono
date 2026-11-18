@@ -2,10 +2,12 @@ import {
   type EndReason,
   onlineReplayId,
   type Replay,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   type ReplayKind,
   type ReplayState,
   type StoredPlayback,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type {
   ArrivalReason,
   OnlineReason,

@@ -2,7 +2,7 @@ import {
   banHolds,
   type CloudBan,
   parseBan,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,
