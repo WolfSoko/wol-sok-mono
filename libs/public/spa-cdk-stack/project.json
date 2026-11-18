@@ -23,6 +23,7 @@
       "options": {
         "configFile": "libs/public/spa-cdk-stack/vite.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

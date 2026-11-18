@@ -31,6 +31,7 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/fourier-analysis/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

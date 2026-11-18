@@ -11,6 +11,7 @@
       "options": {
         "jestConfig": "libs/shared/e2e-server/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

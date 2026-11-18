@@ -25,6 +25,7 @@
       "options": {
         "configFile": "libs/shared/data-access/vite.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

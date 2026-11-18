@@ -21,6 +21,7 @@
       "options": {
         "jestConfig": "libs/utils/math/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

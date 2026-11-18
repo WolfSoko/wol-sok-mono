@@ -40,6 +40,7 @@
         "jestConfig": "apps/korbjaeger-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

@@ -15,6 +15,7 @@
       "options": {
         "jestConfig": "libs/utils/version/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

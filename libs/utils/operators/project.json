@@ -28,6 +28,7 @@
         "jestConfig": "libs/utils/operators/jest.config.ts",
         "codeCoverage": true
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }
