@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01VkMxAx3EPCiuzzqzAQnUdN",
+  "agent_id": "a3d3ec69605c570ed",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3139 diff vs spec",
+  "token_usage": {
+    "input_tokens": 42,
+    "cache_creation_tokens": 110780,
+    "cache_read_tokens": 2247546,
+    "output_tokens": 12354,
+    "api_call_count": 21
+  },
+  "started_at": "2026-11-18T21:59:01.634442205+01:00",
+  "completed_at": "2026-11-18T22:02:08.171773749+01:00"
+}
