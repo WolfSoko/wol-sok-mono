@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
 import { soundSettingsOf } from './game-sound-settings';
+import { GameSoundService } from './game-sound.service';
 
 describe('soundSettingsOf', () => {
   let settings: GameSettingsService;
@@ -41,5 +42,25 @@ describe('soundSettingsOf', () => {
     settings.preview('musicVolume', 0);
 
     expect(sound.musicVolume()).toBe(0);
+  });
+});
+
+describe('GameSoundService', () => {
+  it('follows the sound settings of the device', () => {
+    localStorage.clear();
+    TestBed.resetTestingModule();
+    const settings = TestBed.inject(GameSettingsService);
+    const sound = TestBed.inject(GameSoundService);
+
+    settings.set('effectsVolume', MAX_VOLUME);
+    const full = sound.effectsGain();
+    settings.set('effectsVolume', MAX_VOLUME / 2);
+    const half = sound.effectsGain();
+    settings.set('sound', false);
+
+    expect(full).toBe(1);
+    expect(half).toBeGreaterThan(0);
+    expect(half).toBeLessThan(1);
+    expect(sound.effectsGain()).toBe(0);
   });
 });

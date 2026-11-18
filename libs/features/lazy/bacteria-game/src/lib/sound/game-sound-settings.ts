@@ -1,5 +1,5 @@
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
-import { type SoundSettings } from './sound-settings';
+import { type SoundSettings } from '@wolsok/feat-bacteria-sound';
 
 /** The game's device settings, as the sound reads them. */
 export function soundSettingsOf(settings: GameSettingsService): SoundSettings {

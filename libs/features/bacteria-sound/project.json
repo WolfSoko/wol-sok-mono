@@ -1,0 +1,32 @@
+{
+  "name": "feat-bacteria-sound",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/features/bacteria-sound/src",
+  "tags": ["feature:game-kit"],
+  "targets": {
+    "typecheck-specs": {},
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/libs/features/bacteria-sound"],
+      "options": {
+        "project": "libs/features/bacteria-sound/ng-package.json",
+        "tsConfig": "libs/features/bacteria-sound/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/features/bacteria-sound/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "libs/features/bacteria-sound/jest.config.ts",
+        "tsConfig": "libs/features/bacteria-sound/tsconfig.spec.json"
+      }
+    }
+  }
+}

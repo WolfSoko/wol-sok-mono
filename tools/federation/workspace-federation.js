@@ -106,6 +106,8 @@ function workspaceFederation(config) {
       '@wolsok/feat-shared-bacteria-engine/testing',
       // So are its painters and GPU simulation.
       '@wolsok/feat-bacteria-rendering',
+      // And its sound.
+      '@wolsok/feat-bacteria-sound',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],
