@@ -23,7 +23,7 @@
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "libs/shared/data-access/vite.config.ts"
+        "configFile": "libs/shared/data-access/vite.config.mts"
       }
     }
   }

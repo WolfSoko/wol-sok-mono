@@ -1,7 +1,8 @@
 name: Deploy release
 
 # Deploys what changed since the last deploy of each kind, at the given release
-# tag. release.yml calls it right after creating the release; run it by hand to
+# tag: the apps whose deploy reads a changed file, the npm packages whose version
+# the release bumped. release.yml calls it right after creating the release; run it by hand to
 # redeploy a version, where `projects` names what to deploy (a version deployed
 # once selects nothing since its own deploy tag) and `skip-cache` rebuilds it
 # without the Nx cache (#3058).
@@ -22,7 +23,7 @@ on:
       projects:
         type: string
         default: ''
-        description: Projects to deploy, comma-separated (empty = what changed since the last deploy tag)
+        description: Projects to deploy, comma-separated (empty = what changed since the last deploy tag; npm packages = those bumped since)
       skip-cache:
         type: boolean
         default: false
@@ -129,9 +130,11 @@ jobs:
           fi
           echo "NX_HEAD=$RELEASE_VERSION" >> $GITHUB_ENV
 
-      # Only the projects whose deploy task (a package: its build) reads a
-      # changed file (#2888): Nx alone counts every target's inputs, so a
-      # lint-only root config would redeploy every app.
+      # The apps: those whose deploy task reads a changed file (#2888), as Nx
+      # alone counts every target's inputs and a lint-only root config would
+      # redeploy every app. The packages: those the release bumped (#3049),
+      # since a refactor in a package's sources changes its build but not its
+      # version, which npm already has.
       - name: Select the projects to release and set triggerRelease
         run: |
           if [[ -n "$DEPLOY_PROJECTS" ]]; then
@@ -139,14 +142,13 @@ jobs:
             target=$([[ "${{ matrix.config.app-type }}" == "npm-packages" ]] && echo build || echo deploy)
             selected=$(node tools/ci/deploy-override.mjs --projects="$DEPLOY_PROJECTS" --exclude='${{ matrix.config.exclude-pattern }}' --target="$target")
           else
-            if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
-              selection=(--target=build --projects='${{ matrix.config.projects-filter }}')
-            else
-              selection=(--target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
-            fi
             # Apart from the paste: the step's bash has no pipefail, so a failing
             # selection would otherwise read as an empty one and skip the leg.
-            selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" "${selection[@]}")
+            if [[ "${{ matrix.config.app-type }}" == "npm-packages" ]]; then
+              selected=$(node tools/ci/bumped-packages.mjs --base="$NX_BASE" --head="$NX_HEAD" --projects='${{ matrix.config.projects-filter }}')
+            else
+              selected=$(node tools/ci/release-affected.mjs --base="$NX_BASE" --head="$NX_HEAD" --target=deploy --exclude='${{ matrix.config.exclude-pattern }}')
+            fi
           fi
           RELEASE_PROJECTS=$(paste -sd, - <<< "$selected")
           echo "Selected: ${RELEASE_PROJECTS:-none}"

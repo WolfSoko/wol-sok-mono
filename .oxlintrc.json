@@ -292,7 +292,7 @@
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "allow": ["^\\.\\./\\.\\./tools/vite/workspace-file\\.ts$"],
+            "allow": ["^\\.\\./\\.\\./tools/vite/workspace-file\\.mts$"],
             "depConstraints": [
               {
                 "sourceTag": "*",

@@ -88,7 +88,21 @@ void describe('deploy.yml', () => {
       select,
       /deploy-override\.mjs --projects="\$DEPLOY_PROJECTS" --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}' --target="\$target"/
     );
-    assert.match(select, /release-affected\.mjs/);
+    assert.match(
+      select,
+      /release-affected\.mjs --base="\$NX_BASE" --head="\$NX_HEAD" --target=deploy --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}'/
+    );
+  });
+
+  void it('publishes the packages the release bumped (#3049)', () => {
+    const select = stepOf(
+      'Select the projects to release and set triggerRelease'
+    );
+    assert.match(
+      select,
+      /if \[\[ "\$\{\{ matrix\.config\.app-type \}\}" == "npm-packages" \]\]; then\n\s+selected=\$\(node tools\/ci\/bumped-packages\.mjs --base="\$NX_BASE" --head="\$NX_HEAD" --projects='\$\{\{ matrix\.config\.projects-filter \}\}'\)/
+    );
+    assert.doesNotMatch(select, /release-affected\.mjs[^\n]*--target=build/);
   });
 
   void it('gives every leg an exclude pattern', () => {
