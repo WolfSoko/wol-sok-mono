@@ -1,7 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import * as Sentry from '@sentry/angular';
-import type { BrowserOptions } from '@sentry/angular';
 import { environment as development } from '../../environments/environment';
 import { environment as e2e } from '../../environments/environment.e2e';
 import { environment as emulator } from '../../environments/environment.emulator';
@@ -20,7 +19,7 @@ jest.mock('@sentry/angular', () => ({
 
 /** The filter form of `integrations`, as `sentryOptions` passes it. */
 type IntegrationsFilter = Extract<
-  NonNullable<BrowserOptions['integrations']>,
+  NonNullable<Sentry.BrowserOptions['integrations']>,
   (...args: never[]) => unknown
 >;
 type Integration = Parameters<IntegrationsFilter>[0][number];

@@ -39,6 +39,10 @@ and `spa-cdk-stack`. All eight pass (`nx run-many -t typecheck --skip-nx-cache`)
 
 - No `typecheck-specs` for projects without a `tsconfig.spec.json` (the `tools` scripts and the
   `.mjs`-only projects): `tools` is covered by `typecheck-tools`, the rest have no TypeScript specs.
+- No `typecheck-specs` for `nx-aws-cdk-v2-e2e`: it has a `tsconfig.spec.json` but no `test` target
+  (its Jest specs run as its `e2e` against a generated workspace), so the guard leaves it out.
+- No inferred `typecheck-specs` (a local `createNodes` plugin on `tsconfig.spec.json`), which would
+  spare the per-project entries: raised as a follow-up.
 - No change to a published package's compiler targets (`libs/public/*`): only their specs are fixed.
 - No new `typecheck` targets beyond what `@nx/vite` infers, and no move of the libraries' build
   `tsc` into a check.
@@ -64,7 +68,8 @@ and `spa-cdk-stack`. All eight pass (`nx run-many -t typecheck --skip-nx-cache`)
 4. **Specs follow the types, as in #2815**; configuration follows the sources:
    - `bacteria-game-remote`: the spec takes the integration type from what `sentryOptions` declares
      (its `integrations` parameter), not from a named export that moved.
-   - `spa-cdk-stack`: the spec types the resources as `findResources` returns them.
+   - `spa-cdk-stack`: the spec names the shape of the deployments it reads (`Properties`,
+     `DependsOn`) and casts `findResources`' plain records to it.
    - `ws-thanos`: the fake's chainable `jest.fn`s declare their parameters, so `mock.calls` carries
      them.
    - `shared-data-access`: `process.env['NX_TASK_TARGET_CONFIGURATION']`, as the other Vite configs
