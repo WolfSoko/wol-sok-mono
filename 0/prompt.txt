@@ -1,0 +1,27 @@
+<task-notification>
+<task-id>b2lagajdu</task-id>
+<tool-use-id>toolu_017iFPpnjNWaARBkYQKUv4Ve</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-529/7dce3be4-dbf1-41a9-b459-fb77a422fa17/tasks/b2lagajdu.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for the draft decision" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bsxxfkc0c</task-id>
+<tool-use-id>toolu_01L9eMn4He5RBa2k7B6zjfGz</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-529/7dce3be4-dbf1-41a9-b459-fb77a422fa17/tasks/bsxxfkc0c.output</output-file>
+<status>completed</status>
+<summary>Background command "Run affected lint, test, typecheck-specs, build" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>biuc2s9sl</task-id>
+<tool-use-id>toolu_014Tq1VMCF12zV3RUpksmZmo</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-529/7dce3be4-dbf1-41a9-b459-fb77a422fa17/tasks/biuc2s9sl.output</output-file>
+<status>completed</status>
+<summary>Background command "Rerun game build and the failed test targets" completed (exit code 0)</summary>
+</task-notification>
