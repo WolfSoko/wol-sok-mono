@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.4...v74.172.5) (2026-11-18)
+
+### Refactorings
+
+* **feat-bacteria-sound:** move the game's sound into a lib of its own ([#3128](https://github.com/WolfSoko/wol-sok-mono/issues/3128)) ([9c864bb](https://github.com/WolfSoko/wol-sok-mono/commit/9c864bbf1e07dbe59de75270b8d44e80fa45ede7)), references [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102)
+
 ## [74.172.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.3...v74.172.4) (2026-11-18)
 
 ### Bug Fixes
