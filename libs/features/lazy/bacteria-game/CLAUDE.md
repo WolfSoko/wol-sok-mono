@@ -21,6 +21,13 @@ game's device storage and analytics, `GpuSelfTestService` and
 `SimulationOverrideService`, stay here in `gpu-choice/`, with
 `simulation-check.ts`, whose lines are the game's settings texts.
 
+The sound (the Web Audio synth, the level and menu music, the step
+scheduler) is the lib `feat-bacteria-sound` (`libs/features/bacteria-sound`,
+#3102), taken through `@wolsok/feat-bacteria-sound`. It reads the sound
+settings through its port `SoundSettings`; `sound/game-sound.service.ts`
+here is the root `GameSoundService`, a `GameSound` over the device settings
+(`soundSettingsOf`).
+
 ## Persistence: local storage or Firebase, behind ports
 
 The game keeps the player's progress (medallions, campaign, XP, achievements,
