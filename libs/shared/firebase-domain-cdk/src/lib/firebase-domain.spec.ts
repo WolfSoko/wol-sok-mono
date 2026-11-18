@@ -23,9 +23,9 @@ describe('addFirebaseDomain', () => {
   });
 
   it('creates the record under the logical id the live stacks use', () => {
-    // BacteriaGame and Korbjaeger both deployed their CNAME under this id. A
-    // different id (or scope) would replace the record and take the domain
-    // offline until CloudFormation created the new one.
+    // BacteriaGame deployed its CNAME under this id. A different id (or
+    // scope) would replace the record and take the domain offline until
+    // CloudFormation created the new one.
     expect(Object.keys(template.toJSON()['Resources'])).toEqual([
       'FirebaseHostingRecord7C7772EA',
     ]);

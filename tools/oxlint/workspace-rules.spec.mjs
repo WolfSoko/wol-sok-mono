@@ -123,9 +123,9 @@ void describe('wolsok/no-testing-import', () => {
     "import { FakeFirebase } from '@wolsok/feat-lazy-bac-game/testing';",
     "import type { FakeDoc } from '@wolsok/feat-lazy-bac-game/testing';",
     "import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing';",
-    "import { fakeDbbAnswer } from '@wolsok/feat-shared-basketball-data/testing/fake-dbb';",
+    "import { recordedReplay } from '@wolsok/feat-shared-bacteria-engine/testing/recorded-replay';",
     "export { RecordingAnalytics } from '@wolsok/shared-analytics/testing';",
-    "export * from '@wolsok/feat-korbjaeger-selection/testing';",
+    "export * from '@wolsok/feat-lazy-bac-game/testing';",
     "void import('@wolsok/feat-lazy-bac-game/testing');",
     "require('@wolsok/feat-lazy-bac-game/testing');",
     "export type Fake = import('@wolsok/feat-lazy-bac-game/testing').FakeDoc;",
@@ -178,7 +178,7 @@ void describe('wolsok/no-testing-import', () => {
     void it(`allows testing imports in ${name}`, () => {
       deepStrictEqual(
         reportedCodes(
-          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';\n" +
+          "import { FakeFirebase } from '@wolsok/feat-lazy-bac-game/testing';\n" +
             "import { emulatorEnv } from '@wolsok/shared-firebase-emulator';\n" +
             "import { rulesTestEnvironment } from '@wolsok/shared-firebase-emulator/rules';",
           name
@@ -198,7 +198,7 @@ void describe('wolsok/no-testing-import', () => {
     void it(`reports testing imports in ${name}`, () => {
       deepStrictEqual(
         reportedCodes(
-          "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
+          "import { FakeFirebase } from '@wolsok/feat-lazy-bac-game/testing';",
           name
         ),
         [TESTING_RULE]
@@ -211,7 +211,7 @@ void describe('wolsok/no-testing-import', () => {
     // own folder is named so here, which the rule must not take as test code.
     deepStrictEqual(
       reportedCodes(
-        "import { fakeSelection } from '@wolsok/feat-korbjaeger-selection/testing';",
+        "import { FakeFirebase } from '@wolsok/feat-lazy-bac-game/testing';",
         'prod.ts',
         'testing'
       ),
