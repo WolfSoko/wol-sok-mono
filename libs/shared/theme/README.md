@@ -1,6 +1,6 @@
 # shared-theme
 
-The light/dark choice the apps share (portfolio, Korbjäger):
+The light/dark choice of the apps (today the portfolio):
 
 - `ThemeService`: the visitor's `ThemeChoice` (`'system' | 'light' | 'dark'`)
   as a signal, `choose(choice)` and `cycle()`. A fixed choice sets

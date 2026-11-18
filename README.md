@@ -139,4 +139,4 @@ for Node, not the browser) is denied there, so node-gyp never runs. CI installs 
 
 ## License
 
-The repository is under the [MIT License](LICENSE), except RollaPolla and Korbjäger: their directories, listed at the top of [`LICENSE`](LICENSE), are proprietary for every version released after #2956 added those files (all rights reserved, use only with the owner's written permission) and each hold their own `LICENSE`. Earlier versions stay under MIT. Third-party code keeps its own licence.
+The repository is under the [MIT License](LICENSE), except RollaPolla: its directory, listed at the top of [`LICENSE`](LICENSE), is proprietary for every version released after #2956 added that file (all rights reserved, use only with the owner's written permission) and holds its own `LICENSE`. Earlier versions stay under MIT. Third-party code keeps its own licence.
