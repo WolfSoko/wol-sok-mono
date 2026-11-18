@@ -12,7 +12,7 @@
     "src/testing.ts",
     "src/test-setup.ts",
     "src/**/*.spec.ts",
-    "vite.config.ts"
+    "vite.config.mts"
   ],
   "include": ["src/**/*.ts"]
 }

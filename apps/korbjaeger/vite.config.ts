@@ -1,5 +1,5 @@
 import analog from '@analogjs/platform';
-import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases.ts';
+import { nitroTsPathAliases } from '../../tools/vite/nitro-ts-path-aliases.mts';
 import { workspaceFile } from '../../tools/vite/workspace-file.mts';
 import browserslist from 'browserslist';
 import { rememberBuildConfiguration } from './deploy/build-configuration.ts';
