@@ -1,7 +1,8 @@
 name: Deploy release
 
 # Deploys what changed since the last deploy of each kind, at the given release
-# tag. release.yml calls it right after creating the release; run it by hand to
+# tag: the apps whose deploy reads a changed file, the npm packages whose version
+# the release bumped. release.yml calls it right after creating the release; run it by hand to
 # redeploy a version, where `projects` names what to deploy (a version deployed
 # once selects nothing since its own deploy tag) and `skip-cache` rebuilds it
 # without the Nx cache (#3058).
@@ -22,7 +23,7 @@ on:
       projects:
         type: string
         default: ''
-        description: Projects to deploy, comma-separated (empty = what changed since the last deploy tag)
+        description: Projects to deploy, comma-separated (empty = what changed since the last deploy tag; npm packages = those bumped since)
       skip-cache:
         type: boolean
         default: false

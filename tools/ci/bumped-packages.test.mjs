@@ -68,13 +68,21 @@ void describe('bumped-packages.mjs', () => {
   });
 
   void it('selects every published package from the empty tree', () => {
+    const published = JSON.parse(
+      execFileSync(
+        'npx',
+        ['nx', 'show', 'projects', '--projects=tag:published', '--json'],
+        { cwd: ROOT, encoding: 'utf8' }
+      )
+    );
+    assert.ok(published.includes('ws-thanos'));
     assert.deepEqual(
       run(
         `--base=${EMPTY_TREE}`,
         '--head=HEAD',
         '--projects=tag:published'
       ).sort(),
-      ['nx-aws-cdk-v2', 'spa-cdk-stack', 'ws-thanos']
+      published.sort()
     );
   });
 
@@ -82,7 +90,16 @@ void describe('bumped-packages.mjs', () => {
     assert.throws(
       () =>
         run('--base=no-such-ref', '--head=HEAD', '--projects=tag:published'),
-      (error) => error.status !== 0
+      (error) =>
+        error.status === 1 &&
+        /rev-parse --verify --quiet no-such-ref/.test(error.stderr)
+    );
+  });
+
+  void it('fails on a pattern that matches no project', () => {
+    assert.throws(
+      () => run('--base=HEAD', '--head=HEAD', '--projects=tag:no-such-tag'),
+      (error) => /matches none/.test(error.stderr)
     );
   });
 });

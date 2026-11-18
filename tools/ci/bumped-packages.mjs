@@ -9,15 +9,14 @@
 // Prints one package a line. Fails on an unknown ref or an unreadable
 // manifest, so the leg never takes a failure for an empty selection.
 import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { parseArgs } from 'node:util';
-
-const ROOT = join(dirname(import.meta.filename), '../..');
+import { readProjects, ROOT } from './workspace-projects.mjs';
 
 /**
  * The packages whose version at `head` differs from the one at `base`; a
- * package without a version at `base` (new, or the first deploy) counts as
- * bumped, one without a version at `head` is not published.
+ * package without a manifest at `base` (new, or the first deploy) counts as
+ * bumped, one without a manifest at `head` is not published.
  *
  * @param {string[]} packages the candidates
  * @param {(ref: string, name: string) => string | undefined} versionAt
@@ -41,8 +40,31 @@ function run(command, args) {
   });
 }
 
-function nxJson(args) {
-  return JSON.parse(run('npx', ['nx', 'show', ...args, '--json']));
+/** The names of the projects `pattern` selects; fails on none. */
+function selectedProjects(pattern) {
+  const names = JSON.parse(
+    run('npx', ['nx', 'show', 'projects', `--projects=${pattern}`, '--json'])
+  );
+  if (!Array.isArray(names) || names.some((name) => typeof name !== 'string')) {
+    throw new Error('unexpected output of nx show projects');
+  }
+  // A renamed tag or a mistyped pattern would otherwise stop every publish
+  // without a word.
+  if (names.length === 0) throw new Error(`--projects=${pattern} matches none`);
+  return names;
+}
+
+/** Each package's root, from the folder of its `project.json`. */
+function rootsOf(packages) {
+  const roots = new Map(
+    readProjects().map(({ path, json }) => [json.name, dirname(path)])
+  );
+  return new Map(
+    packages.map((name) => {
+      if (!roots.has(name)) throw new Error(`no project.json names ${name}`);
+      return [name, roots.get(name)];
+    })
+  );
 }
 
 /** Fails unless `ref` names a tree (a commit, a tag or the empty tree). */
@@ -79,19 +101,17 @@ function main() {
   }
   assertTree(values.base);
   assertTree(values.head);
-  const packages = nxJson(['projects', `--projects=${values.projects}`]);
-  const roots = new Map(
-    packages.map((name) => [name, nxJson(['project', name]).root])
-  );
+  const packages = selectedProjects(values.projects);
+  const roots = rootsOf(packages);
   const versionAt = (ref, name) => manifestVersion(ref, roots.get(name));
-  for (const name of bumpedPackages(
-    packages,
-    versionAt,
-    values.base,
-    values.head
-  )) {
-    console.log(name);
+  const bumped = bumpedPackages(packages, versionAt, values.base, values.head);
+  for (const name of packages) {
+    const from = versionAt(values.base, name) ?? 'none';
+    const to = versionAt(values.head, name) ?? 'none';
+    const verdict = bumped.includes(name) ? 'publish' : 'skip';
+    console.error(`${verdict} ${name}: ${from} -> ${to}`);
   }
+  for (const name of bumped) console.log(name);
 }
 
 if (import.meta.filename === process.argv[1]) {
