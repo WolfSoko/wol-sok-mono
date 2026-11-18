@@ -75,9 +75,15 @@ describe('SpaCdkStack', () => {
     });
   });
 
+  /** A deployment as the synthesized template holds it. */
+  type DeploymentResource = {
+    Properties: Record<string, unknown>;
+    DependsOn?: string[];
+  };
+
   /** Build output, index.html, a no-cache override and extra assets. */
   function fourDeploymentsFactory(): {
-    deployments: Record<string, { Properties: Record<string, unknown> }>;
+    deployments: Record<string, DeploymentResource>;
     index: string;
     others: string[];
   } {
@@ -87,7 +93,10 @@ describe('SpaCdkStack', () => {
     stack.spa.addExtraAssets([
       Source.asset(path.join(__dirname, '../../extra-assets-path')),
     ]);
-    const deployments = template().findResources('Custom::CDKBucketDeployment');
+    // findResources types every resource as a plain record.
+    const deployments = template().findResources(
+      'Custom::CDKBucketDeployment'
+    ) as Record<string, DeploymentResource>;
     const index = Object.keys(deployments).find((id) =>
       /DeployWithInvalidation2/.test(id)
     ) as string;
@@ -99,7 +108,7 @@ describe('SpaCdkStack', () => {
     const { deployments, index, others } = fourDeploymentsFactory();
     //then
     expect(others).toHaveLength(3);
-    expect(deployments[index]['DependsOn']).toEqual(
+    expect(deployments[index].DependsOn).toEqual(
       expect.arrayContaining(others)
     );
     expect(
