@@ -5,5 +5,5 @@
   // fallback program made of whatever else a run lints, so its findings
   // changed between runs. tools/ci/tools-tsconfig.test.mjs keeps it so.
   "extends": "./tsconfig.tools.json",
-  "include": ["**/*.ts", "**/*.js", "**/*.mjs"]
+  "include": ["**/*.ts", "**/*.mts", "**/*.js", "**/*.mjs"]
 }
