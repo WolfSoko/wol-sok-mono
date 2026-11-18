@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { BOT_DIFFICULTIES } from '../bot-controller';
-import { LADDER_VERSION, targetWinRate } from '../difficulty-curve';
-import { BALANCE_VERSION } from '../game-balance';
-import { isBigMap, LEVELS } from '../levels';
+import { BOT_DIFFICULTIES } from '../match/bot-controller';
+import { LADDER_VERSION, targetWinRate } from '../match/difficulty-curve';
+import { BALANCE_VERSION } from '../simulation/game-balance';
+import { isBigMap, LEVELS } from '../levels/levels';
 import { playLabMatch } from './lab-match';
 import {
   BalanceReport,

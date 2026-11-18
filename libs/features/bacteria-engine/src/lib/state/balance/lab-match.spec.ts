@@ -1,5 +1,5 @@
-import { computerLoadout } from '../computer-opponent';
-import { GENES, MAX_GENE_LEVEL } from '../evolution';
+import { computerLoadout } from '../match/computer-opponent';
+import { GENES, MAX_GENE_LEVEL } from '../simulation/evolution';
 import {
   CHECK_SECONDS,
   LabCell,

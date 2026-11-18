@@ -45,7 +45,10 @@ describe('the engine bundle in Node', () => {
 
     const output = execFileSync(
       process.execPath,
-      [join(dir, 'run.mjs'), join(__dirname, 'lib/state/golden-replay.json')],
+      [
+        join(dir, 'run.mjs'),
+        join(__dirname, 'lib/state/replay/golden-replay.json'),
+      ],
       { encoding: 'utf8', cwd: dir }
     );
     const [first, second] = JSON.parse(output);

@@ -2,16 +2,16 @@ import {
   arenaSize,
   ONLINE_SIM_RESOLUTION,
   SimResolution,
-} from '../lib/state/arena-size';
-import { DEFAULT_COLORS } from '../lib/state/colony-colors';
-import { getLevel, levelSize } from '../lib/state/levels';
-import type { MatchPlan } from '../lib/state/match-setup';
+} from '../lib/state/simulation/arena-size';
+import { DEFAULT_COLORS } from '../lib/state/progress/colony-colors';
+import { getLevel, levelSize } from '../lib/state/levels/levels';
+import type { MatchPlan } from '../lib/state/match/match-setup';
 import {
   playReplay,
   Replay,
   replayOf,
   replayOutcome,
-} from '../lib/state/replay';
+} from '../lib/state/replay/replay';
 
 const NO_INPUTS = { steers: [], drags: [], boosts: [], weapons: [] };
 
