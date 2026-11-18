@@ -42,3 +42,49 @@ This change is step 1 of the issue: the texts the engine does not render leave t
 
 - **Scope** (manager, request 1239): this PR delivers step 1 and leaves [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) open (`Part of [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103)`). Steps 2 to 4 stay later PRs of [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103), no sub-issues.
 - **Texts in the game lib** instead of a lib of their own (decision 2): approved as written.
+
+# Step 2: folders by concern in `state/`
+
+Step 1 landed in [#3118](https://github.com/WolfSoko/wol-sok-mono/pull/3118). This section is the spec for step 2.
+
+## Goal (step 2)
+
+`libs/features/bacteria-engine/src/lib/state/` is one flat folder of 76 source files (with their specs and three data files) beside five sub-folders. After this step each concern has a folder of its own and the top level keeps only the three helpers every concern uses, so a reader sees which part of the engine a file belongs to before opening it, and step 3 can name the cloud contract's files by folder.
+
+## Non-goals (step 2)
+
+- No API change: `src/index.ts`, `src/balance.ts` and `src/testing.ts` export exactly the same names; only their `from` paths change. No consumer outside the engine changes an import (none imports a path inside it).
+- No code change inside a moved file beyond its import paths: no rename of a file or symbol, no split, no merge.
+- No change to what the simulation computes: goldens, GPU goldens and the `perf` checksums unchanged, no `BALANCE_VERSION` bump.
+- Steps 3 (the `/cloud` entry) and 4 (narrower `perf` inputs) stay later PRs.
+- The old specs and plans under `docs/` keep the paths they were written with (they record what was true then).
+
+## Decisions (step 2)
+
+1. **Six folders, not the issue's five.** The issue puts the match engine and the bots into `simulation/`; that folder would hold 31 files, the flat folder again. `simulation/` is the deterministic physics both rulesets share (what `gpu-int` mirrors and the goldens pin); `match/` is the loop around it: the engine, its run, setup, win conditions, the bots and the computer opponent.
+2. **The map** (every spec, JSON and folder moves with its file):
+
+   | Folder        | Files                                                                                                                                                                                                                                                                                                                                               |
+   | ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+   | `simulation/` | `bacteria-simulation`, `simulation`, `simulation-provider`, `simulation-report`, `grid-format`, `cells`, `arena-fixtures`, `arena-size`, `nutrient-pellets`, `weapon-effects`, `evolution`, `game-balance`, `fixed-tick`; the folders `gpu-int/` and `grid/`                                                                                        |
+   | `match/`      | `match-engine`, `match-run`, `match-setup`, `game-mode`, `frame-pacer`, `win-conditions`, `checksum`, `perf-probe`, `bot-controller`, `bot-navigation`, `bot-senses`, `recent-cache`, `neutral-brain` (with `neutral-colonies.spec`), `computer-opponent`, `expected-player`, `difficulty-curve`, `rivalry`, `player.model`, `evolution-match.spec` |
+   | `levels/`     | `maps`, `expanse-maps`, `organic-maps`, `outbreak-maps`, `reactor-maps`, `shapes`, `zones`, `game-maps`, `training-levels`, `levels`, `match-level`, `campaign`, `chapters`, `daily`, `endless`, `training`; `level-generator/` as `levels/generator/`                                                                                              |
+   | `replay/`     | `replay`, `replay-id`, `replay-link`, `replay-pack`, `replay-reasons`, `replay-score`, `replay-verdict`, `ghost`, `golden-replay.json` with `golden-replay.spec`, `golden-match.spec`                                                                                                                                                               |
+   | `progress/`   | `achievement-ids`, `achievements`, `medallions`, `xp`, `earnings`, `progress`, `evolution-progress`, `unlocks`, `ranks`, `skins`, `colony-colors`, `colony-looks`, `play-games-achievements.json` with its spec                                                                                                                                     |
+   | `cloud/`      | `boards`, `attempts`, `ranked-match`, `admin-commands`, `command-documents`, `feature-toggles`; `cloud-records/` as `cloud/records/`                                                                                                                                                                                                                |
+   | top level     | `geometry`, `is-object`, `base64` (helpers of every concern); `balance/` stays (the `/balance` entry's lab)                                                                                                                                                                                                                                         |
+
+   Reasons for the borderline ones: `evolution` (the traits and weapons) and `fixed-tick` (the tick clock) are read by the physics itself; `difficulty-curve`, `expected-player` and `computer-opponent` choose the computer's strength, which is match setup; `colony-colors`, `colony-looks` and `skins` are unlocked looks; `match-level` picks an online match's level from the ladder; `ranked-match` is the declared attempt, next to `attempts`.
+
+3. **The move is one mechanical commit, made by a script** (`git mv` per entry, then every relative specifier in `libs/features/bacteria-engine/src/**` recomputed from the old to the new location), so git shows renames and a reviewer can rerun it. The script lives in the scratchpad, not the repo: it is used once.
+4. **Paths outside the engine** that name a moved file are updated in the same PR: `tools/perf/engine-bench.mjs` (the golden replay), `tools/bacteria-game/play-games.ts`, `apps/bacteria-wars-functions/src/replays/replays.emulator.ts` (the golden replay), `apps/bacteria-wars-android/README.md`, the root `CLAUDE.md`, the engine's and the game's `CLAUDE.md` and the game's `README.md` where they name an engine file.
+5. **Release effect accepted**: the move touches the engine's sources, so its release redeploys `bacteria-wars-functions` and the game once, with code that behaves the same.
+
+## Acceptance (step 2)
+
+1. `state/` holds at its top level only `geometry.ts`, `is-object.ts` (with its spec), `base64.ts` and the folders `simulation/`, `match/`, `levels/`, `replay/`, `progress/`, `cloud/`, `balance/`.
+2. `src/index.ts`, `src/balance.ts` and `src/testing.ts` export the same names as before (a sorted list of their exported names, compared before and after, noted in the PR).
+3. `git diff -M --stat` shows every moved file as a rename; no moved file changes beyond its import lines.
+4. Golden replays (`golden-replay.spec.ts`, `golden-match.spec.ts`), GPU goldens (`golden.spec.ts`, `sim-golden.spec.ts`, `self-test-golden.spec.ts`) and the `perf` checksums unchanged; no `BALANCE_VERSION` bump.
+5. No path in the repo outside `docs/specs` and `docs/plans` names a moved file at its old place (`grep` over the old paths).
+6. `npx nx affected -t lint,lint-templates,test,typecheck-specs,build` green, plus `npx nx run feat-shared-bacteria-engine:perf` and `bacteria-wars-functions:test`.
