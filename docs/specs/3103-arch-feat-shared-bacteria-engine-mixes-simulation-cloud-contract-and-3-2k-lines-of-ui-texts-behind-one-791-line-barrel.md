@@ -88,3 +88,39 @@ Step 1 landed in [#3118](https://github.com/WolfSoko/wol-sok-mono/pull/3118). Th
 4. Golden replays (`golden-replay.spec.ts`, `golden-match.spec.ts`), GPU goldens (`golden.spec.ts`, `sim-golden.spec.ts`, `self-test-golden.spec.ts`) and the `perf` checksums unchanged; no `BALANCE_VERSION` bump.
 5. No path in the repo outside `docs/specs` and `docs/plans` names a moved file at its old place (`grep` over the old paths).
 6. `npx nx affected -t lint,lint-templates,test,typecheck-specs,build` green, plus `npx nx run feat-shared-bacteria-engine:perf` and `bacteria-wars-functions:test`.
+
+# Step 3: the `/cloud` entry
+
+Step 2 landed in [#3129](https://github.com/WolfSoko/wol-sok-mono/pull/3129). This section is the spec for step 3.
+
+## Goal (step 3)
+
+The documents the game, `bacteria-wars-functions` and the admin exchange (the boards, the attempts, the commands, the cloud records and the feature toggles) are described in `state/cloud/`, but reach every consumer through the one main entry, so no import says whether it takes the contract with the server or the match's internals. After this step they come from `@wolsok/feat-shared-bacteria-engine/cloud`, and the main entry no longer exports them.
+
+## What the code shows (step 3)
+
+- The main index (`src/index.ts`, 815 lines) exports 658 names: 126 from `state/cloud/` (154 lines), 84 of the GPU mirror (`simulation/gpu-int/`, `simulation/grid/`, `grid-format`, about 120 lines, used only by `feat-bacteria-rendering` and the game's GPU path), 448 others.
+- Outside the engine, the cloud names are imported by `bacteria-wars-functions` (about 25 files), the game lib (about 32 files, `admin-kit.ts` included, which hands them on to the admin) and `bacteria-game-remote`'s `firestore-rules-toggles.spec.ts`. 21 of the 126 are imported by nobody outside the engine (`canDeclare`, `requiredAttempt`, `ToMillis`, `REPLAY_COMMAND_TYPES`, `XP_RISE_BASE`, …).
+- `state/cloud/` imports from `simulation/`, `levels/`, `progress/`, `replay/` and `social/profile` (an attempt's level and arena, a board's tick cap, the avatar count). An entry of the same project may: the boundary rule counts the entry as the engine.
+- The other entries (`/balance`, `/testing`) are a `src/<name>.ts` with a path in `tsconfig.base.json`; the engine's `build` (ng-packagr) builds `src/index.ts` only, and `tsconfig.lib.json` includes every non-spec `.ts`, so its `typecheck` covers a new entry file too. `engine-bundle.spec.ts` bundles `index.ts` alone.
+
+## Decisions (step 3)
+
+1. **The entry is the folder.** `src/cloud.ts` exports what `state/cloud/` (with `records/`) holds and something outside the engine imports, nothing else; the main index drops every name of that folder. `social/profile` (the player's profile document) stays in the main entry: the game's UI uses it for names and avatars as much as the server for its document, and it lives outside `state/cloud/`. Reason: one rule a reader can check by path ("from `state/cloud/` → `/cloud`").
+2. **The 21 cloud names nobody outside the engine imports are not exported** by `/cloud`. They stay exported in their files, for the engine's own specs. Reason: the entry is the contract; a name enters it with its first consumer.
+3. **Every consumer switches**: the functions, the game (its `admin-kit.ts` re-exports from `/cloud`, so the admin's imports stay as they are) and the remote's rules spec. A file that needs both takes two imports.
+4. **Wiring**: the path `@wolsok/feat-shared-bacteria-engine/cloud` in `tsconfig.base.json`; the skip in `tools/federation/workspace-federation.js` beside the engine's other entries (the shell and every remote skip it alike); `engine-bundle.spec.ts` bundles `cloud.ts` too (Node only, no Angular, RxJS, Firebase). The `perf` bench bundles `index.ts` and uses no cloud name.
+5. **Docs**: the root `CLAUDE.md` (Cloud Functions: "the documents … are described once, in the engine's `state/cloud/records/`", the federation skip list) and the engine's `CLAUDE.md` name the entry. `docs/architecture/README.md` is unchanged: no project and no edge is added.
+6. **Release effect accepted**: the engine's, the game's and the functions' sources change, so the release redeploys `bacteria-wars-functions` and the game once, with code that behaves the same.
+
+## Acceptance (step 3)
+
+1. `src/index.ts` exports no name defined under `state/cloud/`; `src/cloud.ts` exports only such names (a spec over both entries' exported names checks it).
+2. Outside the engine, no file imports a name of `state/cloud/` from the main entry (the TypeScript build fails where one does, since the name is gone).
+3. Every name the main index exported before is exported by exactly one of the two entries afterwards, except the 21 unused cloud names (sorted lists compared, noted in the PR).
+4. The engine's bundle check passes for `cloud.ts`; golden replays, GPU goldens and the `perf` checksums unchanged, no `BALANCE_VERSION` bump.
+5. `npx nx affected -t lint,lint-templates,test,typecheck-specs,build` green, plus `bacteria-wars-functions:test`, `bacteria-wars-functions:build` and `bacteria-game-remote:build` (the federation build with the new skip).
+
+## Open question (step 3)
+
+- **The issue's "`src/index.ts` well under half its 791 lines"** is out of reach for `/cloud` alone: the cloud is 126 of 658 names, and the index ends at about 660 lines (about 84%). Options: (a) accept that for this step and restate the criterion as acceptance 1; (b) also drop, in this PR, the about 65 other names nobody outside the engine imports (about 600 lines); (c) add a later step of #3103 with a `/gpu` entry for the GPU mirror (84 names, the rendering lib's contract) plus that pruning, which brings the index to about 470 lines. Recommended: (a) now and (c) as step 3b, so this PR stays a pure move of the cloud contract.
