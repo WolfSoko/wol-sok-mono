@@ -1,0 +1,19 @@
+You are a SpeedDev cloud session. Load the speeddev:cockpit skill, read SESSION.md in its base directory and act on the <routine-fire-payload> block below as it says.
+<routine-fire-payload>
+    SpeedDev handover
+    cockpit: 23
+    ticket: WolfSoko/wol-sok-mono#3103
+    role: end-to-end
+    work item: 529
+    base branch: main
+</routine-fire-payload>
+
+---
+
+<task-notification>
+<task-id>bdtycxya9</task-id>
+<tool-use-id>toolu_015aNzGh221sjMZ4cXkPpa4Z</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-529/7dce3be4-dbf1-41a9-b459-fb77a422fa17/tasks/bdtycxya9.output</output-file>
+<status>completed</status>
+<summary>Background command "Install dependencies" completed (exit code 0)</summary>
+</task-notification>
