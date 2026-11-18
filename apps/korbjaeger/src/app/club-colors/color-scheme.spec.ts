@@ -122,6 +122,9 @@ function checkPairs(
     );
 }
 
+/** 432 scheme builds take seconds on a loaded worker; Vitest's 5 s default is too tight. */
+const SPREAD_TIMEOUT_MS = 60_000;
+
 describe('colorScheme', () => {
   it.each([false, true])(
     'keeps every text readable for a spread of 216 colours, first and second (dark: %s)',
@@ -140,7 +143,8 @@ describe('colorScheme', () => {
       });
 
       expect(error).toEqual([]);
-    }
+    },
+    SPREAD_TIMEOUT_MS
   );
 
   describe.each(COLORS)('for %s', (primary) => {
