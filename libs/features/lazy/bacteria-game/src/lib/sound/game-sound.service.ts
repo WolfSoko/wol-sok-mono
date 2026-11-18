@@ -1,5 +1,7 @@
 import { Injectable, computed, effect, inject } from '@angular/core';
-import { GameSettingsService, MAX_VOLUME } from '../settings.service';
+import { GameSettingsService } from '../settings.service';
+import { soundSettingsOf } from './game-sound-settings';
+import { type SoundSettings } from './sound-settings';
 import {
   FrameEvents,
   MatchResult,
@@ -99,7 +101,9 @@ const MENU_MUSIC_SEED = 2024;
  */
 @Injectable({ providedIn: 'root' })
 export class GameSoundService {
-  private readonly settings = inject(GameSettingsService);
+  private readonly settings: SoundSettings = soundSettingsOf(
+    inject(GameSettingsService)
+  );
   private context: AudioContext | null = null;
   private master: GainNode | null = null;
   private musicBus: GainNode | null = null;
@@ -146,24 +150,18 @@ export class GameSoundService {
       return;
     }
     const now = context.currentTime;
-    this.master?.gain.setTargetAtTime(
-      this.settings.value('sound') ? 1 : 0,
-      now,
-      0.02
-    );
+    this.master?.gain.setTargetAtTime(this.settings.sound() ? 1 : 0, now, 0.02);
     this.musicBus?.gain.setTargetAtTime(this.musicLevel(), now, 0.1);
     this.effectsBus?.gain.setTargetAtTime(this.effectsLevel(), now, 0.05);
   }
 
   private musicLevel(): number {
-    return this.settings.value('music')
-      ? perceived(this.settings.value('musicVolume') / MAX_VOLUME)
-      : 0;
+    return this.settings.music() ? perceived(this.settings.musicVolume()) : 0;
   }
 
   private effectsLevel(): number {
-    return this.settings.value('effects')
-      ? perceived(this.settings.value('effectsVolume') / MAX_VOLUME)
+    return this.settings.effects()
+      ? perceived(this.settings.effectsVolume())
       : 0;
   }
 
@@ -172,7 +170,7 @@ export class GameSoundService {
    * effects made outside the service, such as the vaporize snap.
    */
   public readonly effectsGain = computed(() =>
-    this.settings.value('sound') ? this.effectsLevel() : 0
+    this.settings.sound() ? this.effectsLevel() : 0
   );
 
   /** Creates or wakes the audio context, on a user gesture. */
@@ -190,7 +188,7 @@ export class GameSoundService {
       const context = new AudioContextClass();
       this.context = context;
       this.master = context.createGain();
-      this.master.gain.value = this.settings.value('sound') ? 1 : 0;
+      this.master.gain.value = this.settings.sound() ? 1 : 0;
       // A gentle compressor: a dozen effects over the music stay clear
       // instead of clipping.
       const compressor = context.createDynamicsCompressor();
@@ -746,7 +744,7 @@ export class GameSoundService {
       return;
     }
     const noise = () => this.whiteNoise(context);
-    const audible = () => this.settings.value('sound') && this.musicLevel() > 0;
+    const audible = () => this.settings.sound() && this.musicLevel() > 0;
     this.player =
       music === 'menu'
         ? new MenuMusicPlayer(
@@ -798,9 +796,7 @@ export class GameSoundService {
   /** True while an effect would be heard: no nodes are built otherwise. */
   private audible(): boolean {
     return (
-      this.context != null &&
-      this.settings.value('sound') &&
-      this.effectsLevel() > 0
+      this.context != null && this.settings.sound() && this.effectsLevel() > 0
     );
   }
 
