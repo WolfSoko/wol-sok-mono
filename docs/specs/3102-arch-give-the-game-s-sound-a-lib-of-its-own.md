@@ -6,7 +6,7 @@ Issue: [#3102](https://github.com/WolfSoko/wol-sok-mono/issues/3102) step 5, tra
 
 `libs/features/lazy/bacteria-game/src/lib/sound/` (about 2.5k lines of source, 0.7k of specs: the Web Audio synth, the level and menu music, the step scheduler) imports only the engine, `@angular/core` and one game file, `../settings.service` (`GameSettingsService`, `MAX_VOLUME`). Move it into a project of its own, so that:
 
-- a change to the game's menus, state or network no longer reruns the sound specs, and a change to the sound no longer reruns the game's 170 spec files;
+- a change to the game's menus, state or network no longer reruns the sound specs, which run on their own in the new project (a change to the sound still reruns the game's specs, since the game depends on it);
 - the game reaches the sound only through the new lib's `src/index.ts`;
 - the sound reads the player's sound settings through a narrow port, not the game's whole settings service.
 
@@ -26,7 +26,7 @@ No behaviour changes: the same sound plays at the same levels.
    - Why not an injection token the game provides: `GameSoundService` is a root singleton (one `AudioContext`, document listeners added once), and the game has no root providers of its own: it is loaded as a lazy route by the remote and by the shell. A token provided on the route could not be seen by a root service; making the service route- or component-provided would touch eleven specs' providers and, at component level, create a second `AudioContext` per visit.
    - The game's ten importers keep `inject(GameSoundService)` from the same file; only `levelMusic` and the type `Soundtrack` (`bacteria-game.component.ts`, `flow/play-flow.ts`) come from `@wolsok/feat-bacteria-sound`.
 4. **Folder layout:** the lib's `src/lib/` holds today's `sound/` files flat (`game-sound.ts`, `level-music.ts`, `music-player.ts`, `menu-music.ts`, `menu-music-player.ts`, `step-scheduler.ts`, `audio-nodes.ts`, `sound-settings.ts`), with their specs. Relative imports between them stay.
-5. **Public API.** `src/index.ts` exports by name: `GameSound`, `type SoundSettings`, `type Soundtrack`, `levelMusic`, `EVOLVE_LAND_SEC` and the `type LevelMusic`, as far as the game uses them; nothing else.
+5. **Public API.** `src/index.ts` exports by name: `GameSound`, `type SoundSettings`, `type Soundtrack`, `levelMusic` and the `type LevelMusic`, the names the game uses; nothing else (`EVOLVE_LAND_SEC` stays internal, as the game does not import it).
 6. **Specs.** `game-sound.service.spec.ts` moves to the lib as `game-sound.spec.ts` and drives a fake `SoundSettings` of signals instead of `GameSettingsService`. The game keeps one small spec for the adapter: `soundSettingsOf` maps each switch and divides each volume by `MAX_VOLUME`, and `GameSoundService` follows a setting changed through `GameSettingsService`.
 7. **Project setup** copies `feat-bacteria-rendering`'s: buildable (`@nx/angular:ng-packagr-lite`, since the game lib is buildable), Jest with the zoneless `jest-preset-angular` setup, `typecheck-specs`, the same `tsconfig.*`, a `package.json` with its peer dependency on `@angular/core`, MIT, a short `README.md`.
 8. **Federation.** `@wolsok/feat-bacteria-sound` is skipped in `tools/federation/workspace-federation.js` beside the game lib, the engine and the rendering lib.
