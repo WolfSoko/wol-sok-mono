@@ -18,12 +18,12 @@ function declaredFiles(entry: string): Map<string, string[]> {
   });
   const checker = program.getTypeChecker();
   const source = program.getSourceFile(file);
-  const module = source && checker.getSymbolAtLocation(source);
-  if (!module) {
+  const entrySymbol = source && checker.getSymbolAtLocation(source);
+  if (!entrySymbol) {
     throw new Error(`${entry} has no exports`);
   }
   return new Map(
-    checker.getExportsOfModule(module).map((symbol) => {
+    checker.getExportsOfModule(entrySymbol).map((symbol) => {
       const target =
         symbol.flags & ts.SymbolFlags.Alias
           ? checker.getAliasedSymbol(symbol)
@@ -31,6 +31,11 @@ function declaredFiles(entry: string): Map<string, string[]> {
       const files = (target.declarations ?? []).map((declaration) =>
         relative(__dirname, declaration.getSourceFile().fileName)
       );
+      // An import that does not resolve leaves a name without declarations,
+      // which would count as neither side and pass unchecked.
+      if (files.length === 0) {
+        throw new Error(`${entry}: ${symbol.name} has no declaration`);
+      }
       return [symbol.name, files];
     })
   );

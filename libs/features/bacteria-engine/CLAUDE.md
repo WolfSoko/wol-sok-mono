@@ -21,9 +21,9 @@ determinism, replays, balance and texts hold here too.
   DOM, `feat-bacteria-rendering` or `feat-bacteria-sound`. An oxlint override in
   `.oxlintrc.json` guards the imports, Jest runs every spec in Node
   (`testEnvironment: 'node'`), and `engine-bundle.spec.ts` bundles
-  `src/index.ts` and `src/cloud.ts` to prove it. Browser-only code goes elsewhere: WebGL and
-  canvas into `feat-bacteria-rendering`, Web Audio into
-  `feat-bacteria-sound`, the rest into the game lib.
+  `src/index.ts` and `src/cloud.ts` to prove it. Browser-only code goes
+  elsewhere: WebGL and canvas into `feat-bacteria-rendering`, Web Audio
+  into `feat-bacteria-sound`, the rest into the game lib.
 - `src/index.ts` is the main entry (`@wolsok/feat-shared-bacteria-engine`):
   named exports, no `export *`. Nothing outside this lib imports a path
   inside it; a new export goes into the index, unless it is declared
@@ -32,7 +32,11 @@ determinism, replays, balance and texts hold here too.
   `@wolsok/feat-shared-bacteria-engine/cloud` (`src/cloud.ts`, built as the
   ng-packagr secondary entry `cloud/ng-package.json`, since the game lib's
   `build` compiles against the engine's `dist`) only, a
-  name entering it with its first consumer outside the engine;
+  name entering it with its first consumer outside the engine. Its
+  `dist` holds a second copy of what `state/cloud/` imports, so a `/cloud`
+  signature takes and returns plain data, never one of the engine's
+  classes (a class with private members would clash with the main
+  entry's copy in the game lib's `build`);
   `entries.spec.ts` keeps both entries apart. Spec fixtures (`aMatchRecord`,
   `recordedReplay`) are `@wolsok/feat-shared-bacteria-engine/testing`, for
   specs only. The balance lab (`state/balance/`, with the calibration's
