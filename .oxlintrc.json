@@ -219,9 +219,10 @@
                   "rxjs/*",
                   "firebase",
                   "firebase/*",
-                  "**/sound/*"
+                  "@wolsok/feat-bacteria-rendering",
+                  "@wolsok/feat-bacteria-sound"
                 ],
-                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase or sound/ imports."
+                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, rendering or sound imports."
               }
             ]
           }

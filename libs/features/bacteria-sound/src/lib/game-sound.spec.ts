@@ -10,16 +10,20 @@ type SettingValues = {
   [K in keyof SoundSettings]: ReturnType<SoundSettings[K]>;
 };
 
-/** Sound settings a test sets, starting where a new player's start. */
+/** Where the fake's volumes start: neither silent nor full. */
+const START_MUSIC_VOLUME = 0.7;
+const START_EFFECTS_VOLUME = 0.8;
+
+/** Sound settings a test sets, every switch on to start with. */
 class FakeSoundSettings implements SoundSettings {
   private readonly values: {
     [K in keyof SettingValues]: WritableSignal<SettingValues[K]>;
   } = {
     sound: signal(true),
     music: signal(true),
-    musicVolume: signal(0.7),
+    musicVolume: signal(START_MUSIC_VOLUME),
     effects: signal(true),
-    effectsVolume: signal(0.8),
+    effectsVolume: signal(START_EFFECTS_VOLUME),
   };
 
   public readonly sound = this.values.sound.asReadonly();

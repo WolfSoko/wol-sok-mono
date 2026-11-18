@@ -43,8 +43,8 @@ const JINGLE_STEP_SEC = 0.14;
 /** How long the jingle's last note rings. */
 const JINGLE_LAST_NOTE_SEC = 0.5;
 /**
- * When an Evolution purchase's chime rings - as its strands of DNA land
- * (`menu/evolution-fx.ts`).
+ * When an Evolution purchase's chime rings, in seconds after the purchase -
+ * the game lands the purchase's animation on it.
  */
 export const EVOLVE_LAND_SEC = 0.85;
 
