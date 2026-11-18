@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7R6YM3WRFYZH9B3N8HBTHZ0",
+  "strategy": "manual-commit",
+  "branch": "3074-tools-lint-owned-scripts",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "tools/ci/tools-tsconfig.test.mjs",
+    "tools/ci/vite-config-imports.test.mjs",
+    "tools/ci/workspace-projects.mjs",
+    "tools/project.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 9974,
+    "cache_read_tokens": 1140698,
+    "output_tokens": 5116,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 16,
+      "cache_creation_tokens": 78606,
+      "cache_read_tokens": 659985,
+      "output_tokens": 4809,
+      "api_call_count": 8
+    }
+  }
+}
