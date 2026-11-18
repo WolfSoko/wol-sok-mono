@@ -23,6 +23,7 @@
       "inputs": [
         "{workspaceRoot}/tools/ci/**/*",
         "{workspaceRoot}/tools/**/*.mjs",
+        "{workspaceRoot}/tools/**/*.{js,cjs,ts,mts,cts}",
         "{workspaceRoot}/tools/vite/**/*",
         "{workspaceRoot}/.nx/workflows/workers.yml",
         "{workspaceRoot}/.nx/ci-config.yaml",

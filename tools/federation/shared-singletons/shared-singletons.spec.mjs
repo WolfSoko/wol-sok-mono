@@ -20,8 +20,8 @@ const entry = (packageName, version = '1.0.0', singleton = true) => ({
   singleton,
 });
 
-describe('missingSingletons', () => {
-  it('reports a singleton a remote shares and the shell lacks', () => {
+void describe('missingSingletons', () => {
+  void it('reports a singleton a remote shares and the shell lacks', () => {
     const findings = missingSingletons([entry('firebase/app')], {
       game: [entry('firebase/app'), entry('firebase/firestore', '12.19.0')],
     });
@@ -36,7 +36,7 @@ describe('missingSingletons', () => {
     ]);
   });
 
-  it('reports a singleton the shell shares at another version', () => {
+  void it('reports a singleton the shell shares at another version', () => {
     const findings = missingSingletons([entry('rxjs', '7.8.1')], {
       game: [entry('rxjs', '7.8.2')],
     });
@@ -51,7 +51,7 @@ describe('missingSingletons', () => {
     ]);
   });
 
-  it('accepts a singleton the shell shares at the same version', () => {
+  void it('accepts a singleton the shell shares at the same version', () => {
     const findings = missingSingletons([entry('@angular/core', '22.2.6')], {
       game: [entry('@angular/core', '22.2.6')],
       fourier: [entry('@angular/core', '22.2.6')],
@@ -60,7 +60,7 @@ describe('missingSingletons', () => {
     assert.deepEqual(findings, []);
   });
 
-  it('ignores entries that are no singletons', () => {
+  void it('ignores entries that are no singletons', () => {
     const findings = missingSingletons([], {
       game: [
         entry('p5', '2.0.0', false),
@@ -71,7 +71,7 @@ describe('missingSingletons', () => {
     assert.deepEqual(findings, []);
   });
 
-  it('reports a singleton the shell shares only as a non-singleton', () => {
+  void it('reports a singleton the shell shares only as a non-singleton', () => {
     const findings = missingSingletons([entry('p5', '2.0.0', false)], {
       game: [entry('p5', '2.0.0')],
     });
@@ -86,20 +86,20 @@ describe('missingSingletons', () => {
     ]);
   });
 
-  it('reports nothing for remotes that share nothing', () => {
+  void it('reports nothing for remotes that share nothing', () => {
     assert.deepEqual(missingSingletons([entry('rxjs')], { game: [] }), []);
   });
 });
 
-describe('describeFinding', () => {
-  it('names a missing singleton, without a version it lacks', () => {
+void describe('describeFinding', () => {
+  void it('names a missing singleton, without a version it lacks', () => {
     assert.match(
       describeFinding({ remote: 'game', packageName: 'rxjs' }),
       /^game shares the singleton rxjs, but the shell .* does not share it as a singleton/
     );
   });
 
-  it('names both versions of a mismatch', () => {
+  void it('names both versions of a mismatch', () => {
     assert.match(
       describeFinding({
         remote: 'game',
@@ -112,18 +112,18 @@ describe('describeFinding', () => {
   });
 });
 
-describe('federation-shared-singletons project', () => {
+void describe('federation-shared-singletons project', () => {
   const root = join(import.meta.dirname, '../../..');
   const remotesOf = (path) =>
     Object.keys(JSON.parse(readFileSync(join(root, path), 'utf8'))).sort(
       byName
     );
 
-  it('checks the same remotes the development manifest lists', () => {
+  void it('checks the same remotes the development manifest lists', () => {
     assert.deepEqual(remotesOf(DEV_MANIFEST_PATH), remotesOf(MANIFEST_PATH));
   });
 
-  it('depends on the shell and every remote of its production manifest', () => {
+  void it('depends on the shell and every remote of its production manifest', () => {
     const project = JSON.parse(
       readFileSync(join(import.meta.dirname, 'project.json'), 'utf8')
     );

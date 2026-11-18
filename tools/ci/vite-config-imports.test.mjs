@@ -9,11 +9,10 @@
 // `package.json` closer by loads as CommonJS, and Vite's config loader warns
 // "ESM syntax in a file loaded as CommonJS" for it in every project-graph run.
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, extname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import { ROOT } from './workspace-projects.mjs';
+import { ROOT, gitLsFiles } from './workspace-projects.mjs';
 
 const CONFIG_PATTERNS = ['*vite.config.*', '*vitest.config.*'];
 
@@ -120,16 +119,11 @@ function extensionlessImports(modules) {
 }
 
 function trackedViteConfigs() {
-  return execFileSync('git', ['ls-files', '--', ...CONFIG_PATTERNS], {
-    cwd: ROOT,
-    encoding: 'utf8',
-  })
-    .split('\n')
-    .filter(Boolean);
+  return gitLsFiles(...CONFIG_PATTERNS);
 }
 
-describe('relativeSpecifiers', () => {
-  it('finds imports, re-exports, side-effect imports and import()', () => {
+void describe('relativeSpecifiers', () => {
+  void it('finds imports, re-exports, side-effect imports and import()', () => {
     const source = [
       "import { a } from './deploy/a';",
       "export * from '../../tools/vite/b';",
@@ -148,8 +142,8 @@ describe('relativeSpecifiers', () => {
   });
 });
 
-describe('hasModuleExtension', () => {
-  it('takes a module extension, not a dotted file name', () => {
+void describe('hasModuleExtension', () => {
+  void it('takes a module extension, not a dotted file name', () => {
     assert.equal(hasModuleExtension('./a.ts'), true);
     assert.equal(hasModuleExtension('./a.mjs'), true);
     assert.equal(hasModuleExtension('./a'), false);
@@ -157,7 +151,7 @@ describe('hasModuleExtension', () => {
   });
 });
 
-describe('isEsModule', () => {
+void describe('isEsModule', () => {
   const manifests = {
     'apps/app/package.json': { type: 'module' },
     'libs/lib/package.json': { name: 'lib' },
@@ -165,35 +159,35 @@ describe('isEsModule', () => {
   };
   const readJson = (file) => manifests[file];
 
-  it('takes .mts, .mjs and .json as they are', () => {
+  void it('takes .mts, .mjs and .json as they are', () => {
     assert.equal(isEsModule('libs/lib/vite.config.mts', readJson), true);
     assert.equal(isEsModule('tools/vite/a.mjs', readJson), true);
     assert.equal(isEsModule('tools/vite/a.json', readJson), true);
   });
 
-  it('takes .ts and .js by the nearest package.json', () => {
+  void it('takes .ts and .js by the nearest package.json', () => {
     assert.equal(isEsModule('apps/app/deploy/a.ts', readJson), true);
     assert.equal(isEsModule('libs/lib/vite.config.ts', readJson), false);
     assert.equal(isEsModule('tools/vite/a.js', readJson), false);
   });
 
-  it('never takes .cts or .cjs', () => {
+  void it('never takes .cts or .cjs', () => {
     assert.equal(isEsModule('apps/app/a.cts', readJson), false);
     assert.equal(isEsModule('apps/app/a.cjs', readJson), false);
   });
 });
 
-describe('Vite configs', () => {
+void describe('Vite configs', () => {
   const configs = trackedViteConfigs();
 
-  it('are found', () => {
+  void it('are found', () => {
     assert.ok(configs.length > 0, 'no Vite config tracked');
   });
 
   for (const config of configs) {
     const modules = loadedModules(config);
 
-    it(`${config} and what it loads name each relative import's extension`, () => {
+    void it(`${config} and what it loads name each relative import's extension`, () => {
       assert.deepEqual(
         extensionlessImports(modules),
         [],
@@ -201,7 +195,7 @@ describe('Vite configs', () => {
       );
     });
 
-    it(`${config} and what it loads import only files that exist`, () => {
+    void it(`${config} and what it loads import only files that exist`, () => {
       assert.deepEqual(
         modules.filter(({ missing }) => missing).map(({ file }) => file),
         [],
@@ -209,7 +203,7 @@ describe('Vite configs', () => {
       );
     });
 
-    it(`${config} and what it loads are ES modules`, () => {
+    void it(`${config} and what it loads are ES modules`, () => {
       assert.deepEqual(
         modules
           .filter(({ missing, file }) => !missing && !isEsModule(file))
