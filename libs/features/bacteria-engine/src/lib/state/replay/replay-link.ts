@@ -7,7 +7,7 @@ const HASH_KEY = 'ghost';
 
 /**
  * A link to the game that carries a run as a ghost to fight: the run packed
- * for the public (`state/replay-pack.ts`) and written in base64url into the
+ * for the public (`state/replay/replay-pack.ts`) and written in base64url into the
  * hash, so it never reaches a server and works wherever the game is served
  * from.
  */

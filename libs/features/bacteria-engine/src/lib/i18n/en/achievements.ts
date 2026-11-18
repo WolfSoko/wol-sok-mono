@@ -1,6 +1,6 @@
 /**
  * The achievements by id: a short name and the one-line condition, its
- * numbers as placeholders. `state/achievements.ts` takes its English texts
+ * numbers as placeholders. `state/progress/achievements.ts` takes its English texts
  * from here.
  */
 export const achievements = {

@@ -1,7 +1,7 @@
 /**
  * The levels: the campaign ladder's titles and briefings by level id, its
  * chapters, the rule notes, and the words generated levels are named from.
- * The English titles and briefings are the ones `state/levels.ts` carries.
+ * The English titles and briefings are the ones `state/levels/levels.ts` carries.
  */
 export const levels = {
   /** A ladder level's name: "3 · Hourglass". */
