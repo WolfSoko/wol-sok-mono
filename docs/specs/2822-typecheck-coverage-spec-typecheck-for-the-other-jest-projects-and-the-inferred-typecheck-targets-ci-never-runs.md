@@ -16,14 +16,14 @@ the admin, the rendering and sound libs, Korbjäger and its libs, `korbjaeger-fu
 `test` target and without one, 47 have a `tsconfig.spec.json`; `tsc -p <project>/tsconfig.spec.json
 --noEmit` passes on 41 of them and fails on six:
 
-| Project | Errors | Cause |
-| --- | --- | --- |
-| `angular-examples` | 1 | `src/environments/version-tag.generated.ts` is written by its `generate-version` target and absent before it ran |
-| `bacteria-game-remote` | 3 | `error-reports.spec.ts` names `Sentry.Integration`, which `@sentry/angular` no longer exports |
-| `shared-data-access` | 1 | `vite.config.ts` reads `process.env.NX_TASK_TARGET_CONFIGURATION` with a dot (`noPropertyAccessFromIndexSignature`) |
-| `spa-cdk-stack` | 2 | `stack-spa.spec.ts` types `findResources`' answer narrower than it is |
-| `utils-version` | 1 | `tsconfig.spec.json` lacks `resolveJsonModule`, which `src/version.ts` needs for `version.json` |
-| `ws-thanos` | 3 | `snap-sound.service.spec.ts` reads `mock.calls` of `jest.fn(() => this)`, typed as calls without arguments |
+| Project                | Errors | Cause                                                                                                               |
+| ---------------------- | ------ | ------------------------------------------------------------------------------------------------------------------- |
+| `angular-examples`     | 1      | `src/environments/version-tag.generated.ts` is written by its `generate-version` target and absent before it ran    |
+| `bacteria-game-remote` | 3      | `error-reports.spec.ts` names `Sentry.Integration`, which `@sentry/angular` no longer exports                       |
+| `shared-data-access`   | 1      | `vite.config.ts` reads `process.env.NX_TASK_TARGET_CONFIGURATION` with a dot (`noPropertyAccessFromIndexSignature`) |
+| `spa-cdk-stack`        | 2      | `stack-spa.spec.ts` types `findResources`' answer narrower than it is                                               |
+| `utils-version`        | 1      | `tsconfig.spec.json` lacks `resolveJsonModule`, which `src/version.ts` needs for `version.json`                     |
+| `ws-thanos`            | 3      | `snap-sound.service.spec.ts` reads `mock.calls` of `jest.fn(() => this)`, typed as calls without arguments          |
 
 The three without a `tsconfig.spec.json` (`tools`, `oxlint-workspace-rules`,
 `federation-shared-singletons`) run `node --test` on scripts: `tools` has `typecheck-tools`, the

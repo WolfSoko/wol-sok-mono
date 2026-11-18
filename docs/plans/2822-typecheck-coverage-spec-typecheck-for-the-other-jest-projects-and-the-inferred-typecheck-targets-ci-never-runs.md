@@ -16,8 +16,8 @@ One branch, one PR; each task is one commit. Before each commit: `npx nx format:
    - `libs/shared/data-access/vite.config.ts`
    - `libs/utils/version/tsconfig.spec.json`
    - `apps/angular-examples/project.json` (`typecheck-specs` with `dependsOn: ["generate-version"]`)
-   Commit: `fix(<project>): …` per project where the scope rule allows one scope each
-   (six small commits).
+     Commit: `fix(<project>): …` per project where the scope rule allows one scope each
+     (six small commits).
 3. **Add `"typecheck-specs": {}` to the other 41 `project.json` files** (a short Node script edits
    the JSON, then `nx format:write`). Task 1's test goes green. Run
    `npx nx run-many -t typecheck-specs --skip-nx-cache`. Commit: `chore(tools): …` with the test.
