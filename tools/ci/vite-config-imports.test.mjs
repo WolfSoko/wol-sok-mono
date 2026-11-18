@@ -63,8 +63,8 @@ function trackedViteConfigs() {
     .filter(Boolean);
 }
 
-describe('relativeSpecifiers', () => {
-  it('finds imports, re-exports, side-effect imports and import()', () => {
+void describe('relativeSpecifiers', () => {
+  void it('finds imports, re-exports, side-effect imports and import()', () => {
     const source = [
       "import { a } from './deploy/a';",
       "export * from '../../tools/vite/b';",
@@ -83,8 +83,8 @@ describe('relativeSpecifiers', () => {
   });
 });
 
-describe('hasModuleExtension', () => {
-  it('takes a module extension, not a dotted file name', () => {
+void describe('hasModuleExtension', () => {
+  void it('takes a module extension, not a dotted file name', () => {
     assert.equal(hasModuleExtension('./a.ts'), true);
     assert.equal(hasModuleExtension('./a.mjs'), true);
     assert.equal(hasModuleExtension('./a'), false);
@@ -92,15 +92,15 @@ describe('hasModuleExtension', () => {
   });
 });
 
-describe('Vite configs', () => {
+void describe('Vite configs', () => {
   const configs = trackedViteConfigs();
 
-  it('are found', () => {
+  void it('are found', () => {
     assert.ok(configs.length > 0, 'no Vite config tracked');
   });
 
   for (const config of configs) {
-    it(`${config} and what it loads name each relative import's extension`, () => {
+    void it(`${config} and what it loads name each relative import's extension`, () => {
       assert.deepEqual(
         extensionlessImportsFrom(config),
         [],

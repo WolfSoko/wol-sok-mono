@@ -1,5 +1,9 @@
 {
   // Type-aware oxlint takes the nearest tsconfig.json of a file; without this
-  // one the scripts' @wolsok/* imports resolve to nothing there.
-  "extends": "./tsconfig.tools.json"
+  // one the scripts' @wolsok/* imports resolve to nothing there. It includes
+  // the .js/.mjs scripts too (#3074): a file no tsconfig owns is typed in a
+  // fallback program made of whatever else a run lints, so its findings
+  // changed between runs. tools/ci/tools-tsconfig.test.mjs keeps it so.
+  "extends": "./tsconfig.tools.json",
+  "include": ["**/*.ts", "**/*.js", "**/*.mjs"]
 }
