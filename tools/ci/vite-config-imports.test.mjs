@@ -83,31 +83,39 @@ function isEsModule(file, readJson = readWorkspaceJson) {
   );
 }
 
-/** `file` and every file it loads through relative imports, from the root. */
-function loadedFiles(file, seen = new Set()) {
-  if (seen.has(file) || !existsSync(join(ROOT, file))) {
-    return [];
-  }
-  seen.add(file);
-  return [
-    file,
-    ...relativeSpecifiers(readSource(file))
+/**
+ * `config` and every file it loads through relative imports, each read once
+ * (paths from the root): its relative specifiers, or `missing` where an
+ * import names a file that does not exist.
+ */
+function loadedModules(config) {
+  const modules = [];
+  const seen = new Set();
+  const visit = (file) => {
+    if (seen.has(file)) {
+      return;
+    }
+    seen.add(file);
+    if (!existsSync(join(ROOT, file))) {
+      modules.push({ file, missing: true, specifiers: [] });
+      return;
+    }
+    const specifiers = relativeSpecifiers(readSource(file));
+    modules.push({ file, missing: false, specifiers });
+    specifiers
       .filter(hasModuleExtension)
-      .flatMap((specifier) =>
-        loadedFiles(join(dirname(file), specifier), seen)
-      ),
-  ];
+      .forEach((specifier) => visit(join(dirname(file), specifier)));
+  };
+  visit(config);
+  return modules;
 }
 
-/**
- * Each extensionless relative import of `file` and of every file it loads
- * through relative imports, as `<file>: <specifier>` (paths from the root).
- */
-function extensionlessImportsFrom(file) {
-  return loadedFiles(file).flatMap((loaded) =>
-    relativeSpecifiers(readSource(loaded))
+/** Each extensionless relative import, as `<file>: <specifier>`. */
+function extensionlessImports(modules) {
+  return modules.flatMap(({ file, specifiers }) =>
+    specifiers
       .filter((specifier) => !hasModuleExtension(specifier))
-      .map((specifier) => `${loaded}: ${specifier}`)
+      .map((specifier) => `${file}: ${specifier}`)
   );
 }
 
@@ -183,19 +191,31 @@ describe('Vite configs', () => {
   });
 
   for (const config of configs) {
+    const modules = loadedModules(config);
+
     it(`${config} and what it loads name each relative import's extension`, () => {
       assert.deepEqual(
-        extensionlessImportsFrom(config),
+        extensionlessImports(modules),
         [],
         `add the file extension (e.g. '.ts') to these imports`
       );
     });
 
+    it(`${config} and what it loads import only files that exist`, () => {
+      assert.deepEqual(
+        modules.filter(({ missing }) => missing).map(({ file }) => file),
+        [],
+        `these imports name no file: a rename left them behind`
+      );
+    });
+
     it(`${config} and what it loads are ES modules`, () => {
       assert.deepEqual(
-        loadedFiles(config).filter((file) => !isEsModule(file)),
+        modules
+          .filter(({ missing, file }) => !missing && !isEsModule(file))
+          .map(({ file }) => file),
         [],
-        `these load as CommonJS: rename them to .mts`
+        `these load as CommonJS: rename them to .mts or .mjs, or put them under a package.json with "type": "module"`
       );
     });
   }
