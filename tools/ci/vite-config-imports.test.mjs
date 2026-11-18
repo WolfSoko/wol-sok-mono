@@ -2,7 +2,12 @@
 // (#3057): Vite 8's config loader warns about each one without, in every
 // Nx project-graph run, and its planned default `configLoader: 'native'`
 // (Node's ESM loader) refuses them. The check follows the configs' relative
-// imports, so a helper they load (`tools/vite/*.ts`) is held to it too.
+// imports, so a helper they load (`tools/vite/*.mts`) is held to it too.
+//
+// Each of those files is an ES module by Node's rules too (#3106): the root
+// `package.json` has no `"type": "module"`, so a `.ts` file without a module
+// `package.json` closer by loads as CommonJS, and Vite's config loader warns
+// "ESM syntax in a file loaded as CommonJS" for it in every project-graph run.
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
@@ -37,20 +42,72 @@ function hasModuleExtension(specifier) {
   return MODULE_EXTENSIONS.has(extname(specifier));
 }
 
-/**
- * Each extensionless relative import of `file` and of every file it loads
- * through relative imports, as `<file>: <specifier>` (paths from the root).
- */
-function extensionlessImportsFrom(file, seen = new Set()) {
+/** Extensions Node always loads as ES modules. */
+const ESM_EXTENSIONS = new Set(['.mts', '.mjs']);
+
+/** Extensions whose format the nearest `package.json`'s `type` decides. */
+const PACKAGE_TYPED_EXTENSIONS = new Set(['.ts', '.js']);
+
+/** The `type` of the `package.json` nearest to `file` (a path from the root). */
+function nearestPackageType(file, readJson) {
+  for (let dir = dirname(file); ; dir = dirname(dir)) {
+    const manifest = readJson(join(dir, 'package.json'));
+    if (manifest !== undefined) {
+      return manifest.type;
+    }
+    if (dir === dirname(dir)) {
+      return undefined;
+    }
+  }
+}
+
+function readSource(file) {
+  return readFileSync(join(ROOT, file), 'utf8');
+}
+
+function readWorkspaceJson(file) {
+  return existsSync(join(ROOT, file))
+    ? JSON.parse(readSource(file))
+    : undefined;
+}
+
+/** Whether Node loads `file` (a path from the root) as an ES module. */
+function isEsModule(file, readJson = readWorkspaceJson) {
+  const extension = extname(file);
+  if (extension === '.json' || ESM_EXTENSIONS.has(extension)) {
+    return true;
+  }
+  return (
+    PACKAGE_TYPED_EXTENSIONS.has(extension) &&
+    nearestPackageType(file, readJson) === 'module'
+  );
+}
+
+/** `file` and every file it loads through relative imports, from the root. */
+function loadedFiles(file, seen = new Set()) {
   if (seen.has(file) || !existsSync(join(ROOT, file))) {
     return [];
   }
   seen.add(file);
-  const specifiers = relativeSpecifiers(readFileSync(join(ROOT, file), 'utf8'));
-  return specifiers.flatMap((specifier) =>
-    hasModuleExtension(specifier)
-      ? extensionlessImportsFrom(join(dirname(file), specifier), seen)
-      : [`${file}: ${specifier}`]
+  return [
+    file,
+    ...relativeSpecifiers(readSource(file))
+      .filter(hasModuleExtension)
+      .flatMap((specifier) =>
+        loadedFiles(join(dirname(file), specifier), seen)
+      ),
+  ];
+}
+
+/**
+ * Each extensionless relative import of `file` and of every file it loads
+ * through relative imports, as `<file>: <specifier>` (paths from the root).
+ */
+function extensionlessImportsFrom(file) {
+  return loadedFiles(file).flatMap((loaded) =>
+    relativeSpecifiers(readSource(loaded))
+      .filter((specifier) => !hasModuleExtension(specifier))
+      .map((specifier) => `${loaded}: ${specifier}`)
   );
 }
 
@@ -92,6 +149,32 @@ describe('hasModuleExtension', () => {
   });
 });
 
+describe('isEsModule', () => {
+  const manifests = {
+    'apps/app/package.json': { type: 'module' },
+    'libs/lib/package.json': { name: 'lib' },
+    'package.json': { name: 'root' },
+  };
+  const readJson = (file) => manifests[file];
+
+  it('takes .mts, .mjs and .json as they are', () => {
+    assert.equal(isEsModule('libs/lib/vite.config.mts', readJson), true);
+    assert.equal(isEsModule('tools/vite/a.mjs', readJson), true);
+    assert.equal(isEsModule('tools/vite/a.json', readJson), true);
+  });
+
+  it('takes .ts and .js by the nearest package.json', () => {
+    assert.equal(isEsModule('apps/app/deploy/a.ts', readJson), true);
+    assert.equal(isEsModule('libs/lib/vite.config.ts', readJson), false);
+    assert.equal(isEsModule('tools/vite/a.js', readJson), false);
+  });
+
+  it('never takes .cts or .cjs', () => {
+    assert.equal(isEsModule('apps/app/a.cts', readJson), false);
+    assert.equal(isEsModule('apps/app/a.cjs', readJson), false);
+  });
+});
+
 describe('Vite configs', () => {
   const configs = trackedViteConfigs();
 
@@ -105,6 +188,14 @@ describe('Vite configs', () => {
         extensionlessImportsFrom(config),
         [],
         `add the file extension (e.g. '.ts') to these imports`
+      );
+    });
+
+    it(`${config} and what it loads are ES modules`, () => {
+      assert.deepEqual(
+        loadedFiles(config).filter((file) => !isEsModule(file)),
+        [],
+        `these load as CommonJS: rename them to .mts`
       );
     });
   }
