@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.3...v74.172.4) (2026-11-18)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** keep a guest adoption a closed tab left behind ([#3122](https://github.com/WolfSoko/wol-sok-mono/issues/3122)) ([5bcc3b3](https://github.com/WolfSoko/wol-sok-mono/commit/5bcc3b3f4e27503ed7701241e89c6daa0b5795e0)), closes [#3036](https://github.com/WolfSoko/wol-sok-mono/issues/3036), references [#3036](https://github.com/WolfSoko/wol-sok-mono/issues/3036)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** sort state/ into folders by concern ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) step 2) ([#3129](https://github.com/WolfSoko/wol-sok-mono/issues/3129)) ([6ac7ee2](https://github.com/WolfSoko/wol-sok-mono/commit/6ac7ee26d1ecb155e0b44b367c8d056101759eec))
+
 ## [74.172.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.2...v74.172.3) (2026-11-17)
 
 ### Bug Fixes
