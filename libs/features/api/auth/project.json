@@ -29,7 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/api/auth/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

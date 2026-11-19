@@ -36,7 +36,6 @@
         "jestConfig": "apps/fourier-analysis-remote-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

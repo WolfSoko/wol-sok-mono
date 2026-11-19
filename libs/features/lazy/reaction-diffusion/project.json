@@ -31,7 +31,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/reaction-diffusion/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

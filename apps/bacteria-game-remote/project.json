@@ -267,7 +267,6 @@
         "tsConfig": "apps/bacteria-game-remote/tsconfig.spec.json"
       }
     },
-    "typecheck-specs": {},
     "serve-static": {
       "executor": "@nx/web:file-server",
       "defaultConfiguration": "development",

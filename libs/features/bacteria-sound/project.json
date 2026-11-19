@@ -5,7 +5,6 @@
   "sourceRoot": "libs/features/bacteria-sound/src",
   "tags": ["feature:game-kit"],
   "targets": {
-    "typecheck-specs": {},
     "build": {
       "executor": "@nx/angular:ng-packagr-lite",
       "outputs": ["{workspaceRoot}/dist/libs/features/bacteria-sound"],

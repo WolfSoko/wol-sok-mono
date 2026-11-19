@@ -25,7 +25,6 @@
       "options": {
         "configFile": "libs/shared/analytics/vitest.config.mts"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

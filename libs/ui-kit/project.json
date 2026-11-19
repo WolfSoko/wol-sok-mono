@@ -29,7 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/ui-kit/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

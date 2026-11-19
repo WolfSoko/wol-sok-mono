@@ -21,7 +21,6 @@
       "options": {
         "jestConfig": "libs/utils/browser-storage/jest.config.ts"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

@@ -45,6 +45,9 @@
       }
     },
     {
+      "plugin": "./tools/nx/typecheck-specs.mjs"
+    },
+    {
       "plugin": "@nx/vitest",
       "options": {
         "testTargetName": "test"
@@ -126,15 +129,6 @@
           "codeCoverage": true
         }
       }
-    },
-    "typecheck-specs": {
-      "command": "tsc -p {projectRoot}/tsconfig.spec.json --noEmit",
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/tsconfig.base.json"
-      ],
-      "cache": true
     },
     "build-storybook": {
       "inputs": [

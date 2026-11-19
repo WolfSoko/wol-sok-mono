@@ -54,7 +54,6 @@
         "configFile": "vite.config.ts"
       }
     },
-    "typecheck-specs": {},
     "icons": {
       "executor": "nx:run-commands",
       "options": {

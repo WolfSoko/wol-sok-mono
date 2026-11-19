@@ -29,7 +29,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/wasm-test/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

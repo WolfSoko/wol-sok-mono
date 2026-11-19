@@ -9,7 +9,6 @@
       "options": {
         "jestConfig": "tools/deploy/jest.config.ts"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }
