@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>bor1mvsee</task-id>
+<tool-use-id>toolu_01PNLYJberBPuFAoFjxLNvRZ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-534/6e43fee6-6c87-4082-b573-36c8010ef949/tasks/bor1mvsee.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/wolfsoko/wol-sok-mono/534; until [ -s /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-534/6e43fee6-6c87-4082-b573-36c8010ef949/tasks/bu2dcyaxq.output ]; do sleep 20; done; cat /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-534/6e43fee6-6c87-4082-b573-36c8010ef949/tasks/bu2dcyaxq.output" completed (exit code 0)</summary>
+</task-notification>
