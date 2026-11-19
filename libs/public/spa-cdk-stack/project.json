@@ -23,6 +23,7 @@
       "options": {
         "configFile": "libs/public/spa-cdk-stack/vitest.config.mts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

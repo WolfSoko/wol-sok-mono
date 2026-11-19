@@ -30,6 +30,7 @@
         "codeCoverage": true,
         "tsConfig": "libs/public/ws-thanos/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

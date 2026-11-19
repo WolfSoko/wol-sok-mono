@@ -89,6 +89,7 @@
         "tsConfig": "apps/portfolio/tsconfig.spec.json"
       }
     },
+    "typecheck-specs": {},
     "serve-static": {
       "continuous": true,
       "executor": "@nx/web:file-server",

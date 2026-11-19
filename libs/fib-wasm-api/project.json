@@ -33,6 +33,7 @@
         "codeCoverage": true,
         "tsConfig": "libs/fib-wasm-api/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

@@ -212,6 +212,9 @@
       },
       "dependsOn": ["generate-version"]
     },
+    "typecheck-specs": {
+      "dependsOn": ["generate-version"]
+    },
     "lighthouse": {
       "executor": "nx:run-commands",
       "dependsOn": ["build"],

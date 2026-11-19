@@ -21,6 +21,7 @@
       "options": {
         "jestConfig": "libs/utils/time/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

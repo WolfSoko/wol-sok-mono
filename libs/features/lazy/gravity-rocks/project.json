@@ -29,6 +29,7 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/gravity-rocks/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }
