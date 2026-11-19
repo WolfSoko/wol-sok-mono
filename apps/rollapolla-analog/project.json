@@ -62,7 +62,6 @@
         "configFile": "vite.config.ts"
       }
     },
-    "typecheck-specs": {},
     "firebase": {
       "executor": "nx:run-commands",
       "options": {

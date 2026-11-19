@@ -33,7 +33,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/tensorflow-examples/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

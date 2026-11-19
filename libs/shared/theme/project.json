@@ -12,7 +12,6 @@
         "jestConfig": "libs/shared/theme/jest.config.ts",
         "tsConfig": "libs/shared/theme/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

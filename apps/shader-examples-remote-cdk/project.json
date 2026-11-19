@@ -36,7 +36,6 @@
         "jestConfig": "apps/shader-examples-remote-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

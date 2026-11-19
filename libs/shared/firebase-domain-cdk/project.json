@@ -15,7 +15,6 @@
       "options": {
         "jestConfig": "libs/shared/firebase-domain-cdk/jest.config.ts"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

@@ -31,7 +31,6 @@
         "jestConfig": "apps/bacteria-game-remote-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

@@ -31,7 +31,6 @@
         "codeCoverage": true,
         "tsConfig": "libs/features/lazy/shader-examples/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

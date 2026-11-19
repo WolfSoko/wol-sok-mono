@@ -36,7 +36,6 @@
         "jestConfig": "apps/portfolio-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

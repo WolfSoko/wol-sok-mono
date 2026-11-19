@@ -28,7 +28,6 @@
         "jestConfig": "libs/utils/decorators/jest.config.ts",
         "codeCoverage": true
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }

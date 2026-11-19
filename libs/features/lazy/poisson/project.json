@@ -28,7 +28,6 @@
         "jestConfig": "libs/features/lazy/poisson/jest.config.ts",
         "tsConfig": "libs/features/lazy/poisson/tsconfig.spec.json"
       }
-    },
-    "typecheck-specs": {}
+    }
   }
 }
