@@ -5,10 +5,14 @@
 // project with a tsconfig.spec.json, whether its test target is written or
 // inferred; its own spec checks the target it builds. This one checks that
 // nx.json registers it as the one source of the target, that a project.json
-// adds no more than a `dependsOn`, and that every spec tsconfig lies in a
-// project the plugin reaches.
+// adds no more than a `dependsOn`, that every spec tsconfig lies in a project
+// the plugin reaches unless the plugin entry's `exclude` names it, and that
+// every inferred command names an existing spec tsconfig. Nx's `affected`
+// names only `tools` for a change of the plugin, so this test is what CI runs
+// on such a change; run `npx nx run-many -t typecheck-specs` by hand too.
 import assert from 'node:assert/strict';
-import { dirname } from 'node:path';
+import { existsSync } from 'node:fs';
+import { dirname, join, matchesGlob } from 'node:path';
 import { describe, it } from 'node:test';
 import { createNodes } from '../nx/typecheck-specs.mjs';
 import {
@@ -53,19 +57,62 @@ void describe('typecheck-specs', () => {
     );
   });
 
-  void it('reaches every tracked tsconfig.spec.json', async () => {
-    const specTsconfigs = gitLsFiles('**/tsconfig.spec.json');
-    const [, inferTargets] = createNodes;
-    const results = await inferTargets(specTsconfigs, undefined, {
-      workspaceRoot: ROOT,
-      nxJsonConfiguration: readJson('nx.json'),
-    });
-    const reached = new Set(results.map(([file]) => file));
-    const unreached = specTsconfigs.filter((file) => !reached.has(file));
+  void it('reaches every tracked tsconfig.spec.json not excluded in nx.json', async () => {
+    const unreached = (await inferredProjects())
+      .filter(({ projects }) => projects === undefined)
+      .map(({ file }) => file)
+      .filter((file) => !matchesAny(file, pluginEntry().exclude));
     assert.deepEqual(
       unreached.map(dirname),
       [],
-      'a spec tsconfig outside a project root is never type-checked'
+      'a spec tsconfig outside a project root is never type-checked; ' +
+        "list a deliberate gap in the plugin entry's exclude"
     );
   });
+
+  void it('points every inferred command at an existing spec tsconfig', async () => {
+    const broken = (await inferredProjects())
+      .flatMap(({ projects }) => Object.entries(projects ?? {}))
+      .map(([root, { targets }]) =>
+        targets[TARGET].command.replaceAll('{projectRoot}', root)
+      )
+      .filter((command) => !existsSync(join(ROOT, tsconfigOf(command))));
+    assert.deepEqual(broken, [], 'the -p path of the command names no file');
+  });
 });
+
+function pluginEntry() {
+  const entry = readJson('nx.json').plugins.find(
+    (candidate) => pluginName(candidate) === PLUGIN
+  );
+  return typeof entry === 'string' ? { plugin: entry } : entry;
+}
+
+function matchesAny(file, globs = []) {
+  return globs.some((glob) => matchesGlob(file, glob));
+}
+
+/** Nx's view: the plugin's result for each tracked spec tsconfig it is given. */
+async function inferredProjects() {
+  const { include, exclude, options } = pluginEntry();
+  const given = gitLsFiles('**/tsconfig.spec.json').filter(
+    (file) =>
+      (include === undefined || matchesAny(file, include)) &&
+      !matchesAny(file, exclude)
+  );
+  const [, inferTargets] = createNodes;
+  const results = new Map(
+    await inferTargets(given, options, {
+      workspaceRoot: ROOT,
+      nxJsonConfiguration: readJson('nx.json'),
+    })
+  );
+  return gitLsFiles('**/tsconfig.spec.json').map((file) => ({
+    file,
+    projects: results.get(file)?.projects,
+  }));
+}
+
+function tsconfigOf(command) {
+  return command.match(/-p (\S+)/)[1];
+}

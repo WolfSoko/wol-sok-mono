@@ -11,13 +11,24 @@ import { dirname, join } from 'node:path';
 
 const SPEC_TSCONFIG = 'tsconfig.spec.json';
 const DEFAULT_TARGET_NAME = 'typecheck-specs';
-// The files Nx itself takes as the mark of a project root.
-const PROJECT_FILES = ['project.json', 'package.json'];
+// Only a project.json marks a project root here: the root package.json has
+// no `workspaces`, so Nx takes no folder with just a package.json as a project,
+// and the plugin must not turn one into a project of its own.
+const PROJECT_FILE = 'project.json';
+// The plugin is an input of the target it defines, so a run after a change
+// here is never answered from the cache. Nx's `affected` still names only
+// `tools` for such a change: run every target by hand (CLAUDE.md).
+export const PLUGIN_FILE = 'tools/nx/typecheck-specs.mjs';
 
 /** @type {import('@nx/devkit').TargetConfiguration} */
 const TYPECHECK_SPECS_TARGET = {
   command: `tsc -p {projectRoot}/${SPEC_TSCONFIG} --noEmit`,
-  inputs: ['default', '^production', '{workspaceRoot}/tsconfig.base.json'],
+  inputs: [
+    'default',
+    '^production',
+    '{workspaceRoot}/tsconfig.base.json',
+    `{workspaceRoot}/${PLUGIN_FILE}`,
+  ],
   cache: true,
 };
 
@@ -46,5 +57,5 @@ export const createNodes = [
 ];
 
 function isProjectRoot(folder) {
-  return PROJECT_FILES.some((file) => existsSync(join(folder, file)));
+  return existsSync(join(folder, PROJECT_FILE));
 }

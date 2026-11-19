@@ -5,9 +5,10 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, matchesGlob } from 'node:path';
+import { dirname, join, matchesGlob, relative, sep } from 'node:path';
 import { after, before, describe, it } from 'node:test';
-import { createNodes } from './typecheck-specs.mjs';
+import { fileURLToPath } from 'node:url';
+import { createNodes, PLUGIN_FILE } from './typecheck-specs.mjs';
 
 const [pattern, inferTargets] = createNodes;
 const SPEC_TSCONFIG = 'libs/utils/a/tsconfig.spec.json';
@@ -75,6 +76,7 @@ void describe('typecheck-specs plugin', () => {
                   'default',
                   '^production',
                   '{workspaceRoot}/tsconfig.base.json',
+                  '{workspaceRoot}/tools/nx/typecheck-specs.mjs',
                 ],
                 cache: true,
               },
@@ -85,12 +87,23 @@ void describe('typecheck-specs plugin', () => {
     ]);
   });
 
-  void it('infers it for a package.json project too', async () => {
+  void it('skips a folder with only a package.json, as Nx does here', async () => {
     const results = await infer(
       ['libs/utils/a/package.json', SPEC_TSCONFIG],
       [SPEC_TSCONFIG]
     );
-    assert.deepEqual(Object.keys(results[0][1]), ['libs/utils/a']);
+    assert.deepEqual(results, []);
+  });
+
+  void it('names its own path, from the workspace root, as PLUGIN_FILE', () => {
+    const pluginPath = fileURLToPath(
+      import.meta.resolve('./typecheck-specs.mjs')
+    );
+    const workspaceRoot = join(import.meta.dirname, '..', '..');
+    assert.equal(
+      relative(workspaceRoot, pluginPath).split(sep).join('/'),
+      PLUGIN_FILE
+    );
   });
 
   void it('skips a tsconfig.spec.json without a project beside it', async () => {

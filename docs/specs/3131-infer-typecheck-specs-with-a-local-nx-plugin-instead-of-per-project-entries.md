@@ -27,11 +27,16 @@ without an edit of its own.
   target on projects that do not pass yet.
 - **The plugin is `tools/nx/typecheck-specs.mjs`, in the `tools` project.** It
   exports `createNodes` on `**/tsconfig.spec.json` and adds the target to the
-  project whose root holds that file (a `project.json` or `package.json` beside
-  it, as Nx's own plugins check). No app imports it, so a later change to it is
+  project whose root holds that file (a `project.json` beside it; a
+  `package.json` alone makes no project here, since the root `package.json` has
+  no `workspaces`). No app imports it, so a later change to it is
   no build or deploy input of any app (`release-affected.mjs` selects nothing),
   which a `targetDefaults` edit in `nx.json` would not give: `nx.json` keeps
-  Nx's verdict there and releases everything.
+  Nx's verdict there and releases everything. The other side: `nx affected`
+  names only `tools` for a plugin change, so the guard checks every inferred
+  command names an existing spec tsconfig, the plugin file is an input of the
+  target (no cached result after a change), and `CLAUDE.md` asks for a manual
+  `nx run-many -t typecheck-specs` after one.
 - **The plugin owns the whole target definition** (`command`, `inputs`, `cache`),
   and the `typecheck-specs` entry leaves `targetDefaults`. One source, specced
   with the plugin; the reason above is why it does not stay in `nx.json` as the
