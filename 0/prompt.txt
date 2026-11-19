@@ -1,0 +1,21 @@
+watch
+
+---
+
+<task-notification>
+<task-id>b3unoc2ok</task-id>
+<tool-use-id>toolu_01FXn6vEGBAaMc1y5kzRKmbe</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-537/813497ea-191d-4d50-bc41-64878c5fa0aa/tasks/b3unoc2ok.output</output-file>
+<status>completed</status>
+<summary>Background command "while true; do s=$(gh api repos/{owner}/{repo}/pulls/3130 --jq '"\(.state) merged=\(.merged)"' 2&gt;/dev/null || true); case "$s" in closed*) echo "PR #3130: $s"; break;; esac; sleep 60; done" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bnocpnzgj</task-id>
+<tool-use-id>toolu_01TPtFxMhEcxAh1rg6xAjn2p</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-537/813497ea-191d-4d50-bc41-64878c5fa0aa/tasks/bnocpnzgj.output</output-file>
+<status>completed</status>
+<summary>Background command "npm ci --no-audit --no-fund &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-537/813497ea-191d-4d50-bc41-64878c5fa0aa/scratchpad/npmci2.log 2&gt;&amp;1; echo exit $?" completed (exit code 0)</summary>
+</task-notification>
