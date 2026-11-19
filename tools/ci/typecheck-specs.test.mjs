@@ -1,51 +1,71 @@
-// Keeps every spec project's specs type-checked (#2822). Jest and Vitest run
-// specs transpile-only, so a fake or a call in a spec drifts from the real
-// types unnoticed unless `typecheck-specs` (command, inputs and caching from
-// nx.json's targetDefaults) runs among CI's affected targets. A project with a
-// `test` target and a tsconfig.spec.json therefore has one, written as `{}`
-// (a `dependsOn` at most), so the default command is the one that runs. Only
-// `test` targets written in project.json count: a project whose test target a
-// plugin infers is not seen here (none today).
+// Keeps every spec project's specs type-checked (#2822, #3131). Jest and
+// Vitest run specs transpile-only, so a fake or a call in a spec drifts from
+// the real types unnoticed unless `typecheck-specs` runs among CI's affected
+// targets. The local plugin tools/nx/typecheck-specs.mjs infers it for every
+// project with a tsconfig.spec.json, whether its test target is written or
+// inferred; its own spec checks the target it builds. This one checks that
+// nx.json registers it as the one source of the target, that a project.json
+// adds no more than a `dependsOn`, and that every spec tsconfig lies in a
+// project the plugin reaches.
 import assert from 'node:assert/strict';
-import { existsSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 import { describe, it } from 'node:test';
-import { readJson, readProjects, ROOT } from './workspace-projects.mjs';
+import { createNodes } from '../nx/typecheck-specs.mjs';
+import {
+  gitLsFiles,
+  readJson,
+  readProjects,
+  ROOT,
+} from './workspace-projects.mjs';
 
-const SPEC_TSCONFIG = 'tsconfig.spec.json';
+const PLUGIN = './tools/nx/typecheck-specs.mjs';
+const TARGET = 'typecheck-specs';
 
-function hasSpecTsconfig(project) {
-  return existsSync(join(ROOT, dirname(project.path), SPEC_TSCONFIG));
+function pluginName(entry) {
+  return typeof entry === 'string' ? entry : entry.plugin;
 }
 
 void describe('typecheck-specs', () => {
-  void it('is a target of every project with a test target and a tsconfig.spec.json', () => {
-    const missing = readProjects()
-      .filter(({ json }) => json.targets?.test)
-      .filter(hasSpecTsconfig)
-      .filter(({ json }) => !json.targets['typecheck-specs'])
-      .map(({ path }) => path);
-    assert.deepEqual(missing, [], 'add "typecheck-specs": {} to their targets');
+  void it('is inferred by the local plugin, not set in targetDefaults', () => {
+    const nxJson = readJson('nx.json');
+    const entries = nxJson.plugins.filter(
+      (entry) => pluginName(entry) === PLUGIN
+    );
+    assert.equal(entries.length, 1, `register ${PLUGIN} once in nx.json`);
+    assert.equal(
+      nxJson.targetDefaults?.[TARGET],
+      undefined,
+      `the plugin owns ${TARGET}; drop it from targetDefaults`
+    );
   });
 
-  void it('keeps the default command on every project', () => {
+  void it('takes no more than a dependsOn from a project.json', () => {
     const overriding = readProjects()
-      .filter(({ json }) => json.targets?.['typecheck-specs'])
+      .filter(({ json }) => json.targets?.[TARGET])
       .filter(({ json }) =>
-        Object.keys(json.targets['typecheck-specs']).some(
-          (key) => key !== 'dependsOn'
-        )
+        Object.keys(json.targets[TARGET]).some((key) => key !== 'dependsOn')
       )
       .map(({ path }) => path);
     assert.deepEqual(
       overriding,
       [],
-      'leave typecheck-specs at {} or a dependsOn'
+      `leave ${TARGET} to the plugin; a project.json adds a dependsOn at most`
     );
   });
 
-  void it('runs tsc on the project tsconfig.spec.json by default', () => {
-    const { command } = readJson('nx.json').targetDefaults['typecheck-specs'];
-    assert.equal(command, `tsc -p {projectRoot}/${SPEC_TSCONFIG} --noEmit`);
+  void it('reaches every tracked tsconfig.spec.json', async () => {
+    const specTsconfigs = gitLsFiles('**/tsconfig.spec.json');
+    const [, inferTargets] = createNodes;
+    const results = await inferTargets(specTsconfigs, undefined, {
+      workspaceRoot: ROOT,
+      nxJsonConfiguration: readJson('nx.json'),
+    });
+    const reached = new Set(results.map(([file]) => file));
+    const unreached = specTsconfigs.filter((file) => !reached.has(file));
+    assert.deepEqual(
+      unreached.map(dirname),
+      [],
+      'a spec tsconfig outside a project root is never type-checked'
+    );
   });
 });
