@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.9...v74.172.10) (2026-11-19)
+
+### Chore
+
+* **deps:** update dependency color-name to v2 ([#2926](https://github.com/WolfSoko/wol-sok-mono/issues/2926)) ([04dee3e](https://github.com/WolfSoko/wol-sok-mono/commit/04dee3e7303b9774e9627090eac8c87a18f34e22))
+
 ## [74.172.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.8...v74.172.9) (2026-11-19)
 
 ### Bug Fixes
