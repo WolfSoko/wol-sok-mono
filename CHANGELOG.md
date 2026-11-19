@@ -2,6 +2,50 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.9...v74.172.10) (2026-11-19)
+
+### Chore
+
+* **deps:** update dependency color-name to v2 ([#2926](https://github.com/WolfSoko/wol-sok-mono/issues/2926)) ([04dee3e](https://github.com/WolfSoko/wol-sok-mono/commit/04dee3e7303b9774e9627090eac8c87a18f34e22))
+
+## [74.172.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.8...v74.172.9) (2026-11-19)
+
+### Bug Fixes
+
+* **tools:** keep test-only Vite configs out of production inputs ([#3141](https://github.com/WolfSoko/wol-sok-mono/issues/3141)) ([4bc9e84](https://github.com/WolfSoko/wol-sok-mono/commit/4bc9e848357a9b1521dd8aa131b31678925193cc)), closes [#3136](https://github.com/WolfSoko/wol-sok-mono/issues/3136)
+
+### Chore
+
+* **release:** publish ([ecdb8b0](https://github.com/WolfSoko/wol-sok-mono/commit/ecdb8b0f0795c6d33b0ce7d2ef2586df52190546))
+
+## [74.172.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.7...v74.172.8) (2026-11-19)
+
+### Chore
+
+* **nx:** remove the Korbjäger app completely ([#3138](https://github.com/WolfSoko/wol-sok-mono/issues/3138)) ([4443fc3](https://github.com/WolfSoko/wol-sok-mono/commit/4443fc37493f9a6b3d389a0584f53eb348a9e455)), references [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132) [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
+* **release:** publish ([3511efc](https://github.com/WolfSoko/wol-sok-mono/commit/3511efc7287e47e64bf37abeba3dfa4fa1e4e8c8))
+
+## [74.172.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.6...v74.172.7) (2026-11-19)
+
+### Bug Fixes
+
+* **tools:** give the tools scripts a tsconfig so type-aware lint types them on every run ([#3137](https://github.com/WolfSoko/wol-sok-mono/issues/3137)) ([1c334e7](https://github.com/WolfSoko/wol-sok-mono/commit/1c334e750ab72b06ef67fa17857e57d4fc44695e)), closes [#3074](https://github.com/WolfSoko/wol-sok-mono/issues/3074)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** take the cloud contract from a /cloud entry ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) step 3) ([#3139](https://github.com/WolfSoko/wol-sok-mono/issues/3139)) ([6417db7](https://github.com/WolfSoko/wol-sok-mono/commit/6417db7743b0bbbec8160e4a4f528cd62ea4f52a))
+
+## [74.172.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.5...v74.172.6) (2026-11-18)
+
+### Bug Fixes
+
+* **tools-vite:** load the Vite configs and helpers as ES modules ([#3135](https://github.com/WolfSoko/wol-sok-mono/issues/3135)) ([7279523](https://github.com/WolfSoko/wol-sok-mono/commit/72795234002735ecbd9e94097b5967d6060fea61)), references [#3106](https://github.com/WolfSoko/wol-sok-mono/issues/3106) [#3106](https://github.com/WolfSoko/wol-sok-mono/issues/3106) [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
+* **tools:** publish only the npm packages whose version was bumped ([#3134](https://github.com/WolfSoko/wol-sok-mono/issues/3134)) ([1f4e571](https://github.com/WolfSoko/wol-sok-mono/commit/1f4e57154f073b94744b52bbbd557c0f22a33086)), closes [#3049](https://github.com/WolfSoko/wol-sok-mono/issues/3049)
+
+### Chore
+
+* **release:** publish ([348196e](https://github.com/WolfSoko/wol-sok-mono/commit/348196e3f8ca974ff3f9775722051f4d558af4a0))
+
 ## [74.172.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.4...v74.172.5) (2026-11-18)
 
 ### Refactorings

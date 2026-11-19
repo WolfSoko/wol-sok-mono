@@ -1,11 +1,11 @@
 import { BehaviorSubject, firstValueFrom, take, toArray } from 'rxjs';
 import {
-  COMMAND_TTL_MS,
   type MatchPlan,
   onlineReplayId,
   replayFromBytes,
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { COMMAND_TTL_MS } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FAKE_SERVER_STAMP,
   FakeBytes,

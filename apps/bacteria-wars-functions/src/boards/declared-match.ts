@@ -1,15 +1,17 @@
 import {
   type ArrivalReason,
+  type DeclaredReason,
+  type Replay,
+  replayFromBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   type Attempt,
   attemptSeed,
-  type DeclaredReason,
   declaredBeforeMatch,
   isRankedPlan,
   parseAttemptId,
-  type Replay,
-  replayFromBytes,
   submissionDeadline,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type DocumentSnapshot,
   FieldValue,

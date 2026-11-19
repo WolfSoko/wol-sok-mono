@@ -1,10 +1,10 @@
 import { BehaviorSubject, map, Observable } from 'rxjs';
+import { replayToBytes } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type CommandResult,
   type ReplayCommandType,
-  replayToBytes,
   storedPlaybackOf,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { GameReplays } from '../lib/storage/game-replays';
 import {
   hintOf,

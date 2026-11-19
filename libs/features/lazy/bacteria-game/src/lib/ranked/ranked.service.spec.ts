@@ -6,12 +6,12 @@ import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { FakeGameRanked } from '../../testing/fake-game-ranked';
 import type { GpuSelfTestResult } from '@wolsok/feat-bacteria-rendering';
 import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
+import { cpuSimulation } from '@wolsok/feat-shared-bacteria-engine';
 import {
   attemptSeed,
-  cpuSimulation,
   type FeatureToggles,
   type RankedRun,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { PlayerService } from '../state/player.service';
 import { GameAccount } from '../storage/game-account';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';

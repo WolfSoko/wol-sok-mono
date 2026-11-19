@@ -8,8 +8,8 @@ import {
   LEVELS,
   MatchEarnings,
   MedalAward,
-  type RankedOutcome,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type RankedOutcome } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { OneMatch } from '../state/match-rules';
 import { WinnerComponent } from './winner.component';
 

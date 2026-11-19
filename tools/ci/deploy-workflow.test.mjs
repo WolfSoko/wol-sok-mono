@@ -88,7 +88,21 @@ void describe('deploy.yml', () => {
       select,
       /deploy-override\.mjs --projects="\$DEPLOY_PROJECTS" --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}' --target="\$target"/
     );
-    assert.match(select, /release-affected\.mjs/);
+    assert.match(
+      select,
+      /release-affected\.mjs --base="\$NX_BASE" --head="\$NX_HEAD" --target=deploy --exclude='\$\{\{ matrix\.config\.exclude-pattern \}\}'/
+    );
+  });
+
+  void it('publishes the packages the release bumped (#3049)', () => {
+    const select = stepOf(
+      'Select the projects to release and set triggerRelease'
+    );
+    assert.match(
+      select,
+      /if \[\[ "\$\{\{ matrix\.config\.app-type \}\}" == "npm-packages" \]\]; then\n\s+selected=\$\(node tools\/ci\/bumped-packages\.mjs --base="\$NX_BASE" --head="\$NX_HEAD" --projects='\$\{\{ matrix\.config\.projects-filter \}\}'\)/
+    );
+    assert.doesNotMatch(select, /release-affected\.mjs[^\n]*--target=build/);
   });
 
   void it('gives every leg an exclude pattern', () => {
@@ -115,8 +129,8 @@ void describe('deploy.yml', () => {
 
 void describe('deploy-override', () => {
   void it('reads a comma-separated list', () => {
-    assert.deepEqual(requestedProjects(' korbjaeger, ,pacetrainer '), [
-      'korbjaeger',
+    assert.deepEqual(requestedProjects(' rollapolla-analog, ,pacetrainer '), [
+      'rollapolla-analog',
       'pacetrainer',
     ]);
     assert.throws(() => requestedProjects(' , '), /names no project/);
@@ -140,14 +154,14 @@ void describe('deploy-override', () => {
   void it("keeps each leg's own kind of the named projects", () => {
     const expected = {
       'npm-packages': ['ws-thanos'],
-      'non-cdk': ['korbjaeger'],
+      'non-cdk': ['pacetrainer'],
       android: [],
-      cdk: ['korbjaeger-cdk'],
+      cdk: ['portfolio-cdk'],
     };
     for (const { appType, exclude } of legs()) {
       assert.deepEqual(
         run(
-          '--projects=korbjaeger,ws-thanos,korbjaeger-cdk',
+          '--projects=pacetrainer,ws-thanos,portfolio-cdk',
           `--exclude=${exclude}`,
           `--target=${targetOf(appType)}`
         ).sort(),
@@ -160,8 +174,8 @@ void describe('deploy-override', () => {
   void it('fails on a name the workspace does not know', () => {
     assert.throws(
       () =>
-        run('--projects=korbjagger', '--exclude=tag:cdk', '--target=deploy'),
-      (error) => /unknown projects: korbjagger/.test(error.stderr)
+        run('--projects=pacetrainr', '--exclude=tag:cdk', '--target=deploy'),
+      (error) => /unknown projects: pacetrainr/.test(error.stderr)
     );
   });
 
@@ -169,12 +183,12 @@ void describe('deploy-override', () => {
     assert.throws(
       () =>
         run(
-          '--projects=korbjaeger,feat-shared-basketball-data',
+          '--projects=pacetrainer,feat-shared-bacteria-engine',
           '--exclude=tag:cdk,tag:published,tag:type:android',
           '--target=deploy'
         ),
       (error) =>
-        /no deploy target: feat-shared-basketball-data/.test(error.stderr)
+        /no deploy target: feat-shared-bacteria-engine/.test(error.stderr)
     );
   });
 });

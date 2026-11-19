@@ -1,5 +1,5 @@
 import { Observable } from 'rxjs';
-import { VISIBLE_STATUSES } from '@wolsok/feat-shared-bacteria-engine';
+import { VISIBLE_STATUSES } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { FirebaseConnection } from './firebase-connection';
 import {
   type BoardCursor,

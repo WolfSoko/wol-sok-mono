@@ -3,7 +3,7 @@ import {
   attemptSeed,
   endlessAttemptId,
   parseAttemptId,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldPath,
   FieldValue,

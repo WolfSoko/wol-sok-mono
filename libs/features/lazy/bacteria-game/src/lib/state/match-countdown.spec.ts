@@ -1,4 +1,4 @@
-import { COUNTDOWN_MS } from '@wolsok/feat-shared-bacteria-engine';
+import { COUNTDOWN_MS } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   COUNTDOWN_STEP_MS,
   DEFAULT_MATCH_COUNTDOWN_SECONDS,

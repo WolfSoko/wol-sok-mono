@@ -1,11 +1,11 @@
+import { AVATAR_COUNT } from '@wolsok/feat-shared-bacteria-engine';
 import {
-  AVATAR_COUNT,
   boardAvatar,
   boardTag,
   type EntryStatus,
   posesAsLabel,
   showsName,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 
 /**
  * Words a public name may not contain, English and German (ADR 0011, 0012):

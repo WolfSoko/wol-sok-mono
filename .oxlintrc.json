@@ -185,7 +185,7 @@
       }
     },
     {
-      "files": ["apps/{korbjaeger,pacetrainer,rollapolla-analog}/**/*.spec.ts"],
+      "files": ["apps/{pacetrainer,rollapolla-analog}/**/*.spec.ts"],
       "plugins": ["vitest"],
       "env": {
         "vitest": true
@@ -223,34 +223,6 @@
                   "@wolsok/feat-bacteria-sound"
                 ],
                 "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, rendering or sound imports."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": [
-        "libs/features/basketball-data/src/**/*.ts",
-        "libs/features/korbjaeger-account/src/**/*.ts"
-      ],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@angular/*",
-                  "@ngrx/*",
-                  "rxjs",
-                  "rxjs/*",
-                  "firebase",
-                  "firebase/*",
-                  "firebase-admin",
-                  "firebase-admin/*"
-                ],
-                "message": "Korbjäger's feat-shared libs run on Node too, the basketball data in the app's server routes (ADR 0018), the account lib in korbjaeger-functions' bundle: no Angular, NgRx, RxJS or Firebase imports."
               }
             ]
           }
@@ -320,9 +292,7 @@
         "@nx/enforce-module-boundaries": [
           "error",
           {
-            "allow": [
-              "^\\.\\./\\.\\./tools/vite/(nitro-ts-path-aliases|workspace-file)\\.ts$"
-            ],
+            "allow": ["^\\.\\./\\.\\./tools/vite/workspace-file\\.mts$"],
             "depConstraints": [
               {
                 "sourceTag": "*",

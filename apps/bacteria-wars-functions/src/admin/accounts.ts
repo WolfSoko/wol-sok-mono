@@ -1,4 +1,4 @@
-import { banHolds } from '@wolsok/feat-shared-bacteria-engine';
+import { banHolds } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,

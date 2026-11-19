@@ -2,11 +2,13 @@ import {
   missionById,
   missionOf,
   type MissionId,
-  type RankedMatch,
-  type RankedOutcome,
   type Replay,
   type SeriesLength,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type RankedMatch,
+  type RankedOutcome,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { GameMode, OnlineSeat } from './game.states';
 
 /**

@@ -1,4 +1,5 @@
 import type { Observable } from 'rxjs';
+import { isObject } from '@wolsok/feat-shared-bacteria-engine';
 import {
   BOARD_KINDS,
   type BoardEntry,
@@ -6,8 +7,7 @@ import {
   type BoardRow,
   ENTRY_STATUSES,
   type EntryShow,
-  isObject,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 
 /**
  * A board's top document, `boards/{boardId}`, as `rebuildTop` writes it:

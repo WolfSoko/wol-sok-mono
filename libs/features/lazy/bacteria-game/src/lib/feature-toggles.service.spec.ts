@@ -5,7 +5,7 @@ import { FeatureTogglesService } from './feature-toggles.service';
 import {
   FEATURE_TOGGLES,
   type FeatureToggles,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameCloud } from './storage/game-cloud';
 import { GameToggles } from './storage/game-toggles';
 import type { FirebaseConnection } from './storage/firebase-connection';

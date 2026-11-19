@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { banHolds } from '@wolsok/feat-shared-bacteria-engine';
+import { banHolds } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { clearBanCache } from '../limits';
 import { banOf, banPlayer, readBan } from './bans';

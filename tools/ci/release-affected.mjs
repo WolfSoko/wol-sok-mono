@@ -300,7 +300,7 @@ function readOptions() {
 /**
  * Runs Nx with its stdout in a file: piped, `nx show` cuts it off at 64 KiB.
  */
-async function nxJson(args) {
+export async function nxJson(args) {
   const dir = mkdtempSync(join(tmpdir(), 'release-affected-'));
   const file = join(dir, 'out.json');
   try {
@@ -445,9 +445,9 @@ async function candidatesOf({ base, head, files, target, exclude, projects }) {
 /**
  * The tasks `<project>:<target>` runs, itself included, as `nx run --graph`
  * resolves its `dependsOn`: Nx folds no dependency's inputs into a task's,
- * so `korbjaeger:deploy` alone misses what its `build-app` reads.
+ * so a deploy alone misses what the build it runs first reads.
  */
-async function tasksOf(project, target) {
+export async function tasksOf(project, target) {
   const dir = mkdtempSync(join(tmpdir(), 'release-affected-graph-'));
   const file = join(dir, 'graph.json');
   try {

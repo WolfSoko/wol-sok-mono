@@ -1,6 +1,5 @@
 import { TestBed } from '@angular/core/testing';
 import {
-  attemptSeed,
   cpuSimulation,
   GPU_INT_REPLAY_VERSION,
   matchChecksum,
@@ -10,10 +9,13 @@ import {
   parseReplay,
   planMatch,
   playReplay,
-  type RankedMatch,
-  rankedPlan,
   type Ruleset,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  attemptSeed,
+  type RankedMatch,
+  rankedPlan,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { GameReplays } from '../storage/game-replays';
 import { MatchRecorder, MatchTape } from './match-recorder';

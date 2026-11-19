@@ -3,11 +3,11 @@ import {
   ONLINE_SIM_RESOLUTION,
   parseGeneratedId,
   type ReplayHeader,
-  type ReplayKind,
   simGridOf,
   type SimResolution,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type ReplayKind } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import type { Verdict } from '../boards/verify';

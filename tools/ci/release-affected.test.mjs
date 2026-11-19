@@ -11,8 +11,10 @@ import { describe, it } from 'node:test';
 import {
   isVersionBumpOnly,
   keepsNxVerdict,
+  nxJson,
   ownerRoot,
   selectReleaseAffected,
+  tasksOf,
   tsconfigBaseChanges,
 } from './release-affected.mjs';
 
@@ -21,14 +23,20 @@ const SCRIPT = join(import.meta.dirname, 'release-affected.mjs');
 
 const INPUTS = {
   pacetrainer: ['apps/pacetrainer/src/main.ts', 'firebase.pacetrainer.json'],
-  korbjaeger: ['apps/korbjaeger/src/main.ts', 'libs/shared/legal/index.ts'],
+  'rollapolla-analog': [
+    'apps/rollapolla-analog/src/main.ts',
+    'libs/shared/legal/index.ts',
+  ],
   portfolio: ['apps/portfolio/src/main.ts', 'libs/shared/legal/index.ts'],
 };
 
 const PROJECTS = {
   wolsok: { root: '.', dependencies: [] },
   pacetrainer: { root: 'apps/pacetrainer', dependencies: ['tools-federation'] },
-  korbjaeger: { root: 'apps/korbjaeger', dependencies: ['shared-legal'] },
+  'rollapolla-analog': {
+    root: 'apps/rollapolla-analog',
+    dependencies: ['shared-legal'],
+  },
   portfolio: { root: 'apps/portfolio', dependencies: ['shared-legal'] },
   'shared-legal': { root: 'libs/shared/legal', dependencies: [] },
   tools: { root: 'tools', dependencies: [] },
@@ -53,7 +61,7 @@ void describe('selectReleaseAffected', () => {
   void it('keeps only the candidates reading a changed file', () => {
     assert.deepEqual(select(['firebase.pacetrainer.json']), ['pacetrainer']);
     assert.deepEqual(select(['libs/shared/legal/index.ts']), [
-      'korbjaeger',
+      'rollapolla-analog',
       'portfolio',
     ]);
   });
@@ -74,16 +82,16 @@ void describe('selectReleaseAffected', () => {
 
   void it("keeps a candidate whose inputs could not be read, with Nx's verdict", () => {
     const { selected, reasons } = selectReleaseAffected({
-      candidates: ['pacetrainer', 'korbjaeger'],
+      candidates: ['pacetrainer', 'rollapolla-analog'],
       changedFiles: ['firebase.pacetrainer.json'],
       deletedFiles: [],
       inputsOf: (project) =>
-        project === 'korbjaeger' ? undefined : new Set(INPUTS[project]),
+        project === 'rollapolla-analog' ? undefined : new Set(INPUTS[project]),
     });
-    assert.deepEqual(selected, ['pacetrainer', 'korbjaeger']);
+    assert.deepEqual(selected, ['pacetrainer', 'rollapolla-analog']);
     assert.deepEqual(reasons, {
       pacetrainer: 'reads firebase.pacetrainer.json',
-      korbjaeger: "Nx's verdict: its inputs could not be read",
+      'rollapolla-analog': "Nx's verdict: its inputs could not be read",
     });
   });
 
@@ -133,7 +141,7 @@ void describe('selectReleaseAffected', () => {
   // importing from it reads the owner's files, so it stays.
   void it("keeps every dependent of the deleted file's project", () => {
     assert.deepEqual(select([], ['libs/shared/legal/src/old.ts']), [
-      'korbjaeger',
+      'rollapolla-analog',
       'portfolio',
     ]);
   });
@@ -159,14 +167,14 @@ void describe('selectReleaseAffected', () => {
 
   void it('says which deletion a candidate was kept for', () => {
     const { reasons } = selectReleaseAffected({
-      candidates: ['korbjaeger', 'pacetrainer'],
+      candidates: ['rollapolla-analog', 'pacetrainer'],
       changedFiles: [],
       deletedFiles: ['libs/shared/legal/src/old.ts'],
       inputsOf: (project) => new Set(INPUTS[project]),
       projects: PROJECTS,
     });
     assert.deepEqual(reasons, {
-      korbjaeger:
+      'rollapolla-analog':
         'depends on shared-legal, where libs/shared/legal/src/old.ts was deleted',
       pacetrainer: 'reads none of the changed files',
     });
@@ -186,14 +194,14 @@ void describe('selectReleaseAffected', () => {
 
   void it('says why each candidate was kept or dropped', () => {
     const { reasons } = selectReleaseAffected({
-      candidates: ['pacetrainer', 'korbjaeger'],
+      candidates: ['pacetrainer', 'rollapolla-analog'],
       changedFiles: ['firebase.pacetrainer.json', '.oxlintrc.json'],
       deletedFiles: [],
       inputsOf: (project) => new Set(INPUTS[project]),
     });
     assert.deepEqual(reasons, {
       pacetrainer: 'reads firebase.pacetrainer.json',
-      korbjaeger: 'reads none of the changed files',
+      'rollapolla-analog': 'reads none of the changed files',
     });
   });
 });
@@ -385,14 +393,8 @@ function runScript(...args) {
     .filter((line) => line !== '');
 }
 
-function taskInputFiles(task) {
-  return JSON.parse(
-    execFileSync('npx', ['nx', 'show', 'target', 'inputs', task, '--json'], {
-      cwd: ROOT,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'inherit'],
-    })
-  ).files;
+async function taskInputFiles(task) {
+  return (await nxJson(['show', 'target', 'inputs', task])).files;
 }
 
 const NON_CDK = '--exclude=tag:cdk,tag:published,tag:type:android';
@@ -427,11 +429,11 @@ void describe('release-affected on the workspace', () => {
   // Kept out of releases, the rules still rerun every project's lint. Their
   // project's empty named inputs feed none of its own targets either, so each
   // of them must name its files.
-  void it('still lints every project with the workspace rules', () => {
+  void it('still lints every project with the workspace rules', async () => {
     const rules = 'tools/oxlint/workspace-rules.mjs';
-    for (const task of ['pacetrainer:lint', 'korbjaeger-cdk:lint']) {
+    for (const task of ['pacetrainer:lint', 'bacteria-game-remote-cdk:lint']) {
       assert.ok(
-        taskInputFiles(task).includes(rules),
+        (await taskInputFiles(task)).includes(rules),
         `${task} misses ${rules}`
       );
     }
@@ -447,7 +449,7 @@ void describe('release-affected on the workspace', () => {
     assert.ok(ownTargets.length > 0);
     for (const target of ownTargets) {
       const task = `oxlint-workspace-rules:${target}`;
-      const inputs = taskInputFiles(task);
+      const inputs = await taskInputFiles(task);
       for (const file of [rules, 'tools/oxlint/workspace-rules.spec.mjs']) {
         assert.ok(inputs.includes(file), `${task} misses ${file}`);
       }
@@ -465,14 +467,22 @@ void describe('release-affected on the workspace', () => {
     );
   });
 
-  // .browserslistrc is an input of korbjaeger:build-app, which deploy runs
-  // through build: inputs of the tasks a deploy depends on count too.
-  void it('deploys an app whose build step reads the changed file', () => {
-    assert.ok(
-      runScript('--files=.browserslistrc', '--target=deploy', NON_CDK).includes(
-        'korbjaeger'
-      )
+  // Nx folds no dependency's inputs into a task's, so the selection reads the
+  // inputs of every task a deploy runs: the game's deploy runs its federation
+  // build first, and each of its libraries' builds.
+  void it('reads the inputs of the tasks a deploy depends on', async () => {
+    const tasks = (await tasksOf('bacteria-game-remote', 'deploy')).map(
+      // The configuration suffix follows each project's settings, not the
+      // closure: match on project and target only.
+      (task) => task.id.split(':').slice(0, 2).join(':')
     );
+    for (const task of [
+      'bacteria-game-remote:deploy',
+      'bacteria-game-remote:build-federation',
+      'feat-shared-bacteria-engine:build',
+    ]) {
+      assert.ok(tasks.includes(task), `misses ${task}`);
+    }
   });
 
   // A path missing at the head counts as deleted.

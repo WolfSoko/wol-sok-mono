@@ -24,7 +24,6 @@ import {
   LEVELS,
   MatchEarnings,
   Player,
-  type RankedRun,
   type Replay,
   seatFirst,
   Series,
@@ -32,6 +31,7 @@ import {
   timeLeft,
   winRuleOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type RankedRun } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   matchRules,
   nextMatchOf,

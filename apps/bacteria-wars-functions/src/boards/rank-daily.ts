@@ -1,12 +1,11 @@
+import { dailyLevelId, type Replay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   atHourOf,
   dailyBoardId,
-  dailyLevelId,
   dailySort,
   parseAttemptId,
   parseBoardId,
-  type Replay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type Firestore,
   Timestamp,

@@ -1,4 +1,4 @@
-import { COMMAND_TTL_MS } from '@wolsok/feat-shared-bacteria-engine';
+import { COMMAND_TTL_MS } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type * as dbSdk from 'firebase/firestore';
 
 /** The SDK calls the envelope is built with. */

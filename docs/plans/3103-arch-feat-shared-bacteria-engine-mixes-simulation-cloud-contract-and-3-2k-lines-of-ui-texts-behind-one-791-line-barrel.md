@@ -18,3 +18,12 @@ Branch off `main`. Before the move, list the exported names of `src/index.ts`, `
 2. **Run it**, then `npx nx test feat-shared-bacteria-engine`, `typecheck-specs` and `build`. Commit `refactor(feat-shared-bacteria-engine): sort state/ into folders by concern` (renames and import lines only).
 3. **Paths outside the engine** (spec decision 4): tools, the functions' emulator spec, the Android README, the `CLAUDE.md` files and the game's `README.md`; `grep` for every old path (acceptance 5). Commit `docs(feat-shared-bacteria-engine): name the engine's files at their new places` (the tool and spec path changes go into the same commit, since they only follow the move).
 4. **Checks**: `npx nx format:write`; `npx nx affected -t lint,lint-templates,test,typecheck-specs,build`; `nx run feat-shared-bacteria-engine:perf` (checksums); `bacteria-wars-functions:test`; the export lists compared.
+
+# Step 3: the `/cloud` entry
+
+Branch off `main`. Before the change, list the exported names of `src/index.ts` into the scratchpad (acceptance 3).
+
+1. **Entry and its spec, test first.** A spec `src/entries.spec.ts` (Node) that reads both entries' exported names through the TypeScript compiler API and fails when `index.ts` exports a name whose declaration lies under `state/cloud/`, or `cloud.ts` one outside it. Then `src/cloud.ts` with the cloud names that have a consumer, the path in `tsconfig.base.json`, the federation skip, `engine-bundle.spec.ts` over both entries; the cloud blocks leave `index.ts`.
+2. **Consumers switch** (a scratch script moves each cloud name of an `@wolsok/feat-shared-bacteria-engine` import or `export … from` into a `/cloud` one, then `nx format:write`): `apps/bacteria-wars-functions/src/**`, `libs/features/lazy/bacteria-game/src/**` (`admin-kit.ts` included), `apps/bacteria-game-remote/src/firestore-rules-toggles.spec.ts`. Steps 1 and 2 land as one commit, since neither compiles alone: `refactor(feat-shared-bacteria-engine): take the cloud contract from a /cloud entry`.
+3. **Docs**: the root `CLAUDE.md`, the engine's `CLAUDE.md`. Commit `docs(feat-shared-bacteria-engine): name the /cloud entry`.
+4. **Checks**: `npx nx format:write`; `npx nx affected -t lint,lint-templates,test,typecheck-specs,build`; `bacteria-wars-functions:test`, `:build`; `bacteria-game-remote:build`; `feat-shared-bacteria-engine:perf` checksums; the export lists compared.

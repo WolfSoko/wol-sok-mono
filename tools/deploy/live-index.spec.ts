@@ -6,7 +6,7 @@ import {
   LiveCheckDeps,
 } from './live-index';
 
-const SITE = 'https://korb.wolsok.de/';
+const SITE = 'https://rollapolla.com/';
 const BUILT = Buffer.from(
   '<!doctype html>\n<script src="main-NEW.js"></script>\n'
 );
@@ -153,9 +153,9 @@ describe('builtIndexPath', () => {
   it('takes index.html from hosting.public of an object config', () => {
     expect(
       builtIndexPath({
-        hosting: { public: 'dist/apps/korbjaeger/analog/public' },
+        hosting: { public: 'dist/apps/rollapolla-analog/analog/public' },
       })
-    ).toBe('dist/apps/korbjaeger/analog/public/index.html');
+    ).toBe('dist/apps/rollapolla-analog/analog/public/index.html');
   });
 
   it('takes it from an array config of one entry', () => {

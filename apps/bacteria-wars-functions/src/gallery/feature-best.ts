@@ -1,11 +1,11 @@
 import {
-  dailySort,
   getLevel,
   type Replay,
   type ReplayHeader,
   type ReplayOutcome,
   replayScore,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { dailySort } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import {

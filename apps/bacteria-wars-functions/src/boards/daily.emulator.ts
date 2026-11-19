@@ -1,8 +1,8 @@
 import {
-  dailySort,
   type Replay,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { dailySort } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { erasePart } from '../erasure/erase';
 import { erasureAt } from '../testing/erasure';

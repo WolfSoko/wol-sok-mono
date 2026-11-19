@@ -1,13 +1,11 @@
 import {
   ANNIHILATION,
-  attemptSeed,
   cpuSimulation,
   type SimulationFactory,
   dailyLevelId,
   endlessLevelId,
   getLevel,
   GPU_INT_REPLAY_VERSION,
-  isRankedPlan,
   judgeOutcome,
   LADDER_REPLAY_VERSION,
   LADDER_VERSION,
@@ -18,14 +16,18 @@ import {
   parseReplay,
   planMatch,
   playReplay,
-  type RankedMatch,
-  rankedPlan,
   Replay,
   REPLAY_VERSION,
   replayLink,
   replayOf,
   TICK_MS,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  attemptSeed,
+  isRankedPlan,
+  type RankedMatch,
+  rankedPlan,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { ProgressService } from '../progress.service';
 import { TestBed } from '@angular/core/testing';
 import { GameStateService } from './game-state.service';

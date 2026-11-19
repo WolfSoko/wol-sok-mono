@@ -23,13 +23,9 @@ const HOSTING_APPS = readdirSync(WORKSPACE)
   )
   .sort();
 
-/**
- * The public domain visitors load each Hosting app from. Korbjäger's is also
- * held equal to its `SITE_URL` by the app's `firebase-deploy.spec.ts`.
- */
+/** The public domain visitors load each Hosting app from. */
 const PUBLIC_URLS: Record<string, string> = {
   'bacteria-game-remote': 'https://bacteria-wars.wolsok.de/',
-  korbjaeger: 'https://korb.wolsok.de/',
   pacetrainer: 'https://pace-trainer.com/',
   'rollapolla-analog': 'https://rollapolla.com/',
 };

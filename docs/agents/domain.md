@@ -46,7 +46,7 @@ If the concept you need isn't in the glossary yet, that's a signal: either you'r
 
 ## Glossary terms in code
 
-`CONTEXT.md` keeps the domain's terms in the UI's language. Code is English (CLAUDE.md, Coding Rule 10): when you name a domain concept in an identifier, a file name, a persisted field or a test name, use the term's `_Code_` name from its entry (Kind is `Child`, Spielbericht `GameReport`). In issue titles, specs and prose about the domain, use the glossary term itself. A new term gets its `_Code_` line when it enters the glossary.
+`CONTEXT.md` keeps the domain's terms in the UI's language. Code is English (CLAUDE.md, Coding Rule 10): when you name a domain concept in an identifier, a file name, a persisted field or a test name, use the term's `_Code_` name from its entry (Intervall is `Interval`, Trainingslauf `TrainingRun`). In issue titles, specs and prose about the domain, use the glossary term itself. A new term gets its `_Code_` line when it enters the glossary.
 
 ## Flag ADR conflicts
 

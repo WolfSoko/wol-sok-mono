@@ -3,18 +3,20 @@ import { catchError, EMPTY, firstValueFrom, map, Observable, of } from 'rxjs';
 import {
   ARRIVAL_REASONS,
   type ArrivalReason,
-  type CommandResult,
   type EndReason,
   MAX_PACKED_BYTES,
   ONLINE_REASONS,
   type OnlineReason,
+  replayToBytes,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type CommandResult,
   parseCommandResult,
   REPLAY_KINDS,
   REPLAY_STATES,
   type ReplayCommandType,
   type ReplayKind,
-  replayToBytes,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GameReplays } from './game-replays';
