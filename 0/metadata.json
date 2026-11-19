@@ -1,0 +1,71 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7SEYMYVMXW120YD1WF7W6JB",
+  "session_id": "6e43fee6-6c87-4082-b573-36c8010ef949",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-19T08:32:18.588209289Z",
+  "branch": "3136-test-only-vite-configs",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/public/spa-cdk-stack/tsconfig.spec.json",
+    "libs/shared/analytics/tsconfig.lib.json",
+    "libs/shared/analytics/tsconfig.spec.json",
+    "libs/shared/data-access/tsconfig.lib.json",
+    "libs/shared/data-access/tsconfig.spec.json",
+    "tools/ci/test-only-vite-configs.test.mjs"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "2c02832c63d5",
+  "checkpoint_transcript_start": 370,
+  "transcript_lines_at_start": 370,
+  "compact_transcript_start": 37,
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 17192,
+    "cache_read_tokens": 2160529,
+    "output_tokens": 8443,
+    "api_call_count": 14,
+    "subagent_tokens": {
+      "input_tokens": 46,
+      "cache_creation_tokens": 78418,
+      "cache_read_tokens": 1630865,
+      "output_tokens": 8021,
+      "api_call_count": 20
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_019e2rZk7vhxQ3SBejEZkpHa",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "cc8c380ebd19",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 40,
+        "end": 41,
+        "entry_ids": [
+          "47501daf-8ebf-448b-8f0e-6c30a3be7175"
+        ],
+        "tool_use_id": "toolu_019e2rZk7vhxQ3SBejEZkpHa"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_019e2rZk7vhxQ3SBejEZkpHa"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ]
+}
