@@ -4,12 +4,19 @@ import { SnapSoundService } from './snap-sound.service';
 
 class FakeAudioParam {
   public value = 0;
-  public setValueAtTime = jest.fn((value: number) => {
-    this.value = value;
-    return this;
-  });
-  public linearRampToValueAtTime = jest.fn(() => this);
-  public exponentialRampToValueAtTime = jest.fn(() => this);
+  public setValueAtTime = jest.fn<this, [value: number, time: number]>(
+    (value) => {
+      this.value = value;
+      return this;
+    }
+  );
+  public linearRampToValueAtTime = jest.fn<this, [value: number, time: number]>(
+    () => this
+  );
+  public exponentialRampToValueAtTime = jest.fn<
+    this,
+    [value: number, time: number]
+  >(() => this);
   public setTargetAtTime = jest.fn(() => this);
   public cancelScheduledValues = jest.fn(() => this);
   public setValueCurveAtTime = jest.fn(
@@ -39,8 +46,8 @@ class FakeSourceNode extends FakeAudioNode {
   public loop = false;
   public readonly frequency = new FakeAudioParam();
   public readonly playbackRate = new FakeAudioParam();
-  public start = jest.fn();
-  public stop = jest.fn();
+  public start = jest.fn<void, [when?: number]>();
+  public stop = jest.fn<void, [when?: number]>();
 }
 
 class FakeAudioContext {
@@ -157,7 +164,7 @@ describe('SnapSoundService', () => {
 
     expect(startedSources().length).toBeGreaterThan(0);
     const stopTimes = startedSources().map(
-      (source) => source.stop.mock.calls[0]?.[0]
+      (source) => source.stop.mock.calls[0]?.[0] ?? NaN
     );
     // carries most of the 2 second snap, but is gone before it ends
     expect(Math.max(...stopTimes)).toBeGreaterThanOrEqual(1.6);
@@ -179,7 +186,7 @@ describe('SnapSoundService', () => {
     }
     const grainsSilencedAt = gains
       .flatMap((gain) => gain.exponentialRampToValueAtTime.mock.calls)
-      .map(([, time]) => time as unknown as number);
+      .map(([, time]) => time);
     expect(Math.max(...grainsSilencedAt)).toBeLessThanOrEqual(4 * 0.85);
   });
 
@@ -196,7 +203,7 @@ describe('SnapSoundService', () => {
     // the rumble is over within the first third
     const loopsStopAt = lastContext()
       .sources.filter((source) => source.loop)
-      .map((source) => source.stop.mock.calls[0]?.[0] as number);
+      .map((source) => source.stop.mock.calls[0]?.[0] ?? NaN);
     expect(Math.min(...loopsStopAt)).toBeLessThanOrEqual(6 * 0.35);
   });
 
@@ -206,14 +213,14 @@ describe('SnapSoundService', () => {
       .gains.map((gain) => gain.gain)
       .filter((gain) =>
         gain.exponentialRampToValueAtTime.mock.calls.some(
-          ([value]) => (value as unknown as number) <= 0.001
+          ([value]) => value <= 0.001
         )
       )
       .map((gain) => {
         const values = [
           ...gain.setValueAtTime.mock.calls,
           ...gain.linearRampToValueAtTime.mock.calls,
-        ] as unknown as [number, number][];
+        ];
         return {
           start: Math.min(...values.map(([, time]) => time)),
           peak: Math.max(...values.map(([value]) => value)),
@@ -243,13 +250,11 @@ describe('SnapSoundService', () => {
     const loudBursts = lastContext()
       .gains.map((gain) => gain.gain)
       .filter((gain) =>
-        gain.setValueAtTime.mock.calls.some(
-          ([value]) => (value as unknown as number) > 0.3
-        )
+        gain.setValueAtTime.mock.calls.some(([value]) => value > 0.3)
       )
       .filter((gain) =>
         gain.exponentialRampToValueAtTime.mock.calls.some(
-          ([value]) => (value as unknown as number) <= 0.001
+          ([value]) => value <= 0.001
         )
       );
     expect(loudBursts).toEqual([]);
@@ -289,7 +294,7 @@ describe('SnapSoundService', () => {
       (source) => !source.loop && source.buffer != null
     );
     const startTimes = crackles.map(
-      (source) => source.start.mock.calls[0]?.[0] as number
+      (source) => source.start.mock.calls[0]?.[0] ?? NaN
     );
     expect(startTimes.some((time) => time < 6 * 0.15)).toBe(true);
     expect(startTimes.some((time) => time > 6 * 0.4)).toBe(true);

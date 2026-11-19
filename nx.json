@@ -45,6 +45,9 @@
       }
     },
     {
+      "plugin": "./tools/nx/typecheck-specs.mjs"
+    },
+    {
       "plugin": "@nx/vitest",
       "options": {
         "testTargetName": "test"
@@ -66,6 +69,7 @@
       "!{projectRoot}/**/*.stories.@(js|jsx|ts|tsx|mdx)",
       "!{projectRoot}/src/*test-setup.[jt]s",
       "!{projectRoot}/playwright.config.[jt]s",
+      "!{projectRoot}/vitest.config.*",
       "!{projectRoot}/gpu-crosscheck/**/*",
       "!{projectRoot}/.oxlintrc.json",
       "!{projectRoot}/eslint.config.mjs",
@@ -125,15 +129,6 @@
           "codeCoverage": true
         }
       }
-    },
-    "typecheck-specs": {
-      "command": "tsc -p {projectRoot}/tsconfig.spec.json --noEmit",
-      "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/tsconfig.base.json"
-      ],
-      "cache": true
     },
     "build-storybook": {
       "inputs": [
