@@ -71,7 +71,6 @@ export {
   DEFAULT_SCREEN_RESOLUTION,
   DEFAULT_SIM_RESOLUTION,
   detailScale,
-  escapeReach,
   ONLINE_SIM_RESOLUTION,
   renderScale,
   SCREEN_RESOLUTIONS,
@@ -94,10 +93,7 @@ export {
   DEFAULT_DIFFICULTY,
   difficultyOption,
 } from './lib/state/match/bot-controller';
-export type {
-  BotDifficulty,
-  BotProfile,
-} from './lib/state/match/bot-controller';
+export type { BotDifficulty } from './lib/state/match/bot-controller';
 export {
   continueText,
   furthestOpenLevel,
@@ -116,7 +112,6 @@ export {
   colonyColorText,
   DEFAULT_COLORS,
   getColonyColor,
-  isColonyColorId,
   NEUTRAL_COLOR,
   onlineColors,
   pickColor,
@@ -142,7 +137,6 @@ export {
   utcDay,
 } from './lib/state/levels/daily';
 export {
-  computerProfile,
   LADDER_VERSION,
   targetWinRate,
 } from './lib/state/match/difficulty-curve';
@@ -181,7 +175,6 @@ export {
 export type { EvolutionProgress } from './lib/state/progress/evolution-progress';
 export {
   dnaEarned,
-  evolvedTraits,
   geneLevel,
   GENES,
   isPlainLoadout,
@@ -193,7 +186,6 @@ export {
 } from './lib/state/simulation/evolution';
 export type {
   ActiveEffect,
-  EvolvedTraits,
   Gene,
   GeneId,
   Loadout,
@@ -202,7 +194,6 @@ export type {
 } from './lib/state/simulation/evolution';
 export {
   clock,
-  countDown,
   TICK_MS,
   TICK_SEC,
   TickClock,
@@ -215,13 +206,8 @@ export {
   BALANCE_VERSION,
   colonyCapacity,
   gameBalance,
-  NEUTRAL_TRAITS,
-  PLAIN_TRAITS,
 } from './lib/state/simulation/game-balance';
-export type {
-  ColonyTraits,
-  GameBalance,
-} from './lib/state/simulation/game-balance';
+export type { GameBalance } from './lib/state/simulation/game-balance';
 export { getMap } from './lib/state/levels/game-maps';
 export { DEFAULT_MODE, isGameMode } from './lib/state/match/game-mode';
 export type { GameMode } from './lib/state/match/game-mode';
@@ -244,7 +230,7 @@ export {
   wrap,
 } from './lib/state/geometry';
 export type { CellBounds, Point, SteeringVector } from './lib/state/geometry';
-export { GhostController, NO_INPUT } from './lib/state/replay/ghost';
+export { NO_INPUT } from './lib/state/replay/ghost';
 export type { GhostInputs, SeatDriver } from './lib/state/replay/ghost';
 export { isInteger, isObject } from './lib/state/is-object';
 export {
@@ -265,7 +251,6 @@ export {
   gridScale,
   isBigMap,
   isLadderLevel,
-  isLadderLevelId,
   isLevelId,
   levelBalance,
   levelCrosshairSpeed,
@@ -298,15 +283,9 @@ export type {
   MatchOptions,
   MatchResult,
   PlayerSpawn,
-  SecondSampler,
   SizeSample,
 } from './lib/state/match/match-engine';
 export { MatchRun } from './lib/state/match/match-run';
-export type {
-  MatchArena,
-  MatchRunResult,
-  RunnableEngine,
-} from './lib/state/match/match-run';
 export {
   isMatchLevel,
   MATCH_LEVELS,
@@ -317,11 +296,7 @@ export type {
   PickedMatchLevel,
 } from './lib/state/levels/match-level';
 export { planMatch } from './lib/state/match/match-setup';
-export type {
-  MatchPlan,
-  OnlineSeats,
-  PlannedMatch,
-} from './lib/state/match/match-setup';
+export type { MatchPlan } from './lib/state/match/match-setup';
 export {
   isNewBest,
   judgeMatch,
@@ -375,16 +350,11 @@ export { onlineReplayId, PUBLIC_ID } from './lib/state/replay/replay-id';
 export { replayFromHash, replayLink } from './lib/state/replay/replay-link';
 export {
   MAX_PACKED_BYTES,
-  MAX_UNPACKED_BYTES,
-  packReplay,
   replayFromBytes,
   replayToBytes,
-  unpackReplay,
 } from './lib/state/replay/replay-pack';
-export type { PackedReplay, PackOptions } from './lib/state/replay/replay-pack';
 export {
   ARRIVAL_REASONS,
-  DECLARED_REASONS,
   NOT_REPORTED,
   ONLINE_REASONS,
 } from './lib/state/replay/replay-reasons';
@@ -396,24 +366,17 @@ export type {
 export { replayScore } from './lib/state/replay/replay-score';
 export { replayVerdict } from './lib/state/replay/replay-verdict';
 export type { ReplayVerdict } from './lib/state/replay/replay-verdict';
-export type {
-  ReplayReason,
-  ReplayScore,
-  ReplayScoreInput,
-} from './lib/state/replay/replay-score';
+export type { ReplayReason } from './lib/state/replay/replay-score';
 export {
   canPlayBack,
   EVOLVED_REPLAY_VERSION,
   GHOST_REPLAY_VERSION,
   GPU_INT_REPLAY_VERSION,
   LADDER_REPLAY_VERSION,
-  MAX_TICKS,
   onOnlineGrid,
   parseReplay,
-  playbackRefusal,
   playReplay,
   REPLAY_VERSION,
-  replayEngine,
   replayOf,
   replayOutcome,
   replayRun,
@@ -421,23 +384,12 @@ export {
   simGridOf,
 } from './lib/state/replay/replay';
 export type {
-  ParseOptions,
-  PlayableReplay,
-  PlaybackHeader,
-  PlaybackRefusal,
   Replay,
-  ReplayAttempt,
-  ReplayBoost,
-  ReplayDrag,
   ReplayExtras,
   ReplayHeader,
   ReplayInputs,
   ReplayOutcome,
   ReplayResult,
-  ReplayRunOptions,
-  ReplaySeat,
-  ReplaySteer,
-  ReplayWeapon,
 } from './lib/state/replay/replay';
 export {
   addSeriesMatch,
@@ -449,14 +401,12 @@ export {
   rivalryScore,
   SERIES_LENGTHS,
   seriesWinner,
-  startScales,
 } from './lib/state/match/rivalry';
 export type {
   HeadStart,
   Series,
   SeriesLength,
 } from './lib/state/match/rivalry';
-export { decodeReport } from './lib/state/simulation/simulation-report';
 export type { ReportLayout } from './lib/state/simulation/simulation-report';
 export {
   isRuleset,
@@ -468,7 +418,6 @@ export {
   createSimulationProvider,
 } from './lib/state/simulation/simulation-provider';
 export type {
-  ArenaSize,
   DevicePlay,
   GpuSimulations,
   SimulationProvider,
@@ -479,7 +428,6 @@ export type {
   BlockCounts,
   CellsLayer,
   ColonyLayer,
-  ColonySummary,
   GridVariant,
   Ruleset,
   Simulation,
@@ -527,11 +475,7 @@ export {
   timeLeft,
   winRuleOf,
 } from './lib/state/match/win-conditions';
-export type {
-  EndReason,
-  MatchOutcome,
-  WinRule,
-} from './lib/state/match/win-conditions';
+export type { EndReason, MatchOutcome } from './lib/state/match/win-conditions';
 export { COUCH_XP, matchXp, xpGain, xpOf } from './lib/state/progress/xp';
 export type { XpMatch } from './lib/state/progress/xp';
 export {
