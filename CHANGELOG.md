@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.9](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.8...v74.172.9) (2026-11-19)
+
+### Bug Fixes
+
+* **tools:** keep test-only Vite configs out of production inputs ([#3141](https://github.com/WolfSoko/wol-sok-mono/issues/3141)) ([4bc9e84](https://github.com/WolfSoko/wol-sok-mono/commit/4bc9e848357a9b1521dd8aa131b31678925193cc)), closes [#3136](https://github.com/WolfSoko/wol-sok-mono/issues/3136)
+
+### Chore
+
+* **release:** publish ([ecdb8b0](https://github.com/WolfSoko/wol-sok-mono/commit/ecdb8b0f0795c6d33b0ce7d2ef2586df52190546))
+
 ## [74.172.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.7...v74.172.8) (2026-11-19)
 
 ### Chore
