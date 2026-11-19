@@ -14,6 +14,7 @@ lifecycle:
   stop-after:
     - lint
     - lint-templates
+    - typecheck
     - typecheck-specs
     - typecheck-tools
     - test

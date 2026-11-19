@@ -23,8 +23,9 @@
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "libs/shared/analytics/vite.config.mts"
+        "configFile": "libs/shared/analytics/vitest.config.mts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

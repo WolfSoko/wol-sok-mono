@@ -19,7 +19,7 @@ export default defineConfig({
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
-      enabled: process.env.NX_TASK_TARGET_CONFIGURATION === 'ci',
+      enabled: process.env['NX_TASK_TARGET_CONFIGURATION'] === 'ci',
       reporter: ['lcov', 'html', 'text-summary'],
       reportsDirectory: '../../../coverage/libs/shared/data-access',
       provider: 'v8',

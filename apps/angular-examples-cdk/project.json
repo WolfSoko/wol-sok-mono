@@ -36,6 +36,7 @@
         "jestConfig": "apps/angular-examples-cdk/jest.config.ts",
         "passWithNoTests": true
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

@@ -21,6 +21,7 @@
       "options": {
         "jestConfig": "libs/test-helper/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

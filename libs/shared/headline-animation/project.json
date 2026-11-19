@@ -28,6 +28,7 @@
         "jestConfig": "libs/shared/headline-animation/jest.config.ts",
         "tsConfig": "libs/shared/headline-animation/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

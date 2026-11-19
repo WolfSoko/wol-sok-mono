@@ -52,6 +52,7 @@
         "jestConfig": "apps/bacteria-wars-functions/jest.config.ts"
       }
     },
+    "typecheck-specs": {},
     "test-emulator": {
       "executor": "nx:run-commands",
       "options": {

@@ -28,6 +28,7 @@
         "jestConfig": "libs/features/lazy/web-gl/jest.config.ts",
         "tsConfig": "libs/features/lazy/web-gl/tsconfig.spec.json"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

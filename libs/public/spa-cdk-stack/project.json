@@ -21,8 +21,9 @@
     "test": {
       "executor": "@nx/vitest:test",
       "options": {
-        "configFile": "libs/public/spa-cdk-stack/vite.config.mts"
+        "configFile": "libs/public/spa-cdk-stack/vitest.config.mts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

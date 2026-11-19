@@ -21,6 +21,7 @@
       "options": {
         "jestConfig": "libs/shared/ws-gl/jest.config.ts"
       }
-    }
+    },
+    "typecheck-specs": {}
   }
 }

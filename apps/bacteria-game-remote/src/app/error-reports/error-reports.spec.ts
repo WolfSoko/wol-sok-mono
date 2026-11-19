@@ -17,6 +17,13 @@ jest.mock('@sentry/angular', () => ({
   captureException: jest.fn(),
 }));
 
+/** The filter form of `integrations`, as `sentryOptions` passes it. */
+type IntegrationsFilter = Extract<
+  NonNullable<Sentry.BrowserOptions['integrations']>,
+  (...args: never[]) => unknown
+>;
+type Integration = Parameters<IntegrationsFilter>[0][number];
+
 /** The module afresh: each test starts without a started SDK. */
 function errorReports(): typeof import('./error-reports') {
   let module: typeof import('./error-reports') | undefined;
@@ -86,10 +93,9 @@ describe('error reports', () => {
   });
 
   it('leave out console breadcrumbs and sessions', () => {
-    const named = (name: string) => ({ name }) as Sentry.Integration;
-    const integrations = errorReports().sentryOptions(OPTIONS).integrations as (
-      defaults: Sentry.Integration[]
-    ) => Sentry.Integration[];
+    const named = (name: string) => ({ name }) as Integration;
+    const integrations = errorReports().sentryOptions(OPTIONS)
+      .integrations as IntegrationsFilter;
     expect(
       integrations(
         ['GlobalHandlers', 'Console', 'Breadcrumbs', 'BrowserSession'].map(
