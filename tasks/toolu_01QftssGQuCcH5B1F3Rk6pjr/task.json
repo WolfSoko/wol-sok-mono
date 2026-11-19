@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01QftssGQuCcH5B1F3Rk6pjr",
+  "agent_id": "a96a5b7cb0c0a7c01",
+  "subagent_type": "general-purpose",
+  "task_description": "Standards review of gpu entry",
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 86487,
+    "cache_read_tokens": 1039460,
+    "output_tokens": 7479,
+    "api_call_count": 12
+  },
+  "started_at": "2026-11-19T20:49:07.982080251+01:00",
+  "completed_at": "2026-11-19T20:50:23.503953934+01:00"
+}
