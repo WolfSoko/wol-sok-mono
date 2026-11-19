@@ -82,4 +82,9 @@ describe('engine entries', () => {
     expect(gpu.size).toBeGreaterThan(0);
     expect(namesDeclared(gpu, (file) => !inGpu(file))).toEqual([]);
   });
+
+  it('the /cloud and /gpu entries share no folder', () => {
+    expect(namesDeclared(declaredFiles('cloud.ts'), inGpu)).toEqual([]);
+    expect(namesDeclared(declaredFiles('gpu.ts'), inCloud)).toEqual([]);
+  });
 });

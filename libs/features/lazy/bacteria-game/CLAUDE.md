@@ -9,7 +9,8 @@ English texts it renders itself) is the lib `feat-shared-bacteria-engine`
 start with `state/` are in that lib unless they name one of the five
 Angular files that stay here (`game-state.service.ts`, `game.states.ts`,
 `match-recorder.ts`, `player.service.ts`, `player.store.ts`) or `match-rules.ts`. The game imports the engine only
-through `@wolsok/feat-shared-bacteria-engine`.
+through `@wolsok/feat-shared-bacteria-engine` and its entries (`/cloud`, and
+`/gpu` in specs and the bench).
 
 The arena rendering and the GPU simulation (`gl/`, `arena/`, `player-color.ts`,
 `reduced-motion.ts`, the GPU cross-check in `gpu-crosscheck/`) are the lib

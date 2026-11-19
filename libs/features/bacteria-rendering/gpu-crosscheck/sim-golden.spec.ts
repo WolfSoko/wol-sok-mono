@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
-import { intSimulation } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import {
+  intSimulation,
   playScenario,
   scenarioRandom,
   SIM_SCENARIOS,
