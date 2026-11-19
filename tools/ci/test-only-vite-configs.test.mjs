@@ -31,9 +31,9 @@ function productionInputProblems(production, viteBuildConfigs) {
   if (!production.includes(VITEST_CONFIG_EXCLUSION)) {
     problems.push(`missing ${VITEST_CONFIG_EXCLUSION}`);
   }
-  const exclusions = production.filter(
-    (input) => typeof input === 'string' && input.startsWith('!')
-  );
+  const exclusions = production
+    .map((input) => (typeof input === 'string' ? input : input.fileset))
+    .filter((pattern) => pattern?.startsWith('!'));
   for (const exclusion of exclusions) {
     const excluded = viteBuildConfigs.filter(({ root, config }) =>
       matchesGlob(config, exclusion.slice(1).replaceAll('{projectRoot}', root))
@@ -100,6 +100,20 @@ void describe('productionInputProblems', () => {
         [`${exclusion} excludes a Vite build config: apps/a/vite.config.ts`]
       );
     }
+  });
+});
+
+void describe('productionInputProblems on fileset inputs', () => {
+  void it('names a fileset exclusion matching a Vite build config', () => {
+    assert.deepEqual(
+      productionInputProblems(
+        [VITEST_CONFIG_EXCLUSION, { fileset: '!{projectRoot}/vite.config.*' }],
+        [{ root: 'apps/a', config: 'apps/a/vite.config.ts' }]
+      ),
+      [
+        '!{projectRoot}/vite.config.* excludes a Vite build config: apps/a/vite.config.ts',
+      ]
+    );
   });
 });
 
