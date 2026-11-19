@@ -1,15 +1,13 @@
 /**
  * @jest-environment node
  */
-import {
-  BALANCE_VERSION,
-  intSimulation,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import { intSimulation } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import {
   playScenario,
   scenarioRandom,
   SIM_SCENARIOS,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import golden from './golden-gpu-sim.json';
 
 /**

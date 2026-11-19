@@ -4,7 +4,7 @@ import {
   Q14,
   SALT_SPREAD,
   STEP_SALT_STRIDE,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 
 /**
  * The GLSL twin of `state/simulation/gpu-int/` (ADR 0015): the draws, the Q14 products,

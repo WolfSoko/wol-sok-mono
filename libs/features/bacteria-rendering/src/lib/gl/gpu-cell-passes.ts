@@ -1,22 +1,24 @@
 import type { StateLayer } from '../arena/colony-renderer';
 import {
   CellBounds,
-  CellPasses,
-  CellPassesHost,
   ColonySpawn,
   GameBalance,
+  GridVariant,
+  Point,
+  Rect,
+  ReportLayout,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
+  CellPasses,
+  CellPassesHost,
   GridArena,
   GridFrame,
   GridTick,
-  GridVariant,
-  Point,
   INT_KIND,
   READBACK_SLOTS,
   readbacksToTake,
-  Rect,
-  ReportLayout,
   ReportSink,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { activeRects, reachSinceReport } from './active-area';
 import {
   bindTexture,

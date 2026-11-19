@@ -1,13 +1,13 @@
+import { GameBalance } from '@wolsok/feat-shared-bacteria-engine';
 import {
   createIntFrameUniforms,
   DETERMINISTIC_REPORT_LAG,
   fillIntCombatUniforms,
   fillIntFrameUniforms,
   frameSeed,
-  GameBalance,
   GridFrame,
   intMatchUniforms,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { createProgram, FULLSCREEN_VERTEX, Program } from './gl-utils';
 import {
   APPLY_FRAGMENT,

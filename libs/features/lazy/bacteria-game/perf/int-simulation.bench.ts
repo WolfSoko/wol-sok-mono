@@ -7,13 +7,15 @@
  */
 import {
   createPlayer,
-  intSimulation,
   Player,
+  TICK_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
+  intSimulation,
   scenarioRandom,
   SimScenario,
   skirmish,
-  TICK_SEC,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 
 function msPerTick(scenario: SimScenario, warmup: number): number {
   const simulation = intSimulation(

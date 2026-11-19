@@ -35,7 +35,7 @@ import {
   Q14_DRAW_SHIFT,
   SALT,
   TARGET_SHIFT,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { INT_COMMON } from './int-common';
 import { COMMON, HUNT_COLONIES, WEAPON_CODES } from './simulation-shaders';
 

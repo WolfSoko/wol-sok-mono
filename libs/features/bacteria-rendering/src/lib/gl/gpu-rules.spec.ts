@@ -1,10 +1,10 @@
+import { gameBalance } from '@wolsok/feat-shared-bacteria-engine';
 import {
   createIntEffectUniforms,
   DETERMINISTIC_REPORT_LAG,
   frameSeed,
-  gameBalance,
   GridFrame,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { Program } from './gl-utils';
 import { GpuFloatRules, GpuIntRules, Programs } from './gpu-rules';
 

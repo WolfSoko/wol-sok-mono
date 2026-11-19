@@ -3,7 +3,8 @@
  * levels, progress, the English texts it renders itself and the
  * translation mechanics (ADR 0011); the game's other texts live in the
  * game lib, the documents it shares with the server in the `/cloud` entry
- * (`cloud.ts`). The game's UI, its Cloud Functions and its admin area
+ * (`cloud.ts`), the GPU mirror of the simulation in the `/gpu` entry
+ * (`gpu.ts`). The game's UI, its Cloud Functions and its admin area
  * import it as `@wolsok/feat-shared-bacteria-engine`; nothing imports a
  * path inside it.
  *
@@ -245,122 +246,6 @@ export {
 export type { CellBounds, Point, SteeringVector } from './lib/state/geometry';
 export { GhostController, NO_INPUT } from './lib/state/replay/ghost';
 export type { GhostInputs, SeatDriver } from './lib/state/replay/ghost';
-export {
-  drawAt,
-  frameSeed,
-  pcg3d,
-  PICK_OF_8_SHIFT,
-  SALT,
-  SALT_SPREAD,
-  STEP_SALT_STRIDE,
-  stepSalt,
-} from './lib/state/simulation/gpu-int/draws';
-export {
-  chanceThreshold,
-  mulQ14,
-  ONE_Q14,
-  Q14,
-  Q14_DRAW_SHIFT,
-  Q14_STATE_MAX,
-  TARGET_MAX,
-  TARGET_SHIFT,
-  toQ14,
-  toTarget,
-  toUnsignedQ14,
-} from './lib/state/simulation/gpu-int/fixed-point';
-export {
-  createIntEffectUniforms,
-  INT_EFFECT_RADIUS_MAX,
-  INT_MAX_EFFECTS,
-  setIntEffect,
-} from './lib/state/simulation/gpu-int/int-effects';
-export type {
-  IntEffect,
-  IntEffectUniforms,
-} from './lib/state/simulation/gpu-int/int-effects';
-export {
-  createIntFrameUniforms,
-  DIVIDE_VARIANTS,
-  DRAIN_SHIFT,
-  fillIntCombatUniforms,
-  fillIntFrameUniforms,
-  INT_ATTACK_MAX,
-  INT_COLONIES,
-  INT_PELLETS,
-} from './lib/state/simulation/gpu-int/int-frame-uniforms';
-export type {
-  FloatCombatUniforms,
-  FloatFrameUniforms,
-  IntFrameUniforms,
-} from './lib/state/simulation/gpu-int/int-frame-uniforms';
-export { isqrt, unitQ14 } from './lib/state/simulation/gpu-int/int-math';
-export {
-  DETERMINISTIC_REPORT_LAG,
-  divideBudgetOf,
-  readbacksToTake,
-} from './lib/state/simulation/gpu-int/int-readback';
-export {
-  INT_KIND,
-  INT_RECORD,
-  IntPassScratch,
-  intStateHash,
-} from './lib/state/simulation/gpu-int/int-reference';
-export type {
-  IntCombatUniforms,
-  IntGrid,
-  IntPassUniforms,
-} from './lib/state/simulation/gpu-int/int-reference';
-export {
-  intSimulation,
-  IntReferencePasses,
-} from './lib/state/simulation/gpu-int/int-reference-passes';
-export {
-  intColonyCounts,
-  intReferenceTick,
-} from './lib/state/simulation/gpu-int/int-tick';
-export type { IntTickInputs } from './lib/state/simulation/gpu-int/int-tick';
-export {
-  INT_EFFECTS,
-  INT_ENERGY_MAX,
-  intMatchUniforms,
-} from './lib/state/simulation/gpu-int/int-uniforms';
-export type { IntMatchUniforms } from './lib/state/simulation/gpu-int/int-uniforms';
-export {
-  GPU_SELF_TEST_VERSION,
-  SELF_TEST_GOLDEN,
-} from './lib/state/simulation/gpu-int/self-test-golden';
-export {
-  playScenario,
-  scenarioRandom,
-  SELF_TEST_SCENARIO,
-  selfTestVerdict,
-  SIM_SCENARIOS,
-  skirmish,
-} from './lib/state/simulation/gpu-int/sim-scenarios';
-export type {
-  SelfTestVerdict,
-  SimScenario,
-} from './lib/state/simulation/gpu-int/sim-scenarios';
-export {
-  ENERGY_SCALE,
-  LOSER_SHIFT,
-  MAX_EFFECTS,
-  MAX_GPU_COLONIES,
-  MAX_PELLETS,
-  POISONED,
-  RECORD_MASK,
-  REPORT_EXTRA_ROWS,
-  REPORT_ROWS,
-} from './lib/state/simulation/grid-format';
-export { GridWar, READBACK_SLOTS } from './lib/state/simulation/grid/grid-war';
-export type {
-  CellPasses,
-  CellPassesHost,
-  GridArena,
-  GridFrame,
-  GridTick,
-  ReportSink,
-} from './lib/state/simulation/grid/cell-passes';
 export { isInteger, isObject } from './lib/state/is-object';
 export {
   GENERATED_ADJECTIVES,
