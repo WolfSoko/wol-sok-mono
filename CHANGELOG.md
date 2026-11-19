@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.13](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.12...v74.172.13) (2026-11-19)
+
+### Bug Fixes
+
+* **tools:** give every linted script a tsconfig that owns it ([#3144](https://github.com/WolfSoko/wol-sok-mono/issues/3144)) ([bea9b8f](https://github.com/WolfSoko/wol-sok-mono/commit/bea9b8fff0c3e26e0d6fbf5084e550f4841a633a)), closes [#3133](https://github.com/WolfSoko/wol-sok-mono/issues/3133), references [#3133](https://github.com/WolfSoko/wol-sok-mono/issues/3133) [#3133](https://github.com/WolfSoko/wol-sok-mono/issues/3133)
+
+### Chore
+
+* **release:** publish ([411a87d](https://github.com/WolfSoko/wol-sok-mono/commit/411a87d29915d8c028c0215c390bf1a6c64f8d65))
+
 ## [74.172.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.11...v74.172.12) (2026-11-19)
 
 ### Chore
