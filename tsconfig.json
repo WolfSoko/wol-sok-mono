@@ -2,9 +2,10 @@
   // Lint-only (#3133): type-aware oxlint types a file in the program of its
   // nearest tsconfig.json, and for the root scripts, .agents/, .github/ and
   // __checks__ that is this one. Without it they were typed in a fallback
-  // program made of whatever else a run linted. It extends nothing and holds
-  // no paths, so tsx and ts-node (Jest configs), which read it from the root,
-  // transform as before; scripts under tools/ pass their own --tsconfig.
+  // program made of whatever else a run linted. It extends nothing, holds no
+  // paths and sets none of the options tsx applies, so tsx and ts-node (Jest
+  // configs), which read it from the root, still load every script as before;
+  // scripts under tools/ pass their own --tsconfig.
   // tools/ci/script-tsconfig.test.mjs keeps every linted script owned.
   "compilerOptions": {
     "allowJs": true,
