@@ -26,16 +26,17 @@ determinism, replays, balance and texts hold here too.
   into `feat-bacteria-sound`, the rest into the game lib.
 - `src/index.ts` is the main entry (`@wolsok/feat-shared-bacteria-engine`):
   named exports, no `export *`. Nothing outside this lib imports a path
-  inside it, and every entry exports only names something outside the
-  engine imports: a name enters an entry with its first consumer (the
-  engine's own specs take it by relative path). A new export goes into
+  inside it, and the main entry, `/cloud` and `/gpu` export only names
+  something outside the engine imports: a name enters one with its first
+  consumer (the engine's own specs take it by relative path). A new export goes into
   the index, unless it is declared
   - under `state/cloud/`: the cloud contract (the documents, ids, parsers
     and sorts the game, the functions and the admin share) is
     `@wolsok/feat-shared-bacteria-engine/cloud` (`src/cloud.ts`) only;
-  - under `simulation/gpu-int/`, `simulation/grid/` or in
-    `simulation/grid-format.ts`: the GPU mirror of the simulation (ADR 0015) is `@wolsok/feat-shared-bacteria-engine/gpu` (`src/gpu.ts`) only,
-    taken by `feat-bacteria-rendering` and specs.
+  - under `state/simulation/gpu-int/`, `state/simulation/grid/` or in
+    `state/simulation/grid-format.ts`: the GPU mirror of the simulation
+    (ADR 0015) is `@wolsok/feat-shared-bacteria-engine/gpu` (`src/gpu.ts`)
+    only, taken by `feat-bacteria-rendering` and specs.
 
   Both are ng-packagr secondary entries (`cloud/ng-package.json`,
   `gpu/ng-package.json`), since the game lib's and the rendering lib's

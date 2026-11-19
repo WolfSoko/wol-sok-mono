@@ -12,7 +12,8 @@ The arena rendering and the GPU simulation of Bacteria Wars, split out of
   SwiftShader against the engine's reference (ADR 0015), inferred as this
   project's `e2e-ci--*` target.
 
-It depends only on `@wolsok/feat-shared-bacteria-engine` (the GPU mirror of the simulation from its `/gpu` entry), Angular and RxJS
+It depends only on `@wolsok/feat-shared-bacteria-engine` (the GPU mirror
+of the simulation from its `/gpu` entry), Angular and RxJS
 (tag `feature:game-kit`), and the game takes it only through
 `@wolsok/feat-bacteria-rendering` (`src/index.ts`). The game lib's `CLAUDE.md`
 and `README.md` describe how the painters and the GPU simulation work.
