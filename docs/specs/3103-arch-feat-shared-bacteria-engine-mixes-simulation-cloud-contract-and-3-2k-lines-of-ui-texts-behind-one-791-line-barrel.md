@@ -124,3 +124,47 @@ The documents the game, `bacteria-wars-functions` and the admin exchange (the bo
 ## Decided question (step 3)
 
 - **The issue's "`src/index.ts` well under half its 791 lines"** is out of reach for `/cloud` alone: the cloud is 126 of 658 names, and the index ends at about 660 lines (about 84%). Decided (manager, request 1353): this step is a pure move of the cloud contract, with acceptance 1 in place of the line count; a later step 3b of [#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) adds a `/gpu` entry for the GPU mirror (84 names, the rendering lib's contract) and drops the names nobody outside the engine imports, which brings the index to about 470 lines.
+
+# Step 3b: the `/gpu` entry and the unused names
+
+Step 3 landed in [#3139](https://github.com/WolfSoko/wol-sok-mono/pull/3139) (released with 74.172.7). This section is the spec for step 3b, decided in request 1353.
+
+## Goal (step 3b)
+
+The main entry still mixes the GPU mirror of the simulation, which only `feat-bacteria-rendering` and specs take, with the rest of the engine, and it exports names no consumer imports. After this step the GPU mirror comes from `@wolsok/feat-shared-bacteria-engine/gpu`, and the main entry exports only names something outside the engine imports.
+
+## What the code shows (step 3b)
+
+- After step 3 the main index (`src/index.ts`, 662 lines) exports 532 names. 84 are declared under `simulation/gpu-int/`, `simulation/grid/` and `simulation/grid-format.ts` (the GPU mirror, about 120 lines of the index).
+- Of those 84, `feat-bacteria-rendering` imports 47 in its sources and further ones in its specs and `gpu-crosscheck/` (32 in all, partly the same), the game lib 6, all in specs and `perf/int-simulation.bench.ts` (`intSimulation`, `GPU_SELF_TEST_VERSION`, `scenarioRandom`, `skirmish`, `SimScenario`, `GridWar`). The functions, the sound lib and `tools/` import none of them; the `perf` bench plays replays through `playReplay` and names no GPU export.
+- 64 of the 532 names are imported by nothing outside the engine: 19 of the GPU mirror (`drawAt`, `pcg3d`, `mulQ14`, `isqrt`, `IntReferencePasses`, `IntGrid`, …) and 45 others (`escapeReach`, `computerProfile`, `GhostController`, `packReplay`, `unpackReplay`, `MAX_TICKS`, `replayEngine`, `playbackRefusal`, `decodeReport`, 20 of them types such as `PlayableReplay`, `ReplaySeat`, `MatchRunResult`, `ArenaSize`). The engine's own specs take them by relative path. Another 46 names are imported only by specs outside the engine; they have consumers and stay.
+- The GPU folders import from `simulation/` (`game-balance`, `evolution`, `bacteria-simulation`, `simulation-report`, `arena-fixtures`), `levels/` and `match/player.model`. `GridWar implements Simulation`, and its public members take and return plain data and interfaces (`GameMap`, `Player`, `ColonySummary`, `ActiveEffect`), no engine class.
+- `feat-bacteria-rendering` builds with ng-packagr (`@nx/angular:ng-packagr-lite`), like the game lib, so it compiles against the engine's `dist` (learning L530 of step 3).
+
+## Decisions (step 3b)
+
+1. **The entry is the folder**, as for `/cloud`: `src/gpu.ts` exports what `simulation/gpu-int/`, `simulation/grid/` and `simulation/grid-format.ts` declare and something outside the engine imports; the main index drops every name of those paths. `simulation-provider.ts` and `simulation-report.ts`, which use the GPU folders, stay in the main entry: they serve the CPU simulation too. Reason: one rule by path, checked by `entries.spec.ts`.
+2. **A name without a consumer outside the engine leaves both entries** (the 19 GPU and 45 other names); it stays exported in its file for the engine's specs, and enters an entry again with its first consumer. Types that appear in the signature of an exported function go too: a consumer infers them. Should a consumer's ng-packagr build then fail to name an inferred type (TS2742), that type stays in its entry: the build proves it has a consumer. Reason: the entry is the contract, as decided for `/cloud`.
+3. **Consumers switch**: `feat-bacteria-rendering` (sources, specs, `gpu-crosscheck/`) and the game lib's specs and bench take the GPU names from `/gpu`; a file that needs both takes two imports. No other consumer changes.
+4. **Wiring as for `/cloud`**: the path `@wolsok/feat-shared-bacteria-engine/gpu` in `tsconfig.base.json`; the ng-packagr secondary entry `gpu/ng-package.json` (entry file `../src/gpu.ts`), since the rendering lib's `build` compiles against the engine's `dist`; the skip in `tools/federation/workspace-federation.js` beside the other entries; `engine-bundle.spec.ts` bundles `gpu.ts` too (Node only). The `/gpu` signatures expose no engine class (see above), so the second copy in its `dist` does not clash with the main entry's in the rendering build; that build is the proof.
+5. **`entries.spec.ts`** grows a second folder rule: `index.ts` exports nothing declared under the GPU paths, `gpu.ts` nothing outside them, `cloud.ts` and `gpu.ts` nothing of each other's folders.
+6. **Docs**: the root `CLAUDE.md` (the federation skip list, "its engine (`@wolsok/feat-shared-bacteria-engine`, with …)"), the engine's `CLAUDE.md` (entries, "a new export goes into the index, unless …", the bundle check) and the rendering lib's `README.md` ("depends only on `@wolsok/feat-shared-bacteria-engine`") name the entry. `docs/architecture/README.md` is unchanged: no project and no edge is added.
+7. **Release effect accepted**: the engine's and the rendering lib's sources change, so the release redeploys `bacteria-wars-functions` and the game once, with code that behaves the same.
+
+## Non-goals (step 3b)
+
+- No guard that keeps unused names out of the main entry from now on (a workspace-wide consumer scan in a spec); the rule stands in the engine's `CLAUDE.md`, as for `/cloud`.
+- No renaming, no moving of files, no change to what a name does.
+- Step 4 (narrowing `perf`'s inputs) stays its own step.
+
+## Acceptance (step 3b)
+
+1. `src/index.ts` exports no name declared under the GPU paths or `state/cloud/`; `src/gpu.ts` exports only names declared under the GPU paths (`entries.spec.ts`).
+2. Every name `src/index.ts` exports after the change is imported by a file outside the engine (the consumer scan's list, empty, in the PR), except a type kept by decision 2 (named in the PR).
+3. Every name the main index exported before is exported by exactly one of `index.ts` and `gpu.ts` afterwards, except the dropped ones, which are listed in the PR (sorted lists compared).
+4. The engine's bundle check passes for `gpu.ts`; golden replays, GPU goldens (`golden.spec.ts`, `sim-golden.spec.ts`, `self-test-golden.spec.ts`) and the `perf` checksums unchanged, no `BALANCE_VERSION` or `GPU_SELF_TEST_VERSION` bump.
+5. `npx nx affected -t lint,lint-templates,test,typecheck-specs,build` green, plus `feat-bacteria-rendering:build`, `feat-lazy-bacteria-game:build`, `bacteria-wars-functions:build` and `bacteria-game-remote:build` (the federation build with the new skip).
+
+## Open question (step 3b)
+
+- **The issue's "`src/index.ts` well under half its 791 lines"** (under about 395): with `/gpu` and the 45 names gone, the index ends at about 500 lines (from 662), counted in the PR. Recommendation: close #3103's step 3 criterion with the name rules (acceptance 1 and 2) in place of the line count, as request 1353 did for step 3; what remains in the index is the simulation, replay, levels and progress the game, the functions and the rendering lib really import.
