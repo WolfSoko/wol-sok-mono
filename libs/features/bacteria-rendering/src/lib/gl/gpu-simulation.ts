@@ -1,4 +1,5 @@
-import { GameBalance, GridWar } from '@wolsok/feat-shared-bacteria-engine';
+import { GameBalance } from '@wolsok/feat-shared-bacteria-engine';
+import { GridWar } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { GpuCellPasses } from './gpu-cell-passes';
 import { GpuFloatRules, GpuIntRules } from './gpu-rules';
 

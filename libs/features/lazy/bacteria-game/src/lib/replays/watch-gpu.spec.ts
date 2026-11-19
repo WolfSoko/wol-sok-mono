@@ -1,7 +1,5 @@
-import {
-  BALANCE_VERSION,
-  GPU_SELF_TEST_VERSION,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import { GPU_SELF_TEST_VERSION } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import type { KeyValueStorage } from '@wolsok/utils-browser-storage';
 import {
   type GpuSelfTestResult,

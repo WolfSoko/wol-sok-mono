@@ -31,14 +31,12 @@ import {
   createIntEffectUniforms,
   INT_KIND,
   IntTickInputs,
-} from '@wolsok/feat-shared-bacteria-engine';
-import { gpuSimulation } from '../src/lib/gl/gpu-simulation';
-import { GpuSelfTestResult, runGpuSelfTest } from '../src/lib/gl/gpu-self-test';
-import {
   playScenario as playSimScenario,
   scenarioRandom,
   SIM_SCENARIOS,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
+import { gpuSimulation } from '../src/lib/gl/gpu-simulation';
+import { GpuSelfTestResult, runGpuSelfTest } from '../src/lib/gl/gpu-self-test';
 import { CrosscheckScenario, playScenario, SCENARIOS } from './scenarios';
 
 const UNIT = {

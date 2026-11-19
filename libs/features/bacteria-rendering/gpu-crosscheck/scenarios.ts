@@ -11,6 +11,14 @@
  * like, whose last bit may differ between engines.
  */
 import {
+  gameBalance,
+  WALL_BIT,
+  WEAPON_CODE,
+  WEAPON_EFFECTS,
+  ZONE_CODE,
+  ZONE_SHIFT,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   createIntEffectUniforms,
   createIntFrameUniforms,
   DETERMINISTIC_REPORT_LAG,
@@ -18,7 +26,6 @@ import {
   fillIntCombatUniforms,
   fillIntFrameUniforms,
   frameSeed,
-  gameBalance,
   INT_ATTACK_MAX,
   INT_COLONIES,
   INT_EFFECT_RADIUS_MAX,
@@ -36,12 +43,7 @@ import {
   setIntEffect,
   TARGET_SHIFT,
   toQ14,
-  WALL_BIT,
-  WEAPON_CODE,
-  WEAPON_EFFECTS,
-  ZONE_CODE,
-  ZONE_SHIFT,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 
 export interface CrosscheckTick {
   inputs: IntTickInputs;

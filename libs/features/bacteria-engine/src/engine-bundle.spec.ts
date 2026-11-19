@@ -8,7 +8,7 @@ import { join } from 'node:path';
 const FORBIDDEN = ['@angular', '@ngrx', 'rxjs', 'firebase'];
 
 describe('engine', () => {
-  it.each(['index.ts', 'cloud.ts'])(
+  it.each(['index.ts', 'cloud.ts', 'gpu.ts'])(
     '%s bundles without Angular, NgRx, RxJS or Firebase',
     async (entry) => {
       const result = await build({

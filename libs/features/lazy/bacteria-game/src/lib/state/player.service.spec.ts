@@ -7,7 +7,6 @@ import {
   BacteriaSimulation,
   gameBalance,
   getMap,
-  intSimulation,
   MatchPlan,
   planMatch,
   PlayerColorArray,
@@ -15,6 +14,7 @@ import {
   TICK_SEC,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { intSimulation } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { GameState, GameStateStore } from './game.states';
 import { Lockstep } from '../net/lockstep';
 import { PlayerStore } from './player.store';

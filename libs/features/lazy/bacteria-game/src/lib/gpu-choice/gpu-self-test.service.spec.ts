@@ -1,8 +1,6 @@
 import { TestBed } from '@angular/core/testing';
-import {
-  BALANCE_VERSION,
-  GPU_SELF_TEST_VERSION,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
+import { GPU_SELF_TEST_VERSION } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { DeviceStorage } from '../storage/game-storage';
 import { LateGameStorage } from '../../testing/late-game-storage';
 import {

@@ -23,6 +23,14 @@
 
 import { MIN_CELL_DENSITY } from '../arena/colony-energy';
 import {
+  WALL_BIT,
+  WEAPON_CODE,
+  WEAPON_EFFECTS,
+  ZONE_CODE,
+  ZONE_EFFECTS,
+  ZONE_SHIFT,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   ENERGY_SCALE,
   LOSER_SHIFT,
   MAX_EFFECTS,
@@ -31,13 +39,7 @@ import {
   POISONED,
   RECORD_MASK,
   REPORT_ROWS,
-  WALL_BIT,
-  WEAPON_CODE,
-  WEAPON_EFFECTS,
-  ZONE_CODE,
-  ZONE_EFFECTS,
-  ZONE_SHIFT,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 
 export { WALL_BIT, ZONE_SHIFT };
 
@@ -56,7 +58,7 @@ export {
   RECORD_MASK,
   REPORT_ROWS,
 };
-export { REPORT_EXTRA_ROWS } from '@wolsok/feat-shared-bacteria-engine';
+export { REPORT_EXTRA_ROWS } from '@wolsok/feat-shared-bacteria-engine/gpu';
 
 /** The colonies one hunt texture holds: two, x and y each. */
 export const HUNT_COLONIES = 2;

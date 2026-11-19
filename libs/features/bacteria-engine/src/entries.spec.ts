@@ -5,6 +5,13 @@ import { join, relative, sep } from 'node:path';
 import * as ts from 'typescript';
 
 const CLOUD_FOLDER = ['lib', 'state', 'cloud', ''].join(sep);
+const SIMULATION = ['lib', 'state', 'simulation', ''].join(sep);
+/** The GPU mirror of the simulation, the `/gpu` entry's paths. */
+const GPU_PATHS = [
+  `${SIMULATION}gpu-int${sep}`,
+  `${SIMULATION}grid${sep}`,
+  `${SIMULATION}grid-format.ts`,
+];
 
 /** Where each name an entry exports is declared, relative to `src/`. */
 function declaredFiles(entry: string): Map<string, string[]> {
@@ -51,10 +58,15 @@ function namesDeclared(
 }
 
 const inCloud = (file: string) => file.startsWith(CLOUD_FOLDER);
+const inGpu = (file: string) => GPU_PATHS.some((path) => file.startsWith(path));
 
 describe('engine entries', () => {
   it('the main entry exports nothing of the cloud contract', () => {
     expect(namesDeclared(declaredFiles('index.ts'), inCloud)).toEqual([]);
+  });
+
+  it('the main entry exports nothing of the GPU mirror', () => {
+    expect(namesDeclared(declaredFiles('index.ts'), inGpu)).toEqual([]);
   });
 
   it('the /cloud entry exports only the cloud contract', () => {
@@ -62,5 +74,17 @@ describe('engine entries', () => {
 
     expect(cloud.size).toBeGreaterThan(0);
     expect(namesDeclared(cloud, (file) => !inCloud(file))).toEqual([]);
+  });
+
+  it('the /gpu entry exports only the GPU mirror', () => {
+    const gpu = declaredFiles('gpu.ts');
+
+    expect(gpu.size).toBeGreaterThan(0);
+    expect(namesDeclared(gpu, (file) => !inGpu(file))).toEqual([]);
+  });
+
+  it('the /cloud and /gpu entries share no folder', () => {
+    expect(namesDeclared(declaredFiles('cloud.ts'), inGpu)).toEqual([]);
+    expect(namesDeclared(declaredFiles('gpu.ts'), inCloud)).toEqual([]);
   });
 });

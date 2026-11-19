@@ -6,7 +6,7 @@ import {
   SELF_TEST_SCENARIO,
   selfTestVerdict,
   SelfTestVerdict,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { gpuSimulation } from './gpu-simulation';
 import { rendererOf } from './renderer';
 

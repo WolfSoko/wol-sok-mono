@@ -13,11 +13,13 @@ import { I18nService } from '../i18n/i18n.service';
 import {
   BALANCE_VERSION,
   GPU_INT_REPLAY_VERSION,
-  GridWar,
-  intSimulation,
   type MatchRun,
   type Replay,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  GridWar,
+  intSimulation,
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { type GpuIntPainter, ReplayScene } from './replay-scene';
 import {
   CHROME_HIDE_MS,

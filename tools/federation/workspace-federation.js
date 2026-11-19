@@ -103,6 +103,7 @@ function workspaceFederation(config) {
       // win the same way.
       '@wolsok/feat-shared-bacteria-engine',
       '@wolsok/feat-shared-bacteria-engine/cloud',
+      '@wolsok/feat-shared-bacteria-engine/gpu',
       '@wolsok/feat-shared-bacteria-engine/balance',
       '@wolsok/feat-shared-bacteria-engine/testing',
       // So are its painters and GPU simulation.

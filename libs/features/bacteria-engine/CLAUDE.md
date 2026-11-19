@@ -21,28 +21,37 @@ determinism, replays, balance and texts hold here too.
   DOM, `feat-bacteria-rendering` or `feat-bacteria-sound`. An oxlint override in
   `.oxlintrc.json` guards the imports, Jest runs every spec in Node
   (`testEnvironment: 'node'`), and `engine-bundle.spec.ts` bundles
-  `src/index.ts` and `src/cloud.ts` to prove it. Browser-only code goes
+  `src/index.ts`, `src/cloud.ts` and `src/gpu.ts` to prove it. Browser-only code goes
   elsewhere: WebGL and canvas into `feat-bacteria-rendering`, Web Audio
   into `feat-bacteria-sound`, the rest into the game lib.
 - `src/index.ts` is the main entry (`@wolsok/feat-shared-bacteria-engine`):
   named exports, no `export *`. Nothing outside this lib imports a path
-  inside it; a new export goes into the index, unless it is declared
-  under `state/cloud/`: the cloud contract (the documents, ids, parsers
-  and sorts the game, the functions and the admin share) is
-  `@wolsok/feat-shared-bacteria-engine/cloud` (`src/cloud.ts`, built as the
-  ng-packagr secondary entry `cloud/ng-package.json`, since the game lib's
-  `build` compiles against the engine's `dist`) only, a
-  name entering it with its first consumer outside the engine. Its
-  `dist` holds a second copy of what `state/cloud/` imports, so a `/cloud`
-  signature takes and returns plain data, never one of the engine's
-  classes (a class with private members would clash with the main
-  entry's copy in the game lib's `build`);
-  `entries.spec.ts` keeps both entries apart. Spec fixtures (`aMatchRecord`,
+  inside it, and the main entry, `/cloud` and `/gpu` export only names
+  something outside the engine imports: a name enters one with its first
+  consumer (the engine's own specs take it by relative path). A new export goes into
+  the index, unless it is declared
+  - under `state/cloud/`: the cloud contract (the documents, ids, parsers
+    and sorts the game, the functions and the admin share) is
+    `@wolsok/feat-shared-bacteria-engine/cloud` (`src/cloud.ts`) only;
+  - under `state/simulation/gpu-int/`, `state/simulation/grid/` or in
+    `state/simulation/grid-format.ts`: the GPU mirror of the simulation
+    (ADR 0015) is `@wolsok/feat-shared-bacteria-engine/gpu` (`src/gpu.ts`)
+    only, taken by `feat-bacteria-rendering` and specs.
+
+  Both are ng-packagr secondary entries (`cloud/ng-package.json`,
+  `gpu/ng-package.json`), since the game lib's and the rendering lib's
+  `build` compile against the engine's `dist`. Each entry's `dist` holds a
+  second copy of what its folder imports, so a `/cloud` or `/gpu`
+  signature takes and returns plain data and interfaces, never one of the
+  main entry's classes (a class with private members would clash with the
+  main entry's copy in a consumer's `build`); `entries.spec.ts` keeps the
+  entries apart. Spec fixtures (`aMatchRecord`,
   `recordedReplay`) are `@wolsok/feat-shared-bacteria-engine/testing`, for
   specs only. The balance lab (`state/balance/`, with the calibration's
   `SKILL` and `strengthOf`) is `@wolsok/feat-shared-bacteria-engine/balance`
   (`src/balance.ts`), for the scripts in `tools/bacteria-game/balance/`
   only; what they share with the game comes from the main entry.
+
 - The targets `balance-check`, `balance` (ADR 0016) and `perf` (ADR 0014,
   `tools/perf/engine-bench.mjs`) live here, since they play the engine.
 - The goldens (`state/replay/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded

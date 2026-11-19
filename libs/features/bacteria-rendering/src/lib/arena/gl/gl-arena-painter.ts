@@ -3,11 +3,11 @@ import {
   type CellList,
   emptyBounds,
   GameBalance,
-  GridWar,
   growBounds,
   Rect,
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { GridWar } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';

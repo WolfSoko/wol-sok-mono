@@ -3,7 +3,7 @@ import {
   INT_MAX_EFFECTS,
   INT_PELLETS,
   INT_RECORD,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/gpu';
 import {
   LOSER_SHIFT,
   MAX_EFFECTS,

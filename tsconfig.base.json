@@ -71,6 +71,9 @@
       "@wolsok/feat-shared-bacteria-engine/cloud": [
         "./libs/features/bacteria-engine/src/cloud.ts"
       ],
+      "@wolsok/feat-shared-bacteria-engine/gpu": [
+        "./libs/features/bacteria-engine/src/gpu.ts"
+      ],
       "@wolsok/feat-shared-bacteria-engine/balance": [
         "./libs/features/bacteria-engine/src/balance.ts"
       ],
