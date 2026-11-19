@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_011ku6t2cchGW4jZpQgFeSbo",
+  "agent_id": "a0c6779d9c6caf477",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR #3145 against spec",
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 95089,
+    "cache_read_tokens": 1254433,
+    "output_tokens": 9413,
+    "api_call_count": 16
+  },
+  "started_at": "2026-11-19T15:20:11.506575168+01:00",
+  "completed_at": "2026-11-19T15:22:18.732120672+01:00"
+}

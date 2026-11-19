@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7T3BDXZPH4E8WKPA8XTWXA8",
+  "strategy": "manual-commit",
+  "branch": "3131-infer-typecheck-specs",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "docs/specs/3131-infer-typecheck-specs-with-a-local-nx-plugin-instead-of-per-project-entries.md",
+    "tools/ci/typecheck-specs.test.mjs",
+    "tools/nx/typecheck-specs.mjs",
+    "tools/nx/typecheck-specs.test.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 17309,
+    "cache_read_tokens": 1844425,
+    "output_tokens": 10080,
+    "api_call_count": 11,
+    "subagent_tokens": {
+      "input_tokens": 2,
+      "cache_creation_tokens": 63881,
+      "cache_read_tokens": 0,
+      "output_tokens": 129,
+      "api_call_count": 1
+    }
+  }
+}
