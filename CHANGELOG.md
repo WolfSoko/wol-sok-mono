@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.12](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.11...v74.172.12) (2026-11-19)
+
+### Chore
+
+* **nx:** infer typecheck-specs with a local Nx plugin instead of per-project entries ([#3145](https://github.com/WolfSoko/wol-sok-mono/issues/3145)) ([cc63926](https://github.com/WolfSoko/wol-sok-mono/commit/cc63926dc9f8584db7120dc0a0e29903521fff6f)), references [#3131](https://github.com/WolfSoko/wol-sok-mono/issues/3131) [#3130](https://github.com/WolfSoko/wol-sok-mono/issues/3130) [#3131](https://github.com/WolfSoko/wol-sok-mono/issues/3131)
+
 ## [74.172.11](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.10...v74.172.11) (2026-11-19)
 
 ## [74.172.10](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.9...v74.172.10) (2026-11-19)
