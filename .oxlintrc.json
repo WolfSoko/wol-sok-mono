@@ -27,6 +27,7 @@
     "cdk.out/**",
     "storybook-static/**",
     "**/test-build-path/**",
+    "**/test-nested-build-path/**",
     "**/*__template__",
     "**/vite.config.*.timestamp*",
     "**/vitest.config.*.timestamp*"

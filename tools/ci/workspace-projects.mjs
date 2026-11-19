@@ -32,3 +32,20 @@ export function readProjects() {
 export function stringInputs(inputs) {
   return (inputs ?? []).filter((input) => typeof input === 'string');
 }
+
+/** The workflow that runs the checks of every push and pull request. */
+export const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
+/** Keys that would let a step be skipped or fail without failing the run. */
+export const SKIPPING_KEYS = /^\s+(if|continue-on-error):/m;
+
+/** The lines of the step named `name`, up to the next step or job. */
+export function stepBlock(workflow, name) {
+  const lines = workflow.split('\n');
+  const start = lines.findIndex((line) => line.trim() === name);
+  if (start === -1) return null;
+  const indent = lines[start].indexOf('-');
+  const end = lines.findIndex(
+    (line, i) => i > start && line.trim() !== '' && line.search(/\S/) <= indent
+  );
+  return lines.slice(start, end === -1 ? undefined : end).join('\n');
+}

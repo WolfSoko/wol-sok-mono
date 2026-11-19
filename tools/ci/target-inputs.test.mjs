@@ -6,30 +6,22 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
-import { ROOT, readJson, readProjects } from './workspace-projects.mjs';
+import {
+  CI_WORKFLOW,
+  ROOT,
+  SKIPPING_KEYS,
+  readJson,
+  readProjects,
+  stepBlock,
+} from './workspace-projects.mjs';
 
 const WORKSPACE_ROOT = '{workspaceRoot}/';
 const PROJECT_ROOT = '{projectRoot}/';
 const PROJECT_NAME = '{projectName}';
 // A renamed file makes only its own project affected, never `tools`, so CI
 // runs this guard on every run as a step of its own, outside Nx (#3051).
-const CI_WORKFLOW = '.github/workflows/ci-cd.yml';
 const GUARD_STEP_NAME = '- name: Target inputs name existing files';
 const GUARD_COMMAND = 'run: node --test tools/ci/target-inputs.test.mjs';
-// Keys that would let the step be skipped or fail without failing the run.
-const SKIPPING_KEYS = /^\s+(if|continue-on-error):/m;
-
-/** The lines of the step named `name`, up to the next step or job. */
-function stepBlock(workflow, name) {
-  const lines = workflow.split('\n');
-  const start = lines.findIndex((line) => line.trim() === name);
-  if (start === -1) return null;
-  const indent = lines[start].indexOf('-');
-  const end = lines.findIndex(
-    (line, i) => i > start && line.trim() !== '' && line.search(/\S/) <= indent
-  );
-  return lines.slice(start, end === -1 ? undefined : end).join('\n');
-}
 // A path holding one of these is a pattern, not a single file.
 const GLOB_CHARACTERS = /[*?{}[\]!]/;
 

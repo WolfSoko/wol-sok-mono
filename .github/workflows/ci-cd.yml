@@ -82,6 +82,11 @@ jobs:
       - name: Target inputs name existing files
         run: node --test tools/ci/target-inputs.test.mjs
 
+      # Outside Nx too: a new script makes only its own project affected, so
+      # tools:test would miss one that no tsconfig owns (#3133).
+      - name: Scripts belong to their tsconfig
+        run: node --test tools/ci/script-tsconfig.test.mjs
+
       - name: run-checks in parallel on nx cloud workers
         run: |
           npx nx affected -t="lint,lint-templates,typecheck,typecheck-specs,typecheck-tools,test,test-emulator,build,e2e-ci,perf,lighthouse" -c=ci
