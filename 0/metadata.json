@@ -1,0 +1,80 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7SE16PX2QWPR5857NMY29Q3",
+  "session_id": "f451a1fb-2a35-42cb-9ebd-3d99ad93117f",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-19T08:16:12.674568381Z",
+  "branch": "3133-lint-scripts-belong-to-a-tsconfig",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/ci-cd.yml",
+    ".oxlintrc.json",
+    "CLAUDE.md",
+    "apps/angular-examples/tsconfig.editor.json",
+    "apps/bacteria-game-remote/tsconfig.editor.json",
+    "apps/fourier-analysis-remote/tsconfig.editor.json",
+    "apps/shader-examples-remote/tsconfig.editor.json",
+    "apps/ws-thanos-test-app/tsconfig.e2e.json",
+    "apps/ws-thanos-test-app/tsconfig.json",
+    "docs/plans/3133-lint-script-and-config-files-outside-tools-belong-to-no-tsconfig-so-type-aware-lint-depends-on-co-linted-files.md",
+    "docs/specs/3133-lint-script-and-config-files-outside-tools-belong-to-no-tsconfig-so-type-aware-lint-depends-on-co-linted-files.md",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/draw-digit/draw-digit.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/draw-predictions/draw-predictions.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/learned-digits.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/polynominal-regretion/polynomial-regression.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/tensorflow-examples.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/tsconfig.lib.json",
+    "libs/shared/e2e-server/tsconfig.lib.json",
+    "tools/ci/script-tsconfig.test.mjs",
+    "tools/ci/target-inputs.test.mjs",
+    "tools/ci/tools-tsconfig.test.mjs",
+    "tools/ci/workspace-projects.mjs",
+    "tools/tsconfig.json",
+    "tsconfig.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "dfa9b8894d76",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 126,
+    "cache_creation_tokens": 146309,
+    "cache_read_tokens": 8176111,
+    "output_tokens": 39140,
+    "api_call_count": 63
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01Uv14mtA29bxuubDm4yJZKp",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "dfa9b8894d76",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 41,
+        "end": 42,
+        "entry_ids": [
+          "f8363db9-1c92-4b82-adb2-3fe41338e0f2"
+        ],
+        "tool_use_id": "toolu_01Uv14mtA29bxuubDm4yJZKp"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01Uv14mtA29bxuubDm4yJZKp"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ]
+}

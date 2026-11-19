@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7SE16PX2QWPR5857NMY29Q3",
+  "strategy": "manual-commit",
+  "branch": "3133-lint-scripts-belong-to-a-tsconfig",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".github/workflows/ci-cd.yml",
+    ".oxlintrc.json",
+    "CLAUDE.md",
+    "apps/angular-examples/tsconfig.editor.json",
+    "apps/bacteria-game-remote/tsconfig.editor.json",
+    "apps/fourier-analysis-remote/tsconfig.editor.json",
+    "apps/shader-examples-remote/tsconfig.editor.json",
+    "apps/ws-thanos-test-app/tsconfig.e2e.json",
+    "apps/ws-thanos-test-app/tsconfig.json",
+    "docs/plans/3133-lint-script-and-config-files-outside-tools-belong-to-no-tsconfig-so-type-aware-lint-depends-on-co-linted-files.md",
+    "docs/specs/3133-lint-script-and-config-files-outside-tools-belong-to-no-tsconfig-so-type-aware-lint-depends-on-co-linted-files.md",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/draw-digit/draw-digit.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/draw-predictions/draw-predictions.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/learned-digits/learned-digits.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/polynominal-regretion/polynomial-regression.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/src/lib/tensorflow-examples/tensorflow-examples.component.cy.ts",
+    "libs/features/lazy/tensorflow-examples/tsconfig.lib.json",
+    "libs/shared/e2e-server/tsconfig.lib.json",
+    "tools/ci/script-tsconfig.test.mjs",
+    "tools/ci/target-inputs.test.mjs",
+    "tools/ci/tools-tsconfig.test.mjs",
+    "tools/ci/workspace-projects.mjs",
+    "tools/tsconfig.json",
+    "tsconfig.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 126,
+    "cache_creation_tokens": 146309,
+    "cache_read_tokens": 8176111,
+    "output_tokens": 39140,
+    "api_call_count": 63
+  }
+}
