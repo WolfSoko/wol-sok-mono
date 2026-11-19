@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**71 projects · 211 internal dependencies · 3 federated remotes**
+**64 projects · 179 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -25,26 +25,26 @@ dependencies).
 
 ```mermaid
 flowchart TD
-  infra["Infrastructure (CDK)<br/>6 projects"]
-  apps["Apps<br/>14 projects"]
+  infra["Infrastructure (CDK)<br/>5 projects"]
+  apps["Apps<br/>12 projects"]
   public["libs/public (published)<br/>3 projects"]
-  features["libs/features<br/>21 projects"]
+  features["libs/features<br/>17 projects"]
   shared["libs/shared<br/>9 projects"]
   utils["libs/utils<br/>9 projects"]
   other["libs (other)<br/>9 projects"]
-  apps -- 24 --> features
-  apps -- 21 --> other
+  apps -- 17 --> features
+  apps -- 18 --> other
   apps -- 3 --> public
-  apps -- 23 --> shared
-  apps -- 12 --> utils
-  features -- 32 --> other
+  apps -- 18 --> shared
+  apps -- 8 --> utils
+  features -- 28 --> other
   features -- 1 --> public
   features -- 4 --> shared
-  features -- 17 --> utils
+  features -- 14 --> utils
   infra -- 4 --> apps
-  infra -- 6 --> other
-  infra -- 6 --> public
-  infra -- 2 --> shared
+  infra -- 5 --> other
+  infra -- 5 --> public
+  infra -- 1 --> shared
   infra -- 1 --> utils
   other -- 4 --> apps
   other -- 1 --> shared
@@ -166,7 +166,6 @@ flowchart LR
     angular_examples_cdk["angular-examples-cdk"]
     bacteria_game_remote_cdk["bacteria-game-remote-cdk"]
     fourier_analysis_remote_cdk["fourier-analysis-remote-cdk"]
-    korbjaeger_cdk["korbjaeger-cdk"]
     portfolio_cdk["portfolio-cdk"]
     shader_examples_remote_cdk["shader-examples-remote-cdk"]
   end
@@ -176,8 +175,6 @@ flowchart LR
     bacteria_wars_android["bacteria-wars-android"]
     bacteria_wars_functions["bacteria-wars-functions"]
     fourier_analysis_remote["fourier-analysis-remote"]
-    korbjaeger["korbjaeger"]
-    korbjaeger_functions["korbjaeger-functions"]
     nx_aws_cdk_v2_e2e["nx-aws-cdk-v2-e2e"]
     pacetrainer["pacetrainer"]
     portfolio["portfolio"]
@@ -195,8 +192,6 @@ flowchart LR
     feat_api_auth["feat-api-auth"]
     feat_bacteria_rendering["feat-bacteria-rendering"]
     feat_bacteria_sound["feat-bacteria-sound"]
-    feat_korbjaeger_answers["feat-korbjaeger-answers"]
-    feat_korbjaeger_selection["feat-korbjaeger-selection"]
     feat_lazy_bacteria_game["feat-lazy-bacteria-game"]
     feat_lazy_bacteria_wars_admin["feat-lazy-bacteria-wars-admin"]
     feat_lazy_fourier_analysis["feat-lazy-fourier-analysis"]
@@ -209,8 +204,6 @@ flowchart LR
     feat_lazy_wasm_test["feat-lazy-wasm-test"]
     feat_lazy_web_gl["feat-lazy-web-gl"]
     feat_shared_bacteria_engine["feat-shared-bacteria-engine"]
-    feat_shared_basketball_data["feat-shared-basketball-data"]
-    feat_shared_korbjaeger_account["feat-shared-korbjaeger-account"]
     feat_shared_reaction_diffusion_kernels["feat-shared-reaction-diffusion-kernels"]
     neural_networks["neural-networks"]
   end
@@ -292,13 +285,6 @@ flowchart LR
   feat_bacteria_rendering ==> oxlint_workspace_rules
   feat_bacteria_sound --> feat_shared_bacteria_engine
   feat_bacteria_sound ==> oxlint_workspace_rules
-  feat_korbjaeger_answers --> feat_shared_basketball_data
-  feat_korbjaeger_answers ==> oxlint_workspace_rules
-  feat_korbjaeger_answers --> utils_browser_storage
-  feat_korbjaeger_selection --> feat_shared_basketball_data
-  feat_korbjaeger_selection --> feat_shared_korbjaeger_account
-  feat_korbjaeger_selection ==> oxlint_workspace_rules
-  feat_korbjaeger_selection --> utils_browser_storage
   feat_lazy_bacteria_game --> feat_bacteria_rendering
   feat_lazy_bacteria_game --> feat_bacteria_sound
   feat_lazy_bacteria_game --> feat_shared_bacteria_engine
@@ -345,9 +331,6 @@ flowchart LR
   feat_lazy_web_gl ==> oxlint_workspace_rules
   feat_lazy_web_gl --> ui_kit
   feat_shared_bacteria_engine ==> oxlint_workspace_rules
-  feat_shared_basketball_data ==> oxlint_workspace_rules
-  feat_shared_korbjaeger_account ==> oxlint_workspace_rules
-  feat_shared_korbjaeger_account --> utils_time
   feat_shared_reaction_diffusion_kernels ==> oxlint_workspace_rules
   feat_shared_reaction_diffusion_kernels --> utils_gpu_calc
   federation_shared_singletons ==> angular_examples
@@ -366,27 +349,6 @@ flowchart LR
   fourier_analysis_remote_cdk ==> oxlint_workspace_rules
   fourier_analysis_remote_cdk --> spa_cdk_stack
   headline_animation ==> oxlint_workspace_rules
-  korbjaeger --> feat_korbjaeger_answers
-  korbjaeger --> feat_korbjaeger_selection
-  korbjaeger --> feat_shared_basketball_data
-  korbjaeger --> feat_shared_korbjaeger_account
-  korbjaeger ==> oxlint_workspace_rules
-  korbjaeger --> shared_e2e_server
-  korbjaeger --> shared_firebase_emulator
-  korbjaeger --> shared_legal
-  korbjaeger --> shared_theme
-  korbjaeger --> tools_vite
-  korbjaeger --> utils_browser_storage
-  korbjaeger --> utils_time
-  korbjaeger --> utils_version
-  korbjaeger_cdk ==> oxlint_workspace_rules
-  korbjaeger_cdk --> shared_firebase_domain_cdk
-  korbjaeger_cdk --> spa_cdk_stack
-  korbjaeger_functions --> feat_shared_basketball_data
-  korbjaeger_functions --> feat_shared_korbjaeger_account
-  korbjaeger_functions ==> oxlint_workspace_rules
-  korbjaeger_functions --> shared_firebase_emulator
-  korbjaeger_functions --> utils_time
   math ==> oxlint_workspace_rules
   neural_networks ==> oxlint_workspace_rules
   neural_networks --> ui_kit
@@ -434,7 +396,6 @@ flowchart LR
   spa_cdk_stack ==> oxlint_workspace_rules
   test_helper ==> oxlint_workspace_rules
   tools --> feat_shared_bacteria_engine
-  tools --> feat_shared_basketball_data
   tools ==> oxlint_workspace_rules
   tools --> utils_version
   tools_deploy ==> oxlint_workspace_rules
@@ -470,49 +431,38 @@ flowchart LR
 
 | Project                                  | Group    | Tags                                    | Fan-in (Ca) | Fan-out (Ce) | Instability |
 | ---------------------------------------- | -------- | --------------------------------------- | ----------- | ------------ | ----------- |
-| `oxlint-workspace-rules`                 | other    | tools                                   | 69          | 0            | 0           |
+| `oxlint-workspace-rules`                 | other    | tools                                   | 62          | 0            | 0           |
 | `angular-examples`                       | apps     | app, type:host                          | 3           | 19           | 0.86        |
-| `korbjaeger`                             | apps     | app, type:firebase                      | 0           | 13           | 1           |
 | `ui-kit`                                 | other    | shared, ui                              | 10          | 3            | 0.23        |
 | `bacteria-game-remote`                   | apps     | app, type:firebase, type:remote         | 2           | 10           | 0.83        |
 | `feat-lazy-bacteria-game`                | features | feature:lazy                            | 2           | 10           | 0.83        |
-| `utils-browser-storage`                  | utils    | utils                                   | 9           | 2            | 0.18        |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 3           | 5            | 0.63        |
+| `utils-browser-storage`                  | utils    | utils                                   | 6           | 2            | 0.25        |
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 6            | 0.86        |
 | `feat-shared-bacteria-engine`            | features | feat-shared                             | 6           | 1            | 0.14        |
 | `fourier-analysis-remote`                | apps     | app, type:remote                        | 3           | 4            | 0.57        |
 | `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 7            | 1           |
-| `shared-e2e-server`                      | shared   | shared                                  | 6           | 1            | 0.14        |
-| `spa-cdk-stack`                          | public   | infra-shared, published                 | 6           | 1            | 0.14        |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 5            | 0.83        |
-| `feat-shared-basketball-data`            | features | feat-shared                             | 5           | 1            | 0.17        |
 | `pacetrainer`                            | apps     | app, type:firebase                      | 0           | 6            | 1           |
 | `portfolio`                              | apps     | app, type:portfolio                     | 1           | 5            | 0.83        |
+| `shared-e2e-server`                      | shared   | shared                                  | 5           | 1            | 0.17        |
+| `spa-cdk-stack`                          | public   | infra-shared, published                 | 5           | 1            | 0.17        |
 | `utils-measure-fps`                      | utils    | utils                                   | 4           | 2            | 0.33        |
-| `utils-version`                          | utils    | infra-shared, utils                     | 5           | 1            | 0.17        |
-| `feat-korbjaeger-selection`              | features | feature                                 | 1           | 4            | 0.8         |
 | `feat-lazy-gravity-rocks`                | features | feature:lazy                            | 1           | 4            | 0.8         |
 | `feat-lazy-poisson`                      | features | feature:lazy                            | 1           | 4            | 0.8         |
 | `feat-lazy-shader-examples`              | features | feature:lazy                            | 1           | 4            | 0.8         |
-| `feat-shared-korbjaeger-account`         | features | feat-shared                             | 3           | 2            | 0.4         |
 | `federation-shared-singletons`           | other    | tools                                   | 0           | 5            | 1           |
-| `korbjaeger-functions`                   | apps     | app, type:firebase, type:functions      | 0           | 5            | 1           |
 | `shared-analytics`                       | shared   | shared                                  | 3           | 2            | 0.4         |
 | `shared-data-access`                     | shared   | shared                                  | 4           | 1            | 0.2         |
-| `shared-firebase-emulator`               | shared   | shared                                  | 4           | 1            | 0.2         |
-| `shared-legal`                           | shared   | shared                                  | 4           | 1            | 0.2         |
 | `tools-federation`                       | other    | tools                                   | 4           | 1            | 0.2         |
 | `utils-operators`                        | utils    | utils                                   | 4           | 1            | 0.2         |
-| `utils-time`                             | utils    | utils                                   | 4           | 1            | 0.2         |
+| `utils-version`                          | utils    | infra-shared, utils                     | 4           | 1            | 0.2         |
 | `bacteria-wars-functions`                | apps     | app, type:firebase, type:functions      | 0           | 4            | 1           |
 | `feat-api-auth`                          | features | api                                     | 3           | 1            | 0.25        |
-| `feat-korbjaeger-answers`                | features | feature                                 | 1           | 3            | 0.75        |
 | `feat-lazy-tf-examples`                  | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-wasm-test`                    | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `headline-animation`                     | shared   | shared                                  | 3           | 1            | 0.25        |
-| `shared-theme`                           | shared   | shared                                  | 2           | 2            | 0.5         |
-| `tools`                                  | apps     | tools                                   | 0           | 4            | 1           |
-| `tools-vite`                             | other    | tools                                   | 3           | 1            | 0.25        |
+| `shared-legal`                           | shared   | shared                                  | 3           | 1            | 0.25        |
 | `utils-gpu-calc`                         | utils    | utils                                   | 3           | 1            | 0.25        |
 | `utils-json`                             | utils    | utils                                   | 3           | 1            | 0.25        |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 1            | 0.25        |
@@ -525,25 +475,29 @@ flowchart LR
 | `fib-wasm-api`                           | other    | api                                     | 1           | 2            | 0.67        |
 | `math`                                   | utils    | utils                                   | 2           | 1            | 0.33        |
 | `neural-networks`                        | features | feature:lazy                            | 1           | 2            | 0.67        |
-| `shared-firebase-domain-cdk`             | shared   | infra-shared                            | 2           | 1            | 0.33        |
+| `shared-firebase-emulator`               | shared   | shared                                  | 2           | 1            | 0.33        |
+| `shared-theme`                           | shared   | shared                                  | 1           | 2            | 0.67        |
+| `tools`                                  | apps     | tools                                   | 0           | 3            | 1           |
+| `tools-vite`                             | other    | tools                                   | 2           | 1            | 0.33        |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 1            | 0.33        |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 3            | 1           |
 | `fib-wasm`                               | other    | shared                                  | 1           | 1            | 0.5         |
 | `nx-aws-cdk-v2`                          | public   | infra-shared, published                 | 1           | 1            | 0.5         |
 | `nx-aws-cdk-v2-e2e`                      | apps     | e2e                                     | 0           | 2            | 1           |
+| `shared-firebase-domain-cdk`             | shared   | infra-shared                            | 1           | 1            | 0.5         |
 | `test-helper`                            | other    | shared                                  | 1           | 1            | 0.5         |
 | `utils-decorators`                       | utils    | utils                                   | 1           | 1            | 0.5         |
+| `utils-time`                             | utils    | utils                                   | 1           | 1            | 0.5         |
 | `tools-deploy`                           | other    | tools                                   | 0           | 1            | 1           |
 | `bacteria-wars-android`                  | apps     | type:android                            | 0           | 0            | –           |
 
 ## Automated findings
 
 - **Circular dependencies:** none
-- **Tag constraint violations** (`.oxlintrc.json`): 7
+- **Tag constraint violations** (`.oxlintrc.json`): 6
   - `angular-examples` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
   - `bacteria-game-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
   - `fourier-analysis-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `korbjaeger` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
   - `pacetrainer` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
   - `rollapolla-analog` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
   - `shader-examples-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)

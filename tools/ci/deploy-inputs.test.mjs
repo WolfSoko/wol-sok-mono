@@ -63,8 +63,6 @@ void describe('deploy inputs', () => {
     assert.deepEqual(checked, [
       'bacteria-game-remote',
       'bacteria-wars-functions',
-      'korbjaeger',
-      'korbjaeger-functions',
       'pacetrainer',
       'rollapolla-analog',
     ]);

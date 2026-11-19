@@ -2,8 +2,7 @@
   "projects": {
     "pacetrainer": "pacetrainer-ef5b4",
     "rollapolla-analog": "rollapolla-v1",
-    "bacteria-game-remote": "bacteria-wars",
-    "korbjaeger": "korbjaeger"
+    "bacteria-game-remote": "bacteria-wars"
   },
   "targets": {},
   "etags": {}

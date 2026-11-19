@@ -1,6 +1,7 @@
 # 19. Korbjäger shows children only inside a Spiel's Kader
 
-- Status: accepted
+- Status: deprecated: the Korbjäger app and its libs were removed by
+  [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
 - Date: 2026-11-08
 - Changed: 2026-11-11 by
   [#3025](https://github.com/WolfSoko/wol-sok-mono/issues/3025): the
