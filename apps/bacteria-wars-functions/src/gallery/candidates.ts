@@ -1,7 +1,5 @@
-import {
-  storedPlaybackRefusal,
-  TICKS_PER_SEC,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { TICKS_PER_SEC } from '@wolsok/feat-shared-bacteria-engine';
+import { storedPlaybackRefusal } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { ReplaySummary } from '../boards/verify';
 import { type AccountInfo, trustOf } from '../boards/verify-slice';
 import type { ReplayRecord } from '../replays/accept-plan';

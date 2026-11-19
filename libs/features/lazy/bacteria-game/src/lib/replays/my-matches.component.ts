@@ -38,9 +38,9 @@ import {
   levelNameText,
   type Replay,
   replayFromBytes,
-  storedPlaybackRefusal,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { storedPlaybackRefusal } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { isCounted, type ReplayListing } from '../storage/replay-records';

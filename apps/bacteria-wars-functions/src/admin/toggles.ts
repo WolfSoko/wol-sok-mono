@@ -2,7 +2,7 @@ import {
   type FeatureToggle,
   type FeatureToggles,
   featureToggles,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type {
   RemoteConfig,
   RemoteConfigParameter,

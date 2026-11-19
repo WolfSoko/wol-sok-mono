@@ -2,7 +2,7 @@ import type {
   BanReason,
   CommandResult,
   NoticeType,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';

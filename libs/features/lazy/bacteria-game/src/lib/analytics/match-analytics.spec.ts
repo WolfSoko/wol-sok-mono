@@ -8,8 +8,8 @@ import {
   type MatchEarnings,
   type MatchPlan,
   type Player,
-  type RankedOutcome,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type RankedOutcome } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { MatchKind } from '../state/match-rules';
 import {
   MatchAnalytics,

@@ -1,4 +1,4 @@
-import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine';
+import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type DocumentReference,
   type Firestore,

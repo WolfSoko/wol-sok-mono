@@ -1,10 +1,10 @@
+import { type Replay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type CommandResult,
   type CurationCommandType,
   isCurationCommandType,
   parseReplayCommand,
-  type Replay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Firestore } from 'firebase-admin/firestore';
 import type { ModerationChange } from '../admin/moderation';
 import { runAudited } from '../admin/records';

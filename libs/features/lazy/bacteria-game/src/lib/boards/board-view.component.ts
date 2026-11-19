@@ -21,17 +21,19 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import { AvatarComponent } from '../social/avatar.component';
 import {
   type Avatar,
+  clock,
+  rankFor,
+  TICKS_PER_SEC,
+} from '@wolsok/feat-shared-bacteria-engine';
+import {
   type BoardEntry,
   type BoardRef,
   type BoardRow,
-  clock,
   formatTag,
   PAGE_ROWS,
-  rankFor,
   showsName,
-  TICKS_PER_SEC,
   TOP_ROWS,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { BoardTop } from '../storage/game-boards';
 import { boardSections, WIN_RATE_AFTER } from './board-rows';
 import {

@@ -2,10 +2,12 @@ import {
   dailyLevelId,
   LEVELS,
   missionById,
-  type RankedOutcome,
-  rankedPlan,
   replayOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  type RankedOutcome,
+  rankedPlan,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   matchRules,
   MatchRules,

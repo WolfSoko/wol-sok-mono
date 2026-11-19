@@ -8,7 +8,7 @@ import {
   startWith,
   switchMap,
 } from 'rxjs';
-import { parseMirroredBan } from '@wolsok/feat-shared-bacteria-engine';
+import { parseMirroredBan } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { FirebaseConnection } from './firebase-connection';
 import { signedIn } from './firestore-values';
 import {

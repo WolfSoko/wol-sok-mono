@@ -1,4 +1,4 @@
-import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine';
+import type { CommandResult } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { ignoreNotFound } from '../grpc';

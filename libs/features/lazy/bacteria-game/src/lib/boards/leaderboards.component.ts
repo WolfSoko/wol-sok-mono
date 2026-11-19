@@ -14,12 +14,12 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { TranslationKey } from '../i18n/game-texts';
 import { ScreenHeaderComponent } from '../menu/screen-header.component';
+import { utcDay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   BOARD_KINDS,
   BoardKind,
   BoardRef,
-  utcDay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { DAILY_DAYS_SHOWN } from './board-rows';
 import { BoardViewComponent } from './board-view.component';
 import { BoardsService } from './boards.service';

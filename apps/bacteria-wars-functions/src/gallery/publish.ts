@@ -1,7 +1,5 @@
-import {
-  boardAvatar,
-  replayToBytes,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { replayToBytes } from '@wolsok/feat-shared-bacteria-engine';
+import { boardAvatar } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type DocumentSnapshot,

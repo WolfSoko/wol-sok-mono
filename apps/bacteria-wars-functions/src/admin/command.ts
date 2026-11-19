@@ -5,7 +5,7 @@ import {
   parseAdminCommand,
   parseBoardId,
   type PlayerTarget,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Firestore } from 'firebase-admin/firestore';
 import { runCommandDocument } from '../commands/run-command-document';
 import { banPlayer, liftBan } from './bans';

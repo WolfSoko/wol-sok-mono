@@ -1,4 +1,7 @@
-import { BoardRow, EntryStatus } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  BoardRow,
+  EntryStatus,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { boardSections } from './board-rows';
 
 function aRow(

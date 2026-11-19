@@ -2,7 +2,7 @@ import {
   onlineSort,
   XP_FULL_COUNT_BEFORE,
   xpSort,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { erasePart } from '../erasure/erase';
 import { erasureAt } from '../testing/erasure';

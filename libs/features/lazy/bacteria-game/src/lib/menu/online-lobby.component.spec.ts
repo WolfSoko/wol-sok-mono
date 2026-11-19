@@ -4,10 +4,8 @@ import { TestBed } from '@angular/core/testing';
 import { MatSelectHarness } from '@angular/material/select/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
-import {
-  type FeatureToggles,
-  MATCH_LEVELS,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
+import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { I18nService } from '../i18n/i18n.service';

@@ -7,11 +7,11 @@ import {
   FakeGameSocial,
 } from '../../testing/fake-game-social';
 import { I18nService } from '../i18n/i18n.service';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type BoardEntry,
   type BoardRef,
-  defaultProfile,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameAccount } from '../storage/game-account';
 import type { PagedEntry } from '../storage/game-boards';
 import { LateGameStorage } from '../../testing/late-game-storage';

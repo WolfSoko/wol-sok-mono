@@ -4,7 +4,6 @@ import {
   MatchOutcome,
   MatchPlan,
   Player,
-  type RankedMatch,
   Replay,
   ReplayExtras,
   ReplayInputs,
@@ -15,6 +14,7 @@ import {
   savedRegardless,
   type SizeSample,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type RankedMatch } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { MatchAnalytics } from '../analytics/match-analytics';
 import type { OnlineMatchRef } from '../net/online-match.service';
 import { GameReplays } from '../storage/game-replays';

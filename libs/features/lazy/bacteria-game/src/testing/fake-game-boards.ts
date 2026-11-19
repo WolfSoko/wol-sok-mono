@@ -5,7 +5,7 @@ import {
   isVisible,
   TOP_ROWS,
   topRows,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type {
   BoardCursor,
   BoardMember,

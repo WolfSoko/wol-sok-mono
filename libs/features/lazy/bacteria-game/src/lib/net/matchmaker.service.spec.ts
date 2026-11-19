@@ -1,9 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
-import {
-  type FeatureToggles,
-  MATCH_LEVELS,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
+import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameSocial } from '../../testing/fake-game-social';
