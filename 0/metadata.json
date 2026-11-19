@@ -1,0 +1,69 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7T3TK6D0F788TAR8Z69NEXG",
+  "session_id": "813497ea-191d-4d50-bc41-64878c5fa0aa",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-19T14:37:03.036507597Z",
+  "branch": "3131-infer-typecheck-specs",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "tools/ci/typecheck-specs.test.mjs"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "3ef51e74418d",
+  "checkpoint_transcript_start": 780,
+  "transcript_lines_at_start": 780,
+  "compact_transcript_start": 71,
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 7928,
+    "cache_read_tokens": 1255915,
+    "output_tokens": 4439,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 30,
+      "cache_creation_tokens": 31208,
+      "cache_read_tokens": 1254433,
+      "output_tokens": 9284,
+      "api_call_count": 15
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01Ec4XWCctABSKaVqtxZF12t",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "bce99e90997b",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 41,
+        "end": 42,
+        "entry_ids": [
+          "fb7b9e6b-b15f-4def-8f74-2fefccf37c79"
+        ],
+        "tool_use_id": "toolu_01Ec4XWCctABSKaVqtxZF12t"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01Ec4XWCctABSKaVqtxZF12t"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 5
+  }
+}

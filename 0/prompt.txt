@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>bzdbkgxm2</task-id>
+<tool-use-id>toolu_015Mz518i4wS4oXs5CBmsCzs</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-wolfsoko-wol-sok-mono-537/813497ea-191d-4d50-bc41-64878c5fa0aa/tasks/bzdbkgxm2.output</output-file>
+<status>completed</status>
+<summary>Background command "sha=9c6b47cb0b7c2fd7e46e3e9411e545727bf249e4; while true; do r=$(gh api "repos/{owner}/{repo}/actions/runs?head_sha=$sha" --jq '[.workflow_runs[] | select(.status!="completed")] | length' 2&gt;/dev/null || echo 1); [ "$r" = "0" ] &amp;&amp; break; sleep 60; done; gh api "repos/{owner}/{repo}/actions/runs?head_sha=$sha" --jq '.workflow_runs[] | "\(.name) \(.conclusion) \(.html_url)"'" completed (exit code 0)</summary>
+</task-notification>
