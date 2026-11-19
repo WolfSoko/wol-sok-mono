@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.6...v74.172.7) (2026-11-19)
+
+### Bug Fixes
+
+* **tools:** give the tools scripts a tsconfig so type-aware lint types them on every run ([#3137](https://github.com/WolfSoko/wol-sok-mono/issues/3137)) ([1c334e7](https://github.com/WolfSoko/wol-sok-mono/commit/1c334e750ab72b06ef67fa17857e57d4fc44695e)), closes [#3074](https://github.com/WolfSoko/wol-sok-mono/issues/3074)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** take the cloud contract from a /cloud entry ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) step 3) ([#3139](https://github.com/WolfSoko/wol-sok-mono/issues/3139)) ([6417db7](https://github.com/WolfSoko/wol-sok-mono/commit/6417db7743b0bbbec8160e4a4f528cd62ea4f52a))
+
 ## [74.172.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.5...v74.172.6) (2026-11-18)
 
 ### Bug Fixes
