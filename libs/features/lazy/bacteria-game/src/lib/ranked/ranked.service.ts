@@ -6,6 +6,7 @@ import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import { gpuTrusted } from '../gpu-choice/simulation-check';
 import type { GameText } from '../i18n/game-texts';
 import { ModerationService } from '../moderation/moderation.service';
+import { utcDay } from '@wolsok/feat-shared-bacteria-engine';
 import {
   attemptSeed,
   dailyAttemptsLeft,
@@ -22,8 +23,7 @@ import {
   type RankedRunOutcome,
   runsLeft,
   type UnrankedReason,
-  utcDay,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { PlayerService } from '../state/player.service';
 import { GameAccount } from '../storage/game-account';
 import { GameCloud } from '../storage/game-cloud';

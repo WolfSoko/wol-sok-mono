@@ -2,7 +2,7 @@ import {
   type AdminStats,
   atHourOf,
   dailyBoardId,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,

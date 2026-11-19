@@ -59,7 +59,7 @@ void describe('deploy inputs', () => {
     const checked = PROJECTS.filter((project) => project.json.targets?.deploy)
       .filter((project) => rootFirebaseConfigsOf(project).length > 0)
       .map((project) => project.json.name)
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
     assert.deepEqual(checked, [
       'bacteria-game-remote',
       'bacteria-wars-functions',

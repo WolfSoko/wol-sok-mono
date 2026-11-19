@@ -1,5 +1,8 @@
 import { BehaviorSubject } from 'rxjs';
-import { ATTEMPT_DAYS, attemptSeed } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  ATTEMPT_DAYS,
+  attemptSeed,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FAKE_SERVER_TIME,
   FakeFirebase,

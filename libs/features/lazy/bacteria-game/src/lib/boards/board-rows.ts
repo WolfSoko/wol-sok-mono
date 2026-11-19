@@ -1,4 +1,7 @@
-import { BoardRow, CHECKING_ROWS } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  BoardRow,
+  CHECKING_ROWS,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 
 /** The past daily boards the screen offers, today among them. */
 export const DAILY_DAYS_SHOWN = 7;

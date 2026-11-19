@@ -1,10 +1,12 @@
 import {
-  boardAvatar,
   replayFromBytes,
   type ReplayHeader,
   replayToBytes,
-  storedPlaybackOf,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  boardAvatar,
+  storedPlaybackOf,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { erasePart } from '../erasure/erase';
 import { erasureAt } from '../testing/erasure';

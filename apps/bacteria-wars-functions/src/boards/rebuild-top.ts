@@ -1,5 +1,5 @@
+import { BALANCE_VERSION } from '@wolsok/feat-shared-bacteria-engine';
 import {
-  BALANCE_VERSION,
   BOARD_CUT,
   type BoardRow,
   isVisible,
@@ -7,7 +7,7 @@ import {
   TOP_ROWS,
   topRows,
   VISIBLE_STATUSES,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,

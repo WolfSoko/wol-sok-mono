@@ -1,9 +1,11 @@
 import {
-  atHourOf,
   type NOT_REPORTED,
   type OnlineReason as StoredOnlineReason,
-  onlineSort,
 } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  atHourOf,
+  onlineSort,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,

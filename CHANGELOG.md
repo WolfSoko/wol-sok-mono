@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.6](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.5...v74.172.6) (2026-11-18)
+
+### Bug Fixes
+
+* **tools-vite:** load the Vite configs and helpers as ES modules ([#3135](https://github.com/WolfSoko/wol-sok-mono/issues/3135)) ([7279523](https://github.com/WolfSoko/wol-sok-mono/commit/72795234002735ecbd9e94097b5967d6060fea61)), references [#3106](https://github.com/WolfSoko/wol-sok-mono/issues/3106) [#3106](https://github.com/WolfSoko/wol-sok-mono/issues/3106) [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
+* **tools:** publish only the npm packages whose version was bumped ([#3134](https://github.com/WolfSoko/wol-sok-mono/issues/3134)) ([1f4e571](https://github.com/WolfSoko/wol-sok-mono/commit/1f4e57154f073b94744b52bbbd557c0f22a33086)), closes [#3049](https://github.com/WolfSoko/wol-sok-mono/issues/3049)
+
+### Chore
+
+* **release:** publish ([348196e](https://github.com/WolfSoko/wol-sok-mono/commit/348196e3f8ca974ff3f9775722051f4d558af4a0))
+
 ## [74.172.5](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.4...v74.172.5) (2026-11-18)
 
 ### Refactorings

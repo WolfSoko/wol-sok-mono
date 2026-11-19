@@ -1,8 +1,8 @@
 import {
   BALANCE_VERSION,
   endlessLevelId,
-  endlessSort,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { endlessSort } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type AcceptedMatch,
   computeRun,

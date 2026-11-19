@@ -10,15 +10,22 @@ export function readJson(path) {
   return JSON.parse(readFileSync(join(ROOT, path), 'utf8'));
 }
 
-/** Every tracked `project.json` as `{ path, json }`. */
-export function readProjects() {
-  return execFileSync('git', ['ls-files', 'project.json', '**/project.json'], {
+/** The tracked files matching the git pathspecs, relative to the root. */
+export function gitLsFiles(...pathspecs) {
+  return execFileSync('git', ['ls-files', '--', ...pathspecs], {
     cwd: ROOT,
     encoding: 'utf8',
   })
     .split('\n')
-    .filter((path) => path !== '')
-    .map((path) => ({ path, json: readJson(path) }));
+    .filter((path) => path !== '');
+}
+
+/** Every tracked `project.json` as `{ path, json }`. */
+export function readProjects() {
+  return gitLsFiles('project.json', '**/project.json').map((path) => ({
+    path,
+    json: readJson(path),
+  }));
 }
 
 /** The plain string inputs of an inputs list (leaves out object inputs). */

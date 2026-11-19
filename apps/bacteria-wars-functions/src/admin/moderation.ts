@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
+import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import {
   BOARD_KINDS,
-  defaultProfile,
   type NoticeType,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type DocumentReference,
   FieldValue,

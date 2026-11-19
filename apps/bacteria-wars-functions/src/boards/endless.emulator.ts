@@ -1,8 +1,8 @@
 import {
-  endlessSort,
   type Replay,
   replayToBytes,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { endlessSort } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { voidAttempt } from '../replays/accept';
 import { endlessReplay, RUN_ID, TICKS } from '../testing/daily-replay';

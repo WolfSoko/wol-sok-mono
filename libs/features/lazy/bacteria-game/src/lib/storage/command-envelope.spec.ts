@@ -1,7 +1,7 @@
 import {
   COMMAND_ENVELOPE_KEYS,
   COMMAND_TTL_MS,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { commandEnvelope, type EnvelopeSdk } from './command-envelope';
 
 describe('commandEnvelope', () => {

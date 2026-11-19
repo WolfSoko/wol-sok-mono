@@ -8,24 +8,27 @@ import { join } from 'node:path';
 const FORBIDDEN = ['@angular', '@ngrx', 'rxjs', 'firebase'];
 
 describe('engine', () => {
-  it('bundles without Angular, NgRx, RxJS or Firebase', async () => {
-    const result = await build({
-      entryPoints: [join(__dirname, 'index.ts')],
-      bundle: true,
-      platform: 'node',
-      format: 'esm',
-      metafile: true,
-      write: false,
-      logLevel: 'silent',
-    });
+  it.each(['index.ts', 'cloud.ts'])(
+    '%s bundles without Angular, NgRx, RxJS or Firebase',
+    async (entry) => {
+      const result = await build({
+        entryPoints: [join(__dirname, entry)],
+        bundle: true,
+        platform: 'node',
+        format: 'esm',
+        metafile: true,
+        write: false,
+        logLevel: 'silent',
+      });
 
-    const inputs = Object.keys(result.metafile.inputs);
-    expect(inputs.length).toBeGreaterThan(0);
-    expect(
-      inputs.filter((input) => FORBIDDEN.some((name) => input.includes(name)))
-    ).toEqual([]);
-    expect(inputs.filter((input) => input.includes('node_modules'))).toEqual(
-      []
-    );
-  });
+      const inputs = Object.keys(result.metafile.inputs);
+      expect(inputs.length).toBeGreaterThan(0);
+      expect(
+        inputs.filter((input) => FORBIDDEN.some((name) => input.includes(name)))
+      ).toEqual([]);
+      expect(inputs.filter((input) => input.includes('node_modules'))).toEqual(
+        []
+      );
+    }
+  );
 });

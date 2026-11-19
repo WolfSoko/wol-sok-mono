@@ -10,8 +10,8 @@ import {
   GHOST_REPLAY_VERSION,
   LADDER_REPLAY_VERSION,
   LADDER_VERSION,
-  type StoredPlayback,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { type StoredPlayback } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';

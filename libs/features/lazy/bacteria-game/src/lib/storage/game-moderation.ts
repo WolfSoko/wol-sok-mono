@@ -9,16 +9,16 @@ import {
   switchMap,
   timer,
 } from 'rxjs';
+import { isObject } from '@wolsok/feat-shared-bacteria-engine';
 import {
   BAN_REASONS,
   banHolds,
   type BanReason,
   type CloudBan,
-  isObject,
   NOTICE_TYPES,
   type NoticeType,
   parseBan as parseCloudBan,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { millisOf } from './firestore-values';
 
 /**

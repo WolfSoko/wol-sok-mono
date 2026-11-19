@@ -3,7 +3,7 @@ import {
   FEATURE_TOGGLES,
   featureToggles,
   type FeatureToggles,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameToggles } from './storage/game-toggles';
 
 /**

@@ -50,12 +50,12 @@ import {
   medalRank,
   nextLevel,
   Player,
-  RANKED_DAILY_ATTEMPTS,
   replayLink,
   rivalryScore,
   seriesWinner,
   xpClimb,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { RANKED_DAILY_ATTEMPTS } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { ProgressService } from '../progress.service';
 import { ReplayNoteComponent } from '../replays/replay-note.component';
 import { GuestNotice } from '../guest/guest-notice.service';

@@ -6,7 +6,7 @@ import {
   type EntryStatus,
   type HideReason,
   parseBoardId,
-} from '@wolsok/feat-shared-bacteria-engine';
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   type DocumentReference,
   FieldValue,
