@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.14](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.13...v74.172.14) (2026-11-19)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** take the GPU mirror from a /gpu entry and export only used names ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) step 3b) ([#3147](https://github.com/WolfSoko/wol-sok-mono/issues/3147)) ([5390618](https://github.com/WolfSoko/wol-sok-mono/commit/53906186652d98f4f209999412d6607b4b5c37c3))
+
 ## [74.172.13](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.12...v74.172.13) (2026-11-19)
 
 ### Bug Fixes
