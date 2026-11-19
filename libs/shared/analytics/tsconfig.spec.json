@@ -6,7 +6,7 @@
   },
   "files": ["src/test-setup.ts"],
   "include": [
-    "vite.config.mts",
+    "vitest.config.mts",
     "vitest.config.ts",
     "src/**/*.test.ts",
     "src/**/*.spec.ts",
