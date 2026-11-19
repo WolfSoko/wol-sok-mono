@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.8](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.7...v74.172.8) (2026-11-19)
+
+### Chore
+
+* **nx:** remove the Korbjäger app completely ([#3138](https://github.com/WolfSoko/wol-sok-mono/issues/3138)) ([4443fc3](https://github.com/WolfSoko/wol-sok-mono/commit/4443fc37493f9a6b3d389a0584f53eb348a9e455)), references [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132) [#3132](https://github.com/WolfSoko/wol-sok-mono/issues/3132)
+* **release:** publish ([3511efc](https://github.com/WolfSoko/wol-sok-mono/commit/3511efc7287e47e64bf37abeba3dfa4fa1e4e8c8))
+
 ## [74.172.7](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.6...v74.172.7) (2026-11-19)
 
 ### Bug Fixes
