@@ -70,9 +70,20 @@ void describe('typecheck-specs', () => {
     );
   });
 
+  void it('infers typecheck-specs itself, not a renamed target', async () => {
+    const renamed = (await inferredRoots())
+      .filter(([, { targets }]) => !targets[TARGET])
+      .map(([root]) => root);
+    assert.deepEqual(
+      renamed,
+      [],
+      `CI runs ${TARGET}; keep the plugin's targetName at its default`
+    );
+  });
+
   void it('points every inferred command at an existing spec tsconfig', async () => {
-    const broken = (await inferredProjects())
-      .flatMap(({ projects }) => Object.entries(projects ?? {}))
+    const broken = (await inferredRoots())
+      .filter(([, { targets }]) => targets[TARGET])
       .map(([root, { targets }]) =>
         targets[TARGET].command.replaceAll('{projectRoot}', root)
       )
@@ -111,6 +122,13 @@ async function inferredProjects() {
     file,
     projects: results.get(file)?.projects,
   }));
+}
+
+/** Each inferred project as `[root, configuration]`. */
+async function inferredRoots() {
+  return (await inferredProjects()).flatMap(({ projects }) =>
+    Object.entries(projects ?? {})
+  );
 }
 
 function tsconfigOf(command) {
