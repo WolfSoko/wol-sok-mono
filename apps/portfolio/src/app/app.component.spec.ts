@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
+import { BLOG_POSTS } from './blog/posts';
 import { I18nService } from './i18n/i18n.service';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
@@ -27,6 +28,17 @@ describe('AppComponent', () => {
     }
   });
 
+  it('teases the newest article on the home page', async () => {
+    const harness = await RouterTestingHarness.create('/');
+    const teaser = (harness.routeNativeElement as HTMLElement).querySelector(
+      '#blog'
+    );
+    expect(teaser?.textContent).toContain(BLOG_POSTS[0].title.en);
+    expect(teaser?.querySelector('a')?.getAttribute('href')).toBe(
+      `/blog/${BLOG_POSTS[0].slug}`
+    );
+  });
+
   it('sets the canonical URL, title and description per page and language', async () => {
     TestBed.inject(SeoService).init();
     const harness = await RouterTestingHarness.create();
@@ -38,6 +50,12 @@ describe('AppComponent', () => {
     expect(
       head.querySelector('meta[name="description"]')?.getAttribute('content')
     ).toContain('Privacy policy');
+
+    await harness.navigateByUrl('/blog/bacteria-wars-turn-relay');
+    expect(
+      head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+    ).toBe('https://wolsok.de/blog/bacteria-wars-turn-relay');
+    expect(document.title).toContain('Through the wall');
 
     await harness.navigateByUrl('/career');
     expect(document.title).toContain('Career');
@@ -56,6 +74,10 @@ describe('AppComponent', () => {
     const root = fixture.nativeElement as HTMLElement;
     expect(root.querySelector('header .career')?.textContent).toContain(
       'Career'
+    );
+
+    expect(root.querySelector('header .blog')?.getAttribute('href')).toBe(
+      '/blog'
     );
 
     root

@@ -59,6 +59,22 @@
   </div>
 </section>
 
+<section id="blog" class="career" aria-labelledby="blog-title" wolsokReveal>
+  <div class="career-card">
+    <div>
+      <h2 id="blog-title">{{ t().home.blogTitle }}</h2>
+      <p class="intro">
+        <strong>{{ i18n.pick(latestPost.title) }}</strong
+        ><br />
+        {{ i18n.pick(latestPost.summary) }}
+      </p>
+    </div>
+    <a matButton="filled" [routerLink]="latestPostPath">{{
+      t().home.blogLink
+    }}</a>
+  </div>
+</section>
+
 <section id="career" class="career" aria-labelledby="career-title" wolsokReveal>
   <div class="career-card">
     <div>

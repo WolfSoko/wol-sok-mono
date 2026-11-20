@@ -1,0 +1,101 @@
+// The blog's index and the frame of every article.
+:host {
+  display: block;
+}
+
+.hero {
+  padding: 4rem 0 1rem;
+}
+
+h1 {
+  margin: 0;
+  max-width: 24ch;
+  font-size: clamp(2.1rem, 5.5vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+
+  em {
+    font-style: normal;
+    color: var(--accent-warm);
+  }
+}
+
+.date {
+  margin: 0 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.posts {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.post-card {
+  position: relative;
+  padding: 1.75rem 2rem;
+  border-radius: 1.5rem;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 10px 30px var(--shadow);
+  transition: transform 0.2s ease;
+
+  &:hover,
+  &:focus-within {
+    transform: translateY(-3px);
+  }
+
+  h2 {
+    font-size: clamp(1.35rem, 3vw, 1.8rem);
+    line-height: 1.2;
+  }
+
+  // the heading's link covers the whole card
+  h2 a {
+    color: var(--text);
+    text-decoration: none;
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+    }
+  }
+
+  .summary {
+    margin: 0.75rem 0 1rem;
+    max-width: 65ch;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .read {
+    color: var(--accent-warm);
+    font-weight: 600;
+  }
+}
+
+.article-head {
+  padding: 4rem 0 0.5rem;
+  max-width: 46rem;
+
+  .eyebrow a {
+    color: inherit;
+  }
+}
+
+.article-foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  max-width: 46rem;
+  padding: 2rem 0 4rem;
+  border-top: 1px solid var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .post-card {
+    transition: none;
+  }
+}

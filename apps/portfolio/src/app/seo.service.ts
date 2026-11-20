@@ -2,7 +2,7 @@ import { DOCUMENT, effect, inject, Injectable, signal } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
-import { PageData } from './app.routes';
+import { PageData } from './page-data';
 import { I18nService } from './i18n/i18n.service';
 
 export const SITE_URL = 'https://wolsok.de';

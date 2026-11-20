@@ -1,13 +1,8 @@
 import { Route } from '@angular/router';
+import { blogRoutes } from './blog/blog.routes';
 import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
-import { Localized } from './i18n/language';
-
-/** Title and description of a page in every language, set by SeoService. */
-export interface PageData {
-  title: Localized;
-  description: Localized;
-}
+import { PageData } from './page-data';
 
 export const appRoutes: Route[] = [
   {
@@ -39,6 +34,7 @@ export const appRoutes: Route[] = [
       },
     } satisfies PageData,
   },
+  ...blogRoutes,
   {
     path: 'privacy',
     loadComponent: () =>

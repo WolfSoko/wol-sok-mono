@@ -1,0 +1,22 @@
+<section class="hero" aria-labelledby="blog-heading">
+  <p class="eyebrow">{{ t().blog.eyebrow }}</p>
+  <h1 id="blog-heading">
+    {{ t().blog.title }} <em>{{ t().blog.titleAccent }}</em>
+  </h1>
+  <p class="lead">{{ t().blog.lead }}</p>
+</section>
+
+<section class="posts">
+  @for (post of posts; track post.slug) {
+    <article class="post-card">
+      <p class="date">
+        <time [attr.datetime]="post.published">{{ published(post) }}</time>
+      </p>
+      <h2>
+        <a [routerLink]="path(post)">{{ i18n.pick(post.title) }}</a>
+      </h2>
+      <p class="summary">{{ i18n.pick(post.summary) }}</p>
+      <span class="read" aria-hidden="true">{{ t().blog.read }} →</span>
+    </article>
+  }
+</section>
