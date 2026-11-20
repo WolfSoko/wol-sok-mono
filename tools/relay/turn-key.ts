@@ -11,8 +11,10 @@
  * Usage: npx nx run tools-relay:turn-key [-- --account-id=<id>] [--prune]
  *        npx nx run tools-relay:check
  *
- * `--check` sets nothing up: it connects two Chromium peers through the
- * relay only and holds the channel past the credentials' expiry. No secret
+ * `--check` sets nothing up: it connects two peers in one browser page
+ * through the relay only and holds the channel past the credentials'
+ * expiry: `--refresh=none|configure|restart` says how it renews them
+ * meanwhile, `--browser=chromium|firefox|webkit` where it runs. No secret
  * is ever printed.
  */
 import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
@@ -30,6 +32,8 @@ import {
   CHECK_HOLD_MS,
   CHECK_TTL_S,
   checkCredentials,
+  CHECK_BROWSERS,
+  type CheckBrowser,
   checkRelay,
   type RefreshMode,
 } from './relay-check';
@@ -79,11 +83,18 @@ async function check(secrets: FirebaseSecrets): Promise<boolean> {
   if (!['none', 'configure', 'restart'].includes(mode)) {
     throw new Error('--refresh takes none, configure or restart.');
   }
-  log(`Refreshing the credentials: ${mode}`);
+  const browser = (option('browser') ?? 'chromium') as CheckBrowser;
+  if (!(browser in CHECK_BROWSERS)) {
+    throw new Error(
+      `--browser takes ${Object.keys(CHECK_BROWSERS).join(', ')}.`
+    );
+  }
+  log(`Refreshing the credentials: ${mode}, in ${browser}`);
   const result = await checkRelay(
     await checkCredentials(key),
     () => checkCredentials(key),
-    mode
+    mode,
+    browser
   );
   log(JSON.stringify(result));
   return result.opened && result.relayed && result.first && result.afterExpiry;

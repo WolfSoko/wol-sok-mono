@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, firefox, webkit } from '@playwright/test';
 import {
   type RelayEntry,
   relayCredentialsUrl,
@@ -22,6 +22,10 @@ export const CHECK_HOLD_MS = 11 * 60_000;
  * {@link CHECK_REFRESH_MS}, or by that and an ICE restart.
  */
 export type RefreshMode = 'none' | 'configure' | 'restart';
+
+/** The browsers the check runs in: Chrome's, Firefox's and Safari's engines. */
+export const CHECK_BROWSERS = { chromium, firefox, webkit } as const;
+export type CheckBrowser = keyof typeof CHECK_BROWSERS;
 
 /** How often the check takes fresh credentials, well before they expire. */
 export const CHECK_REFRESH_MS = 30_000;
@@ -59,7 +63,7 @@ export async function checkCredentials(key: TurnKey): Promise<RelayEntry> {
 }
 
 /**
- * Two connections in one Chromium page that may reach each other only
+ * Two connections in one browser page that may reach each other only
  * through `relay` (`iceTransportPolicy: 'relay'`), as two devices behind
  * strict NATs: whether their channel opens, carries a message, and still
  * carries one {@link CHECK_HOLD_MS} later, past the credentials' expiry.
@@ -68,9 +72,10 @@ export async function checkRelay(
   relay: RelayEntry,
   fresh: () => Promise<RelayEntry>,
   mode: RefreshMode = 'none',
+  browserName: CheckBrowser = 'chromium',
   holdMs = CHECK_HOLD_MS
 ): Promise<RelayCheck> {
-  const browser = await chromium.launch();
+  const browser = await CHECK_BROWSERS[browserName].launch();
   try {
     const page = await browser.newPage();
     // tsx names the functions it compiles with an `__name` helper, which
