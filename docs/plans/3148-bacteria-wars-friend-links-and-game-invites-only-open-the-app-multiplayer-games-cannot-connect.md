@@ -2,8 +2,8 @@
 
 Spec: [docs/specs/3148-…](../specs/3148-bacteria-wars-friend-links-and-game-invites-only-open-the-app-multiplayer-games-cannot-connect.md).
 Issue: [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148), step 1.
-Branch `3148-bacteria-wars-friend-links-and-game-invites`. One PR, `Part of #3148`
-while the TURN decision is open, else `Closes #3148`.
+Branch `3148-bacteria-wars-friend-links-and-game-invites`. One PR, `Part of #3148`:
+the Cloudflare TURN relay follows as a second PR with its own spec and plan.
 
 All paths are below `libs/features/lazy/bacteria-game/src/`.
 
@@ -43,7 +43,15 @@ All paths are below `libs/features/lazy/bacteria-game/src/`.
 - `docs/analytics.md`: `failure` on `online_ended`.
 - Commit: `fix(feat-lazy-bacteria-game): tell an unreachable device apart and wait longer for its candidates (#3148)`
 
-## Task 3: checks and PR
+## Task 3: let a matched guest who answered finish connecting (spec C, part 1)
+
+- Test first, `lib/net/matchmaker.service.spec.ts`: a claimed guest whose
+  lobby is `connecting` is not left when `JOIN_TIMEOUT_MS` passes.
+- `lib/net/matchmaker.service.ts`: the timeout leaves only a lobby still
+  `waiting`.
+- Commit: `fix(feat-lazy-bacteria-game): let a matched player who answered finish connecting (#3148)`
+
+## Task 4: checks and PR
 
 - `npx nx format:write`, then `npx nx affected -t lint,lint-templates,test,typecheck-specs`.
 - Open the PR with spec, plan and code, the acceptance list and the

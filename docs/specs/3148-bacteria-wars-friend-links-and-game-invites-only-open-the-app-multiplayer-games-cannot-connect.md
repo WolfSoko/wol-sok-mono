@@ -40,20 +40,38 @@ devices. These failures happen only on real devices, for two reasons:
   through the same connection (`OnlineFlow.playChallenge` calls
   `OnlineMatchService.join`), so report 2 is most likely B as well: the
   challenge opens the online lobby, and the connection then fails.
+- **C. Two devices on the same Wi-Fi fail too** (the user's own test). On
+  a LAN the host candidates should connect, but Chrome hides the local IP
+  behind an mDNS name (`<uuid>.local`), and the other device has to
+  resolve it by multicast. Mesh, guest and client-isolated Wi-Fi networks
+  often block that, and the server-reflexive fallback then needs the
+  router to hairpin (send a packet to its own public address back into
+  the LAN), which many home routers do not do for UDP. The e2e
+  (`online.spec.ts`) launches Chromium with
+  `--disable-features=WebRtcHideLocalIpsWithMdns`, so it never exercises
+  this path. Without TURN the game cannot reach such a pair: only a
+  relay gets through. On top of that, in matchmaking the host's
+  `JOIN_TIMEOUT_MS` (20 s) ran from the claim, not from the guest's
+  answer, so it dropped a link that was still connecting (the guest's
+  read, candidate wait and answer all counted against it), and the
+  link's own `CONNECT_TIMEOUT_MS` never got its turn.
 
 ## Scope of this PR (step 1 of the issue)
 
 - A: every new link hash is taken while the game runs, not only the first.
 - B, part 1: a longer candidate wait, a notice of its own when the other
   device cannot be reached, and the failure's kind in analytics.
+- C, part 1: the matchmaking host's join timeout covers only the wait for
+  the guest's answer; once the answer is in, the link's connect timeout
+  decides.
 
 ## Non-goals
 
-- A TURN relay. It needs a provider, a cost decision, a secret, a privacy
-  policy paragraph and an ADR that supersedes the "no TURN" part of ADR 0009.
-  It has gone to the user as a decision of its own. If they approve, it ships
-  as a later PR of this issue ("Part of #3148"). If not, this PR is the whole
-  fix.
+- A TURN relay (B and C, part 2). The user chose Cloudflare TURN, as a
+  second PR of this issue, with its own spec and plan: short-lived
+  credentials from a Cloud Function, the secret, a privacy policy
+  paragraph and an ADR that supersedes the "no TURN" part of ADR 0009.
+  This PR says "Part of #3148".
 - Push notifications for challenges while the friend is not in the game.
 - Changes to the Android app: the TWA already passes the link's URL,
   fragment included, to Chrome.
@@ -112,13 +130,15 @@ devices. These failures happen only on real devices, for two reasons:
    on `OnlineMatchService` with `pairedTransport()`).
 6. `GATHER_TIMEOUT_MS` is 5000.
 7. `docs/analytics.md` lists `failure` on `online_ended`.
-8. `nx test`, `lint`, `lint-templates` and `typecheck-specs` of
+8. In matchmaking, a host whose claimed guest has answered (`connecting`)
+   is not dropped when `JOIN_TIMEOUT_MS` passes; one still `waiting` for
+   the answer is, as before (unit specs on `MatchmakerService`).
+9. `nx test`, `lint`, `lint-templates` and `typecheck-specs` of
    `feat-lazy-bacteria-game` are green, and so is the game's e2e in CI.
 
 ## Open questions
 
-- TURN relay (provider, cost, secret, privacy policy, ADR): with the user,
-  see the non-goals.
+- TURN relay: decided (Cloudflare, second PR), see the non-goals.
 - Whether the failing links were opened with the app already running, and
   whether the failing matches were on mobile data: to be asked of the user
   next. The spec goes ahead on the analysis either way.
