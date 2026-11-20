@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>b5t59qm74</task-id>
+<tool-use-id>toolu_0162HchT6kU1i7geuEkJRbbc</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/b5t59qm74.output</output-file>
+<status>completed</status>
+<summary>Background command "S=/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/scratchpad; (timeout 1000 npx tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check --refresh=restart --browser=firefox 2&gt;&amp;1 | tail -3) &gt; $S/ff-restart.log &amp; (timeout 1000 npx tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check --refresh=none --browser=firefox 2&gt;&amp;1 | tail -3) &gt; $S/ff-none.log &amp; wait; cat $S/ff-restart.log $S/ff-none.log" completed (exit code 0)</summary>
+</task-notification>
