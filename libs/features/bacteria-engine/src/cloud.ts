@@ -37,6 +37,12 @@ export { HIDE_REASONS } from './lib/state/cloud/records/hide-reasons';
 export type { HideReason } from './lib/state/cloud/records/hide-reasons';
 export { NOTICE_TYPES } from './lib/state/cloud/records/notices';
 export type { NoticeType } from './lib/state/cloud/records/notices';
+export {
+  parseRelayCredentials,
+  RELAY_COLLECTION,
+  RELAY_DOC_ID,
+} from './lib/state/cloud/records/relay';
+export type { RelayCredentials } from './lib/state/cloud/records/relay';
 export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud/records/replays';
 export type {
   ReplayKind,
