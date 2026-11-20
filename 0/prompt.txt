@@ -1,0 +1,9 @@
+You are a SpeedDev cloud session. Load the speeddev:cockpit skill, read SESSION.md in its base directory and act on the <routine-fire-payload> block below as it says.
+<routine-fire-payload>
+    SpeedDev handover
+    cockpit: 25
+    ticket: WolfSoko/wol-sok-mono#3159
+    role: end-to-end
+    work item: 560
+    base branch: main
+</routine-fire-payload>
