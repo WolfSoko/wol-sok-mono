@@ -1,0 +1,39 @@
+<task-notification>
+<task-id>bt9i07rnk</task-id>
+<tool-use-id>toolu_01XX9SfnP3w7ZALyRHQrbUpE</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/bt9i07rnk.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1451/answer -G -d arbeit=556 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1451/answer -G -d arbeit=556" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bd5fels5c</task-id>
+<tool-use-id>toolu_01RyqNLGykWkjbHXwanTL7cT</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/bd5fels5c.output</output-file>
+<status>completed</status>
+<summary>Background command "sleep 30; for i in $(seq 1 60); do out=$(gh api repos/{owner}/{repo}/commits/818087adf17bfe277c91313a1e9922ed5c02aea2/check-runs --jq '.check_runs[] | "\(.name): \(.status) \(.conclusion)"'); [ -n "$out" ] &amp;&amp; ! echo "$out" | grep -q "in_progress\|queued" &amp;&amp; break; sleep 60; done; echo "$out" | grep -v "claude: completed skipped"" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjfpmu3jm</task-id>
+<tool-use-id>toolu_01S1QhAyW2TkB1Kz2HjBnZC3</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/bjfpmu3jm.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1452/answer -G -d arbeit=556 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1452/answer -G -d arbeit=556" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+continue
