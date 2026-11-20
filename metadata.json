@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7WHAHNRQXGG1DC8Q3S72TK5",
+  "strategy": "manual-commit",
+  "branch": "3148-turn-relay",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/bacteria-game-remote/firestore.rules",
+    "apps/bacteria-game-remote/rules-test/firestore-rules.emulator.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 4651,
+    "cache_read_tokens": 1148919,
+    "output_tokens": 2247,
+    "api_call_count": 5
+  }
+}
