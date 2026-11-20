@@ -3,8 +3,13 @@ import { spawn } from 'node:child_process';
 /** The Firebase project whose Secret Manager holds the relay's secrets. */
 export const PROJECT = 'bacteria-wars';
 
-/** How the CLI says a secret does not exist (Secret Manager's 404). */
-const NOT_FOUND = /NOT_FOUND|not found|does not exist|404/i;
+/**
+ * Whether the CLI's output says the secret `name` does not exist: Secret
+ * Manager's 404, which the CLI logs on stdout, not stderr.
+ */
+function notFound(name: string, output: string): boolean {
+  return /HTTP Error: 404/.test(output) && output.includes(`/secrets/${name}`);
+}
 
 /** Runs a command with `input` on stdin, answering its exit code and stdout. */
 export type Run = (
@@ -52,11 +57,13 @@ export class FirebaseSecrets {
     if (code === 0) {
       return stdout.trim();
     }
-    if (NOT_FOUND.test(stderr)) {
+    // A failed read prints no secret: its output is the CLI's error.
+    const output = `${stdout}\n${stderr}`.trim();
+    if (notFound(name, output)) {
       return null;
     }
     throw new Error(
-      `Reading the secret ${name} failed (exit ${code}): ${stderr.trim()}`
+      `Reading the secret ${name} failed (exit ${code}): ${output}`
     );
   }
 

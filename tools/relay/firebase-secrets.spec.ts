@@ -18,21 +18,33 @@ describe('FirebaseSecrets', () => {
     ]);
   });
 
-  it('reads a secret that does not exist as none', async () => {
+  it('reads a secret that does not exist as none, as the CLI logs it on stdout', async () => {
     const run: Run = async () => ({
       code: 1,
-      stdout: '',
-      stderr:
-        'Error: HTTP Error: 404, Secret [projects/1/secrets/NAME] not found or has no versions.',
+      stdout:
+        '\nError: Request to https://secretmanager.googleapis.com/v1/projects/bacteria-wars/secrets/NAME/versions/latest:access had HTTP Error: 404, Secret [projects/1/secrets/NAME] not found or has no versions.\n',
+      stderr: '',
     });
     expect(await new FirebaseSecrets(run).read('NAME')).toBeNull();
+  });
+
+  it("reads another secret's 404 as a failure", async () => {
+    const run: Run = async () => ({
+      code: 1,
+      stdout:
+        'Error: HTTP Error: 404, Secret [projects/1/secrets/OTHER] not found',
+      stderr: '',
+    });
+    await expect(new FirebaseSecrets(run).read('NAME')).rejects.toThrow(
+      'Reading the secret NAME failed'
+    );
   });
 
   it('throws on any other failure, never reading it as none', async () => {
     const run: Run = async () => ({
       code: 1,
-      stdout: '',
-      stderr: 'Error: Failed to make request: ETIMEDOUT',
+      stdout: 'Error: Failed to make request: ETIMEDOUT',
+      stderr: '',
     });
     await expect(new FirebaseSecrets(run).read('NAME')).rejects.toThrow(
       'Reading the secret NAME failed (exit 1): Error: Failed to make request: ETIMEDOUT'
