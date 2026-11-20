@@ -1,10 +1,13 @@
+import type { Relay } from '../lib/net/peer-transport';
 import { flush, pairedTransport } from './paired-transport';
+
+const NO_RELAY: Relay = { servers: [], fresh: async () => [] };
 
 describe('pairedTransport', () => {
   async function pair() {
     const transport = pairedTransport();
-    const host = await transport.offer();
-    const guest = await transport.answer(host.offer);
+    const host = await transport.offer(NO_RELAY);
+    const guest = await transport.answer(host.offer, NO_RELAY);
     await host.link.accept(guest.answer);
     return { host: host.link, guest: guest.link };
   }
@@ -18,19 +21,19 @@ describe('pairedTransport', () => {
 
   it('refuses an answer to an offer it never made', async () => {
     const transport = pairedTransport();
-    const host = await transport.offer();
+    const host = await transport.offer(NO_RELAY);
 
-    await expect(transport.answer('elsewhere')).rejects.toThrow();
+    await expect(transport.answer('elsewhere', NO_RELAY)).rejects.toThrow();
     await expect(host.link.accept('made-up')).rejects.toThrow();
   });
 
   it('refuses to answer an offer whose host gave up', async () => {
     const transport = pairedTransport();
-    const host = await transport.offer();
+    const host = await transport.offer(NO_RELAY);
 
     host.link.close();
 
-    await expect(transport.answer(host.offer)).rejects.toThrow();
+    await expect(transport.answer(host.offer, NO_RELAY)).rejects.toThrow();
   });
 
   it('delivers in order and later, never during the send', async () => {
@@ -63,7 +66,7 @@ describe('pairedTransport', () => {
 
   it('rejects the opening of an end closed before it opened', async () => {
     const transport = pairedTransport();
-    const { link } = await transport.offer();
+    const { link } = await transport.offer(NO_RELAY);
 
     link.close();
 

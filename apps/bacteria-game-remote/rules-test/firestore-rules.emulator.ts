@@ -910,6 +910,38 @@ describe('levelStats', () => {
   });
 });
 
+describe('the relay credentials', () => {
+  const relay = 'relay/turn';
+  const credentials = {
+    urls: ['turn:turn.cloudflare.com:3478?transport=udp'],
+    username: 'user',
+    credential: 'secret',
+    expireAt: Timestamp.fromMillis(Date.now() + HOUR),
+  };
+
+  it('lets a signed-in player read them, nobody list or write them', async () => {
+    await seed(relay, credentials);
+    await assertSucceeds(getDoc(doc(db('ada'), relay)));
+    await assertFails(getDocs(collection(db('ada'), 'relay')));
+    await assertFails(setDoc(doc(db('ada'), relay), credentials));
+    await assertFails(setDoc(doc(db('own', OWNER_TOKEN), relay), credentials));
+    await assertFails(
+      getDoc(
+        doc(
+          env.unauthenticatedContext().firestore() as unknown as Firestore,
+          relay
+        )
+      )
+    );
+  });
+
+  it('keeps them from a banned player', async () => {
+    await seed(relay, credentials);
+    await seed('bans/ada', { since: Timestamp.now(), until: null });
+    await assertFails(getDoc(doc(db('ada'), relay)));
+  });
+});
+
 describe('the gallery', () => {
   it("lets the owner read a day's runners-up and the public replays, but not their bytes", async () => {
     await seed('replayCandidates/2026-10-25', { done: true });

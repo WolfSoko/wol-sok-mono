@@ -1,0 +1,22 @@
+{
+  "name": "tools-relay",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "tags": ["tools"],
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "tools/relay/jest.config.ts"
+      }
+    },
+    "turn-key": {
+      "command": "tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts",
+      "cache": false
+    },
+    "check": {
+      "command": "tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check",
+      "cache": false
+    }
+  }
+}

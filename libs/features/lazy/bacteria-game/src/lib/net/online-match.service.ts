@@ -19,12 +19,14 @@ import {
   type PeerConnection,
   type PeerTransport,
   PeerUnreachableError,
+  type Relay,
   type UnreachableKind,
 } from './peer-transport';
 import { PlayerService } from '../state/player.service';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
 import type { GameText } from '../i18n/game-texts';
+import type { RelayServer } from '../storage/game-relay';
 
 /** Where the lobby of an online match stands. */
 export type OnlinePhase =
@@ -170,7 +172,11 @@ export class OnlineMatchService {
       auto: options.auto ?? false,
     });
     try {
-      const { link, offer } = await this.wire.offer();
+      const relay = await this.relay();
+      if (attempt !== this.attempt) {
+        return;
+      }
+      const { link, offer } = await this.wire.offer(this.relayOf(relay));
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -223,6 +229,8 @@ export class OnlineMatchService {
       code,
       auto: options.auto ?? false,
     });
+    // Read while the room is: both before the answer.
+    const relay = this.relay();
     try {
       const room = await rooms.join(code);
       if (attempt !== this.attempt) {
@@ -232,7 +240,10 @@ export class OnlineMatchService {
         this.endWith(attempt, { key: 'online.notices.noRoom' });
         return;
       }
-      const { link, answer } = await this.wire.answer(room.offer);
+      const { link, answer } = await this.wire.answer(
+        room.offer,
+        this.relayOf(await relay)
+      );
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -342,6 +353,19 @@ export class OnlineMatchService {
       this.events.next({ type: 'ended', reason });
     }
     return this.attempt;
+  }
+
+  /**
+   * The TURN relay to connect through where the devices cannot reach each
+   * other directly (ADR 0020) - none without its credentials.
+   */
+  private relay(): Promise<readonly RelayServer[]> {
+    return this.cloud.relay()?.servers() ?? Promise.resolve([]);
+  }
+
+  /** The relay for a link: `servers` now, fresh ones while it lasts. */
+  private relayOf(servers: readonly RelayServer[]): Relay {
+    return { servers, fresh: () => this.relay() };
   }
 
   /** Takes the link of an attempt - false when the attempt is over. */

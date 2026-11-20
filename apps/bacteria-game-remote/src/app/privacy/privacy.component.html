@@ -24,7 +24,7 @@
 
   <article id="de" lang="de">
     <h1>Datenschutzerklärung</h1>
-    <p class="stand">Stand: 7. November 2026</p>
+    <p class="stand">Stand: 20. November 2026</p>
     <p>
       Diese Erklärung gilt für das Spiel Bacteria Wars unter
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -272,7 +272,33 @@
       der Gastgeber den Raum verlässt, löscht das Spiel den Raum; sonst läuft er
       nach einer Stunde ab, und die Datenbank löscht ihn, in der Regel innerhalb
       eines Tages danach. Im Match sehen beide Spieler das Online-Profil des
-      anderen. Das Match selbst läuft nicht über unsere Server.
+      anderen. Das Match selbst läuft nicht über unsere Server, nur dann über
+      die von Cloudflare, wenn die Geräte keinen direkten Weg finden (unten).
+    </p>
+    <p>
+      Damit eine Verbindung auch dort zustande kommt, wo ein Netz direkte
+      Verbindungen sperrt (etwa manche Mobilfunk- und WLAN-Netze), nutzen die
+      Geräte zusätzlich die TURN-Server von Cloudflare Realtime (Anbieter:
+      Cloudflare, Inc., 101 Townsend St., San Francisco, CA 94107, USA). Dafür
+      holt das Spiel vor dem Verbindungsaufbau Zugangsdaten aus Cloud Firestore,
+      die eine Stunde gelten und für alle Spieler dieselben sind. Bei jedem
+      Verbindungsaufbau erhält Cloudflare die IP-Adresse deines Geräts, die
+      Ports und die Zeiten der Verbindung, auch wenn die Geräte sich danach
+      direkt verbinden. Finden sie keinen direkten Weg, läuft das Match über
+      Cloudflare; sein Inhalt ist dabei durchgehend verschlüsselt (DTLS),
+      Cloudflare kann ihn nicht lesen. Wir selbst speichern diese
+      Verbindungsdaten nicht; wie lange Cloudflare sie aufbewahrt, steht in
+      seiner Datenschutzerklärung. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b
+      DSGVO: Ohne diesen Weg kämen viele Online-Matches nicht zustande.
+      Cloudflare verarbeitet die Daten als Auftragsverarbeiter für uns, in
+      seinem weltweiten Netz am nächstgelegenen Standort. Cloudflare, Inc. ist
+      unter dem EU-US Data Privacy Framework zertifiziert; die Übermittlung in
+      die USA stützt sich auf den Angemessenheitsbeschluss der EU-Kommission
+      (Art. 45 DSGVO) und zusätzlich auf Standardvertragsklauseln (Art. 46 Abs.
+      2 lit. c DSGVO). Mehr dazu in der
+      <a href="https://www.cloudflare.com/privacypolicy/"
+        >Datenschutzerklärung von Cloudflare</a
+      >.
     </p>
     <h3 id="de-matches">Aufgezeichnete Matches</h3>
     <p>
@@ -919,7 +945,7 @@
 
   <article id="en" lang="en">
     <h1>Privacy policy</h1>
-    <p class="stand">Last updated: 7 November 2026</p>
+    <p class="stand">Last updated: 20 November 2026</p>
     <p>
       This policy covers the game Bacteria Wars at
       <a href="https://bacteria-wars.wolsok.de">bacteria-wars.wolsok.de</a>
@@ -1146,7 +1172,31 @@
       the host leaves the room, the game deletes the room; otherwise it expires
       after an hour and the database deletes it, usually within a day after
       that. During the match both players see each other's online profile. The
-      match itself does not go through our servers.
+      match itself does not go through our servers, and through Cloudflare's
+      only when the devices find no direct way (below).
+    </p>
+    <p>
+      So that a connection also comes about where a network blocks direct
+      connections (some mobile and Wi-Fi networks do), the devices also use the
+      TURN servers of Cloudflare Realtime (provider: Cloudflare, Inc., 101
+      Townsend St., San Francisco, CA 94107, USA). For that, the game reads
+      access credentials from Cloud Firestore before it connects, valid for an
+      hour and the same for every player. On every connection Cloudflare
+      receives your device's IP address, the ports and the times of the
+      connection, even when the devices then connect directly. If they find no
+      direct way, the match runs through Cloudflare; its content stays encrypted
+      end to end (DTLS), so Cloudflare cannot read it. We do not store these
+      connection details ourselves; how long Cloudflare keeps them is set out in
+      its privacy policy. The legal basis is Art. 6(1)(b) GDPR: without this way
+      many online matches would not come about. Cloudflare processes the data on
+      our behalf as a processor, in its worldwide network at the nearest
+      location. Cloudflare, Inc. is certified under the EU-US Data Privacy
+      Framework; the transfer to the USA relies on the European Commission's
+      adequacy decision (Art. 45 GDPR) and also on standard contractual clauses
+      (Art. 46(2)(c) GDPR). More in
+      <a href="https://www.cloudflare.com/privacypolicy/"
+        >Cloudflare's privacy policy</a
+      >.
     </p>
     <h3 id="en-matches">Recorded matches</h3>
     <p>

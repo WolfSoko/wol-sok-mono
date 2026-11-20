@@ -306,6 +306,12 @@ export const PLAYER_DATA: readonly PlayerData[] = [
   },
   {
     store: 'firestore',
+    path: 'relay/{doc}',
+    erase: 'keep',
+    why: "The TURN relay's shared credentials (ADR 0020), without a uid.",
+  },
+  {
+    store: 'firestore',
     path: 'replayCandidates/{day}',
     erase: 'keep',
     why: "The gallery's runners-up of a day: replay ids and scores, without a uid.",

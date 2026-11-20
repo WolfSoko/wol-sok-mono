@@ -20,6 +20,7 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
   ACCOUNTS_DOC,
@@ -50,6 +51,7 @@ import {
   GUEST_CLEANUP_ON,
   HOURLY_ON,
   REGION,
+  RELAY_ON,
   RETRY_FOR_MS,
   RTDB_URL,
 } from './config';
@@ -61,6 +63,7 @@ import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
+import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
@@ -88,6 +91,12 @@ const realtime = realtimeOf(async () => {
  * functions that name it in `secrets` can read it.
  */
 const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
+
+/**
+ * The TURN key of Cloudflare Realtime (ADR 0020), `{ id, token }`, which
+ * `tools-relay:turn-key` stores: only `refreshRelay` names it.
+ */
+const CLOUDFLARE_TURN_KEY = defineSecret('CLOUDFLARE_TURN_KEY');
 
 /** The feature toggles in Remote Config, loaded on first use. */
 const toggles = remoteTogglesOf(async () =>
@@ -529,6 +538,35 @@ export const hourly = HOURLY_ON
       withSentry(async () => {
         const result = await runHourly(db(), Date.now(), accountInfo, realtime);
         logger.info('Hourly run', result);
+      })
+    )
+  : undefined;
+
+/**
+ * Every 30 minutes: fresh credentials for the TURN relay of online
+ * matches into `relay/turn` (ADR 0020), valid an hour, so a failed run
+ * leaves the last ones for the next. Off with `RELAY_ON`.
+ */
+export const refreshRelay = RELAY_ON
+  ? onSchedule(
+      {
+        schedule: 'every 30 minutes',
+        memory: '256MiB',
+        timeoutSeconds: 60,
+        maxInstances: 1,
+        retryCount: 0,
+        secrets: [CLOUDFLARE_TURN_KEY],
+      },
+      withSentry(async () => {
+        const { expireAt } = await refreshRelayOf(
+          db(),
+          parseTurnKey(CLOUDFLARE_TURN_KEY.value()),
+          fetch,
+          Date.now()
+        );
+        logger.info('Relay refreshed', {
+          expireAt: new Date(expireAt).toISOString(),
+        });
       })
     )
   : undefined;
