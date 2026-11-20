@@ -1,0 +1,65 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7WDYQBV10JJ7W46BN3WKWGQ",
+  "session_id": "e0d61cb9-1e76-4f4a-89f0-620bd261d9ca",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T12:12:37.878358768Z",
+  "branch": "3148-turn-relay",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3148-bacteria-wars-friend-links-and-game-invites-only-open-the-app-multiplayer-games-cannot-connect-part-2-turn-relay.md",
+    "docs/specs/3148-bacteria-wars-friend-links-and-game-invites-only-open-the-app-multiplayer-games-cannot-connect-part-2-turn-relay.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "17df0ada0de8",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 62,
+    "cache_creation_tokens": 131029,
+    "cache_read_tokens": 3525795,
+    "output_tokens": 25403,
+    "api_call_count": 29,
+    "subagent_tokens": {
+      "input_tokens": 12,
+      "cache_creation_tokens": 43675,
+      "cache_read_tokens": 101423,
+      "output_tokens": 8737,
+      "api_call_count": 5
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01XjfhWBjihP61B7RC7cfMAC",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "17df0ada0de8",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 41,
+        "end": 42,
+        "entry_ids": [
+          "cc6d8158-710c-4530-a325-d493a4bc04b9"
+        ],
+        "tool_use_id": "toolu_01XjfhWBjihP61B7RC7cfMAC"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01XjfhWBjihP61B7RC7cfMAC"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ]
+}
