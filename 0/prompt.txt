@@ -1,0 +1,31 @@
+<task-notification>
+<task-id>b80tmokqu</task-id>
+<tool-use-id>toolu_017Fx7epDhKPV153MvGMKN2N</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/b80tmokqu.output</output-file>
+<status>completed</status>
+<summary>Background command "timeout 1000 npx tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check 2&gt;&amp;1 | tail -3; echo "exit ${PIPESTATUS[0]}"" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b4jlwq4gj</task-id>
+<tool-use-id>toolu_01QKqqCW8yAA8T3HtFPzxFTQ</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/b4jlwq4gj.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1448/answer -G -d arbeit=556 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1448/answer -G -d arbeit=556" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b7a6a1jvw</task-id>
+<tool-use-id>toolu_01GVuTrAcFRvZUYab3Tq4NSD</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/b7a6a1jvw.output</output-file>
+<status>completed</status>
+<summary>Background command "(timeout 1000 npx tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check --refresh=configure 2&gt;&amp;1 | tail -3) &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/scratchpad/check-configure.log &amp; (timeout 1000 npx tsx --tsconfig tools/tsconfig.tools.json tools/relay/turn-key.ts --check --refresh=restart 2&gt;&amp;1 | tail -3) &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/scratchpad/check-restart.log &amp; wait; cat /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/scratchpad/check-*.log" completed (exit code 0)</summary>
+</task-notification>
