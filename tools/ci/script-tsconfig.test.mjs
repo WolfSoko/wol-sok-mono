@@ -3,6 +3,8 @@
 // program; a file it leaves out lands in a fallback program built from
 // whatever other unowned files the same run lints, so its type-aware findings
 // changed between `nx lint <project>`, a batched lint run and `npx oxlint .`.
+// It also fails on a tsconfig reference to a config that does not exist
+// (#3143), which TypeScript and tsgolint skip with an error.
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
