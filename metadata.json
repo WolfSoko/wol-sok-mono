@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7XBDHNXJEA1GDY2SYG31W2H",
+  "strategy": "manual-commit",
+  "branch": "3164-better-online-game-experience",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/new-game.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/menu/new-game.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/new-game.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/online-lobby.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/menu/online-lobby.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/online-lobby.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/play-modes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 10312,
+    "cache_read_tokens": 1541888,
+    "output_tokens": 5505,
+    "api_call_count": 8
+  }
+}
