@@ -9,7 +9,7 @@ import { describe, it } from 'node:test';
 import {
   assertRunsOnEveryCiRun,
   gitLsFiles,
-  inRootProject,
+  rootProjectFiles,
   lintedScripts,
   readJson,
   stringInputs,
@@ -31,7 +31,7 @@ const fileInputs = stringInputs(lintTarget.inputs)
 
 /** The linted scripts no other project's root contains. */
 function rootScripts() {
-  return lintedScripts().filter(inRootProject);
+  return rootProjectFiles(lintedScripts());
 }
 
 function underPattern(path) {

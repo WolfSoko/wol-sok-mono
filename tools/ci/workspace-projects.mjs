@@ -89,12 +89,15 @@ export function nearestTsconfig(path) {
 }
 
 /**
- * Whether `path` belongs to the root project: Nx gives a file to the
- * project with the longest root containing it, and to the root project only
- * when no other project's root does.
+ * The paths that belong to the root project: Nx gives a file to the project
+ * with the longest root containing it, and to the root project only when no
+ * other project's root does.
  */
-export function inRootProject(path) {
-  return readProjects()
+export function rootProjectFiles(paths) {
+  const roots = readProjects()
     .map((project) => dirname(project.path))
-    .every((root) => root === '.' || !path.startsWith(`${root}/`));
+    .filter((root) => root !== '.');
+  return paths.filter(
+    (path) => !roots.some((root) => path.startsWith(`${root}/`))
+  );
 }
