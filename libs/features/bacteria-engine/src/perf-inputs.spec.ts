@@ -1,7 +1,7 @@
 /**
  * @jest-environment node
  */
-import { build } from 'esbuild';
+import { build, type BuildOptions } from 'esbuild';
 import { readFileSync } from 'node:fs';
 import { join, matchesGlob, relative, sep } from 'node:path';
 
@@ -10,10 +10,16 @@ const WORKSPACE_ROOT = join(PROJECT_ROOT, '../../..');
 /** One esbuild bundle of the whole main entry, under parallel Jest load. */
 const BUNDLE_TIMEOUT_MS = 60_000;
 
-/** What `tools/perf/engine-bench.mjs` plays: the entry it bundles and its fixtures. */
+/**
+ * What `tools/perf/engine-bench.mjs` plays (`engine-bench.json`): the entry
+ * and the options it bundles it with, the files esbuild reads beside the
+ * bundle, and the fixtures it times.
+ */
 interface BenchPlan {
   entry: string;
-  fixtures: { name: string; file: string }[];
+  build: Pick<BuildOptions, 'bundle' | 'platform' | 'format'>;
+  reads: string[];
+  fixtures: { name: string; file: string; gpuInt?: boolean }[];
 }
 
 type TargetInput = string | { fileset?: string };
@@ -26,7 +32,7 @@ function workspacePath(file: string): string {
   return relative(WORKSPACE_ROOT, file).split(sep).join('/');
 }
 
-const plan = readJson<BenchPlan>(
+const BENCH_PLAN = readJson<BenchPlan>(
   join(WORKSPACE_ROOT, 'tools/perf/engine-bench.json')
 );
 const perfInputs = readJson<{
@@ -73,29 +79,28 @@ describe('the perf target', () => {
     'hashes every file the engine bench bundles',
     async () => {
       const result = await build({
+        ...BENCH_PLAN.build,
         absWorkingDir: WORKSPACE_ROOT,
-        entryPoints: [plan.entry],
-        bundle: true,
-        platform: 'node',
-        format: 'esm',
+        entryPoints: [BENCH_PLAN.entry],
         metafile: true,
         write: false,
         logLevel: 'silent',
       });
 
       const bundled = Object.keys(result.metafile.inputs);
-      expect(bundled).toContain(plan.entry);
+      expect(bundled).toContain(BENCH_PLAN.entry);
       expect(missingFromInputs(bundled)).toEqual([]);
     },
     BUNDLE_TIMEOUT_MS
   );
 
-  it('hashes the bench, its baseline and every fixture it plays', () => {
+  it('hashes the bench, its baseline, what esbuild reads beside the bundle and every fixture', () => {
     const benchFiles = [
       'tools/perf/engine-bench.mjs',
       'tools/perf/engine-bench.json',
       'tools/perf/engine-baseline.json',
-      ...plan.fixtures.map((fixture) => fixture.file),
+      ...BENCH_PLAN.reads,
+      ...BENCH_PLAN.fixtures.map((fixture) => fixture.file),
     ];
 
     expect(missingFromInputs(benchFiles)).toEqual([]);

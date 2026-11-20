@@ -27,7 +27,8 @@
         "^production",
         "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/tools/perf/engine-bench.json"
+        "{workspaceRoot}/tools/perf/engine-bench.json",
+        "{workspaceRoot}/tools/perf/engine-bench.mjs"
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-engine"],
       "options": {
@@ -73,6 +74,7 @@
         "{projectRoot}/src/lib/state/progress/**/*",
         "{projectRoot}/src/lib/state/replay/**/*",
         "{projectRoot}/tsconfig.json",
+        "{projectRoot}/package.json",
         "!{projectRoot}/**/*.spec.ts",
         "^production",
         "{workspaceRoot}/tools/perf/engine-bench.mjs",

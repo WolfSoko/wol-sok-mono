@@ -1,5 +1,15 @@
 {
   "entry": "libs/features/bacteria-engine/src/index.ts",
+  "build": {
+    "bundle": true,
+    "platform": "node",
+    "format": "esm"
+  },
+  "reads": [
+    "libs/features/bacteria-engine/tsconfig.json",
+    "libs/features/bacteria-engine/package.json",
+    ".nvmrc"
+  ],
   "fixtures": [
     {
       "name": "golden-cpu",
