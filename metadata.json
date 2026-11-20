@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VMM8JGT7QSPWKE0NH51EGX",
+  "strategy": "manual-commit",
+  "branch": "3148-bacteria-wars-friend-links-and-game-invites",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/analytics.md",
+    "libs/features/lazy/bacteria-game/src/lib/analytics/game-analytics.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-transport.ts",
+    "libs/features/lazy/bacteria-game/src/testing/paired-transport.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}

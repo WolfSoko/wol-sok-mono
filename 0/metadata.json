@@ -1,0 +1,68 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VMM8JGT7QSPWKE0NH51EGX",
+  "session_id": "bc74782f-d9fb-48cf-98dc-73fb9769872b",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T04:49:55.76312216Z",
+  "branch": "3148-bacteria-wars-friend-links-and-game-invites",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/analytics.md",
+    "libs/features/lazy/bacteria-game/src/lib/analytics/game-analytics.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-transport.ts",
+    "libs/features/lazy/bacteria-game/src/testing/paired-transport.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "771e92faa011",
+  "checkpoint_transcript_start": 757,
+  "transcript_lines_at_start": 757,
+  "compact_transcript_start": 75,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01XPFgSavL3nEZKheFnWAYqY",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "e4ad74ff2898",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 39,
+        "end": 40,
+        "entry_ids": [
+          "42789d16-5e6f-4bb7-8083-9e2e5d5ad8cb"
+        ],
+        "tool_use_id": "toolu_01XPFgSavL3nEZKheFnWAYqY"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01XPFgSavL3nEZKheFnWAYqY"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ]
+}
