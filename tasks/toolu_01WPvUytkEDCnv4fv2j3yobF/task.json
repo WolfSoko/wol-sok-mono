@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01WPvUytkEDCnv4fv2j3yobF",
+  "agent_id": "ac9553a6a89d4442e",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR #3163 diff",
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 86707,
+    "cache_read_tokens": 706122,
+    "output_tokens": 6024,
+    "api_call_count": 10
+  },
+  "started_at": "2026-11-20T21:29:17.509989924+01:00",
+  "completed_at": "2026-11-20T21:30:03.514204196+01:00"
+}

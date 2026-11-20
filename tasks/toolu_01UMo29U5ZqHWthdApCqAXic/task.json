@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01UMo29U5ZqHWthdApCqAXic",
+  "agent_id": "a719862aff532f2b7",
+  "subagent_type": "general-purpose",
+  "task_description": "Standards review of diff",
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 63984,
+    "cache_read_tokens": 244091,
+    "output_tokens": 3045,
+    "api_call_count": 4
+  },
+  "started_at": "2026-11-20T21:29:50.750579984+01:00",
+  "completed_at": "2026-11-20T21:30:39.233683724+01:00"
+}

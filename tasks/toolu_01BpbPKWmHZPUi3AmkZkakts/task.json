@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01BpbPKWmHZPUi3AmkZkakts",
+  "agent_id": "a58223e4e193d7fdb",
+  "subagent_type": "general-purpose",
+  "task_description": "Spec review of diff",
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 66831,
+    "cache_read_tokens": 498237,
+    "output_tokens": 3806,
+    "api_call_count": 7
+  },
+  "started_at": "2026-11-20T21:29:51.662340648+01:00",
+  "completed_at": "2026-11-20T21:32:23.267941678+01:00"
+}
