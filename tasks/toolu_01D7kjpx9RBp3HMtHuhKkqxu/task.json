@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01D7kjpx9RBp3HMtHuhKkqxu",
+  "agent_id": "a8e00bb5dd832d7c9",
+  "subagent_type": "general-purpose",
+  "task_description": "Fresh review of PR #3152 head",
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 114248,
+    "cache_read_tokens": 2570879,
+    "output_tokens": 21286,
+    "api_call_count": 27
+  },
+  "started_at": "2026-11-20T12:41:06.682033024+01:00",
+  "completed_at": "2026-11-20T12:49:56.321232802+01:00"
+}
