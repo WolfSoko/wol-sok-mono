@@ -214,9 +214,12 @@ describe('WebRtcTransport', () => {
       throw new Error('closed');
     };
 
-    await expect(link.route()).resolves.toBe('unknown');
-    expect(warn).toHaveBeenCalled();
-    warn.mockRestore();
+    try {
+      await expect(link.route()).resolves.toBe('unknown');
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
   });
 
   it('waits five seconds at most for the candidates', async () => {

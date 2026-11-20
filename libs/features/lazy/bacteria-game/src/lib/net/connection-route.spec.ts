@@ -98,6 +98,35 @@ describe('connectionRoute', () => {
     }
   );
 
+  it('falls back when the transport names a pair the report lacks', () => {
+    const stats = report(
+      ...candidates,
+      pair('P2', 'L2', 'R2', { selected: true }),
+      { id: 'T', type: 'transport', selectedCandidatePairId: 'gone' }
+    );
+
+    expect(connectionRoute(stats)).toBe('relay');
+  });
+
+  it('falls back on a transport that selected no pair yet', () => {
+    const stats = report(
+      ...candidates,
+      pair('P1', 'L1', 'R1', { nominated: true, state: 'succeeded' }),
+      { id: 'T', type: 'transport' }
+    );
+
+    expect(connectionRoute(stats)).toBe('direct');
+  });
+
+  it('knows no route when a candidate of the selected pair is missing', () => {
+    const stats = report(
+      candidate('L1', 'host'),
+      pair('P', 'L1', 'R9', { selected: true })
+    );
+
+    expect(connectionRoute(stats)).toBe('unknown');
+  });
+
   it('knows no route without a selected pair', () => {
     expect(connectionRoute(report())).toBe('unknown');
     expect(

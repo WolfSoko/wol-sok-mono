@@ -17,14 +17,14 @@ type StatsEntry = Record<string, unknown> & { id: string; type: string };
 export function connectionRoute(stats: RTCStatsReport): ConnectionRoute {
   const entries = new Map<string, StatsEntry>();
   stats.forEach((entry: StatsEntry) => entries.set(entry.id, entry));
-  const pair = selectedPair([...entries.values()], entries);
-  if (pair === undefined) {
-    return 'unknown';
-  }
+  const pair = selectedPair(entries);
   const ends = [
     textOf(pair, 'localCandidateId'),
     textOf(pair, 'remoteCandidateId'),
-  ].map((id) => entryOf(entries, id)?.['candidateType']);
+  ].map((id) => textOf(entryOf(entries, id), 'candidateType'));
+  if (ends.includes(undefined)) {
+    return 'unknown';
+  }
   return ends.includes('relay') ? 'relay' : 'direct';
 }
 
@@ -34,9 +34,9 @@ export function connectionRoute(stats: RTCStatsReport): ConnectionRoute {
  * nominated pair that succeeded.
  */
 function selectedPair(
-  all: readonly StatsEntry[],
   byId: ReadonlyMap<string, StatsEntry>
 ): StatsEntry | undefined {
+  const all = [...byId.values()];
   const pairs = all.filter((entry) => entry.type === 'candidate-pair');
   const transport = all.find(
     (entry) =>

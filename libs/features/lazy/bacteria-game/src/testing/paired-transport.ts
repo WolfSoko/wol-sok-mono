@@ -29,7 +29,7 @@ class PairedEnd implements PeerConnection {
   public readonly opened: Promise<void>;
 
   /** The route `route()` reports, `direct` unless a spec routes it. */
-  public carried: ConnectionRoute = 'direct';
+  public carried: ConnectionRoute | Promise<ConnectionRoute> = 'direct';
 
   /** What `opened` rejects with once this end closes before it opened. */
   private closedBy: Error = new Error('The connection closed.');
@@ -124,8 +124,11 @@ export interface PairedTransport extends PeerTransport {
    * a kind, with a plain error for null.
    */
   failNextGuest(kind: UnreachableKind | null): void;
-  /** Lets both ends of the links made from now on report `route`. */
-  routeAs(route: ConnectionRoute): void;
+  /**
+   * Lets both ends of the links made from now on report `route` - once it
+   * settles, for a promise.
+   */
+  routeAs(route: ConnectionRoute | Promise<ConnectionRoute>): void;
   /** The relay each offer and answer was made with, in order. */
   readonly relays: readonly {
     side: 'host' | 'guest';
@@ -144,7 +147,7 @@ export function pairedTransport(): PairedTransport {
   let made = 0;
   let lastGuest: PairedEnd | null = null;
   let nextFailure: Error | null = null;
-  let route: ConnectionRoute = 'direct';
+  let route: ConnectionRoute | Promise<ConnectionRoute> = 'direct';
   const relays: { side: 'host' | 'guest'; relay: readonly RelayServer[] }[] =
     [];
   return {
