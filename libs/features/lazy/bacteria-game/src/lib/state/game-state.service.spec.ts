@@ -40,6 +40,7 @@ import { PlayerService } from './player.service';
 import { Lockstep, INPUT_DELAY_TICKS } from '../net/lockstep';
 import type { OnlineStart } from '../net/net-message';
 import { OnlineMatchService } from '../net/online-match.service';
+import { RoomTally } from '../net/room-tally';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameReplays } from '../../testing/fake-game-replays';
 import { GameReplays } from '../storage/game-replays';
@@ -969,6 +970,24 @@ describe('GameStateService online', () => {
     expect(state.winner?.id).toBe(1);
     expect(state.earnings).toBeNull();
     expect(state.online).toBeNull();
+  });
+
+  it("counts the room's result for the seat that won", () => {
+    online.connect(1);
+    online.pending = {
+      start: {
+        levelId: 'petri-dish',
+        colors: ['orange', 'blue'],
+        seed: 9,
+        ruleset: 'cpu',
+      },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+
+    online.events.next({ type: 'ended', reason: 'left' });
+
+    expect(TestBed.inject(RoomTally).tally()).toEqual([0, 1]);
   });
 
   it('starts nothing as the guest until the host started', () => {

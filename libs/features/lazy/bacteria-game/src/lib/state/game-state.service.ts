@@ -86,6 +86,7 @@ import {
   OnlineSeatSync,
   SeatChange,
 } from '../net/online-seat-sync';
+import { RoomTally } from '../net/room-tally';
 import { MatchAnalytics, MatchState } from '../analytics/match-analytics';
 import {
   type MatchKind,
@@ -120,6 +121,8 @@ export class GameStateService {
   private progress = inject(ProgressService);
   private evolution = inject(EvolutionService);
   private readonly seatSync = inject(OnlineSeatSync);
+  /** The wins of the online room, which every online match adds to. */
+  private readonly roomTally = inject(RoomTally);
   private matchAnalytics = inject(MatchAnalytics);
   private readonly recorder = inject(MatchRecorder);
   private readonly countdownSeconds = inject(MATCH_COUNTDOWN_SECONDS);
@@ -352,6 +355,9 @@ export class GameStateService {
     const earnings = this.recordMatch(outcome.winner, run?.wins ?? null);
     this.matchAnalytics.ended(outcome, this.matchState(), earnings);
     const recording = this.recorder.finish(outcome, this.playerService);
+    if (state.online !== null) {
+      this.roomTally.count(winnerSeat(outcome.winner));
+    }
     // One update, so the result and the award reach the readers together.
     this.gameStateStore.update({
       ...this.lastReplayAfter(kind, outcome, recording),
