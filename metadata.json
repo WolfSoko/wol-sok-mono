@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7WJQC3KH8ZYR5GT30H9N0FD",
+  "strategy": "manual-commit",
+  "branch": "3148-turn-relay",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "tools/relay/cloudflare-api.spec.ts",
+    "tools/relay/cloudflare-api.ts",
+    "tools/relay/firebase-secrets.spec.ts",
+    "tools/relay/firebase-secrets.ts",
+    "tools/relay/jest.config.ts",
+    "tools/relay/plan-turn-key.spec.ts",
+    "tools/relay/plan-turn-key.ts",
+    "tools/relay/plan-usage-alert.spec.ts",
+    "tools/relay/plan-usage-alert.ts",
+    "tools/relay/project.json",
+    "tools/relay/provision.spec.ts",
+    "tools/relay/provision.ts",
+    "tools/relay/relay-check.ts",
+    "tools/relay/tsconfig.spec.json",
+    "tools/relay/turn-key.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  }
+}
