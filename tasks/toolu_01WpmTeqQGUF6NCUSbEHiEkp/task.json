@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01WpmTeqQGUF6NCUSbEHiEkp",
+  "agent_id": "afcda42775eb9e89a",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR #3152 diff vs spec",
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 108101,
+    "cache_read_tokens": 1010144,
+    "output_tokens": 17397,
+    "api_call_count": 12
+  },
+  "started_at": "2026-11-20T08:00:24.918335622+01:00",
+  "completed_at": "2026-11-20T08:03:41.381395496+01:00"
+}

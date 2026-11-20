@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VWBJF8S0XS7HW51W2S51D7",
+  "strategy": "manual-commit",
+  "branch": "3103-step-4-perf-inputs",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "CLAUDE.md",
+    "docs/specs/3103-arch-feat-shared-bacteria-engine-mixes-simulation-cloud-contract-and-3-2k-lines-of-ui-texts-behind-one-791-line-barrel.md",
+    "libs/features/bacteria-engine/project.json",
+    "libs/features/bacteria-engine/src/perf-inputs.spec.ts",
+    "tools/perf/engine-bench.json",
+    "tools/perf/engine-bench.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 21042,
+    "cache_read_tokens": 3779294,
+    "output_tokens": 11265,
+    "api_call_count": 21,
+    "subagent_tokens": {
+      "input_tokens": 2,
+      "cache_creation_tokens": 65028,
+      "cache_read_tokens": 0,
+      "output_tokens": 151,
+      "api_call_count": 1
+    }
+  }
+}
