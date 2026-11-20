@@ -64,8 +64,10 @@ the cache answers green.
    Renovate PR.
 2. **A local Nx plugin adds it to every inferred target**:
    `tools/nx/lint-lockfile-input.mjs`, registered in `nx.json` right after
-   `@nx/oxlint`. It matches `**/tsconfig.json` beside a `project.json` (not
-   the root project `.`) and contributes
+   `@nx/oxlint`. It matches `**/project.json` (not the root project `.`)
+   whose folder or an ancestor below the root holds a `tsconfig.json` (the
+   nested `tools-*` projects have none of their own and share
+   `tools/tsconfig.json`), and contributes
    `lint: { inputs: ['...', '{workspaceRoot}/package-lock.json'] }`; Nx's
    `'...'` spread keeps everything `@nx/oxlint` inferred and appends the
    lockfile (checked: the merged target keeps the executor and its 13 inputs).
@@ -88,8 +90,10 @@ the cache answers green.
    the only place for it.
 4. **A guard**: `tools/nx/lint-lockfile-input.test.mjs` (part of
    `npx nx test tools`) checks the plugin's `createNodes` (pattern, roots it
-   takes and skips, the spread input), and that the root `project.json`'s
-   `lint` inputs name the lockfile and no `externalDependencies`.
+   takes and skips, the spread input) and that no `project.json` replaces
+   the inferred `lint` inputs without the lockfile; `tools/ci/root-lint.test.mjs`
+   (run on every CI run) checks that the root `project.json`'s `lint` inputs
+   name the lockfile and no `externalDependencies`.
 5. **Docs**: CLAUDE.md's "Linting & Formatting" says that the lockfile is a
    lint input and why `externalDependencies` cannot be used.
 

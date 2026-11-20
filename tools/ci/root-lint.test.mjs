@@ -18,6 +18,7 @@ import {
 const ROOT_PROJECT = 'project.json';
 const LINT_EXECUTOR = '@nx/oxlint:lint';
 const PROJECT_ROOT_PREFIX = '{projectRoot}/';
+const LOCKFILE_INPUT = '{workspaceRoot}/package-lock.json';
 // A new root script makes only the root project affected, never `tools`, so
 // CI runs this guard on every run as a step of its own, outside Nx.
 const GUARD_STEP_NAME = '- name: Root scripts are linted';
@@ -63,6 +64,21 @@ void describe('the root project lint target', () => {
       rootScripts().filter((path) => !readByInputs(path)),
       [],
       `add the files to the lint inputs in ${ROOT_PROJECT}`
+    );
+  });
+
+  // Type-aware lint reads installed type packages that Nx hashes only through
+  // the lockfile (#3151).
+  void it('reads the lockfile as an input', () => {
+    assert.ok(lintTarget.inputs.includes(LOCKFILE_INPUT));
+  });
+
+  // Nx ignores externalDependencies on an executor target such as
+  // @nx/oxlint:lint, so the entry would only read as if it worked.
+  void it('lists no externalDependencies', () => {
+    assert.deepEqual(
+      lintTarget.inputs.filter((input) => input?.externalDependencies),
+      []
     );
   });
 

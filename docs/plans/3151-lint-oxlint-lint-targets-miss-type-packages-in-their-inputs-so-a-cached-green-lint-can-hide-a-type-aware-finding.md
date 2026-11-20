@@ -9,11 +9,13 @@ Branch `3151-lint-lockfile-input` off `main`, one PR.
 
 - Files: `tools/nx/lint-lockfile-input.test.mjs` (new, in the style of
   `typecheck-specs.test.mjs`: a temp workspace, the plugin's `createNodes`).
-- Tests: the pattern is `**/tsconfig.json`; a `tsconfig.json` beside a
-  `project.json` gets `lint.inputs` `['...', '{workspaceRoot}/package-lock.json']`
-  and nothing else; one without a `project.json` and the root `tsconfig.json`
-  get nothing; the root `project.json`'s `lint` inputs name
-  `{workspaceRoot}/package-lock.json` and hold no `externalDependencies`.
+- Tests: the pattern is `**/project.json`; a `project.json` with a
+  `tsconfig.json` in its folder or an ancestor gets `lint.inputs` `['...', '{workspaceRoot}/package-lock.json']`
+  and nothing else; one without any `tsconfig.json` and the root
+  `project.json` get nothing; no `project.json` replaces the inferred `lint`
+  inputs without the lockfile. In `tools/ci/root-lint.test.mjs`: the root
+  `project.json`'s `lint` inputs name `{workspaceRoot}/package-lock.json` and
+  hold no `externalDependencies`.
 - Red: no plugin yet.
 - Commit: folded into 2 (the pre-commit hook runs the affected tests).
 

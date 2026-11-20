@@ -1,26 +1,17 @@
-// Local Nx plugin (#3151): makes the lockfile an input of every `lint` target
-// that @nx/oxlint infers. Type-aware oxlint reads the types of installed
-// packages, and Nx hashes only some of them: the @nx/oxlint executor's own
-// dependency closure and the packages the project and its dependencies
-// import. A package only a tsconfig names in `types` (`@types/jest`, often
-// `@types/node`) is in no lint hash, so its bump could change a finding while
-// Nx replays a cached green lint. A per-package list cannot fix that: Nx
-// ignores `externalDependencies` on an executor target, and `node_modules` is
-// not hashed. The lockfile pins every installed version, so it is the input.
-//
-// Registered in nx.json after @nx/oxlint: Nx merges the `'...'` spread with
-// the inferred inputs, so they all stay and the lockfile comes last. It takes
-// every project.json whose folder or an ancestor below the workspace root
-// holds a tsconfig.json, the program type-aware oxlint types the project's
-// scripts in (the nested `tools-*` projects share `tools/tsconfig.json`).
-// `bacteria-wars-android`, the only project without `lint`, has none, so the
-// plugin never creates a target of its own. The root project's
-// `lint` is hand-written in the root project.json, whose inputs replace the
-// inferred ones, so it names the lockfile itself.
+// Local Nx plugin (#3151): appends the lockfile to every `lint` target that
+// @nx/oxlint infers. Type-aware oxlint reads installed type packages that Nx
+// hashes for this executor only through the lockfile (a package only a
+// tsconfig names in `types`; `externalDependencies` is ignored on executor
+// targets). It must stay after @nx/oxlint in nx.json, so the `'...'` spread
+// has the inferred inputs to keep. It takes every project.json with a
+// tsconfig.json in its folder or an ancestor below the root (the `tools-*`
+// projects share `tools/tsconfig.json`), which today is every project oxlint
+// lints; the root project's hand-written `lint` names the lockfile itself.
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const TSCONFIG = 'tsconfig.json';
+// Must match the targetName @nx/oxlint gets in nx.json.
 const DEFAULT_TARGET_NAME = 'lint';
 // Only a project.json marks a project root here: the root package.json has
 // no `workspaces`, so Nx takes no folder with just a package.json as a project.

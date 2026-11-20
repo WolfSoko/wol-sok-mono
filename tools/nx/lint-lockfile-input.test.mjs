@@ -1,20 +1,14 @@
 // Spec of the local Nx plugin that makes the lockfile an input of every
-// inferred oxlint `lint` target (#3151), and of the root project's hand-written
-// `lint`, which replaces inferred inputs and so needs it by hand. Each plugin
-// case lays out a workspace in a temp folder and runs createNodes on it, as Nx
+// inferred oxlint `lint` target (#3151); the root project's hand-written `lint`
+// is checked by tools/ci/root-lint.test.mjs. Each plugin case lays out a workspace in a temp folder and runs createNodes on it, as Nx
 // does with the files matching its pattern. `describe` and `it` return
 // promises `node:test` awaits itself, hence the `void`.
 import assert from 'node:assert/strict';
-import {
-  mkdirSync,
-  mkdtempSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, matchesGlob } from 'node:path';
 import { after, before, describe, it } from 'node:test';
+import { gitLsFiles, readJson } from '../ci/workspace-projects.mjs';
 import { createNodes, LOCKFILE_INPUT } from './lint-lockfile-input.mjs';
 
 const [pattern, inferTargets] = createNodes;
@@ -62,9 +56,7 @@ async function infer(files, projectFiles, options) {
 }
 
 const LOCKFILE_LINT = {
-  targets: {
-    lint: { inputs: ['...', '{workspaceRoot}/package-lock.json'] },
-  },
+  targets: { lint: { inputs: ['...', LOCKFILE_INPUT] } },
 };
 
 void describe('lint-lockfile-input plugin', () => {
@@ -108,21 +100,20 @@ void describe('lint-lockfile-input plugin', () => {
   });
 });
 
-void describe('root project lint', () => {
-  const rootLintInputs = JSON.parse(
-    readFileSync(join(WORKSPACE_ROOT, 'project.json'), 'utf8')
-  ).targets.lint.inputs;
-
-  void it('names the lockfile', () => {
-    assert.ok(rootLintInputs.includes(LOCKFILE_INPUT));
-  });
-
-  // Nx ignores externalDependencies on an executor target such as
-  // @nx/oxlint:lint, so the entry would only read as if it worked.
-  void it('lists no externalDependencies', () => {
-    assert.deepEqual(
-      rootLintInputs.filter((input) => input?.externalDependencies),
-      []
-    );
+void describe('project.json lint targets', () => {
+  // Inputs a project.json gives `lint` replace the inferred ones unless they
+  // spread them, which would drop the lockfile again.
+  void it('keep the lockfile: they spread the inferred inputs or name it', () => {
+    const replacing = gitLsFiles()
+      .filter(
+        (file) => file.endsWith('project.json') && file !== 'project.json'
+      )
+      .filter((file) => {
+        const inputs = readJson(file).targets?.lint?.inputs;
+        return (
+          inputs && !inputs.includes('...') && !inputs.includes(LOCKFILE_INPUT)
+        );
+      });
+    assert.deepEqual(replacing, []);
   });
 });
