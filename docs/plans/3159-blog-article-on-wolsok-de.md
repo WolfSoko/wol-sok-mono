@@ -25,11 +25,13 @@ Every task runs `npx nx test portfolio`, `npx nx lint portfolio`,
    - Files: `blog/blog-index.component.{ts,html}`, `blog/blog-page.scss`,
      `i18n/texts.en.ts`, `i18n/texts.de.ts` (nav and blog texts),
      `app.component.html`.
-   - Commit `feat(portfolio): blog index and header link (#3159)`.
+   - Also the home page teaser of the newest post (`home.component`), with
+     its spec in `app.component.spec.ts`.
+   - Commit `feat(portfolio): blog index, header link and home teaser (#3159)`.
 4. **Article shell and JSON-LD.**
    - Spec: `blog/blog-post-json-ld.spec.ts` (headline, `datePublished`,
-     author, URL); the article component spec checks the German notice
-     and `lang="en"` on the body.
+     author, URL); the article component spec checks that the body follows
+     the language (English text, German text after a switch).
    - Files: `blog/blog-post-json-ld.ts`, `blog/blog-article.component.ts`
      (shared frame: title, date, notice, JSON-LD, back link, content
      projection), `blog/posts/bacteria-wars-turn-relay/…component.ts`.
@@ -40,7 +42,7 @@ Every task runs `npx nx test portfolio`, `npx nx lint portfolio`,
    Spec: the article spec checks every `<img>` has `alt`, `width`, `height`
    and a file that exists in `public/`.
    Commit `feat(portfolio): pictures for the TURN relay article (#3159)`.
-6. **Article text.** The template with the six sections of the spec's
+6. **Article text, English and German.** One template per language with the six sections of the spec's
    Goal, the figures and small code excerpts (the `relay/turn` document
    shape, the `RTCPeerConnection` config, the renewal), facts checked
    against ADR 0009/0020 and the #3148 specs.
