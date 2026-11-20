@@ -3,16 +3,14 @@
 // (`jest.preset.js` for `jest.preset.cjs`) or a renamed file silently drops
 // the input. Nx also leaves `{projectName}` unresolved in inputs (#2904).
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import {
-  CI_WORKFLOW,
+  assertRunsOnEveryCiRun,
   ROOT,
-  SKIPPING_KEYS,
   readJson,
   readProjects,
-  stepBlock,
 } from './workspace-projects.mjs';
 
 const WORKSPACE_ROOT = '{workspaceRoot}/';
@@ -171,12 +169,6 @@ void describe('target inputs', () => {
 
 void describe('the CI workflow', () => {
   void it('runs this guard on every run, outside the affected tasks', () => {
-    const step = stepBlock(
-      readFileSync(join(ROOT, CI_WORKFLOW), 'utf8'),
-      GUARD_STEP_NAME
-    );
-    assert.ok(step, `${CI_WORKFLOW} has no step "${GUARD_STEP_NAME}"`);
-    assert.ok(step.includes(GUARD_COMMAND), step);
-    assert.doesNotMatch(step, SKIPPING_KEYS);
+    assertRunsOnEveryCiRun(GUARD_STEP_NAME, GUARD_COMMAND);
   });
 });
