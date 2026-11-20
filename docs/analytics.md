@@ -147,7 +147,7 @@ reports show none of their parameters, and page views may count twice.
 3. **Custom definitions → Custom dimensions** (event scope): `kind`,
    `difficulty`, `ranked`, `simulation`, `outcome`, `reason`,
    `medal`, `new_best`, `mission_done`, `item_category`, `setting`, `value`
-   (text), `role`, `matchmade`, `notice`, `source`, `product_id`, `first`,
+   (text), `role`, `matchmade`, `notice`, `failure`, `source`, `product_id`, `first`,
    `accepted`, `found`, `online`, `cloud`, `passed`, `level_name`, and for
    RollaPolla `listed`, `featured`, `just_created`, `late`, `list`, `sort`,
    `chat`. `method`, `content_type`, `achievement_id`, `character`,

@@ -20,6 +20,7 @@ import { GameCloud } from '../storage/game-cloud';
 import type { GameSocial, Waiting } from '../storage/game-social';
 import { SocialService } from '../social/social.service';
 import { OnlineMatchService } from './online-match.service';
+import { CONNECT_TIMEOUT_MS } from './peer-link';
 
 /** How often a waiting player tries to claim an older one. */
 const CLAIM_EVERY_MS = 3000;
@@ -28,8 +29,8 @@ const STILL_WAITING_EVERY_MS = 15_000;
 /** An entry not refreshed for this long belongs to a player who left. */
 const STALE_MS = 45_000;
 /**
- * How long a host waits for the player it claimed to answer. Once they
- * have, the link's own connect timeout decides.
+ * How long a host waits for the player it claimed to answer. One who
+ * answered gets the link's connect time once more to say hello.
  */
 const JOIN_TIMEOUT_MS = 20_000;
 /** How many of the oldest entries a claim looks at. */
@@ -285,16 +286,7 @@ export class MatchmakerService {
         if (picked !== null) {
           this.matchLevelSignal.set(seenFrom('claimer', picked));
           this.found();
-          this.joinTimeout = setTimeout(() => {
-            this.joinTimeout = null;
-            // They never answered - a closed tab: on with the search.
-            if (
-              this.stateSignal() === 'found' &&
-              this.online.lobby().phase === 'waiting'
-            ) {
-              this.online.leave();
-            }
-          }, JOIN_TIMEOUT_MS);
+          this.giveUpUnlessJoined(JOIN_TIMEOUT_MS, true);
           await social.leaveQueue(me).catch(() => undefined);
           return;
         }
@@ -306,6 +298,28 @@ export class MatchmakerService {
     } finally {
       this.claiming = false;
     }
+  }
+
+  /**
+   * Leaves the room unless the claimed player joined within `ms`: on with
+   * the search. A player who answered meanwhile (`connecting`) gets the
+   * link's connect time once more when `oneMore` - a slow handshake on a
+   * strict network - but never waits forever, say when the channel opened
+   * and no hello came.
+   */
+  private giveUpUnlessJoined(ms: number, oneMore: boolean): void {
+    this.joinTimeout = setTimeout(() => {
+      this.joinTimeout = null;
+      const { phase } = this.online.lobby();
+      if (this.stateSignal() !== 'found' || phase === 'connected') {
+        return;
+      }
+      if (phase === 'connecting' && oneMore) {
+        this.giveUpUnlessJoined(CONNECT_TIMEOUT_MS, false);
+        return;
+      }
+      this.online.leave();
+    }, ms);
   }
 
   /** Opens a room for an automatic match - its code, null if that failed. */

@@ -1,8 +1,4 @@
-import {
-  CONNECT_TIMEOUT_MS,
-  GATHER_TIMEOUT_MS,
-  WebRtcTransport,
-} from './peer-link';
+import { CONNECT_TIMEOUT_MS, WebRtcTransport } from './peer-link';
 import { PeerUnreachableError } from './peer-transport';
 
 /** Enough of an RTCPeerConnection for the link: states set by the spec. */
@@ -76,11 +72,10 @@ describe('WebRtcTransport', () => {
     let done = false;
     void offering.then(() => (done = true));
 
-    await jest.advanceTimersByTimeAsync(GATHER_TIMEOUT_MS - 1);
+    await jest.advanceTimersByTimeAsync(4999);
     expect(done).toBe(false);
     await jest.advanceTimersByTimeAsync(1);
     expect(done).toBe(true);
-    expect(GATHER_TIMEOUT_MS).toBe(5000);
   });
 
   it('names a connection whose every way failed unreachable', async () => {

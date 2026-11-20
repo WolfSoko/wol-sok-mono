@@ -3,7 +3,7 @@ import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { EMPTY, fromEvent } from 'rxjs';
-import { filter } from 'rxjs/operators';
+import { delay, filter } from 'rxjs/operators';
 import { HudState } from '../hud/hud-state';
 import { MatchmakerService } from '../net/matchmaker.service';
 import { OnlineMatchService } from '../net/online-match.service';
@@ -66,9 +66,13 @@ export class OnlineFlow {
     // A link into the running game - the Android app, an installed PWA's
     // window, an open tab - only changes the hash: no new start reads it.
     // The game's own drop (`dropHash`) replaces the state and fires none.
+    // The router syncs with the new address in a task of its own, queued at
+    // the popstate before the hashchange; the link is read a task later,
+    // so the drop replaces the router's navigation rather than being
+    // undone by it.
     const view = this.document.defaultView;
     (view === null ? EMPTY : fromEvent(view, 'hashchange'))
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .pipe(delay(0), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.takeLink());
     // The guest of an online match plays what the host starts.
     this.online.events$

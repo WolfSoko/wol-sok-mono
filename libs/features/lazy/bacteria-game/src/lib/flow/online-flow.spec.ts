@@ -158,11 +158,30 @@ describe('OnlineFlow', () => {
         document.location.hash = '';
       });
 
-      /** The fragment changes from outside, as a link into the open app does. */
+      /**
+       * The fragment changes from outside, as a link into the open app
+       * does: one `hashchange` (setting `location.hash` would queue a
+       * second one in jsdom).
+       */
       function followLink(hash: string): void {
-        document.location.hash = hash;
+        history.replaceState(null, '', `/${hash}`);
         document.defaultView?.dispatchEvent(new HashChangeEvent('hashchange'));
       }
+
+      it('lets the router take the new address before it reads the link', async () => {
+        const read = jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');
+        online.start();
+
+        followLink(`#friend=${token}`);
+        // The router syncs with the browser in a task of its own, queued at
+        // the popstate before this hashchange: a drop ahead of it would be
+        // undone by the router's own navigation to the link.
+        await Promise.resolve();
+        expect(read).not.toHaveBeenCalled();
+
+        await flushLinks();
+        expect(read).toHaveBeenCalledWith(token);
+      });
 
       it('offers the inviter of a link that arrives later', async () => {
         const read = jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');

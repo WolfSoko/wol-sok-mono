@@ -84,9 +84,10 @@ export type GameEvents = {
   online_connected: { role: string; matchmade: boolean };
   /**
    * The online link ended with a notice to the player: `reason` how (`lost`,
-   * `left`), `notice` the text's key, which says why.
+   * `left`), `notice` the text's key, which says why, and `failure` why
+   * the other device could not be reached (`ice_failed`, `timeout`),
+   * `none` else.
    */
-  /** `failure`: why the other device could not be reached, `none` else. */
   online_ended: { reason: string; notice: string; failure: string };
   /** A recorded match the cloud (or this device) took. */
   replay_saved: { online: boolean; ranked: boolean };
