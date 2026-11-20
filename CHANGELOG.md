@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.173.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.16...v74.173.0) (2026-11-20)
+
+### Features
+
+* **feat-lazy-bacteria-game:** relay online matches through Cloudflare TURN, renewed by ICE restart ([#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) part 2) ([#3158](https://github.com/WolfSoko/wol-sok-mono/issues/3158)) ([4d2b7c4](https://github.com/WolfSoko/wol-sok-mono/commit/4d2b7c4d125b33399e7ed0fb0ddf0d9949a64f0b))
+
+### Chore
+
+* **deps:** update dependency java-jdk to v25 ([#3156](https://github.com/WolfSoko/wol-sok-mono/issues/3156)) ([8ed2145](https://github.com/WolfSoko/wol-sok-mono/commit/8ed2145b77077640844b933ed25274bc6d371195))
+
 ## [74.172.16](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.15...v74.172.16) (2026-11-20)
 
 ### Refactorings
