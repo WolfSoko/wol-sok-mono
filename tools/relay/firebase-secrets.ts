@@ -4,11 +4,16 @@ import { spawn } from 'node:child_process';
 export const PROJECT = 'bacteria-wars';
 
 /**
- * Whether the CLI's output says the secret `name` does not exist: Secret
- * Manager's 404, which the CLI logs on stdout, not stderr.
+ * The secret Secret Manager reports missing, as the CLI logs its 404 (on
+ * stdout, not stderr): `Secret [projects/<number>/secrets/<name>] not found`.
+ * The request URL also names a secret, so only this part counts.
  */
+const MISSING_SECRET =
+  /HTTP Error: 404, Secret \[projects\/[^/\]]+\/secrets\/([^/\]]+)\] not found/;
+
+/** Whether the CLI's output says that exactly the secret `name` does not exist. */
 function notFound(name: string, output: string): boolean {
-  return /HTTP Error: 404/.test(output) && output.includes(`/secrets/${name}`);
+  return MISSING_SECRET.exec(output)?.[1] === name;
 }
 
 /** Runs a command with `input` on stdin, answering its exit code and stdout. */
