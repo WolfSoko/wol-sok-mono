@@ -14,9 +14,6 @@
       }
     },
     {
-      "plugin": "./tools/nx/lint-lockfile-input.mjs"
-    },
-    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint-templates",
@@ -92,6 +89,9 @@
     ]
   },
   "targetDefaults": {
+    "@nx/oxlint:lint": {
+      "inputs": ["...", "{workspaceRoot}/package-lock.json"]
+    },
     "nx-release-publish": {
       "dependsOn": ["build"],
       "options": {

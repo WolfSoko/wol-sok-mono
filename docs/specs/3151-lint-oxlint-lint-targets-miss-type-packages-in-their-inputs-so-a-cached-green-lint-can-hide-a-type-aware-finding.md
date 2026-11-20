@@ -62,38 +62,31 @@ the cache answers green.
    lint cache once. Lint runs cached per project in CI, so that is one
    uncached lint per project the next time it is affected, not a full run per
    Renovate PR.
-2. **A local Nx plugin adds it to every inferred target**:
-   `tools/nx/lint-lockfile-input.mjs`, registered in `nx.json` right after
-   `@nx/oxlint`. It matches `**/project.json` (not the root project `.`)
-   whose folder or an ancestor below the root holds a `tsconfig.json` (the
-   nested `tools-*` projects have none of their own and share
-   `tools/tsconfig.json`), and contributes
-   `lint: { inputs: ['...', '{workspaceRoot}/package-lock.json'] }`; Nx's
-   `'...'` spread keeps everything `@nx/oxlint` inferred and appends the
-   lockfile (checked: the merged target keeps the executor and its 13 inputs).
-   Every project with an oxlint `lint` has a `tsconfig.json` (the guard of
-   #3074/#3133 requires each linted script to belong to one), and the one
-   project without `lint`, `bacteria-wars-android`, has none, so the plugin
-   creates no half target.
-   - Not `targetDefaults.lint` in `nx.json`: same file, but the plugin keeps
-     the rule and its reason in one tested module, as `typecheck-specs.mjs`
-     does, and a later change to it touches no `nx.json`.
-   - Registering it changes `nx.json` once, and `release-affected.mjs` keeps
-     Nx's verdict for that file, so **the merging release redeploys every app
-     once**. Folding the rule into `typecheck-specs.mjs` would avoid that, but
-     mixes two concerns in a module named for one; this spec accepts the one
-     full release (to be confirmed in the approval).
+2. **`nx.json`'s `targetDefaults` adds it to every inferred target**, keyed
+   by the executor: `"@nx/oxlint:lint": { "inputs": ["...",
+   "{workspaceRoot}/package-lock.json"] }`. Nx merges target defaults after
+   the inferring plugins, so the `'...'` spread keeps every input
+   `@nx/oxlint` inferred and appends the lockfile (checked on the graph: all
+   65 lint targets, executor and inputs kept; `bacteria-wars-android` gets no
+   `lint`, since the entry applies only where the executor already is).
+   - First approved as a local Nx plugin matching `project.json` files with a
+     `tsconfig.json`; the `/simplify` review showed that the executor-keyed
+     entry does the same job with no code and no heuristic that could drift
+     from `@nx/oxlint`'s own detection, and the manager approved the switch.
+   - It changes `nx.json`, and `release-affected.mjs` keeps Nx's verdict for
+     that file, so **the merging release redeploys every app once** (owner
+     approved). A later change to the entry does so again; it is one stable
+     line.
 3. **The root `wolsok:lint`** (hand-written in the root `project.json`, which
    replaces inferred inputs) gets `{workspaceRoot}/package-lock.json` too, and
    loses its `externalDependencies` entry, which Nx ignores and which reads as
-   if it worked. The plugin skips the root project, so `project.json` stays
-   the only place for it.
-4. **A guard**: `tools/nx/lint-lockfile-input.test.mjs` (part of
-   `npx nx test tools`) checks the plugin's `createNodes` (pattern, roots it
-   takes and skips, the spread input) and that no `project.json` replaces
-   the inferred `lint` inputs without the lockfile; `tools/ci/root-lint.test.mjs`
-   (run on every CI run) checks that the root `project.json`'s `lint` inputs
-   name the lockfile and no `externalDependencies`.
+   if it worked. Its explicit inputs replace the target default's, so
+   `project.json` stays the only place for it.
+4. **A guard**: `tools/ci/lint-lockfile-input.test.mjs` (part of
+   `npx nx test tools`) checks the `targetDefaults` entry and fails on a
+   `project.json` whose `lint` inputs neither spread `'...'` nor name the
+   lockfile; `tools/ci/root-lint.test.mjs` (run on every CI run) checks that
+   the root `project.json`'s `lint` inputs name the lockfile.
 5. **Docs**: CLAUDE.md's "Linting & Formatting" says that the lockfile is a
    lint input and why `externalDependencies` cannot be used.
 
@@ -117,6 +110,4 @@ the cache answers green.
 
 ## Open questions
 
-- Decision 2: accept one full release for the `nx.json` registration, or fold
-  the rule into `tools/nx/typecheck-specs.mjs` to avoid it? Recommended:
-  accept it.
+None left: the full release and the switch to `targetDefaults` were approved.

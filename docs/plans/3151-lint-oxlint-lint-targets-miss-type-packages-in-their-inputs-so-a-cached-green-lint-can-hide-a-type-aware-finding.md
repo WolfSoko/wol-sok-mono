@@ -5,34 +5,31 @@ issue [#3151](https://github.com/WolfSoko/wol-sok-mono/issues/3151).
 
 Branch `3151-lint-lockfile-input` off `main`, one PR.
 
-## 1. Plugin test first
+## 1. Guard first
 
-- Files: `tools/nx/lint-lockfile-input.test.mjs` (new, in the style of
-  `typecheck-specs.test.mjs`: a temp workspace, the plugin's `createNodes`).
-- Tests: the pattern is `**/project.json`; a `project.json` with a
-  `tsconfig.json` in its folder or an ancestor gets `lint.inputs` `['...', '{workspaceRoot}/package-lock.json']`
-  and nothing else; one without any `tsconfig.json` and the root
-  `project.json` get nothing; no `project.json` replaces the inferred `lint`
-  inputs without the lockfile. In `tools/ci/root-lint.test.mjs`: the root
-  `project.json`'s `lint` inputs name `{workspaceRoot}/package-lock.json` and
-  hold no `externalDependencies`.
-- Red: no plugin yet.
-- Commit: folded into 2 (the pre-commit hook runs the affected tests).
+- Files: `tools/ci/lint-lockfile-input.test.mjs` (new), `tools/ci/root-lint.test.mjs`,
+  `LOCKFILE_INPUT` in `tools/ci/workspace-projects.mjs`.
+- Tests: `nx.json`'s `targetDefaults["@nx/oxlint:lint"].inputs` is
+  `['...', '{workspaceRoot}/package-lock.json']`; no `project.json` sets
+  `lint` inputs that neither spread nor name the lockfile; the root
+  `project.json`'s `lint` inputs name it.
+- Red: no entry yet.
 
-## 2. Plugin, registration, root target
+## 2. Target default and root target
 
-- Files: `tools/nx/lint-lockfile-input.mjs` (new), `nx.json` (plugin entry
-  right after `@nx/oxlint`), `project.json` (lockfile input in, the
-  `externalDependencies` entry out).
-- Checks: `npx nx test tools`; acceptance 1 to 4 of the spec with
-  `nx show target inputs --check` and `nx show project`; `npx nx run-many -t
-  lint`.
+- Files: `nx.json` (the `targetDefaults` entry), `project.json` (lockfile in,
+  the ignored `externalDependencies` entry out).
+- Checks: `npx nx test tools`; spec acceptance 1 to 4 with
+  `nx show target inputs --check` and the graph; `npx nx run-many -t lint`.
 - Commit: `fix(tools): make the lockfile an input of every oxlint lint target (#3151)`.
+
+(A first version registered a local Nx plugin for the same job; the
+`/simplify` review replaced it with the target default, approved by the
+manager.)
 
 ## 3. Docs
 
-- Files: `CLAUDE.md` ("Linting & Formatting": the lockfile input, the plugin,
-  why `externalDependencies` does not work on the executor).
+- Files: `CLAUDE.md` ("Linting & Formatting": the entry, the guards, why
+  `externalDependencies` does not work on the executor).
 - Checks: `npx nx format:write`, `npx nx affected -t lint,lint-templates
   --base=origin/main`.
-- Commit: `docs(tools): note the lockfile lint input (#3151)`, or folded into 2.
