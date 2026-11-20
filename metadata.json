@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9YME6BD8BG8VZZCV2E1RM",
+  "strategy": "manual-commit",
+  "branch": "3154-online-route",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/bacteria-game-remote/src/app/privacy/privacy.component.html",
+    "docs/analytics.md",
+    "libs/features/lazy/bacteria-game/src/lib/analytics/game-analytics.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/connection-route.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-link.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/peer-transport.ts",
+    "libs/features/lazy/bacteria-game/src/testing/paired-transport.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 12975,
+    "cache_read_tokens": 1972080,
+    "output_tokens": 7450,
+    "api_call_count": 14
+  }
+}
