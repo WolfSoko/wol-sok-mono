@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VM4S1FBKM9Q6KZQ3FBMD31",
+  "strategy": "manual-commit",
+  "branch": "3148-bacteria-wars-friend-links-and-game-invites",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3148-bacteria-wars-friend-links-and-game-invites-only-open-the-app-multiplayer-games-cannot-connect.md",
+    "docs/specs/3148-bacteria-wars-friend-links-and-game-invites-only-open-the-app-multiplayer-games-cannot-connect.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 98,
+    "cache_creation_tokens": 141421,
+    "cache_read_tokens": 6320254,
+    "output_tokens": 24040,
+    "api_call_count": 48
+  }
+}

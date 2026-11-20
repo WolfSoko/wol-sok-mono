@@ -1,0 +1,23 @@
+You are a SpeedDev cloud session. Load the speeddev:cockpit skill, read SESSION.md in its base directory and act on the <routine-fire-payload> block below as it says.
+<routine-fire-payload>
+    SpeedDev handover
+    cockpit: 23
+    ticket: WolfSoko/wol-sok-mono#3148
+    role: end-to-end
+    work item: 547
+    base branch: main
+</routine-fire-payload>
+
+---
+
+<task-notification>
+<task-id>bxrkc0t93</task-id>
+<tool-use-id>toolu_0146n8C62sdV4yycbusYyabp</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-547-wol-sok-mono/bc74782f-d9fb-48cf-98dc-73fb9769872b/tasks/bxrkc0t93.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1410/answer -G -d arbeit=547 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1410/answer -G -d arbeit=547" completed (exit code 0)</summary>
+</task-notification>
