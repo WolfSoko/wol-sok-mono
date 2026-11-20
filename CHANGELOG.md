@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.173.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.0...v74.173.1) (2026-11-20)
+
+### Bug Fixes
+
+* **feat-shared-reaction-diffusion-kernels:** drop the tsconfig reference to a missing spec config ([#3160](https://github.com/WolfSoko/wol-sok-mono/issues/3160)) ([df15e24](https://github.com/WolfSoko/wol-sok-mono/commit/df15e24fd4fc94ff070f87ac98041b72ad2dde0f)), references [#3143](https://github.com/WolfSoko/wol-sok-mono/issues/3143) [#3133](https://github.com/WolfSoko/wol-sok-mono/issues/3133) [#3143](https://github.com/WolfSoko/wol-sok-mono/issues/3143)
+
 ## [74.173.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.16...v74.173.0) (2026-11-20)
 
 ### Features
