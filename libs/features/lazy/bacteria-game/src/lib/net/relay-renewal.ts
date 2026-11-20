@@ -12,6 +12,14 @@ export const RELAY_RENEW_MS = 15 * 60_000;
 /** How long the host waits for the guest's answer before it takes its offer back. */
 export const RENEW_ANSWER_TIMEOUT_MS = 20_000;
 
+/**
+ * When the host tries once more after a renewal that did not get through -
+ * long before the credentials of the link run out (20 minutes left at
+ * least when handed out), not so often that a device of an older version
+ * is offered a restart all the time.
+ */
+export const RENEW_RETRY_MS = 2 * 60_000;
+
 /** What the two devices pass on the signal channel. */
 interface Signal {
   t: 'offer' | 'answer';
@@ -43,6 +51,9 @@ function parseSignal(data: unknown): Signal | null {
 export class RelayRenewal {
   private timer?: ReturnType<typeof setInterval>;
   private answerTimeout?: ReturnType<typeof setTimeout>;
+  private retryTimeout?: ReturnType<typeof setTimeout>;
+  /** True once the renewal of this round failed and was tried again. */
+  private retried = false;
   private stopped = false;
 
   public constructor(
@@ -58,13 +69,17 @@ export class RelayRenewal {
 
   /** The host's part: renews every {@link RELAY_RENEW_MS} until stopped. */
   public start(): void {
-    this.timer ??= setInterval(() => void this.renew(), RELAY_RENEW_MS);
+    this.timer ??= setInterval(() => {
+      this.retried = false;
+      void this.renew();
+    }, RELAY_RENEW_MS);
   }
 
   public stop(): void {
     this.stopped = true;
     clearInterval(this.timer);
     clearTimeout(this.answerTimeout);
+    clearTimeout(this.retryTimeout);
   }
 
   /** One renewal: fresh credentials, an ICE restart and its offer. */
@@ -85,11 +100,12 @@ export class RelayRenewal {
       );
       this.send({ t: 'offer', sdp: await this.describe() });
       this.answerTimeout = setTimeout(
-        () => void this.takeBack(),
+        () => void this.failed(),
         RENEW_ANSWER_TIMEOUT_MS
       );
     } catch (error) {
       console.warn('The relay could not be renewed', error);
+      await this.failed();
     }
   }
 
@@ -111,34 +127,59 @@ export class RelayRenewal {
     if (signal === null || this.stopped) {
       return;
     }
-    try {
-      if (signal.t === 'offer') {
-        // The guest's part. Without fresh credentials of its own it still
-        // answers, or the host's restart would never finish.
-        await this.configure();
-        await this.connection.setRemoteDescription({
-          type: 'offer',
-          sdp: signal.sdp,
-        });
-        await this.connection.setLocalDescription(
-          await this.connection.createAnswer()
-        );
-        this.send({ t: 'answer', sdp: await this.describe() });
-      } else if (this.connection.signalingState === 'have-local-offer') {
-        clearTimeout(this.answerTimeout);
+    if (signal.t === 'offer') {
+      await this.answer(signal.sdp);
+    } else if (this.connection.signalingState === 'have-local-offer') {
+      try {
         await this.connection.setRemoteDescription({
           type: 'answer',
           sdp: signal.sdp,
         });
+        clearTimeout(this.answerTimeout);
+        this.retried = false;
+      } catch (error) {
+        console.warn('The relay renewal was answered wrong', error);
+        await this.failed();
       }
-    } catch (error) {
-      console.warn('The relay renewal failed', error);
     }
   }
 
-  /** Back to the connection as it was, when the guest never answered. */
+  /**
+   * The guest's part. Without fresh credentials of its own it still
+   * answers, or the host's restart would never finish.
+   */
+  private async answer(offer: string): Promise<void> {
+    try {
+      await this.configure();
+      await this.connection.setRemoteDescription({ type: 'offer', sdp: offer });
+      await this.connection.setLocalDescription(
+        await this.connection.createAnswer()
+      );
+      this.send({ t: 'answer', sdp: await this.describe() });
+    } catch (error) {
+      console.warn('The relay renewal could not be answered', error);
+      await this.takeBack();
+    }
+  }
+
+  /**
+   * A renewal that did not get through - unanswered, answered wrong, or
+   * failed on the way: back to the connection as it was, and once more
+   * after {@link RENEW_RETRY_MS}.
+   */
+  private async failed(): Promise<void> {
+    clearTimeout(this.answerTimeout);
+    await this.takeBack();
+    if (!this.retried && !this.stopped) {
+      this.retried = true;
+      this.retryTimeout = setTimeout(() => void this.renew(), RENEW_RETRY_MS);
+    }
+  }
+
+  /** Back to the connection as it was, from an offer of either side. */
   private async takeBack(): Promise<void> {
-    if (this.connection.signalingState === 'have-local-offer') {
+    const state = this.connection.signalingState;
+    if (state === 'have-local-offer' || state === 'have-remote-offer') {
       await this.connection
         .setLocalDescription({ type: 'rollback' })
         .catch((error: unknown) =>

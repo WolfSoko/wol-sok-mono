@@ -1,4 +1,5 @@
 import { Observable, Subject } from 'rxjs';
+import type { RelayServer } from '../storage/game-relay';
 import { iceServers } from './ice-servers';
 import {
   type PeerConnection,
@@ -70,9 +71,7 @@ async function negotiate(
   role: 'host' | 'guest',
   steps: (connection: RTCPeerConnection) => Promise<void>
 ): Promise<{ link: PeerLink; description: string }> {
-  const connection = new RTCPeerConnection({
-    iceServers: iceServers(relay.servers),
-  });
+  const connection = connectionThrough(relay.servers);
   const link = new PeerLink(connection, relay, role);
   try {
     await steps(connection);
@@ -80,6 +79,22 @@ async function negotiate(
   } catch (error) {
     link.close();
     throw error;
+  }
+}
+
+/**
+ * A connection through the STUN servers and `relay` - without the relay
+ * when the browser refuses it, which would cost the STUN servers too.
+ */
+function connectionThrough(relay: readonly RelayServer[]): RTCPeerConnection {
+  try {
+    return new RTCPeerConnection({ iceServers: iceServers(relay) });
+  } catch (error) {
+    if (relay.length === 0) {
+      throw error;
+    }
+    console.warn('The relay was refused; connecting without it', error);
+    return new RTCPeerConnection({ iceServers: iceServers([]) });
   }
 }
 

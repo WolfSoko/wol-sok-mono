@@ -3,6 +3,7 @@ import {
   RELAY_RENEW_MS,
   RelayRenewal,
   RENEW_ANSWER_TIMEOUT_MS,
+  RENEW_RETRY_MS,
 } from './relay-renewal';
 
 const fresh: RelayServer = {
@@ -42,6 +43,9 @@ class FakeConnection {
       description.type === 'offer' ? 'have-local-offer' : 'stable';
   }
   public async setRemoteDescription(description: RTCSessionDescriptionInit) {
+    if (description.sdp === 'not sdp') {
+      throw new Error('Invalid SDP');
+    }
     this.calls.push(`remote:${description.type}`);
     this.signalingState =
       description.type === 'offer' ? 'have-remote-offer' : 'stable';
@@ -160,6 +164,67 @@ describe('RelayRenewal', () => {
 
     expect(connections[0].calls.at(-1)).toBe('local:rollback');
     expect(connections[0].signalingState).toBe('stable');
+  });
+
+  it('takes its offer back and tries once more when the guest never answers', async () => {
+    const { host, connections, channels } = pair();
+    channels[0].other = null;
+
+    await host.renew();
+    await jest.advanceTimersByTimeAsync(RENEW_ANSWER_TIMEOUT_MS);
+    await settle();
+    expect(
+      connections[0].calls.filter((call) => call === 'restart')
+    ).toHaveLength(1);
+
+    await jest.advanceTimersByTimeAsync(RENEW_RETRY_MS);
+    await settle();
+    expect(
+      connections[0].calls.filter((call) => call === 'restart')
+    ).toHaveLength(2);
+
+    // The second one unanswered too: no more tries before the next round.
+    await jest.advanceTimersByTimeAsync(
+      RENEW_ANSWER_TIMEOUT_MS + RENEW_RETRY_MS
+    );
+    await settle();
+    expect(
+      connections[0].calls.filter((call) => call === 'restart')
+    ).toHaveLength(2);
+    expect(connections[0].signalingState).toBe('stable');
+  });
+
+  it('takes its offer back at once when the answer is refused', async () => {
+    const { host, connections, channels } = pair();
+    channels[0].other = null;
+    await host.renew();
+
+    channels[0].onmessage?.({
+      data: JSON.stringify({ t: 'answer', sdp: 'not sdp' }),
+    });
+    await settle();
+
+    expect(connections[0].calls.at(-1)).toBe('local:rollback');
+    expect(connections[0].signalingState).toBe('stable');
+  });
+
+  it('takes its offer back when it cannot be sent, and tries once more', async () => {
+    const { host, connections, channels } = pair();
+    channels[0].send = () => {
+      throw new Error('OperationError');
+    };
+
+    await host.renew();
+    await settle();
+    expect(connections[0].signalingState).toBe('stable');
+
+    channels[0].send = FakeChannel.prototype.send;
+    await jest.advanceTimersByTimeAsync(RENEW_RETRY_MS);
+    await settle();
+    expect(
+      connections[0].calls.filter((call) => call === 'restart')
+    ).toHaveLength(2);
+    expect(connections[0].calls.at(-1)).toBe('remote:answer');
   });
 
   it('renews nothing once stopped', async () => {

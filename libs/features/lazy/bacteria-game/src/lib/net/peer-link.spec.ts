@@ -28,6 +28,12 @@ class FakeRtcConnection {
   public readonly restartIce = jest.fn();
 
   public constructor(public configuration: RTCConfiguration) {
+    // As a browser refuses a configuration with a URL it cannot read.
+    if (
+      configuration.iceServers?.some(({ urls }) => String(urls) === 'turn:')
+    ) {
+      throw new SyntaxError('Invalid URL');
+    }
     FakeRtcConnection.last = this;
   }
 
@@ -110,6 +116,25 @@ describe('WebRtcTransport', () => {
         String(urls).startsWith('stun:')
       )
     ).toBe(true);
+  });
+
+  it('connects without the relay when the browser refuses it', async () => {
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    const bad = { ...relay, urls: ['turn:'] };
+
+    await new WebRtcTransport().offer({
+      servers: [bad],
+      fresh: async () => [],
+    });
+
+    expect(
+      FakeRtcConnection.last?.configuration.iceServers?.every(({ urls }) =>
+        String(urls).startsWith('stun:')
+      )
+    ).toBe(true);
+    warn.mockRestore();
   });
 
   it('renews the relay of an open link on the host, until it closes', async () => {
