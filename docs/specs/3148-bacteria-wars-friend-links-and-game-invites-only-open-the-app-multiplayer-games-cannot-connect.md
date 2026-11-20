@@ -62,8 +62,8 @@ devices. These failures happen only on real devices, for two reasons:
 - B, part 1: a longer candidate wait, a notice of its own when the other
   device cannot be reached, and the failure's kind in analytics.
 - C, part 1: the matchmaking host's join timeout covers only the wait for
-  the guest's answer; once the answer is in, the link's connect timeout
-  decides.
+  the guest's answer; a guest who answered gets the link's connect time
+  once more before the host goes back to the search.
 
 ## Non-goals
 
@@ -132,7 +132,9 @@ devices. These failures happen only on real devices, for two reasons:
 7. `docs/analytics.md` lists `failure` on `online_ended`.
 8. In matchmaking, a host whose claimed guest has answered (`connecting`)
    is not dropped when `JOIN_TIMEOUT_MS` passes; one still `waiting` for
-   the answer is, as before (unit specs on `MatchmakerService`).
+   the answer is, as before, and one still `connecting` after
+   `JOIN_TIMEOUT_MS` plus `CONNECT_TIMEOUT_MS` is left too (unit specs on
+   `MatchmakerService`).
 9. `nx test`, `lint`, `lint-templates` and `typecheck-specs` of
    `feat-lazy-bacteria-game` are green, and so is the game's e2e in CI.
 
