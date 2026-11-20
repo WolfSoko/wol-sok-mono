@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VTYAGKZW8RNAA1MHEYTC5A",
+  "strategy": "manual-commit",
+  "branch": "3103-step-4-perf-inputs",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 24033,
+    "cache_read_tokens": 2851992,
+    "output_tokens": 10993,
+    "api_call_count": 18
+  }
+}
