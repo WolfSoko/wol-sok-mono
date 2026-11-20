@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01RCLBWxxNvb31QDpcUxe9xQ",
+  "agent_id": "abc54b1ab4eed3b7f",
+  "subagent_type": "general-purpose",
+  "task_description": "Simplify: efficiency angle",
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 58062,
+    "cache_read_tokens": 231235,
+    "output_tokens": 1492,
+    "api_call_count": 4
+  },
+  "started_at": "2026-11-20T21:30:57.653176003+01:00",
+  "completed_at": "2026-11-20T21:31:28.164754419+01:00"
+}

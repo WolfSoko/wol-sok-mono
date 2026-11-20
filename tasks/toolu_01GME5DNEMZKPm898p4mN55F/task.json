@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01GME5DNEMZKPm898p4mN55F",
+  "agent_id": "ad8be6586f0edb14f",
+  "subagent_type": "general-purpose",
+  "task_description": "Simplify: altitude angle",
+  "token_usage": {
+    "input_tokens": 8,
+    "cache_creation_tokens": 62179,
+    "cache_read_tokens": 232906,
+    "output_tokens": 1962,
+    "api_call_count": 4
+  },
+  "started_at": "2026-11-20T21:30:57.82946047+01:00",
+  "completed_at": "2026-11-20T21:31:38.953999717+01:00"
+}
