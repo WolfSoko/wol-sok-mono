@@ -1,17 +1,10 @@
 import type { ListedTurnKey } from './plan-turn-key';
-import type { AlertPolicy, ListedPolicy } from './plan-usage-alert';
+import type { AlertPolicy, ListedPolicy } from './plan-spend-alert';
 
 const API = 'https://api.cloudflare.com/client/v4';
 
 /** The longest wait for one of Cloudflare's answers. */
 const TIMEOUT_MS = 20_000;
-
-/** An alert type as `available_alerts` lists it. */
-export interface AvailableAlert {
-  type: string;
-  display_name?: string;
-  filter_options?: unknown;
-}
 
 /**
  * The few calls of Cloudflare's API that `turn-key` makes, with the
@@ -38,16 +31,6 @@ export class CloudflareApi {
 
   public async deleteTurnKey(account: string, uid: string): Promise<void> {
     await this.call('DELETE', `/accounts/${account}/calls/turn_keys/${uid}`);
-  }
-
-  /** Every alert type, by group, as Cloudflare offers them to the account. */
-  public async availableAlerts(
-    account: string
-  ): Promise<Record<string, AvailableAlert[]>> {
-    return this.call(
-      'GET',
-      `/accounts/${account}/alerting/v3/available_alerts`
-    );
   }
 
   public async policies(account: string): Promise<ListedPolicy[]> {

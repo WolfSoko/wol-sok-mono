@@ -2,10 +2,9 @@ import { describe, expect, it, jest } from '@jest/globals';
 import type { CloudflareApi } from './cloudflare-api';
 import {
   ensureTurnKey,
-  ensureUsageAlert,
+  ensureSpendAlert,
   type Secrets,
   TURN_KEY_NAME,
-  usageAlertPolicy,
 } from './provision';
 
 /** An account's TURN keys and alerts at a fake Cloudflare. */
@@ -25,19 +24,6 @@ function fakeCloudflare(keys: { uid: string; name: string }[] = []) {
         1
       );
     }),
-    availableAlerts: jest.fn(async () => ({
-      Billing: [
-        {
-          type: 'billing_usage_alert',
-          filter_options: [
-            {
-              Key: 'product',
-              AvailableValues: [{ ID: 'realtime_turn' }, { ID: 'argo' }],
-            },
-          ],
-        },
-      ],
-    })),
     policies: jest.fn(async () =>
       policies.map((p, i) => ({ id: `p${i}`, ...p }))
     ),
@@ -117,35 +103,21 @@ describe('ensureTurnKey', () => {
   });
 });
 
-describe('usageAlertPolicy', () => {
-  it("takes the TURN product from the account's offer", async () => {
-    const { api } = fakeCloudflare();
-    expect(
-      usageAlertPolicy(await api.availableAlerts(), 'mail@example.org')
-    ).toEqual({
-      name: 'bacteria-wars-turn-usage',
-      alert_type: 'billing_usage_alert',
-      enabled: true,
-      filters: { product: ['realtime_turn'], limit: ['100'] },
-      mechanisms: { email: [{ id: 'mail@example.org' }] },
-    });
-  });
-
-  it('refuses an account without usage alerts', () => {
-    expect(() => usageAlertPolicy({ Billing: [] }, 'm')).toThrow(
-      'No single TURN product for a billing_usage_alert'
-    );
-  });
-});
-
-describe('ensureUsageAlert', () => {
-  it('creates the alert once', async () => {
+describe('ensureSpendAlert', () => {
+  it("creates the $1 spend alert once, beside the account's own", async () => {
     const cloudflare = fakeCloudflare();
 
-    await ensureUsageAlert(cloudflare.asApi, 'acc', 'm@example.org', log);
-    await ensureUsageAlert(cloudflare.asApi, 'acc', 'm@example.org', log);
+    await ensureSpendAlert(cloudflare.asApi, 'acc', 'm@example.org', log);
+    await ensureSpendAlert(cloudflare.asApi, 'acc', 'm@example.org', log);
 
     expect(cloudflare.api.createPolicy).toHaveBeenCalledTimes(1);
+    expect(cloudflare.api.createPolicy).toHaveBeenCalledWith('acc', {
+      name: 'bacteria-wars-spend',
+      alert_type: 'billing_budget_alert',
+      enabled: true,
+      filters: { total_spend_dollars: ['1'] },
+      mechanisms: { email: [{ id: 'm@example.org' }] },
+    });
     expect(cloudflare.api.updatePolicy).not.toHaveBeenCalled();
   });
 });

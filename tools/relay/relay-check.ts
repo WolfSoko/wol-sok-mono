@@ -16,6 +16,16 @@ export const CHECK_TTL_S = 60;
  */
 export const CHECK_HOLD_MS = 11 * 60_000;
 
+/**
+ * How the check keeps the relay's credentials fresh while it holds the
+ * channel: not at all, by `setConfiguration` with new ones every
+ * {@link CHECK_REFRESH_MS}, or by that and an ICE restart.
+ */
+export type RefreshMode = 'none' | 'configure' | 'restart';
+
+/** How often the check takes fresh credentials, well before they expire. */
+export const CHECK_REFRESH_MS = 30_000;
+
 /** What the relay check found. */
 export interface RelayCheck {
   /** The channel opened, through the relay only. */
@@ -56,6 +66,8 @@ export async function checkCredentials(key: TurnKey): Promise<RelayEntry> {
  */
 export async function checkRelay(
   relay: RelayEntry,
+  fresh: () => Promise<RelayEntry>,
+  mode: RefreshMode = 'none',
   holdMs = CHECK_HOLD_MS
 ): Promise<RelayCheck> {
   const browser = await chromium.launch();
@@ -64,8 +76,9 @@ export async function checkRelay(
     // tsx names the functions it compiles with an `__name` helper, which
     // the page does not have.
     await page.evaluate('globalThis.__name = (fn) => fn');
+    await page.exposeFunction('freshRelay', fresh);
     return await page.evaluate(
-      async ({ relay, holdMs }) => {
+      async ({ relay, holdMs, mode, refreshMs }) => {
         const config: RTCConfiguration = {
           iceServers: [relay],
           iceTransportPolicy: 'relay',
@@ -90,14 +103,17 @@ export async function checkRelay(
           return done();
         };
 
-        await a.setLocalDescription(await a.createOffer());
-        await b.setRemoteDescription(
-          a.localDescription as RTCSessionDescription
-        );
-        await b.setLocalDescription(await b.createAnswer());
-        await a.setRemoteDescription(
-          b.localDescription as RTCSessionDescription
-        );
+        const negotiate = async () => {
+          await a.setLocalDescription(await a.createOffer());
+          await b.setRemoteDescription(
+            a.localDescription as RTCSessionDescription
+          );
+          await b.setLocalDescription(await b.createAnswer());
+          await a.setRemoteDescription(
+            b.localDescription as RTCSessionDescription
+          );
+        };
+        await negotiate();
 
         const opened = await until(() => out.readyState === 'open', 20_000);
         let relayed = false;
@@ -114,7 +130,27 @@ export async function checkRelay(
           out.send('first');
         }
         const first = await until(() => received.includes('first'), 10_000);
-        await wait(holdMs);
+        const freshRelay = (
+          globalThis as unknown as {
+            freshRelay: () => Promise<RTCIceServer>;
+          }
+        ).freshRelay;
+        for (let held = 0; held < holdMs; held += refreshMs) {
+          await wait(Math.min(refreshMs, holdMs - held));
+          if (mode !== 'none' && held + refreshMs < holdMs) {
+            const next = await freshRelay();
+            for (const connection of [a, b]) {
+              connection.setConfiguration({
+                iceServers: [next],
+                iceTransportPolicy: 'relay',
+              });
+            }
+            if (mode === 'restart') {
+              a.restartIce();
+              await negotiate();
+            }
+          }
+        }
         if (out.readyState === 'open') {
           out.send('after');
         }
@@ -126,7 +162,7 @@ export async function checkRelay(
         b.close();
         return { opened, relayed, first, afterExpiry };
       },
-      { relay, holdMs }
+      { relay, holdMs, mode, refreshMs: CHECK_REFRESH_MS }
     );
   } finally {
     await browser.close();

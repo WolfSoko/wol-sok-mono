@@ -1,31 +1,31 @@
 import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
-import type { AvailableAlert, CloudflareApi } from './cloudflare-api';
+import type { CloudflareApi } from './cloudflare-api';
 import { planTurnKey } from './plan-turn-key';
-import { type AlertPolicy, planUsageAlert } from './plan-usage-alert';
+import { type AlertPolicy, planSpendAlert } from './plan-spend-alert';
 
 /** The secret with the account API token, the one manual input (ADR 0020). */
 export const ACCOUNT_TOKEN_SECRET = 'CLOUDFLARE_API_TOKEN';
 /** The secret `refreshRelay` reads: `{ id, token }` of the TURN key. */
 export const TURN_KEY_SECRET = 'CLOUDFLARE_TURN_KEY';
 /**
- * The Cloudflare account that owns the TURN key and the usage alert (the
+ * The Cloudflare account that owns the TURN key and the spend alert (the
  * owner's answer of 2026-11-20). Not a secret: the dashboard's URLs carry
  * it. The token has no right to list its accounts, so it is named here.
  */
 export const CLOUDFLARE_ACCOUNT_ID = 'e68356c95bef5b09867db4a32fd76662';
 /** The TURN key's name at Cloudflare, which finds it again. */
 export const TURN_KEY_NAME = 'bacteria-wars-online';
-/** The usage alert's name at Cloudflare, which finds it again. */
-export const USAGE_ALERT_NAME = 'bacteria-wars-turn-usage';
+/** The spend alert's name at Cloudflare, which finds it again. */
+export const SPEND_ALERT_NAME = 'bacteria-wars-spend';
 /**
- * The monthly TURN traffic the alert fires above, in GB: a tenth of the
- * free allowance, some 16,000 matches of 6 MB.
+ * The account's spend the alert fires at, in dollars (the manager's answer
+ * of 2026-11-20 on request 1448): Cloudflare offers no usage alert for
+ * Realtime TURN, and TURN is free up to its monthly allowance, so the first
+ * paid dollar - from any product, TURN included - is the sign of misuse.
  */
-export const RELAY_ALERT_GB = 100;
-/** Cloudflare's alert type for a product's usage above a limit. */
-const USAGE_ALERT_TYPE = 'billing_usage_alert';
-/** What names the Realtime TURN product among the alert's filter options. */
-const TURN_PRODUCT = /realtime|calls|turn/i;
+export const SPEND_ALERT_DOLLARS = 1;
+/** Cloudflare's alert type for the account's spend above a limit. */
+const SPEND_ALERT_TYPE = 'billing_budget_alert';
 
 /** Reads and writes the relay's secrets - `FirebaseSecrets` outside specs. */
 export interface Secrets {
@@ -97,66 +97,34 @@ export async function ensureTurnKey(
   }
 }
 
-/** Every string in `value`, however deep. */
-function stringsIn(value: unknown): string[] {
-  if (typeof value === 'string') {
-    return [value];
-  }
-  if (value !== null && typeof value === 'object') {
-    return Object.values(value).flatMap(stringsIn);
-  }
-  return [];
-}
-
-/**
- * The usage alert as `turn-key` wants it, its product read from what
- * Cloudflare offers the account - throws, with the offer, when there is no
- * usage alert or no TURN product in it (Cloudflare has them on
- * Pay-as-you-go accounts only).
- */
-export function usageAlertPolicy(
-  available: Record<string, AvailableAlert[]>,
-  email: string
-): AlertPolicy {
-  const usage = Object.values(available)
-    .flat()
-    .find(({ type }) => type === USAGE_ALERT_TYPE);
-  const products = [
-    ...new Set(
-      stringsIn(usage?.filter_options).filter((s) => TURN_PRODUCT.test(s))
-    ),
-  ];
-  if (usage === undefined || products.length !== 1) {
-    throw new Error(
-      `No single TURN product for a ${USAGE_ALERT_TYPE} on this account: ${JSON.stringify(usage ?? null)}`
-    );
-  }
+/** The spend alert as `turn-key` wants it, emailed to `email`. */
+export function spendAlertPolicy(email: string): AlertPolicy {
   return {
-    name: USAGE_ALERT_NAME,
-    alert_type: USAGE_ALERT_TYPE,
+    name: SPEND_ALERT_NAME,
+    alert_type: SPEND_ALERT_TYPE,
     enabled: true,
-    filters: { product: products, limit: [String(RELAY_ALERT_GB)] },
+    filters: { total_spend_dollars: [String(SPEND_ALERT_DOLLARS)] },
     mechanisms: { email: [{ id: email }] },
   };
 }
 
-/** The usage alert in place as {@link usageAlertPolicy} wants it. */
-export async function ensureUsageAlert(
+/** The spend alert in place as {@link spendAlertPolicy} wants it. */
+export async function ensureSpendAlert(
   api: CloudflareApi,
   account: string,
   email: string,
   log: Log
 ): Promise<void> {
-  const wanted = usageAlertPolicy(await api.availableAlerts(account), email);
-  const plan = planUsageAlert(await api.policies(account), wanted);
+  const wanted = spendAlertPolicy(email);
+  const plan = planSpendAlert(await api.policies(account), wanted);
   if (plan.action === 'create') {
     await api.createPolicy(account, wanted);
   } else if (plan.action === 'update') {
     await api.updatePolicy(account, plan.id, wanted);
   }
-  log(`Usage alert ${USAGE_ALERT_NAME}: ${plan.action}`);
+  log(`Spend alert ${SPEND_ALERT_NAME}: ${plan.action}`);
   for (const id of plan.remove) {
     await api.deletePolicy(account, id);
-    log(`Usage alert ${id}: removed`);
+    log(`Spend alert ${id}: removed`);
   }
 }

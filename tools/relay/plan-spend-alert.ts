@@ -15,8 +15,8 @@ export type ListedPolicy = AlertPolicy & { id: string } & Record<
     unknown
   >;
 
-/** What `turn-key` does about the usage alert. */
-export type UsageAlertPlan =
+/** What `turn-key` does about the spend alert. */
+export type SpendAlertPlan =
   | { action: 'keep'; id: string; remove: string[] }
   | { action: 'update'; id: string; remove: string[] }
   | { action: 'create'; remove: string[] };
@@ -27,16 +27,16 @@ function emailsOf(policy: Pick<AlertPolicy, 'mechanisms'>): string[] {
 }
 
 /**
- * Whether the usage alert is in place as `wanted`: found by its name, kept
+ * Whether the spend alert is in place as `wanted`: found by its name, kept
  * when its type, switch, the filters it sets and its addresses are the
  * wanted ones, whatever else Cloudflare adds to them,
  * updated otherwise, created when there is none. Other policies of the
  * name are removed.
  */
-export function planUsageAlert(
+export function planSpendAlert(
   policies: readonly ListedPolicy[],
   wanted: AlertPolicy
-): UsageAlertPlan {
+): SpendAlertPlan {
   const [first, ...others] = policies.filter(
     (policy) => policy.name === wanted.name
   );

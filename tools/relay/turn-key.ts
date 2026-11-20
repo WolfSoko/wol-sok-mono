@@ -3,8 +3,8 @@
  * (ADR 0020), from the account API token in the secret
  * `CLOUDFLARE_API_TOKEN` of the project bacteria-wars, on the account
  * `CLOUDFLARE_ACCOUNT_ID` (`--account-id` for another): the TURN key, stored
- * as `CLOUDFLARE_TURN_KEY` for the functions' `refreshRelay`, and the usage
- * alert. Idempotent: a second run changes nothing. An older key of the
+ * as `CLOUDFLARE_TURN_KEY` for the functions' `refreshRelay`, and the spend
+ * alert (`billing_budget_alert` at $1). Idempotent: a second run changes nothing. An older key of the
  * name stays until `--prune`, run once the functions were deployed with
  * the latest version of `CLOUDFLARE_TURN_KEY`.
  *
@@ -23,7 +23,7 @@ import {
   ACCOUNT_TOKEN_SECRET,
   CLOUDFLARE_ACCOUNT_ID,
   ensureTurnKey,
-  ensureUsageAlert,
+  ensureSpendAlert,
   TURN_KEY_SECRET,
 } from './provision';
 import {
@@ -31,6 +31,7 @@ import {
   CHECK_TTL_S,
   checkCredentials,
   checkRelay,
+  type RefreshMode,
 } from './relay-check';
 
 const log = (line: string) => console.log(line);
@@ -60,7 +61,7 @@ async function provision(secrets: FirebaseSecrets): Promise<void> {
     log,
     process.argv.includes('--prune')
   );
-  await ensureUsageAlert(api, account, SITE_OWNER.email, log);
+  await ensureSpendAlert(api, account, SITE_OWNER.email, log);
 }
 
 async function check(secrets: FirebaseSecrets): Promise<boolean> {
@@ -74,7 +75,16 @@ async function check(secrets: FirebaseSecrets): Promise<boolean> {
   log(
     `Connecting through the relay only, holding ${CHECK_HOLD_MS / 1000} s past credentials of ${CHECK_TTL_S} s...`
   );
-  const result = await checkRelay(await checkCredentials(key));
+  const mode = (option('refresh') ?? 'none') as RefreshMode;
+  if (!['none', 'configure', 'restart'].includes(mode)) {
+    throw new Error('--refresh takes none, configure or restart.');
+  }
+  log(`Refreshing the credentials: ${mode}`);
+  const result = await checkRelay(
+    await checkCredentials(key),
+    () => checkCredentials(key),
+    mode
+  );
   log(JSON.stringify(result));
   return result.opened && result.relayed && result.first && result.afterExpiry;
 }
