@@ -411,6 +411,13 @@ describe('PrivacyComponent', () => {
     expect(en).toContain(
       "On every connection Cloudflare receives your device's IP address"
     );
+    // The match runs through Cloudflare's servers when relayed.
+    expect(de).not.toContain(
+      'Das Match selbst läuft nicht über unsere Server.'
+    );
+    expect(en).not.toContain('match itself does not go through our servers.');
+    expect(de).toContain('wie lange Cloudflare sie aufbewahrt');
+    expect(en).toContain('how long Cloudflare keeps them');
   });
 
   it('says only friends can read the online status', async () => {
