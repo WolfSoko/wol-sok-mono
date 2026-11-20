@@ -19,6 +19,7 @@ import {
   type PeerConnection,
   type PeerTransport,
   PeerUnreachableError,
+  type Relay,
   type UnreachableKind,
 } from './peer-transport';
 import { PlayerService } from '../state/player.service';
@@ -175,7 +176,7 @@ export class OnlineMatchService {
       if (attempt !== this.attempt) {
         return;
       }
-      const { link, offer } = await this.wire.offer(relay);
+      const { link, offer } = await this.wire.offer(this.relayOf(relay));
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -239,7 +240,10 @@ export class OnlineMatchService {
         this.endWith(attempt, { key: 'online.notices.noRoom' });
         return;
       }
-      const { link, answer } = await this.wire.answer(room.offer, await relay);
+      const { link, answer } = await this.wire.answer(
+        room.offer,
+        this.relayOf(await relay)
+      );
       if (!this.adopt(link, attempt)) {
         return;
       }
@@ -357,6 +361,11 @@ export class OnlineMatchService {
    */
   private relay(): Promise<readonly RelayServer[]> {
     return this.cloud.relay()?.servers() ?? Promise.resolve([]);
+  }
+
+  /** The relay for a link: `servers` now, fresh ones while it lasts. */
+  private relayOf(servers: readonly RelayServer[]): Relay {
+    return { servers, fresh: () => this.relay() };
   }
 
   /** Takes the link of an attempt - false when the attempt is over. */

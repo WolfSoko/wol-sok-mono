@@ -149,14 +149,14 @@ export function pairedTransport(): PairedTransport {
     },
     supported: () => true,
     async offer(relay) {
-      relays.push({ side: 'host', relay });
+      relays.push({ side: 'host', relay: relay.servers });
       const host = new PairedEnd();
       const offer = `offer-${++made}`;
       offers.set(offer, host);
       return { link: host, offer };
     },
     async answer(offer, relay) {
-      relays.push({ side: 'guest', relay });
+      relays.push({ side: 'guest', relay: relay.servers });
       const host = offers.get(offer);
       if (host === undefined || host.closed) {
         throw new Error(`No open offer "${offer}".`);

@@ -1,22 +1,13 @@
 import { Observable, Subject } from 'rxjs';
-import type { RelayServer } from '../storage/game-relay';
+import { iceServers } from './ice-servers';
 import {
   type PeerConnection,
   type PeerTransport,
   PeerUnreachableError,
+  type Relay,
   type UnreachableKind,
 } from './peer-transport';
-
-/**
- * Public STUN servers, which tell a device the address the internet sees it
- * under. Two devices behind strict NATs - some mobile networks, some
- * Wi-Fi networks - cannot reach each other that way; for them the
- * connection goes through the TURN relay the offer and answer are given
- * (ADR 0020), and without one they are told so.
- */
-const ICE_SERVERS: RTCIceServer[] = [
-  { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
-];
+import { RelayRenewal } from './relay-renewal';
 
 /**
  * The longest wait for the candidates - the ways this device can be
@@ -41,22 +32,29 @@ export class WebRtcTransport implements PeerTransport {
   }
 
   public async offer(
-    relay: readonly RelayServer[]
+    relay: Relay
   ): Promise<{ link: PeerConnection; offer: string }> {
-    const { link, description } = await negotiate(relay, async (connection) =>
-      connection.setLocalDescription(await connection.createOffer())
+    const { link, description } = await negotiate(
+      relay,
+      'host',
+      async (connection) =>
+        connection.setLocalDescription(await connection.createOffer())
     );
     return { link, offer: description };
   }
 
   public async answer(
     offer: string,
-    relay: readonly RelayServer[]
+    relay: Relay
   ): Promise<{ link: PeerConnection; answer: string }> {
-    const { link, description } = await negotiate(relay, async (connection) => {
-      await connection.setRemoteDescription({ type: 'offer', sdp: offer });
-      await connection.setLocalDescription(await connection.createAnswer());
-    });
+    const { link, description } = await negotiate(
+      relay,
+      'guest',
+      async (connection) => {
+        await connection.setRemoteDescription({ type: 'offer', sdp: offer });
+        await connection.setLocalDescription(await connection.createAnswer());
+      }
+    );
     link.giveUpLater();
     return { link, answer: description };
   }
@@ -68,13 +66,14 @@ export class WebRtcTransport implements PeerTransport {
  * again when they fail.
  */
 async function negotiate(
-  relay: readonly RelayServer[],
+  relay: Relay,
+  role: 'host' | 'guest',
   steps: (connection: RTCPeerConnection) => Promise<void>
 ): Promise<{ link: PeerLink; description: string }> {
   const connection = new RTCPeerConnection({
-    iceServers: [...ICE_SERVERS, ...relay],
+    iceServers: iceServers(relay.servers),
   });
-  const link = new PeerLink(connection);
+  const link = new PeerLink(connection, relay, role);
   try {
     await steps(connection);
     return { link, description: await link.description() };
@@ -89,6 +88,9 @@ class PeerLink implements PeerConnection {
   private readonly incoming = new Subject<string>();
   private readonly ended = new Subject<void>();
   private readonly channel: RTCDataChannel;
+  /** The link's own messages, apart from the game's: the relay's renewal. */
+  private readonly signal: RTCDataChannel;
+  private readonly renewal: RelayRenewal;
   private closed = false;
   /** Why the handshake never got through, once it did not. */
   private unreachable: UnreachableKind | null = null;
@@ -102,13 +104,28 @@ class PeerLink implements PeerConnection {
   /** Resolves once the channel is open, rejects when it never opens. */
   public readonly opened: Promise<void>;
 
-  public constructor(private readonly connection: RTCPeerConnection) {
-    // Negotiated: both sides make the same channel, neither waits for it.
+  public constructor(
+    private readonly connection: RTCPeerConnection,
+    relay: Relay,
+    role: 'host' | 'guest'
+  ) {
+    // Negotiated: both sides make the same channels, neither waits for them.
     this.channel = connection.createDataChannel('game', {
       negotiated: true,
       id: 0,
       ordered: true,
     });
+    this.signal = connection.createDataChannel('signal', {
+      negotiated: true,
+      id: 1,
+      ordered: true,
+    });
+    this.renewal = new RelayRenewal(
+      connection,
+      this.signal,
+      () => relay.fresh(),
+      () => this.description()
+    );
     this.channel.onmessage = (event) => {
       if (typeof event.data === 'string') {
         this.incoming.next(event.data);
@@ -126,6 +143,9 @@ class PeerLink implements PeerConnection {
     this.opened = new Promise((resolve, reject) => {
       this.channel.onopen = () => {
         clearTimeout(this.timeout);
+        if (role === 'host') {
+          this.renewal.start();
+        }
         resolve();
       };
       this.ended.subscribe(() => {
@@ -165,7 +185,9 @@ class PeerLink implements PeerConnection {
     this.closed = true;
     this.unreachable = unreachable;
     clearTimeout(this.timeout);
+    this.renewal.stop();
     this.channel.close();
+    this.signal.close();
     this.connection.close();
     this.ended.next();
     this.ended.complete();

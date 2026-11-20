@@ -424,7 +424,10 @@ describe('OnlineMatchService between two devices', () => {
       if (room === null) {
         throw new Error('The room is gone.');
       }
-      const { link, answer } = await transport.answer(room.offer, []);
+      const { link, answer } = await transport.answer(room.offer, {
+        servers: [],
+        fresh: async () => [],
+      });
       await room.answer(answer);
       await link.opened;
       link.send(

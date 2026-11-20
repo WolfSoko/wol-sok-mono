@@ -24,6 +24,16 @@ export interface PeerConnection {
 }
 
 /**
+ * The TURN relay a connection may go through (ADR 0020): its servers now,
+ * none without credentials, and fresh ones for a connection that outlasts
+ * their hour.
+ */
+export interface Relay {
+  servers: readonly RelayServer[];
+  fresh(): Promise<readonly RelayServer[]>;
+}
+
+/**
  * How two devices connect directly: the host makes an offer, the room
  * carries it to the guest, the guest's answer goes back the same way.
  * WebRTC in the game (`WebRtcTransport`), `pairedTransport()` from the
@@ -37,13 +47,11 @@ export interface PeerTransport {
    * A connection for the host, with the offer to pass on to the guest -
    * through `relay` too where the devices cannot reach each other directly.
    */
-  offer(
-    relay: readonly RelayServer[]
-  ): Promise<{ link: PeerConnection; offer: string }>;
+  offer(relay: Relay): Promise<{ link: PeerConnection; offer: string }>;
   /** A connection for the guest, answering the host's offer. */
   answer(
     offer: string,
-    relay: readonly RelayServer[]
+    relay: Relay
   ): Promise<{ link: PeerConnection; answer: string }>;
 }
 
