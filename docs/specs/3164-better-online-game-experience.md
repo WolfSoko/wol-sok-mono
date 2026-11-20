@@ -51,8 +51,11 @@ share, before the first match and between matches:
   and the first lobby look and behave alike, and the logic lives once.
 - **The tally is the room's, kept by a small service** (`RoomTally`,
   `net/room-tally.ts`, root): wins per seat for the matches of the current
-  connection, reset on `connected` and `ended`, fed by the match result the
-  game already reports. Pure counting logic in a function with its spec.
+  connection, reset on `connected` (a new connection), kept after `ended`
+  so the last result still shows it, fed by `GameStateService.endMatch`. Pure counting logic in a function with its spec.
+- **The result keeps the level played.** The host's pick changes the
+  store's level while the result is open, so the dialog holds the level it
+  opened with online; the host's button names the picked one.
 - **The level picker is a list of level cards** (the existing
   `LevelCardComponent`), not the full level map: online levels are few and
   the room has to fit beside the result on a phone. Material buttons and
@@ -72,7 +75,7 @@ share, before the first match and between matches:
    counting that match for its winner, and the room: the host can pick a
    level and start it, the guest sees the pick and waits. A draw counts for
    nobody.
-4. The tally resets when the connection ends or a new one is made.
+4. The tally starts at `0 : 0` for every new connection.
 5. Opening a match with a code no longer asks for a level first.
 6. With the connection gone the result dialog says so and offers no start,
    as today.

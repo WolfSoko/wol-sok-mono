@@ -1,5 +1,8 @@
 <h2 class="headline">{{ headline() }}</h2>
 <p class="level-info">{{ levelNameText(level()) | gameText }}</p>
+@if (online() && connected()) {
+  <feat-lazy-bac-game-online-room class="room" [winner]="winnerSeat()" />
+}
 @if (runNote(); as note) {
   <p class="run-note">{{ note }}</p>
 }
@@ -245,15 +248,25 @@
         {{ "match.actions.chooseLevel" | t }}
       </button>
     }
-    <button mat-stroked-button type="button" (click)="action.emit('again')">
-      <mat-icon>replay</mat-icon>
-      {{
-        (againstGhost()
-          ? "match.actions.fightAgain"
-          : "match.actions.playAgain"
-        ) | t
-      }}
-    </button>
+    @if (onlineNext(); as next) {
+      <button mat-flat-button type="button" (click)="action.emit('again')">
+        <mat-icon>play_arrow</mat-icon>
+        {{
+          "match.actions.playLevel"
+            | t: { level: (levelNameText(next) | gameText) }
+        }}
+      </button>
+    } @else {
+      <button mat-stroked-button type="button" (click)="action.emit('again')">
+        <mat-icon>replay</mat-icon>
+        {{
+          (againstGhost()
+            ? "match.actions.fightAgain"
+            : "match.actions.playAgain"
+          ) | t
+        }}
+      </button>
+    }
     @if (canFightGhost()) {
       <button mat-stroked-button type="button" (click)="action.emit('ghost')">
         <mat-icon>blur_on</mat-icon>
@@ -270,7 +283,8 @@
         {{ "match.share.button" | t }}
       </button>
     }
-    @if (upcoming(); as next) {
+    <!-- Online, the room picks what comes next. -->
+    @if (!online() && upcoming(); as next) {
       <button
         mat-flat-button
         type="button"
