@@ -2,7 +2,7 @@ import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { checkGoogleLink } from './admin/tombstones';
-import { GUEST_CLEANUP_ON } from './config';
+import { GUEST_CLEANUP_ON, RELAY_ON } from './config';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -87,15 +87,29 @@ describe('the exported functions', () => {
     ]);
   });
 
-  it('never retry the hourly run or the guest clean-up', () => {
-    const scheduled = GUEST_CLEANUP_ON
-      ? ['hourly', 'guestCleanup']
-      : ['hourly'];
+  it('never retry the scheduled runs', () => {
+    const scheduled = [
+      'hourly',
+      ...(GUEST_CLEANUP_ON ? ['guestCleanup'] : []),
+      ...(RELAY_ON ? ['refreshRelay'] : []),
+    ];
     for (const name of scheduled) {
       expect([
         name,
         functions[name]?.__endpoint.scheduleTrigger?.retryConfig?.retryCount,
       ]).toEqual([name, 0]);
+    }
+  });
+
+  it('export refreshRelay only with RELAY_ON, with the TURN key its only secret', () => {
+    const endpoint = functions['refreshRelay']?.__endpoint as
+      | (Endpoint & { secretEnvironmentVariables?: { key: string }[] })
+      | undefined;
+    expect(endpoint === undefined).toBe(!RELAY_ON);
+    if (endpoint !== undefined) {
+      expect(
+        endpoint.secretEnvironmentVariables?.map(({ key }) => key)
+      ).toEqual(['CLOUDFLARE_TURN_KEY']);
     }
   });
 

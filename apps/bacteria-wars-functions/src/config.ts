@@ -81,6 +81,23 @@ export const FEATURE_BEST_ON = true;
  */
 export const GUEST_CLEANUP_ON = true;
 
+/**
+ * Whether `refreshRelay`, which keeps the TURN relay's credentials in
+ * `relay/turn` (ADR 0020), is deployed. Off takes it out of the next
+ * deploy; the last credentials expire within {@link RELAY_TTL_S}, and the
+ * game then connects without the relay again. It needs the secret
+ * `CLOUDFLARE_TURN_KEY`, which `tools-relay:turn-key` creates: a deploy of
+ * a function whose secret does not exist fails.
+ */
+export const RELAY_ON = true;
+
+/**
+ * How long the relay's credentials last, in seconds - an hour, refreshed
+ * every 30 minutes (the manager's condition of 2026-11-20): anyone signed
+ * in can read them, so they must not outlast that much.
+ */
+export const RELAY_TTL_S = 60 * 60;
+
 /** How many days a guest account may go unused before it is deleted. */
 export const GUEST_IDLE_DAYS = 90;
 
