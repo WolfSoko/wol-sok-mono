@@ -63,6 +63,16 @@ describe('fetchRelay', () => {
     await expect(refused).rejects.not.toThrow(/key-token/);
   });
 
+  it("throws on an answer that is no JSON, without the answer's text", async () => {
+    const noJson = jest.fn<Promise<Response>, Parameters<typeof fetch>>(
+      async () =>
+        new Response('upstream key-token unavailable', { status: 200 })
+    );
+    const failed = fetchRelay(key, 3600, noJson);
+    await expect(failed).rejects.toThrow('Cloudflare answered no JSON.');
+    await expect(failed).rejects.not.toThrow(/key-token/);
+  });
+
   it('throws on an answer without a TURN server', async () => {
     await expect(
       fetchRelay(key, 3600, fakeFetch(201, { iceServers: [] }))

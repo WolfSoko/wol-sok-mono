@@ -32,7 +32,11 @@ export async function fetchRelay(
       `Cloudflare refused the TURN credentials (${response.status}).`
     );
   }
-  const entry = relayEntry(await response.json());
+  // Its own text, never the body's, which a SyntaxError would quote.
+  const answer: unknown = await response.json().catch(() => {
+    throw new Error('Cloudflare answered no JSON.');
+  });
+  const entry = relayEntry(answer);
   if (entry === null) {
     throw new Error('Cloudflare answered no TURN server.');
   }

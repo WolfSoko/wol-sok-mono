@@ -34,9 +34,7 @@ export function parseRelayCredentials(
   if (!isObject(data) || !Array.isArray(data['urls'])) {
     return null;
   }
-  const urls = data['urls'].filter(
-    (url): url is string => typeof url === 'string'
-  );
+  const urls = data['urls'].filter(isRelayUrl);
   const username = data['username'];
   const credential = data['credential'];
   const expireAt = toMillis(data['expireAt']);
@@ -71,6 +69,18 @@ export function relayCredentialsUrl(keyId: string): string {
 const PORT_53 = /:53(\?|$)/;
 
 /**
+ * A TURN URL a browser takes (RFC 7065): `turn:` or `turns:`, a host, an
+ * optional port and transport. Anything else would make `RTCPeerConnection`
+ * refuse the whole configuration, the STUN servers with it.
+ */
+const TURN_URL = /^turns?:[A-Za-z0-9.-]+(:\d{1,5})?(\?transport=(udp|tcp))?$/;
+
+/** A TURN URL the game can hand to the browser. */
+export function isRelayUrl(url: unknown): url is string {
+  return typeof url === 'string' && TURN_URL.test(url) && !PORT_53.test(url);
+}
+
+/**
  * The TURN server in Cloudflare's `generate-ice-servers` answer, its URLs
  * on port 53 dropped - null when it has none left, or no credentials.
  * The STUN entry is left out: the game has its own STUN servers.
@@ -86,14 +96,13 @@ export function relayEntry(answer: unknown): RelayEntry | null {
     }
     const { username, credential } = server;
     const listed = server['urls'];
-    const urls = (Array.isArray(listed) ? listed : [listed]).filter(
-      (url): url is string =>
-        typeof url === 'string' && /^turns?:/.test(url) && !PORT_53.test(url)
-    );
+    const urls = (Array.isArray(listed) ? listed : [listed]).filter(isRelayUrl);
     if (
       urls.length > 0 &&
       typeof username === 'string' &&
-      typeof credential === 'string'
+      username !== '' &&
+      typeof credential === 'string' &&
+      credential !== ''
     ) {
       return { urls, username, credential };
     }

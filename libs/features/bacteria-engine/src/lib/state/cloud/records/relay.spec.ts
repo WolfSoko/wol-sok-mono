@@ -30,6 +30,18 @@ describe('parseRelayCredentials', () => {
     });
   });
 
+  it('drops urls a browser would refuse, which would cost the STUN servers too', () => {
+    expect(
+      parseRelayCredentials(
+        {
+          ...stored,
+          urls: ['turn:', 'turn:turn.cloudflare.com:3478', 'http://x'],
+        },
+        toMillis
+      )?.urls
+    ).toEqual(['turn:turn.cloudflare.com:3478']);
+  });
+
   it('keeps only the urls that are strings', () => {
     expect(
       parseRelayCredentials(
@@ -111,6 +123,22 @@ describe('relayEntry', () => {
     [
       'a TURN server without a password',
       { iceServers: [{ urls: ['turn:x:3478'], username: 'u' }] },
+    ],
+    [
+      'a TURN server with an empty username',
+      {
+        iceServers: [{ urls: ['turn:x:3478'], username: '', credential: 'c' }],
+      },
+    ],
+    [
+      'a TURN server with an empty password',
+      {
+        iceServers: [{ urls: ['turn:x:3478'], username: 'u', credential: '' }],
+      },
+    ],
+    [
+      'a TURN server with a malformed URL',
+      { iceServers: [{ urls: ['turn:'], username: 'u', credential: 'c' }] },
     ],
     [
       'a TURN server on port 53 only',
