@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>bw6blt7ki</task-id>
+<tool-use-id>toolu_01G8JbGDyvbB4y5vpwxkKJqC</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-556-wol-sok-mono/e0d61cb9-1e76-4f4a-89f0-620bd261d9ca/tasks/bw6blt7ki.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 90); do out=$(gh api repos/{owner}/{repo}/commits/022d89ee0fad99e3b54d9474509af5dcaa268539/check-runs --jq '.check_runs[] | "\(.name): \(.status) \(.conclusion)"'); echo "$out" | grep -q "in_progress\|queued" || break; sleep 60; done; echo "$out"" completed (exit code 0)</summary>
+</task-notification>

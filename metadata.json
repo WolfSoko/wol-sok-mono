@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7WQZ4FNXP989J23G0XQ18R6",
+  "strategy": "manual-commit",
+  "branch": "3148-turn-relay",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/bacteria-wars-functions/src/relay/fetch-relay.spec.ts",
+    "apps/bacteria-wars-functions/src/relay/fetch-relay.ts",
+    "libs/features/bacteria-engine/src/lib/state/cloud/records/relay.spec.ts",
+    "libs/features/bacteria-engine/src/lib/state/cloud/records/relay.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 34993,
+    "cache_read_tokens": 7852181,
+    "output_tokens": 22207,
+    "api_call_count": 18,
+    "subagent_tokens": {
+      "input_tokens": 0,
+      "cache_creation_tokens": 0,
+      "cache_read_tokens": 0,
+      "output_tokens": 0,
+      "api_call_count": 0
+    }
+  }
+}
