@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_019VxsjedEMNg5RmpZndRCeV",
+  "agent_id": "a6809eeaa043a9f6d",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3150 diff vs spec",
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 100429,
+    "cache_read_tokens": 1323703,
+    "output_tokens": 10960,
+    "api_call_count": 16
+  },
+  "started_at": "2026-11-20T05:52:13.01844266+01:00",
+  "completed_at": "2026-11-20T05:56:49.700894708+01:00"
+}
