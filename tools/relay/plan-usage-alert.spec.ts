@@ -27,7 +27,21 @@ describe('planUsageAlert', () => {
   it('keeps it whatever else Cloudflare adds to a policy', () => {
     expect(
       planUsageAlert(
-        [{ ...wanted, id: 'p1', created: 'then', description: '' }],
+        [
+          {
+            ...wanted,
+            id: 'p1',
+            created: 'then',
+            description: '',
+            filters: { ...wanted.filters, zones: [] },
+            mechanisms: {
+              // Cloudflare lists an address with more than its id.
+              email: [
+                Object.assign({ id: 'privacy@example.org' }, { name: 'Owner' }),
+              ],
+            },
+          },
+        ],
         wanted
       )
     ).toEqual({ action: 'keep', id: 'p1', remove: [] });

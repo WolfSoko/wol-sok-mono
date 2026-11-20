@@ -1,3 +1,4 @@
+import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { AvailableAlert, CloudflareApi } from './cloudflare-api';
 import { planTurnKey } from './plan-turn-key';
 import { type AlertPolicy, planUsageAlert } from './plan-usage-alert';
@@ -6,6 +7,12 @@ import { type AlertPolicy, planUsageAlert } from './plan-usage-alert';
 export const ACCOUNT_TOKEN_SECRET = 'CLOUDFLARE_API_TOKEN';
 /** The secret `refreshRelay` reads: `{ id, token }` of the TURN key. */
 export const TURN_KEY_SECRET = 'CLOUDFLARE_TURN_KEY';
+/**
+ * The Cloudflare account that owns the TURN key and the usage alert (the
+ * owner's answer of 2026-11-20). Not a secret: the dashboard's URLs carry
+ * it. The token has no right to list its accounts, so it is named here.
+ */
+export const CLOUDFLARE_ACCOUNT_ID = 'e68356c95bef5b09867db4a32fd76662';
 /** The TURN key's name at Cloudflare, which finds it again. */
 export const TURN_KEY_NAME = 'bacteria-wars-online';
 /** The usage alert's name at Cloudflare, which finds it again. */
@@ -29,32 +36,14 @@ export interface Secrets {
 /** Where `turn-key` reports what it did. */
 export type Log = (line: string) => void;
 
-/** The one account the token reaches, or the one `wanted` names. */
-export async function accountOf(
-  api: CloudflareApi,
-  wanted: string | null
-): Promise<string> {
-  const accounts = await api.accounts();
-  if (wanted !== null) {
-    if (!accounts.some(({ id }) => id === wanted)) {
-      throw new Error(`The token reaches no account ${wanted}.`);
-    }
-    return wanted;
-  }
-  if (accounts.length !== 1) {
-    throw new Error(
-      `The token reaches ${accounts.length} accounts; pick one with --account-id=<id>.`
-    );
-  }
-  return accounts[0]?.id ?? '';
-}
-
-/** The uid the stored TURN key secret names - null for none, or one unreadable. */
+/**
+ * The uid the stored TURN key secret names - null for none, or one
+ * `refreshRelay` could not use either (no id or no token).
+ */
 async function storedUid(secrets: Secrets): Promise<string | null> {
   const value = await secrets.read(TURN_KEY_SECRET);
   try {
-    const id: unknown = value === null ? null : JSON.parse(value).id;
-    return typeof id === 'string' ? id : null;
+    return value === null ? null : parseTurnKey(value).id;
   } catch {
     return null;
   }
@@ -62,14 +51,17 @@ async function storedUid(secrets: Secrets): Promise<string | null> {
 
 /**
  * The TURN key in place and named by `CLOUDFLARE_TURN_KEY`: nothing to do
- * when it is, else a new key whose secret goes straight into the secret,
- * then the stale keys of the name removed.
+ * when it is, else a new key whose secret goes straight into the secret.
+ * Older keys of the name are removed only with `prune`: the deployed
+ * `refreshRelay` keeps the secret's version it was deployed with, so an
+ * old key stays in use until the functions are deployed again.
  */
 export async function ensureTurnKey(
   api: CloudflareApi,
   secrets: Secrets,
   account: string,
-  log: Log
+  log: Log,
+  prune = false
 ): Promise<void> {
   const plan = planTurnKey(
     await api.turnKeys(account),
@@ -80,15 +72,28 @@ export async function ensureTurnKey(
     log(`TURN key ${plan.uid}: keep`);
   } else {
     const created = await api.createTurnKey(account, TURN_KEY_NAME);
+    if (typeof created.secret !== 'string' || created.secret === '') {
+      throw new Error(
+        `Cloudflare created TURN key ${created.uid} without its secret.`
+      );
+    }
     await secrets.write(
       TURN_KEY_SECRET,
       JSON.stringify({ id: created.uid, token: created.secret })
     );
-    log(`TURN key ${created.uid}: created, stored in ${TURN_KEY_SECRET}`);
+    log(
+      `TURN key ${created.uid}: created, stored in ${TURN_KEY_SECRET} - deploy bacteria-wars-functions to use it`
+    );
   }
   for (const uid of plan.remove) {
-    await api.deleteTurnKey(account, uid);
-    log(`TURN key ${uid}: removed`);
+    if (prune) {
+      await api.deleteTurnKey(account, uid);
+      log(`TURN key ${uid}: removed`);
+    } else {
+      log(
+        `TURN key ${uid}: kept - remove it with --prune once the functions run on ${TURN_KEY_SECRET}'s latest version`
+      );
+    }
   }
 }
 

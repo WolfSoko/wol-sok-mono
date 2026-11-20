@@ -1,23 +1,27 @@
 /**
  * Sets up the TURN relay of Bacteria Wars' online matches at Cloudflare
  * (ADR 0020), from the account API token in the secret
- * `CLOUDFLARE_API_TOKEN` of the project bacteria-wars: the TURN key, stored
+ * `CLOUDFLARE_API_TOKEN` of the project bacteria-wars, on the account
+ * `CLOUDFLARE_ACCOUNT_ID` (`--account-id` for another): the TURN key, stored
  * as `CLOUDFLARE_TURN_KEY` for the functions' `refreshRelay`, and the usage
- * alert. Idempotent: a second run changes nothing.
+ * alert. Idempotent: a second run changes nothing. An older key of the
+ * name stays until `--prune`, run once the functions were deployed with
+ * the latest version of `CLOUDFLARE_TURN_KEY`.
  *
- * Usage: npx nx run tools-relay:turn-key [-- --account-id=<id>]
+ * Usage: npx nx run tools-relay:turn-key [-- --account-id=<id>] [--prune]
  *        npx nx run tools-relay:check
  *
  * `--check` sets nothing up: it connects two Chromium peers through the
  * relay only and holds the channel past the credentials' expiry. No secret
  * is ever printed.
  */
+import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { SITE_OWNER } from '@wolsok/shared-legal';
 import { CloudflareApi } from './cloudflare-api';
 import { FirebaseSecrets } from './firebase-secrets';
 import {
   ACCOUNT_TOKEN_SECRET,
-  accountOf,
+  CLOUDFLARE_ACCOUNT_ID,
   ensureTurnKey,
   ensureUsageAlert,
   TURN_KEY_SECRET,
@@ -47,9 +51,15 @@ async function provision(secrets: FirebaseSecrets): Promise<void> {
     );
   }
   const api = new CloudflareApi(token);
-  const account = await accountOf(api, option('account-id'));
+  const account = option('account-id') ?? CLOUDFLARE_ACCOUNT_ID;
   log(`Account ${account}`);
-  await ensureTurnKey(api, secrets, account, log);
+  await ensureTurnKey(
+    api,
+    secrets,
+    account,
+    log,
+    process.argv.includes('--prune')
+  );
   await ensureUsageAlert(api, account, SITE_OWNER.email, log);
 }
 
@@ -60,13 +70,13 @@ async function check(secrets: FirebaseSecrets): Promise<boolean> {
       `No ${TURN_KEY_SECRET} yet: run tools-relay:turn-key first.`
     );
   }
-  const key = JSON.parse(stored) as { id: string; token: string };
+  const key = parseTurnKey(stored);
   log(
     `Connecting through the relay only, holding ${CHECK_HOLD_MS / 1000} s past credentials of ${CHECK_TTL_S} s...`
   );
   const result = await checkRelay(await checkCredentials(key));
   log(JSON.stringify(result));
-  return result.opened && result.relayed && result.first;
+  return result.opened && result.relayed && result.first && result.afterExpiry;
 }
 
 async function main(): Promise<number> {

@@ -1,7 +1,6 @@
 import { describe, expect, it, jest } from '@jest/globals';
 import type { CloudflareApi } from './cloudflare-api';
 import {
-  accountOf,
   ensureTurnKey,
   ensureUsageAlert,
   type Secrets,
@@ -14,7 +13,6 @@ function fakeCloudflare(keys: { uid: string; name: string }[] = []) {
   const policies: Record<string, unknown>[] = [];
   let made = 0;
   const api = {
-    accounts: jest.fn(async () => [{ id: 'acc', name: 'Account' }]),
     turnKeys: jest.fn(async () => [...keys]),
     createTurnKey: jest.fn(async (_account: string, name: string) => {
       const uid = `new${++made}`;
@@ -82,24 +80,40 @@ describe('ensureTurnKey', () => {
     expect(cloudflare.keys).toEqual([{ uid: 'new1', name: TURN_KEY_NAME }]);
   });
 
-  it('replaces a key whose secret nobody holds', async () => {
-    const cloudflare = fakeCloudflare([{ uid: 'old', name: TURN_KEY_NAME }]);
-
-    await ensureTurnKey(cloudflare.asApi, fakeSecrets(), 'acc', log);
-
-    expect(cloudflare.keys).toEqual([{ uid: 'new1', name: TURN_KEY_NAME }]);
-  });
-
-  it('stores the new key before it removes the old one', async () => {
+  it('replaces a key whose secret nobody holds, keeping the old one until --prune', async () => {
     const cloudflare = fakeCloudflare([{ uid: 'old', name: TURN_KEY_NAME }]);
     const secrets = fakeSecrets();
-    cloudflare.api.deleteTurnKey.mockImplementation(async () => {
-      expect(secrets.stored['CLOUDFLARE_TURN_KEY']).toContain('new1');
-    });
+
+    await ensureTurnKey(cloudflare.asApi, secrets, 'acc', log);
+    // The deployed function may still run on the old key's version.
+    expect(cloudflare.keys.map(({ uid }) => uid)).toEqual(['old', 'new1']);
+
+    await ensureTurnKey(cloudflare.asApi, secrets, 'acc', log, true);
+    expect(cloudflare.keys.map(({ uid }) => uid)).toEqual(['new1']);
+    expect(cloudflare.api.createTurnKey).toHaveBeenCalledTimes(1);
+  });
+
+  it('replaces a stored key the functions could not use, a token missing', async () => {
+    const cloudflare = fakeCloudflare([{ uid: 'k1', name: TURN_KEY_NAME }]);
+    const secrets = fakeSecrets({ CLOUDFLARE_TURN_KEY: '{"id":"k1"}' });
 
     await ensureTurnKey(cloudflare.asApi, secrets, 'acc', log);
 
-    expect(cloudflare.api.deleteTurnKey).toHaveBeenCalledWith('acc', 'old');
+    expect(cloudflare.api.createTurnKey).toHaveBeenCalledTimes(1);
+  });
+
+  it('stores nothing for a key created without its secret', async () => {
+    const cloudflare = fakeCloudflare();
+    cloudflare.api.createTurnKey.mockResolvedValueOnce({
+      uid: 'k1',
+      secret: '',
+    });
+    const secrets = fakeSecrets();
+
+    await expect(
+      ensureTurnKey(cloudflare.asApi, secrets, 'acc', log)
+    ).rejects.toThrow('Cloudflare created TURN key k1 without its secret.');
+    expect(secrets.stored).toEqual({});
   });
 });
 
@@ -133,17 +147,5 @@ describe('ensureUsageAlert', () => {
 
     expect(cloudflare.api.createPolicy).toHaveBeenCalledTimes(1);
     expect(cloudflare.api.updatePolicy).not.toHaveBeenCalled();
-  });
-});
-
-describe('accountOf', () => {
-  it("takes the token's only account", async () => {
-    expect(await accountOf(fakeCloudflare().asApi, null)).toBe('acc');
-  });
-
-  it('refuses an account the token does not reach', async () => {
-    await expect(accountOf(fakeCloudflare().asApi, 'other')).rejects.toThrow(
-      'The token reaches no account other.'
-    );
   });
 });

@@ -3,12 +3,18 @@ import {
   type RelayEntry,
   relayCredentialsUrl,
   relayEntry,
+  type TurnKey,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 
 /** The credentials' lifetime in the check, in seconds. */
 export const CHECK_TTL_S = 60;
-/** How long the check holds the channel: past the credentials' expiry. */
-export const CHECK_HOLD_MS = 120_000;
+/**
+ * How long the check holds the channel: 11 minutes, past the credentials'
+ * expiry and past Chrome's refresh of the TURN permission (about every 4
+ * minutes) and of the allocation (its 10-minute lifetime less a minute),
+ * the first moments an expired credential could be refused.
+ */
+export const CHECK_HOLD_MS = 11 * 60_000;
 
 /** What the relay check found. */
 export interface RelayCheck {
@@ -23,10 +29,7 @@ export interface RelayCheck {
 }
 
 /** Credentials from the TURN key, valid {@link CHECK_TTL_S}. */
-export async function checkCredentials(key: {
-  id: string;
-  token: string;
-}): Promise<RelayEntry> {
+export async function checkCredentials(key: TurnKey): Promise<RelayEntry> {
   const response = await fetch(relayCredentialsUrl(key.id), {
     method: 'POST',
     headers: {
@@ -34,6 +37,7 @@ export async function checkCredentials(key: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ ttl: CHECK_TTL_S }),
+    signal: AbortSignal.timeout(20_000),
   });
   const entry = response.ok ? relayEntry(await response.json()) : null;
   if (entry === null) {

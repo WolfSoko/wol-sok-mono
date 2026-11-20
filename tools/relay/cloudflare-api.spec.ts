@@ -52,9 +52,9 @@ describe('CloudflareApi', () => {
       })
     );
 
-    const refused = api.accounts();
+    const refused = api.turnKeys('acc');
     await expect(refused).rejects.toThrow(
-      'Cloudflare GET /accounts answered 403: Authentication error'
+      'Cloudflare GET /accounts/acc/calls/turn_keys answered 403: Authentication error'
     );
     await expect(refused).rejects.not.toThrow(/account-token/);
   });

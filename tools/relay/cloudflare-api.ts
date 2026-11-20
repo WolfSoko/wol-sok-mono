@@ -24,10 +24,6 @@ export class CloudflareApi {
     private readonly fetchFn: typeof fetch = fetch
   ) {}
 
-  public async accounts(): Promise<{ id: string; name: string }[]> {
-    return this.call('GET', '/accounts');
-  }
-
   public async turnKeys(account: string): Promise<ListedTurnKey[]> {
     return this.call('GET', `/accounts/${account}/calls/turn_keys`);
   }
