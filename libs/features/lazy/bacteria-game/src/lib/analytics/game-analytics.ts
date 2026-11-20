@@ -86,7 +86,8 @@ export type GameEvents = {
    * The online link ended with a notice to the player: `reason` how (`lost`,
    * `left`), `notice` the text's key, which says why.
    */
-  online_ended: { reason: string; notice: string };
+  /** `failure`: why the other device could not be reached, `none` else. */
+  online_ended: { reason: string; notice: string; failure: string };
   /** A recorded match the cloud (or this device) took. */
   replay_saved: { online: boolean; ranked: boolean };
   replay_watched: { source: 'my_matches' };

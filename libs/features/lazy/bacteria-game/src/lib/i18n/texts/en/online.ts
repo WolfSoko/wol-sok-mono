@@ -45,5 +45,7 @@ export const online = {
       'Your opponent plays another version of the game - reload both.',
     lost: 'The connection to your opponent was lost.',
     failed: 'Could not connect. Try again - on the same Wi-Fi it works best.',
+    unreachable:
+      'Could not reach the other device. Some mobile and Wi-Fi networks block direct connections - try another network, such as the same Wi-Fi.',
   },
 };

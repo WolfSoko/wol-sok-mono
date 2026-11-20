@@ -1,5 +1,10 @@
 import { Observable, Subject } from 'rxjs';
-import type { PeerConnection, PeerTransport } from './peer-transport';
+import {
+  type PeerConnection,
+  type PeerTransport,
+  PeerUnreachableError,
+  type UnreachableKind,
+} from './peer-transport';
 
 /**
  * Public STUN servers, which tell a device the address the internet sees it
@@ -13,8 +18,9 @@ const ICE_SERVERS: RTCIceServer[] = [
 /**
  * The longest wait for the candidates - the ways this device can be
  * reached - before the offer or answer goes out with those found so far.
+ * A slow mobile network brings the one the STUN server tells late.
  */
-const GATHER_TIMEOUT_MS = 3000;
+export const GATHER_TIMEOUT_MS = 5000;
 
 /** How long a guest may take to connect once it answered. */
 export const CONNECT_TIMEOUT_MS = 20_000;
@@ -74,6 +80,8 @@ class PeerLink implements PeerConnection {
   private readonly ended = new Subject<void>();
   private readonly channel: RTCDataChannel;
   private closed = false;
+  /** Why the handshake never got through, once it did not. */
+  private unreachable: UnreachableKind | null = null;
   /** Gives up on a handshake that never gets through. */
   private timeout?: ReturnType<typeof setTimeout>;
 
@@ -99,7 +107,9 @@ class PeerLink implements PeerConnection {
     this.channel.onclose = () => this.close();
     connection.onconnectionstatechange = () => {
       const state = connection.connectionState;
-      if (state === 'failed' || state === 'closed') {
+      if (state === 'failed') {
+        this.close('ice_failed');
+      } else if (state === 'closed') {
         this.close();
       }
     };
@@ -110,7 +120,11 @@ class PeerLink implements PeerConnection {
       };
       this.ended.subscribe(() => {
         clearTimeout(this.timeout);
-        reject(new Error('The connection closed.'));
+        reject(
+          this.unreachable === null
+            ? new Error('The connection closed.')
+            : new PeerUnreachableError(this.unreachable)
+        );
       });
     });
     // Rejections are handled where it is awaited; this one only waits.
@@ -130,11 +144,16 @@ class PeerLink implements PeerConnection {
     }
   }
 
-  public close(): void {
+  /**
+   * Closes the link - `unreachable` saying why a handshake never got
+   * through, which `opened` then rejects with.
+   */
+  public close(unreachable: UnreachableKind | null = null): void {
     if (this.closed) {
       return;
     }
     this.closed = true;
+    this.unreachable = unreachable;
     clearTimeout(this.timeout);
     this.channel.close();
     this.connection.close();
@@ -145,7 +164,10 @@ class PeerLink implements PeerConnection {
 
   /** Closes the link unless it opens within {@link CONNECT_TIMEOUT_MS}. */
   public giveUpLater(): void {
-    this.timeout ??= setTimeout(() => this.close(), CONNECT_TIMEOUT_MS);
+    this.timeout ??= setTimeout(
+      () => this.close('timeout'),
+      CONNECT_TIMEOUT_MS
+    );
   }
 
   /** The local description with every candidate found in time. */

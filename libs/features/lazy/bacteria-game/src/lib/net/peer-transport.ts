@@ -9,7 +9,11 @@ export interface PeerConnection {
   readonly messages$: Observable<string>;
   /** Emits once the connection is gone - closed by either side, or lost. */
   readonly closed$: Observable<void>;
-  /** Resolves once the connection is open, rejects when it never opens. */
+  /**
+   * Resolves once the connection is open, rejects when it never opens -
+   * with a {@link PeerUnreachableError} when the other device could not be
+   * reached at all.
+   */
   readonly opened: Promise<void>;
   /** Takes the guest's answer - the host's side of the handshake. */
   accept(answer: string): Promise<void>;
@@ -32,4 +36,19 @@ export interface PeerTransport {
   offer(): Promise<{ link: PeerConnection; offer: string }>;
   /** A connection for the guest, answering the host's offer. */
   answer(offer: string): Promise<{ link: PeerConnection; answer: string }>;
+}
+
+/**
+ * Why the other device could not be reached: `ice_failed` when every way
+ * to it failed - strict NATs, which only a relay gets through - and
+ * `timeout` when the connection did not open in time.
+ */
+export type UnreachableKind = 'ice_failed' | 'timeout';
+
+/** The rejection of {@link PeerConnection.opened} for an unreachable device. */
+export class PeerUnreachableError extends Error {
+  public constructor(public readonly kind: UnreachableKind) {
+    super(`The other device could not be reached (${kind}).`);
+    this.name = 'PeerUnreachableError';
+  }
 }

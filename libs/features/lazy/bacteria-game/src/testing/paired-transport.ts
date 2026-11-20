@@ -1,5 +1,10 @@
 import { Subject } from 'rxjs';
-import type { PeerConnection, PeerTransport } from '../lib/net/peer-transport';
+import {
+  type PeerConnection,
+  type PeerTransport,
+  PeerUnreachableError,
+  type UnreachableKind,
+} from '../lib/net/peer-transport';
 
 /** Lets every message under way arrive, and the promises it settles. */
 export const flush = (): Promise<void> =>
@@ -21,10 +26,13 @@ class PairedEnd implements PeerConnection {
   public readonly closed$ = this.ended.asObservable();
   public readonly opened: Promise<void>;
 
+  /** What `opened` rejects with once this end closes before it opened. */
+  private closedBy: Error = new Error('The connection closed.');
+
   public constructor() {
     this.opened = new Promise((resolve, reject) => {
       this.resolveOpened = resolve;
-      this.ended.subscribe(() => reject(new Error('The connection closed.')));
+      this.ended.subscribe(() => reject(this.closedBy));
     });
     this.opened.catch(() => undefined);
   }
@@ -59,18 +67,29 @@ class PairedEnd implements PeerConnection {
     queueMicrotask(() => other.receive(message));
   }
 
+  /** Closes this end before it opened, `opened` rejecting with `error`. */
+  public failWith(error: Error): void {
+    this.closedBy = error;
+    this.close();
+  }
+
   public close(): void {
     if (this.isClosed) {
       return;
     }
     this.isClosed = true;
+    const wasOpen = this.isOpen;
     this.isOpen = false;
     this.ended.next();
     this.ended.complete();
     this.incoming.complete();
-    // The other device notices too - after a moment, as over the network.
+    // The other device notices too - after a moment, as over the network,
+    // and a link that failed before it opened failed there alike.
     const other = this.other;
-    queueMicrotask(() => other?.close());
+    const error = wasOpen ? null : this.closedBy;
+    queueMicrotask(() =>
+      error === null ? other?.close() : other?.failWith(error)
+    );
   }
 
   private open(): void {
@@ -91,6 +110,11 @@ class PairedEnd implements PeerConnection {
 export interface PairedTransport extends PeerTransport {
   /** The end of the guest that answered last - to lose its connection. */
   readonly lastGuest: PeerConnection | null;
+  /**
+   * Lets the next guest's connection fail before it opens: unreachable for
+   * a kind, with a plain error for null.
+   */
+  failNextGuest(kind: UnreachableKind | null): void;
 }
 
 /**
@@ -103,9 +127,16 @@ export function pairedTransport(): PairedTransport {
   const offers = new Map<string, PairedEnd>();
   let made = 0;
   let lastGuest: PairedEnd | null = null;
+  let nextFailure: Error | null = null;
   return {
     get lastGuest() {
       return lastGuest;
+    },
+    failNextGuest(kind) {
+      nextFailure =
+        kind === null
+          ? new Error('The connection failed.')
+          : new PeerUnreachableError(kind);
     },
     supported: () => true,
     async offer() {
@@ -124,6 +155,10 @@ export function pairedTransport(): PairedTransport {
       const answer = `answer-${++made}`;
       host.pair(guest, answer);
       lastGuest = guest;
+      if (nextFailure !== null) {
+        guest.failWith(nextFailure);
+        nextFailure = null;
+      }
       return { link: guest, answer };
     },
   };

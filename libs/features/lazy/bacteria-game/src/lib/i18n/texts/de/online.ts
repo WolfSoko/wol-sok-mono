@@ -44,5 +44,7 @@ export const online: Translation<typeof en> = {
     lost: 'Die Verbindung zu deinem Gegner ist abgebrochen.',
     failed:
       'Keine Verbindung möglich. Versuch es noch mal – im selben WLAN klappt es am besten.',
+    unreachable:
+      'Das andere Gerät ist nicht erreichbar. Manche Mobilfunk- und WLAN-Netze sperren direkte Verbindungen – versucht ein anderes Netz, etwa dasselbe WLAN.',
   },
 };
