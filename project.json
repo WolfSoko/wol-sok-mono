@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/nx/schemas/project-schema.json",
+  "name": "wolsok",
+  "targets": {
+    "lint": {
+      "executor": "@nx/oxlint:lint",
+      "cache": true,
+      "options": {
+        "lintFilePatterns": [
+          ".agents",
+          ".github",
+          "__checks__",
+          ".versionrc.cjs",
+          "commitlint.config.ts",
+          "eslint.config.mjs",
+          "jest.config.ts",
+          "jest.preset.cjs",
+          "lint-staged.config.js"
+        ]
+      },
+      "inputs": [
+        "{projectRoot}/{.agents,.github,__checks__}/**/*.{js,mjs,cjs,ts,mts,cts}",
+        "{projectRoot}/{.versionrc.cjs,commitlint.config.ts,eslint.config.mjs,jest.config.ts,jest.preset.cjs,lint-staged.config.js}",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/.oxlintrc.json",
+        "{projectRoot}/.gitignore",
+        "{workspaceRoot}/tools/oxlint/workspace-rules.mjs",
+        { "externalDependencies": ["oxlint", "oxlint-tsgolint"] }
+      ],
+      "metadata": { "technologies": ["oxlint"] }
+    }
+  }
+}
