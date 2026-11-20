@@ -1,6 +1,7 @@
 # 9. Bacteria Wars plays online in lockstep over WebRTC, signalled through Firestore
 
-- Status: accepted
+- Status: accepted; its "no TURN" superseded by
+  [ADR 0020](0020-bacteria-wars-turn-relay.md) (2026-11-20)
 - Date: 2026-10-22
 - Scope: `libs/features/lazy/bacteria-game`, `apps/bacteria-game-remote`
 

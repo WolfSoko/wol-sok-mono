@@ -400,6 +400,19 @@ describe('PrivacyComponent', () => {
     expect(en).toContain('stays stored only without your identifier');
   });
 
+  it("names Cloudflare's TURN relay of online matches, in both languages", async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain('TURN-Server von Cloudflare Realtime');
+    expect(de).toContain(
+      'Bei jedem Verbindungsaufbau erhält Cloudflare die IP-Adresse deines Geräts'
+    );
+    expect(en).toContain('TURN servers of Cloudflare Realtime');
+    expect(en).toContain(
+      "On every connection Cloudflare receives your device's IP address"
+    );
+  });
+
   it('says only friends can read the online status', async () => {
     const { de, en } = texts(await open());
 
