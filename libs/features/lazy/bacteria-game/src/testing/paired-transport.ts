@@ -28,13 +28,13 @@ class PairedEnd implements PeerConnection {
   public readonly closed$ = this.ended.asObservable();
   public readonly opened: Promise<void>;
 
-  /** The route `route()` reports, `direct` unless a spec routes it. */
-  public carried: ConnectionRoute | Promise<ConnectionRoute> = 'direct';
-
   /** What `opened` rejects with once this end closes before it opened. */
   private closedBy: Error = new Error('The connection closed.');
 
-  public constructor() {
+  /** `carried`: what `route()` reports - once it settles, for a promise. */
+  public constructor(
+    private readonly carried: ConnectionRoute | Promise<ConnectionRoute>
+  ) {
     this.opened = new Promise((resolve, reject) => {
       this.resolveOpened = resolve;
       this.ended.subscribe(() => reject(this.closedBy));
@@ -167,8 +167,7 @@ export function pairedTransport(): PairedTransport {
     supported: () => true,
     async offer(relay) {
       relays.push({ side: 'host', relay: relay.servers });
-      const host = new PairedEnd();
-      host.carried = route;
+      const host = new PairedEnd(route);
       const offer = `offer-${++made}`;
       offers.set(offer, host);
       return { link: host, offer };
@@ -180,8 +179,7 @@ export function pairedTransport(): PairedTransport {
         throw new Error(`No open offer "${offer}".`);
       }
       offers.delete(offer);
-      const guest = new PairedEnd();
-      guest.carried = route;
+      const guest = new PairedEnd(route);
       const answer = `answer-${++made}`;
       host.pair(guest, answer);
       lastGuest = guest;

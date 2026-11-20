@@ -15,13 +15,11 @@ type StatsEntry = Record<string, unknown> & { id: string; type: string };
  * it as the remote candidate - so both devices report the same route.
  */
 export function connectionRoute(stats: RTCStatsReport): ConnectionRoute {
-  const entries = new Map<string, StatsEntry>();
-  stats.forEach((entry: StatsEntry) => entries.set(entry.id, entry));
-  const pair = selectedPair(entries);
+  const pair = selectedPair(stats);
   const ends = [
     textOf(pair, 'localCandidateId'),
     textOf(pair, 'remoteCandidateId'),
-  ].map((id) => textOf(entryOf(entries, id), 'candidateType'));
+  ].map((id) => textOf(entryOf(stats, id), 'candidateType'));
   if (ends.includes(undefined)) {
     return 'unknown';
   }
@@ -33,18 +31,15 @@ export function connectionRoute(stats: RTCStatsReport): ConnectionRoute {
  * (Chromium, Safari), else the pair marked `selected` (Firefox), else a
  * nominated pair that succeeded.
  */
-function selectedPair(
-  byId: ReadonlyMap<string, StatsEntry>
-): StatsEntry | undefined {
-  const all = [...byId.values()];
+function selectedPair(stats: RTCStatsReport): StatsEntry | undefined {
+  const all: StatsEntry[] = [...stats.values()];
   const pairs = all.filter((entry) => entry.type === 'candidate-pair');
-  const transport = all.find(
-    (entry) =>
-      entry.type === 'transport' &&
-      textOf(entry, 'selectedCandidatePairId') !== undefined
-  );
+  const selectedId = all
+    .filter((entry) => entry.type === 'transport')
+    .map((transport) => textOf(transport, 'selectedCandidatePairId'))
+    .find((id) => id !== undefined);
   return (
-    entryOf(byId, textOf(transport, 'selectedCandidatePairId')) ??
+    entryOf(stats, selectedId) ??
     pairs.find((pair) => pair['selected'] === true) ??
     pairs.find(
       (pair) => pair['nominated'] === true && pair['state'] === 'succeeded'
@@ -61,10 +56,10 @@ function textOf(
   return typeof value === 'string' ? value : undefined;
 }
 
-/** The entry with `id`, none without an id. */
+/** The report's entry with `id`, none without an id. */
 function entryOf(
-  byId: ReadonlyMap<string, StatsEntry>,
+  stats: RTCStatsReport,
   id: string | undefined
 ): StatsEntry | undefined {
-  return id === undefined ? undefined : byId.get(id);
+  return id === undefined ? undefined : stats.get(id);
 }

@@ -86,6 +86,15 @@ class FakeRtcConnection {
   }
 }
 
+/** The connection the transport made last. */
+function lastConnection(): FakeRtcConnection {
+  const connection = FakeRtcConnection.last;
+  if (connection === null) {
+    throw new Error('No connection made.');
+  }
+  return connection;
+}
+
 describe('WebRtcTransport', () => {
   const original = globalThis.RTCPeerConnection;
 
@@ -176,12 +185,9 @@ describe('WebRtcTransport', () => {
     expect(fresh).not.toHaveBeenCalled();
   });
 
-  it('reads the route of the selected pair from the statistics', async () => {
+  it('reads the route from the statistics', async () => {
     const { link } = await new WebRtcTransport().offer(noRelay);
-    const connection = FakeRtcConnection.last;
-    if (connection === null) {
-      throw new Error('No connection made.');
-    }
+    const connection = lastConnection();
     const entries = [
       { id: 'L', type: 'local-candidate', candidateType: 'relay' },
       { id: 'R', type: 'remote-candidate', candidateType: 'srflx' },
@@ -206,10 +212,7 @@ describe('WebRtcTransport', () => {
       .spyOn(console, 'warn')
       .mockImplementation(() => undefined);
     const { link } = await new WebRtcTransport().offer(noRelay);
-    const connection = FakeRtcConnection.last;
-    if (connection === null) {
-      throw new Error('No connection made.');
-    }
+    const connection = lastConnection();
     connection.stats = async () => {
       throw new Error('closed');
     };
@@ -224,10 +227,7 @@ describe('WebRtcTransport', () => {
 
   it('waits five seconds at most for the candidates', async () => {
     const offering = new WebRtcTransport().offer(noRelay);
-    const connection = FakeRtcConnection.last;
-    if (connection === null) {
-      throw new Error('No connection made.');
-    }
+    const connection = lastConnection();
     connection.iceGatheringState = 'gathering';
     let done = false;
     void offering.then(() => (done = true));

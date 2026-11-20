@@ -484,11 +484,9 @@ export class OnlineMatchService {
    */
   private trackConnected(role: string, matchmade: boolean): void {
     const routed = this.link?.route() ?? Promise.resolve('unknown' as const);
-    void routed
-      .catch(() => 'unknown' as const)
-      .then((route) =>
-        this.analytics.track('online_connected', { role, matchmade, route })
-      );
+    void routed.then((route) =>
+      this.analytics.track('online_connected', { role, matchmade, route })
+    );
   }
 
   private onClosed(link: PeerConnection): void {
