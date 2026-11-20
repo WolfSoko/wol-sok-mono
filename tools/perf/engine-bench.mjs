@@ -16,7 +16,6 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = join(import.meta.dirname, '../..');
-const ENGINE = join(ROOT, 'libs/features/bacteria-engine/src/index.ts');
 const BASELINE = join(import.meta.dirname, 'engine-baseline.json');
 
 /** Above this much over its baseline a ratio fails the gate. */
@@ -33,23 +32,30 @@ const CALIBRATION_WARM_UPS = 10;
 const CALIBRATION_RUNS = 15;
 
 /**
- * The replays timed: the golden replay, short and small, on both rulesets -
- * `cpu` as online matches play it, `gpu-int` on `intSimulation` as ranked
- * matches are checked - and the heavy case, the largest map with neutral
+ * What the bench plays, as data, so the engine's `perf-inputs.spec.ts`
+ * checks it against the `perf` target's inputs: the entry and how it is
+ * bundled, the files its result depends on beside the bundle (`reads`: the
+ * engine's `tsconfig.json` and `package.json`, which esbuild reads, and
+ * `.nvmrc`, the Node CI runs it on), and the replays timed.
+ * The fixtures are the golden replay, short and small, on both rulesets
+ * (`cpu` as online matches play it, `gpu-int` on `intSimulation` as ranked
+ * matches are checked), and the heavy case: the largest map with neutral
  * colonies on the online grid, ten seconds into a full arena.
  */
-const FIXTURES = [
-  {
-    name: 'golden-cpu',
-    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
-  },
-  {
-    name: 'golden-gpu-int',
-    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
-    gpuInt: true,
-  },
-  { name: 'heavy-cpu', file: 'tools/perf/fixtures/expanse-heavy.json' },
-];
+const BENCH_PLAN = JSON.parse(
+  readFileSync(join(import.meta.dirname, 'engine-bench.json'), 'utf8')
+);
+if (
+  typeof BENCH_PLAN.entry !== 'string' ||
+  BENCH_PLAN.build?.bundle !== true ||
+  !Array.isArray(BENCH_PLAN.fixtures)
+) {
+  throw new Error(
+    'engine-bench.json names no entry, no bundling build or no fixtures'
+  );
+}
+const ENGINE = join(ROOT, BENCH_PLAN.entry);
+const FIXTURES = BENCH_PLAN.fixtures;
 
 const args = new Set(process.argv.slice(2));
 const update = args.has('--update');
@@ -59,10 +65,8 @@ const reportOnly = args.has('--report-only');
 async function loadEngine() {
   const out = join(tmpdir(), `engine-bench-${process.pid}.mjs`);
   await build({
+    ...BENCH_PLAN.build,
     entryPoints: [ENGINE],
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
     outfile: out,
     logLevel: 'silent',
   });

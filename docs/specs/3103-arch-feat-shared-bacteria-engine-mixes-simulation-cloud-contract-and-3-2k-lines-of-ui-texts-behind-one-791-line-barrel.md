@@ -168,3 +168,43 @@ The main entry still mixes the GPU mirror of the simulation, which only `feat-ba
 ## Open question (step 3b)
 
 - **The issue's "`src/index.ts` well under half its 791 lines"** (under about 395): with `/gpu` and the 45 names gone, the index ends at about 500 lines (from 662), counted in the PR. Recommendation: close #3103's step 3 criterion with the name rules (acceptance 1 and 2) in place of the line count, as request 1353 did for step 3; what remains in the index is the simulation, replay, levels and progress the game, the functions and the rendering lib really import.
+
+# Step 4: the `perf` target reads only what the bench plays
+
+Step 3b landed in [#3147](https://github.com/WolfSoko/wol-sok-mono/pull/3147) (released with 74.172.14). This section is the spec for step 4, the issue's optional last step.
+
+## Goal (step 4)
+
+`feat-shared-bacteria-engine:perf` (`tools/perf/engine-bench.mjs`, about 1.5 minutes alone on its worker) takes as inputs only the files the bench bundles and reads, so a change to the cloud contract, the balance lab, the test helpers, the other entries or the docs leaves its cache valid. A spec keeps the inputs and the bench in step.
+
+## What the code shows (step 4)
+
+- `perf`'s inputs are `production`, `^production` and `{workspaceRoot}/tools/perf/**/*`. `production` is every file of the project but specs and test configs: `CLAUDE.md`, `ng-package.json`, `package.json`, `cloud/` and `gpu/` (the secondary entries' `ng-package.json`), `src/cloud.ts`, `src/gpu.ts`, `src/balance.ts`, `src/testing.ts`, `src/testing/`, `src/lib/state/cloud/` (12 sources) and `src/lib/state/balance/` (3) included.
+- The bench bundles `src/index.ts` with esbuild and plays `golden-replay.json` (`state/replay/`) and `tools/perf/fixtures/expanse-heavy.json`, comparing against `tools/perf/engine-baseline.json`. Of `tools/perf/`, `lighthouse-run.mjs` and `serve-firebase-function.mjs` belong to the Lighthouse targets of three apps, which name them as inputs one by one.
+- esbuild reads 97 files of the engine for `src/index.ts` (itself included): everything under `state/simulation/`, `state/match/`, `state/levels/`, `state/progress/` and `state/replay/`, the top-level `state/*.ts` (`base64`, `geometry`, `is-object`), `i18n/` (the engine's English texts and the mechanics), `site/` and `social/`. It reads nothing of `state/cloud/`, `state/balance/`, `src/testing/` or the other entries.
+- `^production` adds nothing today: the engine's only dependency is the implicit edge on `oxlint-workspace-rules`, whose `production` is empty.
+- The bench refuses a baseline measured on another Node major than the one it runs on, which CI takes from `.nvmrc`; `.nvmrc` is no input, so a Node bump would keep the cached result of the old Node.
+
+## Decisions (step 4)
+
+1. **Inputs by folder, as the issue proposes**: `perf` lists the engine's `src/index.ts`, `src/lib/i18n/`, `src/lib/site/`, `src/lib/social/`, `src/lib/state/*.ts`, the five folders `state/simulation/`, `match/`, `levels/`, `progress/` and `replay/` (each `**/*`), the project's `tsconfig.json` and `package.json` (esbuild reads both: paths and class fields, `sideEffects` and `imports`; named in `engine-bench.json` as `reads`, so the spec checks them too), with the spec files negated as `production` negates them; then `^production`. Reason: the bench plays the main entry, and these are its folders; a folder list stays readable where a list of 97 files would not.
+2. **Of `tools/perf/`, only the bench's files**: `engine-bench.mjs`, `engine-baseline.json`, `fixtures/**/*` and the new `engine-bench.json` (decision 3), as the Lighthouse targets name theirs. Reason: a change to the Lighthouse scripts plays no replay differently.
+3. **What the bench plays becomes data**: the entry (`libs/features/bacteria-engine/src/index.ts`) and the fixtures (name, file, `gpuInt`) move from constants in `engine-bench.mjs` into `tools/perf/engine-bench.json`, which the bench reads. Reason: the spec of decision 4 checks the same entry and fixtures the bench plays, without a second copy that could drift.
+4. **A spec keeps the inputs complete**: `src/perf-inputs.spec.ts` (Jest, Node) reads `tools/perf/engine-bench.json` and the `perf` inputs of the engine's `project.json`, bundles the entry with esbuild (`metafile`) and fails, naming the file, when a file esbuild reads or a fixture the bench plays is matched by no input (or by a negated one). The engine's `test` gets `{workspaceRoot}/tools/perf/engine-bench.json` as an input, so a change to what the bench plays reruns it. Reason: a new import from a folder outside the list would otherwise leave a stale cached result; every change to the engine runs its `test`, so the spec catches it in the same PR. The same spec in `tools:test` would not run on an engine change.
+5. **`.nvmrc` becomes an input** of `perf`. Reason: the bench's verdict depends on the Node major (see above); the change touches exactly the list this step defines.
+6. **No new named input in `nx.json`**: the list sits in the target in `project.json`. Reason: an `nx.json` change keeps Nx's verdict in `tools/ci/release-affected.mjs` and redeploys every app; no other target uses the list.
+7. **Docs**: the root `CLAUDE.md` (Performance Gates, phase 2) and the engine's `CLAUDE.md` (the `perf` target) say what `perf` reads and name the spec; a new folder the main entry reaches goes into the list. `docs/architecture/README.md` is unchanged: no project and no edge.
+8. **Release effect accepted**: the engine's `project.json` and `CLAUDE.md` are `production` inputs of the functions' `deploy` and the game's build, so the release redeploys `bacteria-wars-functions` and the game once, with the same code.
+
+## Non-goals (step 4)
+
+- No narrowing of the bench's entry to the four names it calls (`BALANCE_VERSION`, `GPU_INT_REPLAY_VERSION`, `parseReplay`, `playReplay`): tree-shaking keeps the bundle's file set almost the same, and the comment "as the functions bundle it" stands.
+- No change to `test`, `build`, `balance-check` or the functions' `deploy` inputs; a cloud change still redeploys the functions, which import it.
+- No change to what the bench measures, its thresholds, baseline or `--report-only`.
+
+## Acceptance (step 4)
+
+1. `npx nx show target inputs feat-shared-bacteria-engine:perf --check <file>` reports not an input for `src/lib/state/cloud/boards.ts`, `src/lib/state/balance/` (a file of it), `src/cloud.ts`, `src/gpu.ts`, `src/testing/match-record.ts`, `CLAUDE.md`, `tools/perf/lighthouse-run.mjs` and a spec file, and an input for `src/index.ts`, `src/lib/state/simulation/bacteria-simulation.ts`, `src/lib/state/replay/golden-replay.json`, `tools/perf/engine-bench.mjs`, `tools/perf/engine-bench.json`, `tools/perf/fixtures/expanse-heavy.json` and `.nvmrc` (output in the PR).
+2. `src/perf-inputs.spec.ts` passes, and fails naming the file when `state/cloud/` is imported from a file the entry reaches or a listed folder is dropped from the inputs (checked once by hand, noted in the PR).
+3. The bench plays the same replays: `node --expose-gc tools/perf/engine-bench.mjs --report-only` reports the same checksums, ticks and outcomes as `engine-baseline.json`.
+4. `npx nx affected -t lint,lint-templates,test,typecheck-specs,build` green (`tools:test` included, whose `target-inputs.test.mjs` checks the named files exist).
