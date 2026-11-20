@@ -4,19 +4,14 @@
 // root lists them by hand, and oxlint expands no globs: this guard keeps the
 // list and the target's inputs complete.
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
-import { join, matchesGlob } from 'node:path';
+import { matchesGlob } from 'node:path';
 import { describe, it } from 'node:test';
 import {
-  CI_WORKFLOW,
-  ROOT,
-  SKIPPING_KEYS,
-  TSCONFIG,
+  assertRunsOnEveryCiRun,
   gitLsFiles,
+  inRootProject,
   lintedScripts,
-  nearestTsconfig,
   readJson,
-  stepBlock,
   stringInputs,
 } from './workspace-projects.mjs';
 
@@ -34,9 +29,9 @@ const fileInputs = stringInputs(lintTarget.inputs)
   .filter((input) => input.startsWith(PROJECT_ROOT_PREFIX))
   .map((input) => input.slice(PROJECT_ROOT_PREFIX.length));
 
-/** The linted scripts whose nearest tsconfig.json is the root one. */
+/** The linted scripts no other project's root contains. */
 function rootScripts() {
-  return lintedScripts().filter((path) => nearestTsconfig(path) === TSCONFIG);
+  return lintedScripts().filter(inRootProject);
 }
 
 function underPattern(path) {
@@ -55,7 +50,7 @@ void describe('the root project lint target', () => {
     assert.equal(lintTarget.cache, true);
   });
 
-  void it('lints every script the root tsconfig.json is nearest to', () => {
+  void it('lints every script outside the other projects', () => {
     assert.deepEqual(
       rootScripts().filter((path) => !underPattern(path)),
       [],
@@ -81,12 +76,6 @@ void describe('the root project lint target', () => {
 
 void describe('the CI workflow', () => {
   void it('runs this guard on every run, outside the affected tasks', () => {
-    const step = stepBlock(
-      readFileSync(join(ROOT, CI_WORKFLOW), 'utf8'),
-      GUARD_STEP_NAME
-    );
-    assert.ok(step, `${CI_WORKFLOW} has no step "${GUARD_STEP_NAME}"`);
-    assert.ok(step.includes(GUARD_COMMAND), step);
-    assert.doesNotMatch(step, SKIPPING_KEYS);
+    assertRunsOnEveryCiRun(GUARD_STEP_NAME, GUARD_COMMAND);
   });
 });

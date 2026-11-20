@@ -57,8 +57,9 @@ scripts are linted only by a local `npx oxlint .`.
    the root project depends on nothing else (the issue's note that it depends
    on `feat-lazy-bacteria-game` no longer holds; `nx graph` shows no edge).
 5. **A guard keeps the list complete**: `tools/ci/root-lint.test.mjs` fails
-   when a linted script whose nearest `tsconfig.json` is the root one lies
-   under none of the target's `lintFilePatterns` or none of its inputs, and
+   when a linted script that no other project's root contains (so Nx gives
+   it to the root project, whatever `tsconfig.json` is nearest) lies under
+   none of the target's `lintFilePatterns` or none of its inputs, and
    when a pattern names no tracked file. A new root script makes only
    `wolsok` affected, never `tools`, so, like the two guards before it,
    `ci-cd.yml` runs it on every run as the uncached step "Root scripts are
