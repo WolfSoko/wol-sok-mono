@@ -16,7 +16,6 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 const ROOT = join(import.meta.dirname, '../..');
-const ENGINE = join(ROOT, 'libs/features/bacteria-engine/src/index.ts');
 const BASELINE = join(import.meta.dirname, 'engine-baseline.json');
 
 /** Above this much over its baseline a ratio fails the gate. */
@@ -33,23 +32,19 @@ const CALIBRATION_WARM_UPS = 10;
 const CALIBRATION_RUNS = 15;
 
 /**
- * The replays timed: the golden replay, short and small, on both rulesets -
- * `cpu` as online matches play it, `gpu-int` on `intSimulation` as ranked
- * matches are checked - and the heavy case, the largest map with neutral
- * colonies on the online grid, ten seconds into a full arena.
+ * What the bench plays, as data (`engine-bench.json`), so the engine's
+ * `perf-inputs.spec.ts` checks the same entry and fixtures against the
+ * `perf` target's inputs: the entry bundled, and the replays timed - the
+ * golden replay, short and small, on both rulesets - `cpu` as online matches
+ * play it, `gpu-int` on `intSimulation` as ranked matches are checked - and
+ * the heavy case, the largest map with neutral colonies on the online grid,
+ * ten seconds into a full arena.
  */
-const FIXTURES = [
-  {
-    name: 'golden-cpu',
-    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
-  },
-  {
-    name: 'golden-gpu-int',
-    file: 'libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json',
-    gpuInt: true,
-  },
-  { name: 'heavy-cpu', file: 'tools/perf/fixtures/expanse-heavy.json' },
-];
+const PLAYED = JSON.parse(
+  readFileSync(join(import.meta.dirname, 'engine-bench.json'), 'utf8')
+);
+const ENGINE = join(ROOT, PLAYED.entry);
+const FIXTURES = PLAYED.fixtures;
 
 const args = new Set(process.argv.slice(2));
 const update = args.has('--update');

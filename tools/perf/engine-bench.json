@@ -1,0 +1,18 @@
+{
+  "entry": "libs/features/bacteria-engine/src/index.ts",
+  "fixtures": [
+    {
+      "name": "golden-cpu",
+      "file": "libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json"
+    },
+    {
+      "name": "golden-gpu-int",
+      "file": "libs/features/bacteria-engine/src/lib/state/replay/golden-replay.json",
+      "gpuInt": true
+    },
+    {
+      "name": "heavy-cpu",
+      "file": "tools/perf/fixtures/expanse-heavy.json"
+    }
+  ]
+}
