@@ -25,7 +25,7 @@
         "{projectRoot}/.oxlintrc.json",
         "{projectRoot}/.gitignore",
         "{workspaceRoot}/tools/oxlint/workspace-rules.mjs",
-        { "externalDependencies": ["oxlint", "oxlint-tsgolint", "@nx/oxlint"] }
+        "{workspaceRoot}/package-lock.json"
       ],
       "metadata": { "technologies": ["oxlint"] }
     }

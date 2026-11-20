@@ -14,6 +14,9 @@
       }
     },
     {
+      "plugin": "./tools/nx/lint-lockfile-input.mjs"
+    },
+    {
       "plugin": "@nx/eslint/plugin",
       "options": {
         "targetName": "lint-templates",
