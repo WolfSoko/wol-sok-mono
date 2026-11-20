@@ -1,0 +1,70 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9QMDFVV9TNGWCC6SD4CWG",
+  "session_id": "4e645e84-9e34-4e65-b059-7e825c5d5001",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T20:18:10.829787475Z",
+  "branch": "3143-reaction-diffusion-kernels-tsconfig-references-missing-spec",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "tools/ci/script-tsconfig.test.mjs"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "f4b14ae74e6a",
+  "checkpoint_transcript_start": 349,
+  "transcript_lines_at_start": 349,
+  "compact_transcript_start": 36,
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 7572,
+    "cache_read_tokens": 935945,
+    "output_tokens": 3759,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 6,
+      "cache_creation_tokens": 77770,
+      "cache_read_tokens": 138737,
+      "output_tokens": 747,
+      "api_call_count": 3
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01VGoCjhSAd6Jwb7vXFh5yfS",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "bae6e3cdfabc",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 40,
+        "end": 41,
+        "entry_ids": [
+          "a6a5de86-17a5-40f9-92c6-21dad6816dd9"
+        ],
+        "tool_use_id": "toolu_01VGoCjhSAd6Jwb7vXFh5yfS"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01VGoCjhSAd6Jwb7vXFh5yfS"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01B1t8nBzmMQFLJJiB4V3BNB",
+  "agent_id": "a0fd90f464c339c31",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3160 diff",
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 81984,
+    "cache_read_tokens": 296966,
+    "output_tokens": 3671,
+    "api_call_count": 5
+  },
+  "started_at": "2026-11-20T21:15:58.072290088+01:00",
+  "completed_at": "2026-11-20T21:16:53.799321483+01:00"
+}

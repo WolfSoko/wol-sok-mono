@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9QMDFVV9TNGWCC6SD4CWG",
+  "strategy": "manual-commit",
+  "branch": "3143-reaction-diffusion-kernels-tsconfig-references-missing-spec",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CLAUDE.md",
+    "tools/ci/script-tsconfig.test.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 7572,
+    "cache_read_tokens": 935945,
+    "output_tokens": 3759,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 6,
+      "cache_creation_tokens": 77770,
+      "cache_read_tokens": 138737,
+      "output_tokens": 747,
+      "api_call_count": 3
+    }
+  }
+}
