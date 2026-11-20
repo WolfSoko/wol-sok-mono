@@ -10,6 +10,7 @@ import { describe, it } from 'node:test';
 import ts from 'typescript';
 import {
   assertRunsOnEveryCiRun,
+  gitLsFiles,
   ROOT,
   TSCONFIG,
   lintedScripts,
@@ -39,7 +40,7 @@ function parseTsconfig(absolutePath) {
 /**
  * The files of a tsconfig's program and of every project it references,
  * transitively, relative to the root. A reference to a missing config owns
- * nothing, as for TypeScript and tsgolint.
+ * nothing, as for TypeScript and tsgolint; `danglingReferences` fails on it.
  */
 function ownedFiles(tsconfigPath, seen = new Set()) {
   const absolutePath = resolve(ROOT, tsconfigPath);
@@ -72,12 +73,32 @@ function unownedScripts() {
   return unowned;
 }
 
+/** Each tracked tsconfig's references to a config that does not exist. */
+function danglingReferences() {
+  return gitLsFiles('tsconfig*.json', '**/tsconfig*.json').flatMap((path) =>
+    (parseTsconfig(resolve(ROOT, path)).projectReferences ?? [])
+      .map((reference) => ts.resolveProjectReferencePath(reference))
+      .filter((referenced) => !existsSync(referenced))
+      .map((referenced) => `${path} → ${relative(ROOT, referenced)}`)
+  );
+}
+
 void describe('the linted scripts', () => {
   void it('each belong to the program of their nearest tsconfig.json, so type-aware lint types them the same on every run', () => {
     assert.deepEqual(
       unownedScripts(),
       {},
       'widen the "include" of the named tsconfig.json or of a config it references'
+    );
+  });
+});
+
+void describe('the tsconfig references', () => {
+  void it('each name an existing config, which TypeScript and tsgolint would skip with an error', () => {
+    assert.deepEqual(
+      danglingReferences(),
+      [],
+      'drop the reference or add the config it names'
     );
   });
 });
