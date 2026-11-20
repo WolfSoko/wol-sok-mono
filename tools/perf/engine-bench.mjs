@@ -34,7 +34,9 @@ const CALIBRATION_RUNS = 15;
 /**
  * What the bench plays, as data, so the engine's `perf-inputs.spec.ts`
  * checks it against the `perf` target's inputs: the entry and how it is
- * bundled, the files esbuild reads beside the bundle, and the replays timed.
+ * bundled, the files its result depends on beside the bundle (`reads`: the
+ * engine's `tsconfig.json` and `package.json`, which esbuild reads, and
+ * `.nvmrc`, the Node CI runs it on), and the replays timed.
  * The fixtures are the golden replay, short and small, on both rulesets
  * (`cpu` as online matches play it, `gpu-int` on `intSimulation` as ranked
  * matches are checked), and the heavy case: the largest map with neutral
@@ -45,9 +47,12 @@ const BENCH_PLAN = JSON.parse(
 );
 if (
   typeof BENCH_PLAN.entry !== 'string' ||
+  BENCH_PLAN.build?.bundle !== true ||
   !Array.isArray(BENCH_PLAN.fixtures)
 ) {
-  throw new Error('engine-bench.json names no entry or no fixtures');
+  throw new Error(
+    'engine-bench.json names no entry, no bundling build or no fixtures'
+  );
 }
 const ENGINE = join(ROOT, BENCH_PLAN.entry);
 const FIXTURES = BENCH_PLAN.fixtures;

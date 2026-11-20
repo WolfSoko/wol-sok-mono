@@ -27,8 +27,7 @@
         "^production",
         "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/tools/perf/engine-bench.json",
-        "{workspaceRoot}/tools/perf/engine-bench.mjs"
+        "{workspaceRoot}/tools/perf/engine-bench.json"
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-engine"],
       "options": {

@@ -55,9 +55,11 @@ determinism, replays, balance and texts hold here too.
 - The targets `balance-check`, `balance` (ADR 0016) and `perf` (ADR 0014,
   `tools/perf/engine-bench.mjs`) live here, since they play the engine.
   `perf` reads only the folders the main entry bundles (its list in
-  `project.json`) and the bench's own files; `perf-inputs.spec.ts` bundles
-  the entry `tools/perf/engine-bench.json` names and fails on a file no
-  input names. A new folder the main entry reaches goes into that list.
+  `project.json`), the engine's `tsconfig.json` and `package.json`,
+  `.nvmrc` and the bench's own files; `perf-inputs.spec.ts` bundles the
+  entry `tools/perf/engine-bench.json` names and fails on a file no input
+  names. A new folder the main entry reaches goes into that list, a new
+  file the result depends on beside the bundle into `reads`.
 - The goldens (`state/replay/golden-replay.json`, `SELF_TEST_GOLDEN`) are guarded
   by their specs here; the GPU cross-check, which needs `gl/`, lives in
   `feat-bacteria-rendering` (`libs/features/bacteria-rendering/gpu-crosscheck/`)

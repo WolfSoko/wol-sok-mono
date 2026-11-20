@@ -12,8 +12,8 @@ const BUNDLE_TIMEOUT_MS = 60_000;
 
 /**
  * What `tools/perf/engine-bench.mjs` plays (`engine-bench.json`): the entry
- * and the options it bundles it with, the files esbuild reads beside the
- * bundle, and the fixtures it times.
+ * and the options it bundles it with, the files its result depends on
+ * beside the bundle (`reads`), and the fixtures it times.
  */
 interface BenchPlan {
   entry: string;
@@ -94,7 +94,17 @@ describe('the perf target', () => {
     BUNDLE_TIMEOUT_MS
   );
 
-  it('hashes the bench, its baseline, what esbuild reads beside the bundle and every fixture', () => {
+  it('bundles with no esbuild option that could read a file of its own', () => {
+    // `tsconfig`, `alias`, `inject` and the like would make esbuild read
+    // files neither the bundle's metafile nor `reads` names.
+    expect(BENCH_PLAN.build).toEqual({
+      bundle: true,
+      platform: 'node',
+      format: 'esm',
+    });
+  });
+
+  it('hashes the bench, its baseline, what its result depends on beside the bundle and every fixture', () => {
     const benchFiles = [
       'tools/perf/engine-bench.mjs',
       'tools/perf/engine-bench.json',
