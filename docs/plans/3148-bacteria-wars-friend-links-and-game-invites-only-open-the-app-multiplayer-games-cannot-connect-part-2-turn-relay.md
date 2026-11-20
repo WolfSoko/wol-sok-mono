@@ -8,7 +8,7 @@ and `typecheck-specs`, then `npx nx format:write`, before its commit.
 ## 0. Owner input (before task 6)
 
 Manual step for the owner: create a Cloudflare API token with "Calls Write"
-on the account that should own the key. Then run
+and "Notifications Write" on the account that should own the key. Then run
 `npx firebase functions:secrets:set CLOUDFLARE_API_TOKEN --project bacteria-wars`,
 which prompts for the value. Tasks 1 to 5 go on meanwhile.
 
@@ -27,7 +27,7 @@ which prompts for the value. Tasks 1 to 5 go on meanwhile.
   so the spec fakes them), `refresh-relay.spec.ts`, `refresh-relay.emulator.ts`.
   Also `src/config.ts` (`RELAY_ON`, `RELAY_TTL_S`, `CLOUDFLARE_TURN_KEY_NAME`
   with docs), `src/main.ts` (`defineSecret('CLOUDFLARE_TURN_KEY')`,
-  `onSchedule('every 60 minutes')` wrapped in `withSentry`, exported only
+  `onSchedule('every 30 minutes')` wrapped in `withSentry`, exported only
   with `RELAY_ON`), and `src/erasure/player-data.ts` (`relay/{doc}`, `keep`).
 - Tests: acceptance 2, 3 and 5. A `main` spec checks the export behind the
   flag, if the app already has one for `HOURLY_ON`; otherwise it reads as
@@ -65,7 +65,8 @@ which prompts for the value. Tasks 1 to 5 go on meanwhile.
 
 - Files: `tools/relay/project.json` (`tools-relay`, tag `tools`, targets
   `test` (Jest), `turn-key` and `check`), `jest.config.ts`,
-  `tsconfig.spec.json`, `turn-key.ts` (CLI), `plan-turn-key.ts` (pure),
+  `tsconfig.spec.json`, `turn-key.ts` (CLI), `plan-turn-key.ts` and `plan-usage-alert.ts`
+  (pure),
   `cloudflare-api.ts` and `firebase-secrets.ts` (ports), `relay-check.ts`
   (Playwright Chromium, `iceTransportPolicy: 'relay'`), and their specs.
 - Also: `tools/tsconfig.tools.json` and `tools/tsconfig.json` includes, if
@@ -78,7 +79,11 @@ which prompts for the value. Tasks 1 to 5 go on meanwhile.
 ## 6. Provision (needs step 0)
 
 - Run `npx nx run tools-relay:turn-key` twice: the second run must report
-  `keep`. Then run `npx nx run tools-relay:check`.
+  `keep` for the key and the alert. Then run `npx nx run tools-relay:check`,
+  which also checks a relayed channel past its credentials' expiry.
+- If the alert's product is missing, ask the manager (spec). If the
+  expiry check fails, add the `PeerLink` refresh to task 4 (its commit
+  and spec) before the PR.
 - Paste both outputs, with no secrets in them, into the PR (acceptance 8).
 - No commit.
 

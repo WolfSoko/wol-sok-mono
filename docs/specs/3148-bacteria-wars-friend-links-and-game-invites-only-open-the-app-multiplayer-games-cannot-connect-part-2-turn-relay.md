@@ -34,26 +34,27 @@ token, kept as a secret.
 
 - **The game reads shared, short-lived credentials from one Firestore
   document. It calls no function.** A scheduled function `refreshRelay`
-  (`apps/bacteria-wars-functions/src/relay/`) runs every hour. It asks
-  Cloudflare for credentials valid for `RELAY_TTL_S` (4 h) and writes them
+  (`apps/bacteria-wars-functions/src/relay/`) runs every 30 minutes. It asks
+  Cloudflare for credentials valid for `RELAY_TTL_S` (1 h, the manager's
+  condition on request 1442, to limit misuse) and writes them
   to `relay/turn` as `{ urls, username, credential, expireAt, refreshedAt }`.
-  A reader always gets at least 3 h. The game reads the document right
+  A reader always gets at least 30 minutes. The game reads the document right
   before it builds the offer or the answer (`getDoc`, given up on after
   `RELAY_READ_TIMEOUT_MS`, 2 s). It passes the TURN server to
   `RTCPeerConnection` next to Google's STUN servers.
   - Why: the repo's rule is that the client never calls a function. A
-    document read is fast at match start. Generating credentials once an
-    hour costs 24 calls a day, not one per match.
+    document read is fast at match start. Generating credentials every
+    30 minutes costs 48 calls a day, not one per match.
   - The alternative was a command document per player (`relayRequests/{uid}`)
     with a trigger writing credentials back. It would let us throttle per
     uid, but an anonymous account costs nothing to create, so the gain is
     small. It also adds a trigger's cold start to every first match.
   - Trade-off: anyone signed in and not banned can read the credentials and
-    relay traffic on our key until they expire. Cloudflare charges only
+    relay traffic on our key for up to an hour. Cloudflare charges only
     egress ($0.05/GB). Docs say the first 1,000 GB a month are free,
     shared with the SFU. A lockstep match sends a few kB a second, about
-    6 MB in a 10-minute match. The ADR records this risk and the off switch
-    (`RELAY_ON`).
+    6 MB in a 10-minute match. The ADR records this risk, the usage alert and
+    the off switch (`RELAY_ON`).
 - **Firestore stores the TURN entry flat.** Cloudflare's answer is
   `iceServers: [{ urls: [stun…] }, { urls: [turn…], username, credential }]`.
   Only the TURN entry is stored, its `urls` a plain array, because Firestore
@@ -80,7 +81,8 @@ token, kept as a secret.
   - `CLOUDFLARE_API_TOKEN` (Secret Manager, project `bacteria-wars`) is the
     only manual input. It is an API token with the permission Cloudflare's
     API reference calls "Calls Write" (Account > Calls/Realtime > Edit)
-    on the account that should own the TURN key. The owner sets it once with
+    and "Notifications Write" (Account > Notifications > Edit, for the
+    usage alert) on the account that should own the TURN key. The owner sets it once with
     `npx firebase functions:secrets:set CLOUDFLARE_API_TOKEN --project bacteria-wars`,
     which prompts for the value. No function reads it. Only the provisioning
     tool does.
@@ -111,14 +113,36 @@ token, kept as a secret.
     two `RTCPeerConnection`s in Playwright's Chromium with
     `iceTransportPolicy: 'relay'` and send one message across. That proves
     the relay works without any device and without mDNS.
+- **A live connection outlives its credentials.** A match that began with
+  credentials still has to hold once they expire. `--check` therefore runs
+  twice. The first run uses credentials with a 60 s TTL, holds the relayed
+  channel for 120 s and sends again. If that second message arrives,
+  Cloudflare keeps an allocation past its credentials' expiry and nothing
+  more is needed. If it fails, `PeerLink` takes fresh credentials every
+  `RELAY_REFRESH_MS` (20 minutes) from `GameRelay` while it is open
+  (`RTCPeerConnection.setConfiguration`, as Cloudflare recommends), and the
+  check is run again with that.
+- **A usage alert at Cloudflare** (the manager's condition on request 1442).
+  `turn-key` also creates, idempotently by its name
+  `bacteria-wars-turn-usage`, a notification policy of the type
+  `billing_usage_alert` (Usage Based Billing). It selects the Realtime TURN
+  product, with a limit of `RELAY_ALERT_GB` (100 GB a month, a tenth of the
+  free allowance, about 16,000 matches), and sends email to `SITE_OWNER`'s
+  address (`@wolsok/shared-legal`, public already). The tool reads the
+  product's name from `GET /alerting/v3/available_alerts` and does not
+  hard-code it. If the account offers no such product (Cloudflare offers
+  these alerts on Pay-as-you-go accounts only), the tool fails with that
+  message, and the session asks the manager how to go on before the merge.
+  The fallback it proposes is an hourly check of TURN usage in Cloudflare's
+  GraphQL analytics, reported to Sentry over the limit.
 - **Off switch.** `refreshRelay` is exported only with `RELAY_ON` in
   `src/config.ts`, as `HOURLY_ON` is. With it off the next deploy (`--force`)
-  removes the function. The document expires within 4 h, after which the
+  removes the function. The document expires within 1 h, after which the
   game is STUN-only again.
 - **Deploy order.** `firebase deploy` fails for a function whose secret does
   not exist. So `CLOUDFLARE_API_TOKEN` is set and `turn-key` has run before
   the merge. `RELAY_ON` ships as `true` only once `CLOUDFLARE_TURN_KEY`
-  exists. Until the first scheduled run, up to an hour after the deploy, the
+  exists. Until the first scheduled run, up to 30 minutes after the deploy, the
   game connects STUN-only as today.
 - **ADR 0020** "Bacteria Wars relays online matches through Cloudflare
   Realtime TURN" partly supersedes ADR 0009 (its "no TURN"). ADR 0009's
@@ -141,9 +165,9 @@ token, kept as a secret.
 1. `parseRelayCredentials` accepts `{ urls, username, credential, expireAt }`
    and returns `null` for anything else, an empty `urls` included (engine
    spec).
-2. `refreshRelay`'s handler posts `{ ttl: 14400 }` to Cloudflare's
+2. `refreshRelay`'s handler posts `{ ttl: 3600 }` to Cloudflare's
    `generate-ice-servers` URL with the key's bearer token. It writes only
-   the TURN entry, without port-53 URLs, and with `expireAt` = now + 4 h, to
+   the TURN entry, without port-53 URLs, and with `expireAt` = now + 1 h, to
    `relay/turn`. A failed Cloudflare call throws and leaves the document as
    it was (spec with a faked `fetch` and Firestore emulator spec).
 3. `main.ts` exports `refreshRelay` only with `RELAY_ON`, wrapped in
@@ -160,7 +184,11 @@ token, kept as a secret.
 7. `planTurnKey` returns `keep` for an existing key named in the secret. It
    returns `create` (deleting the rest) for no key, a key the secret does
    not name, or several keys of the name (tools-relay spec).
-8. `npx nx run tools-relay:turn-key` run twice in a row against the real
+8. The usage alert exists after `turn-key`, and a second run neither
+   creates nor changes it (`planUsageAlert` spec, and the run by hand).
+   `--check` also holds a relayed channel 120 s past a 60 s credential and
+   sends again; the result decides the refresh (see Decisions).
+   `npx nx run tools-relay:turn-key` run twice in a row against the real
    account changes nothing the second time (checked by hand, noted in the
    PR). `--check` sends a message through the relay with
    `iceTransportPolicy: 'relay'` (run by hand, output in the PR).
@@ -171,7 +199,7 @@ token, kept as a secret.
 11. `nx test`, `lint`, `lint-templates` and `typecheck-specs` of the touched
     projects are green, and the game's e2e (`online.spec.ts`,
     STUN-only on the emulator) still passes in CI.
-12. After the deploy, `relay/turn` exists within an hour. A real-device
+12. After the deploy, `relay/turn` exists within 30 minutes. A real-device
     check, two phones on mobile data, is asked of the owner and noted in
     the PR. CI cannot test real NATs, and the relay-only check (8) covers
     the relay itself.
