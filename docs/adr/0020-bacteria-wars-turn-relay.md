@@ -47,12 +47,25 @@ two things:
 - It makes sure the TURN key `bacteria-wars-online` exists and is stored as
   `CLOUDFLARE_TURN_KEY` (`{ id, token }`), the only secret the function
   reads.
-- It makes sure the usage alert `bacteria-wars-turn-usage` exists
-  (`billing_usage_alert`, 100 GB a month, sent to the site owner's address).
+- It makes sure the spend alert `bacteria-wars-spend` exists
+  (`billing_budget_alert` at $1, sent to the site owner's address).
+  Cloudflare offers no usage alert for Realtime TURN, and TURN is free up
+  to its monthly allowance, so the first paid dollar is the sign of
+  misuse.
 
-A second run changes nothing. A replaced key stays until a run with `--prune`, because the deployed function keeps the secret version it was deployed with. `tools-relay:check` connects two Chromium
-peers through the relay only, and holds the channel past its credentials'
-expiry.
+A second run changes nothing. A replaced key stays until a run with `--prune`, because the deployed function keeps the secret version it was deployed with. `tools-relay:check` connects two peers
+in one browser page through the relay only, and holds the channel past its
+credentials' expiry.
+
+**The host renews the relay of an open link.** A relayed connection dies
+once its credentials expired and the browser refreshes its allocation:
+measured over 11 minutes with 60 s credentials, in Chromium and Firefox.
+Fresh credentials through `setConfiguration` alone do not save it. An ICE
+restart with them does. So every 15 minutes the host takes fresh
+credentials, restarts ICE and sends its offer over a second negotiated
+data channel, `signal`; the guest answers the same way (`RelayRenewal`).
+The game's channel and the lockstep protocol stay as they were. A device
+of an older version never answers, and the host takes its offer back.
 
 ## Consequences
 
@@ -63,12 +76,17 @@ expiry.
   DTLS-encrypted.
 - Anyone signed in can relay traffic on our key for up to an hour. Cloudflare
   bills egress at $0.05/GB beyond the free tier, and a lockstep match is
-  about 6 MB. The usage alert reports misuse, and `RELAY_ON` in the
+  about 6 MB. The spend alert reports misuse, and `RELAY_ON` in the
   functions' `config.ts` takes the function out of the next deploy. The game
   is STUN-only again within the hour.
 - A deploy fails for a function whose secret does not exist. So
   `CLOUDFLARE_TURN_KEY` has to exist before `RELAY_ON` ships, and
   `turn-key` runs before such a merge.
+- A host waiting in a room keeps the credentials of its offer, with 20
+  minutes left at least. A guest joining much later may reach a host on a
+  strict NAT no more.
+- Safari's engine (WebKit) is untested by the check. It needs a real
+  device.
 - Per-player credentials (a command document per uid and a trigger) were
   rejected. Anonymous accounts cost nothing, so a per-uid limit gains
   little, and the trigger's cold start would delay every first match.

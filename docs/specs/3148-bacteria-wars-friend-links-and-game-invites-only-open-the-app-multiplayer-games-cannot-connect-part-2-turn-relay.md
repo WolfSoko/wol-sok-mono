@@ -23,7 +23,7 @@ token, kept as a secret.
   anyway, and ICE prefers a direct path when there is one. A second round
   would add a wait for every pair that needs the relay.
 - Measuring how often the relay carries a match (a `route` parameter on
-  `online_ended`). It is worth having for cost and value, but it reads
+  `online_ended`; follow-up request 1443). It is worth having for cost and value, but it reads
   `getStats()` and changes the analytics catalog and section 11. It goes to
   the manager as a follow-up.
 - Swapping Google's STUN servers for Cloudflare's.
@@ -53,7 +53,7 @@ token, kept as a secret.
     relay traffic on our key for up to an hour. Cloudflare charges only
     egress ($0.05/GB). Docs say the first 1,000 GB a month are free,
     shared with the SFU. A lockstep match sends a few kB a second, about
-    6 MB in a 10-minute match. The ADR records this risk, the usage alert and
+    6 MB in a 10-minute match. The ADR records this risk, the spend alert and
     the off switch (`RELAY_ON`).
 - **Firestore stores the TURN entry flat.** Cloudflare's answer is
   `iceServers: [{ urls: [stun…] }, { urls: [turn…], username, credential }]`.
@@ -86,7 +86,7 @@ token, kept as a secret.
     only manual input. It is an API token with the permission Cloudflare's
     API reference calls "Calls Write" (Account > Calls/Realtime > Edit)
     and "Notifications Write" (Account > Notifications > Edit, for the
-    usage alert) on the account that should own the TURN key. The owner sets it once with
+    spend alert) on the account that should own the TURN key. The owner sets it once with
     `npx firebase functions:secrets:set CLOUDFLARE_API_TOKEN --project bacteria-wars`,
     which prompts for the value. No function reads it. Only the provisioning
     tool does.
@@ -122,28 +122,49 @@ token, kept as a secret.
     two `RTCPeerConnection`s in Playwright's Chromium with
     `iceTransportPolicy: 'relay'` and send one message across. That proves
     the relay works without any device and without mDNS.
-- **A live connection outlives its credentials.** A match that began with
-  credentials still has to hold once they expire. `--check` therefore runs
-  twice. The first run uses credentials with a 60 s TTL, holds the relayed
-  channel for 120 s and sends again. If that second message arrives,
-  Cloudflare keeps an allocation past its credentials' expiry and nothing
-  more is needed. If it fails, `PeerLink` takes fresh credentials every
-  `RELAY_REFRESH_MS` (20 minutes) from `GameRelay` while it is open
-  (`RTCPeerConnection.setConfiguration`, as Cloudflare recommends), and the
-  check is run again with that.
-- **A usage alert at Cloudflare** (the manager's condition on request 1442).
-  `turn-key` also creates, idempotently by its name
-  `bacteria-wars-turn-usage`, a notification policy of the type
-  `billing_usage_alert` (Usage Based Billing). It selects the Realtime TURN
-  product, with a limit of `RELAY_ALERT_GB` (100 GB a month, a tenth of the
-  free allowance, about 16,000 matches), and sends email to `SITE_OWNER`'s
-  address (`@wolsok/shared-legal`, public already). The tool reads the
-  product's name from `GET /alerting/v3/available_alerts` and does not
-  hard-code it. If the account offers no such product (Cloudflare offers
-  these alerts on Pay-as-you-go accounts only), the tool fails with that
-  message, and the session asks the manager how to go on before the merge.
-  The fallback it proposes is an hourly check of TURN usage in Cloudflare's
-  GraphQL analytics, reported to Sentry over the limit.
+- **A live connection outlives its credentials: the host renews the relay
+  (the manager's answer on request 1450).** `tools-relay:check` measured
+  it. Two Chromium peers, relay only, credentials of 60 s, channel held
+  11 minutes, past Chrome's refresh of the TURN permission (about every
+  4 minutes) and of the allocation (its 10-minute lifetime less a minute):
+  - without a refresh, the channel dies;
+  - with `setConfiguration` and fresh credentials every 30 s, it still
+    dies;
+  - with that and an ICE restart, it lives.
+    So `PeerLink` makes a second negotiated channel, `signal` (id 1; the
+    game's stays id 0, and the lockstep protocol does not change).
+    `RelayRenewal` (`net/relay-renewal.ts`) runs on it:
+  - Every `RELAY_RENEW_MS` (15 minutes) the host takes fresh credentials
+    (`Relay.fresh`, which is `GameRelay.servers`), sets them with
+    `setConfiguration`, restarts ICE and sends its offer.
+  - The guest also takes fresh credentials and answers.
+  - Only the host offers, so the two never offer at once.
+  - A device of an older version has no `signal` channel and never
+    answers. The host takes its offer back after
+    `RENEW_ANSWER_TIMEOUT_MS` (20 s, `rollback`), and the link goes on as
+    before.
+  - Without credentials, nothing is renewed.
+- **Known limit: a long wait in a room.** The host's offer carries the
+  credentials it had when it opened the room, which have 20 minutes left
+  at least. A guest who joins much later than that may reach a host on a
+  strict NAT no more. A room code is usually typed in within minutes. The
+  ADR records the limit.
+- **Browsers.** The check runs in Chromium and Firefox
+  (`--browser=chromium|firefox|webkit`). WebKit (Safari) is untested: its
+  Playwright build needs system libraries this machine lacks. Safari on
+  iOS gets the relay all the same; whether its renewal holds is checked on
+  a real device after the deploy.
+- **A spend alert at Cloudflare** (the manager's condition on request 1442,
+  settled on request 1448). The account offers usage alerts
+  (`billing_usage_alert`), but none for Realtime TURN: 28 product names
+  were refused. So `turn-key` creates, idempotently by its name, the
+  budget alert `bacteria-wars-spend` (`billing_budget_alert`,
+  `total_spend_dollars` 1, `SPEND_ALERT_DOLLARS`). It sends email to
+  `SITE_OWNER`'s address (`@wolsok/shared-legal`, public already). TURN is
+  free up to Cloudflare's monthly allowance, so misuse costs nothing until
+  it is used up. The first paid dollar, from any product, then alerts at
+  once. The account's own "Default budget alert (auto-created)" at $10
+  stays.
 - **Off switch.** `refreshRelay` is exported only with `RELAY_ON` in
   `src/config.ts`, as `HOURLY_ON` is. With it off the next deploy (`--force`)
   removes the function. The document expires within 1 h, after which the
@@ -192,16 +213,21 @@ token, kept as a secret.
    with Google's STUN only, and the match still connects (game specs with
    the fake `GameRelay` and `pairedTransport()`).
 7. `planTurnKey` returns `keep` for an existing key named in the secret. It
-   returns `create` (deleting the rest) for no key, a key the secret does
-   not name, or several keys of the name (tools-relay spec).
-8. The usage alert exists after `turn-key`, and a second run neither
-   creates nor changes it (`planUsageAlert` spec, and the run by hand).
-   `--check` also holds a relayed channel 120 s past a 60 s credential and
-   sends again; the result decides the refresh (see Decisions).
+   returns `create` for no key, a key the secret does not name, or several
+   keys of the name. Older keys are removed only with `--prune`
+   (tools-relay spec).
+8. The spend alert exists after `turn-key`, and a second run neither
+   creates nor changes it (`planSpendAlert` spec, and the run by hand).
    `npx nx run tools-relay:turn-key` run twice in a row against the real
    account changes nothing the second time (checked by hand, noted in the
-   PR). `--check` sends a message through the relay with
-   `iceTransportPolicy: 'relay'` (run by hand, output in the PR).
+   PR). `--check --refresh=restart` keeps a relayed channel alive 11
+   minutes past a 60 s credential in Chromium and Firefox; without the
+   restart it dies (run by hand, outputs in the PR).
+   8a. On the host, an open link renews the relay every 15 minutes: fresh
+   credentials, `setConfiguration`, ICE restart, its offer on `signal`. The
+   guest answers with fresh credentials of its own. An unanswered offer is
+   taken back after 20 s, a closed link renews nothing, the guest never
+   offers (`relay-renewal.spec.ts`, `peer-link.spec.ts`).
 9. The privacy policy names Cloudflare in "Online-Matches" and "Online
    matches" (`privacy.component.spec.ts` checks the German and English
    paragraph).

@@ -84,8 +84,13 @@ storage until then. Settings stay with the device either way.
   (`GameRelay`, `storage/game-relay.ts`; `FirestoreGameRelay` reads the
   shared credentials the functions keep in `relay/turn`, waits 2 s at
   most and keeps them while they last more than 20 minutes) and hands the
-  servers to the transport (`offer(relay)`, `answer(offer, relay)`). No
-  credentials means no relay, never a failed match.
+  servers to the transport (`offer(relay)`, `answer(offer, relay)`, a
+  `Relay`: the servers now and `fresh()` for later). No credentials means
+  no relay, never a failed match. A relayed connection dies once its
+  credentials expired, so `PeerLink` makes a second negotiated channel,
+  `signal` (id 1; the game's is id 0), on which `RelayRenewal`
+  (`net/relay-renewal.ts`) restarts ICE with fresh credentials every 15
+  minutes, offered by the host only. Keep the game's messages off it.
 - Profiles, friends, challenges and the matchmaking queue go through the
   `GameSocial` port (`storage/game-social.ts`, `FirestoreGameSocial`), the
   online status through `GamePresence` (`RtdbGamePresence`, the Realtime
