@@ -50,7 +50,7 @@ two things:
 - It makes sure the usage alert `bacteria-wars-turn-usage` exists
   (`billing_usage_alert`, 100 GB a month, sent to the site owner's address).
 
-A second run changes nothing. `tools-relay:check` connects two Chromium
+A second run changes nothing. A replaced key stays until a run with `--prune`, because the deployed function keeps the secret version it was deployed with. `tools-relay:check` connects two Chromium
 peers through the relay only, and holds the channel past its credentials'
 expiry.
 

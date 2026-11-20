@@ -62,8 +62,12 @@ token, kept as a secret.
   (Cloudflare: browsers block it and the URL times out without trickle ICE,
   which the game does not use).
 - **No usable credentials means STUN only, as today.** Covered cases: no
-  document, an expired or unreadable one, a read that fails or takes longer
-  than 2 s, and `RELAY_ON` off. A missing relay never blocks a match.
+  document, an unreadable one, one expired more than an hour ago by the
+  device's clock (`CLOCK_SLACK_MS`: a phone whose clock runs ahead still
+  uses fresh ones; Cloudflare refuses really expired ones, and ICE goes on
+  without them), a read that fails or takes longer than 2 s, and
+  `RELAY_ON` off. A failed refresh keeps the credentials the device has. A
+  missing relay never blocks a match (review of PR #3158).
 - **The record is described once, in the engine.**
   `state/cloud/records/relay.ts` holds `RelayCredentials` and
   `parseRelayCredentials(data, toMillis)`. It is exported from the engine's
@@ -95,16 +99,21 @@ token, kept as a secret.
   `tsx --tsconfig tools/tsconfig.tools.json`, target `tools-relay:turn-key`):
   1. Reads `CLOUDFLARE_API_TOKEN` through
      `firebase functions:secrets:access` into memory. It never prints it.
-  2. Finds the account through `GET /accounts` and fails unless there is
-     exactly one (`--account-id` picks one).
+  2. Works on the account `CLOUDFLARE_ACCOUNT_ID`, a constant in the tool
+     (the owner's answer on request 1447; the token may not list accounts,
+     and the id is no secret). `--account-id` names another.
   3. Lists the TURN keys (`GET /accounts/{id}/calls/turn_keys`) and looks
      for the name `bacteria-wars-online`.
   4. Does nothing when the key exists and `CLOUDFLARE_TURN_KEY` names its
      uid. Otherwise it creates a new key
      (`POST …/turn_keys { name }`; the response's `secret` is shown only
      then), stores it with
-     `firebase functions:secrets:set CLOUDFLARE_TURN_KEY --data-file=- --force`,
-     and then deletes the other keys of that name.
+     `firebase functions:secrets:set CLOUDFLARE_TURN_KEY --data-file=-`.
+     Older keys of the name stay until a run with `--prune`: the deployed
+     `refreshRelay` keeps the secret version it was deployed with (the CLI
+     redeploys nothing from a script), so the old key stays in use until
+     the functions are deployed again. A secret read that fails for any
+     reason but "not found" stops the tool rather than set up a new key.
   - Every run after the first changes nothing. Its decision
     (`planTurnKey(keys, storedUid)`, returning `keep`, `create` and the uids
     to delete) is a pure function with a spec. The HTTP and CLI calls sit
@@ -177,8 +186,9 @@ token, kept as a secret.
    (`bacteria-game-remote:test-emulator`).
 5. `player-data.spec.ts` passes with the new `relay/{doc}` entry.
 6. With valid credentials, the host's offer and the guest's answer are made
-   with `[googleStun, { urls, username, credential }]`. With a missing,
-   expired or unreadable document, or a read longer than 2 s, they are made
+   with `[googleStun, { urls, username, credential }]`. With a missing or
+   unreadable document, one expired more than an hour ago, or a read longer
+   than 2 s, they are made
    with Google's STUN only, and the match still connects (game specs with
    the fake `GameRelay` and `pairedTransport()`).
 7. `planTurnKey` returns `keep` for an existing key named in the secret. It
@@ -206,7 +216,6 @@ token, kept as a secret.
 
 ## Open questions
 
-- Which Cloudflare account owns the key: the tool takes the token's only
-  account, or `--account-id`. The owner creates the token, so the owner
-  picks the account.
+- Which Cloudflare account owns the key: decided, the owner named it on
+  request 1447 (`CLOUDFLARE_ACCOUNT_ID`).
 - The owner checks the privacy policy paragraph before the merge.
