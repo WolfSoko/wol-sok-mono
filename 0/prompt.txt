@@ -1,0 +1,11 @@
+<task-notification>
+<task-id>byl7mujpt</task-id>
+<tool-use-id>toolu_01YFsjSEed1XvbApSWvA2FH7</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-548-wol-sok-mono/c528c5ea-ac2c-4eed-b9c4-2141b321615a/tasks/byl7mujpt.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1412/answer -G -d arbeit=548 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1412/answer -G -d arbeit=548" completed (exit code 0)</summary>
+</task-notification>
