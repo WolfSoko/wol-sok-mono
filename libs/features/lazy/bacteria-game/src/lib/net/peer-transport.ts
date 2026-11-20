@@ -1,4 +1,5 @@
 import type { Observable } from 'rxjs';
+import type { RelayServer } from '../storage/game-relay';
 
 /**
  * A direct connection to the other device of an online match: ordered and
@@ -32,10 +33,18 @@ export interface PeerConnection {
 export interface PeerTransport {
   /** True where this device can make a direct connection at all. */
   supported(): boolean;
-  /** A connection for the host, with the offer to pass on to the guest. */
-  offer(): Promise<{ link: PeerConnection; offer: string }>;
+  /**
+   * A connection for the host, with the offer to pass on to the guest -
+   * through `relay` too where the devices cannot reach each other directly.
+   */
+  offer(
+    relay: readonly RelayServer[]
+  ): Promise<{ link: PeerConnection; offer: string }>;
   /** A connection for the guest, answering the host's offer. */
-  answer(offer: string): Promise<{ link: PeerConnection; answer: string }>;
+  answer(
+    offer: string,
+    relay: readonly RelayServer[]
+  ): Promise<{ link: PeerConnection; answer: string }>;
 }
 
 /**

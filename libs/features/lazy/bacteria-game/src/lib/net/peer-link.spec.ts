@@ -18,7 +18,7 @@ class FakeRtcConnection {
     send: jest.fn(),
   };
 
-  public constructor() {
+  public constructor(public readonly configuration: RTCConfiguration) {
     FakeRtcConnection.last = this;
   }
 
@@ -62,8 +62,28 @@ describe('WebRtcTransport', () => {
     globalThis.RTCPeerConnection = original;
   });
 
+  const relay = {
+    urls: ['turn:turn.cloudflare.com:3478?transport=udp'],
+    username: 'user',
+    credential: 'secret',
+  };
+
+  it('reaches the other device through the STUN servers and the relay', async () => {
+    await new WebRtcTransport().offer([relay]);
+    const servers = FakeRtcConnection.last?.configuration.iceServers ?? [];
+    expect(servers.at(-1)).toEqual(relay);
+    expect(String(servers[0]?.urls)).toMatch(/^stun:/);
+
+    await new WebRtcTransport().answer('offer', []);
+    expect(
+      FakeRtcConnection.last?.configuration.iceServers?.every(({ urls }) =>
+        String(urls).startsWith('stun:')
+      )
+    ).toBe(true);
+  });
+
   it('waits five seconds at most for the candidates', async () => {
-    const offering = new WebRtcTransport().offer();
+    const offering = new WebRtcTransport().offer([]);
     const connection = FakeRtcConnection.last;
     if (connection === null) {
       throw new Error('No connection made.');
@@ -79,7 +99,7 @@ describe('WebRtcTransport', () => {
   });
 
   it('names a connection whose every way failed unreachable', async () => {
-    const { link } = await new WebRtcTransport().answer('offer');
+    const { link } = await new WebRtcTransport().answer('offer', []);
 
     FakeRtcConnection.last?.moveTo('failed');
 
@@ -89,7 +109,7 @@ describe('WebRtcTransport', () => {
   });
 
   it('names a connection that never opened in time unreachable', async () => {
-    const { link } = await new WebRtcTransport().answer('offer');
+    const { link } = await new WebRtcTransport().answer('offer', []);
     const opened = link.opened.catch((error: unknown) => error);
 
     await jest.advanceTimersByTimeAsync(CONNECT_TIMEOUT_MS);
@@ -100,7 +120,7 @@ describe('WebRtcTransport', () => {
   });
 
   it('keeps a plain error for a link closed on purpose', async () => {
-    const { link } = await new WebRtcTransport().answer('offer');
+    const { link } = await new WebRtcTransport().answer('offer', []);
 
     link.close();
 

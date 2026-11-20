@@ -5,6 +5,7 @@ import {
   PeerUnreachableError,
   type UnreachableKind,
 } from '../lib/net/peer-transport';
+import type { RelayServer } from '../lib/storage/game-relay';
 
 /** Lets every message under way arrive, and the promises it settles. */
 export const flush = (): Promise<void> =>
@@ -115,6 +116,11 @@ export interface PairedTransport extends PeerTransport {
    * a kind, with a plain error for null.
    */
   failNextGuest(kind: UnreachableKind | null): void;
+  /** The relay each offer and answer was made with, in order. */
+  readonly relays: readonly {
+    side: 'host' | 'guest';
+    relay: readonly RelayServer[];
+  }[];
 }
 
 /**
@@ -128,7 +134,10 @@ export function pairedTransport(): PairedTransport {
   let made = 0;
   let lastGuest: PairedEnd | null = null;
   let nextFailure: Error | null = null;
+  const relays: { side: 'host' | 'guest'; relay: readonly RelayServer[] }[] =
+    [];
   return {
+    relays,
     get lastGuest() {
       return lastGuest;
     },
@@ -139,13 +148,15 @@ export function pairedTransport(): PairedTransport {
           : new PeerUnreachableError(kind);
     },
     supported: () => true,
-    async offer() {
+    async offer(relay) {
+      relays.push({ side: 'host', relay });
       const host = new PairedEnd();
       const offer = `offer-${++made}`;
       offers.set(offer, host);
       return { link: host, offer };
     },
-    async answer(offer: string) {
+    async answer(offer, relay) {
+      relays.push({ side: 'guest', relay });
       const host = offers.get(offer);
       if (host === undefined || host.closed) {
         throw new Error(`No open offer "${offer}".`);

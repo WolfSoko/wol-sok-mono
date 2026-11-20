@@ -1,4 +1,5 @@
 import { Observable, Subject } from 'rxjs';
+import type { RelayServer } from '../storage/game-relay';
 import {
   type PeerConnection,
   type PeerTransport,
@@ -8,8 +9,10 @@ import {
 
 /**
  * Public STUN servers, which tell a device the address the internet sees it
- * under. There is no TURN server: two devices behind strict NATs - some
- * mobile networks, some offices - cannot reach each other, and are told so.
+ * under. Two devices behind strict NATs - some mobile networks, some
+ * Wi-Fi networks - cannot reach each other that way; for them the
+ * connection goes through the TURN relay the offer and answer are given
+ * (ADR 0020), and without one they are told so.
  */
 const ICE_SERVERS: RTCIceServer[] = [
   { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
@@ -37,17 +40,20 @@ export class WebRtcTransport implements PeerTransport {
     return typeof RTCPeerConnection === 'function';
   }
 
-  public async offer(): Promise<{ link: PeerConnection; offer: string }> {
-    const { link, description } = await negotiate(async (connection) =>
+  public async offer(
+    relay: readonly RelayServer[]
+  ): Promise<{ link: PeerConnection; offer: string }> {
+    const { link, description } = await negotiate(relay, async (connection) =>
       connection.setLocalDescription(await connection.createOffer())
     );
     return { link, offer: description };
   }
 
   public async answer(
-    offer: string
+    offer: string,
+    relay: readonly RelayServer[]
   ): Promise<{ link: PeerConnection; answer: string }> {
-    const { link, description } = await negotiate(async (connection) => {
+    const { link, description } = await negotiate(relay, async (connection) => {
       await connection.setRemoteDescription({ type: 'offer', sdp: offer });
       await connection.setLocalDescription(await connection.createAnswer());
     });
@@ -57,13 +63,17 @@ export class WebRtcTransport implements PeerTransport {
 }
 
 /**
- * A new link and its local description once `steps` set it - the link
- * closed again when they fail.
+ * A new link, reaching the other device through the STUN servers and
+ * `relay`, and its local description once `steps` set it - the link closed
+ * again when they fail.
  */
 async function negotiate(
+  relay: readonly RelayServer[],
   steps: (connection: RTCPeerConnection) => Promise<void>
 ): Promise<{ link: PeerLink; description: string }> {
-  const connection = new RTCPeerConnection({ iceServers: ICE_SERVERS });
+  const connection = new RTCPeerConnection({
+    iceServers: [...ICE_SERVERS, ...relay],
+  });
   const link = new PeerLink(connection);
   try {
     await steps(connection);

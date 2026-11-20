@@ -14,6 +14,7 @@ import {
 } from '../../testing/paired-transport';
 import { PlayerService } from '../state/player.service';
 import { GameAccount } from '../storage/game-account';
+import type { RelayServer } from '../storage/game-relay';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import type { OnlineSetup, OnlineStart } from './net-message';
 import { NET_VERSION } from './net-message';
@@ -37,6 +38,8 @@ interface Device {
 
 describe('OnlineMatchService between two devices', () => {
   let rooms: FakeGameRooms;
+  /** What the relay hands out - none unless a spec sets it. */
+  let relayServers: RelayServer[];
   let transport: PairedTransport;
   let analytics: RecordingAnalytics;
   /** Each device's injector, destroyed after the test. */
@@ -44,13 +47,17 @@ describe('OnlineMatchService between two devices', () => {
 
   beforeEach(() => {
     rooms = new FakeGameRooms();
+    relayServers = [];
     transport = pairedTransport();
     analytics = new RecordingAnalytics();
     injectors = [];
     TestBed.configureTestingModule({
       providers: [
         provideRecordingAnalytics(analytics),
-        provideFakeGameCloud({ rooms }),
+        provideFakeGameCloud({
+          rooms,
+          relay: { servers: async () => relayServers },
+        }),
         { provide: PEER_TRANSPORT, useValue: transport },
       ],
     });
@@ -124,6 +131,33 @@ describe('OnlineMatchService between two devices', () => {
       ]);
       expect(host.online.peer()).toBe('bob');
       expect(guest.online.peer()).toBe('ada');
+    });
+
+    it('hands both devices the relay for their offer and answer', async () => {
+      const relay = {
+        urls: ['turn:turn.cloudflare.com:3478?transport=udp'],
+        username: 'user',
+        credential: 'secret',
+      };
+      relayServers = [relay];
+
+      const { host } = await connected();
+
+      expect(host.online.lobby().phase).toBe('connected');
+      expect(transport.relays).toEqual([
+        { side: 'host', relay: [relay] },
+        { side: 'guest', relay: [relay] },
+      ]);
+    });
+
+    it('connects without a relay when it has no credentials', async () => {
+      const { host } = await connected();
+
+      expect(host.online.lobby().phase).toBe('connected');
+      expect(transport.relays).toEqual([
+        { side: 'host', relay: [] },
+        { side: 'guest', relay: [] },
+      ]);
     });
 
     it('takes the room for its stub once the guest connected, never deleting it', async () => {
@@ -368,7 +402,7 @@ describe('OnlineMatchService between two devices', () => {
       if (room === null) {
         throw new Error('The room is gone.');
       }
-      const { link, answer } = await transport.answer(room.offer);
+      const { link, answer } = await transport.answer(room.offer, []);
       await room.answer(answer);
       await link.opened;
       link.send(

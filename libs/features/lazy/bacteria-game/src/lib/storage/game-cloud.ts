@@ -6,6 +6,7 @@ import type { GameStorage } from './game-storage';
 import type { FirebaseConnection } from './firebase-connection';
 import { FirebaseGameAccount } from './firebase-game-account';
 import { FirestoreGameBoards } from './firestore-game-boards';
+import { FirestoreGameRelay } from './firestore-game-relay';
 import { FirestoreGameRooms } from './firestore-game-rooms';
 import { FirestoreGameSocial } from './firestore-game-social';
 import type { GamePresence, GameSocial } from './game-social';
@@ -15,6 +16,7 @@ import { FirestoreGameReplays } from './firestore-game-replays';
 import type { GameReplays } from './game-replays';
 import { LocalGameReplays } from './local-game-replays';
 import type { GameBoards } from './game-boards';
+import type { GameRelay } from './game-relay';
 import type { GameRooms } from './game-rooms';
 import type { GameToggles } from './game-toggles';
 import { banned, type GameModeration } from './game-moderation';
@@ -63,6 +65,7 @@ export class GameCloud {
     account: GameAccount;
     storage: GameStorage;
     rooms: GameRooms;
+    relay: GameRelay;
     social: GameSocial;
     presence: GamePresence | null;
     replays: GameReplays | null;
@@ -112,6 +115,14 @@ export class GameCloud {
   /** Where online matches meet - null without a project, there are none then. */
   public rooms(): GameRooms | null {
     return this.connected()?.rooms ?? null;
+  }
+
+  /**
+   * The TURN relay's credentials for online matches (ADR 0020) - null
+   * without a project, where there are no online matches either.
+   */
+  public relay(): GameRelay | null {
+    return this.connected()?.relay ?? null;
   }
 
   /** Profiles, friends and matchmaking - null without a project. */
@@ -195,6 +206,7 @@ export class GameCloud {
           isBanned
         ),
         rooms: new FirestoreGameRooms(connection, account.playerIds),
+        relay: new FirestoreGameRelay(connection),
         social: new FirestoreGameSocial(connection),
         presence:
           connection.rtdb == null
