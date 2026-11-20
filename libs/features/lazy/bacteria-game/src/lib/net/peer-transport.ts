@@ -1,5 +1,6 @@
 import type { Observable } from 'rxjs';
 import type { RelayServer } from '../storage/game-relay';
+import type { ConnectionRoute } from './connection-route';
 
 /**
  * A direct connection to the other device of an online match: ordered and
@@ -20,6 +21,8 @@ export interface PeerConnection {
   accept(answer: string): Promise<void>;
   /** Sends a message, dropped once the connection is no longer open. */
   send(message: string): void;
+  /** How the open connection carries the match: direct or through the relay. */
+  route(): Promise<ConnectionRoute>;
   close(): void;
 }
 

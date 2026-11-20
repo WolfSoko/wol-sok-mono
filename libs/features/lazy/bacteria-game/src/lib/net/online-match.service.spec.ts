@@ -141,6 +141,20 @@ describe('OnlineMatchService between two devices', () => {
       expect(guest.online.peer()).toBe('ada');
     });
 
+    it.each(['direct', 'relay'] as const)(
+      'reports the link and its route on both devices (%s)',
+      async (route) => {
+        transport.routeAs(route);
+
+        await connected();
+
+        expect(analytics.tracked('online_connected')).toEqual([
+          { role: 'guest', matchmade: false, route },
+          { role: 'host', matchmade: false, route },
+        ]);
+      }
+    );
+
     it('hands both devices the relay for their offer and answer', async () => {
       const relay = {
         urls: ['turn:turn.cloudflare.com:3478?transport=udp'],

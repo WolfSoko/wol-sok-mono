@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import type { ConnectionRoute } from '../lib/net/connection-route';
 import {
   type PeerConnection,
   type PeerTransport,
@@ -26,6 +27,9 @@ class PairedEnd implements PeerConnection {
   public readonly messages$ = this.incoming.asObservable();
   public readonly closed$ = this.ended.asObservable();
   public readonly opened: Promise<void>;
+
+  /** The route `route()` reports, `direct` unless a spec routes it. */
+  public carried: ConnectionRoute = 'direct';
 
   /** What `opened` rejects with once this end closes before it opened. */
   private closedBy: Error = new Error('The connection closed.');
@@ -66,6 +70,10 @@ class PairedEnd implements PeerConnection {
     }
     // Later, as over the network: a reply never re-enters the sender.
     queueMicrotask(() => other.receive(message));
+  }
+
+  public async route(): Promise<ConnectionRoute> {
+    return this.carried;
   }
 
   /** Closes this end before it opened, `opened` rejecting with `error`. */
@@ -116,6 +124,8 @@ export interface PairedTransport extends PeerTransport {
    * a kind, with a plain error for null.
    */
   failNextGuest(kind: UnreachableKind | null): void;
+  /** Lets both ends of the links made from now on report `route`. */
+  routeAs(route: ConnectionRoute): void;
   /** The relay each offer and answer was made with, in order. */
   readonly relays: readonly {
     side: 'host' | 'guest';
@@ -134,6 +144,7 @@ export function pairedTransport(): PairedTransport {
   let made = 0;
   let lastGuest: PairedEnd | null = null;
   let nextFailure: Error | null = null;
+  let route: ConnectionRoute = 'direct';
   const relays: { side: 'host' | 'guest'; relay: readonly RelayServer[] }[] =
     [];
   return {
@@ -147,10 +158,14 @@ export function pairedTransport(): PairedTransport {
           ? new Error('The connection failed.')
           : new PeerUnreachableError(kind);
     },
+    routeAs(next) {
+      route = next;
+    },
     supported: () => true,
     async offer(relay) {
       relays.push({ side: 'host', relay: relay.servers });
       const host = new PairedEnd();
+      host.carried = route;
       const offer = `offer-${++made}`;
       offers.set(offer, host);
       return { link: host, offer };
@@ -163,6 +178,7 @@ export function pairedTransport(): PairedTransport {
       }
       offers.delete(offer);
       const guest = new PairedEnd();
+      guest.carried = route;
       const answer = `answer-${++made}`;
       host.pair(guest, answer);
       lastGuest = guest;

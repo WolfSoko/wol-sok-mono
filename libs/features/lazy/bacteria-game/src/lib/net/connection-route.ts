@@ -21,9 +21,10 @@ export function connectionRoute(stats: RTCStatsReport): ConnectionRoute {
   if (pair === undefined) {
     return 'unknown';
   }
-  const ends = [pair['localCandidateId'], pair['remoteCandidateId']].map(
-    (id) => entries.get(String(id))?.['candidateType']
-  );
+  const ends = [
+    textOf(pair, 'localCandidateId'),
+    textOf(pair, 'remoteCandidateId'),
+  ].map((id) => entryOf(entries, id)?.['candidateType']);
   return ends.includes('relay') ? 'relay' : 'direct';
 }
 
@@ -37,14 +38,33 @@ function selectedPair(
   byId: ReadonlyMap<string, StatsEntry>
 ): StatsEntry | undefined {
   const pairs = all.filter((entry) => entry.type === 'candidate-pair');
-  const selectedId = all.find(
-    (entry) => entry.type === 'transport' && entry['selectedCandidatePairId']
-  )?.['selectedCandidatePairId'];
+  const transport = all.find(
+    (entry) =>
+      entry.type === 'transport' &&
+      textOf(entry, 'selectedCandidatePairId') !== undefined
+  );
   return (
-    (selectedId === undefined ? undefined : byId.get(String(selectedId))) ??
+    entryOf(byId, textOf(transport, 'selectedCandidatePairId')) ??
     pairs.find((pair) => pair['selected'] === true) ??
     pairs.find(
       (pair) => pair['nominated'] === true && pair['state'] === 'succeeded'
     )
   );
+}
+
+/** The entry's field `key` where it is a text, else undefined. */
+function textOf(
+  entry: StatsEntry | undefined,
+  key: string
+): string | undefined {
+  const value = entry?.[key];
+  return typeof value === 'string' ? value : undefined;
+}
+
+/** The entry with `id`, none without an id. */
+function entryOf(
+  byId: ReadonlyMap<string, StatsEntry>,
+  id: string | undefined
+): StatsEntry | undefined {
+  return id === undefined ? undefined : byId.get(id);
 }
