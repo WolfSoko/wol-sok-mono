@@ -113,7 +113,7 @@ dimension gets no data since and can be archived in GA4.
 | `share`                                                                                                              | `method` (`native`, `copy`), `content_type` (`friend_invite`, `ghost_run`)                                                                                        | friends screen, result screen                                 |
 | `matchmaking_started`, `matchmaking_found` (`wait_sec`), `matchmaking_cancelled` (`found`, `wait_sec`)               |                                                                                                                                                                   | `MatchmakerService`                                           |
 | `online_connected`                                                                                                   | `role`, `matchmade`                                                                                                                                               | `OnlineMatchService.greet`                                    |
-| `online_ended`                                                                                                       | `reason`, `notice` (the notice's text key)                                                                                                                        | `OnlineMatchService.endWith`                                  |
+| `online_ended`                                                                                                       | `reason`, `notice` (the notice's text key), `failure` (`ice_failed`, `timeout` or `none`)                                                                         | `OnlineMatchService.endWith`                                  |
 | `replay_saved`                                                                                                       | `online`, `ranked`                                                                                                                                                | upload accepted                                               |
 | `replay_watched`                                                                                                     | `source: my_matches`                                                                                                                                              | My matches                                                    |
 | `replay_deleted`, `replay_kept_out`                                                                                  | `cloud`                                                                                                                                                           | My matches                                                    |
@@ -147,7 +147,7 @@ reports show none of their parameters, and page views may count twice.
 3. **Custom definitions → Custom dimensions** (event scope): `kind`,
    `difficulty`, `ranked`, `simulation`, `outcome`, `reason`,
    `medal`, `new_best`, `mission_done`, `item_category`, `setting`, `value`
-   (text), `role`, `matchmade`, `notice`, `source`, `product_id`, `first`,
+   (text), `role`, `matchmade`, `notice`, `failure`, `source`, `product_id`, `first`,
    `accepted`, `found`, `online`, `cloud`, `passed`, `level_name`, and for
    RollaPolla `listed`, `featured`, `just_created`, `late`, `list`, `sort`,
    `chat`. `method`, `content_type`, `achievement_id`, `character`,

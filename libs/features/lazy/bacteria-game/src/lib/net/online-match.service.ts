@@ -15,7 +15,12 @@ import {
   agreedRuleset,
 } from './net-message';
 import { WebRtcTransport } from './peer-link';
-import type { PeerConnection, PeerTransport } from './peer-transport';
+import {
+  type PeerConnection,
+  type PeerTransport,
+  PeerUnreachableError,
+  type UnreachableKind,
+} from './peer-transport';
 import { PlayerService } from '../state/player.service';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { errorCode } from '../storage/retry';
@@ -346,10 +351,13 @@ export class OnlineMatchService {
       return false;
     }
     this.link = link;
+    let opened = false;
     link.messages$.subscribe((data) => this.receive(data));
-    link.closed$.subscribe(() => this.onClosed(link));
+    // Before it opened, the attempt hears why from `opened`'s rejection.
+    link.closed$.subscribe(() => opened && this.onClosed(link));
     link.opened.then(
       () => {
+        opened = true;
         this.ownOffers = [...this.players.rulesetOffers()];
         this.send({
           k: 'hello',
@@ -457,6 +465,15 @@ export class OnlineMatchService {
 
   private fail(attempt: number, error: unknown): void {
     console.warn('The online match could not connect', error);
+    if (error instanceof PeerUnreachableError) {
+      this.endWith(
+        attempt,
+        { key: 'online.notices.unreachable' },
+        'lost',
+        error.kind
+      );
+      return;
+    }
     this.endWith(attempt, { key: 'online.notices.failed' });
   }
 
@@ -464,12 +481,17 @@ export class OnlineMatchService {
   private endWith(
     attempt: number,
     notice: GameText,
-    reason: OnlineEnd = 'lost'
+    reason: OnlineEnd = 'lost',
+    failure: UnreachableKind | 'none' = 'none'
   ): void {
     if (attempt !== this.attempt) {
       return;
     }
-    this.analytics.track('online_ended', { reason, notice: notice.key });
+    this.analytics.track('online_ended', {
+      reason,
+      notice: notice.key,
+      failure,
+    });
     this.restart({ notice }, reason);
   }
 

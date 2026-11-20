@@ -1,5 +1,9 @@
 import { createEnvironmentInjector, EnvironmentInjector } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import {
+  provideRecordingAnalytics,
+  RecordingAnalytics,
+} from '@wolsok/shared-analytics/testing';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameRooms } from '../../testing/fake-game-rooms';
@@ -34,15 +38,18 @@ interface Device {
 describe('OnlineMatchService between two devices', () => {
   let rooms: FakeGameRooms;
   let transport: PairedTransport;
+  let analytics: RecordingAnalytics;
   /** Each device's injector, destroyed after the test. */
   let injectors: EnvironmentInjector[];
 
   beforeEach(() => {
     rooms = new FakeGameRooms();
     transport = pairedTransport();
+    analytics = new RecordingAnalytics();
     injectors = [];
     TestBed.configureTestingModule({
       providers: [
+        provideRecordingAnalytics(analytics),
         provideFakeGameCloud({ rooms }),
         { provide: PEER_TRANSPORT, useValue: transport },
       ],
@@ -153,6 +160,55 @@ describe('OnlineMatchService between two devices', () => {
       host.online.leave();
 
       expect(rooms.state(code)).toBe('closed');
+    });
+
+    it.each(['ice_failed', 'timeout'] as const)(
+      'tells a guest the host cannot be reached when the link fails (%s)',
+      async (kind) => {
+        const { code } = await waitingHost('ada');
+        const guest = device('bob');
+        transport.failNextGuest(kind);
+
+        await guest.online.join(code);
+
+        expect(guest.online.lobby().notice).toEqual({
+          key: 'online.notices.unreachable',
+        });
+        expect(analytics.tracked('online_ended')).toContainEqual({
+          reason: 'lost',
+          notice: 'online.notices.unreachable',
+          failure: kind,
+        });
+      }
+    );
+
+    it('tells the host too when the guest cannot be reached', async () => {
+      const { host, hosting, code } = await waitingHost('ada');
+      transport.failNextGuest('ice_failed');
+
+      await device('bob').online.join(code);
+      await hosting;
+
+      expect(host.online.lobby().notice).toEqual({
+        key: 'online.notices.unreachable',
+      });
+    });
+
+    it('tells a guest of any other failure as before', async () => {
+      const { code } = await waitingHost('ada');
+      const guest = device('bob');
+      transport.failNextGuest(null);
+
+      await guest.online.join(code);
+
+      expect(guest.online.lobby().notice).toEqual({
+        key: 'online.notices.failed',
+      });
+      expect(analytics.tracked('online_ended')).toContainEqual({
+        reason: 'lost',
+        notice: 'online.notices.failed',
+        failure: 'none',
+      });
     });
 
     it('tells a guest when no room has the code', async () => {

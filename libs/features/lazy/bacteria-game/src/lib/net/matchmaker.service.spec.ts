@@ -11,6 +11,7 @@ import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { claimable, MatchmakerService } from './matchmaker.service';
 import { OnlineMatchService } from './online-match.service';
+import { CONNECT_TIMEOUT_MS } from './peer-link';
 
 describe('MatchmakerService', () => {
   let social: FakeGameSocial;
@@ -114,6 +115,42 @@ describe('MatchmakerService', () => {
     expect(online.leave).toHaveBeenCalled();
     expect(second.state()).toBe('searching');
     expect(social.get('queue/bob')).not.toBeNull();
+  });
+
+  it('leaves a claimed player be who answered and is still connecting', async () => {
+    await social.enqueue('ada');
+    const second = matchmaker('bob');
+    await second.find();
+    await jest.advanceTimersByTimeAsync(0);
+    // The answer came: the link's own connect timeout takes it from here.
+    online.lobby.update((lobby) => ({ ...lobby, phase: 'connecting' }));
+    TestBed.tick();
+    online.leave.mockClear();
+
+    await jest.advanceTimersByTimeAsync(20_000);
+    TestBed.tick();
+
+    expect(online.leave).not.toHaveBeenCalled();
+    expect(second.state()).toBe('found');
+  });
+
+  it('gives up on a claimed player who never finishes connecting', async () => {
+    await social.enqueue('ada');
+    const second = matchmaker('bob');
+    await second.find();
+    await jest.advanceTimersByTimeAsync(0);
+    // Open but silent: the channel came up and no hello followed.
+    online.lobby.update((lobby) => ({ ...lobby, phase: 'connecting' }));
+    TestBed.tick();
+    online.leave.mockClear();
+    social.remove('queue/ada');
+
+    await jest.advanceTimersByTimeAsync(20_000 + CONNECT_TIMEOUT_MS);
+    TestBed.tick();
+    await jest.advanceTimersByTimeAsync(0);
+
+    expect(online.leave).toHaveBeenCalled();
+    expect(second.state()).toBe('searching');
   });
 
   describe('the level the players would like', () => {

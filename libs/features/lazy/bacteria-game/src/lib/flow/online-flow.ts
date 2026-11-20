@@ -2,7 +2,8 @@ import { DOCUMENT } from '@angular/common';
 import { DestroyRef, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { EMPTY, fromEvent } from 'rxjs';
+import { delay, filter } from 'rxjs/operators';
 import { HudState } from '../hud/hud-state';
 import { MatchmakerService } from '../net/matchmaker.service';
 import { OnlineMatchService } from '../net/online-match.service';
@@ -20,7 +21,8 @@ import { PlayFlow } from './play-flow';
 /**
  * Online play on the stage, and what links bring in: hosting and joining a
  * match, a friend's challenge, the matchmaking's matches, the host's starts
- * the guest follows, and the shared run or the invitation a link carries.
+ * the guest follows, and the shared run or the invitation a link carries -
+ * on the start and whenever a link opens the running game.
  * Provided by the stage component, one per stage; {@link start} sets it
  * going.
  */
@@ -55,12 +57,23 @@ export class OnlineFlow {
   }
 
   /**
-   * Takes what the link brought - a shared run, an invitation - and follows
-   * the online match's starts from now on.
+   * Takes what the link brought - a shared run, an invitation - and every
+   * link that opens the running game later, and follows the online match's
+   * starts from now on.
    */
   public start(): void {
-    void this.takeChallenge();
-    void this.takeInvite();
+    this.takeLink();
+    // A link into the running game - the Android app, an installed PWA's
+    // window, an open tab - only changes the hash: no new start reads it.
+    // The game's own drop (`dropHash`) replaces the state and fires none.
+    // The router syncs with the new address in a task of its own, queued at
+    // the popstate before the hashchange; the link is read a task later,
+    // so the drop replaces the router's navigation rather than being
+    // undone by it.
+    const view = this.document.defaultView;
+    (view === null ? EMPTY : fromEvent(view, 'hashchange'))
+      .pipe(delay(0), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.takeLink());
     // The guest of an online match plays what the host starts.
     this.online.events$
       .pipe(
@@ -171,6 +184,12 @@ export class OnlineFlow {
     if (this.store.snapshot().online?.seat === 1) {
       this.flow.startGame();
     }
+  }
+
+  /** Takes the shared run or the invitation the address's hash carries. */
+  private takeLink(): void {
+    void this.takeChallenge();
+    void this.takeInvite();
   }
 
   /**

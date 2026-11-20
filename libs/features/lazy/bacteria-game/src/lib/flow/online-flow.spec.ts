@@ -8,6 +8,7 @@ import { OnlineEvent, OnlineMatchService } from '../net/online-match.service';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { SocialService } from '../social/social.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
+import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { OnlineFlow } from './online-flow';
@@ -146,6 +147,85 @@ describe('OnlineFlow', () => {
 
       expect(online.inviteOffer()).toEqual({ token, from: 'Ada' });
       expect(navigate).not.toHaveBeenCalled();
+    });
+
+    describe('opening the game while it runs', () => {
+      const flushLinks = () => new Promise((resolve) => setTimeout(resolve));
+      let document: Document;
+
+      beforeEach(() => {
+        document = TestBed.inject(DOCUMENT);
+        document.location.hash = '';
+      });
+
+      /**
+       * The fragment changes from outside, as a link into the open app
+       * does: one `hashchange` (setting `location.hash` would queue a
+       * second one in jsdom).
+       */
+      function followLink(hash: string): void {
+        history.replaceState(null, '', `/${hash}`);
+        document.defaultView?.dispatchEvent(new HashChangeEvent('hashchange'));
+      }
+
+      it('lets the router take the new address before it reads the link', async () => {
+        const read = jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');
+        online.start();
+
+        followLink(`#friend=${token}`);
+        // The router syncs with the browser in a task of its own, queued at
+        // the popstate before this hashchange: a drop ahead of it would be
+        // undone by the router's own navigation to the link.
+        await Promise.resolve();
+        expect(read).not.toHaveBeenCalled();
+
+        await flushLinks();
+        expect(read).toHaveBeenCalledWith(token);
+      });
+
+      it('offers the inviter of a link that arrives later', async () => {
+        const read = jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');
+        online.start();
+        await flushLinks();
+        expect(read).not.toHaveBeenCalled();
+
+        followLink(`#friend=${token}`);
+        await flushLinks();
+
+        expect(read).toHaveBeenCalledWith(token);
+        expect(online.inviteOffer()).toEqual({ token, from: 'Ada' });
+        expect(navigate).toHaveBeenCalled();
+      });
+
+      it('offers a shared run that arrives later', async () => {
+        const offer = jest
+          .spyOn(TestBed.inject(GameStateService), 'offerChallenge')
+          .mockResolvedValue(true);
+        online.start();
+        await flushLinks();
+
+        followLink('#run=shared');
+        await flushLinks();
+
+        expect(offer).toHaveBeenLastCalledWith('#run=shared');
+        expect(navigate).toHaveBeenCalled();
+      });
+
+      it('does not take a link again when the game drops it itself', async () => {
+        const read = jest.spyOn(social, 'readInvite').mockResolvedValue('Ada');
+        navigate.mockImplementation(async () => {
+          // As the router does: replaceState, which fires no hashchange.
+          history.replaceState(null, '', '/');
+          return true;
+        });
+        online.start();
+
+        followLink(`#friend=${token}`);
+        await flushLinks();
+        await flushLinks();
+
+        expect(read).toHaveBeenCalledTimes(1);
+      });
     });
 
     it('keeps the link when it could not be read, for a reload', async () => {
