@@ -26,7 +26,8 @@
         "default",
         "^production",
         "{workspaceRoot}/jest.preset.cjs",
-        "{workspaceRoot}/jest.config.ts"
+        "{workspaceRoot}/jest.config.ts",
+        "{workspaceRoot}/tools/perf/engine-bench.json"
       ],
       "outputs": ["{workspaceRoot}/coverage/libs/features/bacteria-engine"],
       "options": {
@@ -61,9 +62,25 @@
       "cache": true,
       "parallelism": false,
       "inputs": [
-        "production",
+        "{projectRoot}/src/index.ts",
+        "{projectRoot}/src/lib/i18n/**/*",
+        "{projectRoot}/src/lib/site/**/*",
+        "{projectRoot}/src/lib/social/**/*",
+        "{projectRoot}/src/lib/state/*.ts",
+        "{projectRoot}/src/lib/state/simulation/**/*",
+        "{projectRoot}/src/lib/state/match/**/*",
+        "{projectRoot}/src/lib/state/levels/**/*",
+        "{projectRoot}/src/lib/state/progress/**/*",
+        "{projectRoot}/src/lib/state/replay/**/*",
+        "{projectRoot}/tsconfig.json",
+        "{projectRoot}/package.json",
+        "!{projectRoot}/**/*.spec.ts",
         "^production",
-        "{workspaceRoot}/tools/perf/**/*"
+        "{workspaceRoot}/tools/perf/engine-bench.mjs",
+        "{workspaceRoot}/tools/perf/engine-bench.json",
+        "{workspaceRoot}/tools/perf/engine-baseline.json",
+        "{workspaceRoot}/tools/perf/fixtures/**/*",
+        "{workspaceRoot}/.nvmrc"
       ],
       "options": {
         "command": "node --expose-gc tools/perf/engine-bench.mjs --report-only"

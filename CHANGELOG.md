@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.16](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.15...v74.172.16) (2026-11-20)
+
+### Refactorings
+
+* **feat-shared-bacteria-engine:** the perf target reads only what the engine bench plays ([#3103](https://github.com/WolfSoko/wol-sok-mono/issues/3103) step 4) ([#3152](https://github.com/WolfSoko/wol-sok-mono/issues/3152)) ([103a723](https://github.com/WolfSoko/wol-sok-mono/commit/103a723d2b66b1ad2704a003858e653ead977aa1))
+
 ## [74.172.15](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.14...v74.172.15) (2026-11-20)
 
 ### Bug Fixes
