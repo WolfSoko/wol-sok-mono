@@ -37,3 +37,13 @@ Branch off `main`. Before the change, list the exported names of `src/index.ts` 
 3. **Drop the unused names**: the 45 main-entry names without a consumer leave `index.ts` (the 19 GPU ones never enter `gpu.ts`); rerun the consumer scan and the builds of the rendering lib and the game lib, keeping a type only where a build fails to name it. Commit `refactor(feat-shared-bacteria-engine): export only names a consumer imports`.
 4. **Docs**: the root `CLAUDE.md`, the engine's `CLAUDE.md`, the rendering lib's `README.md`. Commit `docs(feat-shared-bacteria-engine): name the /gpu entry`.
 5. **Checks**: `npx nx format:write`; `npx nx affected -t lint,lint-templates,test,typecheck-specs,build`; `feat-bacteria-rendering:build`, `feat-lazy-bacteria-game:build`, `bacteria-wars-functions:build`, `bacteria-game-remote:build`; `feat-shared-bacteria-engine:perf` checksums; the export lists compared and the index's line count, both in the PR.
+
+# Step 4: the `perf` target reads only what the bench plays
+
+Branch off `main`.
+
+1. **What the bench plays as data.** `tools/perf/engine-bench.json` (entry, fixtures); `engine-bench.mjs` reads it instead of its `ENGINE` and `FIXTURES` constants. Check: the bench reports the baseline's checksums. Commit `refactor(feat-shared-bacteria-engine): read what the engine bench plays from engine-bench.json`.
+2. **The spec, test first.** `src/perf-inputs.spec.ts` (Node): bundles the entry of `engine-bench.json` with esbuild (`metafile`), matches every file read and every fixture against the `perf` inputs of `project.json` (`{projectRoot}`/`{workspaceRoot}` replaced, `!` patterns negating, named inputs skipped, `path.matchesGlob`); add `{workspaceRoot}/tools/perf/engine-bench.json` to the engine's `test` inputs. It passes against today's broad inputs; the narrowing of task 3 must keep it green. Then the hand check of acceptance 2 (an import of `state/cloud/` added to a reached file, a folder dropped from the list: both red, reverted).
+3. **Narrow the inputs** in the engine's `project.json` as decisions 1, 2 and 5 say; the spec stays green, `nx show target inputs … --check` as acceptance 1. Tasks 2 and 3 land as one commit: `perf(feat-shared-bacteria-engine): read only the files the engine bench plays`.
+4. **Docs**: the root `CLAUDE.md`, the engine's `CLAUDE.md`. Commit `docs(feat-shared-bacteria-engine): say what the perf target reads`.
+5. **Checks**: `npx nx format:write`; `npx nx affected -t lint,lint-templates,test,typecheck-specs,build --base=origin/main`; `npx nx test tools`; the bench's checksums; `node tools/ci/release-affected.mjs --base=origin/main --head=HEAD --target=deploy 2>/dev/null` for the PR.
