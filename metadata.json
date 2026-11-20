@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7XBHJTTC5BAWTS2D4ESWGP9",
+  "strategy": "manual-commit",
+  "branch": "3164-better-online-game-experience",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/specs/3164-better-online-game-experience.md",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/match.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/match.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 28,
+    "cache_creation_tokens": 16237,
+    "cache_read_tokens": 2872615,
+    "output_tokens": 7668,
+    "api_call_count": 14
+  }
+}
