@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.172.15](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.14...v74.172.15) (2026-11-20)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** take links into the running game, name an unreachable device, let a matched guest finish connecting ([#3153](https://github.com/WolfSoko/wol-sok-mono/issues/3153)) ([0cc85be](https://github.com/WolfSoko/wol-sok-mono/commit/0cc85be18b520957e975639d309698a0e271e8d4)), closes [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148), references [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148) [#3148](https://github.com/WolfSoko/wol-sok-mono/issues/3148)
+* **wolsok:** lint the root scripts, .agents/, .github/ and __checks__ in CI ([#3150](https://github.com/WolfSoko/wol-sok-mono/issues/3150)) ([5980f41](https://github.com/WolfSoko/wol-sok-mono/commit/5980f4119545c719cf5a07c7b715348437ed980c)), references [#3140](https://github.com/WolfSoko/wol-sok-mono/issues/3140) [#3140](https://github.com/WolfSoko/wol-sok-mono/issues/3140) [#3140](https://github.com/WolfSoko/wol-sok-mono/issues/3140) [#3140](https://github.com/WolfSoko/wol-sok-mono/issues/3140)
+
 ## [74.172.14](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.13...v74.172.14) (2026-11-19)
 
 ### Refactorings
