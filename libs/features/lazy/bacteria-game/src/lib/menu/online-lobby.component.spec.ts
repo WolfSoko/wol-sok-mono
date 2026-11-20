@@ -56,6 +56,18 @@ describe('OnlineLobbyComponent', () => {
     expect(text(host)).toContain('Open a match');
   });
 
+  it('shows the room the players share once connected', () => {
+    const host = render({ phase: 'connected', role: 'host' });
+
+    expect(host.querySelector('feat-lazy-bac-game-online-room')).not.toBeNull();
+  });
+
+  it('shows no room before the opponent is there', () => {
+    const host = render({ phase: 'waiting', role: 'host', code: 'K7QPXM' });
+
+    expect(host.querySelector('feat-lazy-bac-game-online-room')).toBeNull();
+  });
+
   it('offers no online play while a ban holds, and says so', () => {
     moderation.banFor(null);
     const host = render({});

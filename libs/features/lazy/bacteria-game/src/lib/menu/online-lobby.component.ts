@@ -34,13 +34,14 @@ import {
 import type { OnlineLobby } from '../net/online-match.service';
 import { AvatarComponent } from '../social/avatar.component';
 import { FriendsComponent } from '../social/friends.component';
+import { OnlineRoomComponent } from './online-room.component';
 import { SocialService } from '../social/social.service';
 import { CODE_LENGTH } from '../storage/game-rooms';
 
 /**
  * The lobby of online matches: find an opponent automatically, challenge a
  * friend who is online, or open a room and pass its code on - or join one
- * with its code. The code part reports what the player picks; finding an
+ * with its code. Once connected, it shows the room the two players share. The code part reports what the player picks; finding an
  * opponent and challenging a friend it runs itself.
  */
 @Component({
@@ -55,6 +56,7 @@ import { CODE_LENGTH } from '../storage/game-rooms';
     MatInputModule,
     MatProgressSpinnerModule,
     MatSelectModule,
+    OnlineRoomComponent,
     TranslatePipe,
   ],
   templateUrl: './online-lobby.component.html',

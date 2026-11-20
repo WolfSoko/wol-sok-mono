@@ -236,27 +236,9 @@ describe('NewGameComponent', () => {
     // The lobby comes first, with no level to pick or brief yet.
     expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
     expect(host().querySelector('.details')).toBeNull();
-    const levels = jest.fn();
-    fixture.componentInstance.levelChange.subscribe(levels);
+    // Opening a match asks for no level: the room picks it once connected.
     button('Open a match').click();
     await settle();
-    // Opening a match picks its level first; back is back to the lobby.
-    expect(host().querySelector('feat-lazy-bac-game-level-map')).not.toBeNull();
-    expect(hosted).not.toHaveBeenCalled();
-    button('Back').click();
-    await settle();
-    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
-    button('Open a match').click();
-    await settle();
-    const level = host().querySelector<HTMLButtonElement>(
-      'feat-lazy-bac-game-level-map button:not([disabled])'
-    );
-    if (level === null) {
-      throw new Error('no level to pick');
-    }
-    level.click();
-    await settle();
-    expect(levels).toHaveBeenCalled();
     expect(hosted).toHaveBeenCalledTimes(1);
     expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
     const input = host().querySelector<HTMLInputElement>('input[name="code"]');
@@ -286,23 +268,6 @@ describe('NewGameComponent', () => {
     await settle();
     button('Start').click();
     expect(started).toHaveBeenCalledWith('online');
-  });
-
-  it('opens a match on the level chosen when the player goes on with Next', async () => {
-    await render({
-      entry: { kind: 'online', step: 'start' } satisfies NewGameEntry,
-      online: { phase: 'idle', role: null, code: null, notice: null },
-      onlineAvailable: true,
-      colonyNames: ['Orange', 'Blue'],
-    });
-    const hosted = jest.fn();
-    fixture.componentInstance.hostOnline.subscribe(hosted);
-    button('Open a match').click();
-    await settle();
-    button('Next').click();
-    await settle();
-    expect(hosted).toHaveBeenCalledTimes(1);
-    expect(host().querySelector('feat-lazy-bac-game-level-map')).toBeNull();
   });
 
   it('waits with Start until the storage told what the player evolved', async () => {

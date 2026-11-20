@@ -37,6 +37,7 @@
         </p>
       } @else {
         @if (matchmaking) {
+          <p class="text">{{ "online.findText" | t }}</p>
           <button
             mat-flat-button
             type="button"
@@ -138,13 +139,7 @@
           {{ "online.connected" | t: { colony: ownColony() ?? "" } }}
         }
       </p>
-      <p class="text">
-        @if (lobby().role === "host") {
-          {{ "online.hostPicks" | t }}
-        } @else {
-          {{ "online.guestFollows" | t }}
-        }
-      </p>
+      <feat-lazy-bac-game-online-room />
     }
   }
   @if (pickedLevel(); as picked) {

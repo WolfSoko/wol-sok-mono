@@ -6,6 +6,7 @@ export const online: Translation<typeof en> = {
     'Online-Matches gibt es nur mit der Cloud des Spiels – und mit der verbindet sich diese Version nicht.',
   searching: 'Suche einen Gegner …',
   find: 'Gegner finden',
+  findText: 'Spiel gegen jemand Zufälligen – auf deinem Level oder seinem.',
   matchmakingPaused:
     'Zufällige Matches sind gerade pausiert. Spiel stattdessen mit Code gegen einen Freund.',
   level: 'Level',
@@ -29,8 +30,6 @@ export const online: Translation<typeof en> = {
   connecting: 'Verbinde mit deinem Gegner …',
   connectedTo: 'Verbunden mit {name} – du spielst {colony}.',
   connected: 'Verbunden – du spielst {colony}.',
-  hostPicks: 'Du wählst das Level und startest die Matches.',
-  guestFollows: 'Dein Gegner wählt das Level und startet die Matches.',
   leave: 'Verlassen',
   left: 'Links',
   right: 'Rechts',
