@@ -310,6 +310,13 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    // The TURN relay's shared credentials (ADR 0020), an hour each, which
+    // the functions' refreshRelay replaces every 30 minutes: read by a
+    // player about to connect online, so not by a banned one, like a room.
+    match /relay/{doc} {
+      allow get: if signedIn() && notBanned();
+    }
+
     match /publicReplays/{id} {
       allow read: if isAdmin();
     }
