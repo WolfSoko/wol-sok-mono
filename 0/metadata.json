@@ -1,0 +1,58 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9K6CTYGVK4YCGG8VVSS8C",
+  "session_id": "59dce51c-8d39-448b-9516-52cf98c8d93c",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T20:16:00.842017999Z",
+  "branch": "3151-lint-lockfile-input",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3151-lint-oxlint-lint-targets-miss-type-packages-in-their-inputs-so-a-cached-green-lint-can-hide-a-type-aware-finding.md",
+    "docs/specs/3151-lint-oxlint-lint-targets-miss-type-packages-in-their-inputs-so-a-cached-green-lint-can-hide-a-type-aware-finding.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "4cd30e13621e",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 92,
+    "cache_creation_tokens": 128506,
+    "cache_read_tokens": 5621218,
+    "output_tokens": 31560,
+    "api_call_count": 46
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01EuZKZn7SiE3XsEmrvzsa95",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "4cd30e13621e",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 40,
+        "end": 41,
+        "entry_ids": [
+          "204b291e-de29-4966-9b57-f4900d0add79"
+        ],
+        "tool_use_id": "toolu_01EuZKZn7SiE3XsEmrvzsa95"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01EuZKZn7SiE3XsEmrvzsa95"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9K6CTYGVK4YCGG8VVSS8C",
+  "strategy": "manual-commit",
+  "branch": "3151-lint-lockfile-input",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3151-lint-oxlint-lint-targets-miss-type-packages-in-their-inputs-so-a-cached-green-lint-can-hide-a-type-aware-finding.md",
+    "docs/specs/3151-lint-oxlint-lint-targets-miss-type-packages-in-their-inputs-so-a-cached-green-lint-can-hide-a-type-aware-finding.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 92,
+    "cache_creation_tokens": 128506,
+    "cache_read_tokens": 5621218,
+    "output_tokens": 31560,
+    "api_call_count": 46
+  }
+}
