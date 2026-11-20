@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7X9JNXZ5B33HSPD1X8TSJKN",
+  "strategy": "manual-commit",
+  "branch": "3143-reaction-diffusion-kernels-tsconfig-references-missing-spec",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3143-reaction-diffusion-kernels-tsconfig-json-references-a-tsconfig-spec-json-that-does-not-exist.md",
+    "docs/specs/3143-reaction-diffusion-kernels-tsconfig-json-references-a-tsconfig-spec-json-that-does-not-exist.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 103172,
+    "cache_read_tokens": 3252445,
+    "output_tokens": 13174,
+    "api_call_count": 29
+  }
+}
