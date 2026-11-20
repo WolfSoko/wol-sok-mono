@@ -41,8 +41,13 @@ export {
   parseRelayCredentials,
   RELAY_COLLECTION,
   RELAY_DOC_ID,
+  relayCredentialsUrl,
+  relayEntry,
 } from './lib/state/cloud/records/relay';
-export type { RelayCredentials } from './lib/state/cloud/records/relay';
+export type {
+  RelayCredentials,
+  RelayEntry,
+} from './lib/state/cloud/records/relay';
 export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud/records/replays';
 export type {
   ReplayKind,

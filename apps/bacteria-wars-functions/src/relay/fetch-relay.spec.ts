@@ -1,4 +1,4 @@
-import { fetchRelay, parseTurnKey, relayEntry } from './fetch-relay';
+import { fetchRelay, parseTurnKey } from './fetch-relay';
 
 /** Cloudflare's answer to `generate-ice-servers`, as its docs show it. */
 const generated = {
@@ -26,54 +26,6 @@ function fakeFetch(status: number, body: unknown) {
     async () => new Response(JSON.stringify(body), { status })
   );
 }
-
-describe('relayEntry', () => {
-  it('takes the TURN server, without the URLs on port 53', () => {
-    expect(relayEntry(generated)).toEqual({
-      urls: [
-        'turn:turn.cloudflare.com:3478?transport=udp',
-        'turn:turn.cloudflare.com:3478?transport=tcp',
-        'turns:turn.cloudflare.com:5349?transport=tcp',
-        'turns:turn.cloudflare.com:443?transport=tcp',
-      ],
-      username: 'user',
-      credential: 'secret',
-    });
-  });
-
-  it('takes a single URL given as a string', () => {
-    expect(
-      relayEntry({
-        iceServers: [
-          {
-            urls: 'turn:turn.cloudflare.com:3478',
-            username: 'u',
-            credential: 'c',
-          },
-        ],
-      })?.urls
-    ).toEqual(['turn:turn.cloudflare.com:3478']);
-  });
-
-  it.each([
-    ['no servers', {}],
-    ['STUN only', { iceServers: [generated.iceServers[0]] }],
-    [
-      'a TURN server without a password',
-      { iceServers: [{ urls: ['turn:x:3478'], username: 'u' }] },
-    ],
-    [
-      'a TURN server on port 53 only',
-      {
-        iceServers: [
-          { urls: ['turn:x:53?transport=udp'], username: 'u', credential: 'c' },
-        ],
-      },
-    ],
-  ])('finds none in %s', (_case, answer) => {
-    expect(relayEntry(answer)).toBeNull();
-  });
-});
 
 describe('fetchRelay', () => {
   it("asks for credentials of the given lifetime with the key's token", async () => {

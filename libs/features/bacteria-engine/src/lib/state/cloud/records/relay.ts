@@ -52,3 +52,51 @@ export function parseRelayCredentials(
   }
   return { urls, username, credential, expireAt };
 }
+
+/** The TURN server as Cloudflare hands it out and `relay/turn` keeps it. */
+export type RelayEntry = Omit<RelayCredentials, 'expireAt'>;
+
+/**
+ * Where Cloudflare Realtime hands out credentials for the TURN key
+ * `keyId`: a POST with the key's token and `{ ttl }` in seconds.
+ */
+export function relayCredentialsUrl(keyId: string): string {
+  return `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(keyId)}/credentials/generate-ice-servers`;
+}
+
+/**
+ * A URL on port 53, which browsers block: without trickle ICE, which the
+ * game does not use, it only times out (Cloudflare's advice).
+ */
+const PORT_53 = /:53(\?|$)/;
+
+/**
+ * The TURN server in Cloudflare's `generate-ice-servers` answer, its URLs
+ * on port 53 dropped - null when it has none left, or no credentials.
+ * The STUN entry is left out: the game has its own STUN servers.
+ */
+export function relayEntry(answer: unknown): RelayEntry | null {
+  const servers = isObject(answer) ? answer['iceServers'] : null;
+  if (!Array.isArray(servers)) {
+    return null;
+  }
+  for (const server of servers) {
+    if (!isObject(server)) {
+      continue;
+    }
+    const { username, credential } = server;
+    const listed = server['urls'];
+    const urls = (Array.isArray(listed) ? listed : [listed]).filter(
+      (url): url is string =>
+        typeof url === 'string' && /^turns?:/.test(url) && !PORT_53.test(url)
+    );
+    if (
+      urls.length > 0 &&
+      typeof username === 'string' &&
+      typeof credential === 'string'
+    ) {
+      return { urls, username, credential };
+    }
+  }
+  return null;
+}

@@ -1,3 +1,9 @@
+import {
+  type RelayEntry,
+  relayCredentialsUrl,
+  relayEntry,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
+
 /**
  * The TURN key of Cloudflare Realtime that hands out the relay's
  * credentials (ADR 0020): its id and its token, as the provisioning tool
@@ -9,25 +15,8 @@ export interface TurnKey {
   token: string;
 }
 
-/** The TURN server the game connects through, as `relay/turn` keeps it. */
-export interface RelayEntry {
-  urls: string[];
-  username: string;
-  credential: string;
-}
-
-/** Where Cloudflare hands out credentials for a key. */
-const GENERATE_URL = (keyId: string) =>
-  `https://rtc.live.cloudflare.com/v1/turn/keys/${encodeURIComponent(keyId)}/credentials/generate-ice-servers`;
-
 /** The longest wait for Cloudflare's answer. */
 const FETCH_TIMEOUT_MS = 10_000;
-
-/**
- * A URL on port 53, which browsers block: without trickle ICE, which the
- * game does not use, it only times out (Cloudflare's advice).
- */
-const PORT_53 = /:53(\?|$)/;
 
 /** The `CLOUDFLARE_TURN_KEY` secret's value, which names no part of it on failure. */
 export function parseTurnKey(secret: string): TurnKey {
@@ -50,34 +39,6 @@ export function parseTurnKey(secret: string): TurnKey {
 }
 
 /**
- * The TURN server in Cloudflare's `generate-ice-servers` answer, its URLs
- * on port 53 dropped - null when it has none left, or no credentials.
- * The STUN entry is left out: the game has its own STUN servers.
- */
-export function relayEntry(answer: unknown): RelayEntry | null {
-  const servers = (answer as { iceServers?: unknown } | null)?.iceServers;
-  if (!Array.isArray(servers)) {
-    return null;
-  }
-  for (const server of servers as Record<string, unknown>[]) {
-    const { username, credential } = server ?? {};
-    const listed = server?.['urls'];
-    const urls = (Array.isArray(listed) ? listed : [listed]).filter(
-      (url): url is string =>
-        typeof url === 'string' && /^turns?:/.test(url) && !PORT_53.test(url)
-    );
-    if (
-      urls.length > 0 &&
-      typeof username === 'string' &&
-      typeof credential === 'string'
-    ) {
-      return { urls, username, credential };
-    }
-  }
-  return null;
-}
-
-/**
  * Fresh credentials for the relay, valid `ttlSeconds` - throws when
  * Cloudflare refuses or answers no TURN server, never with the token or
  * Cloudflare's text in the message.
@@ -87,7 +48,7 @@ export async function fetchRelay(
   ttlSeconds: number,
   fetchFn: typeof fetch
 ): Promise<RelayEntry> {
-  const response = await fetchFn(GENERATE_URL(key.id), {
+  const response = await fetchFn(relayCredentialsUrl(key.id), {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${key.token}`,
