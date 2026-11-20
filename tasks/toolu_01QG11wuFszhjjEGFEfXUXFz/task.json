@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01QG11wuFszhjjEGFEfXUXFz",
+  "agent_id": "afa2df377bc3c45d3",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3153 diff",
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 55107,
+    "cache_read_tokens": 226208,
+    "output_tokens": 2298,
+    "api_call_count": 4
+  },
+  "started_at": "2026-11-20T11:53:18.132599694+01:00",
+  "completed_at": "2026-11-20T11:53:33.511473899+01:00"
+}

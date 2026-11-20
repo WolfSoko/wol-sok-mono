@@ -1,0 +1,69 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7W9YGCCNSX5RW0HHFN6D7H5",
+  "session_id": "bc74782f-d9fb-48cf-98dc-73fb9769872b",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-20T11:02:35.820098256Z",
+  "branch": "3148-bacteria-wars-friend-links-and-game-invites",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/net/matchmaker.service.spec.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "741278afb26e",
+  "checkpoint_transcript_start": 1103,
+  "transcript_lines_at_start": 1103,
+  "compact_transcript_start": 109,
+  "token_usage": {
+    "input_tokens": 82,
+    "cache_creation_tokens": 40201,
+    "cache_read_tokens": 6258011,
+    "output_tokens": 22842,
+    "api_call_count": 39,
+    "subagent_tokens": {
+      "input_tokens": 10,
+      "cache_creation_tokens": 55107,
+      "cache_read_tokens": 226208,
+      "output_tokens": 2298,
+      "api_call_count": 4
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01XPFgSavL3nEZKheFnWAYqY",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "e4ad74ff2898",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 39,
+        "end": 40,
+        "entry_ids": [
+          "42789d16-5e6f-4bb7-8083-9e2e5d5ad8cb"
+        ],
+        "tool_use_id": "toolu_01XPFgSavL3nEZKheFnWAYqY"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01XPFgSavL3nEZKheFnWAYqY"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 7
+  }
+}
