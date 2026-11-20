@@ -4,46 +4,22 @@
 // whatever other unowned files the same run lints, so its type-aware findings
 // changed between `nx lint <project>`, a batched lint run and `npx oxlint .`.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
-import { dirname, join, matchesGlob, relative, resolve } from 'node:path';
+import { existsSync } from 'node:fs';
+import { relative, resolve } from 'node:path';
 import { describe, it } from 'node:test';
 import ts from 'typescript';
 import {
-  CI_WORKFLOW,
+  assertRunsOnEveryCiRun,
   ROOT,
-  SKIPPING_KEYS,
-  gitLsFiles,
-  readJson,
-  stepBlock,
+  TSCONFIG,
+  lintedScripts,
+  nearestTsconfig,
 } from './workspace-projects.mjs';
 
-const SCRIPT_FILE = /\.[cm]?[jt]sx?$/;
-const DECLARATION_FILE = /\.d\.[cm]?ts$/;
-const TSCONFIG = 'tsconfig.json';
 // A new file makes only its own project affected, never `tools`, so CI runs
 // this guard on every run as a step of its own, outside Nx.
 const GUARD_STEP_NAME = '- name: Scripts belong to their tsconfig';
 const GUARD_COMMAND = 'run: node --test tools/ci/script-tsconfig.test.mjs';
-
-/** The tracked scripts oxlint lints: none its `ignorePatterns` match. */
-function lintedScripts() {
-  const { ignorePatterns } = readJson('.oxlintrc.json');
-  return gitLsFiles().filter(
-    (path) =>
-      SCRIPT_FILE.test(path) &&
-      !DECLARATION_FILE.test(path) &&
-      !ignorePatterns.some((pattern) => matchesGlob(path, pattern))
-  );
-}
-
-/** The `tsconfig.json` closest above `path`, relative to the root, or null. */
-function nearestTsconfig(path) {
-  for (let dir = dirname(path); ; dir = dirname(dir)) {
-    const candidate = join(dir, TSCONFIG);
-    if (existsSync(join(ROOT, candidate))) return candidate;
-    if (dir === '.') return null;
-  }
-}
 
 function parseTsconfig(absolutePath) {
   return ts.getParsedCommandLineOfConfigFile(
@@ -108,12 +84,6 @@ void describe('the linted scripts', () => {
 
 void describe('the CI workflow', () => {
   void it('runs this guard on every run, outside the affected tasks', () => {
-    const step = stepBlock(
-      readFileSync(join(ROOT, CI_WORKFLOW), 'utf8'),
-      GUARD_STEP_NAME
-    );
-    assert.ok(step, `${CI_WORKFLOW} has no step "${GUARD_STEP_NAME}"`);
-    assert.ok(step.includes(GUARD_COMMAND), step);
-    assert.doesNotMatch(step, SKIPPING_KEYS);
+    assertRunsOnEveryCiRun(GUARD_STEP_NAME, GUARD_COMMAND);
   });
 });

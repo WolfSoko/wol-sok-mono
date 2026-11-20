@@ -87,6 +87,11 @@ jobs:
       - name: Scripts belong to their tsconfig
         run: node --test tools/ci/script-tsconfig.test.mjs
 
+      # Outside Nx too: a new root script makes only the root project affected,
+      # so tools:test would miss one its lint target leaves out (#3140).
+      - name: Root scripts are linted
+        run: node --test tools/ci/root-lint.test.mjs
+
       - name: run-checks in parallel on nx cloud workers
         run: |
           npx nx affected -t="lint,lint-templates,typecheck,typecheck-specs,typecheck-tools,test,test-emulator,build,e2e-ci,perf,lighthouse" -c=ci

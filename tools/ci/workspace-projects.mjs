@@ -1,8 +1,9 @@
 // The workspace's project.json files and target inputs, as the tools/ci
 // tests read them.
+import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { dirname, join, matchesGlob } from 'node:path';
 
 export const ROOT = join(import.meta.dirname, '..', '..');
 
@@ -48,4 +49,55 @@ export function stepBlock(workflow, name) {
     (line, i) => i > start && line.trim() !== '' && line.search(/\S/) <= indent
   );
   return lines.slice(start, end === -1 ? undefined : end).join('\n');
+}
+
+/**
+ * Asserts that the CI workflow runs a guard as the step `name` with the
+ * command `command` on every run: a step outside Nx, with no `if:` or
+ * `continue-on-error`. A guard needs one where the files it checks make
+ * only their own project affected, never `tools`.
+ */
+export function assertRunsOnEveryCiRun(name, command) {
+  const step = stepBlock(readFileSync(join(ROOT, CI_WORKFLOW), 'utf8'), name);
+  assert.ok(step, `${CI_WORKFLOW} has no step "${name}"`);
+  assert.ok(step.includes(command), step);
+  assert.doesNotMatch(step, SKIPPING_KEYS);
+}
+
+const SCRIPT_FILE = /\.[cm]?[jt]sx?$/;
+const DECLARATION_FILE = /\.d\.[cm]?ts$/;
+export const TSCONFIG = 'tsconfig.json';
+
+/** The tracked scripts oxlint lints: none its `ignorePatterns` match. */
+export function lintedScripts() {
+  const { ignorePatterns } = readJson('.oxlintrc.json');
+  return gitLsFiles().filter(
+    (path) =>
+      SCRIPT_FILE.test(path) &&
+      !DECLARATION_FILE.test(path) &&
+      !ignorePatterns.some((pattern) => matchesGlob(path, pattern))
+  );
+}
+
+/** The `tsconfig.json` closest above `path`, relative to the root, or null. */
+export function nearestTsconfig(path) {
+  for (let dir = dirname(path); ; dir = dirname(dir)) {
+    const candidate = join(dir, TSCONFIG);
+    if (existsSync(join(ROOT, candidate))) return candidate;
+    if (dir === '.') return null;
+  }
+}
+
+/**
+ * The paths that belong to the root project: Nx gives a file to the project
+ * with the longest root containing it, and to the root project only when no
+ * other project's root does.
+ */
+export function rootProjectFiles(paths) {
+  const roots = readProjects()
+    .map((project) => dirname(project.path))
+    .filter((root) => root !== '.');
+  return paths.filter(
+    (path) => !roots.some((root) => path.startsWith(`${root}/`))
+  );
 }
