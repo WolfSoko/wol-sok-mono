@@ -40,6 +40,8 @@ describe('OnlineMatchService between two devices', () => {
   let rooms: FakeGameRooms;
   /** What the relay hands out - none unless a spec sets it. */
   let relayServers: RelayServer[];
+  /** Holds the relay's answer back while set, for a spec to release. */
+  let relayHeld: Promise<void> | null;
   let transport: PairedTransport;
   let analytics: RecordingAnalytics;
   /** Each device's injector, destroyed after the test. */
@@ -48,6 +50,7 @@ describe('OnlineMatchService between two devices', () => {
   beforeEach(() => {
     rooms = new FakeGameRooms();
     relayServers = [];
+    relayHeld = null;
     transport = pairedTransport();
     analytics = new RecordingAnalytics();
     injectors = [];
@@ -56,7 +59,12 @@ describe('OnlineMatchService between two devices', () => {
         provideRecordingAnalytics(analytics),
         provideFakeGameCloud({
           rooms,
-          relay: { servers: async () => relayServers },
+          relay: {
+            servers: async () => {
+              await relayHeld;
+              return relayServers;
+            },
+          },
         }),
         { provide: PEER_TRANSPORT, useValue: transport },
       ],
@@ -148,6 +156,20 @@ describe('OnlineMatchService between two devices', () => {
         { side: 'host', relay: [relay] },
         { side: 'guest', relay: [relay] },
       ]);
+    });
+
+    it('builds no connection for a host who left while the relay was read', async () => {
+      let release: () => void = () => undefined;
+      relayHeld = new Promise((resolve) => (release = resolve));
+      const host = device('ada');
+
+      const hosting = host.online.host();
+      host.online.leave();
+      release();
+      await hosting;
+
+      expect(transport.relays).toEqual([]);
+      expect(host.online.lobby().phase).toBe('idle');
     });
 
     it('connects without a relay when it has no credentials', async () => {

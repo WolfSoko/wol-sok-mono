@@ -1,5 +1,6 @@
 import { FakeFirebase, timestampAt } from '../../testing/fake-firebase-sdk';
 import {
+  CLOCK_SLACK_MS,
   FirestoreGameRelay,
   RELAY_KEEP_MS,
   RELAY_READ_TIMEOUT_MS,
@@ -45,7 +46,10 @@ describe('FirestoreGameRelay', () => {
 
   it.each([
     ['no document', null],
-    ['expired credentials', stored(-1)],
+    [
+      'credentials expired longer ago than a clock may be off',
+      stored(-CLOCK_SLACK_MS),
+    ],
     ['a damaged document', { urls: 'turn:x' }],
   ])('hands out none for %s', async (_case, data) => {
     if (data !== null) {
@@ -79,6 +83,21 @@ describe('FirestoreGameRelay', () => {
 
     now = NOW + 60 * MINUTE - RELAY_KEEP_MS;
     expect((await relay.servers())[0]?.username).toBe('second');
+  });
+
+  it('hands on credentials just expired by a clock that runs ahead', async () => {
+    backend.put('relay/turn', stored(-CLOCK_SLACK_MS + 1));
+    expect(await relayOf().servers()).toHaveLength(1);
+  });
+
+  it('keeps the credentials it has when reading newer ones fails', async () => {
+    backend.put('relay/turn', stored(60 * MINUTE, 'first'));
+    const relay = relayOf();
+    await relay.servers();
+
+    backend.refused.add('relay/turn');
+    now = NOW + 50 * MINUTE;
+    expect((await relay.servers())[0]?.username).toBe('first');
   });
 
   it('reads again after a read that found none', async () => {

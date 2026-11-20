@@ -1,12 +1,11 @@
+import type { RelayEntry } from '@wolsok/feat-shared-bacteria-engine/cloud';
+
 /**
  * A TURN server an online match may go through when the two devices cannot
- * reach each other directly (ADR 0020) - what `RTCIceServer` takes.
+ * reach each other directly (ADR 0020) - what `RTCIceServer` takes, as
+ * `relay/turn` keeps it.
  */
-export interface RelayServer {
-  urls: string[];
-  username: string;
-  credential: string;
-}
+export type RelayServer = RelayEntry;
 
 /**
  * Where the game gets the TURN relay's short-lived credentials before it

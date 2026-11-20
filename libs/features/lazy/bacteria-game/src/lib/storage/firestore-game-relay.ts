@@ -22,6 +22,14 @@ export const RELAY_READ_TIMEOUT_MS = 2000;
 export const RELAY_KEEP_MS = 20 * 60_000;
 
 /**
+ * How far past their expiry, by this device's clock, credentials are still
+ * handed on: a phone whose clock runs ahead would else never use the
+ * relay. Credentials that really expired are refused by Cloudflare, and the
+ * devices connect without the relay, as they would without them.
+ */
+export const CLOCK_SLACK_MS = 60 * 60_000;
+
+/**
  * The relay's credentials from `relay/turn` (ADR 0020), which only the
  * functions write and which the rules let any signed-in player who is not
  * banned read. Read when the game connects, kept while they last more
@@ -40,10 +48,11 @@ export class FirestoreGameRelay implements GameRelay {
       this.kept === null ||
       this.kept.expireAt - this.now() <= RELAY_KEEP_MS
     ) {
-      this.kept = await this.read();
+      // A failed read keeps what this device has, while it may still work.
+      this.kept = (await this.read()) ?? this.kept;
     }
     const kept = this.kept;
-    if (kept === null || kept.expireAt <= this.now()) {
+    if (kept === null || kept.expireAt + CLOCK_SLACK_MS <= this.now()) {
       return [];
     }
     const { urls, username, credential } = kept;

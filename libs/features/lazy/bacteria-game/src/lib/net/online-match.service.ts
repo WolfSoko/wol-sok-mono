@@ -171,7 +171,11 @@ export class OnlineMatchService {
       auto: options.auto ?? false,
     });
     try {
-      const { link, offer } = await this.wire.offer(await this.relay());
+      const relay = await this.relay();
+      if (attempt !== this.attempt) {
+        return;
+      }
+      const { link, offer } = await this.wire.offer(relay);
       if (!this.adopt(link, attempt)) {
         return;
       }
