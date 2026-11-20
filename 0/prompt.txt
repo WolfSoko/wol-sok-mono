@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>b4upjk6pr</task-id>
+<tool-use-id>toolu_01GwR627RgcHdiRcsnAXDBhF</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-548-wol-sok-mono/c528c5ea-ac2c-4eed-b9c4-2141b321615a/tasks/b4upjk6pr.output</output-file>
+<status>completed</status>
+<summary>Background command "until [ "$(gh api repos/{owner}/{repo}/commits/430ab51f/check-runs --jq '[.check_runs[]|select(.status!="completed")]|length')" = "0" ]; do sleep 30; done; gh api repos/{owner}/{repo}/commits/430ab51f/check-runs --jq '.check_runs[] | "\(.name): \(.conclusion)"'" completed (exit code 0)</summary>
+</task-notification>

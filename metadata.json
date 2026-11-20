@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7VP0X6TRAQQEP4DW8219D5C",
+  "strategy": "manual-commit",
+  "branch": "3140-lint-root-scripts",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "project.json",
+    "tools/ci/root-lint.test.mjs",
+    "tools/ci/workspace-projects.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 10181,
+    "cache_read_tokens": 1843770,
+    "output_tokens": 4328,
+    "api_call_count": 11,
+    "subagent_tokens": {
+      "input_tokens": 30,
+      "cache_creation_tokens": 35760,
+      "cache_read_tokens": 1323703,
+      "output_tokens": 10877,
+      "api_call_count": 15
+    }
+  }
+}
