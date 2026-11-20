@@ -116,6 +116,23 @@ describe('MatchmakerService', () => {
     expect(social.get('queue/bob')).not.toBeNull();
   });
 
+  it('leaves a claimed player be who answered and is still connecting', async () => {
+    await social.enqueue('ada');
+    const second = matchmaker('bob');
+    await second.find();
+    await jest.advanceTimersByTimeAsync(0);
+    // The answer came: the link's own connect timeout takes it from here.
+    online.lobby.update((lobby) => ({ ...lobby, phase: 'connecting' }));
+    TestBed.tick();
+    online.leave.mockClear();
+
+    await jest.advanceTimersByTimeAsync(20_000);
+    TestBed.tick();
+
+    expect(online.leave).not.toHaveBeenCalled();
+    expect(second.state()).toBe('found');
+  });
+
   describe('the level the players would like', () => {
     const [hourglass, corridors] = MATCH_LEVELS.slice(1).map(({ id }) => id);
 

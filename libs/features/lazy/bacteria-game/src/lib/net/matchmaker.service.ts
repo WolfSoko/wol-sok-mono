@@ -27,7 +27,10 @@ const CLAIM_EVERY_MS = 3000;
 const STILL_WAITING_EVERY_MS = 15_000;
 /** An entry not refreshed for this long belongs to a player who left. */
 const STALE_MS = 45_000;
-/** How long a host waits for the player it claimed to join. */
+/**
+ * How long a host waits for the player it claimed to answer. Once they
+ * have, the link's own connect timeout decides.
+ */
 const JOIN_TIMEOUT_MS = 20_000;
 /** How many of the oldest entries a claim looks at. */
 const LOOK_AT = 10;
@@ -284,10 +287,10 @@ export class MatchmakerService {
           this.found();
           this.joinTimeout = setTimeout(() => {
             this.joinTimeout = null;
-            // They never came - a closed tab: on with the search.
+            // They never answered - a closed tab: on with the search.
             if (
               this.stateSignal() === 'found' &&
-              this.online.lobby().phase !== 'connected'
+              this.online.lobby().phase === 'waiting'
             ) {
               this.online.leave();
             }
