@@ -36,6 +36,18 @@ export const online = {
   /** The colonies' names until the game names them. */
   left: 'Left',
   right: 'Right',
+  /** The room two connected players share, before and between matches. */
+  room: {
+    label: 'Your room',
+    you: 'You',
+    opponent: 'Opponent',
+    tally: 'Wins in this room: {host} to {guest}',
+    won: 'Won',
+    next: 'Next level',
+    pick: 'Pick the next level',
+    choosing: '{name} is choosing the level…',
+    choosingAnon: 'Your opponent is choosing the level…',
+  },
   notices: {
     badCode: 'A code has six letters and digits.',
     noRoom: 'There is no open match under that code.',

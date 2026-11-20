@@ -34,6 +34,17 @@ export const online: Translation<typeof en> = {
   leave: 'Verlassen',
   left: 'Links',
   right: 'Rechts',
+  room: {
+    label: 'Euer Raum',
+    you: 'Du',
+    opponent: 'Gegner',
+    tally: 'Siege in diesem Raum: {host} zu {guest}',
+    won: 'Gewonnen',
+    next: 'Nächstes Level',
+    pick: 'Wähl das nächste Level',
+    choosing: '{name} wählt das Level …',
+    choosingAnon: 'Dein Gegner wählt das Level …',
+  },
   notices: {
     badCode: 'Ein Code hat sechs Buchstaben und Ziffern.',
     noRoom: 'Unter diesem Code ist kein Match offen.',

@@ -1,0 +1,91 @@
+@if (seat(); as seat) {
+  @let score = tally();
+  <section class="room" [attr.aria-label]="'online.room.label' | t">
+    <div class="players">
+      @for (player of players(); track $index; let first = $first) {
+        <div
+          class="player"
+          [class.you]="player.you"
+          [class.won]="player.won"
+          [style.--seat-color]="player.color"
+        >
+          @if (player.avatar; as avatar) {
+            <feat-lazy-bac-game-avatar
+              [avatar]="avatar"
+              [label]="player.name"
+              [size]="48"
+            />
+          } @else {
+            <span class="no-avatar" aria-hidden="true">
+              <mat-icon>person</mat-icon>
+            </span>
+          }
+          <span class="name">{{ player.name }}</span>
+          @if (player.won) {
+            <span class="tag won-tag">
+              <mat-icon aria-hidden="true">emoji_events</mat-icon>
+              {{ "online.room.won" | t }}
+            </span>
+          } @else if (player.you) {
+            <span class="tag">{{ "online.room.you" | t }}</span>
+          }
+        </div>
+        @if (first) {
+          <p
+            class="tally"
+            [attr.aria-label]="
+              'online.room.tally' | t: { host: score[0], guest: score[1] }
+            "
+          >
+            <span aria-hidden="true">{{ score[0] }}</span>
+            <span class="colon" aria-hidden="true">:</span>
+            <span aria-hidden="true">{{ score[1] }}</span>
+          </p>
+        }
+      }
+    </div>
+
+    @if (next(); as next) {
+      <div class="next" aria-live="polite">
+        <span class="label">{{ "online.room.next" | t }}</span>
+        <!-- Re-created on every pick, so the highlight plays again. -->
+        @for (level of [next]; track level.id) {
+          <div
+            class="next-level"
+            [style.--card-floor]="level.floor"
+            [style.--card-edge]="level.edge"
+          >
+            @if (previews) {
+              <feat-lazy-bac-game-level-preview
+                class="next-preview"
+                [levelId]="level.id"
+                [title]="level.title"
+                [size]="level.size"
+                decorative
+              />
+            }
+            <span class="next-badge">{{ level.badge }}</span>
+            <span class="next-title">{{ level.title }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    @if (seat.seat === 0) {
+      <span class="label">{{ "online.room.pick" | t }}</span>
+      <div class="picker">
+        @for (card of cards(); track card.id) {
+          <feat-lazy-bac-game-level-card
+            class="pick"
+            [card]="card"
+            [current]="card.id === seat.levelId"
+            [showMedals]="false"
+            (pick)="pick($event)"
+          />
+        }
+      </div>
+    } @else {
+      <p class="choosing" role="status">{{ choosing() }}</p>
+    }
+  </section>
+}
