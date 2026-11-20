@@ -1,5 +1,6 @@
 import {
   parseRelayCredentials,
+  parseTurnKey,
   RELAY_COLLECTION,
   RELAY_DOC_ID,
   relayCredentialsUrl,
@@ -130,4 +131,22 @@ describe('relayCredentialsUrl', () => {
       'https://rtc.live.cloudflare.com/v1/turn/keys/key-id/credentials/generate-ice-servers'
     );
   });
+});
+
+describe('parseTurnKey', () => {
+  it('reads the secret the provisioning tool stores', () => {
+    expect(parseTurnKey('{"id":"key-id","token":"key-token"}')).toEqual({
+      id: 'key-id',
+      token: 'key-token',
+    });
+  });
+
+  it.each(['', 'key-token', '{"id":"key-id"}', '{"id":1,"token":"t"}'])(
+    'refuses %j without repeating it',
+    (secret) => {
+      expect(() => parseTurnKey(secret)).toThrow(
+        'CLOUDFLARE_TURN_KEY is no {"id","token"} JSON.'
+      );
+    }
+  );
 });

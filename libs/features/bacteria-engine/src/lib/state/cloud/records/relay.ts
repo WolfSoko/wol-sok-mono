@@ -100,3 +100,38 @@ export function relayEntry(answer: unknown): RelayEntry | null {
   }
   return null;
 }
+
+/**
+ * The TURN key of Cloudflare Realtime that hands out the relay's
+ * credentials: its id and its token, as the provisioning tool
+ * (`tools-relay:turn-key`) stores them in the secret `CLOUDFLARE_TURN_KEY`.
+ * The token can only hand out credentials, never change the account.
+ */
+export interface TurnKey {
+  id: string;
+  token: string;
+}
+
+/**
+ * The `CLOUDFLARE_TURN_KEY` secret's value - throws, naming no part of it,
+ * for anything but `{ id, token }` with both non-empty.
+ */
+export function parseTurnKey(secret: string): TurnKey {
+  let value: unknown = null;
+  try {
+    value = JSON.parse(secret);
+  } catch {
+    // Reported below without the value.
+  }
+  const id = isObject(value) ? value['id'] : null;
+  const token = isObject(value) ? value['token'] : null;
+  if (
+    typeof id !== 'string' ||
+    id === '' ||
+    typeof token !== 'string' ||
+    token === ''
+  ) {
+    throw new Error('CLOUDFLARE_TURN_KEY is no {"id","token"} JSON.');
+  }
+  return { id, token };
+}

@@ -1,4 +1,4 @@
-import { fetchRelay, parseTurnKey } from './fetch-relay';
+import { fetchRelay } from './fetch-relay';
 
 /** Cloudflare's answer to `generate-ice-servers`, as its docs show it. */
 const generated = {
@@ -68,19 +68,4 @@ describe('fetchRelay', () => {
       fetchRelay(key, 3600, fakeFetch(201, { iceServers: [] }))
     ).rejects.toThrow('Cloudflare answered no TURN server.');
   });
-});
-
-describe('parseTurnKey', () => {
-  it('reads the secret the provisioning tool stores', () => {
-    expect(parseTurnKey('{"id":"key-id","token":"key-token"}')).toEqual(key);
-  });
-
-  it.each(['', 'key-token', '{"id":"key-id"}', '{"id":1,"token":"t"}'])(
-    'refuses %j without repeating it',
-    (secret) => {
-      expect(() => parseTurnKey(secret)).toThrow(
-        'CLOUDFLARE_TURN_KEY is no {"id","token"} JSON.'
-      );
-    }
-  );
 });

@@ -1,10 +1,11 @@
 import {
   RELAY_COLLECTION,
   RELAY_DOC_ID,
+  type TurnKey,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { RELAY_TTL_S } from '../config';
-import { fetchRelay, type TurnKey } from './fetch-relay';
+import { fetchRelay } from './fetch-relay';
 
 /**
  * Fresh credentials for the TURN relay into `relay/turn` (ADR 0020), valid

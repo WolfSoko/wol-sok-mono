@@ -20,6 +20,7 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
+import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
   ACCOUNTS_DOC,
@@ -62,7 +63,6 @@ import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
-import { parseTurnKey } from './relay/fetch-relay';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';

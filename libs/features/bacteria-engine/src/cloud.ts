@@ -39,6 +39,7 @@ export { NOTICE_TYPES } from './lib/state/cloud/records/notices';
 export type { NoticeType } from './lib/state/cloud/records/notices';
 export {
   parseRelayCredentials,
+  parseTurnKey,
   RELAY_COLLECTION,
   RELAY_DOC_ID,
   relayCredentialsUrl,
@@ -47,6 +48,7 @@ export {
 export type {
   RelayCredentials,
   RelayEntry,
+  TurnKey,
 } from './lib/state/cloud/records/relay';
 export { REPLAY_KINDS, REPLAY_STATES } from './lib/state/cloud/records/replays';
 export type {
