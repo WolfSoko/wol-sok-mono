@@ -1,10 +1,8 @@
 /**
- * The source of a CloudFront Function (runtime `cloudfront-js-2.0`, viewer
- * request) that answers a path ending in `/`, other than `/` itself, with a
- * permanent redirect to the same path without its trailing slashes and with
- * a single leading one, so the target stays on the site, keeping the query
- * string. Kept as source text, so the spec runs exactly the code
- * that is deployed.
+ * The CloudFront Function behind `SpaProps.redirectTrailingSlash`, for runtime
+ * `cloudfront-js-2.0` (plain ES5). The target keeps a single leading slash, so
+ * it never leaves the site. Kept as source text, so the spec runs exactly the
+ * code that is deployed.
  */
 export const TRAILING_SLASH_REDIRECT_SOURCE = `
 function handler(event) {

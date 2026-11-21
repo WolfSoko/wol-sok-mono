@@ -15,7 +15,7 @@ Features are:
   regions.
 - Redirect from HTTP to HTTPS with an ACM certificate.
 - Route53 alias record creation,
-- Optionally, a permanent redirect from `/path/` to `/path` (see below).
+- Optionally, a permanent redirect from `/path/` to `/path`.
 
 ## Usage
 
@@ -73,18 +73,9 @@ stack.spa.addExtraAssets(
 ```
 
 A site that uploads its prerendered pages under their bare paths (`/about`
-holding `about/index.html`) can set `redirectTrailingSlash: true`. A CloudFront
-Function on viewer request then answers every path ending in `/`, other than
-`/`, with a `301` to the path without it, query string kept; without it such a
-path has no object and falls back to `index.html`. The function takes the
-default behaviour's viewer-request slot:
-
-```ts
-new SpaStack(app, 'MyApp', {
-  // ...
-  redirectTrailingSlash: true,
-});
-```
+holding `about/index.html`) can set `redirectTrailingSlash: true`, which
+redirects `/about/` to `/about` (see its doc comment); without bare-path objects
+the target falls back to `index.html` like any other miss.
 
 ## Building
 

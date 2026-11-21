@@ -65,16 +65,11 @@ export interface SpaProps {
   /**
    * Answer a path ending in `/` (other than `/`) with a permanent redirect to
    * the path without it, query string kept, so `/about/` goes to `/about`
-   * instead of falling back to index.html. For sites that serve their
-   * prerendered pages under bare paths. Takes the default behaviour's
-   * viewer-request function slot.
+   * instead of falling back to index.html. Only for sites that upload their
+   * pages under bare paths as well: without an `about` object the target
+   * falls back too. Takes the default behaviour's viewer-request slot.
    * @default false
    */
-  redirectTrailingSlash?: boolean;
-}
-
-interface DistributionOptions {
-  allowedOrigins?: string[];
   redirectTrailingSlash?: boolean;
 }
 
@@ -147,13 +142,7 @@ export class SpaConstruct extends Construct {
     super(parent, spaName);
     const removalPolicy: RemovalPolicy =
       props.bucketRemovalPolicy ?? defaultBucketRemovalPolicy;
-    const {
-      buildOutputPath,
-      extraAllowedOrigins,
-      redirectTrailingSlash,
-      noCacheFiles = [],
-      cacheOverrides = [],
-    } = props;
+    const { buildOutputPath, noCacheFiles = [], cacheOverrides = [] } = props;
     const overrides: CacheOverride[] = [
       ...(noCacheFiles.length > 0
         ? [{ files: noCacheFiles, cacheControl: CacheControl.noCache() }]
@@ -180,7 +169,7 @@ export class SpaConstruct extends Construct {
       siteDomain,
       certificate,
       this.bucket,
-      { allowedOrigins: extraAllowedOrigins, redirectTrailingSlash }
+      props
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
@@ -301,7 +290,10 @@ export class SpaConstruct extends Construct {
     siteDomain: string,
     certificate: ICertificate,
     siteBucket: IBucket,
-    { allowedOrigins = [], redirectTrailingSlash = false }: DistributionOptions
+    {
+      extraAllowedOrigins = [],
+      redirectTrailingSlash = false,
+    }: Pick<SpaProps, 'extraAllowedOrigins' | 'redirectTrailingSlash'>
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
       this,
@@ -310,7 +302,7 @@ export class SpaConstruct extends Construct {
         corsBehavior: {
           accessControlAllowCredentials: false,
           accessControlAllowOrigins: [
-            ...allowedOrigins,
+            ...extraAllowedOrigins,
             'https://' + siteDomain,
             'http://localhost',
             'http://127.0.0.1',
