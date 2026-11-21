@@ -72,6 +72,37 @@
         "label": "Skill: speeddev:cockpit",
         "default_collapsed": true
       }
+    },
+    {
+      "id": "claude-skill-toolu_0122BGzyR3fATkNDMeehohoj",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "simplify"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "92b615637d9d",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 1701,
+        "end": 1702,
+        "entry_ids": [
+          "2fbe3f2b-debc-4a97-ab66-8a15583daf81"
+        ],
+        "tool_use_id": "toolu_0122BGzyR3fATkNDMeehohoj"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_0122BGzyR3fATkNDMeehohoj"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: simplify",
+        "default_collapsed": true
+      }
     }
   ],
   "session_metrics": {
