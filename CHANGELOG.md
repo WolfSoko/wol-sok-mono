@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.175.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.1...v74.175.2) (2026-11-21)
+
+### Bug Fixes
+
+* **spa-cdk-stack:** refuse a file and a path below it in one addExtraAssets call ([#3179](https://github.com/WolfSoko/wol-sok-mono/issues/3179)) ([bef53fa](https://github.com/WolfSoko/wol-sok-mono/commit/bef53fab90d1c411547b1b92f28164c61725bc73)), references [#3168](https://github.com/WolfSoko/wol-sok-mono/issues/3168) [#3170](https://github.com/WolfSoko/wol-sok-mono/issues/3170) [#3170](https://github.com/WolfSoko/wol-sok-mono/issues/3170)
+
+### Chore
+
+* **release:** publish ([6974c29](https://github.com/WolfSoko/wol-sok-mono/commit/6974c297421fef9079f66887e22c806c6a92e4d0))
+
 ## [74.175.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.0...v74.175.1) (2026-11-21)
 
 ### Bug Fixes
