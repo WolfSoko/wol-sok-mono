@@ -42,6 +42,16 @@ describe('trailing-slash redirect', () => {
     expect(locationOf(handler({ request: request(uri) }))).toBe(location);
   });
 
+  it.each(['//evil.com/', '///evil.com/', '/\\evil.com/'])(
+    'keeps the redirect of %s on this site',
+    (uri) => {
+      const location = locationOf(handler({ request: request(uri) }));
+
+      expect(location).toBe('/evil.com');
+      expect(new URL(location, 'https://wolsok.de/x').host).toBe('wolsok.de');
+    }
+  );
+
   it('keeps the query string, every value of a repeated key too', () => {
     const response = handler({
       request: request('/career/', {
