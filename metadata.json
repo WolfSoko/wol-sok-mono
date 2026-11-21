@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZMR978AW72013AJ2JVEKTH",
+  "strategy": "manual-commit",
+  "branch": "3167-guest-level-wish-and-ready",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/online-match.service.ts",
+    "libs/features/lazy/bacteria-game/src/testing/fake-online-match.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 8347,
+    "cache_read_tokens": 887433,
+    "output_tokens": 4105,
+    "api_call_count": 6
+  }
+}
