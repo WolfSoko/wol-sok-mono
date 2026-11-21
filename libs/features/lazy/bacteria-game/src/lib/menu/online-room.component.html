@@ -78,10 +78,10 @@
       </div>
     }
 
-    @if (seat.seat === 0 || guestSpeaks()) {
+    @if (isHost() || guestSpeaks()) {
       @let wish = guest().wish;
       <span class="label">{{
-        (seat.seat === 0 ? "online.room.pick" : "online.room.suggest") | t
+        (isHost() ? "online.room.pick" : "online.room.suggest") | t
       }}</span>
       <div class="picker">
         @for (card of cards(); track card.id) {
@@ -96,7 +96,7 @@
         }
       </div>
     }
-    @if (seat.seat === 0) {
+    @if (isHost()) {
       @if (suggests(); as suggests) {
         <p class="suggests" role="status">{{ suggests }}</p>
       }
@@ -111,7 +111,7 @@
           mat-stroked-button
           (click)="toggleReady()"
         >
-          <mat-icon>{{
+          <mat-icon aria-hidden="true">{{
             ready ? "check_circle" : "radio_button_unchecked"
           }}</mat-icon>
           {{ "online.room.imReady" | t }}

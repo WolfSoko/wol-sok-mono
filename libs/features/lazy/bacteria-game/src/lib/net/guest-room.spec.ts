@@ -1,43 +1,51 @@
 import { TestBed } from '@angular/core/testing';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { GameStateStore } from '../state/game.states';
-import {
-  afterSetup,
-  afterStart,
-  GuestRoom,
-  type GuestWish,
-  NO_WISH,
-} from './guest-room';
+import { GuestRoom, guestRoomAfter, NOTHING_SAID, viewOf } from './guest-room';
+import type { GuestRoomState } from './net-message';
 import { OnlineMatchService } from './online-match.service';
 
-const wish = (change: Partial<GuestWish>): GuestWish => ({
-  ...NO_WISH,
+const word = (change: Partial<GuestRoomState>): GuestRoomState => ({
+  ...NOTHING_SAID,
   ...change,
 });
+const setupOf = (levelId: string) => ({ type: 'setup', levelId }) as const;
 
 describe('the rules of the guest room', () => {
   it('drops the wish once the host picked it', () => {
-    expect(afterSetup(wish({ wish: 'corridors' }), 'corridors')).toEqual(
-      NO_WISH
-    );
-    expect(afterSetup(wish({ wish: 'corridors' }), 'hourglass')).toEqual(
-      wish({ wish: 'corridors' })
-    );
+    expect(
+      guestRoomAfter(word({ wish: 'corridors' }), setupOf('corridors'))
+    ).toEqual(NOTHING_SAID);
+    expect(
+      guestRoomAfter(word({ wish: 'corridors' }), setupOf('hourglass'))
+    ).toEqual(word({ wish: 'corridors' }));
   });
 
   it('keeps ready only for the level it was given for', () => {
-    expect(afterSetup(wish({ readyFor: 'corridors' }), 'corridors')).toEqual(
-      wish({ readyFor: 'corridors' })
-    );
-    expect(afterSetup(wish({ readyFor: 'corridors' }), 'hourglass')).toEqual(
-      NO_WISH
-    );
+    expect(
+      guestRoomAfter(word({ readyFor: 'corridors' }), setupOf('corridors'))
+    ).toEqual(word({ readyFor: 'corridors' }));
+    expect(
+      guestRoomAfter(word({ readyFor: 'corridors' }), setupOf('hourglass'))
+    ).toEqual(NOTHING_SAID);
   });
 
   it('drops ready with the start of a match, not the wish', () => {
     expect(
-      afterStart(wish({ wish: 'hourglass', readyFor: 'corridors' }))
-    ).toEqual(wish({ wish: 'hourglass' }));
+      guestRoomAfter(word({ wish: 'hourglass', readyFor: 'corridors' }), {
+        type: 'start',
+      })
+    ).toEqual(word({ wish: 'hourglass' }));
+  });
+
+  it('shows ready and the wish only against the level set now', () => {
+    const said = word({ wish: 'hourglass', readyFor: 'corridors' });
+    expect(viewOf(said, 'corridors')).toEqual({
+      wish: 'hourglass',
+      ready: true,
+    });
+    expect(viewOf(said, 'hourglass')).toEqual({ wish: null, ready: false });
+    expect(viewOf(NOTHING_SAID, null)).toEqual({ wish: null, ready: false });
   });
 });
 
@@ -86,14 +94,14 @@ describe('GuestRoom', () => {
     expect(room.state()).toEqual({ wish: 'corridors', ready: false });
     expect(online.sendRoom).toHaveBeenLastCalledWith({
       wish: 'corridors',
-      ready: false,
+      readyFor: null,
     });
 
     room.suggest('corridors');
     expect(room.state()).toEqual({ wish: null, ready: false });
     expect(online.sendRoom).toHaveBeenLastCalledWith({
       wish: null,
-      ready: false,
+      readyFor: null,
     });
   });
 
@@ -119,7 +127,7 @@ describe('GuestRoom', () => {
     expect(room.state()).toEqual({ wish: null, ready: false });
     expect(online.sendRoom).toHaveBeenLastCalledWith({
       wish: null,
-      ready: false,
+      readyFor: null,
     });
   });
 
@@ -140,7 +148,7 @@ describe('GuestRoom', () => {
     expect(room.state()).toEqual({ wish: null, ready: false });
     expect(online.sendRoom).toHaveBeenLastCalledWith({
       wish: null,
-      ready: false,
+      readyFor: null,
     });
   });
 
@@ -152,12 +160,40 @@ describe('GuestRoom', () => {
 
     online.events.next({
       type: 'room',
-      room: { wish: 'hourglass', ready: true },
+      room: { wish: 'hourglass', readyFor: 'petri-dish' },
     });
     expect(room.state()).toEqual({ wish: 'hourglass', ready: true });
 
     online.events.next({ type: 'ended', reason: 'left' });
     expect(room.state()).toEqual({ wish: null, ready: false });
+  });
+
+  it('shows the host no ready for a level it picked since', () => {
+    seat(0);
+    online.events.next({
+      type: 'room',
+      room: { wish: 'corridors', readyFor: 'petri-dish' },
+    });
+    expect(room.state()).toEqual({ wish: 'corridors', ready: true });
+
+    // The host takes the wish, before the guest's word on it is back.
+    store.update({
+      online: { seat: 0, levelId: 'corridors', colors: ['orange', 'blue'] },
+    });
+
+    expect(room.state()).toEqual({ wish: null, ready: false });
+  });
+
+  it("keeps a guest's ready for the level it saw from showing for the host's new one", () => {
+    seat(0, 'corridors');
+
+    // Said for the level before, while the host's new setup was on its way.
+    online.events.next({
+      type: 'room',
+      room: { wish: null, readyFor: 'petri-dish' },
+    });
+
+    expect(room.state().ready).toBe(false);
   });
 
   it('starts every connection without a wish', () => {

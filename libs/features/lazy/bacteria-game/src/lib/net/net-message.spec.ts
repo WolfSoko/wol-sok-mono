@@ -33,11 +33,13 @@ describe('parseNetMessage', () => {
       )
     ).toEqual({ k: 'hello', v: NET_VERSION, id: null, r: ['cpu'], f: [] });
     expect(
-      parseNetMessage(send({ k: 'room', wish: 'petri-dish', ready: true }))
-    ).toEqual({ k: 'room', wish: 'petri-dish', ready: true });
+      parseNetMessage(
+        send({ k: 'room', wish: 'corridors', readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: 'corridors', readyFor: 'petri-dish' });
     expect(
-      parseNetMessage(send({ k: 'room', wish: null, ready: false }))
-    ).toEqual({ k: 'room', wish: null, ready: false });
+      parseNetMessage(send({ k: 'room', wish: null, readyFor: null }))
+    ).toEqual({ k: 'room', wish: null, readyFor: null });
     expect(
       parseNetMessage(
         send({ k: 'setup', levelId: 'petri-dish', colors: ['orange', 'blue'] })
@@ -124,19 +126,24 @@ describe('parseNetMessage', () => {
     expect(NET_VERSION).toMatch(/^3\//);
   });
 
-  it('drops a room message with a level that plays no online match', () => {
+  it('reads a level that plays no online match as none, keeping the rest', () => {
     const bigMap = LEVELS.find((level) => !playableOnline(level));
     expect(bigMap).toBeDefined();
-    expect(MATCH_LEVELS.length).toBeGreaterThan(0);
-    for (const value of [
-      { k: 'room', wish: bigMap?.id, ready: false },
-      { k: 'room', wish: 'nowhere', ready: false },
-      { k: 'room', wish: 3, ready: false },
-      { k: 'room', wish: null, ready: 'yes' },
-      { k: 'room', ready: true },
-    ]) {
-      expect(parseNetMessage(send(value))).toBeNull();
-    }
+    expect(MATCH_LEVELS.map(({ id }) => id)).toContain('petri-dish');
+    expect(
+      parseNetMessage(
+        send({ k: 'room', wish: bigMap?.id, readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: null, readyFor: 'petri-dish' });
+    // A newer build's level: its wish is unknown here, its ready still holds.
+    expect(
+      parseNetMessage(
+        send({ k: 'room', wish: 'not-yet-built', readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: null, readyFor: 'petri-dish' });
+    expect(
+      parseNetMessage(send({ k: 'room', wish: 3, readyFor: true }))
+    ).toEqual({ k: 'room', wish: null, readyFor: null });
   });
 
   it('drops what is no message of this game', () => {

@@ -84,6 +84,9 @@ export class OnlineRoomComponent {
   /** The guest's wish and ready, on either seat. */
   protected readonly guest = this.guestRoom.state;
 
+  /** True on the host's device, which picks and starts. */
+  protected readonly isHost = computed(() => this.seat()?.seat === 0);
+
   /** True for a guest who may wish a level and say ready. */
   protected readonly guestSpeaks = computed(
     () => this.seat()?.seat === 1 && this.guestRoom.available()
@@ -141,7 +144,7 @@ export class OnlineRoomComponent {
 
   /** The tag on the wished level's card: whose wish it is. */
   protected readonly wishTag = computed(() =>
-    this.seat()?.seat === 1
+    !this.isHost()
       ? this.i18n.t('online.room.yourWish')
       : this.byOpponent('online.room.wants', 'online.room.wantsAnon')
   );
@@ -149,7 +152,7 @@ export class OnlineRoomComponent {
   /** What the host reads of the guest's wish - null without one. */
   protected readonly suggests = computed(() => {
     const wish = this.guest().wish;
-    if (this.seat()?.seat !== 0 || wish === null) {
+    if (!this.isHost() || wish === null) {
       return null;
     }
     const level = this.card(wish).title;
@@ -160,7 +163,7 @@ export class OnlineRoomComponent {
 
   /** The host picks the level; the guest wishes it. */
   protected pick(levelId: string): void {
-    if (this.seat()?.seat === 0) {
+    if (this.isHost()) {
       this.gameState.setLevel(levelId);
     } else if (this.guestSpeaks()) {
       this.guestRoom.suggest(levelId);

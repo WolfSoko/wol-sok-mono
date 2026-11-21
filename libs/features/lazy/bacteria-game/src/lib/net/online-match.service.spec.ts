@@ -344,19 +344,19 @@ describe('OnlineMatchService between two devices', () => {
     it("brings the guest's wish and ready to the host", async () => {
       const { host, guest } = await connected();
 
-      guest.online.sendRoom({ wish: 'corridors', ready: true });
+      guest.online.sendRoom({ wish: 'corridors', readyFor: 'petri-dish' });
       await flush();
 
       expect(host.events).toContainEqual({
         type: 'room',
-        room: { wish: 'corridors', ready: true },
+        room: { wish: 'corridors', readyFor: 'petri-dish' },
       });
     });
 
     it('sends nothing from the host', async () => {
       const { host, guest } = await connected();
 
-      host.online.sendRoom({ wish: 'corridors', ready: true });
+      host.online.sendRoom({ wish: 'corridors', readyFor: 'petri-dish' });
       await flush();
 
       expect(host.events.map(({ type }) => type)).toEqual(['connected']);
@@ -368,7 +368,7 @@ describe('OnlineMatchService between two devices', () => {
 
       expect(guest.online.lobby().phase).toBe('connected');
       expect(guest.online.peerFeatures()).toEqual([]);
-      guest.online.sendRoom({ wish: 'corridors', ready: true });
+      guest.online.sendRoom({ wish: 'corridors', readyFor: 'petri-dish' });
       await flush();
       expect(heard).not.toContainEqual(expect.objectContaining({ k: 'room' }));
     });

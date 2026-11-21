@@ -3,38 +3,58 @@ import { GameStateStore } from '../state/game.states';
 import type { GuestRoomState } from './net-message';
 import { type OnlineEvent, OnlineMatchService } from './online-match.service';
 
-/**
- * The guest's word in the room as the guest keeps it: its wish, and the
- * level it said ready for - ready holds only while that level is set.
- */
-export interface GuestWish {
+/** The guest's word as the room shows it, for the level set now. */
+export interface GuestRoomView {
+  /** The level the guest would like next - null for none or the one set. */
   wish: string | null;
-  readyFor: string | null;
+  /** True while the guest is ready for the level set. */
+  ready: boolean;
 }
 
-export const NO_WISH: GuestWish = { wish: null, readyFor: null };
+export const NOTHING_SAID: GuestRoomState = { wish: null, readyFor: null };
 
-const NOTHING_SAID: GuestRoomState = { wish: null, ready: false };
+/** What moves the guest's word on, besides the guest itself. */
+export type GuestRoomEvent =
+  /** The host set `levelId` up for the next match. */
+  | { type: 'setup'; levelId: string }
+  /** A match started. */
+  | { type: 'start' };
 
 /**
- * The guest's word after the host set `levelId` up: a wish the host took
- * is fulfilled, and ready for another level no longer holds.
+ * The guest's word after `event`: a wish the host took is fulfilled, ready
+ * for another level than the one set no longer holds, and ready was for
+ * the match that started.
  */
-export function afterSetup(word: GuestWish, levelId: string): GuestWish {
+export function guestRoomAfter(
+  word: GuestRoomState,
+  event: GuestRoomEvent
+): GuestRoomState {
+  if (event.type === 'start') {
+    return { ...word, readyFor: null };
+  }
+  const { levelId } = event;
   return {
     wish: word.wish === levelId ? null : word.wish,
-    readyFor: word.readyFor === levelId ? word.readyFor : null,
+    readyFor: word.readyFor === levelId ? levelId : null,
   };
 }
 
-/** The guest's word once a match started: ready was for that match. */
-export function afterStart(word: GuestWish): GuestWish {
-  return { ...word, readyFor: null };
+/**
+ * The guest's word for the level set now, `levelId`: both seats show it
+ * so, so a host that just picked another level shows no stale ready.
+ */
+export function viewOf(
+  word: GuestRoomState,
+  levelId: string | null
+): GuestRoomView {
+  return {
+    wish: word.wish === levelId ? null : word.wish,
+    ready: word.readyFor !== null && word.readyFor === levelId,
+  };
 }
 
-/** What the guest's word says over the wire. */
-function said({ wish, readyFor }: GuestWish): GuestRoomState {
-  return { wish, ready: readyFor !== null };
+function sameWord(a: GuestRoomState, b: GuestRoomState): boolean {
+  return a.wish === b.wish && a.readyFor === b.readyFor;
 }
 
 /**
@@ -49,20 +69,19 @@ export class GuestRoom {
   private readonly online = inject(OnlineMatchService);
   private readonly store = inject(GameStateStore);
   /** The guest's own word, at the guest. */
-  private readonly word = signal<GuestWish>(NO_WISH);
+  private readonly word = signal<GuestRoomState>(NOTHING_SAID);
   /** What the guest told the host, at the host. */
   private readonly heard = signal<GuestRoomState>(NOTHING_SAID);
 
   /** True where the guest can speak: connected to a peer that understands the room. */
-  public readonly available = computed(
-    () =>
-      this.online.lobby().phase === 'connected' &&
-      this.online.peerFeatures().includes('room')
-  );
+  public readonly available = computed(() => this.online.peerHas('room'));
 
-  /** The guest's wish and ready, on either seat. */
-  public readonly state = computed((): GuestRoomState =>
-    this.online.lobby().role === 'guest' ? said(this.word()) : this.heard()
+  /** The guest's wish and ready for the level set now, on either seat. */
+  public readonly state = computed(() =>
+    viewOf(
+      this.online.lobby().role === 'guest' ? this.word() : this.heard(),
+      this.levelId()
+    )
   );
 
   public constructor() {
@@ -77,8 +96,8 @@ export class GuestRoom {
     if (levelId === this.levelId()) {
       return;
     }
-    const { wish } = this.word();
-    this.say({ ...this.word(), wish: wish === levelId ? null : levelId });
+    const word = this.word();
+    this.say({ ...word, wish: word.wish === levelId ? null : levelId });
   }
 
   /** The guest says it is ready for the level set - or no longer is. */
@@ -86,7 +105,7 @@ export class GuestRoom {
     const word = this.word();
     this.say({
       ...word,
-      readyFor: word.readyFor === null ? this.levelId() : null,
+      readyFor: this.state().ready ? null : this.levelId(),
     });
   }
 
@@ -94,17 +113,22 @@ export class GuestRoom {
     switch (event.type) {
       case 'connected':
       case 'ended':
-        this.word.set(NO_WISH);
+        this.word.set(NOTHING_SAID);
         this.heard.set(NOTHING_SAID);
         return;
       case 'room':
         this.heard.set(event.room);
         return;
       case 'setup':
-        this.change(afterSetup(this.word(), event.setup.levelId));
+        this.change(
+          guestRoomAfter(this.word(), {
+            type: 'setup',
+            levelId: event.setup.levelId,
+          })
+        );
         return;
       case 'start':
-        this.change(afterStart(this.word()));
+        this.change(guestRoomAfter(this.word(), { type: 'start' }));
         return;
       case 'colors':
         return;
@@ -112,22 +136,22 @@ export class GuestRoom {
   }
 
   /** The guest's own change - only where it can speak. */
-  private say(word: GuestWish): void {
+  private say(word: GuestRoomState): void {
     if (this.online.lobby().role === 'guest' && this.available()) {
       this.change(word);
     }
   }
 
   /** Keeps the guest's word and tells the host, when it changed. */
-  private change(word: GuestWish): void {
-    const before = this.word();
-    if (before.wish === word.wish && before.readyFor === word.readyFor) {
+  private change(word: GuestRoomState): void {
+    if (sameWord(this.word(), word)) {
       return;
     }
     this.word.set(word);
-    this.online.sendRoom(said(word));
+    this.online.sendRoom(word);
   }
 
+  /** The level of the next match, as this device's seat has it. */
   private levelId(): string | null {
     return this.store.online()?.levelId ?? null;
   }

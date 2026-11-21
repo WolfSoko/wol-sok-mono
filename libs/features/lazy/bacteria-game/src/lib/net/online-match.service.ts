@@ -304,9 +304,15 @@ export class OnlineMatchService {
     }
   }
 
-  /** True when the other device named `feature` in its hello. */
-  private peerHas(feature: NetFeature): boolean {
-    return this.greeted && this.peerFeatures().includes(feature);
+  /**
+   * True while connected to a device that named `feature` in its hello -
+   * what decides whether a feature's messages go out, and its controls show.
+   */
+  public peerHas(feature: NetFeature): boolean {
+    return (
+      this.lobby().phase === 'connected' &&
+      this.peerFeatures().includes(feature)
+    );
   }
 
   /**
@@ -450,7 +456,7 @@ export class OnlineMatchService {
         if (role === 'host') {
           this.events.next({
             type: 'room',
-            room: { wish: message.wish, ready: message.ready },
+            room: { wish: message.wish, readyFor: message.readyFor },
           });
         }
         return;

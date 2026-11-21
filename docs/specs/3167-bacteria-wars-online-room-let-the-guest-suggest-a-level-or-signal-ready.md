@@ -16,9 +16,9 @@ in the result dialog), the guest stops being only a spectator:
    status line reads "{name} suggests {level}". Taking it is the host's
    ordinary pick of that card. Tapping the wished card again on the guest
    takes the wish back.
-2. **Signal ready.** The guest gets a toggle button "Ready", which turns into
-   "Ready ✓" ("Not ready" to undo). The host sees a "Ready" tag on the
-   guest's player card. Ready is only a signal. The host can start without
+2. **Signal ready.** The guest gets a toggle button "I'm ready"
+   (`aria-pressed`; its icon turns into a check while pressed, a second tap
+   takes it back). The host sees a "Ready" tag on the guest's player card. Ready is only a signal. The host can start without
    it, and the matchmaking's automatic first match ignores it.
 3. **Both reset when they no longer fit.** A wish is dropped once the host
    picks the wished level (fulfilled). Ready is dropped whenever the host's
@@ -50,23 +50,31 @@ in the result dialog), the guest stops being only a spectator:
   sends none. Unknown feature names are dropped while parsing, so a later
   feature can join the list the same way.
 - **One message carries the guest's whole room state**:
-  `{ k: 'room', wish: string | null, ready: boolean }`, sent by the guest
-  only, with the level checked by `isLevelId` and `playableOnline` on
-  receipt. Last write wins and the message is idempotent. That leaves no
+  `{ k: 'room', wish: string | null, readyFor: string | null }`, sent by the
+  guest only. Last write wins and the message is idempotent. That leaves no
   ordering between separate "wish" and "ready" messages to get wrong, and a
-  reset is a resend.
+  reset is a resend. Ready names the level it was given for, so both seats
+  show it only while that level is set: a host that just picked another
+  level, or a ready said while the host's new setup was on its way, never
+  shows a stale ready. Each level is checked with `isMatchLevel`, and one
+  this build does not play online (a newer build's) reads as `null`, while
+  the rest of the message still counts.
 - **The guest owns the state, and the resets happen on the guest.** It
   applies them when it receives the host's `setup` (a changed level drops
   ready, a level equal to the wish drops the wish) or a `start` (drops
   ready). Each reset is sent to the host. The rules are one pure function,
-  `guestRoomAfter(state, event)`, in `net/guest-room.ts`, with its own spec.
+  `guestRoomAfter(state, event)`, and what the room shows of the state for
+  the level set now is `viewOf(state, levelId)`, both in `net/guest-room.ts`
+  with their spec.
   The host only mirrors what it receives, and clears its mirror on
   `connected` and `ended`.
 - **A root service `GuestRoom`** (`net/guest-room.ts`, beside `RoomTally`)
   holds the state as a signal for both seats (`state`, `available`), with
-  `suggest(levelId)` and `toggleReady()` for the guest. The wire stays in
-  `OnlineMatchService`: `sendRoom(state)` (guest only), a `room` event for
-  the host, and `peerFeatures`, read from the hello.
+  `suggest(levelId)` and `toggleReady()` for the guest. `OnlineSeatSync`
+  starts it, so a word heard before the room is on screen is kept. The
+  wire stays in `OnlineMatchService`: `sendRoom(state)` (guest only), a
+  `room` event for the host, `peerFeatures` read from the hello, and
+  `peerHas(feature)`, the one check both the sending and the controls use.
 - **The picker serves both seats.** The guest's card tap calls
   `GuestRoom.suggest`, the host's calls `setLevel` as before. The
   `LevelCardComponent` gets an optional `tag` input for the wish label, so
@@ -77,7 +85,7 @@ in the result dialog), the guest stops being only a spectator:
 
 1. Connected to a peer that sent `f: ['room']`, as guest: the room shows the
    picker and a Ready toggle. Tapping a card sends
-   `{k:'room', wish:<id>, ready:false}` and tags that card "Your wish".
+   `{k:'room', wish:<id>, readyFor:null}` and tags that card "Your wish".
    Tapping it again sends `wish: null`. The level itself stays the host's.
 2. As host: the guest's wish tags its card "{name} wants this" (or "Your
    opponent wants this" without a profile), and the status line reads
@@ -90,9 +98,9 @@ in the result dialog), the guest stops being only a spectator:
 4. Against a peer whose hello has no `f` (an older release), the guest sees
    the room as in #3164 (no picker, no Ready, "… is choosing the level"),
    sends no `room` message, and the match connects and plays.
-5. `parseNetMessage` rejects a `room` message with a level that is unknown
-   or does not play online, or with a non-boolean `ready`. It keeps only
-   known names in a hello's `f`. `NET_VERSION` is unchanged.
+5. `parseNetMessage` reads a level of a `room` message that is unknown or
+   does not play online as `null`, and keeps the message's other field. It
+   keeps only known names in a hello's `f`. `NET_VERSION` is unchanged.
 6. The result dialog's room behaves the same, since it embeds the same
    component.
 7. `npx nx test feat-lazy-bacteria-game`, lint, lint-templates,

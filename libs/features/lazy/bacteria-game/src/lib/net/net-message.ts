@@ -32,12 +32,13 @@ export type NetFeature = (typeof NET_FEATURES)[number];
 
 /**
  * What the guest says in the room between matches (feature `room`): the
- * level it would like next, if any, and whether it is ready.
+ * level it would like next, and the level it said ready for - each a level
+ * that plays online, or null. Ready holds only while that level is set, so
+ * the host never shows it for a level the guest did not agree to.
  */
 export interface GuestRoomState {
-  /** A level that plays online, or null for no wish. */
   wish: string | null;
-  ready: boolean;
+  readyFor: string | null;
 }
 
 /** What one seat puts in before one tick, on the engine's input grid. */
@@ -147,12 +148,14 @@ export function parseNetMessage(data: unknown): NetMessage | null {
         f: parseFeatures(value['f']),
       };
     }
-    case 'room': {
-      const { wish, ready } = value;
-      return (wish === null || isMatchLevel(wish)) && typeof ready === 'boolean'
-        ? { k: 'room', wish, ready }
-        : null;
-    }
+    case 'room':
+      // A level this build does not play online - a newer build's - reads
+      // as none, and the rest of the message still counts.
+      return {
+        k: 'room',
+        wish: matchLevelOrNull(value['wish']),
+        readyFor: matchLevelOrNull(value['readyFor']),
+      };
     case 'setup': {
       const setup = parseSetup(value);
       return setup === null ? null : { k: 'setup', ...setup };
@@ -218,6 +221,10 @@ function parseFeatures(value: unknown): NetFeature[] {
     return [];
   }
   return NET_FEATURES.filter((feature) => value.includes(feature));
+}
+
+function matchLevelOrNull(value: unknown): string | null {
+  return isMatchLevel(value) ? value : null;
 }
 
 /** Two finite numbers no further from 0 than `limit`. */

@@ -78,6 +78,13 @@ export class FakeOnlineMatch implements Pick<
   public readonly share = jest.fn();
   public readonly offerColors = jest.fn();
   public readonly sendRoom = jest.fn();
+
+  public peerHas(feature: NetFeature): boolean {
+    return (
+      this.lobby().phase === 'connected' &&
+      this.peerFeatures().includes(feature)
+    );
+  }
   /** A lockstep for the connected seat, sending nowhere. */
   public readonly startMatch = jest.fn(
     (_start: OnlineStart): Lockstep | null =>

@@ -8,9 +8,9 @@ they say otherwise. Each task is test first and ends with
 1. **Wire format** (`net/net-message.ts`, `net/net-message.spec.ts`)
    - `NET_FEATURES = ['room'] as const`, `hello` gains `f: NetFeature[]`
      (parsed: an array that keeps only known names, else `[]`).
-   - New message `{ k: 'room'; wish: string | null; ready: boolean }`, with
-     `wish` checked by `isLevelId` and `playableOnline(getLevel(...))`.
-   - Specs: round-trip, rejection of bad wish or ready, an old hello without
+   - New message `{ k: 'room'; wish: string | null; readyFor: string | null }`,
+     each level checked by `isMatchLevel` and read as `null` when it fails.
+   - Specs: round-trip, a bad level read as none, an old hello without
      `f` giving `[]`, unknown features dropped, `NET_VERSION` unchanged.
    - Commit: `feat(feat-lazy-bacteria-game): a room message and features in the online hello`.
 2. **Service wire** (`net/online-match.service.ts`, its spec,
@@ -26,6 +26,8 @@ they say otherwise. Each task is test first and ends with
 3. **Guest room state** (`net/guest-room.ts`, `net/guest-room.spec.ts`)
    - Pure `guestRoomAfter(state, event)`: a setup with another level drops
      ready, a setup equal to the wish drops the wish, a start drops ready.
+     Pure `viewOf(state, levelId)`: what either seat shows for the level set
+     now.
    - Root service `GuestRoom`: `state`, `available` (`computed`: connected,
      and the peer has `room`), `suggest`, `toggleReady`. The guest applies the
      reset rules on `setup` and `start` events and resends when the state

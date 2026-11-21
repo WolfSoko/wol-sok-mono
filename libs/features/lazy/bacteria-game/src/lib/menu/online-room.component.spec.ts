@@ -149,7 +149,7 @@ describe('OnlineRoomComponent', () => {
       expect(setLevel).not.toHaveBeenCalled();
       expect(online.sendRoom).toHaveBeenLastCalledWith({
         wish: MATCH_LEVELS[1].id,
-        ready: false,
+        readyFor: null,
       });
       const tagged = host.querySelectorAll('.pick')[1];
       expect(text(tagged.querySelector('.card-tag') as HTMLElement)).toBe(
@@ -177,7 +177,7 @@ describe('OnlineRoomComponent', () => {
       expect(ready().getAttribute('aria-pressed')).toBe('true');
       expect(online.sendRoom).toHaveBeenLastCalledWith({
         wish: null,
-        ready: true,
+        readyFor: 'petri-dish',
       });
       expect(
         host.querySelectorAll('.player')[1].querySelector('.ready-tag')
@@ -195,7 +195,7 @@ describe('OnlineRoomComponent', () => {
 
       online.events.next({
         type: 'room',
-        room: { wish: MATCH_LEVELS[2].id, ready: true },
+        room: { wish: MATCH_LEVELS[2].id, readyFor: 'petri-dish' },
       });
       fixture.detectChanges();
 
