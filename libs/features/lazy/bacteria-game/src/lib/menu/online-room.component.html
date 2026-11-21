@@ -24,6 +24,12 @@
           @if (player.youTag) {
             <span class="tag">{{ "online.room.you" | t }}</span>
           }
+          @if (player.ready) {
+            <span class="tag ready-tag">
+              <mat-icon aria-hidden="true">check_circle</mat-icon>
+              {{ "online.room.ready" | t }}
+            </span>
+          }
           @if (player.won) {
             <span class="tag won-tag">
               <mat-icon aria-hidden="true">emoji_events</mat-icon>
@@ -72,8 +78,11 @@
       </div>
     }
 
-    @if (seat.seat === 0) {
-      <span class="label">{{ "online.room.pick" | t }}</span>
+    @if (seat.seat === 0 || guestSpeaks()) {
+      @let wish = guest().wish;
+      <span class="label">{{
+        (seat.seat === 0 ? "online.room.pick" : "online.room.suggest") | t
+      }}</span>
       <div class="picker">
         @for (card of cards(); track card.id) {
           <feat-lazy-bac-game-level-card
@@ -81,11 +90,33 @@
             [card]="card"
             [current]="card.id === seat.levelId"
             [showMedals]="false"
+            [tag]="card.id === wish ? wishTag() : null"
             (pick)="pick($event)"
           />
         }
       </div>
+    }
+    @if (seat.seat === 0) {
+      @if (suggests(); as suggests) {
+        <p class="suggests" role="status">{{ suggests }}</p>
+      }
     } @else {
+      @if (guestSpeaks()) {
+        @let ready = guest().ready;
+        <button
+          class="ready-toggle"
+          type="button"
+          [attr.aria-pressed]="ready"
+          [class.is-ready]="ready"
+          mat-stroked-button
+          (click)="toggleReady()"
+        >
+          <mat-icon>{{
+            ready ? "check_circle" : "radio_button_unchecked"
+          }}</mat-icon>
+          {{ "online.room.imReady" | t }}
+        </button>
+      }
       <p class="choosing" role="status">{{ choosing() }}</p>
     }
   </section>

@@ -370,9 +370,7 @@ describe('OnlineMatchService between two devices', () => {
       expect(guest.online.peerFeatures()).toEqual([]);
       guest.online.sendRoom({ wish: 'corridors', ready: true });
       await flush();
-      expect(heard).not.toContainEqual(
-        expect.objectContaining({ k: 'room' })
-      );
+      expect(heard).not.toContainEqual(expect.objectContaining({ k: 'room' }));
     });
 
     it('forgets the features with the connection', async () => {

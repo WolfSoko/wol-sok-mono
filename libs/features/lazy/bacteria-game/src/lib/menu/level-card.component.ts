@@ -53,6 +53,8 @@ export class LevelCardComponent {
   /** True for the level the match will be played on. */
   public readonly current = input(false);
   public readonly showMedals = input(true);
+  /** A short word on the card - say whose wish it is - null for none. */
+  public readonly tag = input<string | null>(null);
 
   public readonly pick = output<string>();
 }

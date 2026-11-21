@@ -98,6 +98,8 @@ export type NetMessage =
     }
   /** The host changed the setup of the next match. */
   | ({ k: 'setup' } & OnlineSetup)
+  /** The guest's wish and ready in the room - feature `room`. */
+  | ({ k: 'room' } & GuestRoomState)
   /**
    * The guest's own colours - its pick first - for the host to make the
    * match's pair from (see `onlineColors`).

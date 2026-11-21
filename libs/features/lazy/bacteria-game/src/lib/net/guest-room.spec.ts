@@ -106,7 +106,7 @@ describe('GuestRoom', () => {
     expect(online.sendRoom).not.toHaveBeenCalled();
   });
 
-  it("drops ready when the host changes the level, and the wish when it is taken", () => {
+  it('drops ready when the host changes the level, and the wish when it is taken', () => {
     seat(1);
     room.suggest('corridors');
     room.toggleReady();
