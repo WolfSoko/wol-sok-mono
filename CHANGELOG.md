@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.176.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.0...v74.176.1) (2026-11-21)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** keep naming the opponent on the result of an online match ([#3183](https://github.com/WolfSoko/wol-sok-mono/issues/3183)) ([27f1ce4](https://github.com/WolfSoko/wol-sok-mono/commit/27f1ce47c84cf0ddcbca93b380ad54687b17b3b7)), closes [#3180](https://github.com/WolfSoko/wol-sok-mono/issues/3180)
+
 ## [74.176.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.2...v74.176.0) (2026-11-21)
 
 ### Features
