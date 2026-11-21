@@ -11,6 +11,7 @@ import {
   gitLsFiles,
   rootProjectFiles,
   lintedScripts,
+  LOCKFILE_INPUT,
   readJson,
   stringInputs,
 } from './workspace-projects.mjs';
@@ -64,6 +65,12 @@ void describe('the root project lint target', () => {
       [],
       `add the files to the lint inputs in ${ROOT_PROJECT}`
     );
+  });
+
+  // Type-aware lint reads installed type packages that Nx hashes only through
+  // the lockfile (#3151); these inputs replace the targetDefaults entry's.
+  void it('reads the lockfile as an input', () => {
+    assert.ok(lintTarget.inputs.includes(LOCKFILE_INPUT));
   });
 
   void it('names only tracked files and folders', () => {
