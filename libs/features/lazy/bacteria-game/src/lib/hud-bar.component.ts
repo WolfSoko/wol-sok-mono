@@ -19,7 +19,7 @@ import {
   TranslationKey,
 } from './i18n/game-texts';
 import { I18nService } from './i18n/i18n.service';
-import { HudPerf, perfMs } from './hud-perf';
+import { glErrorsText, HudGl, HudPerf, perfMs } from './hud-perf';
 import { TranslatePipe } from './i18n/translate.pipe';
 
 /**
@@ -71,6 +71,8 @@ export class HudBarComponent {
   public readonly fps = input<number | null>(null);
   /** Where a frame's time goes, beside the frame rate - null while hidden. */
   public readonly perf = input<HudPerf | null>(null);
+  /** The GL diagnostic's renderer and errors - null while it is off. */
+  public readonly gl = input<HudGl | null>(null);
   public readonly sound = input.required<boolean>();
   /** True where the match can be paused right now. */
   public readonly showPause = input(false);
@@ -110,7 +112,24 @@ export class HudBarComponent {
     }
   );
 
+  /** The GL diagnostic's line: the renderer and the errors, or none. */
+  protected readonly glText = computed((): string | null => {
+    const gl = this.gl();
+    if (gl === null) {
+      return null;
+    }
+    return this.i18n.t('stage.hud.gl', {
+      renderer: gl.renderer,
+      errors:
+        gl.errors.length === 0
+          ? this.i18n.t('stage.hud.glNoErrors')
+          : glErrorsText(gl.errors),
+    });
+  });
+
   public readonly soundChange = output<boolean>();
+  /** The GL diagnostic's button: save the painter's layers. */
+  public readonly saveGlLayers = output<void>();
   public readonly pause = output<void>();
   public readonly giveUp = output<void>();
   public readonly fullscreenChange = output<boolean>();

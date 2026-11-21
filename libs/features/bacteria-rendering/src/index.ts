@@ -10,7 +10,9 @@ export {
   type ArenaFrame,
   type ArenaLayout,
   type ArenaPainter,
+  type CapturedLayer,
   layoutKey,
+  type PainterDiagnostics,
 } from './lib/arena/arena-painter';
 export {
   arenaTheme,
@@ -44,6 +46,7 @@ export { MinimapPainter } from './lib/arena/minimap';
 export { ZONE_COLORS } from './lib/arena/zone-look';
 export { type GpuSelfTestResult, runGpuSelfTest } from './lib/gl/gpu-self-test';
 export { type GpuSimulationOptions } from './lib/gl/gpu-simulation';
+export { type GlErrorCount } from './lib/gl/gl-diagnostics';
 export { GpuTimer } from './lib/gl/gpu-timer';
 export { isSoftwareRenderer } from './lib/gl/renderer';
 export {

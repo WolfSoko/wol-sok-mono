@@ -3,6 +3,7 @@ import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { isRuleset, Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
+import { dropQueryParam } from './drop-query-param';
 
 /** Where this device keeps its simulation override. */
 export const SIMULATION_OVERRIDE_STORAGE_KEY = 'bacteria-game.sim-override';
@@ -13,19 +14,6 @@ export const SIMULATION_OVERRIDE_PARAM = 'sim';
 /** A stored override, as far as it can be read - null for none. */
 export function parseSimulationOverride(value: unknown): Ruleset | null {
   return isRuleset(value) ? value : null;
-}
-
-/** Takes `?sim=` out of the page's address, everything else as it was. */
-function dropOverrideQuery(): void {
-  if (typeof location === 'undefined' || typeof history === 'undefined') {
-    return;
-  }
-  const url = new URL(location.href);
-  if (!url.searchParams.has(SIMULATION_OVERRIDE_PARAM)) {
-    return;
-  }
-  url.searchParams.delete(SIMULATION_OVERRIDE_PARAM);
-  history.replaceState(history.state, '', url);
 }
 
 /**
@@ -99,6 +87,6 @@ export class SimulationOverrideService {
     this.chosen = true;
     this.forced.set(ruleset);
     this.storage.write(SIMULATION_OVERRIDE_STORAGE_KEY, ruleset);
-    dropOverrideQuery();
+    dropQueryParam(SIMULATION_OVERRIDE_PARAM);
   }
 }

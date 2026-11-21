@@ -7,6 +7,8 @@ import type {
 import { GameStateService } from '../state/game-state.service';
 import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
+import { GlDebugService } from '../gl-debug/gl-debug.service';
+import * as layerSheet from '../gl-debug/layer-sheet';
 import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';
 
@@ -37,6 +39,8 @@ describe('StageFrame', () => {
     service.setArenaSize(width, height);
     service.start();
   }
+
+  afterEach(() => history.replaceState(null, '', '/'));
 
   beforeEach(() => {
     localStorage.clear();
@@ -134,6 +138,74 @@ describe('StageFrame', () => {
       x: 0,
       y: 0,
       ...TestBed.inject(ArenaStage).arena(),
+    });
+  });
+  describe('the GL diagnostic', () => {
+    const LAYERS = [
+      { label: 'trail', width: 2, height: 1, pixels: new Uint8Array(8) },
+    ];
+
+    function diagnosable() {
+      const diagnostics = {
+        renderer: 'Adreno (TM) 740',
+        errors: jest.fn(() => []),
+        captureLayers: jest.fn(() => LAYERS),
+      };
+      return {
+        diagnostics,
+        painter: { ...painter(), diagnose: jest.fn(() => diagnostics) },
+      };
+    }
+
+    function debugging(): void {
+      history.replaceState(null, '', '/?gldebug');
+      TestBed.inject(GlDebugService).start();
+    }
+
+    it('leaves the painter alone without ?gldebug', () => {
+      const { painter } = diagnosable();
+
+      frame.onPainterChange(painter);
+
+      expect(painter.diagnose).not.toHaveBeenCalled();
+      expect(frame.hudGl()).toBeNull();
+    });
+
+    it('diagnoses the painter with ?gldebug and shows its renderer', () => {
+      debugging();
+      const { painter } = diagnosable();
+
+      frame.onPainterChange(painter);
+
+      expect(painter.diagnose).toHaveBeenCalledTimes(1);
+      expect(frame.hudGl()).toEqual({
+        renderer: 'Adreno (TM) 740',
+        errors: [],
+      });
+    });
+
+    it('diagnoses a painter that was there before ?gldebug was read', () => {
+      const { painter } = diagnosable();
+      frame.onPainterChange(painter);
+
+      debugging();
+      TestBed.tick();
+
+      expect(painter.diagnose).toHaveBeenCalledTimes(1);
+    });
+
+    it("saves the painter's layers as a sheet", () => {
+      debugging();
+      const { painter, diagnostics } = diagnosable();
+      frame.onPainterChange(painter);
+      const download = jest
+        .spyOn(layerSheet, 'downloadLayerSheet')
+        .mockImplementation(() => undefined);
+
+      frame.saveGlLayers();
+
+      expect(diagnostics.captureLayers).toHaveBeenCalledTimes(1);
+      expect(download).toHaveBeenCalledWith(LAYERS);
     });
   });
 });

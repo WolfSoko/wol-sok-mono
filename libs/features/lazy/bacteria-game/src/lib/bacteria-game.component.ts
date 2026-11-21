@@ -33,6 +33,7 @@ import { OnlineFlow } from './flow/online-flow';
 import { PlayFlow } from './flow/play-flow';
 import { GpuSelfTestService } from './gpu-choice/gpu-self-test.service';
 import { SimulationOverrideService } from './gpu-choice/simulation-override.service';
+import { GlDebugService } from './gl-debug/gl-debug.service';
 import { GameHapticsService } from './haptics.service';
 import { MatchCountdownComponent } from './countdown/match-countdown.component';
 import { HudBarComponent } from './hud-bar.component';
@@ -123,6 +124,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   private readonly haptics = inject(GameHapticsService);
   private readonly gpuSelfTest = inject(GpuSelfTestService);
   private readonly simulationOverride = inject(SimulationOverrideService);
+  private readonly glDebug = inject(GlDebugService);
   private readonly featureToggles = inject(FeatureTogglesService);
   protected readonly language = inject(I18nService).language;
   protected readonly settings = inject(GameSettingsService);
@@ -341,6 +343,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private checkGpu(): void {
     this.simulationOverride.start();
+    this.glDebug.start();
     effect(() => {
       const toggles = this.featureToggles.toggles();
       if (

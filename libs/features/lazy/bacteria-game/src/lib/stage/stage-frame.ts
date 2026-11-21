@@ -20,10 +20,13 @@ import {
   FramePerf,
   MinimapPainter,
   type GpuTimer,
+  type PainterDiagnostics,
 } from '@wolsok/feat-bacteria-rendering';
 import { EvolutionService } from '../evolution.service';
 import { GameHapticsService } from '../haptics.service';
-import { HudPerf, simulationLabel } from '../hud-perf';
+import { GlDebugService } from '../gl-debug/gl-debug.service';
+import { downloadLayerSheet } from '../gl-debug/layer-sheet';
+import { HudGl, HudPerf, simulationLabel } from '../hud-perf';
 import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
 import {
@@ -59,8 +62,13 @@ export class StageFrame {
   private readonly playerService = inject(PlayerService);
   private readonly playerStore = inject(PlayerStore);
   private readonly settings = inject(GameSettingsService);
-  /** Reads the frame rate switch - made once, as the frames read it each. */
-  private readonly showsFps = () => this.settings.value('showFps');
+  private readonly glDebug = inject(GlDebugService);
+  /**
+   * True while the HUD shows the breakdown of a frame: with the frame rate,
+   * and with the GL diagnostic. Made once, as the frames read it each.
+   */
+  private readonly showsFps = () =>
+    this.settings.value('showFps') || this.glDebug.on();
   private readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   /** The skin the player's colony wears: the look picked, once owned. */
@@ -105,6 +113,15 @@ export class StageFrame {
    * settings hide the frame rate, or before a window of frames is over.
    */
   public readonly hudPerf = signal<HudPerf | null>(null);
+  /** True while the HUD shows {@link hudPerf}. */
+  public readonly showsBreakdown = computed(() => this.showsFps());
+  /** What the GL diagnostic shows in the HUD - null while it is off. */
+  public readonly hudGl = signal<HudGl | null>(null);
+  /** The painter being diagnosed, and what it tells. */
+  private diagnosed: {
+    painter: ArenaPainter;
+    diagnostics: PainterDiagnostics;
+  } | null = null;
 
   /** What the arena view paints: the match as it stands. */
   public readonly scene: ArenaScene = {
@@ -157,10 +174,16 @@ export class StageFrame {
         untracked(() => this.stage.draw());
       }
     });
+    // The GL diagnostic takes the painter as soon as it is turned on.
+    effect(() => {
+      if (this.glDebug.on()) {
+        untracked(() => this.diagnose(this.stage.currentPainter()));
+      }
+    });
     // The breakdown of a frame starts over with each match, and whenever
     // the frame rate is shown again - no frames of before in its average.
     effect(() => {
-      this.settings.value('showFps');
+      this.showsFps();
       this.stage.running();
       untracked(() => {
         this.framePerf.reset();
@@ -192,6 +215,9 @@ export class StageFrame {
   public onPainterChange(painter: ArenaPainter | null): void {
     const built = this.stage.takePainter(painter);
     painter?.setRenderScale?.(this.quality.scale);
+    if (untracked(this.glDebug.on)) {
+      this.diagnose(painter);
+    }
     if (!built) {
       return;
     }
@@ -202,6 +228,32 @@ export class StageFrame {
     this.ambience.setTheme(this.stage.theme());
     this.stage.chooseSimulationFor(painter);
     this.stage.draw();
+  }
+
+  /** Saves the diagnosed painter's layers as a picture - see `GlDebugService`. */
+  public saveGlLayers(): void {
+    downloadLayerSheet(this.diagnosed?.diagnostics.captureLayers() ?? []);
+  }
+
+  /** Turns the GL diagnostic on for a painter that is not diagnosed yet. */
+  private diagnose(painter: ArenaPainter | null): void {
+    if (painter === this.diagnosed?.painter) {
+      return;
+    }
+    const diagnostics = painter?.diagnose?.() ?? null;
+    this.diagnosed =
+      painter == null || diagnostics == null ? null : { painter, diagnostics };
+    this.showGl();
+  }
+
+  /** The diagnostic's line as it stands. */
+  private showGl(): void {
+    const diagnostics = this.diagnosed?.diagnostics;
+    this.hudGl.set(
+      diagnostics == null
+        ? null
+        : { renderer: diagnostics.renderer, errors: diagnostics.errors() }
+    );
   }
 
   /** Readies the stage for a fresh match: no frame of before, no shake. */
@@ -314,6 +366,7 @@ export class StageFrame {
           ? 1
           : this.quality.scale ** 2,
     });
+    this.showGl();
   }
 
   /**
