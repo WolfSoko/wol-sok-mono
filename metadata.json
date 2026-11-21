@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZMCPC5WC2NSA7AQ8NNX5TZ",
+  "strategy": "manual-commit",
+  "branch": "3167-guest-level-wish-and-ready",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3167-bacteria-wars-online-room-let-the-guest-suggest-a-level-or-signal-ready.md",
+    "docs/specs/3167-bacteria-wars-online-room-let-the-guest-suggest-a-level-or-signal-ready.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 104584,
+    "cache_read_tokens": 1313890,
+    "output_tokens": 8320,
+    "api_call_count": 13
+  }
+}
