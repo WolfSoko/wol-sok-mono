@@ -47,6 +47,15 @@
     }
   </span>
 }
+@let glLine = glText();
+@if (glLine !== null) {
+  <span class="hud-gl">
+    <span>{{ glLine }}</span>
+    <button mat-stroked-button type="button" (click)="saveGlLayers.emit()">
+      {{ "stage.hud.saveGlLayers" | t }}
+    </button>
+  </span>
+}
 <span class="hud-actions">
   <button
     mat-icon-button

@@ -7,6 +7,7 @@ import type {
 import { GameStateService } from '../state/game-state.service';
 import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
+import * as layerSheet from '../gl-debug/layer-sheet';
 import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';
 
@@ -38,7 +39,12 @@ describe('StageFrame', () => {
     service.start();
   }
 
-  beforeEach(() => {
+  afterEach(() => history.replaceState(null, '', '/'));
+
+  beforeEach(() => setUp());
+
+  /** The stage's frame, with the address as it stands - `?gldebug` is read now. */
+  function setUp(): void {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [ArenaStage, StageFrame] });
     const canvas = document.createElement('canvas');
@@ -58,7 +64,7 @@ describe('StageFrame', () => {
       declaring: signal(false),
     });
     frame = TestBed.inject(StageFrame);
-  });
+  }
 
   describe('a new painter', () => {
     it('gets the war a simulation and the arena its size', () => {
@@ -134,6 +140,66 @@ describe('StageFrame', () => {
       x: 0,
       y: 0,
       ...TestBed.inject(ArenaStage).arena(),
+    });
+  });
+  describe('the GL diagnostic', () => {
+    const LAYERS = [
+      { label: 'trail', width: 2, height: 1, pixels: new Uint8Array(8) },
+    ];
+
+    function diagnosable() {
+      const diagnostics = {
+        renderer: 'Adreno (TM) 740',
+        errors: jest.fn(() => []),
+        captureLayers: jest.fn(() => LAYERS),
+      };
+      return {
+        diagnostics,
+        painter: { ...painter(), diagnose: jest.fn(() => diagnostics) },
+      };
+    }
+
+    /** The stage set up again, with `?gldebug` in the address. */
+    function debugging(): void {
+      history.replaceState(null, '', '/?gldebug');
+      TestBed.resetTestingModule();
+      setUp();
+    }
+
+    it('leaves the painter alone without ?gldebug', () => {
+      const { painter } = diagnosable();
+
+      frame.onPainterChange(painter);
+
+      expect(painter.diagnose).not.toHaveBeenCalled();
+      expect(frame.hudGl()).toBeNull();
+    });
+
+    it('diagnoses the painter with ?gldebug and shows its renderer', () => {
+      debugging();
+      const { painter } = diagnosable();
+
+      frame.onPainterChange(painter);
+
+      expect(painter.diagnose).toHaveBeenCalledTimes(1);
+      expect(frame.hudGl()).toEqual({
+        renderer: 'Adreno (TM) 740',
+        errors: [],
+      });
+    });
+
+    it("saves the painter's layers as a sheet", () => {
+      debugging();
+      const { painter, diagnostics } = diagnosable();
+      frame.onPainterChange(painter);
+      const download = jest
+        .spyOn(layerSheet, 'downloadLayerSheet')
+        .mockImplementation(() => undefined);
+
+      frame.saveGlLayers();
+
+      expect(diagnostics.captureLayers).toHaveBeenCalledTimes(1);
+      expect(download).toHaveBeenCalledWith(LAYERS);
     });
   });
 });

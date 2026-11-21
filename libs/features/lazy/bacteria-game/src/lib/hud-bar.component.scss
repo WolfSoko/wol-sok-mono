@@ -67,9 +67,18 @@
 
 .colony-energy,
 .hud-fps,
-.hud-perf {
+.hud-perf,
+.hud-gl {
   font-size: 0.75rem;
   opacity: 0.8;
+}
+
+// The diagnostic's line, and its button within reach of a tap.
+.hud-gl {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  pointer-events: auto;
 }
 
 // The breakdown's lines under each other, at the end of the first row.

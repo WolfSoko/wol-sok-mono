@@ -20,6 +20,7 @@ import {
   ReportSink,
 } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { activeRects, reachSinceReport } from './active-area';
+import { checkGl } from './gl-diagnostics';
 import {
   bindTexture,
   sharedQuad,
@@ -27,6 +28,7 @@ import {
   createTexture,
   Program,
   Target,
+  useExactOutput,
 } from './gl-utils';
 import {
   compiledSharedPrograms,
@@ -347,6 +349,8 @@ export class GpuCellPasses implements CellPasses {
     }
     const gl = this.gl;
     const { programs } = resources;
+    // Raised since the last tick, by the painter's frame or an upload.
+    checkGl(gl, 'before simulation tick');
     this.step = tick.step;
     this.updateArea(tick);
 
@@ -399,6 +403,7 @@ export class GpuCellPasses implements CellPasses {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindVertexArray(null);
+    checkGl(gl, 'simulation tick');
   }
 
   /**
@@ -846,6 +851,7 @@ export class GpuCellPasses implements CellPasses {
     if (layout == null) {
       throw new Error('The GPU passes have no arena to set up for');
     }
+    useExactOutput(gl);
     const programs: Programs = {
       ...compiledSharedPrograms(gl),
       ...this.rules.cellPrograms(gl),

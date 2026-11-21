@@ -11,6 +11,9 @@ export const stage: Translation<typeof en> = {
     fps: '{fps} FPS',
     perf: '{simulation} {cells} · {pixels} % Pixel · Ticks {sim} ms · Zeichnen {draw} ms · {ticks} Ticks pro Bild',
     perfGpu: 'GPU: Ticks {sim} ms · Zeichnen {draw} ms',
+    gl: 'GL {renderer} · Fehler: {errors}',
+    glNoErrors: 'keine',
+    saveGlLayers: 'GL-Ebenen speichern',
     pause: 'Pause',
     giveUp: 'Aufgeben',
     giveUpAgain:

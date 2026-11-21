@@ -11,6 +11,11 @@ export const stage = {
     perf: '{simulation} {cells} · {pixels} % pixels · ticks {sim} ms · drawing {draw} ms · {ticks} ticks a frame',
     /** And on the GPU, where the browser can time it. */
     perfGpu: 'GPU: ticks {sim} ms · drawing {draw} ms',
+    /** The GL diagnostic (`?gldebug`): the renderer and the GL errors per pass. */
+    gl: 'GL {renderer} · errors: {errors}',
+    glNoErrors: 'none',
+    /** Its button: saves the painter's layers as one picture. */
+    saveGlLayers: 'Save GL layers',
     pause: 'Pause',
     giveUp: 'Give up',
     giveUpAgain: 'Tap again to give up: the ranked attempt counts as played',

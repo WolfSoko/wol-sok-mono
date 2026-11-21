@@ -8,7 +8,15 @@ import {
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GridWar } from '@wolsok/feat-shared-bacteria-engine/gpu';
-import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
+import {
+  ArenaFrame,
+  ArenaPainter,
+  CapturedLayer,
+  PaintedColony,
+  PainterDiagnostics,
+} from '../arena-painter';
+import { checkGl, diagnose } from '../../gl/gl-diagnostics';
+import { flipRows, readFramebuffer, readTexture } from '../../gl/readback';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
 import { ArenaTheme } from '../arena-theme';
@@ -30,6 +38,7 @@ import {
   createTarget,
   createTexture,
   FULLSCREEN_VERTEX,
+  useExactOutput,
   Program,
   Target,
 } from '../../gl/gl-utils';
@@ -198,6 +207,8 @@ interface ColonyTargets {
 
 /** A colony whose cells and density are ready for its pass over the frame. */
 interface PreparedColony {
+  /** Its place in the frame's colonies - which targets it draws from. */
+  place: number;
   layer: PaintedColony;
   bounds: CellBounds;
   margin: ReturnType<typeof passMargins>;
@@ -287,6 +298,13 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly detail: number;
   /** What of the arena the frame being painted shows. */
   private view: Rect;
+  /**
+   * What the last frame drew from, for the diagnostic's capture: its
+   * colonies and those of them prepared. Empty before a frame and after the
+   * context went.
+   */
+  private paintedColonies: readonly PaintedColony[] = [];
+  private preparedColonies: readonly PreparedColony[] = [];
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
@@ -344,6 +362,8 @@ export class GlArenaPainter implements ArenaPainter {
       // Without this the browser would never hand the context back.
       event.preventDefault();
       this.resources = null;
+      this.paintedColonies = [];
+      this.preparedColonies = [];
     });
     canvas.addEventListener('webglcontextrestored', () => {
       if (this.disposed) {
@@ -386,6 +406,17 @@ export class GlArenaPainter implements ArenaPainter {
   /** The GPU and driver this painter's context renders with. */
   public renderer(): string {
     return rendererOf(this.gl);
+  }
+
+  public diagnose(): PainterDiagnostics {
+    const diagnostics = diagnose(this.gl);
+    // Whatever was raised before is nobody's pass.
+    diagnostics.check('before the diagnostic');
+    return {
+      renderer: this.renderer(),
+      errors: () => diagnostics.errors(),
+      captureLayers: () => this.captureLayers(),
+    };
   }
 
   /**
@@ -459,14 +490,20 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const { programs } = resources;
+    // What was raised since the last frame - uploads, a resize, the timer.
+    checkGl(gl, 'between frames');
     this.motes.advance(frame.deltaTimeSec);
     this.weapons.update(frame);
     // Laid before the frame's own target is bound: no switch between them.
     this.layWalls(resources, frame.walls, theme);
+    checkGl(gl, 'walls layer');
     this.view = frame.view;
     // Every colony's cells and blur before the frame's own target is bound:
     // a GPU that renders in tiles stores and loads a target at each switch.
     const colonies = this.prepareColonies(resources, frame);
+    checkGl(gl, 'colony cells');
+    this.paintedColonies = frame.colonies;
+    this.preparedColonies = colonies;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.renderWidth, this.renderHeight);
@@ -493,6 +530,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.useAlphaBlend();
+    checkGl(gl, 'floor');
 
     this.background.clear();
     pushMotes(this.background, theme, this.motes);
@@ -502,12 +540,15 @@ export class GlArenaPainter implements ArenaPainter {
     pushDynamicWalls(this.background, theme, this.motes, frame.dynamicWalls);
     this.drawShapes(this.background);
     this.drawWeaponLayer(this.weapons.ground, false);
+    checkGl(gl, 'ground');
 
     for (const colony of colonies) {
       this.drawColony(frame, colony);
     }
+    checkGl(gl, 'colonies');
     if (!frame.reducedMotion) {
       this.drawEffects(frame);
+      checkGl(gl, 'glow');
     }
     // The weapons over the colonies - the clouds, the ice and the membrane,
     // then their flashes, shockwaves and sparks as light. The crosshairs
@@ -528,6 +569,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.unit
     );
     this.drawShapes(this.foreground);
+    checkGl(gl, 'weapons and crosshairs');
     this.ambience = frame.ambience ?? null;
     this.ambienceMoves = this.ambience != null && !frame.reducedMotion;
     this.packWisps(theme);
@@ -572,6 +614,7 @@ export class GlArenaPainter implements ArenaPainter {
     if (ambience != null && this.ambienceMoves) {
       this.drawAmbience(ambience);
     }
+    checkGl(gl, 'copy to canvas');
   }
 
   /**
@@ -728,7 +771,7 @@ export class GlArenaPainter implements ArenaPainter {
         this.scissorCells(bounds, margin.verticalBlur);
         this.blurPass(resources.blur.texture, targets.density, 0, 1);
       }
-      prepared.push({ layer, bounds, margin, targets });
+      prepared.push({ place: index, layer, bounds, margin, targets });
     });
     gl.disable(gl.SCISSOR_TEST);
     return prepared;
@@ -1132,9 +1175,71 @@ export class GlArenaPainter implements ArenaPainter {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  /**
+   * The layers the diagnostic saves: the frame kept as the trail, the
+   * simulation's glow, and the cells and density of each colony the last
+   * frame drew - read back from the GPU, which waits for it. Only a
+   * colony's box is fresh in its targets; the rest is left black, so
+   * nothing stale passes for a smear.
+   */
+  private captureLayers(): CapturedLayer[] {
+    const resources = this.resources;
+    if (resources == null) {
+      return [];
+    }
+    const gl = this.gl;
+    const { width, height } = this;
+    const trail = { width: this.renderWidth, height: this.renderHeight };
+    const layers: CapturedLayer[] = [
+      {
+        label: 'trail',
+        ...trail,
+        // Row 0 of the frame is the bottom of the view.
+        pixels: flipRows(
+          readFramebuffer(
+            gl,
+            resources.trail.framebuffer,
+            trail.width,
+            trail.height
+          ),
+          trail.width,
+          trail.height
+        ),
+      },
+    ];
+    const glow = glowOf(this.paintedColonies);
+    if (glow != null && gl.isTexture(glow)) {
+      layers.push({
+        label: 'glow',
+        width,
+        height,
+        pixels: readTexture(gl, glow, width, height),
+      });
+    }
+    for (const { place, bounds, margin, targets } of this.preparedColonies) {
+      const fresh = [
+        ['cells', targets.cells, margin.cells],
+        ['density', targets.density, margin.verticalBlur],
+      ] as const;
+      for (const [name, target, reach] of fresh) {
+        const layer = {
+          label: `colony ${place + 1} ${name}`,
+          width,
+          height,
+          pixels: readFramebuffer(gl, target.framebuffer, width, height),
+        };
+        keepBox(layer, this.passBox(bounds, reach));
+        layers.push(layer);
+      }
+    }
+    checkGl(gl, 'capture layers');
+    return layers;
+  }
+
   /** Compiles the programs and allocates every buffer, texture and target. */
   private setup(): Resources {
     const gl = this.gl;
+    useExactOutput(gl);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
 
     const programs: Programs = {
@@ -1260,5 +1365,31 @@ export class GlArenaPainter implements ArenaPainter {
     gl.clear(gl.COLOR_BUFFER_BIT);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     return target;
+  }
+}
+
+/** The GPU simulation's glow a frame's colonies are drawn with, if any. */
+function glowOf(colonies: readonly PaintedColony[]): WebGLTexture | null {
+  for (const layer of colonies) {
+    if (layer.kind === 'state') {
+      return layer.effects;
+    }
+  }
+  return null;
+}
+
+/** Blacks out a layer of the arena grid outside a box of it. */
+export function keepBox(layer: CapturedLayer, box: CellBox): void {
+  const [x0, y0, x1, y1] = box;
+  const { width, height, pixels } = layer;
+  const row = width * 4;
+  for (let y = 0; y < height; y++) {
+    const start = y * row;
+    if (y < y0 || y >= y1) {
+      pixels.fill(0, start, start + row);
+      continue;
+    }
+    pixels.fill(0, start, start + x0 * 4);
+    pixels.fill(0, start + x1 * 4, start + row);
   }
 }

@@ -1,4 +1,5 @@
-import { sharedQuad } from './gl-utils';
+import { sharedQuad, useExactOutput } from './gl-utils';
+import { fakeGl, glConstant } from './testing/fake-gl';
 
 /** Just enough of a context to make a quad in, and to lose it. */
 function fakeContext() {
@@ -66,5 +67,15 @@ describe('sharedQuad', () => {
 
     expect(fake.deleteVertexArray).not.toHaveBeenCalled();
     expect(fake.deleteBuffer).not.toHaveBeenCalled();
+  });
+});
+
+describe('useExactOutput', () => {
+  it('switches dithering off, so a target holds exactly what was drawn', () => {
+    const fake = fakeGl();
+
+    useExactOutput(fake.gl);
+
+    expect(fake.callsOf('disable', glConstant('DITHER'))).toBe(1);
   });
 });

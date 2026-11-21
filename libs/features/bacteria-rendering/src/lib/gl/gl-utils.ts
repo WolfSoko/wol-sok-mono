@@ -138,6 +138,18 @@ function createQuad(gl: WebGL2RenderingContext): Quad {
   return { vao, corners };
 }
 
+/**
+ * Makes a context write exactly what its shaders output. WebGL starts with
+ * dithering on, and some GPUs (Android phones among them) then dither even
+ * 8-bit targets: the glow packs colony ids into its alpha, the trail fades
+ * by blending, and the cells and density are read back as numbers, so a
+ * step of noise in any of them shows. Called wherever a context's
+ * resources are set up, a restored context included.
+ */
+export function useExactOutput(gl: WebGL2RenderingContext): void {
+  gl.disable(gl.DITHER);
+}
+
 /** Binds a texture to a unit and points a sampler uniform at it. */
 export function bindTexture(
   gl: WebGL2RenderingContext,

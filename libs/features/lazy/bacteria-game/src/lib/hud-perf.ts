@@ -1,4 +1,7 @@
-import type { FramePerfReport } from '@wolsok/feat-bacteria-rendering';
+import type {
+  FramePerfReport,
+  GlErrorCount,
+} from '@wolsok/feat-bacteria-rendering';
 import type { SimulationVariant } from '@wolsok/feat-shared-bacteria-engine';
 
 /** The breakdown of a frame the HUD shows beside the frame rate. */
@@ -30,4 +33,19 @@ export function simulationLabel(variant: SimulationVariant): string {
 /** Milliseconds as the HUD shows them, one decimal. */
 export function perfMs(ms: number): string {
   return ms.toFixed(1);
+}
+
+/** What the HUD shows while the GL diagnostic (`?gldebug`) runs. */
+export interface HudGl {
+  /** The GPU and driver, as the browser names them. */
+  renderer: string;
+  /** The GL errors so far, by pass. */
+  errors: readonly GlErrorCount[];
+}
+
+/** The errors as the HUD lists them: "floor INVALID_OPERATION ×12, …". */
+export function glErrorsText(errors: readonly GlErrorCount[]): string {
+  return errors
+    .map(({ pass, error, count }) => `${pass} ${error} ×${count}`)
+    .join(', ');
 }

@@ -181,3 +181,49 @@ describe('HudBarComponent', () => {
     expect(giveUp).toHaveBeenCalled();
   });
 });
+
+describe('HudBarComponent GL diagnostic', () => {
+  it('shows no GL line without the diagnostic', () => {
+    const { host } = render();
+
+    expect(host.querySelector('.hud-gl')).toBeNull();
+  });
+
+  it('shows the renderer and that no pass raised a GL error', () => {
+    const { host } = render({
+      gl: { renderer: 'ANGLE (Qualcomm, Adreno (TM) 740)', errors: [] },
+    });
+
+    expect(host.querySelector('.hud-gl')?.textContent).toContain(
+      'GL ANGLE (Qualcomm, Adreno (TM) 740) · errors: none'
+    );
+  });
+
+  it('lists each pass with its error and count', () => {
+    const { host } = render({
+      gl: {
+        renderer: 'Mali-G78',
+        errors: [
+          { pass: 'floor', error: 'INVALID_OPERATION', count: 12 },
+          { pass: 'glow', error: 'OUT_OF_MEMORY', count: 1 },
+        ],
+      },
+    });
+
+    expect(host.querySelector('.hud-gl')?.textContent).toContain(
+      'errors: floor INVALID_OPERATION ×12, glow OUT_OF_MEMORY ×1'
+    );
+  });
+
+  it('asks for the GL layers to be saved', () => {
+    const { fixture, host } = render({
+      gl: { renderer: 'Mali-G78', errors: [] },
+    });
+    const saved = jest.fn();
+    fixture.componentInstance.saveGlLayers.subscribe(saved);
+
+    host.querySelector<HTMLButtonElement>('.hud-gl button')?.click();
+
+    expect(saved).toHaveBeenCalledTimes(1);
+  });
+});

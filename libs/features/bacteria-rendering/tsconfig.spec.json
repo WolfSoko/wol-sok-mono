@@ -10,6 +10,7 @@
     "jest.config.ts",
     "**/*.spec.ts",
     "gpu-crosscheck/**/*.ts",
+    "src/**/testing/**/*.ts",
     "playwright.config.ts"
   ]
 }

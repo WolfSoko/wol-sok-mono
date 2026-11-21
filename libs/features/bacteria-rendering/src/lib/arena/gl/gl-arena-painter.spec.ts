@@ -1,6 +1,15 @@
 import { Cells, gameBalance } from '@wolsok/feat-shared-bacteria-engine';
+import type { ArenaFrame, PaintedColony } from '../arena-painter';
+import { arenaTheme } from '../arena-theme';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
-import { encodeCells, packTints, passMargins } from './gl-arena-painter';
+import { fakeGl, glConstant } from '../../gl/testing/fake-gl';
+import {
+  encodeCells,
+  keepBox,
+  GlArenaPainter,
+  packTints,
+  passMargins,
+} from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';
 
 describe('packTints', () => {
@@ -130,5 +139,144 @@ describe('passMargins', () => {
 
     expect(far.colony).toBe(near.colony + 5);
     expect(far.cells).toBe(near.cells + 5);
+  });
+});
+
+/** A GL painter of a 32×16 arena on a fake WebGL2 context, twice as many pixels. */
+function painterOnFakeContext(width = 32, height = 16) {
+  const fake = fakeGl();
+  const canvas = document.createElement('canvas');
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  jest
+    .spyOn(canvas, 'getContext')
+    .mockReturnValue(fake.gl as unknown as RenderingContext);
+  const painter = GlArenaPainter.create(canvas, width, height, 2, 1);
+  if (painter == null) {
+    throw new Error('No painter on the fake context');
+  }
+  return { fake, canvas, painter };
+}
+
+describe('GlArenaPainter', () => {
+  const DITHER = glConstant('DITHER');
+
+  it('paints without dithering, so the trail and the targets hold what was drawn', () => {
+    const { fake, painter } = painterOnFakeContext();
+
+    expect(painter).not.toBeNull();
+    expect(fake.callsOf('disable', DITHER)).toBe(1);
+  });
+
+  it('switches dithering off again in a restored context', () => {
+    const { fake, canvas } = painterOnFakeContext();
+
+    canvas.dispatchEvent(new Event('webglcontextlost'));
+    canvas.dispatchEvent(new Event('webglcontextrestored'));
+
+    expect(fake.callsOf('disable', DITHER)).toBe(2);
+  });
+});
+
+describe('GlArenaPainter diagnostic', () => {
+  const WIDTH = 32;
+  const HEIGHT = 16;
+
+  function painted() {
+    const { fake, painter } = painterOnFakeContext(WIDTH, HEIGHT);
+    painter.setFloor(arenaTheme('petri-dish'), []);
+    return { fake, painter };
+  }
+
+  /** A colony drawn out of the GPU simulation's state. */
+  const GPU_COLONY = {
+    kind: 'state',
+    look: 'slime',
+    color: [255, 140, 0, 255],
+    boostTarget: null,
+    state: {},
+    effects: {},
+    owner: 1,
+    bounds: { minX: 4, minY: 4, maxX: 10, maxY: 8 },
+  } as unknown as PaintedColony;
+
+  function frame(colonies: readonly PaintedColony[] = []): ArenaFrame {
+    return {
+      clear: false,
+      deltaTimeSec: 1 / 60,
+      timeSec: 1,
+      view: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
+      walls: [],
+      dynamicWalls: [],
+      colonies,
+      reducedMotion: false,
+      nutrients: [],
+      balance: gameBalance,
+      cursors: [],
+      weaponFires: [],
+      weaponEffects: [],
+      seatColors: new Map(),
+      particleBudget: 0,
+    };
+  }
+
+  it('never asks for GL errors while nobody diagnoses the painter', () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame([GPU_COLONY]));
+    painter.showLastFrame();
+
+    expect(fake.callsOf('getError')).toBe(0);
+  });
+
+  it('counts an error under the pass that raised it', () => {
+    const { fake, painter } = painted();
+    const diagnostics = painter.diagnose();
+    // The floor's opacity is the first float uniform of a frame without colonies.
+    fake.failOn('uniform1f', glConstant('INVALID_OPERATION'));
+
+    painter.paint(frame());
+
+    expect(diagnostics.errors()).toEqual([
+      { pass: 'floor', error: 'INVALID_OPERATION', count: 1 },
+    ]);
+    expect(diagnostics.renderer).toBe('fake renderer');
+  });
+
+  it("captures the trail, the glow and each colony's cells and density", () => {
+    const { painter } = painted();
+    painter.paint(frame([GPU_COLONY]));
+
+    const layers = painter.diagnose().captureLayers();
+
+    expect(
+      layers.map(({ label, width, height, pixels }) => ({
+        label,
+        width,
+        height,
+        bytes: pixels.length,
+      }))
+    ).toEqual([
+      { label: 'trail', width: 64, height: 32, bytes: 64 * 32 * 4 },
+      { label: 'glow', width: 32, height: 16, bytes: 32 * 16 * 4 },
+      { label: 'colony 1 cells', width: 32, height: 16, bytes: 32 * 16 * 4 },
+      { label: 'colony 1 density', width: 32, height: 16, bytes: 32 * 16 * 4 },
+    ]);
+  });
+});
+
+describe('keepBox', () => {
+  it('blacks out what lies outside the box', () => {
+    const layer = {
+      label: 'cells',
+      width: 3,
+      height: 2,
+      pixels: new Uint8Array(3 * 2 * 4).fill(9),
+    };
+
+    keepBox(layer, [1, 0, 2, 1]);
+
+    const kept = Array.from({ length: 6 }, (_, i) => layer.pixels[i * 4]);
+    expect(kept).toEqual([0, 9, 0, 0, 0, 0]);
   });
 });
