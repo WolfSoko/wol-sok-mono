@@ -32,10 +32,13 @@ with `nx run-many -t test -p feat-shared-bacteria-engine feat-lazy-bacteria-game
 - **"A worker process has failed to exit gracefully"** shows only under that
   parallel load, never in a run on its own. `--detectOpenHandles --runInBand`
   over the whole game lib reports no open handle, and every interval in the
-  lib's sources is cleared on destroy. Jest's pool force-exits a worker that
-  is still busy (coverage written, teardown) 500 ms after asking it to stop,
-  and that is what the warning reports on an overloaded machine. No leak was
-  found to fix.
+  lib's sources is cleared on destroy. Jest's pool (`jest-worker` 30.5.1,
+  `end()`) force-exits any worker that has not exited 500 ms after it was
+  asked to stop (`workerGracefulExitTimeout`), and the warning reports
+  that. Most likely, the worker was still busy (writing coverage, tearing
+  down) on an overloaded machine. That is a presumption: the run in band
+  does not rule out a handle that only parallel load leaves open. No leak
+  was found to fix.
 - **The load itself.** `nx.json` runs 6 tasks at a time (`parallel: 6`), and
   each Jest task starts one worker per core minus one. On an Nx Cloud worker
   (`extra_large`, 8 vCPU) that is up to 42 Jest processes. This is the shared

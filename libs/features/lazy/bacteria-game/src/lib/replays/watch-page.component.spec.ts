@@ -22,6 +22,12 @@ import { settleTurn, settleUntil } from '../../testing/settle-until';
 
 const ID = 'AbCdEfGhIjKlMnOpQrSt';
 
+/**
+ * The file's first test also compiles the page and the viewer before
+ * `settleUntil` starts its 3 s, so its own limit covers both.
+ */
+const FIRST_OPEN_TIMEOUT_MS = 10_000;
+
 /** Whether the page shows what it loaded: the viewer or why there is none. */
 function shown(page: HTMLElement): boolean {
   return (
@@ -70,27 +76,35 @@ describe('WatchPageComponent', () => {
     return { fixture, page };
   }
 
-  it('plays a public replay, noindex, with its canonical on its page', async () => {
-    const { fixture, page } = await open({ replay: recordedReplay() });
+  it(
+    'plays a public replay, noindex, with its canonical on its page',
+    async () => {
+      const { fixture, page } = await open({ replay: recordedReplay() });
 
-    expect(page.querySelector('h1')?.textContent).toContain('Featured match:');
-    expect(
-      page.querySelector('feat-lazy-bac-game-replay-viewer')
-    ).not.toBeNull();
-    expect(TestBed.inject(Title).getTitle()).toContain('- Bacteria Wars');
-    expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe(
-      'noindex'
-    );
-    const document = TestBed.inject(DOCUMENT);
-    expect(
-      document.head.querySelector('link[rel="canonical"]')?.getAttribute('href')
-    ).toBe(`https://bacteria-wars.wolsok.de/replays/${ID}`);
+      expect(page.querySelector('h1')?.textContent).toContain(
+        'Featured match:'
+      );
+      expect(
+        page.querySelector('feat-lazy-bac-game-replay-viewer')
+      ).not.toBeNull();
+      expect(TestBed.inject(Title).getTitle()).toContain('- Bacteria Wars');
+      expect(TestBed.inject(Meta).getTag('name="robots"')?.content).toBe(
+        'noindex'
+      );
+      const document = TestBed.inject(DOCUMENT);
+      expect(
+        document.head
+          .querySelector('link[rel="canonical"]')
+          ?.getAttribute('href')
+      ).toBe(`https://bacteria-wars.wolsok.de/replays/${ID}`);
 
-    fixture.destroy();
+      fixture.destroy();
 
-    expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
-    expect(TestBed.inject(Meta).getTag('name="robots"')).toBeNull();
-  });
+      expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
+      expect(TestBed.inject(Meta).getTag('name="robots"')).toBeNull();
+    },
+    FIRST_OPEN_TIMEOUT_MS
+  );
 
   it('finds a trusted GPU for a gpu-int replay and hands it to the viewer', async () => {
     const replay = recordedReplay('petri-dish', 30);
