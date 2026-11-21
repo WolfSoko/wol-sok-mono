@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZPF2Z2C13Q7BTQB5HKDZAR",
+  "strategy": "manual-commit",
+  "branch": "3175-lab-pass",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "libs/features/bacteria-engine/src/lib/state/progress/achievements.ts",
+    "tools/bacteria-game/generate-achievement-icons.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 28649,
+    "cache_read_tokens": 3881771,
+    "output_tokens": 10249,
+    "api_call_count": 25
+  }
+}
