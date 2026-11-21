@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZT4MNR6MHGX3A0P27QRMR5",
+  "strategy": "manual-commit",
+  "branch": "3174-arena-smears",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/bacteria-rendering/src/lib/gl/gl-diagnostics.spec.ts",
+    "libs/features/bacteria-rendering/src/lib/gl/gl-diagnostics.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 7001,
+    "cache_read_tokens": 835345,
+    "output_tokens": 4965,
+    "api_call_count": 3
+  }
+}
