@@ -88,7 +88,9 @@ describe('OnlineRoomComponent', () => {
   });
 
   it("changes the host's next match, which goes to the guest", () => {
-    const online = TestBed.inject(OnlineMatchService) as unknown as FakeOnlineMatch;
+    const online = TestBed.inject(
+      OnlineMatchService
+    ) as unknown as FakeOnlineMatch;
     TestBed.inject(GameStateService);
     online.connect(0);
     const { fixture, host } = render();
