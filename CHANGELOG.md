@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.176.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.2...v74.176.0) (2026-11-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** let the guest suggest a level and signal ready in the online room ([#3176](https://github.com/WolfSoko/wol-sok-mono/issues/3176)) ([1d407cd](https://github.com/WolfSoko/wol-sok-mono/commit/1d407cd80ef0e5b6688aa6d1000e4f8e44f293b4)), references [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167) [#3167](https://github.com/WolfSoko/wol-sok-mono/issues/3167)
+* **spa-cdk-stack:** ✨ redirect trailing-slash URLs to their bare path on request ([0a8ffa4](https://github.com/WolfSoko/wol-sok-mono/commit/0a8ffa4b4d474ac1f5bac898587d038b06337579)), references [#3171](https://github.com/WolfSoko/wol-sok-mono/issues/3171)
+
+### Bug Fixes
+
+* **portfolio-cdk:** 🐛 redirect trailing-slash URLs to the bare page ([c308297](https://github.com/WolfSoko/wol-sok-mono/commit/c3082975b69c111625df8ed60fcc321f1529be57)), closes [#3171](https://github.com/WolfSoko/wol-sok-mono/issues/3171)
+* **spa-cdk-stack:** keep the trailing-slash redirect on the site ([ea93b5b](https://github.com/WolfSoko/wol-sok-mono/commit/ea93b5b77b614cd769b877f41bc555e04a6e2d8a)), references [#3171](https://github.com/WolfSoko/wol-sok-mono/issues/3171)
+
+### Refactorings
+
+* **spa-cdk-stack:** take the distribution options from SpaProps ([fd00dff](https://github.com/WolfSoko/wol-sok-mono/commit/fd00dff13454218e1e7eba1dcdb1566b2fc9ea14)), references [#3171](https://github.com/WolfSoko/wol-sok-mono/issues/3171)
+
+### Chore
+
+* **release:** publish ([00b5eaf](https://github.com/WolfSoko/wol-sok-mono/commit/00b5eaf3c1f09e906ff28a871df9fd9b914de2e7))
+
+### Documentation
+
+* **portfolio-cdk:** 📚️ spec and plan for the trailing-slash redirect ([#3171](https://github.com/WolfSoko/wol-sok-mono/issues/3171)) ([b7338e4](https://github.com/WolfSoko/wol-sok-mono/commit/b7338e48a0e3c9191de3d5a03ef19339ec2b7384))
+
 ## [74.175.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.1...v74.175.2) (2026-11-21)
 
 ### Bug Fixes
