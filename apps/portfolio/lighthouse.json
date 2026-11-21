@@ -1,5 +1,12 @@
 {
   "$comment": "Lighthouse CI (ADR 0014, gate 4): the prerendered pages, as CloudFront serves them. Run by tools/perf/lighthouse-run.mjs.",
   "staticDistDir": "dist/apps/portfolio",
-  "url": ["/", "/career", "/privacy", "/impressum"]
+  "url": [
+    "/",
+    "/career",
+    "/blog",
+    "/blog/bacteria-wars-turn-relay",
+    "/privacy",
+    "/impressum"
+  ]
 }

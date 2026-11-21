@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img">
+  <title>STUN ist ein Spiegel, TURN ein Briefträger</title>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#e9dfcc" />
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1e293b" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#2563eb" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#15803d" />
+    </marker>
+  </defs>
+  <rect width="960" height="480" fill="#fdf8ef" />
+  <rect width="960" height="480" fill="url(#dots)" />
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" fill="#1e293b">
+    <text x="240" y="46" text-anchor="middle" font-size="26" font-weight="800" fill="#2563eb">STUN: der Spiegel</text>
+    <path d="M160.6 300.0 Q160.6 300.0 159.7 311.7 Q158.7 323.5 151.6 333.3 Q144.4 343.2 133.7 350.0 Q123.0 356.8 110.1 356.2 Q97.3 355.7 88.3 347.2 Q79.2 338.6 70.5 330.9 Q61.7 323.3 56.2 311.6 Q50.6 300.0 55.1 287.9 Q59.6 275.7 67.7 266.5 Q75.9 257.2 87.2 253.3 Q98.5 249.5 110.1 249.0 Q121.8 248.5 134.8 250.5 Q147.8 252.6 154.3 264.1 Q160.8 275.5 160.7 287.8Z" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+    <circle cx="85.2" cy="308.2" r="6.6" fill="#15803d" opacity="0.35" />
+    <circle cx="137.5" cy="275.2" r="4.4" fill="#15803d" opacity="0.35" />
+    <circle cx="92.4" cy="290.1" r="11.0" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="97.4" cy="291.8" r="5.5" fill="#1e293b" />
+    <circle cx="127.6" cy="290.1" r="11.0" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="132.5" cy="291.8" r="5.5" fill="#1e293b" />
+    <path d="M93.5 317.6 Q110.0 335.2 126.5 317.6" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+    <ellipse cx="300" cy="230" rx="95" ry="130" fill="#bfdbfe" stroke="#1e293b" stroke-width="4" />
+    <ellipse cx="300" cy="230" rx="80" ry="114" fill="#dbeafe" />
+    <path d="M250 150 Q265 135 285 140" stroke="#fff" stroke-width="8" stroke-linecap="round" fill="none" />
+    <rect x="292" y="358" width="16" height="50" fill="#1e293b" />
+    <rect x="250" y="404" width="100" height="14" rx="7" fill="#1e293b" />
+    <path d="M338.7 240.0 Q338.7 240.0 337.9 249.0 Q337.2 257.9 331.8 265.4 Q326.3 273.0 318.1 278.2 Q309.9 283.3 300.1 282.9 Q290.3 282.6 283.4 276.0 Q276.5 269.5 269.8 263.6 Q263.1 257.8 258.9 248.9 Q254.7 240.0 258.1 230.7 Q261.5 221.5 267.7 214.4 Q273.9 207.3 282.6 204.4 Q291.2 201.4 300.1 201.1 Q309.0 200.7 318.9 202.2 Q328.9 203.8 333.8 212.5 Q338.8 221.3 338.7 230.7Z" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+    <circle cx="281.1" cy="246.3" r="5.0" fill="#15803d" opacity="0.35" />
+    <circle cx="321.0" cy="221.1" r="3.4" fill="#15803d" opacity="0.35" />
+    <circle cx="286.6" cy="232.4" r="8.4" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="282.8" cy="233.7" r="4.2" fill="#1e293b" />
+    <circle cx="313.4" cy="232.4" r="8.4" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="309.7" cy="233.7" r="4.2" fill="#1e293b" />
+    <path d="M287.4 253.4 Q300.0 266.9 312.6 253.4" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+    <path d="M146 70 H444 Q460 70 460 86 V110 Q460 126 444 126 H309.0 L300 105 L289.0 126 H146 Q130 126 130 110 V86 Q130 70 146 70Z" fill="#fff" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round" />
+    <text x="295.0" y="103.95" text-anchor="middle" font-size="17" font-weight="700">Du siehst aus wie 203.0.113.7:51234</text>
+    <text x="240" y="455" text-anchor="middle" font-size="16" font-weight="500" fill="#64748b">sagt dir deine öffentliche Adresse</text>
+    <line x1="480" y1="40" x2="480" y2="450" stroke="#e2d6c0" stroke-width="3" stroke-dasharray="4 10" />
+    <text x="720" y="46" text-anchor="middle" font-size="26" font-weight="800" fill="#ea580c">TURN: der Briefträger</text>
+    <rect x="530" y="150" width="40" height="230" fill="#b45309" rx="4" />
+    <rect x="531.5" y="151.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="173.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="553.5" y="173.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="195.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="217.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="553.5" y="217.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="239.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="261.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="553.5" y="261.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="283.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="305.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="553.5" y="305.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="327.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="349.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="553.5" y="349.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="531.5" y="371.5" width="37.0" height="7.0" rx="3" fill="#ea580c" />
+    <rect x="870" y="150" width="40" height="230" fill="#b45309" rx="4" />
+    <rect x="871.5" y="151.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="173.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="893.5" y="173.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="195.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="217.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="893.5" y="217.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="239.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="261.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="893.5" y="261.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="283.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="305.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="893.5" y="305.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="327.5" width="37.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="349.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="893.5" y="349.5" width="15.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="871.5" y="371.5" width="37.0" height="7.0" rx="3" fill="#ea580c" />
+    <path d="M787.2 280.0 Q787.2 280.0 784.7 295.0 Q782.2 310.0 772.2 321.5 Q762.3 333.0 748.5 338.6 Q734.7 344.3 720.7 341.3 Q706.7 338.3 692.6 335.2 Q678.5 332.1 666.5 321.8 Q654.4 311.6 654.8 295.8 Q655.2 280.0 659.3 266.3 Q663.3 252.7 671.6 241.2 Q680.0 229.8 692.6 222.7 Q705.3 215.6 720.7 212.6 Q736.1 209.6 748.4 219.2 Q760.8 228.9 767.1 241.6 Q773.4 254.3 780.3 267.2Z" fill="#fbbf24" stroke="#b45309" stroke-width="3" />
+    <circle cx="690.3" cy="289.9" r="7.9" fill="#b45309" opacity="0.35" />
+    <circle cx="753.0" cy="250.3" r="5.3" fill="#b45309" opacity="0.35" />
+    <circle cx="698.9" cy="268.1" r="13.2" fill="#fff" stroke="#b45309" stroke-width="2" />
+    <circle cx="704.8" cy="270.1" r="6.6" fill="#1e293b" />
+    <circle cx="741.1" cy="268.1" r="13.2" fill="#fff" stroke="#b45309" stroke-width="2" />
+    <circle cx="747.1" cy="270.1" r="6.6" fill="#1e293b" />
+    <path d="M700.2 301.1 Q720.0 322.2 739.8 301.1" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+    <path d="M668 228 Q720 180 772 228 Z" fill="#2563eb" stroke="#1e293b" stroke-width="3" />
+    <rect x="650" y="222" width="140" height="14" rx="7" fill="#2563eb" stroke="#1e293b" stroke-width="3" />
+    <text x="720" y="216" text-anchor="middle" font-size="15" font-weight="800" fill="#fff">TURN</text>
+    <path d="M780 300 Q840 280 836 350 Q810 380 776 350 Z" fill="#d6b48a" stroke="#1e293b" stroke-width="3" />
+    <g transform="translate(806 300) rotate(-20)"><rect x="-13.2" y="-9.0" width="26.4" height="18.0" rx="4" fill="#fff" stroke="#2563eb" stroke-width="2.5" /><path d="M-13.2 -9.0 L0 1.8 L13.2 -9.0" fill="none" stroke="#2563eb" stroke-width="2.5" /></g>
+    <g transform="translate(818 330) rotate(15)"><rect x="-13.2" y="-9.0" width="26.4" height="18.0" rx="4" fill="#fff" stroke="#6d28d9" stroke-width="2.5" /><path d="M-13.2 -9.0 L0 1.8 L13.2 -9.0" fill="none" stroke="#6d28d9" stroke-width="2.5" /></g>
+    <g transform="translate(600 320) rotate(0)"><rect x="-15.399999999999999" y="-10.5" width="30.799999999999997" height="21.0" rx="4" fill="#fff" stroke="#15803d" stroke-width="2.5" /><path d="M-15.399999999999999 -10.5 L0 2.1 L15.399999999999999 -10.5" fill="none" stroke="#15803d" stroke-width="2.5" /></g>
+    <path d="M620 320 Q640 300 655 305" stroke="#15803d" stroke-width="3" stroke-dasharray="5 5" fill="none" marker-end="url(#arrow-green)" />
+    <text x="720" y="455" text-anchor="middle" font-size="16" font-weight="500" fill="#64748b">trägt jedes Paket für dich</text>
+    <path d="M616 70 H824 Q840 70 840 86 V110 Q840 126 824 126 H734.0 L700 130 L714.0 126 H616 Q600 126 600 110 V86 Q600 70 616 70Z" fill="#fff" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round" />
+    <text x="720.0" y="104.3" text-anchor="middle" font-size="18" font-weight="700">Eilzustellung!</text>
+  </g>
+</svg>

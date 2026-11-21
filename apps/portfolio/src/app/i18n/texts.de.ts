@@ -7,6 +7,7 @@ export const de: Translation<typeof en> = {
     site: 'Seite',
     sections: 'Abschnitte',
     career: 'Werdegang',
+    blog: 'Blog',
     github: 'GitHub',
     language: 'Sprache',
     theme: {
@@ -44,6 +45,17 @@ export const de: Translation<typeof en> = {
       'Freiberuflicher Fullstack-Engineer seit 2008, Angular seit dem ersten Tag. {years} Jahre Projekte für Otto, freenet, About You, Fielmann und mehr.',
     careerLink: 'Zum Werdegang',
     builtWith: 'Gebaut mit',
+    blogTitle: 'Aus dem Blog',
+    blogLink: 'Artikel lesen',
+  },
+  blog: {
+    eyebrow: 'Blog',
+    title: 'Wie es funktioniert,',
+    titleAccent: 'unter der Haube.',
+    lead: 'Artikel darüber, was in den Spielen und Apps dieser Seite steckt: Netzwerk, GPUs, Angular und die Cloud, für Engineers, die gern die Verkabelung sehen.',
+    read: 'Artikel lesen',
+    published: 'Veröffentlicht am {date}',
+    back: 'Alle Artikel',
   },
   career: {
     eyebrow: 'Freiberuflich seit {since}',

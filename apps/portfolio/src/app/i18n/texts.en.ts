@@ -9,6 +9,7 @@ export const en = {
     site: 'Site',
     sections: 'Sections',
     career: 'Career',
+    blog: 'Blog',
     github: 'GitHub',
     language: 'Language',
     theme: {
@@ -46,6 +47,17 @@ export const en = {
       'Freelance full-stack engineer since 2008, Angular since its first day. {years} years of projects for Otto, freenet, About You, Fielmann and more.',
     careerLink: 'See the career',
     builtWith: 'Built with',
+    blogTitle: 'From the blog',
+    blogLink: 'Read the article',
+  },
+  blog: {
+    eyebrow: 'Blog',
+    title: 'How it works,',
+    titleAccent: 'under the hood.',
+    lead: 'Articles on what it took to build the games and apps on this site: networking, GPUs, Angular and the cloud, for engineers who like to see the wiring.',
+    read: 'Read the article',
+    published: 'Published {date}',
+    back: 'All articles',
   },
   career: {
     eyebrow: 'Freelance since {since}',
