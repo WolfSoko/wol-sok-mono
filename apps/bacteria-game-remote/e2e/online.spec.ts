@@ -82,7 +82,7 @@ test('two devices play an online match, and the one left wins', async ({
   );
 });
 
-test('two devices share a room: the host picks the level, the guest sees it, before and after a match', async ({
+test('two devices share a room: the guest wishes a level and says ready, the host picks it, before and after a match', async ({
   browser,
 }, testInfo) => {
   // A whole match: Meltdown ends after a minute of match time.
@@ -96,11 +96,29 @@ test('two devices share a room: the host picks the level, the guest sees it, bef
     await expect(po.room.locator('.tally')).toHaveText(/0\s*:\s*0/);
   }
   await expect(guest.po.room).toContainText('is choosing the level');
-  await expect(guest.po.room.locator('.picker')).toHaveCount(0);
 
+  // The guest wishes a level and says ready; the host sees both.
+  await guest.po.pickRoomLevel('Meltdown');
+  await expect(guest.po.room.locator('.card-tag')).toHaveText('Your wish');
+  await expect(host.po.room.locator('.card-tag')).toHaveText(/wants this$/);
+  await expect(host.po.room.locator('.suggests')).toHaveText(
+    /suggests Meltdown$/
+  );
+  await guest.po.readyCta.click();
+  await expect(guest.po.readyCta).toHaveAttribute('aria-pressed', 'true');
+  await expect(host.po.room.locator('.ready-tag')).toBeVisible();
+  await shot(host.page, 'room-host-wish');
+
+  // The host takes the wish: fulfilled, and ready was for the level before.
   await host.po.pickRoomLevel('Meltdown');
   await expect(host.po.room.locator('.next-title')).toHaveText(/Meltdown/);
   await expect(guest.po.room.locator('.next-title')).toHaveText(/Meltdown/);
+  for (const { po } of [host, guest]) {
+    await expect(po.room.locator('.card-tag')).toHaveCount(0);
+    await expect(po.room.locator('.ready-tag')).toHaveCount(0);
+  }
+  await expect(host.po.room.locator('.suggests')).toHaveCount(0);
+  await expect(guest.po.readyCta).toHaveAttribute('aria-pressed', 'false');
   await shot(host.page, 'room-host');
   await shot(guest.page, 'room-guest');
 
