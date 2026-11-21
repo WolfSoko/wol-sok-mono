@@ -63,7 +63,8 @@ import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
-import { canRaceAsGhost } from '../state/match-rules';
+import { OnlineRoomComponent } from '../menu/online-room.component';
+import { canRaceAsGhost, winnerSeat } from '../state/match-rules';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -99,6 +100,7 @@ export type MatchEndAction =
     MatIconModule,
     MatProgressBarModule,
     MedallionComponent,
+    OnlineRoomComponent,
     ReplayNoteComponent,
     TranslatePipe,
   ],
@@ -127,8 +129,22 @@ export class WinnerComponent {
   /** Null when both colonies wiped each other out in the same step. */
   public winner: Signal<Player | null> = this.state.winner;
 
-  /** The level that was just played. */
-  public level: Signal<Level> = this.state.level;
+  /**
+   * The level that was just played - not the setup's, which the host of an
+   * online room changes on this screen for the next match.
+   */
+  public readonly level: Signal<Level> = this.state.boardLevel;
+
+  /** The seat that won an online match, for the room - null on a draw. */
+  public readonly winnerSeat: Signal<0 | 1 | null> = computed(() =>
+    winnerSeat(this.winner())
+  );
+
+  /** The level the host starts next online, as the room shows it. */
+  public readonly onlineNext: Signal<Level | null> = computed(() => {
+    const levelId = this.state.online()?.levelId;
+    return levelId === undefined ? null : getLevel(levelId);
+  });
 
   /** The level that comes next, null after the last one. */
   public upcoming: Signal<Level | null> = computed(() =>

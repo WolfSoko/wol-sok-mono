@@ -16,7 +16,6 @@ import {
   english,
   GameText,
   ladderLockText,
-  levelTitleText,
   ONLINE_LOCK_TEXT,
   recipeKeys,
   renderGameText,
@@ -26,9 +25,6 @@ import { TranslatePipe } from '../i18n/translate.pipe';
 import {
   BOT_DIFFICULTIES,
   CHAPTERS,
-  getLevel,
-  LEVELS,
-  levelSize,
   MAX_DIFFICULTY,
   MIN_DIFFICULTY,
   parseGeneratedId,
@@ -38,7 +34,7 @@ import {
   rollLevelId,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { LevelCard, LevelCardComponent } from './level-card.component';
-import { levelColors } from './menu-cards';
+import { levelCard } from './menu-cards';
 
 /**
  * The levels to pick from: the ladder chapter by chapter, a card per level
@@ -133,31 +129,18 @@ export class LevelMapComponent {
   }
 
   /**
-   * A level's card: its badge - its place on the ladder, or the style of a
-   * generated one - its lock, its medallions, its arena's colours and the
-   * size of its map, whose picture the card draws. Its
-   * texts are in the active language: the computeds that call it follow a
-   * switch.
+   * A level's card with its lock and its medallions. Its texts are in the
+   * active language: the computeds that call it follow a switch.
    */
   private card(id: string): LevelCard {
-    const level = getLevel(id);
-    const made = parseGeneratedId(id);
     const lock = this.locks()[id];
-    return {
-      id,
-      badge:
-        made === null
-          ? String(LEVELS.indexOf(level) + 1)
-          : this.i18n.t(recipeKeys(made.recipe).label),
-      title: this.text(levelTitleText(level)),
+    return levelCard(id, (key, params) => this.i18n.t(key, params), {
       lock: lock === undefined ? null : this.text(lockText(id, lock)),
-      ...levelColors(id),
-      size: levelSize(level),
       medals: BOT_DIFFICULTIES.map((difficulty) => ({
         difficulty: difficulty.id,
         tier: this.medals()[id]?.[difficulty.id] ?? null,
       })),
-    };
+    });
   }
 
   private text(text: GameText): string {

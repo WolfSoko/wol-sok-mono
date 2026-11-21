@@ -83,7 +83,7 @@
             }
             @case ("start") {
               <div class="start-step" [class.lobby-only]="!briefed()">
-                <!-- Online, the level is only told once there is a match to play it in. -->
+                <!-- Online, the room the players share shows the level. -->
                 @if (briefed()) {
                   <section
                     class="details"
@@ -152,7 +152,7 @@
                       [lobby]="online()"
                       [available]="onlineAvailable()"
                       [colonyNames]="colonyNames()"
-                      (host)="createOnline()"
+                      (host)="hostOnline.emit()"
                       (join)="joinOnline.emit($event)"
                       (leave)="leaveOnline.emit()"
                     />

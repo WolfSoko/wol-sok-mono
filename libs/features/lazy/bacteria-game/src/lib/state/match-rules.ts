@@ -2,6 +2,7 @@ import {
   missionById,
   missionOf,
   type MissionId,
+  type Player,
   type Replay,
   type SeriesLength,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -225,4 +226,9 @@ function recordingOf(
   return kind === 'vs-computer' || kind === 'daily' || kind === 'endless'
     ? 'local'
     : 'none';
+}
+
+/** The seat of the player who won - 0 left, 1 right - null for a draw. */
+export function winnerSeat(winner: Player | null): 0 | 1 | null {
+  return winner === null ? null : winner.id === 0 ? 0 : 1;
 }

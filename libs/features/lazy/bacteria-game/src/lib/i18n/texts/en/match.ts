@@ -117,8 +117,8 @@ export const match = {
     shareFailed: 'The link could not be shared.',
   },
   actions: {
+    playLevel: 'Play {level}',
     menu: 'Main menu',
-    guestWaits: 'Your opponent starts the next match.',
     connectionGone: 'The connection to your opponent is gone.',
     newRun: 'New run',
     nextLevel: 'Next level',

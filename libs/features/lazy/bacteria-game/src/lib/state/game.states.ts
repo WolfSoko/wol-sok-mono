@@ -96,6 +96,12 @@ export interface GameStateState {
    */
   endedBy: EndReason | null;
   /**
+   * The level the match that ended was played on - kept for its result,
+   * while the setup may already name the next one (an online room's host
+   * picks it on the result). Null before a match ended.
+   */
+  endedOn: string | null;
+  /**
    * What the match that just ended earned - null until a match is over, and
    * after one against the computer without a human in it.
    */
@@ -150,6 +156,7 @@ export function createInitialState(): GameStateState {
     height: 320,
     winner: null,
     endedBy: null,
+    endedOn: null,
     earnings: null,
     keysPressed: [],
     levelId: LEVELS[0].id,
@@ -187,6 +194,7 @@ export const GameStateStore = signalStore(
       mode,
       seriesLength,
       endedBy,
+      endedOn,
       online,
       colors,
       countdown,
@@ -200,6 +208,10 @@ export const GameStateStore = signalStore(
         })
       );
       const level = computed(() => getLevel(rules().levelId));
+      const boardLevel = computed(() => {
+        const id = endedOn();
+        return id === null ? level() : getLevel(id);
+      });
       const winRule = computed(() => winRuleOf(level()));
       const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
       return {
@@ -209,6 +221,12 @@ export const GameStateStore = signalStore(
         matchRules: rules,
         /** The level of the next match: one picked for it, or the selected one. */
         level,
+        /**
+         * The level on the board: the one the match on the board was played
+         * on until it is reset, the next match's before - online, the host
+         * picks the next level while the last one's result is shown.
+         */
+        boardLevel,
         /** How the next match is won. */
         winRule,
         /** True while a match is on, paused or not. */

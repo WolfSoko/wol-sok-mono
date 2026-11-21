@@ -4,6 +4,8 @@ export const online = {
     "Online matches need the game's cloud, which this build of the game does not connect to.",
   searching: 'Looking for an opponent…',
   find: 'Find an opponent',
+  /** What finding an opponent does - one line above its button. */
+  findText: 'Play someone at random, on your level or theirs.',
   /** In place of "Find an opponent" while the owner has paused it. */
   matchmakingPaused:
     'Random matches are paused for now. Play a friend with a code instead.',
@@ -30,12 +32,21 @@ export const online = {
   connecting: 'Connecting to your opponent…',
   connectedTo: 'Connected to {name} - you play {colony}.',
   connected: 'Connected - you play {colony}.',
-  hostPicks: 'You pick the level and start the matches.',
-  guestFollows: 'Your opponent picks the level and starts the matches.',
   leave: 'Leave',
   /** The colonies' names until the game names them. */
   left: 'Left',
   right: 'Right',
+  /** The room two connected players share, before and between matches. */
+  room: {
+    label: 'Your room',
+    you: 'You',
+    tally: 'Wins in this room: {host} to {guest}',
+    won: 'Won',
+    next: 'Next level',
+    pick: 'Pick the next level',
+    choosing: '{name} is choosing the level…',
+    choosingAnon: 'Your opponent is choosing the level…',
+  },
   notices: {
     badCode: 'A code has six letters and digits.',
     noRoom: 'There is no open match under that code.',

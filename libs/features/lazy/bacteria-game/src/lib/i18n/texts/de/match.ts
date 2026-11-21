@@ -112,8 +112,8 @@ export const match: Translation<typeof en> = {
     shareFailed: 'Der Link ließ sich nicht teilen.',
   },
   actions: {
+    playLevel: '{level} spielen',
     menu: 'Hauptmenü',
-    guestWaits: 'Dein Gegner startet das nächste Match.',
     connectionGone: 'Die Verbindung zu deinem Gegner ist weg.',
     newRun: 'Neuer Lauf',
     nextLevel: 'Nächstes Level',

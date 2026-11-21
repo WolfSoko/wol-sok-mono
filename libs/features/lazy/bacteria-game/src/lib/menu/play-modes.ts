@@ -60,16 +60,13 @@ export const STEP_LABELS: Readonly<Record<NewGameStep, TranslationKey>> = {
 /**
  * The steps a mode goes through. The daily level and the endless run pick
  * their levels themselves, so they skip the level choice. An online match
- * opens on the lobby, where the player finds, joins or opens a match: only
- * the one `creating` a match picks its level. Before a mode is picked, the
- * steps most modes have are shown ahead.
+ * opens on the lobby, where the player finds, joins or opens a match; its
+ * level is picked in the room the two players share once connected. Before
+ * a mode is picked, the steps most modes have are shown ahead.
  */
-export function stepsOf(
-  kind: PlayKind | null,
-  creating = false
-): readonly NewGameStep[] {
+export function stepsOf(kind: PlayKind | null): readonly NewGameStep[] {
   const picksLevel =
-    kind !== 'daily' && kind !== 'endless' && (kind !== 'online' || creating);
+    kind !== 'daily' && kind !== 'endless' && kind !== 'online';
   return picksLevel ? ['mode', 'level', 'start'] : ['mode', 'start'];
 }
 
