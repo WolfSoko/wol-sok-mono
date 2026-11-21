@@ -89,6 +89,9 @@
     ]
   },
   "targetDefaults": {
+    "@nx/oxlint:lint": {
+      "inputs": ["...", "{workspaceRoot}/package-lock.json"]
+    },
     "nx-release-publish": {
       "dependsOn": ["build"],
       "options": {

@@ -68,6 +68,9 @@ const SCRIPT_FILE = /\.[cm]?[jt]sx?$/;
 const DECLARATION_FILE = /\.d\.[cm]?ts$/;
 export const TSCONFIG = 'tsconfig.json';
 
+/** The lockfile as a target input: it pins every installed version (#3151). */
+export const LOCKFILE_INPUT = '{workspaceRoot}/package-lock.json';
+
 /** The tracked scripts oxlint lints: none its `ignorePatterns` match. */
 export function lintedScripts() {
   const { ignorePatterns } = readJson('.oxlintrc.json');
