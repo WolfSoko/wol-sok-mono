@@ -5,6 +5,7 @@ import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaCertificateStack, SpaStack, SpaStackProps } from './spa/spa.stack';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
+import { TRAILING_SLASH_REDIRECT_SOURCE } from './spa/trailing-slash-redirect';
 
 // Mock the fromLookup method
 vitest.mock('aws-cdk-lib/aws-route53', () => {
@@ -222,6 +223,38 @@ describe('SpaCdkStack', () => {
           Source.asset(path.join(__dirname, '../../extra-assets-path')),
         ])
       ).toThrow(/"asset.json"/);
+    });
+  });
+
+  describe('trailing-slash redirect', () => {
+    const viewerRequestFunction = {
+      DistributionConfig: Match.objectLike({
+        DefaultCacheBehavior: Match.objectLike({
+          FunctionAssociations: [
+            Match.objectLike({ EventType: 'viewer-request' }),
+          ],
+        }),
+      }),
+    };
+
+    it('should redirect on viewer request with a CloudFront Function when enabled', () => {
+      const { template } = testStackFactory({ redirectTrailingSlash: true });
+
+      template().resourceCountIs('AWS::CloudFront::Function', 1);
+      template().hasResourceProperties('AWS::CloudFront::Function', {
+        FunctionConfig: Match.objectLike({ Runtime: 'cloudfront-js-2.0' }),
+        FunctionCode: TRAILING_SLASH_REDIRECT_SOURCE,
+      });
+      template().hasResourceProperties(
+        'AWS::CloudFront::Distribution',
+        viewerRequestFunction
+      );
+    });
+
+    it('should add no function by default', () => {
+      const { template } = testStackFactory();
+
+      template().resourceCountIs('AWS::CloudFront::Function', 0);
     });
   });
 
