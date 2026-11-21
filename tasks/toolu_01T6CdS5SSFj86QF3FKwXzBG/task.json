@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01T6CdS5SSFj86QF3FKwXzBG",
+  "agent_id": "a2456d791cebc3ed7",
+  "subagent_type": "general-purpose",
+  "task_description": "Simplify: reuse angle",
+  "token_usage": {
+    "input_tokens": 20,
+    "cache_creation_tokens": 84697,
+    "cache_read_tokens": 806625,
+    "output_tokens": 4442,
+    "api_call_count": 10
+  },
+  "started_at": "2026-11-21T21:30:44.371147306+01:00",
+  "completed_at": "2026-11-21T21:31:46.788810746+01:00"
+}
