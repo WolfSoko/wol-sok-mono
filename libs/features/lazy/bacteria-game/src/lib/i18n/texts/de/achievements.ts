@@ -62,4 +62,8 @@ export const achievements: Translation<(typeof ENGINE_EN)['achievements']> = {
     name: 'Sofakrieg',
     condition: 'Spiele {count} Matches zu zweit',
   },
+  'lab-member': {
+    name: 'Labormitglied',
+    condition: 'Fülle deinen Laborausweis aus',
+  },
 };

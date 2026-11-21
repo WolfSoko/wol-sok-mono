@@ -476,7 +476,13 @@ export {
   winRuleOf,
 } from './lib/state/match/win-conditions';
 export type { EndReason, MatchOutcome } from './lib/state/match/win-conditions';
-export { COUCH_XP, matchXp, xpGain, xpOf } from './lib/state/progress/xp';
+export {
+  ACHIEVEMENT_XP,
+  COUCH_XP,
+  matchXp,
+  xpGain,
+  xpOf,
+} from './lib/state/progress/xp';
 export type { XpMatch } from './lib/state/progress/xp';
 export {
   kindOfCode,

@@ -4,6 +4,7 @@ import { map } from 'rxjs';
 import { GameAccount } from '../storage/game-account';
 import { DeviceStorage } from '../storage/game-storage';
 import {
+  dismissedLately,
   GUEST_NOTICE_KEY,
   GuestVisits,
   noticeDue,
@@ -44,6 +45,18 @@ export class GuestNotice {
     );
   });
 
+  /** True once the device has told what it keeps of the visits. */
+  public readonly known = computed(() => this.visits() !== undefined);
+
+  /**
+   * True while "Later" keeps the main menu's card away - false until the
+   * device has answered.
+   */
+  public readonly dismissedLately = computed(() => {
+    const visits = this.visits();
+    return visits !== undefined && dismissedLately(visits, Date.now());
+  });
+
   /** True while a guest's success may still bring the offer to sign in. */
   public readonly successHintDue = computed(
     () => this.guest() && this.visits()?.successHintShown === false
@@ -75,7 +88,7 @@ export class GuestNotice {
       });
   }
 
-  /** Puts the notice away for two weeks on this device. */
+  /** Puts the notice and the Lab Pass away for two weeks on this device. */
   public dismiss(): void {
     this.change({ dismissedAt: Date.now() });
   }

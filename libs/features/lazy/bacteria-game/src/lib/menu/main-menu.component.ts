@@ -2,10 +2,12 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   inject,
   input,
   output,
   OutputEmitterRef,
+  untracked,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -39,8 +41,8 @@ import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { AccountChipComponent } from '../guest/account-chip.component';
-import { GuestBannerComponent } from '../guest/guest-banner.component';
-import { GuestNotice } from '../guest/guest-notice.service';
+import { LabPassCardComponent } from '../guest/lab-pass-card.component';
+import { LabPass } from '../guest/lab-pass.service';
 import { InstallBannerComponent } from '../support/install-banner.component';
 import { StatsBannerComponent } from '../analytics/stats-banner.component';
 import { StatsConsent } from '../analytics/stats-consent.service';
@@ -90,7 +92,7 @@ export type MenuPage =
     InstallBannerComponent,
     StatsBannerComponent,
     AccountChipComponent,
-    GuestBannerComponent,
+    LabPassCardComponent,
     SiteFooterComponent,
     TranslatePipe,
     GameTextPipe,
@@ -144,6 +146,18 @@ export class MainMenuComponent {
 
   private readonly busy = inject(StageBusy);
 
+  public constructor() {
+    // A sign-in that brought no profile of its own goes on to make one.
+    effect(() => {
+      if (this.labPass.onboardingDue()) {
+        untracked(() => {
+          this.labPass.startOnboarding();
+          this.open.emit('profile');
+        });
+      }
+    });
+  }
+
   /**
    * Emits a way into a new game behind the stage's spinner: the screen it
    * opens takes a moment to lay out. A match is started behind it by the
@@ -177,8 +191,8 @@ export class MainMenuComponent {
 
   protected readonly support = inject(GameSupport);
   protected readonly installOffer = inject(InstallOffer);
-  /** The guest's notice, which the install offer waits behind. */
-  protected readonly guestNotice = inject(GuestNotice);
+  /** The Lab Pass, which the install offer waits behind. */
+  protected readonly labPass = inject(LabPass);
   protected readonly stats = inject(StatsConsent);
   /** True on the game's own site, where the support options are provided. */
   protected readonly onSite = inject(GAME_SUPPORT) !== null;

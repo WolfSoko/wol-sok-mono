@@ -106,6 +106,8 @@ const RULES: Record<AchievementId, Rule> = {
     params: { count: COUCH_WAR_MATCHES },
     earned: (progress) => progress.totals.couchMatches >= COUCH_WAR_MATCHES,
   },
+  // Granted by the Lab Pass in the main menu, never by a match.
+  'lab-member': { earned: () => false },
 };
 
 /** An achievement's name and condition as texts to translate. */

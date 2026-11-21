@@ -8,6 +8,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
+import { LabPass } from '../guest/lab-pass.service';
 import { ProfileEditorComponent } from './profile-editor.component';
 
 describe('ProfileEditorComponent', () => {
@@ -36,6 +37,42 @@ describe('ProfileEditorComponent', () => {
         provideFakeGameCloud({ social, presence: new FakeGamePresence() }),
       ],
     });
+  });
+
+  it('welcomes a player who just signed in, from the name', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const labPass = TestBed.inject(LabPass);
+    labPass.startOnboarding();
+    const host = await render();
+
+    expect(host.querySelector('.welcome')?.textContent).toContain(
+      'Welcome to the lab'
+    );
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="name"]')
+    );
+
+    fixture.destroy();
+    expect(labPass.welcoming()).toBe(false);
+  });
+
+  it('opens on the motto when the Lab Pass asks for it', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const labPass = TestBed.inject(LabPass);
+    labPass.focusEditor('motto');
+    const host = await render();
+
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="motto"]')
+    );
+    expect(labPass.editorFocus()).toBeNull();
+  });
+
+  it('welcomes nobody who opens the profile on their own', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const host = await render();
+
+    expect(host.querySelector('.welcome')).toBeNull();
   });
 
   it('saves the name, the motto and the picture picked', async () => {

@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import {
   COMEBACK_MS,
+  dismissedLately,
   GUEST_IDLE_DAYS,
   GuestVisits,
   localDay,
@@ -122,6 +123,17 @@ describe('noticeDue', () => {
     // A clock that was off then keeps it away no longer either.
     expect(later(-DAY_MS)).toBe(false);
     expect(later(-NOTICE_DISMISSED_MS)).toBe(true);
+  });
+});
+
+describe('dismissedLately', () => {
+  it('holds for two weeks after "Later", on any day', () => {
+    const later = (ago: number) =>
+      dismissedLately(visits({ days: 1, dismissedAt: NOW - ago }), NOW);
+
+    expect(dismissedLately(visits(), NOW)).toBe(false);
+    expect(later(DAY_MS)).toBe(true);
+    expect(later(NOTICE_DISMISSED_MS)).toBe(false);
   });
 });
 

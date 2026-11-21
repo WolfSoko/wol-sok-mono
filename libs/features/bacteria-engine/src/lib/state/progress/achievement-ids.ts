@@ -14,6 +14,7 @@ export const ACHIEVEMENT_IDS = [
   'petri-scholar',
   'hard-boiled',
   'couch-war',
+  'lab-member',
 ] as const;
 
 export type AchievementId = (typeof ACHIEVEMENT_IDS)[number];
