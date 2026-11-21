@@ -58,7 +58,6 @@ export const en = {
     read: 'Read the article',
     published: 'Published {date}',
     back: 'All articles',
-    playGame: 'Play Bacteria Wars',
   },
   career: {
     eyebrow: 'Freelance since {since}',

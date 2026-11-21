@@ -14,11 +14,11 @@ import { BlogFigure } from './blog-figure';
   template: `
     <figure>
       <img
-        [src]="figure().src"
+        [src]="i18n.pick(figure().src)"
         [width]="figure().width"
         [height]="figure().height"
         [alt]="i18n.pick(figure().alt)"
-        loading="lazy"
+        [attr.loading]="eager() ? 'eager' : 'lazy'"
         decoding="async"
       />
       <figcaption>{{ i18n.pick(figure().caption) }}</figcaption>
@@ -53,5 +53,7 @@ import { BlogFigure } from './blog-figure';
 })
 export class BlogFigureComponent {
   public readonly figure = input.required<BlogFigure>();
+  /** For the picture at the top, which should not wait for the scroll (LCP). */
+  public readonly eager = input(false);
   protected readonly i18n = inject(I18nService);
 }

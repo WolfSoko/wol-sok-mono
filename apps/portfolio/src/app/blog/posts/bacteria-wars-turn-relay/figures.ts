@@ -1,16 +1,16 @@
-import { BlogFigure } from '../../blog-figure';
+import { BlogFigure, figureSources } from '../../blog-figure';
 
-const BASE = '/blog/bacteria-wars-turn-relay';
+const SLUG = 'bacteria-wars-turn-relay';
 
 /** The pictures of the TURN relay article, in the order it shows them. */
 export const TURN_RELAY_FIGURES = {
   walls: {
-    src: `${BASE}/nat-walls.svg`,
+    src: figureSources(SLUG, 'nat-walls'),
     width: 960,
     height: 480,
     alt: {
-      en: 'Two cartoon bacteria colonies, each on its own phone, shout “Can you hear me?” at each other through two brick walls labelled NAT.',
-      de: 'Zwei Comic-Bakterienkolonien, jede auf ihrem eigenen Handy, rufen sich durch zwei Backsteinmauern mit der Aufschrift NAT „Hörst du mich?“ zu.',
+      en: 'Two cartoon bacteria colonies, each on its own phone, shout “Hello?!” at each other through two brick walls labelled NAT.',
+      de: 'Zwei Comic-Bakterienkolonien, jede auf ihrem eigenen Handy, rufen sich durch zwei Backsteinmauern mit der Aufschrift NAT „Hallo?!“ zu.',
     },
     caption: {
       en: 'The bug report, drawn: both players are online, neither can reach the other.',
@@ -18,7 +18,7 @@ export const TURN_RELAY_FIGURES = {
     },
   },
   nat: {
-    src: `${BASE}/nat-problem.svg`,
+    src: figureSources(SLUG, 'nat-problem'),
     width: 960,
     height: 520,
     alt: {
@@ -31,7 +31,7 @@ export const TURN_RELAY_FIGURES = {
     },
   },
   stunTurn: {
-    src: `${BASE}/stun-turn.svg`,
+    src: figureSources(SLUG, 'stun-turn'),
     width: 960,
     height: 480,
     alt: {
@@ -44,7 +44,7 @@ export const TURN_RELAY_FIGURES = {
     },
   },
   ice: {
-    src: `${BASE}/ice-candidates.svg`,
+    src: figureSources(SLUG, 'ice-candidates'),
     width: 960,
     height: 540,
     alt: {
@@ -57,7 +57,7 @@ export const TURN_RELAY_FIGURES = {
     },
   },
   wiring: {
-    src: `${BASE}/wiring.svg`,
+    src: figureSources(SLUG, 'wiring'),
     width: 960,
     height: 640,
     alt: {
@@ -70,7 +70,7 @@ export const TURN_RELAY_FIGURES = {
     },
   },
   renewal: {
-    src: `${BASE}/renewal-timeline.svg`,
+    src: figureSources(SLUG, 'renewal-timeline'),
     width: 960,
     height: 440,
     alt: {

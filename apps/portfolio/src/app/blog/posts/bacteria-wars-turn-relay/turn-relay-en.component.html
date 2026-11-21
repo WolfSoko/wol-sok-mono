@@ -1,4 +1,4 @@
-<wolsok-blog-figure [figure]="figures.walls" />
+<wolsok-blog-figure [figure]="figures.walls" [eager]="true" />
 
 <p>
   <a href="https://bacteria-wars.wolsok.de">Bacteria Wars</a> is a real-time
@@ -13,8 +13,9 @@
 <p>
   This article is about the fix: a TURN relay. What problem it solves, what a
   TURN server is, how the game is wired to one without ever calling a backend
-  function, and the one surprise that killed every relayed match after ten
-  minutes.
+  function, and the one surprise that would have killed every relayed match once
+  its credentials ran out: it took a test with one-minute credentials to see it
+  in ten.
 </p>
 
 <h2>Peer to peer, in theory</h2>
@@ -23,9 +24,9 @@
   deterministic simulation with the same seed, and only the players’ inputs
   travel. Each input is played six ticks (100 ms) after it was made, on both
   devices, so it usually arrives before the other side needs it. That is a few
-  dozen bytes sixty times a second, about 6 MB for a ten-minute match. No game
-  server needed: the two browsers talk directly over a
-  <strong>WebRTC data channel</strong>.
+  dozen bytes sixty times a second; with both directions and the headers of UDP,
+  DTLS and SCTP, about 6 MB for a ten-minute match. No game server needed: the
+  two browsers talk directly over a <strong>WebRTC data channel</strong>.
 </p>
 <p>
   To open that channel, the devices first have to swap a description of
@@ -135,7 +136,9 @@
       <tr>
         <td><code>srflx</code> (server-reflexive)</td>
         <td>the public address STUN reported</td>
-        <td>both NATs keep one port per source (hole punching)</td>
+        <td>
+          both NATs keep one public port for every destination (hole punching)
+        </td>
       </tr>
       <tr>
         <td><code>relay</code></td>
@@ -178,7 +181,9 @@
   <li>
     <strong>Half the lifetime, at least.</strong> Valid for an hour, refreshed
     every half hour: whoever reads the document gets 30 minutes or more. A
-    failed refresh leaves the last credentials in place until they run out.
+    device keeps its copy while at least 20 minutes are left, so every new
+    connection starts with 20 minutes at least. A failed refresh leaves the last
+    credentials in place until they run out.
   </li>
   <li>
     <strong>Flat storage.</strong> Cloudflare answers with an
@@ -224,7 +229,7 @@
   next deploy, and within the hour the game is STUN-only again.
 </p>
 
-<h2>The link that died after ten minutes</h2>
+<h2>The link that died with its credentials</h2>
 <wolsok-blog-figure [figure]="figures.renewal" />
 <p>
   The first draft stopped there, and it would have shipped broken. Before the
@@ -250,10 +255,11 @@
   <li><strong>Fresh credentials and an ICE restart:</strong> it lives.</li>
 </ul>
 <p>
-  Matches are short, but a lobby, a rematch and a second match easily outlast an
-  hour. So the host renews the relay of an open link every 15 minutes. It takes
-  fresh credentials, restarts ICE and sends the new offer, not through Firestore
-  this time, but over a second negotiated data channel next to the game’s:
+  Matches are short, but a lobby, a rematch and a second match easily outlast
+  the 20 minutes a connection’s credentials have left at least. So the host
+  renews the relay of an open link every 15 minutes. It takes fresh credentials,
+  restarts ICE and sends the new offer, not through Firestore this time, but
+  over a second negotiated data channel next to the game’s:
 </p>
 <pre><code>{{ code.renewal }}</code></pre>
 <p>

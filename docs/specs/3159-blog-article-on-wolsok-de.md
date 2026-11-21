@@ -60,8 +60,9 @@ It is illustrated with diagrams and funny pictures.
   shared article frame, picked by `I18nService`. The page is prerendered in
   English and a German browser switches after hydration, as every page does.
   Title, description, the blog index and the alt texts are `Localized`.
-  Code, identifiers and the labels inside the pictures (NAT, STUN, TURN,
-  `relay/turn`) are the same in both.
+  Code and identifiers are the same in both; every picture has a German
+  copy (`<name>.de.svg`) with its sentences translated, so the German page
+  shows no English sentence.
 - **Pictures are hand-made SVG files** in
   `apps/portfolio/public/blog/bacteria-wars-turn-relay/`, loaded with
   `<img loading="lazy">` and real `alt` texts, with `width`/`height` set so

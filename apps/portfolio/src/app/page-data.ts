@@ -4,4 +4,6 @@ import { Localized } from './i18n/language';
 export interface PageData {
   title: Localized;
   description: Localized;
+  /** The Open Graph type, `website` unless the page is an article. */
+  type?: 'website' | 'article';
 }

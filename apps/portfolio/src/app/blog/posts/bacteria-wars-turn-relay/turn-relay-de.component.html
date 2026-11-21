@@ -1,4 +1,4 @@
-<wolsok-blog-figure [figure]="figures.walls" />
+<wolsok-blog-figure [figure]="figures.walls" [eager]="true" />
 
 <p>
   <a href="https://bacteria-wars.wolsok.de">Bacteria Wars</a> ist ein
@@ -17,7 +17,8 @@
   Dieser Artikel handelt von der Lösung: einem TURN-Relay. Welches Problem es
   löst, was ein TURN-Server ist, wie das Spiel ihn anbindet, ohne je eine
   Backend-Funktion aufzurufen, und von der einen Überraschung, die jedes
-  Relay-Match nach zehn Minuten sterben ließ.
+  Relay-Match sterben ließe, sobald seine Zugangsdaten ablaufen: Erst ein Test
+  mit Zugangsdaten von einer Minute zeigte sie, nach zehn Minuten.
 </p>
 
 <h2>Peer to Peer, in der Theorie</h2>
@@ -27,9 +28,9 @@
   der Spieler werden übertragen. Jede Eingabe wird sechs Ticks (100 ms) nach
   ihrer Entstehung gespielt, auf beiden Geräten, sie kommt also meist an, bevor
   die andere Seite sie braucht. Das sind ein paar Dutzend Bytes sechzigmal pro
-  Sekunde, etwa 6 MB für ein zehnminütiges Match. Ein Spielserver ist nicht
-  nötig: Die beiden Browser sprechen direkt über einen
-  <strong>WebRTC-Datenkanal</strong>.
+  Sekunde; mit beiden Richtungen und den Headern von UDP, DTLS und SCTP etwa 6
+  MB für ein zehnminütiges Match. Ein Spielserver ist nicht nötig: Die beiden
+  Browser sprechen direkt über einen <strong>WebRTC-Datenkanal</strong>.
 </p>
 <p>
   Um diesen Kanal zu öffnen, müssen die Geräte erst eine Beschreibung ihrer
@@ -144,7 +145,10 @@
       <tr>
         <td><code>srflx</code> (server-reflexive)</td>
         <td>die öffentliche Adresse, die STUN gemeldet hat</td>
-        <td>beide NATs einen Port pro Quelle behalten (Hole Punching)</td>
+        <td>
+          beide NATs einen öffentlichen Port für jedes Ziel behalten (Hole
+          Punching)
+        </td>
       </tr>
       <tr>
         <td><code>relay</code></td>
@@ -189,7 +193,9 @@
   <li>
     <strong>Mindestens die halbe Laufzeit.</strong> Eine Stunde gültig, jede
     halbe Stunde erneuert: Wer das Dokument liest, bekommt 30 Minuten oder mehr.
-    Ein fehlgeschlagenes Erneuern lässt die letzten Zugangsdaten stehen, bis sie
+    Ein Gerät behält seine Kopie, solange noch mindestens 20 Minuten übrig sind,
+    jede neue Verbindung startet also mit mindestens 20 Minuten. Ein
+    fehlgeschlagenes Erneuern lässt die letzten Zugangsdaten stehen, bis sie
     ablaufen.
   </li>
   <li>
@@ -239,7 +245,7 @@
   binnen einer Stunde läuft das Spiel wieder nur mit STUN.
 </p>
 
-<h2>Die Verbindung, die nach zehn Minuten starb</h2>
+<h2>Die Verbindung, die mit ihren Zugangsdaten starb</h2>
 <wolsok-blog-figure [figure]="figures.renewal" />
 <p>
   Der erste Entwurf hörte hier auf, und er wäre kaputt ausgeliefert worden. Vor
@@ -267,10 +273,11 @@
 </ul>
 <p>
   Matches sind kurz, aber eine Lobby, eine Revanche und ein zweites Match dauern
-  schnell länger als eine Stunde. Darum erneuert der Host das Relay einer
-  offenen Verbindung alle 15 Minuten. Er holt frische Zugangsdaten, startet ICE
-  neu und schickt das neue Offer, diesmal nicht über Firestore, sondern über
-  einen zweiten, ausgehandelten Datenkanal neben dem des Spiels:
+  schnell länger als die mindestens 20 Minuten, die die Zugangsdaten einer
+  Verbindung noch haben. Darum erneuert der Host das Relay einer offenen
+  Verbindung alle 15 Minuten. Er holt frische Zugangsdaten, startet ICE neu und
+  schickt das neue Offer, diesmal nicht über Firestore, sondern über einen
+  zweiten, ausgehandelten Datenkanal neben dem des Spiels:
 </p>
 <pre><code>{{ code.renewal }}</code></pre>
 <p>

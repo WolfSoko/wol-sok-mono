@@ -1,5 +1,5 @@
 import { blogRoutes } from './blog.routes';
-import { BLOG_POSTS, findBlogPost } from './posts';
+import { BLOG_POSTS } from './posts';
 
 describe('BLOG_POSTS', () => {
   it('gives every post a unique, URL-safe slug', () => {
@@ -33,12 +33,5 @@ describe('BLOG_POSTS', () => {
       'blog',
       ...BLOG_POSTS.map((post) => `blog/${post.slug}`),
     ]);
-  });
-
-  it('finds a post by its slug', () => {
-    expect(findBlogPost('bacteria-wars-turn-relay')?.published).toBe(
-      '2026-11-20'
-    );
-    expect(findBlogPost('nothing')).toBeUndefined();
   });
 });

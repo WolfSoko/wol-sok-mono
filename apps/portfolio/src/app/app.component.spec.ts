@@ -56,8 +56,14 @@ describe('AppComponent', () => {
       head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
     ).toBe('https://wolsok.de/blog/bacteria-wars-turn-relay');
     expect(document.title).toContain('Through the wall');
+    expect(
+      head.querySelector('meta[property="og:type"]')?.getAttribute('content')
+    ).toBe('article');
 
     await harness.navigateByUrl('/career');
+    expect(
+      head.querySelector('meta[property="og:type"]')?.getAttribute('content')
+    ).toBe('website');
     expect(document.title).toContain('Career');
     TestBed.inject(I18nService).setLanguage('de');
     TestBed.tick();

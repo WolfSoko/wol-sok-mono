@@ -34,6 +34,7 @@ function postRoute(post: BlogPost): Route {
         de: `${post.title.de} – wolsok.de`,
       },
       description: post.summary,
+      type: 'article',
       post,
     } satisfies BlogPostRouteData,
   };

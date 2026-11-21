@@ -42,7 +42,7 @@ export class SeoService {
     while (route.firstChild) {
       route = route.firstChild;
     }
-    const { title, description } = route.data as Partial<PageData>;
+    const { title, description, type } = route.data as Partial<PageData>;
     const path = this.router.url.split(/[?#]/)[0];
     const url = SITE_URL + path;
     if (description) {
@@ -51,6 +51,7 @@ export class SeoService {
       this.meta.updateTag({ property: 'og:description', content: text });
     }
     this.meta.updateTag({ property: 'og:url', content: url });
+    this.meta.updateTag({ property: 'og:type', content: type ?? 'website' });
     if (title) {
       const text = this.i18n.pick(title);
       this.title.setTitle(text);

@@ -42,8 +42,9 @@ await db.collection('relay').doc('turn').set({
   renewal: `// host, every 15 minutes (RELAY_RENEW_MS)
 const servers = await relay.fresh();
 connection.setConfiguration({ iceServers: iceServers(servers) });
-const offer = await connection.createOffer({ iceRestart: true });
-await connection.setLocalDescription(offer);
-signal.send(JSON.stringify({ t: 'offer', sdp: offer.sdp }));
+connection.restartIce();
+await connection.setLocalDescription(await connection.createOffer());
+// describe(): the SDP once its candidates are gathered
+signal.send(JSON.stringify({ t: 'offer', sdp: await describe() }));
 // guest: fresh credentials too, then answers on the same channel`,
 };

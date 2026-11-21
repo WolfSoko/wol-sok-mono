@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
   DOCUMENT,
   inject,
   input,
@@ -11,15 +12,16 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
 import { I18nService } from '../i18n/i18n.service';
 import { SITE_URL } from '../seo.service';
-import { BlogPost, publishedOn } from './blog-post';
+import { BlogPost } from './blog-post';
 import { blogPostingJsonLd } from './blog-post-json-ld';
+import { publishedLabel } from './published-label';
 
 const JSON_LD_ID = 'blog-post-json-ld';
 
 /**
  * The frame every article shares: date, title and lead from its
- * {@link BlogPost}, its `BlogPosting` data in the head, the article's own
- * text projected in, and the links back.
+ * {@link BlogPost}, its `BlogPosting` data in the head while it is open,
+ * the article's own text projected in, and the links at its end.
  */
 @Component({
   selector: 'wolsok-blog-article',
@@ -38,8 +40,10 @@ const JSON_LD_ID = 'blog-post-json-ld';
     <ng-content />
     <footer class="article-foot">
       <a matButton="outlined" routerLink="/blog">← {{ t().blog.back }}</a>
-      @if (playUrl(); as url) {
-        <a matButton="filled" [href]="url">{{ t().blog.playGame }}</a>
+      @if (post().callToAction; as action) {
+        <a matButton="filled" [href]="action.url">{{
+          i18n.pick(action.label)
+        }}</a>
       }
     </footer>
   `,
@@ -47,27 +51,24 @@ const JSON_LD_ID = 'blog-post-json-ld';
 })
 export class BlogArticleComponent implements OnInit {
   public readonly post = input.required<BlogPost>();
-  /** The game the article is about, linked at its end. */
-  public readonly playUrl = input<string>();
 
   protected readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.texts;
   private readonly document = inject(DOCUMENT);
+  private readonly destroyRef = inject(DestroyRef);
 
   protected readonly published = computed(() =>
-    this.i18n.fill(this.t().blog.published, {
-      date: publishedOn(this.post(), this.i18n.locale()),
-    })
+    publishedLabel(this.i18n, this.post())
   );
 
   public ngOnInit(): void {
-    let script = this.document.getElementById(JSON_LD_ID);
-    if (!script) {
-      script = this.document.createElement('script');
-      script.id = JSON_LD_ID;
-      script.setAttribute('type', 'application/ld+json');
-      this.document.head.appendChild(script);
-    }
+    const script = this.document.createElement('script');
+    script.id = JSON_LD_ID;
+    script.setAttribute('type', 'application/ld+json');
     script.textContent = blogPostingJsonLd(this.post(), SITE_URL);
+    this.document.getElementById(JSON_LD_ID)?.remove();
+    this.document.head.appendChild(script);
+    // another page must not carry this article's data
+    this.destroyRef.onDestroy(() => script.remove());
   }
 }

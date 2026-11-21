@@ -40,14 +40,21 @@ describe('TurnRelayPostComponent', () => {
     expect(root.querySelector('h1')?.textContent).toContain('Durch die Wand');
     expect(root.querySelector('wolsok-turn-relay-en')).toBeNull();
     expect(root.textContent).toContain('Wie ICE einen Weg wählt');
+    expect(root.querySelector('img')?.getAttribute('src')).toBe(
+      TURN_RELAY_FIGURES.walls.src.de
+    );
   });
 
   it('shows every picture with its size and alt text', async () => {
     const { root } = await open();
     const images = [...root.querySelectorAll('img')];
     expect(images.map((image) => image.getAttribute('src'))).toEqual(
-      Object.values(TURN_RELAY_FIGURES).map((figure) => figure.src)
+      Object.values(TURN_RELAY_FIGURES).map((figure) => figure.src.en)
     );
+    expect(images.map((image) => image.getAttribute('loading'))).toEqual([
+      'eager',
+      ...Array<string>(images.length - 1).fill('lazy'),
+    ]);
     for (const image of images) {
       expect(image.alt.length).toBeGreaterThan(20);
       expect(image.getAttribute('width')).toMatch(/^\d+$/);
@@ -57,21 +64,31 @@ describe('TurnRelayPostComponent', () => {
 
   it('gives every picture a file, its size and texts in both languages', () => {
     for (const figure of Object.values(TURN_RELAY_FIGURES)) {
-      const file = join(PUBLIC, figure.src);
-      expect(existsSync(file)).toBe(true);
-      for (const text of [figure.alt, figure.caption]) {
+      for (const text of [figure.src, figure.alt, figure.caption]) {
         expect(text.en.trim()).not.toBe('');
         expect(text.de.trim()).not.toBe('');
       }
+      expect(existsSync(join(PUBLIC, figure.src.en))).toBe(true);
+      expect(existsSync(join(PUBLIC, figure.src.de))).toBe(true);
     }
   });
 
-  it('adds the BlogPosting data to the head', async () => {
-    await open();
+  it('carries the BlogPosting data in the head only while it is open', async () => {
+    const { harness } = await open();
     const script = document.getElementById('blog-post-json-ld');
     expect(JSON.parse(script?.textContent ?? '{}')).toMatchObject({
       '@type': 'BlogPosting',
       datePublished: '2026-11-20',
     });
+
+    await harness.navigateByUrl('/blog');
+    expect(document.getElementById('blog-post-json-ld')).toBeNull();
+  });
+
+  it('links the call to action of the post at its end', async () => {
+    const { root } = await open();
+    expect(
+      root.querySelector('.article-foot a[href^="https"]')?.getAttribute('href')
+    ).toBe('https://bacteria-wars.wolsok.de');
   });
 });

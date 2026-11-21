@@ -56,7 +56,6 @@ export const de: Translation<typeof en> = {
     read: 'Artikel lesen',
     published: 'Veröffentlicht am {date}',
     back: 'Alle Artikel',
-    playGame: 'Bacteria Wars spielen',
   },
   career: {
     eyebrow: 'Freiberuflich seit {since}',

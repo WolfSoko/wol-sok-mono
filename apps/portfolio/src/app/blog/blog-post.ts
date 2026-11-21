@@ -10,6 +10,8 @@ export interface BlogPost {
   readonly title: Localized;
   /** One or two sentences: the index's teaser and the page's description. */
   readonly summary: Localized;
+  /** Where the article sends its reader at the end, such as the game it is about. */
+  readonly callToAction?: { readonly label: Localized; readonly url: string };
   /** The article's page, loaded only when it is opened. */
   readonly loadComponent: () => Promise<Type<unknown>>;
 }

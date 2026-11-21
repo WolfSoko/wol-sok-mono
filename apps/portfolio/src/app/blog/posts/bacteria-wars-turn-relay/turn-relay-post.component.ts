@@ -12,10 +12,7 @@ import { TurnRelayEnComponent } from './turn-relay-en.component';
   imports: [BlogArticleComponent, TurnRelayEnComponent, TurnRelayDeComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <wolsok-blog-article
-      [post]="post"
-      playUrl="https://bacteria-wars.wolsok.de"
-    >
+    <wolsok-blog-article [post]="post">
       @switch (i18n.language()) {
         @case ('de') {
           <wolsok-turn-relay-de />
