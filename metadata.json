@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZW4TMNQRR1CB0EKE4JPBTX",
+  "strategy": "manual-commit",
+  "branch": "3180-online-loss-dialog-names-computer",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/bacteria-game-remote/e2e/online.spec.ts",
+    "docs/plans/3180-bacteria-wars-after-an-online-multiplayer-match-the-losing-dialog-says-you-lost-against-the-computer.md",
+    "docs/specs/3180-bacteria-wars-after-an-online-multiplayer-match-the-losing-dialog-says-you-lost-against-the-computer.md",
+    "libs/features/lazy/bacteria-game/src/lib/stage/arena-stage.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/stage/arena-stage.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/game-state.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/game-state.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/game.states.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner-dna.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 144,
+    "cache_creation_tokens": 154361,
+    "cache_read_tokens": 10033451,
+    "output_tokens": 29486,
+    "api_call_count": 72,
+    "subagent_tokens": {
+      "input_tokens": 46,
+      "cache_creation_tokens": 89744,
+      "cache_read_tokens": 2076490,
+      "output_tokens": 11714,
+      "api_call_count": 23
+    }
+  }
+}

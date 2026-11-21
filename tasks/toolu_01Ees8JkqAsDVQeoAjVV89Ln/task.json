@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01Ees8JkqAsDVQeoAjVV89Ln",
+  "agent_id": "a78661bf751539bf3",
+  "subagent_type": "general-purpose",
+  "task_description": "Review #3180 diff vs spec",
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 89744,
+    "cache_read_tokens": 2076490,
+    "output_tokens": 11714,
+    "api_call_count": 23
+  },
+  "started_at": "2026-11-21T21:10:56.701621434+01:00",
+  "completed_at": "2026-11-21T21:14:25.519500708+01:00"
+}
