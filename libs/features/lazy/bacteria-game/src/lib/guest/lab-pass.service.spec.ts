@@ -7,7 +7,12 @@ import {
 import type { Avatar, Profile } from '@wolsok/feat-shared-bacteria-engine';
 import { ProgressService } from '../progress.service';
 import { SocialService } from '../social/social.service';
-import { GameAccount, PlayerProfile } from '../storage/game-account';
+import { Subject } from 'rxjs';
+import {
+  GameAccount,
+  PlayerProfile,
+  PlayerSwitch,
+} from '../storage/game-account';
 import { GuestNotice } from './guest-notice.service';
 import { LabPass } from './lab-pass.service';
 import { SignIn } from './sign-in.service';
@@ -37,6 +42,7 @@ describe('LabPass', () => {
     dismiss: jest.Mock;
   };
   let signIns: ReturnType<typeof signal<number>>;
+  let players: Subject<PlayerSwitch>;
 
   beforeEach(() => {
     analytics = new RecordingAnalytics();
@@ -65,10 +71,14 @@ describe('LabPass', () => {
       dismiss: jest.fn(),
     };
     signIns = signal(0);
+    players = new Subject<PlayerSwitch>();
     TestBed.configureTestingModule({
       providers: [
         provideRecordingAnalytics(analytics),
-        { provide: GameAccount, useValue: { cloud: true, profile: player } },
+        {
+          provide: GameAccount,
+          useValue: { cloud: true, profile: player, players },
+        },
         { provide: SocialService, useValue: social },
         { provide: ProgressService, useValue: progress },
         { provide: GuestNotice, useValue: notice },
@@ -127,6 +137,17 @@ describe('LabPass', () => {
     TestBed.tick();
     expect(labPass.visible()).toBe(false);
     expect(progress.grantAchievement).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the announcement from the next player', () => {
+    const labPass = pass();
+    completeAll();
+    TestBed.tick();
+    expect(labPass.justEarned()).toBe(true);
+
+    players.next({ playerId: 'next-guest', adoptsGuest: false });
+
+    expect(labPass.justEarned()).toBe(false);
   });
 
   it('waits for the progress before it grants', () => {

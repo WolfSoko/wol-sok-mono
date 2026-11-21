@@ -6,6 +6,7 @@ import {
   signal,
   untracked,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AchievementId } from '@wolsok/feat-shared-bacteria-engine';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { ProgressService } from '../progress.service';
@@ -105,6 +106,11 @@ export class LabPass {
   public readonly editorFocus = this.focusState.asReadonly();
 
   public constructor() {
+    // The announcement is the player's who earned it: the next one, after
+    // a sign-in or a sign-out, never sees it.
+    this.account.players
+      .pipe(takeUntilDestroyed())
+      .subscribe(() => this.earnedNow.set(false));
     effect(() => {
       if (this.next() === null && this.progress.loaded() && !this.held()) {
         untracked(() => this.earn());
