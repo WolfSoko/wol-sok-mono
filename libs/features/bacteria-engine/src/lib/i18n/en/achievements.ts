@@ -60,4 +60,8 @@ export const achievements = {
     name: 'Couch War',
     condition: 'Play {count} matches between two players',
   },
+  'lab-member': {
+    name: 'Lab Member',
+    condition: 'Complete your Lab Pass',
+  },
 };
