@@ -33,19 +33,18 @@ export function assertNoFileIsAnotherSourcesFolder(
   if (stagedFolders.length < 2) {
     return;
   }
+  // Within one folder no path is both, so every clash is between sources.
   const trees = stagedFolders.map((folder) => readTree(folder));
-  for (const [index, { files }] of trees.entries()) {
-    const others = trees.filter((_, other) => other !== index);
-    const clash = [...files].find((file) =>
-      others.some(({ folders }) => folders.has(file))
+  const folders = new Set(trees.flatMap((tree) => [...tree.folders]));
+  const clash = trees
+    .flatMap((tree) => [...tree.files])
+    .find((file) => folders.has(file));
+  if (clash !== undefined) {
+    throw new Error(
+      `"${clash}" is a file in one source and a folder in another of the ` +
+        'same deployment. A BucketDeployment unpacks all its sources into ' +
+        'one folder, so add them in separate addExtraAssets calls.'
     );
-    if (clash !== undefined) {
-      throw new Error(
-        `"${clash}" is a file in one source and a folder in another of the ` +
-          'same deployment. A BucketDeployment unpacks all its sources into ' +
-          'one folder, so add them in separate addExtraAssets calls.'
-      );
-    }
   }
 }
 

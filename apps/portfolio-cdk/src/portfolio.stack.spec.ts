@@ -35,11 +35,7 @@ describe('createPortfolioStack', () => {
 
   afterEach(() => rmSync(buildOutput, { recursive: true, force: true }));
 
-  it('synthesizes from a build output with pages below other pages', () => {
-    expect(() => synthesize()).not.toThrow();
-  });
-
-  it('uploads the bare-path pages one depth at a time, no-cache and as HTML', () => {
+  it('synthesizes pages below other pages, uploading them one depth at a time, no-cache and as HTML', () => {
     const deployments = Object.values(
       synthesize().findResources('Custom::CDKBucketDeployment')
     ).map(({ Properties }) => Properties);
