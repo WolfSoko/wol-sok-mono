@@ -101,10 +101,15 @@ export function noticeDue(
   now: number
 ): boolean {
   if (!cameBack && visits.days < NOTICE_FROM_DAY) return false;
+  return !dismissedLately(visits, now);
+}
+
+/** True while "Later" keeps the guest's notice and the Lab Pass away. */
+export function dismissedLately(visits: GuestVisits, now: number): boolean {
   // Either way round: a clock that was off when the notice was put away
   // still keeps it away for two weeks at most.
   return (
-    visits.dismissedAt === null ||
-    Math.abs(now - visits.dismissedAt) >= NOTICE_DISMISSED_MS
+    visits.dismissedAt !== null &&
+    Math.abs(now - visits.dismissedAt) < NOTICE_DISMISSED_MS
   );
 }

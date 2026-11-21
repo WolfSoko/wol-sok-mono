@@ -31,8 +31,10 @@ describe('SignIn', () => {
   });
 
   it('counts a sign-in with Google', async () => {
-    await TestBed.inject(SignIn).signIn();
+    const signIn = TestBed.inject(SignIn);
+    await signIn.signIn();
 
+    expect(signIn.signIns()).toBe(1);
     expect(analytics.events).toEqual([
       { name: 'login', params: { method: 'google' } },
     ]);
@@ -47,6 +49,7 @@ describe('SignIn', () => {
       await signIn.signIn();
 
       expect(signIn.failed()).toBe(how === 'failed');
+      expect(signIn.signIns()).toBe(0);
       expect(analytics.events).toEqual([
         { name: 'login_failed', params: { reason: how } },
       ]);

@@ -17,6 +17,9 @@ export class SignIn {
   private readonly analytics = injectGameAnalytics();
 
   public readonly busy = signal(false);
+  /** Counts the sign-ins that succeeded in this visit - the Lab Pass's cue. */
+  private readonly signInCount = signal(0);
+  public readonly signIns = this.signInCount.asReadonly();
   /** True when the last sign-in or sign-out failed. */
   public readonly failed = signal(false);
   /** True while a sign-in can start. */
@@ -30,6 +33,7 @@ export class SignIn {
       const outcome = await this.account.signIn();
       this.failed.set(outcome === 'failed');
       if (outcome === 'signed-in') {
+        this.signInCount.update((count) => count + 1);
         this.analytics.track('login', { method: 'google' });
       } else {
         this.analytics.track('login_failed', { reason: outcome });
