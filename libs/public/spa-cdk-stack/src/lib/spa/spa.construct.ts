@@ -205,7 +205,9 @@ export class SpaConstruct extends Construct {
    * All assets of one call go into one deployment, which unpacks them into
    * one folder: a file and a path below it, such as `Source.data('blog', …)`
    * and `Source.data('blog/first-post', …)`, cannot share a call. Such a call
-   * throws at synth; add the deeper paths in a call of their own.
+   * throws at synth, after the rejected deployment joined the construct, so
+   * the construct is no longer usable; add the deeper paths in a call of
+   * their own.
    */
   public addExtraAssets(
     assets: ISource[],

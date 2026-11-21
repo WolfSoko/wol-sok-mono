@@ -3,9 +3,10 @@
 Spec: [docs/specs/3170-….md](../specs/3170-spa-cdk-stack-addextraassets-breaks-on-a-file-and-a-path-below-it-in-one-call-add-a-guard-and-a-portfolio-cdk-synth-test.md).
 
 1. **Guard in spa-cdk-stack** (test first)
-   - Files: `libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts` (a function
-     `assertNoFileBelowAnother(deployment)` reading the `Asset` children's staged folders, called in
-     `addUpload`; JSDoc on `addExtraAssets`), `libs/public/spa-cdk-stack/README.md`.
+   - Files: new `libs/public/spa-cdk-stack/src/lib/spa/deployment-sources.ts`
+     (`assertNoFileIsAnotherSourcesFolder(deployment)`, reading the `Asset` children's staged
+     folders), called in `addUpload` of `spa.construct.ts`; JSDoc on `addExtraAssets`;
+     `libs/public/spa-cdk-stack/README.md`.
    - Tests: `stack-spa.spec.ts`: one call with `blog` and `blog/x` throws naming `blog`; two calls
      pass; disjoint `Source.data`/`Source.asset` sources pass; snapshots unchanged.
    - Commit: `fix(spa-cdk-stack): refuse a file and a path below it in one addExtraAssets call`.

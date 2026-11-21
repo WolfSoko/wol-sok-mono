@@ -33,9 +33,10 @@ test that builds its stack from a build output with nested pages.
    output, index and override deployments each have one source, so the guard costs nothing there,
    and a future multi-source upload is covered too.
 3. **Only across sources.** Within one source folder a path cannot be both file and folder.
-4. **`ValidationError`-style message**: `addExtraAssets: "blog" is a file in one source and a folder
-   in another of the same deployment; S3 deployments unpack all sources into one folder, so add them
-   in separate addExtraAssets calls.` A plain `Error`, as the construct's `onlyInclude` throws.
+4. **Message**: `"blog" is a file in one source and a folder in another of the same deployment. A
+   BucketDeployment unpacks all its sources into one folder, so add them in separate addExtraAssets
+   calls.` A plain `Error`, as the construct's `onlyInclude` throws. A folder reached through a
+   symlink counts as a folder.
 5. **portfolio-cdk synth test.** `main.ts` builds its stack inline at import from
    `dist/apps/portfolio`. Its stack setup moves into `src/portfolio.stack.ts`
    (`createPortfolioStack(app, buildOutputPath)`); `main.ts` keeps the `App`, the call and the tags.

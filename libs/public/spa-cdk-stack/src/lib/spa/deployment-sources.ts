@@ -1,7 +1,7 @@
 import { AssetStaging } from 'aws-cdk-lib';
 import { Asset } from 'aws-cdk-lib/aws-s3-assets';
 import { BucketDeployment } from 'aws-cdk-lib/aws-s3-deployment';
-import { existsSync, readdirSync, statSync } from 'node:fs';
+import { Dirent, existsSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 /** The paths below one staged source folder, with `/` between segments. */
@@ -50,8 +50,10 @@ export function assertNoFileIsAnotherSourcesFolder(
 }
 
 function stagedFolderOf(asset: Asset): string | undefined {
-  const staging = asset.node.tryFindChild('Stage');
-  if (!(staging instanceof AssetStaging)) {
+  const staging = asset.node.children.find(
+    (child): child is AssetStaging => child instanceof AssetStaging
+  );
+  if (staging === undefined) {
     return undefined;
   }
   const folder = staging.absoluteStagedPath;
@@ -70,6 +72,9 @@ function readTree(root: string): SourceTree {
       if (entry.isDirectory()) {
         tree.folders.add(path);
         visit(path);
+      } else if (isLinkToFolder(join(root, path), entry)) {
+        // Not followed, so a link loop cannot recurse forever.
+        tree.folders.add(path);
       } else {
         tree.files.add(path);
       }
@@ -77,4 +82,12 @@ function readTree(root: string): SourceTree {
   };
   visit('');
   return tree;
+}
+
+/** A link to a folder, which the deployment unpacks as a folder. */
+function isLinkToFolder(path: string, entry: Dirent): boolean {
+  return (
+    entry.isSymbolicLink() &&
+    statSync(path, { throwIfNoEntry: false })?.isDirectory() === true
+  );
 }
