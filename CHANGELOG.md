@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.175.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.175.0...v74.175.1) (2026-11-21)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** wait for the work in timing-sensitive bacteria specs ([#3149](https://github.com/WolfSoko/wol-sok-mono/issues/3149)) ([#3173](https://github.com/WolfSoko/wol-sok-mono/issues/3173)) ([7b6573c](https://github.com/WolfSoko/wol-sok-mono/commit/7b6573ce4bccefe1336a0fc2568323fccc025a04))
+
 ## [74.175.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.174.0...v74.175.0) (2026-11-21)
 
 ### Features
