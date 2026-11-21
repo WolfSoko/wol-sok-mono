@@ -34,6 +34,8 @@ export interface RoomPlayer {
   avatar: Avatar | null;
   /** True for the player at this device. */
   you: boolean;
+  /** True to tag them as "You" - not when "You" is their name already. */
+  youTag: boolean;
   /** Their colony's colour, as a CSS colour. */
   color: string;
   /** True for the winner of the match just played. */
@@ -90,12 +92,16 @@ export class OnlineRoomComponent {
       name: opponent?.name ?? this.i18n.t('online.room.opponent'),
       avatar: opponent?.avatar ?? null,
     };
-    return ([0, 1] as const).map((index) => ({
-      ...(index === seat.seat ? me : them),
-      you: index === seat.seat,
-      color: cssColor(seat.colors[index]),
-      won: this.winner() === index,
-    }));
+    return ([0, 1] as const).map((index) => {
+      const you = index === seat.seat;
+      return {
+        ...(you ? me : them),
+        you,
+        youTag: you && own !== null,
+        color: cssColor(seat.colors[index]),
+        won: this.winner() === index,
+      };
+    });
   });
 
   /** The level of the next match. */

@@ -114,7 +114,6 @@ export const match: Translation<typeof en> = {
   actions: {
     playLevel: '{level} spielen',
     menu: 'Hauptmenü',
-    guestWaits: 'Dein Gegner startet das nächste Match.',
     connectionGone: 'Die Verbindung zu deinem Gegner ist weg.',
     newRun: 'Neuer Lauf',
     nextLevel: 'Nächstes Level',

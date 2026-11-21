@@ -21,13 +21,14 @@
             </span>
           }
           <span class="name">{{ player.name }}</span>
+          @if (player.youTag) {
+            <span class="tag">{{ "online.room.you" | t }}</span>
+          }
           @if (player.won) {
             <span class="tag won-tag">
               <mat-icon aria-hidden="true">emoji_events</mat-icon>
               {{ "online.room.won" | t }}
             </span>
-          } @else if (player.you) {
-            <span class="tag">{{ "online.room.you" | t }}</span>
           }
         </div>
         @if (first) {

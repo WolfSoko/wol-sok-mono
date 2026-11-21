@@ -275,6 +275,7 @@ describe('WinnerComponent', () => {
       store.update({
         winner: createPlayer({ id: 1, name: 'Opponent' }),
         levelId: played.id,
+        endedOn: played.id,
         online: { seat, levelId: played.id, colors: ['orange', 'blue'] },
         earnings: null,
       });
@@ -309,13 +310,24 @@ describe('WinnerComponent', () => {
       expect(textOf(result)).toContain(`Play ${picked.name}`);
     });
 
+    it('keeps the level played once the connection is gone', () => {
+      const result = onlineResult(1);
+
+      store.update({ online: null, levelId: picked.id });
+      result.detectChanges();
+
+      expect(
+        result.nativeElement.querySelector('.level-info')?.textContent
+      ).toContain(played.name);
+    });
+
     it('shows the guest the room and has them wait for the host', () => {
       const result = onlineResult(1);
 
       expect(
         result.nativeElement.querySelector('feat-lazy-bac-game-online-room')
       ).not.toBeNull();
-      expect(textOf(result)).toContain('Your opponent starts the next match.');
+      expect(textOf(result)).toContain('is choosing the level');
       expect(textOf(result)).not.toContain('Play ');
     });
   });

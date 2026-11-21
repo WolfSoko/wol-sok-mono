@@ -305,6 +305,7 @@ export class GameStateService {
       height,
       winner: null,
       endedBy: null,
+      endedOn: null,
       earnings: null,
     });
     // subscribe update time passed when game running
@@ -366,6 +367,7 @@ export class GameStateService {
       currentState: GameState.END,
       winner: outcome.winner,
       endedBy: outcome.reason,
+      endedOn: this.gameStateStore.level().id,
       earnings,
       series:
         series === null
@@ -718,7 +720,12 @@ export class GameStateService {
    * - not during one, which keeps the rules it started with.
    */
   private respawnIfIdle(): void {
-    if (this.isIdle()) {
+    // A match it ended stays on the board under its result until reset -
+    // the host of an online room picks the next level right there.
+    if (
+      this.isIdle() &&
+      this.gameStateStore.snapshot().currentState !== GameState.END
+    ) {
       this.initPlayers();
     }
   }
@@ -908,6 +915,7 @@ export class GameStateService {
       timePassed: 0,
       winner: null,
       endedBy: null,
+      endedOn: null,
       earnings: null,
     }));
     return true;
@@ -939,6 +947,7 @@ export class GameStateService {
       timePassed: 0,
       winner: null,
       endedBy: null,
+      endedOn: null,
       earnings: null,
     }));
   }
@@ -1002,7 +1011,8 @@ function nextSeries(series: Series | null, length: SeriesLength): Series {
 }
 
 /** The seat of the player who won - 0 left, 1 right - null for a draw. */
-function winnerSeat(winner: Player | null): 0 | 1 | null {
+/** The seat of a match's winner - null on a draw. */
+export function winnerSeat(winner: Player | null): 0 | 1 | null {
   return winner === null ? null : winner.id === 0 ? 0 : 1;
 }
 

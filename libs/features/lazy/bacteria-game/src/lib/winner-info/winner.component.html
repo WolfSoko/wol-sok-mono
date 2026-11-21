@@ -208,7 +208,7 @@
     {{ "match.actions.menu" | t }}
   </button>
   @if (onlineGuest()) {
-    <p class="online-wait">{{ "match.actions.guestWaits" | t }}</p>
+    <!-- The room says that the opponent picks the next match. -->
   } @else if (online() && !connected()) {
     <p class="online-wait">{{ "match.actions.connectionGone" | t }}</p>
   } @else if (endlessAction(); as label) {

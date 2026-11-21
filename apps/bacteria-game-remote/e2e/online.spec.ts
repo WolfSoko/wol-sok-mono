@@ -112,10 +112,14 @@ test('two devices share a room: the host picks the level, the guest sees it, bef
   // Both see the result with the room: one win counted, the host picks on.
   for (const { po } of [host, guest]) {
     await expect(po.winner).toBeVisible({ timeout: 240_000 });
-    await expect(po.room.locator('.tally')).toHaveText(/(1\s*:\s*0|0\s*:\s*1)/);
+    // One win counted - or none for a draw.
+    await expect(po.room.locator('.tally')).toHaveText(
+      /^\s*[01]\s*:\s*[01]\s*$/
+    );
   }
-  await expect(guest.po.winner).toContainText(
-    'Your opponent starts the next match.'
+  await expect(guest.po.room).toContainText('is choosing the level');
+  await expect(guest.page.getByRole('button', { name: /^Play / })).toHaveCount(
+    0
   );
   await host.po.pickRoomLevel('Petri Dish');
   await expect(guest.po.room.locator('.next-title')).toHaveText(/Petri Dish/);

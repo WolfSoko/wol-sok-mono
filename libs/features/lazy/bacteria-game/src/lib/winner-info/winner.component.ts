@@ -65,6 +65,7 @@ import { EvolutionService } from '../evolution.service';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
 import { OnlineRoomComponent } from '../menu/online-room.component';
 import { canRaceAsGhost } from '../state/match-rules';
+import { winnerSeat } from '../state/game-state.service';
 
 /** What the player picked when the match was over. */
 export type MatchEndAction =
@@ -130,19 +131,18 @@ export class WinnerComponent {
   public winner: Signal<Player | null> = this.state.winner;
 
   /**
-   * The level that was just played - held online, where the host picks the
-   * next match's level on this screen.
+   * The level that was just played - not the setup's, which the host of an
+   * online room changes on this screen for the next match.
    */
-  private readonly playedLevel = untracked(this.state.level);
-  public level: Signal<Level> = computed(() =>
-    this.state.online() === null ? this.state.level() : this.playedLevel
-  );
+  public readonly level: Signal<Level> = computed(() => {
+    const endedOn = this.state.endedOn();
+    return endedOn === null ? this.state.level() : getLevel(endedOn);
+  });
 
   /** The seat that won an online match, for the room - null on a draw. */
-  public readonly winnerSeat: Signal<0 | 1 | null> = computed(() => {
-    const id = this.winner()?.id;
-    return id === 0 || id === 1 ? id : null;
-  });
+  public readonly winnerSeat: Signal<0 | 1 | null> = computed(() =>
+    winnerSeat(this.winner())
+  );
 
   /** The level the host starts next online, as the room shows it. */
   public readonly onlineNext: Signal<Level | null> = computed(() => {

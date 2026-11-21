@@ -96,6 +96,12 @@ export interface GameStateState {
    */
   endedBy: EndReason | null;
   /**
+   * The level the match that ended was played on - kept for its result,
+   * while the setup may already name the next one (an online room's host
+   * picks it on the result). Null before a match ended.
+   */
+  endedOn: string | null;
+  /**
    * What the match that just ended earned - null until a match is over, and
    * after one against the computer without a human in it.
    */
@@ -150,6 +156,7 @@ export function createInitialState(): GameStateState {
     height: 320,
     winner: null,
     endedBy: null,
+    endedOn: null,
     earnings: null,
     keysPressed: [],
     levelId: LEVELS[0].id,

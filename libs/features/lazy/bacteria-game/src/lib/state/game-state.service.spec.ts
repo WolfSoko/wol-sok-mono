@@ -990,6 +990,17 @@ describe('GameStateService online', () => {
     expect(TestBed.inject(RoomTally).tally()).toEqual([0, 1]);
   });
 
+  it('keeps the finished board under the result while the host picks the next level', () => {
+    online.connect(0);
+    store.update({ currentState: GameState.END });
+    const init = jest.spyOn(TestBed.inject(PlayerService), 'init');
+
+    service.setLevel('serpentine');
+
+    expect(store.snapshot().online?.levelId).toBe('serpentine');
+    expect(init).not.toHaveBeenCalled();
+  });
+
   it('starts nothing as the guest until the host started', () => {
     online.connect(1);
 
