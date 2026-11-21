@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7YECKFER5RPN3C47WC22X7C",
+  "strategy": "manual-commit",
+  "branch": "3164-better-online-game-experience",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/campaign.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/campaign.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/hud/hud-state.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/online.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/level-map.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/menu-cards.ts",
+    "libs/features/lazy/bacteria-game/src/lib/menu/online-room.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/stage/arena-stage.ts",
+    "libs/features/lazy/bacteria-game/src/lib/stage/stage-frame.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/game-state.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/game.states.ts",
+    "libs/features/lazy/bacteria-game/src/lib/state/match-rules.ts",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/winner-info/winner.component.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 56,
+    "cache_creation_tokens": 38803,
+    "cache_read_tokens": 7477815,
+    "output_tokens": 18127,
+    "api_call_count": 23,
+    "subagent_tokens": {
+      "input_tokens": 124,
+      "cache_creation_tokens": 413250,
+      "cache_read_tokens": 5335003,
+      "output_tokens": 30518,
+      "api_call_count": 62
+    }
+  }
+}
