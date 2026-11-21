@@ -1,0 +1,17 @@
+<task-notification>
+<task-id>bxphednbt</task-id>
+<tool-use-id>toolu_01HrixeJThXzgquyXASzFxD3</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/tasks/bxphednbt.output</output-file>
+<status>completed</status>
+<summary>Background command "rm -rf test-results &amp;&amp; npx nx run-many -p feat-bacteria-rendering feat-lazy-bacteria-game -t test,lint,lint-templates,typecheck-specs --output-style=static &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/scratchpad/checks.log 2&gt;&amp;1; echo exit $?; grep -E "Successfully|Failed|failed|✖|error" /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/scratchpad/checks.log | head -20" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bjbzxszz9</task-id>
+<tool-use-id>toolu_01WinA36diQ8FZEie7Pd5NYf</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/tasks/bjbzxszz9.output</output-file>
+<status>completed</status>
+<summary>Background command "npx nx run-many -p feat-lazy-bacteria-game feat-bacteria-rendering -t test --parallel=1 --output-style=static &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/scratchpad/test2.log 2&gt;&amp;1; echo exit $?; grep -E "Tests:|^FAIL|● .*›" /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/scratchpad/test2.log | head" completed (exit code 0)</summary>
+</task-notification>
