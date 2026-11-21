@@ -4,6 +4,6 @@
   "private": true,
   "license": "MIT",
   "peerDependencies": {
-    "aws-cdk-lib": "2.274.0"
+    "aws-cdk-lib": "2.278.0"
   }
 }
