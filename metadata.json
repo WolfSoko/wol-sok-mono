@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZSSJA815S21B64HERGTBWJ",
+  "strategy": "manual-commit",
+  "branch": "3174-arena-smears",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3174-bacteria-wars-the-arena-draws-smears-streaks-again-regression-of-pr-2742.md",
+    "docs/specs/3174-bacteria-wars-the-arena-draws-smears-streaks-again-regression-of-pr-2742.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 160,
+    "cache_creation_tokens": 230484,
+    "cache_read_tokens": 14528409,
+    "output_tokens": 57719,
+    "api_call_count": 80
+  }
+}
