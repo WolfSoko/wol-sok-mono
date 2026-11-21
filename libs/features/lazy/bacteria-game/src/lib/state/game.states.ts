@@ -194,6 +194,7 @@ export const GameStateStore = signalStore(
       mode,
       seriesLength,
       endedBy,
+      endedOn,
       online,
       colors,
       countdown,
@@ -207,6 +208,10 @@ export const GameStateStore = signalStore(
         })
       );
       const level = computed(() => getLevel(rules().levelId));
+      const boardLevel = computed(() => {
+        const id = endedOn();
+        return id === null ? level() : getLevel(id);
+      });
       const winRule = computed(() => winRuleOf(level()));
       const gameSeconds = computed(() => Math.floor(timePassed() / 1000));
       return {
@@ -216,6 +221,12 @@ export const GameStateStore = signalStore(
         matchRules: rules,
         /** The level of the next match: one picked for it, or the selected one. */
         level,
+        /**
+         * The level on the board: the one the match on the board was played
+         * on until it is reset, the next match's before - online, the host
+         * picks the next level while the last one's result is shown.
+         */
+        boardLevel,
         /** How the next match is won. */
         winRule,
         /** True while a match is on, paused or not. */

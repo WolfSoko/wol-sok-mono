@@ -10,7 +10,6 @@ import {
   holdTarget,
   NEUTRAL_COLOR,
   nextLevel,
-  ONLINE_LOCKS,
   readableOn,
   rivalryScore,
 } from '@wolsok/feat-shared-bacteria-engine';
@@ -71,8 +70,8 @@ export class HudState {
   /** True while an online match waits for the other device. */
   public readonly waitingForPeer = this.store.waitingForPeer;
 
-  /** The level the next match is played on. */
-  public readonly level = this.store.level;
+  /** The level on the board - the last match's under its result. */
+  public readonly level = this.store.boardLevel;
   /** Its name in the HUD: "3 · Hourglass". */
   public readonly levelName = computed(() => levelNameText(this.level()));
   /** The level that follows the selected one, null at the end of the list. */
@@ -197,11 +196,9 @@ export class HudState {
   /** Why the level after the selected one is locked, null when it is open. */
   public readonly upcomingLock = computed(() => {
     const upcoming = this.upcomingLevel();
-    const locks =
-      this.store.matchRules().locks === 'online'
-        ? ONLINE_LOCKS
-        : this.campaign.locks();
-    return upcoming === null ? null : (locks[upcoming.id] ?? null);
+    return upcoming === null
+      ? null
+      : (this.campaign.locks()[upcoming.id] ?? null);
   });
   /** True where Restart may start the match again - see `matchRules`. */
   public readonly canRestart = computed(

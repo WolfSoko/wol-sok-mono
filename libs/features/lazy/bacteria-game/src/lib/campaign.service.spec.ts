@@ -4,7 +4,11 @@ import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
 import { GameStateStore } from './state/game.states';
-import { LEVELS, levelTitle } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  LEVELS,
+  levelTitle,
+  ONLINE_LOCKS,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { GameStorage } from './storage/game-storage';
 import { LateGameStorage } from '../testing/late-game-storage';
 
@@ -53,7 +57,7 @@ describe('CampaignService', () => {
     expect(campaign.locks()).toEqual({});
   });
 
-  it('leaves the level of an online room to its host, locked on the ladder or not', () => {
+  it('leaves the level of an online room to its host, with only the online locks', () => {
     const campaign = create();
     store.update({
       online: { seat: 0, levelId: LEVELS[0].id, colors: ['orange', 'blue'] },
@@ -62,7 +66,7 @@ describe('CampaignService', () => {
     gameState.setLevel(LEVELS[6].id);
     TestBed.tick();
 
-    expect(campaign.locks()).toEqual({});
+    expect(campaign.locks()).toEqual(ONLINE_LOCKS);
     expect(store.levelId()).toBe(LEVELS[6].id);
   });
 

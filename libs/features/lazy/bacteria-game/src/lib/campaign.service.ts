@@ -11,6 +11,7 @@ import {
   isLadderLevel,
   LEVELS,
   medalTally,
+  ONLINE_LOCKS,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GameStateStore } from './state/game.states';
 import { GameStateService } from './state/game-state.service';
@@ -68,7 +69,7 @@ export class CampaignService {
     () =>
       this.mode() === 'vs-computer' &&
       !this.settings.value('freePlay') &&
-      this.store.online() === null
+      this.store.matchRules().locks === 'campaign'
   );
 
   /**
@@ -76,9 +77,12 @@ export class CampaignService {
    * and all of them in free play, between two players and online, who have
    * nothing to prove to the computer.
    */
-  public readonly locks = computed((): Readonly<Record<string, string>> =>
-    this.onLadder() ? this.progress.ladderLocks() : {}
-  );
+  public readonly locks = computed((): Readonly<Record<string, string>> => {
+    if (this.store.matchRules().locks === 'online') {
+      return ONLINE_LOCKS;
+    }
+    return this.onLadder() ? this.progress.ladderLocks() : {};
+  });
 
   constructor() {
     // On the ladder, the next match is on a level of it that is open - a

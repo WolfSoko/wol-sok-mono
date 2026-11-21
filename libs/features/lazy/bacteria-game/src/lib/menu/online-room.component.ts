@@ -6,16 +6,12 @@ import {
   input,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { rgba } from '@wolsok/feat-bacteria-rendering';
 import {
   type Avatar,
   getColonyColor,
-  getLevel,
-  LEVELS,
-  levelSize,
-  levelTitleText,
   MATCH_LEVELS,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { renderGameText, type GameText } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { RoomTally } from '../net/room-tally';
@@ -26,7 +22,7 @@ import { GameStateStore } from '../state/game.states';
 import { LevelCard, LevelCardComponent } from './level-card.component';
 import { LevelPreviewComponent } from './level-preview.component';
 import { LevelPreviewService } from './level-preview.service';
-import { levelColors } from './menu-cards';
+import { levelCard } from './menu-cards';
 
 /** One player of the room, as the room shows them. */
 export interface RoomPlayer {
@@ -89,7 +85,7 @@ export class OnlineRoomComponent {
       avatar: own?.avatar ?? null,
     };
     const them = {
-      name: opponent?.name ?? this.i18n.t('online.room.opponent'),
+      name: opponent?.name ?? this.i18n.t('newGame.opponent'),
       avatar: opponent?.avatar ?? null,
     };
     return ([0, 1] as const).map((index) => {
@@ -129,30 +125,11 @@ export class OnlineRoomComponent {
     }
   }
 
-  /**
-   * A level's card: its place on the ladder, its title in the active
-   * language and its arena's colours. Online there are no medallions and
-   * no locks.
-   */
   private card(id: string): LevelCard {
-    const level = getLevel(id);
-    return {
-      id: level.id,
-      badge: String(LEVELS.indexOf(level) + 1),
-      title: this.text(levelTitleText(level)),
-      lock: null,
-      ...levelColors(level.id),
-      size: levelSize(level),
-      medals: [],
-    };
-  }
-
-  private text(text: GameText): string {
-    return renderGameText(text, (key, params) => this.i18n.t(key, params));
+    return levelCard(id, (key, params) => this.i18n.t(key, params));
   }
 }
 
 function cssColor(colorId: string): string {
-  const [r, g, b] = getColonyColor(colorId).rgb;
-  return `rgb(${r} ${g} ${b})`;
+  return rgba(getColonyColor(colorId).rgb);
 }

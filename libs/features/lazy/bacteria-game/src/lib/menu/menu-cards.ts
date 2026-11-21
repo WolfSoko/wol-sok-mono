@@ -1,6 +1,19 @@
 import { arenaTheme, cssTriple } from '@wolsok/feat-bacteria-rendering';
-import type { GameText } from '../i18n/game-texts';
-import { DAILY_ATTEMPTS } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  levelTitleText,
+  recipeKeys,
+  renderGameText,
+  type GameText,
+} from '../i18n/game-texts';
+import type { I18nService } from '../i18n/i18n.service';
+import {
+  DAILY_ATTEMPTS,
+  getLevel,
+  LEVELS,
+  levelSize,
+  parseGeneratedId,
+} from '@wolsok/feat-shared-bacteria-engine';
+import type { LevelCard } from './level-card.component';
 
 /** Today's daily level as the menus show it. */
 export interface DailyCard {
@@ -36,4 +49,30 @@ export function endlessNoteText(best: number): GameText {
 export function levelColors(id: string): { floor: string; edge: string } {
   const theme = arenaTheme(id);
   return { floor: cssTriple(theme.floor), edge: cssTriple(theme.border) };
+}
+
+/**
+ * A level's card: its badge - its place on the ladder, or the style of a
+ * generated one - its title in the active language, its arena's colours
+ * and the size of its map, with the lock and the medallions the level
+ * choice gives it (none by default).
+ */
+export function levelCard(
+  id: string,
+  t: I18nService['t'],
+  extras: Pick<LevelCard, 'lock' | 'medals'> = { lock: null, medals: [] }
+): LevelCard {
+  const level = getLevel(id);
+  const made = parseGeneratedId(id);
+  return {
+    id,
+    badge:
+      made === null
+        ? String(LEVELS.indexOf(level) + 1)
+        : t(recipeKeys(made.recipe).label),
+    title: renderGameText(levelTitleText(level), t),
+    ...levelColors(id),
+    size: levelSize(level),
+    ...extras,
+  };
 }

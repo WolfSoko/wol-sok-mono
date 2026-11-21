@@ -36,7 +36,6 @@ export const online: Translation<typeof en> = {
   room: {
     label: 'Euer Raum',
     you: 'Du',
-    opponent: 'Gegner',
     tally: 'Siege in diesem Raum: {host} zu {guest}',
     won: 'Gewonnen',
     next: 'Nächstes Level',

@@ -40,7 +40,6 @@ export const online = {
   room: {
     label: 'Your room',
     you: 'You',
-    opponent: 'Opponent',
     tally: 'Wins in this room: {host} to {guest}',
     won: 'Won',
     next: 'Next level',

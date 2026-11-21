@@ -95,6 +95,7 @@ import {
   canRaceAsGhost,
   rematchOf,
   SETUP_MATCH,
+  winnerSeat,
 } from './match-rules';
 
 /**
@@ -245,10 +246,7 @@ export class GameStateService {
       this.endMatch({ winner, reason: 'forfeit' });
     }
     this.gameStateStore.update({ online: null, waitingForPeer: false });
-    // A match it ended stays on the board under its result until reset.
-    if (!matchOn) {
-      this.respawnIfIdle();
-    }
+    this.respawnIfIdle();
   }
 
   private isRunning(): boolean {
@@ -720,12 +718,7 @@ export class GameStateService {
    * - not during one, which keeps the rules it started with.
    */
   private respawnIfIdle(): void {
-    // A match it ended stays on the board under its result until reset -
-    // the host of an online room picks the next level right there.
-    if (
-      this.isIdle() &&
-      this.gameStateStore.snapshot().currentState !== GameState.END
-    ) {
+    if (this.isIdle()) {
       this.initPlayers();
     }
   }
@@ -746,8 +739,14 @@ export class GameStateService {
    * True while nobody is playing - the only time the colonies may be spawned
    * again. A paused match is still a match and keeps its colonies.
    */
+  /**
+   * True while the board waits for a match: none is on, and no result is
+   * shown - a match it ended stays on the board under its result until
+   * reset, while the host of an online room picks the next level there.
+   */
   private isIdle(): boolean {
-    return !isMatchOn(this.gameStateStore.snapshot().currentState);
+    const { currentState } = this.gameStateStore.snapshot();
+    return !isMatchOn(currentState) && currentState !== GameState.END;
   }
 
   /**
@@ -1008,12 +1007,6 @@ function nextSeries(series: Series | null, length: SeriesLength): Series {
   return series !== null && seriesWinner(series) === null
     ? series
     : newSeries(length);
-}
-
-/** The seat of the player who won - 0 left, 1 right - null for a draw. */
-/** The seat of a match's winner - null on a draw. */
-export function winnerSeat(winner: Player | null): 0 | 1 | null {
-  return winner === null ? null : winner.id === 0 ? 0 : 1;
 }
 
 /** The parts of the setup a match is started with. */

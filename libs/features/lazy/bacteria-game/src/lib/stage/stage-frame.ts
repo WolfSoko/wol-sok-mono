@@ -67,7 +67,7 @@ export class StageFrame {
   private readonly skin = inject(EvolutionService).worn;
   /** The look the computer wears on the level - see `seatLooks`. */
   private readonly computerLook = computed(() =>
-    computerLook(this.store.level().id)
+    computerLook(this.store.boardLevel().id)
   );
 
   /** The bubbles and the mist in the dish, over the arena - null without a painter. */

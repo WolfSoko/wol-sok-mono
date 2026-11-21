@@ -149,7 +149,7 @@ export class ArenaStage {
       : ONLINE_SIM_RESOLUTION
   );
   /** How many times the base arena the level's map is along each side. */
-  public readonly mapSize = computed(() => levelSize(this.store.level()));
+  public readonly mapSize = computed(() => levelSize(this.store.boardLevel()));
   /**
    * The arena in cells, as fine as the simulation resolution asks for and
    * as big as the level's map.
@@ -159,22 +159,22 @@ export class ArenaStage {
   );
   /** Balance of the selected level - drives both rendering and the scoreboard. */
   public readonly balance: Signal<GameBalance> = computed(() => {
-    const level = this.store.level();
+    const level = this.store.boardLevel();
     return levelBalance(level, gridScale(level, this.arena().width));
   });
   /** Walls of the selected level, drawn every frame. */
   public readonly walls: Signal<Rect[]> = computed(() => {
     const { width, height } = this.arena();
-    return levelMap(this.store.level()).createWalls(width, height);
+    return levelMap(this.store.boardLevel()).createWalls(width, height);
   });
   /** Zones of the selected level, drawn under the walls. */
   public readonly zones: Signal<Zone[]> = computed(() => {
     const { width, height } = this.arena();
-    return mapZones(levelMap(this.store.level()), width, height);
+    return mapZones(levelMap(this.store.boardLevel()), width, height);
   });
   /** How the selected level looks and sounds. */
   public readonly theme: Signal<ArenaTheme> = computed(() =>
-    arenaTheme(this.campaign.activeArena() ?? this.store.level().id)
+    arenaTheme(this.campaign.activeArena() ?? this.store.boardLevel().id)
   );
   /** The frame colour of the arena, as a CSS `rgb()` triple. */
   public readonly arenaBorder = computed(() => cssTriple(this.theme().border));
