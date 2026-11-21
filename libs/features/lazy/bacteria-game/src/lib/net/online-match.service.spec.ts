@@ -141,6 +141,37 @@ describe('OnlineMatchService between two devices', () => {
       expect(guest.online.peer()).toBe('ada');
     });
 
+    it.each(['direct', 'relay'] as const)(
+      'reports the link and its route on both devices (%s)',
+      async (route) => {
+        transport.routeAs(route);
+
+        await connected();
+
+        expect(analytics.tracked('online_connected')).toEqual([
+          { role: 'guest', matchmade: false, route },
+          { role: 'host', matchmade: false, route },
+        ]);
+      }
+    );
+
+    it('reports the route of a link that closed before its statistics came', async () => {
+      let release: (route: 'relay') => void = () => undefined;
+      transport.routeAs(new Promise((resolve) => (release = resolve)));
+      const { guest } = await connected();
+
+      guest.online.leave();
+      await flush();
+      expect(analytics.tracked('online_connected')).toEqual([]);
+
+      release('relay');
+      await flush();
+      expect(analytics.tracked('online_connected')).toEqual([
+        { role: 'guest', matchmade: false, route: 'relay' },
+        { role: 'host', matchmade: false, route: 'relay' },
+      ]);
+    });
+
     it('hands both devices the relay for their offer and answer', async () => {
       const relay = {
         urls: ['turn:turn.cloudflare.com:3478?transport=udp'],

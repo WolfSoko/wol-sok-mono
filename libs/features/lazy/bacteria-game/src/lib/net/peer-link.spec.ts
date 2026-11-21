@@ -26,6 +26,9 @@ class FakeRtcConnection {
   /** The channels made, by id: 0 the game's, 1 the link's own signals. */
   public readonly channels = new Map<number, ReturnType<typeof fakeChannel>>();
   public readonly restartIce = jest.fn();
+  /** What `getStats()` resolves with: no selected pair unless set. */
+  public stats: () => Promise<RTCStatsReport> = async () =>
+    new Map() as unknown as RTCStatsReport;
 
   public constructor(public configuration: RTCConfiguration) {
     // As a browser refuses a configuration with a URL it cannot read.
@@ -69,6 +72,9 @@ class FakeRtcConnection {
   public async setRemoteDescription() {
     return undefined;
   }
+  public getStats(): Promise<RTCStatsReport> {
+    return this.stats();
+  }
   public close(): void {
     this.connectionState = 'closed';
   }
@@ -78,6 +84,15 @@ class FakeRtcConnection {
     this.connectionState = state;
     this.onconnectionstatechange?.();
   }
+}
+
+/** The connection the transport made last. */
+function lastConnection(): FakeRtcConnection {
+  const connection = FakeRtcConnection.last;
+  if (connection === null) {
+    throw new Error('No connection made.');
+  }
+  return connection;
 }
 
 describe('WebRtcTransport', () => {
@@ -170,12 +185,49 @@ describe('WebRtcTransport', () => {
     expect(fresh).not.toHaveBeenCalled();
   });
 
+  it('reads the route from the statistics', async () => {
+    const { link } = await new WebRtcTransport().offer(noRelay);
+    const connection = lastConnection();
+    const entries = [
+      { id: 'L', type: 'local-candidate', candidateType: 'relay' },
+      { id: 'R', type: 'remote-candidate', candidateType: 'srflx' },
+      {
+        id: 'P',
+        type: 'candidate-pair',
+        localCandidateId: 'L',
+        remoteCandidateId: 'R',
+      },
+      { id: 'T', type: 'transport', selectedCandidatePairId: 'P' },
+    ];
+    connection.stats = async () =>
+      new Map(
+        entries.map((entry) => [entry.id, entry])
+      ) as unknown as RTCStatsReport;
+
+    await expect(link.route()).resolves.toBe('relay');
+  });
+
+  it('knows no route when the statistics cannot be read', async () => {
+    const warn = jest
+      .spyOn(console, 'warn')
+      .mockImplementation(() => undefined);
+    const { link } = await new WebRtcTransport().offer(noRelay);
+    const connection = lastConnection();
+    connection.stats = async () => {
+      throw new Error('closed');
+    };
+
+    try {
+      await expect(link.route()).resolves.toBe('unknown');
+      expect(warn).toHaveBeenCalled();
+    } finally {
+      warn.mockRestore();
+    }
+  });
+
   it('waits five seconds at most for the candidates', async () => {
     const offering = new WebRtcTransport().offer(noRelay);
-    const connection = FakeRtcConnection.last;
-    if (connection === null) {
-      throw new Error('No connection made.');
-    }
+    const connection = lastConnection();
     connection.iceGatheringState = 'gathering';
     let done = false;
     void offering.then(() => (done = true));

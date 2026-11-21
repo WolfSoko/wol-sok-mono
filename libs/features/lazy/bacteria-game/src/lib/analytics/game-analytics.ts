@@ -4,6 +4,7 @@ import type {
   EndReason,
   SimulationVariant,
 } from '@wolsok/feat-shared-bacteria-engine';
+import type { ConnectionRoute } from '../net/connection-route';
 
 /** How a match is played, as the statistics tell the modes apart. */
 export type MatchKind =
@@ -80,8 +81,16 @@ export type GameEvents = {
   matchmaking_found: { wait_sec: number };
   /** `found`: the player gave up a match already found. */
   matchmaking_cancelled: { found: boolean; wait_sec: number };
-  /** The two devices of an online match are linked. */
-  online_connected: { role: string; matchmade: boolean };
+  /**
+   * The two devices of an online match are linked: `route` whether the
+   * link runs `direct` or through the TURN `relay` (`unknown` where the
+   * browser cannot tell).
+   */
+  online_connected: {
+    role: string;
+    matchmade: boolean;
+    route: ConnectionRoute;
+  };
   /**
    * The online link ended with a notice to the player: `reason` how (`lost`,
    * `left`), `notice` the text's key, which says why, and `failure` why
