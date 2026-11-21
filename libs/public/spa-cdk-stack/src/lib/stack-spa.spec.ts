@@ -227,16 +227,6 @@ describe('SpaCdkStack', () => {
   });
 
   describe('trailing-slash redirect', () => {
-    const viewerRequestFunction = {
-      DistributionConfig: Match.objectLike({
-        DefaultCacheBehavior: Match.objectLike({
-          FunctionAssociations: [
-            Match.objectLike({ EventType: 'viewer-request' }),
-          ],
-        }),
-      }),
-    };
-
     it('should redirect on viewer request with a CloudFront Function when enabled', () => {
       const { template } = testStackFactory({ redirectTrailingSlash: true });
 
@@ -245,10 +235,15 @@ describe('SpaCdkStack', () => {
         FunctionConfig: Match.objectLike({ Runtime: 'cloudfront-js-2.0' }),
         FunctionCode: TRAILING_SLASH_REDIRECT_SOURCE,
       });
-      template().hasResourceProperties(
-        'AWS::CloudFront::Distribution',
-        viewerRequestFunction
-      );
+      template().hasResourceProperties('AWS::CloudFront::Distribution', {
+        DistributionConfig: Match.objectLike({
+          DefaultCacheBehavior: Match.objectLike({
+            FunctionAssociations: [
+              Match.objectLike({ EventType: 'viewer-request' }),
+            ],
+          }),
+        }),
+      });
     });
 
     it('should add no function by default', () => {
