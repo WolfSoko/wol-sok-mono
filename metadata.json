@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZMTGH14J25DASY69NAV6A1",
+  "strategy": "manual-commit",
+  "branch": "3167-guest-level-wish-and-ready",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/net/guest-room.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/net/guest-room.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 6606,
+    "cache_read_tokens": 305989,
+    "output_tokens": 6642,
+    "api_call_count": 2
+  }
+}
