@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>bb1jgxr05</task-id>
+<tool-use-id>toolu_01UDJ84WzmdeMcMxvB4nsT2N</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-577-wol-sok-mono/6d8724a5-f67b-48dd-b7d3-f73b7a134579/tasks/bb1jgxr05.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/577/wol-sok-mono; SHA=b6e77a6d; for i in $(seq 1 100); do out=$(gh api repos/{owner}/{repo}/commits/$(git rev-parse HEAD)/check-runs --jq '.check_runs[] | "\(.name): \(.status) \(.conclusion)"' 2&gt;/dev/null); echo "$out" | grep -q "in_progress\|queued" || { [ -n "$out" ] &amp;&amp; break; }; sleep 30; done; echo "$out"" completed (exit code 0)</summary>
+</task-notification>
