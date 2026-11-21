@@ -1,11 +1,15 @@
 import {
+  afterRenderEffect,
   ChangeDetectionStrategy,
   Component,
   computed,
+  DestroyRef,
+  ElementRef,
   inject,
   linkedSignal,
   signal,
   untracked,
+  viewChild,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -14,6 +18,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { TranslationKey } from '../i18n/game-texts';
+import { LabPass } from '../guest/lab-pass.service';
 import { ModerationService } from '../moderation/moderation.service';
 import { GameAccount } from '../storage/game-account';
 import { AvatarComponent } from './avatar.component';
@@ -55,6 +60,23 @@ export class ProfileEditorComponent {
   protected readonly social = inject(SocialService);
   protected readonly moderation = inject(ModerationService);
   private readonly account = inject(GameAccount);
+  /** Welcomes a player who just signed in, to make their profile. */
+  protected readonly labPass = inject(LabPass);
+  private readonly nameInput =
+    viewChild<ElementRef<HTMLInputElement>>('nameInput');
+
+  public constructor() {
+    // The welcome starts with the name: focused once, as the field shows.
+    let focused = false;
+    afterRenderEffect(() => {
+      const input = this.nameInput();
+      if (!focused && input !== undefined && this.labPass.welcoming()) {
+        focused = true;
+        input.nativeElement.focus();
+      }
+    });
+    inject(DestroyRef).onDestroy(() => this.labPass.endOnboarding());
+  }
 
   protected readonly nameMax = NAME_MAX;
   protected readonly mottoMax = MOTTO_MAX;
@@ -171,6 +193,7 @@ export class ProfileEditorComponent {
         (now) => new Set([...now].filter((field) => !touched.has(field)))
       );
       this.note.set('profile.editor.saved');
+      this.labPass.endOnboarding();
     } catch (error) {
       console.error('Could not save the profile', error);
       this.note.set('social.failed');

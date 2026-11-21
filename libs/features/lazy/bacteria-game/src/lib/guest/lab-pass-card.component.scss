@@ -1,0 +1,70 @@
+@use '../menu-banner';
+
+@include menu-banner.banner;
+
+.dish {
+  overflow: visible;
+
+  .rim {
+    fill: var(--bw-surface-glass);
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  .cell {
+    fill: none;
+    stroke: var(--bw-soft);
+    stroke-width: 1.5;
+    transition:
+      fill 300ms ease,
+      stroke 300ms ease;
+
+    &.done {
+      fill: currentColor;
+      stroke: currentColor;
+    }
+  }
+}
+
+.urgent {
+  color: var(--bw-text);
+}
+
+.steps {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+  color: var(--bw-soft);
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .mat-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+
+  .done {
+    color: var(--bw-player);
+  }
+
+  .next {
+    color: var(--bw-text);
+    font-weight: 600;
+  }
+}
+
+.failed {
+  grid-column: 1 / -1;
+  font-size: 0.85rem;
+  color: var(--bw-gold);
+}

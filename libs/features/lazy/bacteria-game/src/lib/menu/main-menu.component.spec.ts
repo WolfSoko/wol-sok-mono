@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
@@ -18,6 +19,7 @@ import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
 import { I18nService } from '../i18n/i18n.service';
+import { LabPass } from '../guest/lab-pass.service';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -493,5 +495,41 @@ describe('MainMenuComponent admin tile', () => {
     fixture.detectChanges();
 
     expect(tile(host)?.textContent).toContain('Verwaltung');
+  });
+});
+
+describe('MainMenuComponent and the Lab Pass', () => {
+  function renderWith(pass: Partial<LabPass>) {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: LabPass, useValue: pass }],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    return { fixture, open };
+  }
+
+  const quietPass = () => ({
+    visible: signal(false),
+    onboardingDue: signal(false),
+    startOnboarding: jest.fn(),
+  });
+
+  it('opens the profile once a sign-in brought no profile', () => {
+    const pass = quietPass();
+    const { fixture, open } = renderWith(pass);
+    fixture.detectChanges();
+    expect(open).not.toHaveBeenCalled();
+
+    pass.onboardingDue.set(true);
+    pass.startOnboarding.mockImplementation(() =>
+      pass.onboardingDue.set(false)
+    );
+    fixture.detectChanges();
+
+    expect(pass.startOnboarding).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith('profile');
   });
 });

@@ -33,15 +33,16 @@ PR ("Part of #3175"):
    Pick a name and a look"), the name field focused, "Save" as the primary
    action. Leaving it is always possible.
 3. **The reward.** Completing all four steps earns the new achievement
-   **Lab Member** ("Complete your Lab Pass"), shown like every other: toast
-   with the game's achievement sound, the profile's achievement list, its XP
+   **Lab Member** ("Complete your Lab Pass"), announced by the card itself
+   ("Welcome to the lab! You earned Lab Member: +50 XP"; the game has no
+   toast outside the result screen), the profile's achievement list, its XP
    (`ACHIEVEMENT_XP`, 50), and it syncs to Play Games as a draft with the
    next Android release.
 4. **The guest banner becomes the pass.** The guest notice's text (unused
    guest accounts are deleted after 90 days) moves into the pass's card while
-   step 1 is open; `GuestNotice.visible` keeps deciding *when* a guest's
+   step 1 is open; `GuestNotice.visible` keeps deciding _when_ a guest's
    card shows urgently (from the third day), but the card itself shows from
-   the first visit, folded to one line until the notice is due.
+   the first visit, and adds the deletion note once the notice is due.
 
 ### Non-goals
 
@@ -67,7 +68,7 @@ PR ("Part of #3175"):
   is granted: the achievement's `earned` returns false for every match, and
   `ProgressService.grantAchievement(id)` stores the day and returns whether
   it was new. `LabPass` grants it once all steps are done and the progress
-  is loaded. Reason: the achievement system already does toasts, XP,
+  is loaded. Reason: the achievement system already does XP,
   profile list, merging and Play Games; a reward of its own would duplicate
   that.
 - **Play Games**: `lab-member` gets an entry in
@@ -84,15 +85,14 @@ PR ("Part of #3175"):
 
 - A guest sees the Lab Pass card in the main menu with step 1 active;
   "Sign in" in it starts the Google sign-in.
-- From the guest notice's third day the card shows the deletion note,
-  unfolded.
+- From the guest notice's third day the card adds the deletion note.
 - After a guest's sign-in without a stored profile, the profile screen opens
   in onboarding mode.
 - Each step's slot fills when its fact holds; the button names the next open
   step and leads there (sign-in, profile editor, profile editor's motto,
   Friends).
-- With all four done, `lab-member` is earned once (toast, profile, XP), and
-  the card goes away for good.
+- With all four done, `lab-member` is earned once (the card says so, profile,
+  XP), and the card goes away for good once closed.
 - "Later" hides the card for two weeks.
 - Specs cover `labPassSteps`, `LabPass` (granting once, not before the
   progress loaded), the card and the onboarding trigger; the Play Games
@@ -122,7 +122,7 @@ the code; how a custom-token account shows as signed in (`profileOf`);
 privacy policy section for Play Games sign-in; a manual step for the OAuth
 secret.
 
-## Open questions
+## Decided
 
-- Is an achievement (permanent on Play once published) the right reward, or
-  should the pass give something local only?
+- The reward is the achievement Lab Member (approved 2026-11-21); the owner
+  publishes it on Play when they want.

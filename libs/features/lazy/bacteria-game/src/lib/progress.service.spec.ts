@@ -465,7 +465,9 @@ describe('ProgressService', () => {
 
     it('grants nothing before the storage has answered', () => {
       const progress = createWith({
-        [PROGRESS_STORAGE_KEY]: { achievements: { 'lab-member': '2026-01-02' } },
+        [PROGRESS_STORAGE_KEY]: {
+          achievements: { 'lab-member': '2026-01-02' },
+        },
       });
 
       expect(progress.grantAchievement('lab-member')).toBe(false);

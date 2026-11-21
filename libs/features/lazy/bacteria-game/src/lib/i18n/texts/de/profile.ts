@@ -75,4 +75,34 @@ export const profile: Translation<typeof en> = {
     success:
       'Gut gespielt! Melde dich mit Google an, damit du behältst, was du dir verdient hast – auf jedem Gerät.',
   },
+  labPass: {
+    title: 'Laborausweis',
+    progress: '{done} von {total} erledigt',
+    reward: 'Füll ihn aus und verdiene dir {achievement}.',
+    steps: {
+      'sign-in': 'Mit Google anmelden',
+      profile: 'Profil anlegen',
+      motto: 'Motto schreiben',
+      friend: 'Einen Freund hinzufügen',
+    },
+    hints: {
+      'sign-in':
+        'Melde dich an, damit dein Fortschritt auf jedem Gerät bleibt.',
+      profile: 'Wähle deinen Namen und dein Aussehen.',
+      motto: 'Erzähl den anderen, was deine Kolonie antreibt.',
+      friend:
+        'Füge einen Freund hinzu, um ihn online zu sehen und herauszufordern.',
+    },
+    go: {
+      'sign-in': 'Anmelden',
+      profile: 'Profil anlegen',
+      motto: 'Motto schreiben',
+      friend: 'Freunde finden',
+    },
+    earnedTitle: 'Willkommen im Labor!',
+    earned: 'Du hast {achievement} verdient: +{xp} XP.',
+    close: 'Super',
+    welcome:
+      'Willkommen im Labor, {name}! Wähle Namen und Aussehen und speichere.',
+  },
 };
