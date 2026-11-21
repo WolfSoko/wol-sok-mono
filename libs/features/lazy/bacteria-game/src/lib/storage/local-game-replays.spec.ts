@@ -42,34 +42,42 @@ describe('LocalGameReplays', () => {
     replays = new LocalGameReplays(storage);
   });
 
-  /** Lets the storage answer, as often as `submit`'s compression needs. */
-  async function settle(): Promise<void> {
-    for (let i = 0; i < 5; i++) {
-      await new Promise((resolve) => setTimeout(resolve));
+  /**
+   * Answers the storage on every turn until `work` is done, then once more
+   * for what it asked last. The replays' compression runs on Node's thread
+   * pool, so no fixed number of turns covers it on a busy machine.
+   */
+  async function answered<T>(work: Promise<T>): Promise<T> {
+    let done = false;
+    work.then(
+      () => (done = true),
+      () => (done = true)
+    );
+    while (!done) {
       storage.flush();
+      await new Promise((resolve) => setTimeout(resolve));
     }
+    storage.flush();
+    return work;
   }
 
   async function submitted(hint: number): Promise<string> {
-    const id = (await replays.submit({ replay: REPLAY, hint })) as string;
-    await settle();
-    return id;
+    return (await answered(replays.submit({ replay: REPLAY, hint }))) as string;
   }
 
-  async function listed(): Promise<ReplayListing[]> {
-    const list = replays.listMine();
-    await settle();
-    return list;
+  function listed(): Promise<ReplayListing[]> {
+    return answered(replays.listMine());
   }
 
   /** Rewrites every stored entry as `change` says. */
   async function rewriteStored(
     change: (entry: Record<string, unknown>) => Record<string, unknown>
   ): Promise<void> {
-    void storage.update(LOCAL_REPLAYS_KEY, (stored) =>
-      (stored as Record<string, unknown>[]).map(change)
+    await answered(
+      storage.update(LOCAL_REPLAYS_KEY, (stored) =>
+        (stored as Record<string, unknown>[]).map(change)
+      )
     );
-    await settle();
   }
 
   it('keeps a replay on the device, saved once the storage answered', async () => {
@@ -78,7 +86,7 @@ describe('LocalGameReplays', () => {
     replays.watchSaved(id).subscribe((saved) => seen.push(saved));
     expect(seen).toEqual([]);
 
-    await settle();
+    storage.flush();
 
     expect(seen).toContain(true);
     expect(await listed()).toEqual([
@@ -94,9 +102,7 @@ describe('LocalGameReplays', () => {
         simulation: 'cpu',
       }),
     ]);
-    const bytes = replays.replayBytes(id);
-    await settle();
-    const read = await bytes;
+    const read = await answered(replays.replayBytes(id));
     expect(read).not.toBeNull();
     expect(await replayFromBytes(read as Uint8Array<ArrayBuffer>)).toEqual(
       REPLAY
@@ -107,8 +113,7 @@ describe('LocalGameReplays', () => {
     const now = jest.spyOn(Date, 'now');
     for (let i = 0; i <= MAX_LOCAL_REPLAYS; i++) {
       now.mockReturnValue(1000 + i);
-      await replays.submit({ replay: REPLAY, hint: i });
-      await settle();
+      await submitted(i);
     }
     now.mockRestore();
 
@@ -121,9 +126,12 @@ describe('LocalGameReplays', () => {
   it('removes a replay on request, and refuses what needs the server', async () => {
     const id = await submitted(1);
 
-    const removed = (await replays.sendCommand('remove', id)) as string;
-    const featured = (await replays.sendCommand('feature', id)) as string;
-    await settle();
+    const removed = (await answered(
+      replays.sendCommand('remove', id)
+    )) as string;
+    const featured = (await answered(
+      replays.sendCommand('feature', id)
+    )) as string;
 
     expect(await firstValueFrom(replays.watchCommand(removed))).toEqual({
       ok: true,
@@ -138,8 +146,9 @@ describe('LocalGameReplays', () => {
   it('deletes a replay on "Delete" (forget) too', async () => {
     const id = await submitted(1);
 
-    const forgotten = (await replays.sendCommand('forget', id)) as string;
-    await settle();
+    const forgotten = (await answered(
+      replays.sendCommand('forget', id)
+    )) as string;
 
     expect(await firstValueFrom(replays.watchCommand(forgotten))).toEqual({
       ok: true,

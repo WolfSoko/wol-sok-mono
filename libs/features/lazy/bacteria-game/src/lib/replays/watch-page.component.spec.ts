@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { of } from 'rxjs';
@@ -18,15 +18,16 @@ import { ReplayViewerComponent } from './replay-viewer.component';
 import { WatchGpu } from './watch-gpu';
 import { PublicReplayResult, PublicReplays } from './public-replays';
 import { WatchPageComponent } from './watch-page.component';
+import { settleTurn, settleUntil } from '../../testing/settle-until';
 
 const ID = 'AbCdEfGhIjKlMnOpQrSt';
 
-async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
-  for (let i = 0; i < 5; i++) {
-    await new Promise((resolve) => setTimeout(resolve, 0));
-    await fixture.whenStable();
-    fixture.detectChanges();
-  }
+/** Whether the page shows what it loaded: the viewer or why there is none. */
+function shown(page: HTMLElement): boolean {
+  return (
+    page.querySelector('feat-lazy-bac-game-replay-viewer') !== null ||
+    page.querySelector('[role="alert"]') !== null
+  );
 }
 
 /** A stand-in for the page's GPU source, telling how often it started. */
@@ -64,8 +65,9 @@ describe('WatchPageComponent', () => {
     });
     TestBed.inject(I18nService).setLanguage('en');
     const fixture = TestBed.createComponent(WatchPageComponent);
-    await settle(fixture);
-    return { fixture, page: fixture.nativeElement as HTMLElement };
+    const page = fixture.nativeElement as HTMLElement;
+    await settleUntil(fixture, () => shown(page), 'the loaded page');
+    return { fixture, page };
   }
 
   it('plays a public replay, noindex, with its canonical on its page', async () => {
@@ -116,7 +118,7 @@ describe('WatchPageComponent', () => {
     expect(viewer().gpu()).toBeNull();
 
     watchGpu.trusted.set('Adreno 650');
-    await settle(fixture);
+    await settleTurn(fixture);
 
     expect(viewer().gpu()).toBe('Adreno 650');
   });

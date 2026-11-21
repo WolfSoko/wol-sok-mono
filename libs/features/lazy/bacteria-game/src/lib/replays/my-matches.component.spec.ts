@@ -16,38 +16,11 @@ import { GameAccount } from '../storage/game-account';
 import { GameReplays } from '../storage/game-replays';
 import { NEVER, of, throwError } from 'rxjs';
 import { COMMAND_TIMEOUT_MS, MyMatchesComponent } from './my-matches.component';
-
-/** How long `settleUntil` waits: below Jest's 5 s, so its message shows. */
-const SETTLE_LIMIT_MS = 3_000;
-
-/** One macrotask turn, then change detection. */
-async function settleTurn(fixture: ComponentFixture<unknown>): Promise<void> {
-  await new Promise((resolve) => setTimeout(resolve, 0));
-  await fixture.whenStable();
-  fixture.detectChanges();
-}
+import { settleTurn, settleUntil } from '../../testing/settle-until';
 
 /** Enough turns for what finishes within a few: taps and commands. */
 async function settle(fixture: ComponentFixture<unknown>): Promise<void> {
   for (let i = 0; i < 10; i++) {
-    await settleTurn(fixture);
-  }
-}
-
-/**
- * Settles until `ready` holds. Loading a replay runs the compression
- * streams on Node's thread pool, which finish on no fixed turn.
- */
-async function settleUntil(
-  fixture: ComponentFixture<unknown>,
-  ready: () => boolean,
-  what: string
-): Promise<void> {
-  const deadline = Date.now() + SETTLE_LIMIT_MS;
-  while (!ready()) {
-    if (Date.now() >= deadline) {
-      throw new Error(`Timed out waiting for ${what}`);
-    }
     await settleTurn(fixture);
   }
 }
@@ -72,8 +45,9 @@ describe('MyMatchesComponent', () => {
 
   async function render() {
     const fixture = TestBed.createComponent(MyMatchesComponent);
-    await settle(fixture);
-    return { fixture, page: fixture.nativeElement as HTMLElement };
+    const page = fixture.nativeElement as HTMLElement;
+    await settleUntil(fixture, () => listed(page), 'the list');
+    return { fixture, page };
   }
 
   function button(page: HTMLElement, label: string): HTMLButtonElement {
@@ -84,6 +58,11 @@ describe('MyMatchesComponent', () => {
       throw new Error(`No button "${label}"`);
     }
     return found;
+  }
+
+  /** Whether the list is read: its loading bar gave way. */
+  function listed(page: HTMLElement): boolean {
+    return page.querySelector('mat-progress-bar') === null;
   }
 
   function viewer(page: HTMLElement): Element | null {

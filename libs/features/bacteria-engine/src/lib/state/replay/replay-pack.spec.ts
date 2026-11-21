@@ -30,6 +30,12 @@ const EXTRAS = {
   client: '1.2.3',
 };
 
+/**
+ * An hour of inputs takes seconds to pack and read back on its own; on a
+ * busy CI worker the default five seconds run out while it waits for zlib.
+ */
+const HOUR_TIMEOUT_MS = 30_000;
+
 /** Two seconds of a match where both humans steer, drag and boost. */
 function played(): Replay {
   const { spawns, options } = planMatch(ONLINE);
@@ -108,15 +114,25 @@ describe('replay packing', () => {
     expect(unpackReplay(packed)).toBeNull();
   });
 
-  it('fits an hour of both sticks moving every tick into the caps', async () => {
-    const hour = hourOfSticks();
-    const json = JSON.stringify(packReplay(hour));
-    const bytes = await replayToBytes(hour);
+  it(
+    'fits an hour of both sticks moving every tick into the caps',
+    async () => {
+      const hour = hourOfSticks();
+      const json = JSON.stringify(packReplay(hour));
+      const bytes = await replayToBytes(hour);
 
-    expect(json.length).toBeLessThan(MAX_UNPACKED_BYTES);
-    expect(bytes.length).toBeLessThan(MAX_PACKED_BYTES);
-    expect(await replayFromBytes(bytes, { stored: true })).toEqual(hour);
-  });
+      expect(json.length).toBeLessThan(MAX_UNPACKED_BYTES);
+      expect(bytes.length).toBeLessThan(MAX_PACKED_BYTES);
+      const read = await replayFromBytes(bytes, { stored: true });
+      expect(read?.header).toEqual(hour.header);
+      // The inputs compared as JSON: Jest's deep equality takes seconds on
+      // 432 000 steers, which a busy worker turns into a timeout.
+      expect(JSON.stringify(read?.inputs) === JSON.stringify(hour.inputs)).toBe(
+        true
+      );
+    },
+    HOUR_TIMEOUT_MS
+  );
 
   it('reads nothing from bytes over the caps', async () => {
     expect(
