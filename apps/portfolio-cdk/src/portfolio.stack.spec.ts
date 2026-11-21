@@ -1,5 +1,5 @@
 import { App } from 'aws-cdk-lib';
-import { Template } from 'aws-cdk-lib/assertions';
+import { Match, Template } from 'aws-cdk-lib/assertions';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -51,5 +51,20 @@ describe('createPortfolioStack', () => {
     expect(
       pageUploads.map(({ SourceObjectKeys }) => SourceObjectKeys.length)
     ).toEqual([3, 1]);
+  });
+
+  it('redirects trailing-slash paths with a viewer-request CloudFront Function', () => {
+    const template = synthesize();
+
+    template.resourceCountIs('AWS::CloudFront::Function', 1);
+    template.hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        DefaultCacheBehavior: Match.objectLike({
+          FunctionAssociations: [
+            Match.objectLike({ EventType: 'viewer-request' }),
+          ],
+        }),
+      }),
+    });
   });
 });

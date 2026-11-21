@@ -14,7 +14,8 @@ const STACK_NAME = 'Portfolio';
  * Each prerendered page is at <page>/index.html, but CloudFront in front of
  * S3 resolves no folder index: /privacy would fall back to the home page.
  * So every page, nested ones such as /blog/<slug> too, is uploaded once more
- * under its bare path.
+ * under its bare path. A trailing slash (/career/) would miss both and fall
+ * back to the home page too, so it redirects to the bare path.
  */
 export function createPortfolioStack(
   app: App,
@@ -30,6 +31,7 @@ export function createPortfolioStack(
     buildOutputPath,
     domainName: 'wolsok.de',
     bucketRemovalPolicy: RemovalPolicy.DESTROY,
+    redirectTrailingSlash: true,
     // Crawlers and AdSense read these by name; a page changes with each release.
     noCacheFiles: [
       'ads.txt',
