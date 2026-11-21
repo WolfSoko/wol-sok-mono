@@ -7,6 +7,10 @@ import {
 import {
   AllowedMethods,
   Distribution,
+  FunctionCode,
+  FunctionEventType,
+  FunctionRuntime,
+  Function as CloudFrontFunction,
   HttpVersion,
   ResponseHeadersPolicy,
   SecurityPolicyProtocol,
@@ -29,6 +33,7 @@ import {
 } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 import { assertNoFileIsAnotherSourcesFolder } from './deployment-sources';
+import { TRAILING_SLASH_REDIRECT_SOURCE } from './trailing-slash-redirect';
 
 export interface SpaProps {
   domainName: string;
@@ -57,6 +62,20 @@ export interface SpaProps {
    * the later header wins. Wildcards may only appear in the last segment.
    */
   cacheOverrides?: CacheOverride[];
+  /**
+   * Answer a path ending in `/` (other than `/`) with a permanent redirect to
+   * the path without it, query string kept, so `/about/` goes to `/about`
+   * instead of falling back to index.html. For sites that serve their
+   * prerendered pages under bare paths. Takes the default behaviour's
+   * viewer-request function slot.
+   * @default false
+   */
+  redirectTrailingSlash?: boolean;
+}
+
+interface DistributionOptions {
+  allowedOrigins?: string[];
+  redirectTrailingSlash?: boolean;
 }
 
 interface DeploymentOptions {
@@ -131,6 +150,7 @@ export class SpaConstruct extends Construct {
     const {
       buildOutputPath,
       extraAllowedOrigins,
+      redirectTrailingSlash,
       noCacheFiles = [],
       cacheOverrides = [],
     } = props;
@@ -160,7 +180,7 @@ export class SpaConstruct extends Construct {
       siteDomain,
       certificate,
       this.bucket,
-      extraAllowedOrigins
+      { allowedOrigins: extraAllowedOrigins, redirectTrailingSlash }
     );
     this.createARecord(siteDomain, this.distribution, zone);
 
@@ -281,7 +301,7 @@ export class SpaConstruct extends Construct {
     siteDomain: string,
     certificate: ICertificate,
     siteBucket: IBucket,
-    allowedOrigins: string[] = []
+    { allowedOrigins = [], redirectTrailingSlash = false }: DistributionOptions
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
       this,
@@ -322,12 +342,28 @@ export class SpaConstruct extends Construct {
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        functionAssociations: redirectTrailingSlash
+          ? [
+              {
+                eventType: FunctionEventType.VIEWER_REQUEST,
+                function: this.createTrailingSlashRedirect(),
+              },
+            ]
+          : undefined,
       },
     });
     new CfnOutput(this, `${this.spaName}-DistributionId`, {
       value: distribution.distributionId,
     });
     return distribution;
+  }
+
+  private createTrailingSlashRedirect(): CloudFrontFunction {
+    return new CloudFrontFunction(this, 'TrailingSlashRedirect', {
+      code: FunctionCode.fromInline(TRAILING_SLASH_REDIRECT_SOURCE),
+      runtime: FunctionRuntime.JS_2_0,
+      comment: 'Redirects /path/ to /path',
+    });
   }
 
   private createARecord(
