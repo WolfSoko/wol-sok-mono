@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01BKiY6HgPwxzvK4m4Ht84WS",
+  "agent_id": "a5312092b556417f3",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3181 against spec",
+  "token_usage": {
+    "input_tokens": 46,
+    "cache_creation_tokens": 122512,
+    "cache_read_tokens": 2251086,
+    "output_tokens": 15550,
+    "api_call_count": 23
+  },
+  "started_at": "2026-11-21T20:45:13.077161838+01:00",
+  "completed_at": "2026-11-21T20:49:19.137815467+01:00"
+}
