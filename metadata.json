@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7YPSK7YQJCCXJ80J1CC2Q56",
+  "strategy": "manual-commit",
+  "branch": "3149-bacteria-specs-fail-under-parallel-jest-load",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "libs/features/bacteria-engine/src/lib/state/replay/replay-pack.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/replays/my-matches.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/replays/watch-page.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/storage/local-game-replays.spec.ts",
+    "libs/features/lazy/bacteria-game/src/testing/settle-until.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 160,
+    "cache_creation_tokens": 163402,
+    "cache_read_tokens": 10665000,
+    "output_tokens": 36672,
+    "api_call_count": 76
+  }
+}

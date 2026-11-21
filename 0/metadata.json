@@ -1,0 +1,65 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7YPSK7YQJCCXJ80J1CC2Q56",
+  "session_id": "e1e8912a-017a-4871-8bee-9d2c2983c014",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T09:25:30.701113095Z",
+  "branch": "3149-bacteria-specs-fail-under-parallel-jest-load",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [
+    "libs/features/bacteria-engine/src/lib/state/replay/replay-pack.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/replays/my-matches.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/replays/watch-page.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/storage/local-game-replays.spec.ts",
+    "libs/features/lazy/bacteria-game/src/testing/settle-until.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "4934f6a0ca19",
+  "compact_transcript_start": 0,
+  "token_usage": {
+    "input_tokens": 160,
+    "cache_creation_tokens": 163402,
+    "cache_read_tokens": 10665000,
+    "output_tokens": 36672,
+    "api_call_count": 76
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_015SxNkvSPqUZTLhuma9kGKU",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "4934f6a0ca19",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 43,
+        "end": 44,
+        "entry_ids": [
+          "c76cba5d-a928-4b74-bef2-9133bd6cdbec"
+        ],
+        "tool_use_id": "toolu_015SxNkvSPqUZTLhuma9kGKU"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_015SxNkvSPqUZTLhuma9kGKU"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 3
+  }
+}

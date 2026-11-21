@@ -1,0 +1,49 @@
+You are a SpeedDev cloud session. Load the speeddev:cockpit skill, read SESSION.md in its base directory and act on the <routine-fire-payload> block below as it says.
+<routine-fire-payload>
+    SpeedDev handover
+    cockpit: 25
+    ticket: WolfSoko/wol-sok-mono#3149
+    role: end-to-end
+    work item: 561
+    base branch: main
+</routine-fire-payload>
+
+---
+
+<task-notification>
+<task-id>bvtpe86x4</task-id>
+<tool-use-id>toolu_01PVAfaCTnovqSp21ZNKPqr1</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-561-wol-sok-mono/e1e8912a-017a-4871-8bee-9d2c2983c014/tasks/bvtpe86x4.output</output-file>
+<status>completed</status>
+<summary>Background command "Run both full suites, look for exit warnings" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b93vve1kl</task-id>
+<tool-use-id>toolu_01EacgU43zLM3hTGJyo1TN1H</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-561-wol-sok-mono/e1e8912a-017a-4871-8bee-9d2c2983c014/tasks/b93vve1kl.output</output-file>
+<status>completed</status>
+<summary>Background command "Detect open handles in game lib" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b1b9o5ygo</task-id>
+<tool-use-id>toolu_017VCGxM2GrdnmggJNjHWhq6</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-561-wol-sok-mono/e1e8912a-017a-4871-8bee-9d2c2983c014/tasks/b1b9o5ygo.output</output-file>
+<status>completed</status>
+<summary>Background command "Wait for spec/plan approval" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b6e7tq3tg</task-id>
+<tool-use-id>toolu_01FV98vPYmeS49kuCgjs6yop</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-561-wol-sok-mono/e1e8912a-017a-4871-8bee-9d2c2983c014/tasks/b6e7tq3tg.output</output-file>
+<status>completed</status>
+<summary>Background command "Three parallel runs of both projects" completed (exit code 0)</summary>
+</task-notification>
