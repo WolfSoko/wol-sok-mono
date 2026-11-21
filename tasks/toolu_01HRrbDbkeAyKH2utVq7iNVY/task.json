@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01HRrbDbkeAyKH2utVq7iNVY",
+  "agent_id": "a65d2b971dc131b3e",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3169 CDK fix",
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 94876,
+    "cache_read_tokens": 404667,
+    "output_tokens": 5261,
+    "api_call_count": 6
+  },
+  "started_at": "2026-11-21T08:28:11.2213291+01:00",
+  "completed_at": "2026-11-21T08:29:16.5655162+01:00"
+}
