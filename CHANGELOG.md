@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.174.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.2...v74.174.0) (2026-11-21)
+
+### Features
+
+* **portfolio:** blog with an article on how Bacteria Wars relays online matches through TURN ([#3165](https://github.com/WolfSoko/wol-sok-mono/issues/3165)) ([f2199ea](https://github.com/WolfSoko/wol-sok-mono/commit/f2199ea096063543afc390701cddc9e50e0b1389)), references [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159)
+
 ## [74.173.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.1...v74.173.2) (2026-11-21)
 
 ### Bug Fixes
