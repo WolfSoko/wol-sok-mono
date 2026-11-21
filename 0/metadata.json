@@ -1,0 +1,72 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZPKR9T5JYG5RJPESKMWJDX",
+  "session_id": "6d8724a5-f67b-48dd-b7d3-f73b7a134579",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T18:41:35.924015378Z",
+  "branch": "3170-spa-extra-assets-guard",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3170-spa-cdk-stack-addextraassets-breaks-on-a-file-and-a-path-below-it-in-one-call-add-a-guard-and-a-portfolio-cdk-synth-test.md",
+    "docs/specs/3170-spa-cdk-stack-addextraassets-breaks-on-a-file-and-a-path-below-it-in-one-call-add-a-guard-and-a-portfolio-cdk-synth-test.md",
+    "libs/public/spa-cdk-stack/src/lib/spa/deployment-sources.ts",
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "e1fc73143dbb",
+  "checkpoint_transcript_start": 565,
+  "transcript_lines_at_start": 565,
+  "compact_transcript_start": 56,
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 8965,
+    "cache_read_tokens": 1065737,
+    "output_tokens": 4840,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 2,
+      "cache_creation_tokens": 45770,
+      "cache_read_tokens": 18900,
+      "output_tokens": 83,
+      "api_call_count": 1
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01WQwNXsY3sx2MkyR65qt8TK",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "2c92f006cd13",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 42,
+        "end": 43,
+        "entry_ids": [
+          "00b9408a-1c84-4660-9954-e73e2a6c731a"
+        ],
+        "tool_use_id": "toolu_01WQwNXsY3sx2MkyR65qt8TK"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01WQwNXsY3sx2MkyR65qt8TK"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 2
+  }
+}

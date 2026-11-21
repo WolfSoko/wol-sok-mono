@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01SJnMHCRDYSgS8EX1ry3FQi",
+  "agent_id": "a423aff637e513a72",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR diff vs spec",
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 68940,
+    "cache_read_tokens": 324874,
+    "output_tokens": 4580,
+    "api_call_count": 5
+  },
+  "started_at": "2026-11-21T19:39:11.630918722+01:00",
+  "completed_at": "2026-11-21T19:40:29.193919768+01:00"
+}
