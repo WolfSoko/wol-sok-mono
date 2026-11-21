@@ -1,0 +1,11 @@
+SpeedDev: something is waiting for this session (a nudge or a decided request). Go on with your work item.
+
+---
+
+<task-notification>
+<task-id>bkj5ixkdy</task-id>
+<tool-use-id>toolu_01UyP2E3X4ajMF27henMLtZs</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/tasks/bkj5ixkdy.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/574/wol-sok-mono; npx nx format:write --base=origin/main &gt;/dev/null 2&gt;&amp;1; timeout 1500 npx nx affected -t lint,lint-templates,typecheck-specs,test --base=origin/main --output-style=static --parallel=4 &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/scratchpad/checks.log 2&gt;&amp;1; echo exit $?; grep -E "Successfully ran|Ran target|Failed tasks|^  - |✖" /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/scratchpad/checks.log | tail -30" completed (exit code 0)</summary>
+</task-notification>
