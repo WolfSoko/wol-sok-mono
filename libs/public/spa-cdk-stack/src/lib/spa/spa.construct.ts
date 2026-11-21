@@ -28,6 +28,7 @@ import {
   Source,
 } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
+import { assertNoFileIsAnotherSourcesFolder } from './deployment-sources';
 
 export interface SpaProps {
   domainName: string;
@@ -200,6 +201,11 @@ export class SpaConstruct extends Construct {
    * build output and before index.html. Use it for files that are not in
    * buildOutputPath; for those that are, use noCacheFiles or cacheOverrides,
    * or they are uploaded twice.
+   *
+   * All assets of one call go into one deployment, which unpacks them into
+   * one folder: a file and a path below it, such as `Source.data('blog', …)`
+   * and `Source.data('blog/first-post', …)`, cannot share a call. Such a call
+   * throws at synth; add the deeper paths in a call of their own.
    */
   public addExtraAssets(
     assets: ISource[],
@@ -212,6 +218,7 @@ export class SpaConstruct extends Construct {
   /** Adds a deployment that runs after the uploads so far and before index.html. */
   private addUpload(sources: ISource[], options: DeploymentOptions): void {
     const deployment = this.createBucketDeployment(sources, options);
+    assertNoFileIsAnotherSourcesFolder(deployment);
     deployment.node.addDependency(this.lastUpload);
     this.lastUpload = deployment;
     this.bucketDeployments.push(deployment);

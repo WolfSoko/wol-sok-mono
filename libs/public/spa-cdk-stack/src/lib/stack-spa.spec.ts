@@ -165,6 +165,66 @@ describe('SpaCdkStack', () => {
     });
   });
 
+  describe('extra assets in one call', () => {
+    const page = (key: string) => Source.data(key, `<html>${key}</html>`);
+
+    it('should refuse a file and a path below it, as one deployment unpacks them into one folder', () => {
+      const { stack } = testStackFactory();
+
+      expect(() =>
+        stack.spa.addExtraAssets([page('blog'), page('blog/first-post')])
+      ).toThrow(/"blog" is a file in one source and a folder in another/);
+    });
+
+    it('should refuse them in either order and below several folders', () => {
+      const { stack } = testStackFactory();
+
+      expect(() =>
+        stack.spa.addExtraAssets([page('docs/a/b'), page('docs/a')])
+      ).toThrow(/"docs\/a"/);
+    });
+
+    it('should take the same files in separate calls', () => {
+      const { stack, template } = testStackFactory();
+
+      stack.spa.addExtraAssets([page('career'), page('blog')]);
+      stack.spa.addExtraAssets([page('blog/first-post')]);
+
+      template().resourceCountIs('Custom::CDKBucketDeployment', 4);
+    });
+
+    it('should take sources that share folders but no file', () => {
+      const { stack, template } = testStackFactory();
+
+      stack.spa.addExtraAssets([
+        page('blog/first-post'),
+        page('blog/second-post'),
+        Source.asset(path.join(__dirname, '../../extra-assets-path')),
+      ]);
+
+      template().resourceCountIs('Custom::CDKBucketDeployment', 3);
+    });
+
+    it('should check only what an asset keeps after its excludes', () => {
+      const { stack } = testStackFactory();
+
+      expect(() =>
+        stack.spa.addExtraAssets([
+          page('asset.json/x'),
+          Source.asset(path.join(__dirname, '../../extra-assets-path'), {
+            exclude: ['asset.json'],
+          }),
+        ])
+      ).not.toThrow();
+      expect(() =>
+        stack.spa.addExtraAssets([
+          page('asset.json/x'),
+          Source.asset(path.join(__dirname, '../../extra-assets-path')),
+        ])
+      ).toThrow(/"asset.json"/);
+    });
+  });
+
   describe('cache overrides', () => {
     const nestedBuildPath = path.join(
       __dirname,

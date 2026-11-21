@@ -55,6 +55,22 @@ new SpaStack(app, 'MyApp', {
 });
 ```
 
+Each `addExtraAssets` call is one deployment, which unpacks all its sources into
+one folder. So a file and a path below it, such as a page uploaded under its bare
+path `blog` and another under `blog/first-post`, cannot share a call: the
+construct throws at synth. Add the deeper paths in a call of their own:
+
+```ts
+stack.spa.addExtraAssets(
+  [Source.data('blog', blogHtml)],
+  CacheControl.noCache()
+);
+stack.spa.addExtraAssets(
+  [Source.data('blog/first-post', postHtml)],
+  CacheControl.noCache()
+);
+```
+
 ## Building
 
 ## Running unit tests
