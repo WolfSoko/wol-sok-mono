@@ -7,7 +7,6 @@ import type {
 import { GameStateService } from '../state/game-state.service';
 import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
-import { GlDebugService } from '../gl-debug/gl-debug.service';
 import * as layerSheet from '../gl-debug/layer-sheet';
 import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';
@@ -42,7 +41,10 @@ describe('StageFrame', () => {
 
   afterEach(() => history.replaceState(null, '', '/'));
 
-  beforeEach(() => {
+  beforeEach(() => setUp());
+
+  /** The stage's frame, with the address as it stands - `?gldebug` is read now. */
+  function setUp(): void {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [ArenaStage, StageFrame] });
     const canvas = document.createElement('canvas');
@@ -62,7 +64,7 @@ describe('StageFrame', () => {
       declaring: signal(false),
     });
     frame = TestBed.inject(StageFrame);
-  });
+  }
 
   describe('a new painter', () => {
     it('gets the war a simulation and the arena its size', () => {
@@ -157,9 +159,11 @@ describe('StageFrame', () => {
       };
     }
 
+    /** The stage set up again, with `?gldebug` in the address. */
     function debugging(): void {
       history.replaceState(null, '', '/?gldebug');
-      TestBed.inject(GlDebugService).start();
+      TestBed.resetTestingModule();
+      setUp();
     }
 
     it('leaves the painter alone without ?gldebug', () => {
@@ -182,16 +186,6 @@ describe('StageFrame', () => {
         renderer: 'Adreno (TM) 740',
         errors: [],
       });
-    });
-
-    it('diagnoses a painter that was there before ?gldebug was read', () => {
-      const { painter } = diagnosable();
-      frame.onPainterChange(painter);
-
-      debugging();
-      TestBed.tick();
-
-      expect(painter.diagnose).toHaveBeenCalledTimes(1);
     });
 
     it("saves the painter's layers as a sheet", () => {

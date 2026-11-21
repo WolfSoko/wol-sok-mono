@@ -16,6 +16,7 @@ import {
   PainterDiagnostics,
 } from '../arena-painter';
 import { checkGl, diagnose } from '../../gl/gl-diagnostics';
+import { flipRows, readFramebuffer, readTexture } from '../../gl/readback';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
 import { ArenaTheme } from '../arena-theme';
@@ -298,14 +299,12 @@ export class GlArenaPainter implements ArenaPainter {
   /** What of the arena the frame being painted shows. */
   private view: Rect;
   /**
-   * What the last frame drew from, for the diagnostic's capture: the GPU
-   * simulation's glow and the colonies prepared. Null before a frame and
-   * after the context went.
+   * What the last frame drew from, for the diagnostic's capture: its
+   * colonies and those of them prepared. Empty before a frame and after the
+   * context went.
    */
-  private lastPainted: {
-    glow: WebGLTexture | null;
-    colonies: readonly PreparedColony[];
-  } | null = null;
+  private paintedColonies: readonly PaintedColony[] = [];
+  private preparedColonies: readonly PreparedColony[] = [];
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
@@ -363,7 +362,8 @@ export class GlArenaPainter implements ArenaPainter {
       // Without this the browser would never hand the context back.
       event.preventDefault();
       this.resources = null;
-      this.lastPainted = null;
+      this.paintedColonies = [];
+      this.preparedColonies = [];
     });
     canvas.addEventListener('webglcontextrestored', () => {
       if (this.disposed) {
@@ -502,7 +502,8 @@ export class GlArenaPainter implements ArenaPainter {
     // a GPU that renders in tiles stores and loads a target at each switch.
     const colonies = this.prepareColonies(resources, frame);
     checkGl(gl, 'colony cells');
-    this.lastPainted = { glow: glowOf(frame.colonies), colonies };
+    this.paintedColonies = frame.colonies;
+    this.preparedColonies = colonies;
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.renderWidth, this.renderHeight);
@@ -1186,74 +1187,53 @@ export class GlArenaPainter implements ArenaPainter {
     if (resources == null) {
       return [];
     }
-    const { width, height } = this;
-    const layers = [
-      // Row 0 of the frame is the bottom of the view.
-      this.readLayer(
-        'trail',
-        resources.trail.texture,
-        this.renderWidth,
-        this.renderHeight,
-        true
-      ),
-    ];
-    const painted = this.lastPainted;
-    const glow = painted?.glow;
-    if (glow != null && this.gl.isTexture(glow)) {
-      layers.push(this.readLayer('glow', glow, width, height, false));
-    }
-    for (const { place, bounds, margin, targets } of painted?.colonies ?? []) {
-      const name = `colony ${place + 1}`;
-      const cells = this.readLayer(
-        `${name} cells`,
-        targets.cells.texture,
-        width,
-        height,
-        false
-      );
-      const density = this.readLayer(
-        `${name} density`,
-        targets.density.texture,
-        width,
-        height,
-        false
-      );
-      keepBox(cells, this.passBox(bounds, margin.cells));
-      keepBox(density, this.passBox(bounds, margin.verticalBlur));
-      layers.push(cells, density);
-    }
-    checkGl(this.gl, 'capture layers');
-    return layers;
-  }
-
-  /** Reads a texture back, through a framebuffer made for it. */
-  private readLayer(
-    label: string,
-    texture: WebGLTexture,
-    width: number,
-    height: number,
-    bottomUp: boolean
-  ): CapturedLayer {
     const gl = this.gl;
-    const framebuffer = gl.createFramebuffer();
-    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
-    gl.framebufferTexture2D(
-      gl.FRAMEBUFFER,
-      gl.COLOR_ATTACHMENT0,
-      gl.TEXTURE_2D,
-      texture,
-      0
-    );
-    const read = new Uint8Array(width * height * 4);
-    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, read);
-    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.deleteFramebuffer(framebuffer);
-    return {
-      label,
-      width,
-      height,
-      pixels: bottomUp ? flipRows(read, width, height) : read,
-    };
+    const { width, height } = this;
+    const trail = { width: this.renderWidth, height: this.renderHeight };
+    const layers: CapturedLayer[] = [
+      {
+        label: 'trail',
+        ...trail,
+        // Row 0 of the frame is the bottom of the view.
+        pixels: flipRows(
+          readFramebuffer(
+            gl,
+            resources.trail.framebuffer,
+            trail.width,
+            trail.height
+          ),
+          trail.width,
+          trail.height
+        ),
+      },
+    ];
+    const glow = glowOf(this.paintedColonies);
+    if (glow != null && gl.isTexture(glow)) {
+      layers.push({
+        label: 'glow',
+        width,
+        height,
+        pixels: readTexture(gl, glow, width, height),
+      });
+    }
+    for (const { place, bounds, margin, targets } of this.preparedColonies) {
+      const fresh = [
+        ['cells', targets.cells, margin.cells],
+        ['density', targets.density, margin.verticalBlur],
+      ] as const;
+      for (const [name, target, reach] of fresh) {
+        const layer = {
+          label: `colony ${place + 1} ${name}`,
+          width,
+          height,
+          pixels: readFramebuffer(gl, target.framebuffer, width, height),
+        };
+        keepBox(layer, this.passBox(bounds, reach));
+        layers.push(layer);
+      }
+    }
+    checkGl(gl, 'capture layers');
+    return layers;
   }
 
   /** Compiles the programs and allocates every buffer, texture and target. */
@@ -1388,23 +1368,6 @@ export class GlArenaPainter implements ArenaPainter {
   }
 }
 
-/** RGBA rows in the other order: the bottom row first becomes the top. */
-export function flipRows(
-  pixels: Uint8Array,
-  width: number,
-  height: number
-): Uint8Array {
-  const row = width * 4;
-  const flipped = new Uint8Array(pixels.length);
-  for (let y = 0; y < height; y++) {
-    flipped.set(
-      pixels.subarray(y * row, (y + 1) * row),
-      (height - 1 - y) * row
-    );
-  }
-  return flipped;
-}
-
 /** The GPU simulation's glow a frame's colonies are drawn with, if any. */
 function glowOf(colonies: readonly PaintedColony[]): WebGLTexture | null {
   for (const layer of colonies) {
@@ -1419,11 +1382,14 @@ function glowOf(colonies: readonly PaintedColony[]): WebGLTexture | null {
 export function keepBox(layer: CapturedLayer, box: CellBox): void {
   const [x0, y0, x1, y1] = box;
   const { width, height, pixels } = layer;
+  const row = width * 4;
   for (let y = 0; y < height; y++) {
-    for (let x = 0; x < width; x++) {
-      if (x < x0 || x >= x1 || y < y0 || y >= y1) {
-        pixels.fill(0, (y * width + x) * 4, (y * width + x + 1) * 4);
-      }
+    const start = y * row;
+    if (y < y0 || y >= y1) {
+      pixels.fill(0, start, start + row);
+      continue;
     }
+    pixels.fill(0, start, start + x0 * 4);
+    pixels.fill(0, start + x1 * 4, start + row);
   }
 }

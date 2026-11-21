@@ -5,7 +5,6 @@ import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
 import { fakeGl, glConstant } from '../../gl/testing/fake-gl';
 import {
   encodeCells,
-  flipRows,
   keepBox,
   GlArenaPainter,
   packTints,
@@ -262,16 +261,6 @@ describe('GlArenaPainter diagnostic', () => {
       { label: 'glow', width: 32, height: 16, bytes: 32 * 16 * 4 },
       { label: 'colony 1 cells', width: 32, height: 16, bytes: 32 * 16 * 4 },
       { label: 'colony 1 density', width: 32, height: 16, bytes: 32 * 16 * 4 },
-    ]);
-  });
-});
-
-describe('flipRows', () => {
-  it('puts the bottom row first on top', () => {
-    const pixels = Uint8Array.from([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]);
-
-    expect(Array.from(flipRows(pixels, 1, 3))).toEqual([
-      3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1,
     ]);
   });
 });

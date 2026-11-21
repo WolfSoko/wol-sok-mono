@@ -14,20 +14,21 @@ export const GL_DEBUG_PARAM = 'gldebug';
  */
 @Injectable({ providedIn: 'root' })
 export class GlDebugService {
-  private readonly enabled = signal(false);
+  /**
+   * True while the diagnostic runs: read off the address as the service
+   * is made - before any painter is - and the query taken out of it.
+   */
+  public readonly on = signal(takeQueryFlag(GL_DEBUG_PARAM)).asReadonly();
+}
 
-  /** True while the diagnostic runs. */
-  public readonly on = this.enabled.asReadonly();
-
-  /** Takes `?gldebug` off the address, and turns the diagnostic on if it was there. */
-  public start(): void {
-    if (typeof location === 'undefined') {
-      return;
-    }
-    if (!new URLSearchParams(location.search).has(GL_DEBUG_PARAM)) {
-      return;
-    }
-    this.enabled.set(true);
-    dropQueryParam(GL_DEBUG_PARAM);
+/** True when the page's address has the flag, which leaves it. */
+function takeQueryFlag(name: string): boolean {
+  if (typeof location === 'undefined') {
+    return false;
   }
+  const present = new URLSearchParams(location.search).has(name);
+  if (present) {
+    dropQueryParam(name);
+  }
+  return present;
 }

@@ -51,8 +51,11 @@ export function splitAlpha(pixels: Uint8Array): {
   const colors = new Uint8ClampedArray(pixels);
   const alpha = new Uint8ClampedArray(pixels.length);
   for (let i = 0; i < pixels.length; i += 4) {
+    const a = pixels[i + 3];
     colors[i + 3] = 255;
-    alpha.fill(pixels[i + 3], i, i + 3);
+    alpha[i] = a;
+    alpha[i + 1] = a;
+    alpha[i + 2] = a;
     alpha[i + 3] = 255;
   }
   return { colors, alpha };

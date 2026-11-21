@@ -63,12 +63,7 @@ export class StageFrame {
   private readonly playerStore = inject(PlayerStore);
   private readonly settings = inject(GameSettingsService);
   private readonly glDebug = inject(GlDebugService);
-  /**
-   * True while the HUD shows the breakdown of a frame: with the frame rate,
-   * and with the GL diagnostic. Made once, as the frames read it each.
-   */
-  private readonly showsFps = () =>
-    this.settings.value('showFps') || this.glDebug.on();
+
   private readonly sound = inject(GameSoundService);
   private readonly haptics = inject(GameHapticsService);
   /** The skin the player's colony wears: the look picked, once owned. */
@@ -113,8 +108,13 @@ export class StageFrame {
    * settings hide the frame rate, or before a window of frames is over.
    */
   public readonly hudPerf = signal<HudPerf | null>(null);
-  /** True while the HUD shows {@link hudPerf}. */
-  public readonly showsBreakdown = computed(() => this.showsFps());
+  /**
+   * True while the HUD shows {@link hudPerf}: with the frame rate, and with
+   * the GL diagnostic.
+   */
+  public readonly showsBreakdown = computed(
+    () => this.settings.value('showFps') || this.glDebug.on()
+  );
   /** What the GL diagnostic shows in the HUD - null while it is off. */
   public readonly hudGl = signal<HudGl | null>(null);
   /** The painter being diagnosed, and what it tells. */
@@ -174,16 +174,10 @@ export class StageFrame {
         untracked(() => this.stage.draw());
       }
     });
-    // The GL diagnostic takes the painter as soon as it is turned on.
-    effect(() => {
-      if (this.glDebug.on()) {
-        untracked(() => this.diagnose(this.stage.currentPainter()));
-      }
-    });
     // The breakdown of a frame starts over with each match, and whenever
     // the frame rate is shown again - no frames of before in its average.
     effect(() => {
-      this.showsFps();
+      this.showsBreakdown();
       this.stage.running();
       untracked(() => {
         this.framePerf.reset();
@@ -295,7 +289,7 @@ export class StageFrame {
     }
     const { width, height } = this.stage.arena();
     // Timed only while the HUD shows the frame rate.
-    const perf = untracked(this.showsFps) ? this.framePerf : null;
+    const perf = untracked(this.showsBreakdown) ? this.framePerf : null;
     const timer = perf === null ? null : (painter.gpuTimer?.() ?? null);
     // The ticks' GPU time where the war runs on the GPU.
     const simulation = this.playerService.getSimulation();
