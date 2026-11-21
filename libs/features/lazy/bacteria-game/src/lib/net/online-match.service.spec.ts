@@ -312,6 +312,80 @@ describe('OnlineMatchService between two devices', () => {
     });
   });
 
+  describe('the room', () => {
+    /** A host of an older release, playing the protocol by hand. */
+    async function oldHost(): Promise<{ guest: Device; heard: unknown[] }> {
+      const { link, offer } = await transport.offer({
+        servers: [],
+        fresh: async () => [],
+      });
+      const room = await rooms.open(offer);
+      const guest = device('bob');
+      const joining = guest.online.join(room.code);
+      await link.accept(await room.answer);
+      await link.opened;
+      const heard: unknown[] = [];
+      link.messages$.subscribe((data) => heard.push(JSON.parse(data)));
+      link.send(
+        JSON.stringify({ k: 'hello', v: NET_VERSION, id: 'eve', r: ['cpu'] })
+      );
+      await joining;
+      await flush();
+      return { guest, heard };
+    }
+
+    it('names the room feature on both devices', async () => {
+      const { host, guest } = await connected();
+
+      expect(host.online.peerFeatures()).toEqual(['room']);
+      expect(guest.online.peerFeatures()).toEqual(['room']);
+    });
+
+    it("brings the guest's wish and ready to the host", async () => {
+      const { host, guest } = await connected();
+
+      guest.online.sendRoom({ wish: 'corridors', ready: true });
+      await flush();
+
+      expect(host.events).toContainEqual({
+        type: 'room',
+        room: { wish: 'corridors', ready: true },
+      });
+    });
+
+    it('sends nothing from the host', async () => {
+      const { host, guest } = await connected();
+
+      host.online.sendRoom({ wish: 'corridors', ready: true });
+      await flush();
+
+      expect(host.events.map(({ type }) => type)).toEqual(['connected']);
+      expect(guest.events.map(({ type }) => type)).toEqual(['connected']);
+    });
+
+    it('plays an older host, which names no features, and sends it no room', async () => {
+      const { guest, heard } = await oldHost();
+
+      expect(guest.online.lobby().phase).toBe('connected');
+      expect(guest.online.peerFeatures()).toEqual([]);
+      guest.online.sendRoom({ wish: 'corridors', ready: true });
+      await flush();
+      expect(heard).not.toContainEqual(
+        expect.objectContaining({ k: 'room' })
+      );
+    });
+
+    it('forgets the features with the connection', async () => {
+      const { host, guest } = await connected();
+
+      guest.online.leave();
+      await flush();
+
+      expect(host.online.peerFeatures()).toEqual([]);
+      expect(guest.online.peerFeatures()).toEqual([]);
+    });
+  });
+
   describe('a match', () => {
     it('starts on both devices, numbered for the room', async () => {
       const { host, guest, code } = await connected();

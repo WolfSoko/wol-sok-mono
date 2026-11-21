@@ -7,7 +7,10 @@ import { GameCloud } from '../storage/game-cloud';
 import { type OpenRoom, normalizeRoomCode } from '../storage/game-rooms';
 import { Lockstep } from './lockstep';
 import {
+  type GuestRoomState,
+  NET_FEATURES,
   NET_VERSION,
+  type NetFeature,
   NetMessage,
   OnlineSetup,
   OnlineStart,
@@ -74,6 +77,8 @@ export type OnlineEvent =
   | { type: 'colors'; colors: [string, string] }
   /** The host changed the next match's setup - for the guest. */
   | { type: 'setup'; setup: OnlineSetup }
+  /** The guest's wish and ready in the room - for the host. */
+  | { type: 'room'; room: GuestRoomState }
   /** The host started a match - for the guest; see {@link takeStart}. */
   | { type: 'start'; start: OnlineStart }
   /** The connection is gone. */
@@ -117,6 +122,7 @@ export class OnlineMatchService {
     { initialValue: null }
   );
   private readonly peerState = signal<string | null>(null);
+  private readonly peerFeatureState = signal<readonly NetFeature[]>([]);
   private readonly players = inject(PlayerService);
   /**
    * The rulesets each device offered in its hello. Both sides settle the
@@ -147,6 +153,12 @@ export class OnlineMatchService {
    * after the connection, so the result can offer to add them as a friend.
    */
   public readonly peer = this.peerState.asReadonly();
+  /**
+   * What the other device understands beyond the version, from its hello -
+   * none before it said hello, after the connection, or from an older
+   * release.
+   */
+  public readonly peerFeatures = this.peerFeatureState.asReadonly();
   public readonly events$: Observable<OnlineEvent> = this.events.asObservable();
 
   /** True where online matches can be played: with the cloud and WebRTC. */
@@ -283,6 +295,21 @@ export class OnlineMatchService {
   }
 
   /**
+   * The guest tells the host its wish and ready in the room - only to a
+   * host that understands the room (feature `room`).
+   */
+  public sendRoom(room: GuestRoomState): void {
+    if (this.lobby().role === 'guest' && this.peerHas('room')) {
+      this.send({ k: 'room', ...room });
+    }
+  }
+
+  /** True when the other device named `feature` in its hello. */
+  private peerHas(feature: NetFeature): boolean {
+    return this.greeted && this.peerFeatures().includes(feature);
+  }
+
+  /**
    * The host starts a match: tells the guest, and returns the lockstep to
    * play it with. Null while no guest is connected.
    */
@@ -348,6 +375,7 @@ export class OnlineMatchService {
     this.greeted = false;
     this.ownOffers = ['cpu'];
     this.peerOffers = ['cpu'];
+    this.peerFeatureState.set([]);
     this.lobbyState.set({ ...IDLE_LOBBY, ...lobby });
     if (wasConnected) {
       this.events.next({ type: 'ended', reason });
@@ -388,6 +416,7 @@ export class OnlineMatchService {
           v: NET_VERSION,
           id: this.playerId(),
           r: [...this.ownOffers],
+          f: [...NET_FEATURES],
         });
       },
       () => undefined
@@ -403,6 +432,7 @@ export class OnlineMatchService {
     if (message.k === 'hello') {
       this.peerState.set(message.id);
       this.peerOffers = message.r;
+      this.peerFeatureState.set(message.f);
       this.greet(message.v);
       return;
     }
@@ -414,6 +444,14 @@ export class OnlineMatchService {
       case 'setup':
         if (role === 'guest') {
           this.events.next({ type: 'setup', setup: setupOf(message) });
+        }
+        return;
+      case 'room':
+        if (role === 'host') {
+          this.events.next({
+            type: 'room',
+            room: { wish: message.wish, ready: message.ready },
+          });
         }
         return;
       case 'colors':
