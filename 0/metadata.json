@@ -1,0 +1,66 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZNWS7YX66B6VMP1DP69XG1",
+  "session_id": "6cc97c11-40ce-43f6-bff5-cbc717ed2653",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T18:29:19.399249423Z",
+  "branch": "3171-trailing-slash-redirect",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/public/spa-cdk-stack/README.md",
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts",
+    "libs/public/spa-cdk-stack/src/lib/spa/trailing-slash-redirect.spec.ts",
+    "libs/public/spa-cdk-stack/src/lib/spa/trailing-slash-redirect.ts",
+    "libs/public/spa-cdk-stack/src/lib/stack-spa.spec.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "8ca66acb6188",
+  "checkpoint_transcript_start": 313,
+  "transcript_lines_at_start": 313,
+  "compact_transcript_start": 28,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_014JHyeErERYKxxHiCUiRf3Q",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "8ca66acb6188",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 42,
+        "end": 43,
+        "entry_ids": [
+          "8a34f8d6-9ecf-4705-96e3-7e4a15167709"
+        ],
+        "tool_use_id": "toolu_014JHyeErERYKxxHiCUiRf3Q"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_014JHyeErERYKxxHiCUiRf3Q"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 1
+  }
+}
