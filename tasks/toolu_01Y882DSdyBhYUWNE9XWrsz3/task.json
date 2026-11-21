@@ -1,0 +1,7 @@
+{
+  "tool_use_id": "toolu_01Y882DSdyBhYUWNE9XWrsz3",
+  "agent_id": "afab4d90896a60e13",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR #3166 diff vs spec",
+  "started_at": "2026-11-21T07:39:55.181634697+01:00"
+}

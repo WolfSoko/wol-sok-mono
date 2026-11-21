@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7YDBWS58TVWAJKQ9M3DHVD3",
+  "strategy": "manual-commit",
+  "branch": "3164-better-online-game-experience",
+  "checkpoints_count": 3,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 34,
+    "cache_creation_tokens": 9908,
+    "cache_read_tokens": 4827700,
+    "output_tokens": 7376,
+    "api_call_count": 17,
+    "subagent_tokens": {
+      "input_tokens": 16,
+      "cache_creation_tokens": 80291,
+      "cache_read_tokens": 609484,
+      "output_tokens": 2832,
+      "api_call_count": 8
+    }
+  }
+}
