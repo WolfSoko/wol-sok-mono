@@ -27,6 +27,7 @@ import {
   createTexture,
   Program,
   Target,
+  useExactOutput,
 } from './gl-utils';
 import {
   compiledSharedPrograms,
@@ -846,6 +847,7 @@ export class GpuCellPasses implements CellPasses {
     if (layout == null) {
       throw new Error('The GPU passes have no arena to set up for');
     }
+    useExactOutput(gl);
     const programs: Programs = {
       ...compiledSharedPrograms(gl),
       ...this.rules.cellPrograms(gl),

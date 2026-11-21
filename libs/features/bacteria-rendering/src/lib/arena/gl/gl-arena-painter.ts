@@ -30,6 +30,7 @@ import {
   createTarget,
   createTexture,
   FULLSCREEN_VERTEX,
+  useExactOutput,
   Program,
   Target,
 } from '../../gl/gl-utils';
@@ -1135,6 +1136,7 @@ export class GlArenaPainter implements ArenaPainter {
   /** Compiles the programs and allocates every buffer, texture and target. */
   private setup(): Resources {
     const gl = this.gl;
+    useExactOutput(gl);
     gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
 
     const programs: Programs = {

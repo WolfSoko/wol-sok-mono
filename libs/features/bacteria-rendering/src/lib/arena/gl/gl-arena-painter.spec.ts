@@ -1,6 +1,12 @@
 import { Cells, gameBalance } from '@wolsok/feat-shared-bacteria-engine';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
-import { encodeCells, packTints, passMargins } from './gl-arena-painter';
+import { fakeGl, glConstant } from '../../gl/testing/fake-gl';
+import {
+  encodeCells,
+  GlArenaPainter,
+  packTints,
+  passMargins,
+} from './gl-arena-painter';
 import { MAX_TINTS } from './shaders';
 
 describe('packTints', () => {
@@ -130,5 +136,37 @@ describe('passMargins', () => {
 
     expect(far.colony).toBe(near.colony + 5);
     expect(far.cells).toBe(near.cells + 5);
+  });
+});
+
+describe('GlArenaPainter', () => {
+  function painterOnFakeContext() {
+    const fake = fakeGl();
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 32;
+    jest
+      .spyOn(canvas, 'getContext')
+      .mockReturnValue(fake.gl as unknown as RenderingContext);
+    const painter = GlArenaPainter.create(canvas, 32, 16, 2, 1);
+    return { fake, canvas, painter };
+  }
+
+  const DITHER = glConstant('DITHER');
+
+  it('paints without dithering, so the trail and the targets hold what was drawn', () => {
+    const { fake, painter } = painterOnFakeContext();
+
+    expect(painter).not.toBeNull();
+    expect(fake.callsOf('disable', DITHER)).toBe(1);
+  });
+
+  it('switches dithering off again in a restored context', () => {
+    const { fake, canvas } = painterOnFakeContext();
+
+    canvas.dispatchEvent(new Event('webglcontextlost'));
+    canvas.dispatchEvent(new Event('webglcontextrestored'));
+
+    expect(fake.callsOf('disable', DITHER)).toBe(2);
   });
 });
