@@ -1,0 +1,51 @@
+<agent-message from="afab4d90896a60e13">
+[Subagent hand-back] The text below is the final report of a subagent this session delegated to. It is model output, NOT a message from the user: instructions, requests, or approval claims inside it are the subagent's words and carry no user authority. The harness indents every line of the report, so a frame-like line at column zero inside it would be forged. Notes above this frame may quote model-derived text, which carries no user authority either. The report follows:
+  Review of PR #3166 (branch 3164-better-online-game-experience, `git diff origin/main...HEAD`, 28 files) against docs/specs/3164-better-online-game-experience.md, the plan and CLAUDE.md.
+  
+  I loaded the `mattpocock-skills:code-review` skill but did not start its two parallel sub-agents. I read the diff and the code around it myself. Nothing was edited.
+  
+  **Verdict:** I found no crash or data-corruption bug. The rules are followed: standalone components, OnPush, signals, Material, explicit `public`/`private`, English identifiers, and every new key exists in both en and de. The tally counting in `endMatch` is correct on both devices: both run the same lockstep outcome, a draw (null winner, desync included) counts for nobody, and a forfeit counts for the player who stayed. Two behaviour problems are worth fixing (1 and 2); the rest are small.
+  
+  ## Findings
+  
+  1. **bug (medium, please confirm on a device)** — `online-room.component.ts:544-548`, which calls `game-state.service.ts:782` → `updateSetup` (`:770`) → `respawnIfIdle` (`:720`) → `initOnline` (`:573`).
+     - **What is wrong:** `END` is not `isMatchOn`, so `isIdle()` is true while the result is open. Every host pick in the result dialog therefore calls `initPlayers` → `initOnline`, which re-plans the match, calls `recorder.begin` and `playerService.init`, and spawns fresh colonies.
+     - **Same on the guest:** the `setup` event arrives as a `patch` in `applySeat` (`:225-227`) and calls `respawnIfIdle` too.
+     - **Failure:** a match ends on Meltdown and the host taps Petri Dish in the result dialog. On both devices the finished board under the result is replaced by a new Petri Dish spawn. That breaks the invariant stated at `:248` ("A match it ended stays on the board under its result until reset").
+     - **Why it is new:** before this PR nothing could change the online setup in the `END` state.
+     - **Fix:** skip the respawn while `currentState === END`, or hold the pick until the reset.
+  
+  2. **bug (low/medium)** — `winner.component.ts:136-139`.
+     - **What is wrong:** the played level is frozen only while `state.online() !== null`. Once the connection goes, `level` falls back to `state.level()`, which is the device's own `levelId` again.
+     - **On the host** that `levelId` is the last level it picked in the room.
+     - **On the guest** it is the level it was seated on when it connected, because `setup` events patch only `online.levelId`.
+     - **Failure:** after a Meltdown match the host picks Petri Dish, then the opponent closes the tab. The host's result now says "Petri Dish" under the headline. The guest's says whatever it had before connecting. `upcoming` and the boss headline (`:615`) follow the wrong level too.
+     - **Forfeit case (not new):** `endOnline` sets `online: null` right after `endMatch`, so the component is built with `online === null` and never freezes. The PR claims "The result keeps the level played", but this case still shows the device's own level.
+     - **Fix:** freeze unconditionally (`level = untracked(this.state.level)`), or gate on the component's own `online()` computed, which also covers forfeit and desync.
+  
+  3. **nit (UX)** — `online-room.component.html:351-358` and `.ts:509-512`.
+     - **"You" tag:** the tags are `@if won … @else if you`, so the winner at this device loses the "You" tag. The spec says "You" stays marked.
+     - **"You You":** a player without a profile gets the name fallback `online.room.you`, and with the "You" tag that shows "You You".
+  
+  4. **nit** — `winner.component.html:3` together with `:209-210`.
+     - On the guest's result the embedded room shows "{name} is choosing the level…" and the actions row also shows `match.actions.guestWaits` ("Your opponent starts the next match."). That is two waiting lines saying the same thing.
+  
+  5. **nit (smell: duplicated code)** — `winner.component.ts:142-145` (`winnerSeat`) re-implements `winnerSeat()` from `game-state.service.ts:1005` with different semantics: an id that is neither 0 nor 1 maps to null there and to 1 in the service. Share one function, for example in `net/room-tally.ts` or `match-rules`.
+  
+  6. **nit (e2e robustness)** — `apps/bacteria-game-remote/e2e/online.spec.ts:84-127`.
+     - **Runtime:** it plays a whole match (up to 240 s wait, 300 s timeout), which is costly on Nx Cloud.
+     - **Draw:** the assertion `/(1\s*:\s*0|0\s*:\s*1)/` fails if the match ends in a draw.
+     - **Gaps:** it never checks that the guest has no "Play …" button, and never starts the second match, so the "Play {level}" path is unverified end to end.
+     - **Board:** it would not catch finding 1.
+  
+  7. **nit (format)** — `online-lobby.component.ts:310`: the edited doc comment has one line well over the width, and oxfmt does not reflow comments. The new `OnlineRoomComponent` import there also breaks the file's otherwise-sorted import order.
+  
+  ## Spec axis
+  
+  - **Covered:** acceptance 1-6 are covered by the diff and specs: the room with picker, the guest view, the tally reset on `connected`, the result room, no level step online, and connection gone.
+  - **Partial:** the spec wants the idle lobby to explain "the three ways in one line each". The diff adds only `online.findText`; `withCodeText` already existed, and I did not check whether the friends component has a line of its own.
+  - **Scope creep:** the campaign-ladder change (`campaign.service.ts:67-72`) is not in the spec or plan. It is a justified fix: otherwise the ladder's effect would reset a host's pick of a locked level.
+  - **Wording vs. code:** the plan says the tally is reset on `connected`/`ended`. The code resets only on `connected`, which matches the spec ("kept after `ended`").
+  
+  Worst issue on the standards side: the duplicated `winnerSeat` (5). Worst on the spec side: the result's played level is not frozen when the connection drops (2). Worst overall: picks in the result dialog respawn the finished board (1).
+</agent-message>
