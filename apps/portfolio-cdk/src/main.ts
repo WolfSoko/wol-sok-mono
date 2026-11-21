@@ -3,7 +3,7 @@ import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { prerenderedPages } from './prerendered-pages';
+import { pagesByDepth, prerenderedPages } from './prerendered-pages';
 
 const buildOutputPath = 'dist/apps/portfolio';
 
@@ -35,16 +35,20 @@ const stack = new SpaStack(app, stackName, {
   ],
 });
 
-stack.spa.addExtraAssets(
-  pages.map((page) =>
-    Source.data(
-      page,
-      readFileSync(join(buildOutputPath, page, 'index.html'), 'utf8')
-    )
-  ),
-  CacheControl.noCache(),
-  'text/html; charset=utf-8'
-);
+// One upload per depth: in a single one the file `blog` would block the
+// folder `blog/` of `blog/<slug>` (see pagesByDepth).
+for (const group of pagesByDepth(pages)) {
+  stack.spa.addExtraAssets(
+    group.map((page) =>
+      Source.data(
+        page,
+        readFileSync(join(buildOutputPath, page, 'index.html'), 'utf8')
+      )
+    ),
+    CacheControl.noCache(),
+    'text/html; charset=utf-8'
+  );
+}
 
 const tags: Tags = Tags.of(app);
 tags.add('app', 'Portfolio');
