@@ -48,12 +48,12 @@ export const TURN_RELAY_FIGURES = {
     width: 960,
     height: 540,
     alt: {
-      en: 'Diagram of the three kinds of ICE candidates: host (the device’s own address, hidden behind an mDNS name), server-reflexive (the public address STUN reports) and relay (an address on the TURN server). ICE checks the pairs from cheapest to most expensive; the relay pair always works.',
-      de: 'Diagramm der drei Arten von ICE-Kandidaten: host (die eigene Adresse des Geräts, hinter einem mDNS-Namen versteckt), server-reflexive (die öffentliche Adresse, die STUN meldet) und relay (eine Adresse auf dem TURN-Server). ICE prüft die Paare vom billigsten zum teuersten; das Relay-Paar klappt immer.',
+      en: 'Diagram of the three kinds of ICE candidates: host (the device’s own address, hidden behind an mDNS name), server-reflexive (the public address STUN reports) and relay (an address on the TURN server). ICE checks the pairs from cheapest to most expensive; the relay pair works wherever the TURN server can be reached.',
+      de: 'Diagramm der drei Arten von ICE-Kandidaten: host (die eigene Adresse des Geräts, hinter einem mDNS-Namen versteckt), server-reflexive (die öffentliche Adresse, die STUN meldet) und relay (eine Adresse auf dem TURN-Server). ICE prüft die Paare vom billigsten zum teuersten; das Relay-Paar klappt überall, wo der TURN-Server erreichbar ist.',
     },
     caption: {
-      en: 'ICE tries the direct paths first. The relay candidate is the one that always works, and the one that costs money.',
-      de: 'ICE probiert zuerst die direkten Wege. Der Relay-Kandidat ist der, der immer klappt, und der, der Geld kostet.',
+      en: 'ICE tries the direct paths first. The relay candidate works wherever the TURN server can be reached, and it is the one that costs money.',
+      de: 'ICE probiert zuerst die direkten Wege. Der Relay-Kandidat klappt überall, wo der TURN-Server erreichbar ist, und er ist der, der Geld kostet.',
     },
   },
   wiring: {

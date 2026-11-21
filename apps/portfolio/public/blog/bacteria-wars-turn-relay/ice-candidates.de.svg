@@ -61,7 +61,7 @@
     <circle cx="300" cy="373" r="15" fill="#ea580c" />
     <text x="300" y="379" text-anchor="middle" font-size="16" font-weight="800" fill="#fff">3</text>
     <text x="300" y="379" text-anchor="middle" font-size="15" font-weight="600" fill="#ea580c"></text>
-    <text x="480" y="455" text-anchor="middle" font-size="15" font-weight="600" fill="#ea580c">klappt immer · kostet Bandbreite</text>
+    <text x="480" y="455" text-anchor="middle" font-size="15" font-weight="600" fill="#ea580c">klappt, wo TURN erreichbar ist · kostet Bandbreite</text>
     <text x="480" y="500" text-anchor="middle" font-size="17" font-weight="600" fill="#1e293b">Das Relay-Paar hat die niedrigste Priorität: Direkte Wege bleiben direkt.</text>
     <text x="480" y="526" text-anchor="middle" font-size="14" font-weight="500" fill="#64748b">host: ein Netz · srflx: Heimrouter · relay: Mobilfunk, isolierte WLANs</text>
   </g>
