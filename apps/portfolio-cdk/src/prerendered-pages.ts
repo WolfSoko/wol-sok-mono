@@ -32,7 +32,9 @@ export function pagesByDepth(pages: readonly string[]): string[][] {
   const groups = new Map<number, string[]>();
   for (const page of pages) {
     const depth = page.split('/').length;
-    groups.set(depth, [...(groups.get(depth) ?? []), page]);
+    const group = groups.get(depth) ?? [];
+    group.push(page);
+    groups.set(depth, group);
   }
   return [...groups.entries()]
     .sort(([a], [b]) => a - b)
