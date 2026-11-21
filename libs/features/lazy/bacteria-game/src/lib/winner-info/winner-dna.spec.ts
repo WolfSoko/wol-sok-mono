@@ -89,6 +89,7 @@ describe('WinnerComponent DNA', () => {
     canEvolve.set(true);
     store.update({
       online: { seat: 0, levelId: LEVELS[0].id, colors: ['orange', 'blue'] },
+      endedOnline: true,
     });
     won(125, 80);
 

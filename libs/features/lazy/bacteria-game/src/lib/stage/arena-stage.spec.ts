@@ -8,6 +8,7 @@ import {
   arenaSize,
   ONLINE_SIM_RESOLUTION,
 } from '@wolsok/feat-shared-bacteria-engine';
+import { GameStateStore } from '../state/game.states';
 import { ArenaStage, ArenaStageHost } from './arena-stage';
 
 describe('ArenaStage', () => {
@@ -49,6 +50,19 @@ describe('ArenaStage', () => {
       );
       expect(stage.arena()).not.toEqual(low);
     });
+  });
+
+  it('keeps the online grid under the result of an online match once the connection is gone', () => {
+    settings.set('simResolution', 'low');
+    const low = stage.arena();
+    const store = TestBed.inject(GameStateStore);
+
+    store.update({ endedBy: 'annihilation', endedOnline: true, online: null });
+
+    expect(stage.arena()).toEqual(
+      arenaSize(ONLINE_SIM_RESOLUTION, stage.mapSize())
+    );
+    expect(stage.arena()).not.toEqual(low);
   });
 
   describe('the vaporize effect', () => {

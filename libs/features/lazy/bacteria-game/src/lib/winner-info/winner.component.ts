@@ -281,15 +281,10 @@ export class WinnerComponent {
   });
 
   /**
-   * True after a match between two devices - also once the other one left,
-   * which ended it.
+   * True after a match between two devices - also once the connection is
+   * gone, whether its end ended the match or came after it.
    */
-  public online: Signal<boolean> = computed(
-    () =>
-      this.state.online() !== null ||
-      this.state.endedBy() === 'forfeit' ||
-      this.state.endedBy() === 'desync'
-  );
+  public online: Signal<boolean> = computed(() => this.state.endedOnline());
 
   private readonly social = inject(SocialService);
   private readonly analytics = injectGameAnalytics();
@@ -488,8 +483,9 @@ export class WinnerComponent {
    * - and the lifetime rivalry of the two colours.
    */
   public duel = computed(() => {
-    // Couch matches only: an online match counts for no couch rivalry.
-    if (this.rules().kind !== 'two-players') {
+    // Couch matches only: an online match counts for no couch rivalry -
+    // also once its connection is gone and the rules are the setup's again.
+    if (this.online() || this.rules().kind !== 'two-players') {
       return null;
     }
     const colors = this.colors();

@@ -304,6 +304,7 @@ export class GameStateService {
       winner: null,
       endedBy: null,
       endedOn: null,
+      endedOnline: false,
       earnings: null,
     });
     // subscribe update time passed when game running
@@ -366,6 +367,7 @@ export class GameStateService {
       winner: outcome.winner,
       endedBy: outcome.reason,
       endedOn: this.gameStateStore.level().id,
+      endedOnline: state.online !== null,
       earnings,
       series:
         series === null
@@ -915,6 +917,7 @@ export class GameStateService {
       winner: null,
       endedBy: null,
       endedOn: null,
+      endedOnline: false,
       earnings: null,
     }));
     return true;
@@ -947,6 +950,7 @@ export class GameStateService {
       winner: null,
       endedBy: null,
       endedOn: null,
+      endedOnline: false,
       earnings: null,
     }));
   }

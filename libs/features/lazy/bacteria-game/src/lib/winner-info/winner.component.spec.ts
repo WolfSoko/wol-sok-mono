@@ -266,6 +266,21 @@ describe('WinnerComponent', () => {
     expect(text()).not.toContain('Rivalry');
   });
 
+  it('leaves the couch rivalry out of an online match once its connection is gone', () => {
+    store.update({
+      mode: 'two-players',
+      colors: ['orange', 'blue'],
+      winner: createPlayer({ id: 0, name: 'You' }),
+      levelId: LEVELS[0].id,
+      endedBy: 'annihilation',
+      endedOnline: true,
+      online: null,
+      earnings: null,
+    });
+
+    expect(text()).not.toContain('Rivalry');
+  });
+
   describe('online', () => {
     const played = LEVELS[0];
     const picked = LEVELS[1];
@@ -273,9 +288,11 @@ describe('WinnerComponent', () => {
     /** The result of an online match, opened once the match ended. */
     function onlineResult(seat: 0 | 1): ComponentFixture<WinnerComponent> {
       store.update({
-        winner: createPlayer({ id: 1, name: 'Opponent' }),
+        winner: createPlayer({ id: 1, name: 'Opponent', isBot: seat === 0 }),
         levelId: played.id,
+        endedBy: 'annihilation',
         endedOn: played.id,
+        endedOnline: true,
         online: { seat, levelId: played.id, colors: ['orange', 'blue'] },
         earnings: null,
       });
@@ -319,6 +336,42 @@ describe('WinnerComponent', () => {
       expect(
         result.nativeElement.querySelector('.level-info')?.textContent
       ).toContain(played.name);
+    });
+
+    it('keeps naming the opponent who won once their device left', () => {
+      const result = onlineResult(0);
+
+      store.update({ online: null });
+      result.detectChanges();
+
+      const shown = textOf(result);
+      expect(shown).toContain('Your opponent ate the other colony - they win.');
+      expect(shown).not.toContain('computer');
+      expect(shown).toContain('The connection to your opponent is gone.');
+      expect(shown).not.toContain('Choose a level');
+      // No room is left to pick a level in or to say ready.
+      expect(
+        result.nativeElement.querySelector('feat-lazy-bac-game-online-room')
+      ).toBeNull();
+      expect(shown).not.toContain('Play ');
+    });
+
+    it('says the opponent is gone after a forfeit, without the room', () => {
+      const result = onlineResult(0);
+
+      store.update({
+        winner: createPlayer({ id: 0, name: 'You' }),
+        endedBy: 'forfeit',
+        online: null,
+      });
+      result.detectChanges();
+
+      const shown = textOf(result);
+      expect(shown).toContain('Your opponent is gone - the match is yours.');
+      expect(shown).toContain('The connection to your opponent is gone.');
+      expect(
+        result.nativeElement.querySelector('feat-lazy-bac-game-online-room')
+      ).toBeNull();
     });
 
     it('shows the guest the room and has them wait for the host', () => {
