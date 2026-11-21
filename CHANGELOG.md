@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.175.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.174.0...v74.175.0) (2026-11-21)
+
+### Features
+
+* **feat-lazy-bacteria-game:** a shared online room to pick the level, before and between matches ([#3166](https://github.com/WolfSoko/wol-sok-mono/issues/3166)) ([7d1f284](https://github.com/WolfSoko/wol-sok-mono/commit/7d1f284a855ee0b937744b176ebf3c4b20fa5ca3)), references [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164) [#3164](https://github.com/WolfSoko/wol-sok-mono/issues/3164)
+
+### Bug Fixes
+
+* **portfolio-cdk:** upload the bare-path pages one depth at a time ([#3169](https://github.com/WolfSoko/wol-sok-mono/issues/3169)) ([b950d05](https://github.com/WolfSoko/wol-sok-mono/commit/b950d0565668d9c64f750a65b3b51718883f1aa3)), references [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159) [#3165](https://github.com/WolfSoko/wol-sok-mono/issues/3165) [#3159](https://github.com/WolfSoko/wol-sok-mono/issues/3159)
+
 ## [74.174.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.2...v74.174.0) (2026-11-21)
 
 ### Features
