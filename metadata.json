@@ -1,0 +1,34 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZVJ790HHV1S0XF3VHA97BP",
+  "strategy": "manual-commit",
+  "branch": "3175-lab-pass",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/guest/lab-pass.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/guest/lab-pass.service.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 8354,
+    "cache_read_tokens": 1920939,
+    "output_tokens": 4005,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 44,
+      "cache_creation_tokens": 57637,
+      "cache_read_tokens": 2251086,
+      "output_tokens": 15467,
+      "api_call_count": 22
+    }
+  }
+}

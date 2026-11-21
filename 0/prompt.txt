@@ -1,0 +1,7 @@
+<task-notification>
+<task-id>bie8zvwvb</task-id>
+<tool-use-id>toolu_01Qitq6kxV4NrpDzKnVDb72f</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/tasks/bie8zvwvb.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/574/wol-sok-mono; timeout 1500 npx nx affected -t lint,lint-templates,typecheck-specs,test --base=origin/main --output-style=static --parallel=2 &gt; /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/scratchpad/checks2.log 2&gt;&amp;1; echo exit $?; sed 's/\x1b\[[0-9;]*m//g' /tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-574-wol-sok-mono/475a2065-2558-4483-af73-9593604fa273/scratchpad/checks2.log | grep -E "Successfully ran|Failed tasks|^- |FAIL " | tail -15" completed (exit code 0)</summary>
+</task-notification>

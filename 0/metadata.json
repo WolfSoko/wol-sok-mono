@@ -1,0 +1,70 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZVJ790HHV1S0XF3VHA97BP",
+  "session_id": "475a2065-2558-4483-af73-9593604fa273",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T20:08:06.833560399Z",
+  "branch": "3175-lab-pass",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/lazy/bacteria-game/src/lib/guest/lab-pass.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/guest/lab-pass.service.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "037caf4ac22f",
+  "checkpoint_transcript_start": 1331,
+  "transcript_lines_at_start": 1331,
+  "compact_transcript_start": 121,
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 8354,
+    "cache_read_tokens": 1920939,
+    "output_tokens": 4005,
+    "api_call_count": 7,
+    "subagent_tokens": {
+      "input_tokens": 44,
+      "cache_creation_tokens": 57637,
+      "cache_read_tokens": 2251086,
+      "output_tokens": 15467,
+      "api_call_count": 22
+    }
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01Mh6fNHzdSEFgjrWvriTxNE",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "1bded4b9ed0c",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 42,
+        "end": 43,
+        "entry_ids": [
+          "3bd496ec-6a01-40d1-a8c7-3834dda266cd"
+        ],
+        "tool_use_id": "toolu_01Mh6fNHzdSEFgjrWvriTxNE"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01Mh6fNHzdSEFgjrWvriTxNE"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 5
+  }
+}
