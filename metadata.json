@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZTEZPRT9CPPNC48A4M6P23",
+  "strategy": "manual-commit",
+  "branch": "3174-arena-smears",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "libs/features/bacteria-rendering/src/index.ts",
+    "libs/features/lazy/bacteria-game/src/lib/bacteria-game.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/bacteria-game.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gl-debug/gl-debug.service.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gl-debug/gl-debug.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gl-debug/layer-sheet.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gl-debug/layer-sheet.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gpu-choice/drop-query-param.ts",
+    "libs/features/lazy/bacteria-game/src/lib/gpu-choice/simulation-override.service.ts",
+    "libs/features/lazy/bacteria-game/src/lib/hud-bar.component.html",
+    "libs/features/lazy/bacteria-game/src/lib/hud-bar.component.scss",
+    "libs/features/lazy/bacteria-game/src/lib/hud-bar.component.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/hud-bar.component.ts",
+    "libs/features/lazy/bacteria-game/src/lib/hud-perf.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/de/stage.ts",
+    "libs/features/lazy/bacteria-game/src/lib/i18n/texts/en/stage.ts",
+    "libs/features/lazy/bacteria-game/src/lib/stage/stage-frame.spec.ts",
+    "libs/features/lazy/bacteria-game/src/lib/stage/stage-frame.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 30,
+    "cache_creation_tokens": 44313,
+    "cache_read_tokens": 4476040,
+    "output_tokens": 16722,
+    "api_call_count": 14
+  }
+}
