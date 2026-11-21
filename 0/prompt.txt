@@ -1,0 +1,17 @@
+<task-notification>
+<task-id>buqxyuhw4</task-id>
+<tool-use-id>toolu_01KtWUruqSRQLgcDLtR2LFxC</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-573-wol-sok-mono/25e362ba-b3b7-47d5-9fa1-0a5227719f1b/tasks/buqxyuhw4.output</output-file>
+<status>completed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/573/wol-sok-mono; for i in $(seq 1 55); do s=$(gh api repos/{owner}/{repo}/commits/ee870292ba46f43753ac38a811ff18ba7f445d00/check-runs --jq '.check_runs[] | select(.name=="main") | .status+" "+(.conclusion//"")'); case "$s" in completed*) break;; esac; sleep 30; done; echo "$s"; gh api repos/{owner}/{repo}/commits/ee870292ba46f43753ac38a811ff18ba7f445d00/check-runs --jq '.check_runs[] | "\(.name): \(.status) \(.conclusion)"'" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b4im25p0f</task-id>
+<tool-use-id>toolu_019ihBa2eH1doQeGgoKBb3hg</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-573-wol-sok-mono/25e362ba-b3b7-47d5-9fa1-0a5227719f1b/tasks/b4im25p0f.output</output-file>
+<status>failed</status>
+<summary>Background command "cd /home/wolf/speeddev-runner/checkouts/573/wol-sok-mono; npx firebase emulators:start --only auth,firestore,database --project demo-bacteria-wars --config firebase.local-e2e.json &gt; /tmp/claude-1000/emu.log 2&gt;&amp;1" failed with exit code 144</summary>
+</task-notification>
