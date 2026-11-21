@@ -1,0 +1,61 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7YD63RGFCDFX7FJY4W3VMH1",
+  "session_id": "48325d88-356d-4c94-977d-3d74664a6710",
+  "strategy": "manual-commit",
+  "created_at": "2026-11-21T06:37:35.086911688Z",
+  "branch": "3164-better-online-game-experience",
+  "checkpoints_count": 3,
+  "save_step_count": 3,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-5-5",
+  "turn_id": "0eabb2691ba3",
+  "checkpoint_transcript_start": 683,
+  "transcript_lines_at_start": 683,
+  "compact_transcript_start": 69,
+  "token_usage": {
+    "input_tokens": 122,
+    "cache_creation_tokens": 258183,
+    "cache_read_tokens": 14134802,
+    "output_tokens": 24958,
+    "api_call_count": 59
+  },
+  "skill_events_version": 1,
+  "skill_events": [
+    {
+      "id": "claude-skill-toolu_01KtfduAyBfdbvnshtUGdqta",
+      "event_type": "tool_invocation",
+      "skill": {
+        "name": "speeddev:cockpit"
+      },
+      "source": {
+        "agent": "claude-code",
+        "signal": "skill_tool_use",
+        "confidence": "explicit"
+      },
+      "turn_id": "344b100a98c0",
+      "transcript_anchor": {
+        "unit": "line",
+        "start": 40,
+        "end": 41,
+        "entry_ids": [
+          "0238ed7b-4293-47f3-9ab2-94a58d8c33d7"
+        ],
+        "tool_use_id": "toolu_01KtfduAyBfdbvnshtUGdqta"
+      },
+      "native": {
+        "tool_name": "Skill",
+        "tool_use_id": "toolu_01KtfduAyBfdbvnshtUGdqta"
+      },
+      "collapse": {
+        "target": "tool_pair",
+        "label": "Skill: speeddev:cockpit",
+        "default_collapsed": true
+      }
+    }
+  ],
+  "session_metrics": {
+    "turn_count": 3
+  }
+}
