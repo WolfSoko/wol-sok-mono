@@ -1,5 +1,6 @@
 import { firstValueFrom } from 'rxjs';
 import { LateGameStorage } from '../../testing/late-game-storage';
+import { SETTLE_LIMIT_MS } from '../../testing/settle-until';
 import {
   type MatchPlan,
   replayFromBytes,
@@ -45,7 +46,9 @@ describe('LocalGameReplays', () => {
   /**
    * Answers the storage on every turn until `work` is done, then once more
    * for what it asked last. The replays' compression runs on Node's thread
-   * pool, so no fixed number of turns covers it on a busy machine.
+   * pool, so no fixed number of turns covers it on a busy machine. Fails
+   * once `SETTLE_LIMIT_MS` ran out, so a hung call names itself and stops
+   * answering before the next test's storage comes.
    */
   async function answered<T>(work: Promise<T>): Promise<T> {
     let done = false;
@@ -53,7 +56,11 @@ describe('LocalGameReplays', () => {
       () => (done = true),
       () => (done = true)
     );
+    const deadline = Date.now() + SETTLE_LIMIT_MS;
     while (!done) {
+      if (Date.now() >= deadline) {
+        throw new Error('Timed out waiting for the replays to answer');
+      }
       storage.flush();
       await new Promise((resolve) => setTimeout(resolve));
     }

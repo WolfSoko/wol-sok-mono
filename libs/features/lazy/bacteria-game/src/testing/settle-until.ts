@@ -1,7 +1,7 @@
 import type { ComponentFixture } from '@angular/core/testing';
 
-/** How long `settleUntil` waits: below Jest's 5 s, so its message shows. */
-const SETTLE_LIMIT_MS = 3_000;
+/** How long a spec's wait lasts: below Jest's 5 s, so its message shows. */
+export const SETTLE_LIMIT_MS = 3_000;
 
 /** One macrotask turn, then change detection. */
 export async function settleTurn(
@@ -15,8 +15,9 @@ export async function settleTurn(
 /**
  * Settles at least one turn and then until `ready` holds, and fails naming
  * `what` once the limit ran out. The first turn renders, so a check for
- * something gone (a loading bar) does not hold on a page never drawn. For work that finishes on no fixed turn: the compression streams of
- * a replay run on Node's thread pool, and a busy machine slows everything.
+ * something gone (a loading bar) does not hold on a page never drawn.
+ * For work that finishes on no fixed turn: the compression streams of a
+ * replay run on Node's thread pool, and a busy machine slows everything.
  */
 export async function settleUntil(
   fixture: ComponentFixture<unknown>,
