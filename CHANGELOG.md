@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.173.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.1...v74.173.2) (2026-11-21)
+
+### Bug Fixes
+
+* **tools:** make the lockfile an input of every oxlint lint target ([#3163](https://github.com/WolfSoko/wol-sok-mono/issues/3163)) ([7313892](https://github.com/WolfSoko/wol-sok-mono/commit/7313892bfb1ce8f3ff5d1fc67bc071441e705484)), references [#3151](https://github.com/WolfSoko/wol-sok-mono/issues/3151) [#3151](https://github.com/WolfSoko/wol-sok-mono/issues/3151) [#3151](https://github.com/WolfSoko/wol-sok-mono/issues/3151) [#3151](https://github.com/WolfSoko/wol-sok-mono/issues/3151)
+
+### Chore
+
+* **release:** publish ([93db2d4](https://github.com/WolfSoko/wol-sok-mono/commit/93db2d4bcd77bfb610223fdac166b75c851f8fa6))
+
+## [74.173.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.173.0...v74.173.1) (2026-11-20)
+
+### Bug Fixes
+
+* **feat-shared-reaction-diffusion-kernels:** drop the tsconfig reference to a missing spec config ([#3160](https://github.com/WolfSoko/wol-sok-mono/issues/3160)) ([df15e24](https://github.com/WolfSoko/wol-sok-mono/commit/df15e24fd4fc94ff070f87ac98041b72ad2dde0f)), references [#3143](https://github.com/WolfSoko/wol-sok-mono/issues/3143) [#3133](https://github.com/WolfSoko/wol-sok-mono/issues/3133) [#3143](https://github.com/WolfSoko/wol-sok-mono/issues/3143)
+
 ## [74.173.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.172.16...v74.173.0) (2026-11-20)
 
 ### Features

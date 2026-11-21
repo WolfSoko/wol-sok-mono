@@ -3,6 +3,8 @@
 // program; a file it leaves out lands in a fallback program built from
 // whatever other unowned files the same run lints, so its type-aware findings
 // changed between `nx lint <project>`, a batched lint run and `npx oxlint .`.
+// It also fails on a tsconfig reference to a config that does not exist
+// (#3143), which TypeScript and tsgolint skip with an error.
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { relative, resolve } from 'node:path';
@@ -10,6 +12,7 @@ import { describe, it } from 'node:test';
 import ts from 'typescript';
 import {
   assertRunsOnEveryCiRun,
+  gitLsFiles,
   ROOT,
   TSCONFIG,
   lintedScripts,
@@ -39,7 +42,7 @@ function parseTsconfig(absolutePath) {
 /**
  * The files of a tsconfig's program and of every project it references,
  * transitively, relative to the root. A reference to a missing config owns
- * nothing, as for TypeScript and tsgolint.
+ * nothing, as for TypeScript and tsgolint; `danglingReferences` fails on it.
  */
 function ownedFiles(tsconfigPath, seen = new Set()) {
   const absolutePath = resolve(ROOT, tsconfigPath);
@@ -72,12 +75,32 @@ function unownedScripts() {
   return unowned;
 }
 
+/** Each tracked tsconfig's references to a config that does not exist. */
+function danglingReferences() {
+  return gitLsFiles('tsconfig*.json', '**/tsconfig*.json').flatMap((path) =>
+    (parseTsconfig(resolve(ROOT, path)).projectReferences ?? [])
+      .map((reference) => ts.resolveProjectReferencePath(reference))
+      .filter((referenced) => !existsSync(referenced))
+      .map((referenced) => `${path} → ${relative(ROOT, referenced)}`)
+  );
+}
+
 void describe('the linted scripts', () => {
   void it('each belong to the program of their nearest tsconfig.json, so type-aware lint types them the same on every run', () => {
     assert.deepEqual(
       unownedScripts(),
       {},
       'widen the "include" of the named tsconfig.json or of a config it references'
+    );
+  });
+});
+
+void describe('the tsconfig references', () => {
+  void it('each name an existing config, which TypeScript and tsgolint would skip with an error', () => {
+    assert.deepEqual(
+      danglingReferences(),
+      [],
+      'drop the reference or add the config it names'
     );
   });
 });
