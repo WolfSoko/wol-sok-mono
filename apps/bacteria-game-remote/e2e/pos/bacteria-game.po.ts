@@ -119,10 +119,22 @@ export class BacteriaGamePo {
     await this.chooseMode('Online');
   }
 
-  /** Opens an online match from the lobby, on a level picked first. */
-  public async openMatch(level = 'Petri Dish'): Promise<void> {
+  /** Opens an online match from the lobby: the room picks its level later. */
+  public async openMatch(): Promise<void> {
     await this.page.getByRole('button', { name: 'Open a match' }).click();
-    await this.chooseLevel(level);
+  }
+
+  /** The room two connected players share, before and between matches. */
+  public get room(): Locator {
+    return this.page.locator('feat-lazy-bac-game-online-room');
+  }
+
+  /** Picks the next online match's level in the room - the host only. */
+  public async pickRoomLevel(title: string): Promise<void> {
+    await this.room
+      .locator('.picker')
+      .getByRole('button', { name: new RegExp(`^\\d+ ${title}\\b`) })
+      .click();
   }
 
   /** A new campaign game, started on the level the ladder offers. */
