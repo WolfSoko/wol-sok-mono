@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZPE76W1PSST0MFS0HD2S0W",
+  "strategy": "manual-commit",
+  "branch": "3170-spa-extra-assets-guard",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/portfolio-cdk/src/main.ts",
+    "apps/portfolio-cdk/src/portfolio.stack.spec.ts",
+    "apps/portfolio-cdk/src/portfolio.stack.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 16271,
+    "cache_read_tokens": 2821379,
+    "output_tokens": 12157,
+    "api_call_count": 20
+  }
+}
