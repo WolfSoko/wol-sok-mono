@@ -1,0 +1,11 @@
+<task-notification>
+<task-id>b6zl3yf4i</task-id>
+<tool-use-id>toolu_01UGtLGpUiqYXWYezx8F2HEs</tool-use-id>
+<output-file>/tmp/claude-1000/-home-wolf-speeddev-runner-checkouts-575-wol-sok-mono/1e520589-c04d-4129-870f-26a690e3f82a/tasks/b6zl3yf4i.output</output-file>
+<status>completed</status>
+<summary>Background command "for i in $(seq 1 110); do
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1522/answer -G -d arbeit=575 -d wait=4 | grep -qE '"decision"|Unknown request' &amp;&amp; break
+sleep 1
+done
+curl -s --max-time 5 https://routine-utt5l6k4qa-ez.a.run.app/api/cockpit/request/1522/answer -G -d arbeit=575" completed (exit code 0)</summary>
+</task-notification>
