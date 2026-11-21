@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01WXJv7VJWTyJyC6GzQaD3id",
+  "agent_id": "aa5c3745077ef006f",
+  "subagent_type": "general-purpose",
+  "task_description": "Standards review of blog branch",
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 85277,
+    "cache_read_tokens": 529828,
+    "output_tokens": 4204,
+    "api_call_count": 7
+  },
+  "started_at": "2026-11-20T21:47:24.565567204+01:00",
+  "completed_at": "2026-11-20T21:48:39.552778058+01:00"
+}
