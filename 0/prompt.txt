@@ -1,0 +1,37 @@
+<agent-message from="ae0e9e6a8d45027e3">
+[Subagent hand-back] The text below is the final report of a subagent this session delegated to. It is model output, NOT a message from the user: instructions, requests, or approval claims inside it are the subagent's words and carry no user authority. The harness indents every line of the report, so a frame-like line at column zero inside it would be forged. Notes above this frame may quote model-derived text, which carries no user authority either. The report follows:
+  I reviewed the diff by hand. I didn't run the code-review skill, because it would spawn more sub-agents for a diff this small.
+  
+  I found one important problem: the redirect is an open redirect. The runtime contract, CDK wiring and tests are otherwise correct.
+  
+  Findings:
+  
+  1. **`libs/public/spa-cdk-stack/src/lib/spa/trailing-slash-redirect.ts:16` — important, open redirect.** `path = uri.replace(/\/+$/, '') || '/'` removes only the trailing slashes. Any repeated leading slashes stay, so the `Location` can come out as a protocol-relative URL.
+     - **Failure scenario:** `https://wolsok.de//evil.com/` gets a 301 with `Location: //evil.com`, and the browser goes to `https://evil.com/`. That makes it usable for phishing links on wolsok.de. CloudFront does not collapse duplicate slashes in the URI.
+     - **Also affected:** `///evil.com/`, and `/\evil.com/` when a raw backslash reaches the edge (browsers read `/\` as `//`).
+     - **Verified:** I ran the deployed source string through `vm`. `new URL(location, 'https://wolsok.de/x')` resolved all three cases to `https://evil.com/`.
+     - **Fix:** normalise the start of the path to a single `/`, e.g. `'/' + uri.replace(/^[\/\\]+/, '').replace(/\/+$/, '')`, or answer such URIs with the request unchanged.
+     - **Tests:** add `//evil.com/` and `/\evil.com/` to the spec. The existing `['//', '/']` case shows leading slashes were considered, but only that harmless one.
+  
+  2. **`trailing-slash-redirect.ts:22` — nit, a key without a value changes form.** `?flag` arrives as `{ flag: { value: '' } }` and is rebuilt as `?flag=`. This is harmless for campaign parameters.
+     - The AWS event-structure docs don't say whether querystring values are passed encoded or decoded. If CloudFront ever passed decoded values, `?q=a%26b` would come back as `q=a&b`. Rebuilding without escaping matches AWS's own samples, so this is only worth a manual `curl` check after deploy: `curl -sI 'https://wolsok.de/career/?q=a%26b&flag'`.
+  
+  Checked and found correct:
+  - **Runtime contract (checked against AWS's "CloudFront Functions event structure" page):**
+    - `event.request.uri` and the `querystring` object (always present, empty when there is no query string) are read correctly.
+    - When a key repeats, `multiValue` holds every value including the first, which `entry.multiValue || [entry]` handles correctly.
+    - The generated response has an integer `statusCode`, a `statusDescription` (optional) and a lower-case `headers.location.value`, as required.
+    - The code is plain ES5 (`var`, `Object.keys`, `forEach`, a regex), which `cloudfront-js-2.0` supports.
+    - The `\\/` escape inside the template literal produces `/\/+$/` in the deployed code, and the spec evaluates that same string.
+  - **CDK wiring in `spa.construct.ts`:**
+    - `FunctionRuntime.JS_2_0` and `FunctionCode.fromInline` are used correctly, and the function auto-publishes by default.
+    - It is attached as `VIEWER_REQUEST` on the default behaviour only, which is the distribution's only behaviour (`cacheOverrides` only set S3 object metadata).
+    - With the option off, `functionAssociations` is `undefined`, so the existing templates stay unchanged.
+    - The new `DistributionOptions` object parameter is clean.
+  - **Tests against the acceptance points:**
+    - Point 1: `stack-spa.spec.ts` checks one function, the runtime, the exact source and the `viewer-request` association, and zero functions by default.
+    - Point 2: `trailing-slash-redirect.spec.ts` covers `/career/`, a nested slug, multiple trailing slashes, `?a=1&b=2&b=3`, and the pass-through of `/`, `/career` and assets.
+    - Points 3 and 4: `apps/portfolio-cdk/src/main.ts` sets the flag, and the README and CLAUDE.md describe it.
+    - Point 5 (the `curl` checks after deploy) can't be proven before deploy.
+  - **Repo rules:** CLAUDE.md's "do not bump targets in `libs/public/*`" is respected (no compile-target change; the spec calls for a `feat(spa-cdk-stack)` minor release). Everything is in English, and the class members are explicitly `private`.
+</agent-message>

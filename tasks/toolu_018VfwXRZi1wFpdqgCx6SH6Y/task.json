@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_018VfwXRZi1wFpdqgCx6SH6Y",
+  "agent_id": "ae0e9e6a8d45027e3",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3177 diff",
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 90279,
+    "cache_read_tokens": 391471,
+    "output_tokens": 4877,
+    "api_call_count": 6
+  },
+  "started_at": "2026-11-21T19:30:25.368701192+01:00",
+  "completed_at": "2026-11-21T19:31:31.47149809+01:00"
+}
