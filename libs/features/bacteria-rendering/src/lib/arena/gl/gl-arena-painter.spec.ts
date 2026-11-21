@@ -6,6 +6,7 @@ import { fakeGl, glConstant } from '../../gl/testing/fake-gl';
 import {
   encodeCells,
   flipRows,
+  keepBox,
   GlArenaPainter,
   packTints,
   passMargins,
@@ -142,19 +143,23 @@ describe('passMargins', () => {
   });
 });
 
-describe('GlArenaPainter', () => {
-  function painterOnFakeContext() {
-    const fake = fakeGl();
-    const canvas = document.createElement('canvas');
-    canvas.width = 64;
-    canvas.height = 32;
-    jest
-      .spyOn(canvas, 'getContext')
-      .mockReturnValue(fake.gl as unknown as RenderingContext);
-    const painter = GlArenaPainter.create(canvas, 32, 16, 2, 1);
-    return { fake, canvas, painter };
+/** A GL painter of a 32×16 arena on a fake WebGL2 context, twice as many pixels. */
+function painterOnFakeContext(width = 32, height = 16) {
+  const fake = fakeGl();
+  const canvas = document.createElement('canvas');
+  canvas.width = width * 2;
+  canvas.height = height * 2;
+  jest
+    .spyOn(canvas, 'getContext')
+    .mockReturnValue(fake.gl as unknown as RenderingContext);
+  const painter = GlArenaPainter.create(canvas, width, height, 2, 1);
+  if (painter == null) {
+    throw new Error('No painter on the fake context');
   }
+  return { fake, canvas, painter };
+}
 
+describe('GlArenaPainter', () => {
   const DITHER = glConstant('DITHER');
 
   it('paints without dithering, so the trail and the targets hold what was drawn', () => {
@@ -179,17 +184,7 @@ describe('GlArenaPainter diagnostic', () => {
   const HEIGHT = 16;
 
   function painted() {
-    const fake = fakeGl();
-    const canvas = document.createElement('canvas');
-    canvas.width = WIDTH * 2;
-    canvas.height = HEIGHT * 2;
-    jest
-      .spyOn(canvas, 'getContext')
-      .mockReturnValue(fake.gl as unknown as RenderingContext);
-    const painter = GlArenaPainter.create(canvas, WIDTH, HEIGHT, 2, 1);
-    if (painter == null) {
-      throw new Error('No painter on the fake context');
-    }
+    const { fake, painter } = painterOnFakeContext(WIDTH, HEIGHT);
     painter.setFloor(arenaTheme('petri-dish'), []);
     return { fake, painter };
   }
@@ -278,5 +273,21 @@ describe('flipRows', () => {
     expect(Array.from(flipRows(pixels, 1, 3))).toEqual([
       3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1,
     ]);
+  });
+});
+
+describe('keepBox', () => {
+  it('blacks out what lies outside the box', () => {
+    const layer = {
+      label: 'cells',
+      width: 3,
+      height: 2,
+      pixels: new Uint8Array(3 * 2 * 4).fill(9),
+    };
+
+    keepBox(layer, [1, 0, 2, 1]);
+
+    const kept = Array.from({ length: 6 }, (_, i) => layer.pixels[i * 4]);
+    expect(kept).toEqual([0, 9, 0, 0, 0, 0]);
   });
 });

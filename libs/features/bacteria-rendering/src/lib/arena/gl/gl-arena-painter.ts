@@ -206,6 +206,8 @@ interface ColonyTargets {
 
 /** A colony whose cells and density are ready for its pass over the frame. */
 interface PreparedColony {
+  /** Its place in the frame's colonies - which targets it draws from. */
+  place: number;
   layer: PaintedColony;
   bounds: CellBounds;
   margin: ReturnType<typeof passMargins>;
@@ -295,8 +297,15 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly detail: number;
   /** What of the arena the frame being painted shows. */
   private view: Rect;
-  /** The simulation's glow the last frame added - for the diagnostic. */
-  private lastGlow: WebGLTexture | null = null;
+  /**
+   * What the last frame drew from, for the diagnostic's capture: the GPU
+   * simulation's glow and the colonies prepared. Null before a frame and
+   * after the context went.
+   */
+  private lastPainted: {
+    glow: WebGLTexture | null;
+    colonies: readonly PreparedColony[];
+  } | null = null;
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
@@ -354,6 +363,7 @@ export class GlArenaPainter implements ArenaPainter {
       // Without this the browser would never hand the context back.
       event.preventDefault();
       this.resources = null;
+      this.lastPainted = null;
     });
     canvas.addEventListener('webglcontextrestored', () => {
       if (this.disposed) {
@@ -400,6 +410,8 @@ export class GlArenaPainter implements ArenaPainter {
 
   public diagnose(): PainterDiagnostics {
     const diagnostics = diagnose(this.gl);
+    // Whatever was raised before is nobody's pass.
+    diagnostics.check('before the diagnostic');
     return {
       renderer: this.renderer(),
       errors: () => diagnostics.errors(),
@@ -478,6 +490,8 @@ export class GlArenaPainter implements ArenaPainter {
       return;
     }
     const { programs } = resources;
+    // What was raised since the last frame - uploads, a resize, the timer.
+    checkGl(gl, 'between frames');
     this.motes.advance(frame.deltaTimeSec);
     this.weapons.update(frame);
     // Laid before the frame's own target is bound: no switch between them.
@@ -488,6 +502,7 @@ export class GlArenaPainter implements ArenaPainter {
     // a GPU that renders in tiles stores and loads a target at each switch.
     const colonies = this.prepareColonies(resources, frame);
     checkGl(gl, 'colony cells');
+    this.lastPainted = { glow: glowOf(frame.colonies), colonies };
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.renderWidth, this.renderHeight);
@@ -755,7 +770,7 @@ export class GlArenaPainter implements ArenaPainter {
         this.scissorCells(bounds, margin.verticalBlur);
         this.blurPass(resources.blur.texture, targets.density, 0, 1);
       }
-      prepared.push({ layer, bounds, margin, targets });
+      prepared.push({ place: index, layer, bounds, margin, targets });
     });
     gl.disable(gl.SCISSOR_TEST);
     return prepared;
@@ -994,7 +1009,6 @@ export class GlArenaPainter implements ArenaPainter {
       const { minX, minY, maxX, maxY } = layer.bounds;
       growBounds(around, minX, minY, maxX, maxY);
     }
-    this.lastGlow = effects;
     if (effects == null) {
       return;
     }
@@ -1162,8 +1176,10 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * The layers the diagnostic saves: the frame kept as the trail, the
-   * simulation's glow, and each colony's cells and density - read back from
-   * the GPU, which waits for it.
+   * simulation's glow, and the cells and density of each colony the last
+   * frame drew - read back from the GPU, which waits for it. Only a
+   * colony's box is fresh in its targets; the rest is left black, so
+   * nothing stale passes for a smear.
    */
   private captureLayers(): CapturedLayer[] {
     const resources = this.resources;
@@ -1181,28 +1197,32 @@ export class GlArenaPainter implements ArenaPainter {
         true
       ),
     ];
-    if (this.lastGlow != null) {
-      layers.push(this.readLayer('glow', this.lastGlow, width, height, false));
+    const painted = this.lastPainted;
+    const glow = painted?.glow;
+    if (glow != null && this.gl.isTexture(glow)) {
+      layers.push(this.readLayer('glow', glow, width, height, false));
     }
-    resources.colonies.forEach((targets, index) => {
-      const name = `colony ${index + 1}`;
-      layers.push(
-        this.readLayer(
-          `${name} cells`,
-          targets.cells.texture,
-          width,
-          height,
-          false
-        ),
-        this.readLayer(
-          `${name} density`,
-          targets.density.texture,
-          width,
-          height,
-          false
-        )
+    for (const { place, bounds, margin, targets } of painted?.colonies ?? []) {
+      const name = `colony ${place + 1}`;
+      const cells = this.readLayer(
+        `${name} cells`,
+        targets.cells.texture,
+        width,
+        height,
+        false
       );
-    });
+      const density = this.readLayer(
+        `${name} density`,
+        targets.density.texture,
+        width,
+        height,
+        false
+      );
+      keepBox(cells, this.passBox(bounds, margin.cells));
+      keepBox(density, this.passBox(bounds, margin.verticalBlur));
+      layers.push(cells, density);
+    }
+    checkGl(this.gl, 'capture layers');
     return layers;
   }
 
@@ -1383,4 +1403,27 @@ export function flipRows(
     );
   }
   return flipped;
+}
+
+/** The GPU simulation's glow a frame's colonies are drawn with, if any. */
+function glowOf(colonies: readonly PaintedColony[]): WebGLTexture | null {
+  for (const layer of colonies) {
+    if (layer.kind === 'state') {
+      return layer.effects;
+    }
+  }
+  return null;
+}
+
+/** Blacks out a layer of the arena grid outside a box of it. */
+export function keepBox(layer: CapturedLayer, box: CellBox): void {
+  const [x0, y0, x1, y1] = box;
+  const { width, height, pixels } = layer;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (x < x0 || x >= x1 || y < y0 || y >= y1) {
+        pixels.fill(0, (y * width + x) * 4, (y * width + x + 1) * 4);
+      }
+    }
+  }
 }

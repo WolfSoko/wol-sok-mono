@@ -3,7 +3,7 @@ import { take } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { isRuleset, Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { DeviceStorage } from '../storage/game-storage';
-import { dropQueryParam } from './drop-query-param';
+import { dropQueryParam } from '../drop-query-param';
 
 /** Where this device keeps its simulation override. */
 export const SIMULATION_OVERRIDE_STORAGE_KEY = 'bacteria-game.sim-override';

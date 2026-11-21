@@ -349,6 +349,8 @@ export class GpuCellPasses implements CellPasses {
     }
     const gl = this.gl;
     const { programs } = resources;
+    // Raised since the last tick, by the painter's frame or an upload.
+    checkGl(gl, 'before simulation tick');
     this.step = tick.step;
     this.updateArea(tick);
 

@@ -211,6 +211,8 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.gameStateService.endSeries();
     this.onlineFlow.start();
     this.checkGpu();
+    // `?gldebug`: the GL diagnostic for this session, see GlDebugService.
+    this.glDebug.start();
 
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
@@ -343,7 +345,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
    */
   private checkGpu(): void {
     this.simulationOverride.start();
-    this.glDebug.start();
     effect(() => {
       const toggles = this.featureToggles.toggles();
       if (

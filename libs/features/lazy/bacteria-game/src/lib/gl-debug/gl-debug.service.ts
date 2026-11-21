@@ -1,5 +1,5 @@
 import { Injectable, signal } from '@angular/core';
-import { dropQueryParam } from '../gpu-choice/drop-query-param';
+import { dropQueryParam } from '../drop-query-param';
 
 /** The URL query that turns the GL diagnostic on: `?gldebug`. */
 export const GL_DEBUG_PARAM = 'gldebug';

@@ -43,6 +43,7 @@ export function fakeGl(): FakeGl {
     getExtension: () => null,
     getParameter: () => 'fake renderer',
     isVertexArray: () => true,
+    isTexture: () => true,
     getError: () => errors.shift() ?? NO_ERROR,
   };
   const target: Record<string | symbol, unknown> = { NO_ERROR };

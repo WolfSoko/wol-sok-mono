@@ -101,9 +101,20 @@ function drawSheet(layers: readonly CapturedLayer[]): HTMLCanvasElement | null {
  * with.
  */
 export function downloadLayerSheet(layers: readonly CapturedLayer[]): void {
-  const canvas = layers.length === 0 ? null : drawSheet(layers);
-  canvas?.toBlob((blob) => {
+  if (layers.length === 0) {
+    console.warn('GL layers: no GL painter is diagnosed, nothing to save');
+    return;
+  }
+  const canvas = drawSheet(layers);
+  if (canvas == null) {
+    console.warn('GL layers: the browser gave no canvas to draw them on');
+    return;
+  }
+  canvas.toBlob((blob) => {
     if (blob == null) {
+      console.warn(
+        `GL layers: the browser could not encode the ${canvas.width}×${canvas.height} sheet`
+      );
       return;
     }
     const url = URL.createObjectURL(blob);
