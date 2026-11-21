@@ -58,8 +58,7 @@ export class GlDiagnostics {
   private nameOf(code: number): string {
     const gl = this.gl as unknown as Record<string, unknown>;
     return (
-      ERROR_NAMES.find((name) => gl[name] === code) ??
-      `0x${code.toString(16)}`
+      ERROR_NAMES.find((name) => gl[name] === code) ?? `0x${code.toString(16)}`
     );
   }
 }

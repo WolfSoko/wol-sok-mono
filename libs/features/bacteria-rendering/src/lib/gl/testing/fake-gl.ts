@@ -59,7 +59,8 @@ export function fakeGl(): FakeGl {
       }
       let method = methods.get(name);
       if (method == null) {
-        const result = results[name] ?? (() => (name.startsWith('create') ? {} : undefined));
+        const result =
+          results[name] ?? (() => (name.startsWith('create') ? {} : undefined));
         method = jest.fn((...args: unknown[]) => {
           const made = calls.get(name) ?? [];
           made.push(args);
@@ -80,10 +81,8 @@ export function fakeGl(): FakeGl {
     gl,
     calls,
     callsOf: (name, ...args) =>
-      (calls.get(name) ?? []).filter(
-        (made) =>
-          args.length === 0 ||
-          args.every((arg, index) => Object.is(made[index], arg))
+      (calls.get(name) ?? []).filter((made) =>
+        args.every((arg, index) => Object.is(made[index], arg))
       ).length,
     failNext: (code) => errors.push(code),
     failOn: (method, code) => failing.set(method, code),

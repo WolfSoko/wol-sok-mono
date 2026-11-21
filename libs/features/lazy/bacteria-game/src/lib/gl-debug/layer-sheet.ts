@@ -45,8 +45,8 @@ export function sheetLayout(
 
 /** A layer's RGBA as its colours, opaque, and its alpha as grey. */
 export function splitAlpha(pixels: Uint8Array): {
-  colors: Uint8ClampedArray;
-  alpha: Uint8ClampedArray;
+  colors: Uint8ClampedArray<ArrayBuffer>;
+  alpha: Uint8ClampedArray<ArrayBuffer>;
 } {
   const colors = new Uint8ClampedArray(pixels);
   const alpha = new Uint8ClampedArray(pixels.length);

@@ -540,6 +540,16 @@ play each other.
   `deterministicSimulation` off, never what the device offers online.
   The settings show the ruleset local matches play and the self-test's
   verdict (`gpu-choice/simulation-check.ts`).
+- `?gldebug` (`gl-debug/`, #3174) is the GL diagnostic for a device whose
+  arena draws wrong: for the page's session the HUD shows the frame
+  breakdown, the WebGL renderer and the GL errors per pass, and "Save GL
+  layers" downloads the painter's layers (trail, glow, each colony's cells
+  and density, colours and alpha) as one PNG. Nothing is stored or sent.
+  The painter (`ArenaPainter.diagnose()`) and the GPU simulation then call
+  `getError` after each pass (`gl/gl-diagnostics.ts`, `checkGl`), which
+  stalls the GPU, so never without the flag. Both GL contexts render with
+  dithering off (`useExactOutput`, `gl/gl-utils.ts`): the glow packs colony
+  ids into an RGBA8 alpha.
 
 ## Usage statistics
 
