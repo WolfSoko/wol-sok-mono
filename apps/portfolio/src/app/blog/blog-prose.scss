@@ -1,0 +1,93 @@
+// The running text of an article: a readable measure, the site's tokens,
+// code and asides.
+:host {
+  display: block;
+  max-width: 46rem;
+  padding: 1rem 0 2rem;
+  font-size: 1.08rem;
+  line-height: 1.75;
+}
+
+h2 {
+  margin: 3rem 0 0.75rem;
+  font-size: clamp(1.5rem, 3.5vw, 2rem);
+  line-height: 1.2;
+}
+
+h3 {
+  margin: 2rem 0 0.5rem;
+  font-size: 1.2rem;
+}
+
+p,
+li {
+  color: color-mix(in srgb, var(--text) 85%, var(--muted));
+}
+
+a {
+  color: var(--accent-cool);
+}
+
+strong {
+  color: var(--text);
+}
+
+code {
+  padding: 0.1em 0.35em;
+  border-radius: 0.35em;
+  background: var(--surface-2);
+  font-size: 0.9em;
+}
+
+pre {
+  margin: 1.5rem 0;
+  padding: 1.25rem 1.5rem;
+  overflow-x: auto;
+  border-radius: 1rem;
+  border: 1px solid var(--line);
+  background: var(--surface-2);
+  font-size: 0.85rem;
+  line-height: 1.55;
+
+  code {
+    padding: 0;
+    background: none;
+    font-size: inherit;
+  }
+}
+
+.aside {
+  margin: 1.75rem 0;
+  padding: 1rem 1.25rem;
+  border-left: 4px solid var(--accent-warm);
+  border-radius: 0 1rem 1rem 0;
+  background: color-mix(in srgb, var(--accent-warm) 8%, var(--surface));
+
+  p {
+    margin: 0;
+  }
+}
+
+table {
+  width: 100%;
+  margin: 1.5rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: var(--text);
+}
+
+// tables and code scroll on their own at phone width, never the page
+.scroll {
+  overflow-x: auto;
+}

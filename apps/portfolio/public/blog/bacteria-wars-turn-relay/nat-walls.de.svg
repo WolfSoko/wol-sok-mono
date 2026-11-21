@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 480" width="960" height="480" role="img">
+  <title>Zwei Kolonien rufen durch NAT-Mauern</title>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#e9dfcc" />
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1e293b" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#2563eb" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#15803d" />
+    </marker>
+  </defs>
+  <rect width="960" height="480" fill="#fdf8ef" />
+  <rect width="960" height="480" fill="url(#dots)" />
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" fill="#1e293b">
+    <rect x="40" y="90" width="200" height="340" rx="22" fill="#1e293b" />
+    <rect x="49" y="112" width="182" height="296" rx="10" fill="#dcfce7" />
+    <rect x="122.0" y="98" width="36" height="6" rx="3" fill="#475569" />
+    <path d="M207.0 270.0 Q207.0 270.0 201.7 283.6 Q196.4 297.2 187.4 307.6 Q178.3 318.1 165.6 322.4 Q152.9 326.7 139.8 327.8 Q126.6 328.8 111.9 326.2 Q97.2 323.7 90.4 310.4 Q83.5 297.2 83.3 283.6 Q83.0 270.0 83.9 256.7 Q84.7 243.4 92.9 232.2 Q101.0 221.1 113.2 213.5 Q125.4 205.8 139.8 206.9 Q154.2 207.9 164.3 217.3 Q174.5 226.7 184.9 235.1 Q195.2 243.4 201.1 256.7Z" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+    <circle cx="112.1" cy="279.3" r="7.4" fill="#15803d" opacity="0.35" />
+    <circle cx="171.0" cy="242.1" r="5.0" fill="#15803d" opacity="0.35" />
+    <circle cx="120.2" cy="258.8" r="12.4" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="125.7" cy="260.7" r="6.2" fill="#1e293b" />
+    <circle cx="159.8" cy="258.8" r="12.4" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="165.4" cy="260.7" r="6.2" fill="#1e293b" />
+    <ellipse cx="140.0" cy="293.6" rx="10.5" ry="12.4" fill="#1e293b" />
+    <rect x="720" y="90" width="200" height="340" rx="22" fill="#1e293b" />
+    <rect x="729" y="112" width="182" height="296" rx="10" fill="#ede9fe" />
+    <rect x="802.0" y="98" width="36" height="6" rx="3" fill="#475569" />
+    <path d="M884.9 270.0 Q884.9 270.0 879.5 283.0 Q874.1 296.0 865.8 306.5 Q857.5 317.0 845.3 322.3 Q833.1 327.6 819.2 330.9 Q805.4 334.2 791.9 328.2 Q778.4 322.2 773.5 308.4 Q768.7 294.7 764.8 282.4 Q760.9 270.0 761.6 256.1 Q762.3 242.2 771.2 231.1 Q780.2 220.0 792.8 213.4 Q805.5 206.7 819.2 210.0 Q832.9 213.3 844.3 219.3 Q855.7 225.2 868.1 233.1 Q880.4 240.9 882.7 255.5Z" fill="#8b5cf6" stroke="#6d28d9" stroke-width="3" />
+    <circle cx="792.1" cy="279.3" r="7.4" fill="#6d28d9" opacity="0.35" />
+    <circle cx="851.0" cy="242.1" r="5.0" fill="#6d28d9" opacity="0.35" />
+    <circle cx="800.2" cy="258.8" r="12.4" fill="#fff" stroke="#6d28d9" stroke-width="2" />
+    <circle cx="794.6" cy="260.7" r="6.2" fill="#1e293b" />
+    <circle cx="839.8" cy="258.8" r="12.4" fill="#fff" stroke="#6d28d9" stroke-width="2" />
+    <circle cx="834.3" cy="260.7" r="6.2" fill="#1e293b" />
+    <ellipse cx="820.0" cy="293.6" rx="10.5" ry="12.4" fill="#1e293b" />
+    <rect x="330" y="70" width="90" height="380" fill="#b45309" rx="4" />
+    <rect x="331.5" y="71.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="71.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="93.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="93.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="93.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="115.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="115.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="137.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="137.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="137.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="159.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="159.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="181.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="181.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="181.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="203.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="203.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="225.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="225.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="225.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="247.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="247.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="269.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="269.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="269.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="291.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="291.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="313.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="313.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="313.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="335.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="335.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="357.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="357.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="357.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="379.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="379.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="401.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="401.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="401.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="423.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="375.5" y="423.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="331.5" y="445.5" width="19.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="353.5" y="445.5" width="41.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="397.5" y="445.5" width="21.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="341.0" y="240.0" width="68" height="40" rx="8" fill="#fdf8ef" stroke="#1e293b" stroke-width="2.5" />
+    <text x="375.0" y="268.0" text-anchor="middle" font-size="22" font-weight="800">NAT</text>
+    <rect x="540" y="70" width="90" height="380" fill="#b45309" rx="4" />
+    <rect x="541.5" y="71.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="71.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="93.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="93.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="93.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="115.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="115.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="137.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="137.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="137.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="159.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="159.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="181.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="181.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="181.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="203.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="203.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="225.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="225.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="225.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="247.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="247.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="269.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="269.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="269.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="291.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="291.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="313.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="313.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="313.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="335.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="335.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="357.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="357.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="357.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="379.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="379.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="401.5" width="19.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="401.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="401.5" width="21.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="423.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="585.5" y="423.5" width="41.0" height="19.0" rx="3" fill="#ea580c" />
+    <rect x="541.5" y="445.5" width="19.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="563.5" y="445.5" width="41.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="607.5" y="445.5" width="21.0" height="3.0" rx="3" fill="#ea580c" />
+    <rect x="551.0" y="240.0" width="68" height="40" rx="8" fill="#fdf8ef" stroke="#1e293b" stroke-width="2.5" />
+    <text x="585.0" y="268.0" text-anchor="middle" font-size="22" font-weight="800">NAT</text>
+    <path d="M76 20 H214 Q230 20 230 36 V60 Q230 76 214 76 H159.0 L150 120 L139.0 76 H76 Q60 76 60 60 V36 Q60 20 76 20Z" fill="#fff" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round" />
+    <text x="145.0" y="55.7" text-anchor="middle" font-size="22" font-weight="700">Hallo?!</text>
+    <path d="M751 20 H889 Q905 20 905 36 V60 Q905 76 889 76 H834.0 L810 120 L814.0 76 H751 Q735 76 735 60 V36 Q735 20 751 20Z" fill="#fff" stroke="#1e293b" stroke-width="2.5" stroke-linejoin="round" />
+    <text x="820.0" y="55.7" text-anchor="middle" font-size="22" font-weight="700">Hallo??</text>
+    <g transform="translate(290 230) rotate(-12)"><rect x="-22.0" y="-15.0" width="44" height="30" rx="4" fill="#fff" stroke="#15803d" stroke-width="2.5" /><path d="M-22.0 -15.0 L0 3.0 L22.0 -15.0" fill="none" stroke="#15803d" stroke-width="2.5" /></g>
+    <path d="M245 250 Q275 228 300 236" fill="none" stroke="#15803d" stroke-width="3" stroke-dasharray="6 6" />
+    <text x="312" y="205" text-anchor="middle" font-size="34" font-weight="900" fill="#dc2626">✗</text>
+    <g transform="translate(670 300) rotate(14)"><rect x="-22.0" y="-15.0" width="44" height="30" rx="4" fill="#fff" stroke="#6d28d9" stroke-width="2.5" /><path d="M-22.0 -15.0 L0 3.0 L22.0 -15.0" fill="none" stroke="#6d28d9" stroke-width="2.5" /></g>
+    <path d="M715 290 Q690 305 668 320" fill="none" stroke="#6d28d9" stroke-width="3" stroke-dasharray="6 6" />
+    <text x="648" y="282" text-anchor="middle" font-size="34" font-weight="900" fill="#dc2626">✗</text>
+    <text x="480" y="270" text-anchor="middle" font-size="64" font-weight="900" fill="#64748b">?</text>
+    <text x="480" y="470" text-anchor="middle" font-size="16" font-weight="500" fill="#64748b">dazwischen das Internet</text>
+  </g>
+</svg>

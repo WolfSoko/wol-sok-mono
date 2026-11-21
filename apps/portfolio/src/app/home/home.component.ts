@@ -6,6 +6,8 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
+import { blogPostPath } from '../blog/blog-post';
+import { BLOG_POSTS } from '../blog/posts';
 import { CAREER_SINCE } from '../career/career-since';
 import { yearsSince } from '../career/career.model';
 import { I18nService } from '../i18n/i18n.service';
@@ -24,6 +26,9 @@ export class HomeComponent {
   protected readonly apps = APPS;
   protected readonly experiments = EXPERIMENTS;
   protected readonly packages = PACKAGES;
+  /** The newest article, teased above the career. */
+  protected readonly latestPost = BLOG_POSTS[0];
+  protected readonly latestPostPath = blogPostPath(this.latestPost);
   protected readonly i18n = inject(I18nService);
   protected readonly t = this.i18n.texts;
   protected readonly careerLead = computed(() =>

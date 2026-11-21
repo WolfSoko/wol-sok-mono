@@ -1,0 +1,360 @@
+<wolsok-blog-figure [figure]="figures.walls" [eager]="true" />
+
+<p>
+  <a href="https://bacteria-wars.wolsok.de">Bacteria Wars</a> ist ein
+  Echtzeit-Strategiespiel im Browser: Zwei Kolonien wachsen über eine
+  Petrischale und kämpfen um sie, sechzig Ticks pro Sekunde. Seit Oktober können
+  zwei Spieler online gegeneinander antreten. An meinem Schreibtisch lief das
+  prima. Dann meldeten Spieler einen bekannten Satz des Spiels:
+  <em
+    >„Keine Verbindung möglich. Versuch es noch mal – im selben WLAN klappt es
+    am besten.“</em
+  >
+  Zwei Handys im Mobilfunknetz kamen nicht zueinander. Und, ironischerweise,
+  zwei Geräte im selben WLAN auch nicht.
+</p>
+<p>
+  Dieser Artikel handelt von der Lösung: einem TURN-Relay. Welches Problem es
+  löst, was ein TURN-Server ist, wie das Spiel ihn anbindet, ohne je eine
+  Backend-Funktion aufzurufen, und von der einen Überraschung, die jedes
+  Relay-Match sterben ließe, sobald seine Zugangsdaten ablaufen: Erst ein Test
+  mit Zugangsdaten von einer Minute zeigte sie, nach zehn Minuten.
+</p>
+
+<h2>Peer to Peer, in der Theorie</h2>
+<p>
+  Ein Online-Match läuft im <strong>Lockstep</strong>: Beide Geräte rechnen
+  dieselbe deterministische Simulation mit demselben Seed, und nur die Eingaben
+  der Spieler werden übertragen. Jede Eingabe wird sechs Ticks (100 ms) nach
+  ihrer Entstehung gespielt, auf beiden Geräten, sie kommt also meist an, bevor
+  die andere Seite sie braucht. Das sind ein paar Dutzend Bytes sechzigmal pro
+  Sekunde; mit beiden Richtungen und den Headern von UDP, DTLS und SCTP etwa 6
+  MB für ein zehnminütiges Match. Ein Spielserver ist nicht nötig: Die beiden
+  Browser sprechen direkt über einen <strong>WebRTC-Datenkanal</strong>.
+</p>
+<p>
+  Um diesen Kanal zu öffnen, müssen die Geräte erst eine Beschreibung ihrer
+  selbst tauschen (ein SDP-<em>Offer</em> und eine <em>Answer</em>, samt jeder
+  Netzadresse, unter der sie erreichbar sein könnten). Das Spiel macht das über
+  Firestore: Der Host schreibt sein Offer in ein Raumdokument
+  <code>rooms/&#123;code&#125;</code>, der Gast liest es über den sechsstelligen
+  Code und schreibt seine Answer zurück. Danach ist Firestore raus.
+</p>
+<p>
+  „Direkt“ ist der Haken. Die meisten Geräte im Internet sind überhaupt nicht
+  direkt erreichbar.
+</p>
+
+<h2>Was ein NAT mit einem eingehenden Paket macht</h2>
+<wolsok-blog-figure [figure]="figures.nat" />
+<p>
+  Dein Handy hat eine private Adresse wie <code>10.23.4.5</code>. Das Internet
+  sieht die öffentliche Adresse eines <strong>NAT</strong> (Network Address
+  Translation) davor: deinen Router zu Hause oder ein Carrier-Grade-NAT, das
+  sich im Mobilfunk Tausende Handys teilen. Schickt das Handy ein UDP-Paket
+  hinaus, wählt das NAT einen öffentlichen Port, merkt sich die Zuordnung und
+  lässt die Antworten herein. Ein Paket von irgendwem sonst an diesen Port
+  verwirft es.
+</p>
+<p>
+  Für zwei Geräte, die jeweils hinter einem NAT sitzen, ist das eine Sackgasse:
+  Das erste Paket jeder Seite sieht für das NAT der anderen unaufgefordert aus.
+  WebRTC löst das mit <em>Hole Punching</em>: Beide erfahren ihre öffentliche
+  Adresse und ihren Port, tauschen sie in Offer und Answer und schicken sich
+  gleichzeitig Pakete. Jedes ausgehende Paket öffnet eine Zuordnung, die die
+  Pakete der anderen Seite hereinlässt.
+</p>
+<p>
+  Mit den meisten Heimroutern klappt das. Es scheitert genau dort, wo die
+  Spieler es gemeldet haben:
+</p>
+<ul>
+  <li>
+    <strong>Symmetrische und Carrier-Grade-NATs</strong> im Mobilfunk vergeben
+    für jedes Ziel einen neuen öffentlichen Port. Die Adresse, die ein Handy
+    über einen Server erfahren hat, ist nicht die, an die das andere Handy
+    senden müsste, das gestanzte Loch sitzt also an der falschen Stelle.
+  </li>
+  <li>
+    <strong>Dasselbe WLAN</strong> sollte der einfache Fall sein, aber Browser
+    verstecken die lokale IP hinter einem zufälligen Namen
+    <code>&lt;uuid&gt;.local</code>, den das andere Gerät per Multicast-DNS
+    auflösen muss. Mesh-, Gast- und isolierte WLANs blockieren das. Der Ausweg,
+    die öffentliche Adresse, verlangt vom Router <em>Hairpinning</em>
+    (ein Paket an die eigene öffentliche Adresse zurück ins LAN schicken), und
+    viele Heimrouter machen das für UDP nicht.
+  </li>
+</ul>
+<p>
+  Die End-to-End-Tests des Spiels haben davon nie etwas gesehen: Sie ließen
+  beide Spieler in einem Chromium auf einem Rechner laufen, mit abgeschaltetem
+  mDNS-Verstecken.
+</p>
+
+<h2>STUN und TURN</h2>
+<wolsok-blog-figure [figure]="figures.stunTurn" />
+<p>
+  Zu WebRTC gehören zwei Arten von Hilfsservern, und ihre Namen klingen
+  ähnlicher, als ihre Aufgaben sind.
+</p>
+<p>
+  <strong>STUN</strong> (Session Traversal Utilities for NAT,
+  <a href="https://www.rfc-editor.org/rfc/rfc8489">RFC 8489</a>) ist ein
+  Spiegel. Das Gerät schickt ihm ein Paket, und STUN antwortet mit Adresse und
+  Port, von denen das Paket kam: der öffentlichen Seite des NAT. Das kostet fast
+  nichts, trägt keinen Spielverkehr, und Google betreibt öffentliche Server. Bis
+  November war das alles, was das Spiel nutzte.
+</p>
+<p>
+  <strong>TURN</strong> (Traversal Using Relays around NAT,
+  <a href="https://www.rfc-editor.org/rfc/rfc8656">RFC 8656</a>) ist ein
+  Briefträger. Das Gerät bittet ihn um eine <em>Allocation</em>: eine Adresse
+  und einen Port auf dem TURN-Server, die ihm gehören. Alles, was an diese
+  Adresse geht, wird zum Gerät weitergeleitet, und alles, was das Gerät darüber
+  schickt, geht von dort hinaus. Beide NATs sehen nur Verkehr zum und vom
+  TURN-Server, den sie durchlassen wie jede andere ausgehende Verbindung. Das
+  klappt durch jedes NAT, das überhaupt UDP oder TLS hinauslässt. Der Preis:
+  Jedes Paket des Matches läuft über den Server, und jemand zahlt die
+  Bandbreite. Darum braucht TURN Zugangsdaten, und darum ist es der letzte
+  Ausweg.
+</p>
+
+<h2>Wie ICE einen Weg wählt</h2>
+<wolsok-blog-figure [figure]="figures.ice" />
+<p>
+  Der Browser entscheidet nicht selbst zwischen direkt und Relay; das macht ICE
+  (Interactive Connectivity Establishment). Während er Offer oder Answer
+  vorbereitet, <em>sammelt</em> der Browser <em>Kandidaten</em>, Adressen, unter
+  denen er erreichbar sein könnte:
+</p>
+<div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Kandidat</th>
+        <th>Woher er kommt</th>
+        <th>Klappt, wenn</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>host</code></td>
+        <td>die eigene Netzwerkschnittstelle (als mDNS-Name)</td>
+        <td>beide in einem Netz sind, das mDNS auflöst</td>
+      </tr>
+      <tr>
+        <td><code>srflx</code> (server-reflexive)</td>
+        <td>die öffentliche Adresse, die STUN gemeldet hat</td>
+        <td>
+          beide NATs einen öffentlichen Port für jedes Ziel behalten (Hole
+          Punching)
+        </td>
+      </tr>
+      <tr>
+        <td><code>relay</code></td>
+        <td>eine Allocation auf dem TURN-Server</td>
+        <td>
+          der TURN-Server erreichbar ist (UDP oder TLS hinaus) und die
+          Zugangsdaten gelten
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<p>
+  Beide Seiten schicken ihre Kandidaten in Offer und Answer. ICE bildet daraus
+  Paare, prüft sie, die billigsten zuerst, und wählt das beste Paar, das
+  antwortet. Ein Relay-Paar hat die niedrigste Priorität, zwei Geräte, die
+  direkt miteinander sprechen können, tun es also weiterhin. Nur wenn nichts
+  anderes durchkommt, läuft das Match über das Relay. Dafür reicht ein
+  TURN-Server in der Konfiguration: keine zweite Aushandlung, keine Logik „erst
+  direkt, dann Relay“ im Spiel.
+</p>
+
+<h2>Die Verkabelung im Spiel</h2>
+<wolsok-blog-figure [figure]="figures.wiring" />
+<p>
+  Das Spiel hat eine feste Regel:
+  <strong>Der Client ruft nie eine Funktion auf</strong>. Er liest und schreibt
+  Firestore-Dokumente, und Cloud Functions reagieren darauf. TURN-Zugangsdaten
+  gibt üblicherweise ein Backend-Endpunkt pro Nutzer aus. Hier sind sie
+  stattdessen geteilt und kurzlebig, und sie liegen in einem einzigen Dokument.
+</p>
+<p>
+  Ich nutze
+  <a href="https://developers.cloudflare.com/realtime/turn/"
+    >Cloudflares Realtime TURN</a
+  >. Eine zeitgesteuerte Funktion, <code>refreshRelay</code>, holt bei
+  Cloudflare alle 30 Minuten Zugangsdaten, die eine Stunde gelten, und schreibt
+  den TURN-Eintrag der Antwort nach <code>relay/turn</code>:
+</p>
+<pre><code>{{ code.refresh }}</code></pre>
+<p>Das Dokument, das jeder Spieler liest, sieht so aus:</p>
+<pre><code>{{ code.relayDocument }}</code></pre>
+<p>Ein paar Details, die man leicht falsch macht:</p>
+<ul>
+  <li>
+    <strong>Mindestens die halbe Laufzeit.</strong> Eine Stunde gültig, jede
+    halbe Stunde erneuert: Wer das Dokument liest, bekommt 30 Minuten oder mehr.
+    Ein Gerät behält seine Kopie, solange noch mindestens 20 Minuten übrig sind,
+    jede neue Verbindung startet also mit mindestens 20 Minuten. Ein
+    fehlgeschlagenes Erneuern lässt die letzten Zugangsdaten stehen, bis sie
+    ablaufen.
+  </li>
+  <li>
+    <strong>Flach gespeichert.</strong> Cloudflare antwortet mit einem Array
+    <code>iceServers</code> aus Objekten mit <code>urls</code>-Arrays. Firestore
+    hält in diesem Projekt keine Arrays in Arrays, also wird nur der
+    TURN-Eintrag gespeichert. URLs auf Port 53 fallen weg: Browser sperren den
+    Port, und der Versuch läuft nur in einen Timeout.
+  </li>
+  <li>
+    <strong>Lesen, nie auflisten.</strong> Die Security Rules erlauben jedem
+    angemeldeten, nicht gesperrten Spieler ein <code>get</code> des Dokuments.
+    Niemand kann die Collection auflisten oder hineinschreiben; das tut nur die
+    Funktion.
+  </li>
+  <li>
+    <strong>Nie ein Match blockieren.</strong> Das Spiel liest das Dokument
+    direkt vor Offer oder Answer, gibt nach 2 Sekunden auf und behält eine
+    Kopie, solange mehr als 20 Minuten übrig sind. Kein Dokument, ein
+    abgelaufenes, ein langsames Lesen: Das Match verbindet sich wie bisher nur
+    mit STUN.
+  </li>
+</ul>
+<p>
+  Auf dem Gerät kommt der TURN-Eintrag einfach zu Googles STUN-Servern in die
+  <code>RTCPeerConnection</code>. Der Transport selbst weiß nichts von
+  Firestore; er bekommt die Relay-Server übergeben:
+</p>
+<pre><code>{{ code.peerConnection }}</code></pre>
+
+<h3>Auch die Cloudflare-Seite ist Code</h3>
+<p>
+  Bei Cloudflare ist nichts von Hand zusammengeklickt. Ein kleines Werkzeug im
+  Repo, <code>tools-relay:turn-key</code>, nimmt ein Account-API-Token aus einem
+  Secret (<code>CLOUDFLARE_API_TOKEN</code>, die einzige manuelle Eingabe),
+  stellt sicher, dass ein TURN-Key mit festem Namen existiert, und speichert ihn
+  als Secret <code>CLOUDFLARE_TURN_KEY</code>, das einzige, das die Funktion
+  liest. Ein zweiter Lauf ändert nichts. Der Key kann nur TURN-Zugangsdaten
+  erzeugen; an den Account kommt er nicht heran.
+</p>
+<p>
+  Dasselbe Werkzeug richtet einen Kostenalarm ein. Cloudflare hat keinen
+  Nutzungsalarm für TURN, aber TURN ist bis zu einem monatlichen Kontingent
+  kostenlos, also ist der erste bezahlte Dollar des Accounts das Zeichen für
+  Missbrauch. Und es gibt einen Ausschalter: <code>RELAY_ON</code> in der
+  Konfiguration der Functions nimmt den Scheduler aus dem nächsten Deploy, und
+  binnen einer Stunde läuft das Spiel wieder nur mit STUN.
+</p>
+
+<h2>Die Verbindung, die mit ihren Zugangsdaten starb</h2>
+<wolsok-blog-figure [figure]="figures.renewal" />
+<p>
+  Der erste Entwurf hörte hier auf, und er wäre kaputt ausgeliefert worden. Vor
+  dem Merge schrieb ich einen Check (<code>tools-relay:check</code>): zwei
+  Peer-Verbindungen in einem Playwright-Browser, mit
+  <code>iceTransportPolicy: 'relay'</code> durchs Relay gezwungen, Zugangsdaten
+  von nur 60 Sekunden, und der Kanal elf Minuten offen gehalten, über die
+  Momente hinaus, in denen Chrome seine TURN-Permission (etwa alle vier Minuten)
+  und seine Allocation (ihre zehn Minuten Laufzeit, weniger eine) erneuert.
+</p>
+<ul>
+  <li>
+    <strong>Ohne Erneuerung:</strong> Der Kanal stirbt, sobald die Zugangsdaten
+    abgelaufen sind.
+  </li>
+  <li>
+    <strong
+      >Frische Zugangsdaten über <code>setConfiguration()</code> alle 30
+      Sekunden:</strong
+    >
+    Er stirbt trotzdem. Der Browser erneuert die alte Allocation weiter mit den
+    alten Zugangsdaten.
+  </li>
+  <li><strong>Frische Zugangsdaten und ein ICE-Restart:</strong> Er lebt.</li>
+</ul>
+<p>
+  Matches sind kurz, aber eine Lobby, eine Revanche und ein zweites Match dauern
+  schnell länger als die mindestens 20 Minuten, die die Zugangsdaten einer
+  Verbindung noch haben. Darum erneuert der Host das Relay einer offenen
+  Verbindung alle 15 Minuten. Er holt frische Zugangsdaten, startet ICE neu und
+  schickt das neue Offer, diesmal nicht über Firestore, sondern über einen
+  zweiten, ausgehandelten Datenkanal neben dem des Spiels:
+</p>
+<pre><code>{{ code.renewal }}</code></pre>
+<p>
+  Der Spielkanal und das Lockstep-Protokoll bleiben unberührt, während ICE
+  darunter umschaltet. Nur der Host bietet an, die beiden Seiten bieten also nie
+  gleichzeitig an. Ein Gerät mit einer älteren Version hat keinen Signalkanal
+  und antwortet nie; nach 20 Sekunden nimmt der Host sein Offer zurück, und das
+  Match läuft weiter wie bisher.
+</p>
+<div class="aside">
+  <p>
+    <strong>Lektion:</strong> Eine langlebige WebRTC-Verbindung über TURN ist
+    nicht fertig, wenn sie steht. Teste sie über die Laufzeit ihrer Zugangsdaten
+    und der Allocation des Browsers hinaus, nicht nur „verbindet sie sich“.
+  </p>
+</div>
+
+<h2>Was es kostet und was es verrät</h2>
+<ul>
+  <li>
+    <strong>Geld.</strong> Cloudflare berechnet TURN-Traffic jenseits des
+    kostenlosen monatlichen Kontingents mit 0,05 $ pro GB. Ein zehnminütiges
+    Relay-Match sind etwa 6 MB. Das Risiko ist nicht das Spiel, sondern jemand,
+    der die geteilten Zugangsdaten nimmt und bis zu einer Stunde eigenen Verkehr
+    darüber leitet. Dafür gibt es den Kostenalarm und den Ausschalter.
+  </li>
+  <li>
+    <strong>Datenschutz.</strong> Der Browser sammelt seinen Relay-Kandidaten
+    vorab, Cloudflare sieht also beim Verbindungsaufbau die IP-Adresse, Ports
+    und Verbindungszeiten jedes Online-Spielers, ob über das Relay oder nicht.
+    Das Match selbst bleibt mit DTLS Ende-zu-Ende-verschlüsselt; das Relay
+    leitet Bytes weiter, die es nicht lesen kann. Die Datenschutzerklärung des
+    Spiels sagt das.
+  </li>
+  <li>
+    <strong>Zugangsdaten pro Spieler</strong> waren die Alternative: ein
+    Befehlsdokument pro Spieler und ein Trigger, der Zugangsdaten
+    zurückschreibt. Anonyme Accounts kosten nichts, ein Limit pro Account bringt
+    also wenig, und der Kaltstart des Triggers hätte jedes erste Match
+    verzögert.
+  </li>
+</ul>
+
+<h2>Was bleibt</h2>
+<ul>
+  <li>
+    Peer to Peer ohne TURN klappt am Schreibtisch und scheitert im Mobilfunk.
+  </li>
+  <li>
+    Nimm den TURN-Server in die ICE-Konfiguration auf und lass ICE wählen:
+    Direkte Wege bleiben direkt.
+  </li>
+  <li>
+    Zugangsdaten brauchen keinen Endpunkt: Ein geteiltes Dokument, dessen
+    Laufzeit doppelt so lang ist wie sein Erneuerungsintervall, reicht für ein
+    kleines Spiel.
+  </li>
+  <li>
+    Eine Relay-Verbindung überlebt ihre Zugangsdaten nur mit einem ICE-Restart.
+  </li>
+</ul>
+<p>
+  Die Entscheidungen stehen im Repository:
+  <a
+    href="https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/adr/0009-bacteria-wars-online-lockstep.md"
+    >ADR 0009</a
+  >
+  (Lockstep über WebRTC) und
+  <a
+    href="https://github.com/WolfSoko/wol-sok-mono/blob/main/docs/adr/0020-bacteria-wars-turn-relay.md"
+    >ADR 0020</a
+  >
+  (das TURN-Relay), die ganze Geschichte in
+  <a href="https://github.com/WolfSoko/wol-sok-mono/issues/3148">Issue #3148</a
+  >. Oder du sparst dir das Lesen, schnappst dir jemanden im Mobilfunknetz und
+  <a href="https://bacteria-wars.wolsok.de">spielst ein Match</a>.
+</p>

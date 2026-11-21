@@ -40,6 +40,7 @@ header {
 }
 
 .career,
+.blog,
 .github {
   color: var(--muted);
   font-weight: 600;
@@ -109,5 +110,23 @@ footer {
 @media (max-width: 30rem) {
   .github {
     display: none;
+  }
+
+  // logo, two links, the language switch and the theme fit a 360 px phone
+  header {
+    gap: 0.5rem;
+  }
+
+  .logo {
+    font-size: 1.25rem;
+  }
+
+  .tools {
+    gap: 0.45rem;
+  }
+
+  .career,
+  .blog {
+    font-size: 0.9rem;
   }
 }

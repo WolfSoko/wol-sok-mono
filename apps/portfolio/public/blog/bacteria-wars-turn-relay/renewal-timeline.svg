@@ -1,0 +1,81 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="960" height="440" role="img">
+  <title>Credentials over time and the ICE restart</title>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#e9dfcc" />
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1e293b" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#2563eb" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#15803d" />
+    </marker>
+  </defs>
+  <rect width="960" height="440" fill="#fdf8ef" />
+  <rect width="960" height="440" fill="url(#dots)" />
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" fill="#1e293b">
+    <text x="480" y="40" text-anchor="middle" font-size="24" font-weight="800" fill="#1e293b">Credentials expire. A relayed link must not.</text>
+    <line x1="150" y1="380" x2="900" y2="380" stroke="#1e293b" stroke-width="2.5" marker-end="url(#arrow)" />
+    <line x1="150.0" y1="374" x2="150.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="150.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">0 min</text>
+    <line x1="275.0" y1="374" x2="275.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="275.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">15 min</text>
+    <line x1="400.0" y1="374" x2="400.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="400.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">30 min</text>
+    <line x1="525.0" y1="374" x2="525.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="525.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">45 min</text>
+    <line x1="650.0" y1="374" x2="650.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="650.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">60 min</text>
+    <line x1="775.0" y1="374" x2="775.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="775.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">75 min</text>
+    <line x1="900.0" y1="374" x2="900.0" y2="386" stroke="#1e293b" stroke-width="2" />
+    <text x="900.0" y="406" text-anchor="middle" font-size="13" font-weight="600" fill="#64748b">90 min</text>
+    <rect x="150.0" y="80" width="500.0" height="22" rx="11" fill="#fef9c3" stroke="#a16207" stroke-width="2" />
+    <text x="162.0" y="96" text-anchor="start" font-size="13" font-weight="700" fill="#854d0e">credentials #1 · 1 h</text>
+    <rect x="400.0" y="110" width="500.0" height="22" rx="11" fill="#fef9c3" stroke="#a16207" stroke-width="2" />
+    <text x="412.0" y="126" text-anchor="start" font-size="13" font-weight="700" fill="#854d0e">credentials #2 · 1 h</text>
+    <rect x="650.0" y="140" width="250.0" height="22" rx="11" fill="#fef9c3" stroke="#a16207" stroke-width="2" />
+    <text x="662.0" y="156" text-anchor="start" font-size="13" font-weight="700" fill="#854d0e">credentials #3</text>
+    <text x="16" y="124" text-anchor="start" font-size="14" font-weight="700" fill="#1e293b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">relay/turn</text>
+    <text x="16" y="225" text-anchor="start" font-size="14" font-weight="700" fill="#1e293b">no renewal</text>
+    <line x1="233.3" y1="220" x2="733.3" y2="220" stroke="#dc2626" stroke-width="6" stroke-linecap="round" />
+    <text x="233.3" y="206" text-anchor="start" font-size="13" font-weight="600" fill="#dc2626">match starts with #1</text>
+    <text x="749.3" y="228" text-anchor="start" font-size="15" font-weight="800" fill="#dc2626">✗ dies when #1 expires</text>
+    <path d="M750.8 268.0 Q750.8 268.0 749.8 271.7 Q748.8 275.5 746.5 278.6 Q744.3 281.7 740.8 283.7 Q737.4 285.7 733.2 286.5 Q729.0 287.2 725.7 284.5 Q722.4 281.7 720.6 278.4 Q718.7 275.0 716.8 271.5 Q714.8 268.0 715.6 263.9 Q716.4 259.8 719.1 256.7 Q721.8 253.6 725.6 252.1 Q729.4 250.6 733.2 251.4 Q737.0 252.1 740.9 252.8 Q744.8 253.6 748.0 256.5 Q751.2 259.4 751.0 263.7Z" fill="#fca5a5" stroke="#dc2626" stroke-width="3" />
+    <circle cx="725.2" cy="270.7" r="2.2" fill="#dc2626" opacity="0.35" />
+    <circle cx="742.3" cy="259.9" r="1.4" fill="#dc2626" opacity="0.35" />
+    <circle cx="727.6" cy="264.8" r="3.6" fill="#fff" stroke="#dc2626" stroke-width="2" />
+    <circle cx="727.6" cy="265.3" r="1.8" fill="#1e293b" />
+    <circle cx="739.1" cy="264.8" r="3.6" fill="#fff" stroke="#dc2626" stroke-width="2" />
+    <circle cx="739.1" cy="265.3" r="1.8" fill="#1e293b" />
+    <path d="M728.8 276.5 Q733.3 271.6 737.8 276.5" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+    <text x="16" y="325" text-anchor="start" font-size="14" font-weight="700" fill="#1e293b">ICE restart</text>
+    <line x1="233.3" y1="320" x2="900.0" y2="320" stroke="#15803d" stroke-width="6" stroke-linecap="round" />
+    <circle cx="358.3" cy="320" r="11" fill="#fff" stroke="#15803d" stroke-width="3" />
+    <path d="M353.3 320 a5 5 0 1 1 5 5" stroke="#15803d" stroke-width="2.5" fill="none" />
+    <circle cx="483.3" cy="320" r="11" fill="#fff" stroke="#15803d" stroke-width="3" />
+    <path d="M478.3 320 a5 5 0 1 1 5 5" stroke="#15803d" stroke-width="2.5" fill="none" />
+    <circle cx="608.3" cy="320" r="11" fill="#fff" stroke="#15803d" stroke-width="3" />
+    <path d="M603.3 320 a5 5 0 1 1 5 5" stroke="#15803d" stroke-width="2.5" fill="none" />
+    <circle cx="733.3" cy="320" r="11" fill="#fff" stroke="#15803d" stroke-width="3" />
+    <path d="M728.3 320 a5 5 0 1 1 5 5" stroke="#15803d" stroke-width="2.5" fill="none" />
+    <circle cx="858.3" cy="320" r="11" fill="#fff" stroke="#15803d" stroke-width="3" />
+    <path d="M853.3 320 a5 5 0 1 1 5 5" stroke="#15803d" stroke-width="2.5" fill="none" />
+    <text x="358.3" y="300" text-anchor="start" font-size="13" font-weight="700" fill="#15803d">every 15 min: fresh credentials + ICE restart</text>
+    <path d="M907.0 274.0 Q907.0 274.0 906.8 278.0 Q906.7 282.0 904.1 285.3 Q901.6 288.5 897.9 290.5 Q894.2 292.5 890.2 291.6 Q886.2 290.7 883.0 288.8 Q879.8 286.9 876.2 284.6 Q872.6 282.4 871.8 278.2 Q871.0 274.0 872.6 270.2 Q874.2 266.4 876.7 263.4 Q879.1 260.3 882.7 258.9 Q886.2 257.4 890.2 256.5 Q894.2 255.6 898.2 257.1 Q902.2 258.7 903.6 262.7 Q905.1 266.7 906.0 270.4Z" fill="#22c55e" stroke="#15803d" stroke-width="3" />
+    <circle cx="881.9" cy="276.7" r="2.2" fill="#15803d" opacity="0.35" />
+    <circle cx="899.0" cy="265.9" r="1.4" fill="#15803d" opacity="0.35" />
+    <circle cx="884.2" cy="270.8" r="3.6" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="884.2" cy="271.3" r="1.8" fill="#1e293b" />
+    <circle cx="895.8" cy="270.8" r="3.6" fill="#fff" stroke="#15803d" stroke-width="2" />
+    <circle cx="895.8" cy="271.3" r="1.8" fill="#1e293b" />
+    <path d="M884.6 279.8 Q890.0 285.5 895.4 279.8" fill="none" stroke="#1e293b" stroke-width="3" stroke-linecap="round" />
+    <text x="480" y="432" text-anchor="middle" font-size="15" font-weight="500" fill="#64748b">setConfiguration() with fresh credentials alone did not save the link in the test. The restart did.</text>
+  </g>
+</svg>

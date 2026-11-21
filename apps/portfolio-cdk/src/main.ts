@@ -1,20 +1,17 @@
 import { envOrDie, SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy, Tags } from 'aws-cdk-lib';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { prerenderedPages } from './prerendered-pages';
 
 const buildOutputPath = 'dist/apps/portfolio';
 
 // Each prerendered page is at <page>/index.html, but CloudFront in front of
 // S3 resolves no folder index: /privacy would fall back to the home page.
-// So every page is uploaded once more under its bare path, below.
-const pages = readdirSync(buildOutputPath, { withFileTypes: true })
-  .filter((entry) => entry.isDirectory())
-  .map((entry) => entry.name)
-  .filter((page) =>
-    readdirSync(join(buildOutputPath, page)).includes('index.html')
-  );
+// So every page, nested ones such as /blog/<slug> too, is uploaded once more
+// under its bare path, below.
+const pages = prerenderedPages(buildOutputPath);
 
 const app = new App();
 

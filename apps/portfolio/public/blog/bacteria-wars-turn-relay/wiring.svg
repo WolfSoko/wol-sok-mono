@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 640" width="960" height="640" role="img">
+  <title>How the game is wired to the TURN relay</title>
+  <defs>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="1.3" fill="#e9dfcc" />
+    </pattern>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#1e293b" />
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#2563eb" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0L10 5L0 10z" fill="#15803d" />
+    </marker>
+  </defs>
+  <rect width="960" height="640" fill="#fdf8ef" />
+  <rect width="960" height="640" fill="url(#dots)" />
+  <g font-family="system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif" fill="#1e293b">
+    <text x="480" y="40" text-anchor="middle" font-size="23" font-weight="800" fill="#1e293b">How the game gets through, without calling a function</text>
+    <rect x="18" y="62" width="164" height="62" rx="14" fill="#ffedd5" stroke="#ea580c" stroke-width="2.5" />
+    <text x="100.0" y="89.0" text-anchor="middle" font-size="18" font-weight="800">Cloudflare</text>
+    <text x="100.0" y="113.0" text-anchor="middle" font-size="15" fill="#64748b">TURN API</text>
+    <line x1="100" y1="124" x2="100" y2="625" stroke="#ea580c" stroke-width="2" stroke-dasharray="5 7" opacity="0.7" />
+    <rect x="208" y="62" width="164" height="62" rx="14" fill="#fff" stroke="#1e293b" stroke-width="2.5" />
+    <text x="290.0" y="89.0" text-anchor="middle" font-size="18" font-weight="800">refreshRelay</text>
+    <text x="290.0" y="113.0" text-anchor="middle" font-size="15" fill="#64748b">Cloud Function</text>
+    <line x1="290" y1="124" x2="290" y2="625" stroke="#1e293b" stroke-width="2" stroke-dasharray="5 7" opacity="0.7" />
+    <rect x="398" y="62" width="164" height="62" rx="14" fill="#fef9c3" stroke="#a16207" stroke-width="2.5" />
+    <text x="480.0" y="89.0" text-anchor="middle" font-size="18" font-weight="800">Firestore</text>
+    <text x="480.0" y="113.0" text-anchor="middle" font-size="15" fill="#64748b">relay/turn · rooms</text>
+    <line x1="480" y1="124" x2="480" y2="625" stroke="#a16207" stroke-width="2" stroke-dasharray="5 7" opacity="0.7" />
+    <rect x="588" y="62" width="164" height="62" rx="14" fill="#dcfce7" stroke="#15803d" stroke-width="2.5" />
+    <text x="670.0" y="89.0" text-anchor="middle" font-size="18" font-weight="800">Host</text>
+    <text x="670.0" y="113.0" text-anchor="middle" font-size="15" fill="#64748b">game</text>
+    <line x1="670" y1="124" x2="670" y2="625" stroke="#15803d" stroke-width="2" stroke-dasharray="5 7" opacity="0.7" />
+    <rect x="778" y="62" width="164" height="62" rx="14" fill="#ede9fe" stroke="#6d28d9" stroke-width="2.5" />
+    <text x="860.0" y="89.0" text-anchor="middle" font-size="18" font-weight="800">Guest</text>
+    <text x="860.0" y="113.0" text-anchor="middle" font-size="15" fill="#64748b">game</text>
+    <line x1="860" y1="124" x2="860" y2="625" stroke="#6d28d9" stroke-width="2" stroke-dasharray="5 7" opacity="0.7" />
+    <rect x="16" y="140" width="928" height="112" rx="12" fill="#fff" opacity="0.6" />
+    <text x="30" y="160" text-anchor="start" font-size="13" font-weight="700" fill="#64748b">every 30 min</text>
+    <path d="M290 180 H106" stroke="#1e293b" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="195.0" y="171" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">POST ttl: 3600</text>
+    <path d="M100 208 H284" stroke="#1e293b" stroke-width="2.8" fill="none" stroke-dasharray="8 6" marker-end="url(#arrow)" />
+    <text x="195.0" y="199" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b">credentials, 1 h</text>
+    <path d="M290 236 H474" stroke="#1e293b" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="385.0" y="227" text-anchor="middle" font-size="14" font-weight="600" fill="#1e293b" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace">set relay/turn</text>
+    <text x="30" y="282" text-anchor="start" font-size="13" font-weight="700" fill="#64748b">before a match</text>
+    <path d="M670 300 H486" stroke="#15803d" stroke-width="2.8" fill="none" marker-end="url(#arrow-green)" />
+    <text x="575.0" y="291" text-anchor="middle" font-size="14" font-weight="600" fill="#15803d">get relay/turn (2 s max)</text>
+    <path d="M670 340 H486" stroke="#15803d" stroke-width="2.8" fill="none" marker-end="url(#arrow-green)" />
+    <text x="575.0" y="331" text-anchor="middle" font-size="14" font-weight="600" fill="#15803d">offer → rooms/{code}</text>
+    <path d="M860 380 H486" stroke="#6d28d9" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="670.0" y="371" text-anchor="middle" font-size="14" font-weight="600" fill="#6d28d9">get relay/turn, read offer</text>
+    <path d="M860 420 H486" stroke="#6d28d9" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="670.0" y="411" text-anchor="middle" font-size="14" font-weight="600" fill="#6d28d9">answer → rooms/{code}</text>
+    <path d="M480 456 H664" stroke="#15803d" stroke-width="2.8" fill="none" stroke-dasharray="8 6" marker-end="url(#arrow-green)" />
+    <text x="575.0" y="447" text-anchor="middle" font-size="14" font-weight="600" fill="#15803d">answer</text>
+    <text x="30" y="496" text-anchor="start" font-size="13" font-weight="700" fill="#64748b">the match</text>
+    <path d="M676 530 Q765 486 854 530" stroke="#2563eb" stroke-width="3" fill="none" stroke-dasharray="10 7" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)" />
+    <text x="765" y="492" text-anchor="middle" font-size="14" font-weight="600" fill="#2563eb">direct, if ICE finds a path</text>
+    <path d="M670 572 H106" stroke="#ea580c" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="385.0" y="563" text-anchor="middle" font-size="14" font-weight="600" fill="#ea580c">or: Host → TURN relay</text>
+    <path d="M100 612 H854" stroke="#ea580c" stroke-width="2.8" fill="none" marker-end="url(#arrow)" />
+    <text x="480.0" y="603" text-anchor="middle" font-size="14" font-weight="600" fill="#ea580c">TURN relay → Guest · DTLS-encrypted, Cloudflare cannot read it</text>
+  </g>
+</svg>
