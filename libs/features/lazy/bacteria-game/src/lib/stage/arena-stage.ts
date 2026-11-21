@@ -137,13 +137,14 @@ export class ArenaStage {
   );
   /**
    * The grid the war runs on: the setting, but online the one grid both
-   * devices run - also under the result of a match the other device left,
-   * which a new grid would wipe off the board - and the online grid too
+   * devices run - also under the result of an online match once the
+   * connection is gone, which a new grid would wipe off the board - and the
+   * online grid too
    * for a ranked match (`rankedPlan`), from its declaration on.
    */
   private readonly simResolution = computed((): SimResolution =>
     !this.store.matchRules().onlineGrid &&
-    this.store.endedBy() !== 'forfeit' &&
+    !this.store.endedOnline() &&
     !(this.host()?.declaring() ?? false)
       ? this.settings.value('simResolution')
       : ONLINE_SIM_RESOLUTION

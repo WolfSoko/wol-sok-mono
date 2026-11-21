@@ -102,6 +102,12 @@ export interface GameStateState {
    */
   endedOn: string | null;
   /**
+   * True when the match that ended was played online - kept for its result,
+   * while the connection may already be gone (the winner often leaves right
+   * after it). False before a match ended.
+   */
+  endedOnline: boolean;
+  /**
    * What the match that just ended earned - null until a match is over, and
    * after one against the computer without a human in it.
    */
@@ -157,6 +163,7 @@ export function createInitialState(): GameStateState {
     winner: null,
     endedBy: null,
     endedOn: null,
+    endedOnline: false,
     earnings: null,
     keysPressed: [],
     levelId: LEVELS[0].id,

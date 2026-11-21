@@ -146,4 +146,12 @@ test('two devices share a room: the guest wishes a level and says ready, the hos
   ).toBeVisible();
   await shot(host.page, 'result-host');
   await shot(guest.page, 'result-guest');
+
+  // The guest's device goes on the result: the host's result stays the one
+  // of an online match, never one against the computer (#3180).
+  await guest.page.context().close();
+  await expect(host.po.winner).toContainText(
+    'The connection to your opponent is gone.'
+  );
+  await expect(host.po.winner).not.toContainText(/computer/i);
 });

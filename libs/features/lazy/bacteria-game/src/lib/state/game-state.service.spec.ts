@@ -777,6 +777,21 @@ describe('GameStateService', () => {
       );
     });
 
+    it('remembers that a match on this device ended offline, until the next one starts', () => {
+      store.update({ endedOnline: true });
+
+      winAgainst('vs-computer');
+      expect(store.snapshot().endedOnline).toBe(false);
+
+      store.update({ endedOnline: true });
+      service.start();
+      expect(store.snapshot().endedOnline).toBe(false);
+
+      store.update({ endedOnline: true });
+      service.reset();
+      expect(store.snapshot().endedOnline).toBe(false);
+    });
+
     it('awards nothing between two players', () => {
       winAgainst('two-players');
 
@@ -970,6 +985,76 @@ describe('GameStateService online', () => {
     expect(state.winner?.id).toBe(1);
     expect(state.earnings).toBeNull();
     expect(state.online).toBeNull();
+  });
+
+  it('remembers that the match ended online once the connection is gone', () => {
+    online.connect(1);
+    online.pending = {
+      start: {
+        levelId: 'petri-dish',
+        colors: ['orange', 'blue'],
+        seed: 9,
+        ruleset: 'cpu',
+      },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+    const playerService = TestBed.inject(PlayerService);
+    const opponent = playerStore.entities().find((player) => player.isBot);
+    jest.spyOn(playerService, 'canTick').mockReturnValue(true);
+    jest.spyOn(playerService, 'tick').mockImplementation(() => undefined);
+    jest
+      .spyOn(playerService, 'outcome')
+      .mockReturnValue({ winner: opponent ?? null, reason: 'annihilation' });
+    service.advance(320, 180, 1);
+    jest.restoreAllMocks();
+
+    online.events.next({ type: 'ended', reason: 'left' });
+
+    const state = store.snapshot();
+    expect(state.endedBy).toBe('annihilation');
+    expect(state.online).toBeNull();
+    expect(state.endedOnline).toBe(true);
+  });
+
+  it('counts a desync as a match that ended online', () => {
+    online.connect(1);
+    online.pending = {
+      start: {
+        levelId: 'petri-dish',
+        colors: ['orange', 'blue'],
+        seed: 9,
+        ruleset: 'cpu',
+      },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+    jest
+      .spyOn(TestBed.inject(PlayerService), 'desynced', 'get')
+      .mockReturnValue(true);
+    service.advance(320, 180, 1);
+    jest.restoreAllMocks();
+
+    expect(store.snapshot().endedBy).toBe('desync');
+    expect(store.snapshot().endedOnline).toBe(true);
+  });
+
+  it('counts a forfeit as a match that ended online', () => {
+    online.connect(1);
+    online.pending = {
+      start: {
+        levelId: 'petri-dish',
+        colors: ['orange', 'blue'],
+        seed: 9,
+        ruleset: 'cpu',
+      },
+      lockstep: new Lockstep(1, () => undefined),
+    };
+    service.start();
+
+    online.events.next({ type: 'ended', reason: 'left' });
+
+    expect(store.snapshot().endedOnline).toBe(true);
   });
 
   it("counts the room's result for the seat that won", () => {
