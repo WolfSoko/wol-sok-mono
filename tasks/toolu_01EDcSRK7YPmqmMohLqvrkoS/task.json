@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01EDcSRK7YPmqmMohLqvrkoS",
+  "agent_id": "ab4ce4878c0c6c25e",
+  "subagent_type": "general-purpose",
+  "task_description": "Spec axis review",
+  "token_usage": {
+    "input_tokens": 10,
+    "cache_creation_tokens": 69314,
+    "cache_read_tokens": 327775,
+    "output_tokens": 4012,
+    "api_call_count": 5
+  },
+  "started_at": "2026-11-21T19:16:44.962460881+01:00",
+  "completed_at": "2026-11-21T19:17:34.894159009+01:00"
+}

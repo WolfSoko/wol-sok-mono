@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_01XGpKVT7GptdgYbVCM52H61",
+  "agent_id": "ad7e83ce69e2049f7",
+  "subagent_type": "general-purpose",
+  "task_description": "Review PR 3176 diff",
+  "token_usage": {
+    "input_tokens": 20,
+    "cache_creation_tokens": 101503,
+    "cache_read_tokens": 635406,
+    "output_tokens": 10691,
+    "api_call_count": 9
+  },
+  "started_at": "2026-11-21T19:16:21.602584601+01:00",
+  "completed_at": "2026-11-21T19:18:23.694954234+01:00"
+}

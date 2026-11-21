@@ -1,0 +1,15 @@
+{
+  "tool_use_id": "toolu_011vjL9U3XKmEea8V5kaie3V",
+  "agent_id": "afb2a77dc24117c0a",
+  "subagent_type": "general-purpose",
+  "task_description": "Standards axis review",
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 76346,
+    "cache_read_tokens": 471730,
+    "output_tokens": 3893,
+    "api_call_count": 7
+  },
+  "started_at": "2026-11-21T19:16:44.726327599+01:00",
+  "completed_at": "2026-11-21T19:17:38.22914887+01:00"
+}
