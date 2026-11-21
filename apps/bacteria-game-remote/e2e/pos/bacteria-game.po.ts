@@ -129,12 +129,20 @@ export class BacteriaGamePo {
     return this.page.locator('feat-lazy-bac-game-online-room');
   }
 
-  /** Picks the next online match's level in the room - the host only. */
+  /**
+   * Picks the next online match's level in the room - the host's pick, the
+   * guest's wish.
+   */
   public async pickRoomLevel(title: string): Promise<void> {
     await this.room
       .locator('.picker')
       .getByRole('button', { name: new RegExp(`^\\d+ ${title}\\b`) })
       .click();
+  }
+
+  /** The guest's "I'm ready" in the room. */
+  public get readyCta(): Locator {
+    return this.room.locator('.ready-toggle');
   }
 
   /** A new campaign game, started on the level the ladder offers. */

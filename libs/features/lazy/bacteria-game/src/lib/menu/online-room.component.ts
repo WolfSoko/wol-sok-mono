@@ -5,6 +5,7 @@ import {
   inject,
   input,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { rgba } from '@wolsok/feat-bacteria-rendering';
 import {
@@ -13,7 +14,9 @@ import {
   MATCH_LEVELS,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
+import type { TranslationKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { GuestRoom } from '../net/guest-room';
 import { RoomTally } from '../net/room-tally';
 import { AvatarComponent } from '../social/avatar.component';
 import { SocialService } from '../social/social.service';
@@ -36,6 +39,8 @@ export interface RoomPlayer {
   color: string;
   /** True for the winner of the match just played. */
   won: boolean;
+  /** True for a guest who said ready. */
+  ready: boolean;
 }
 
 /**
@@ -43,7 +48,9 @@ export interface RoomPlayer {
  * matches: both players face to face with the room's tally, and the next
  * match's level. The host picks it here - every pick reaches the guest
  * through the setup the host already shares - and the guest watches it
- * change. Starting stays with the screen around it.
+ * change. A guest whose host understands the room may wish a level and say
+ * ready (`GuestRoom`), which the host sees; picking stays the host's, and
+ * starting stays with the screen around it.
  */
 @Component({
   selector: 'feat-lazy-bac-game-online-room',
@@ -51,6 +58,7 @@ export interface RoomPlayer {
     AvatarComponent,
     LevelCardComponent,
     LevelPreviewComponent,
+    MatButtonModule,
     MatIconModule,
     TranslatePipe,
   ],
@@ -63,6 +71,7 @@ export class OnlineRoomComponent {
   private readonly gameState = inject(GameStateService);
   private readonly social = inject(SocialService);
   private readonly i18n = inject(I18nService);
+  private readonly guestRoom = inject(GuestRoom);
   protected readonly previews = inject(LevelPreviewService).supported;
   protected readonly tally = inject(RoomTally).tally;
 
@@ -71,6 +80,22 @@ export class OnlineRoomComponent {
 
   /** This device's online seat - null without a connection. */
   protected readonly seat = this.store.online;
+
+  /** The guest's wish and ready, on either seat. */
+  protected readonly guest = this.guestRoom.state;
+
+  /** True on the host's device, which picks and starts. */
+  protected readonly isHost = computed(() => this.seat()?.seat === 0);
+
+  /** True for a guest who may wish a level and say ready. */
+  protected readonly guestSpeaks = computed(
+    () => this.seat()?.seat === 1 && this.guestRoom.available()
+  );
+
+  /** The opponent's name, once their profile is there. */
+  private readonly opponentName = computed(
+    () => this.social.opponent()?.card.name
+  );
 
   /** The host (left) and the guest (right). */
   protected readonly players = computed((): RoomPlayer[] => {
@@ -96,6 +121,7 @@ export class OnlineRoomComponent {
         youTag: you && own !== null,
         color: cssColor(seat.colors[index]),
         won: this.winner() === index,
+        ready: index === 1 && this.guest().ready,
       };
     });
   });
@@ -112,17 +138,52 @@ export class OnlineRoomComponent {
   );
 
   /** What the guest reads while the host picks. */
-  protected readonly choosing = computed(() => {
-    const name = this.social.opponent()?.card.name;
-    return name === undefined
-      ? this.i18n.t('online.room.choosingAnon')
-      : this.i18n.t('online.room.choosing', { name });
+  protected readonly choosing = computed(() =>
+    this.byOpponent('online.room.choosing', 'online.room.choosingAnon')
+  );
+
+  /** The tag on the wished level's card: whose wish it is. */
+  protected readonly wishTag = computed(() =>
+    !this.isHost()
+      ? this.i18n.t('online.room.yourWish')
+      : this.byOpponent('online.room.wants', 'online.room.wantsAnon')
+  );
+
+  /** What the host reads of the guest's wish - null without one. */
+  protected readonly suggests = computed(() => {
+    const wish = this.guest().wish;
+    if (!this.isHost() || wish === null) {
+      return null;
+    }
+    const level = this.card(wish).title;
+    return this.byOpponent('online.room.suggests', 'online.room.suggestsAnon', {
+      level,
+    });
   });
 
+  /** The host picks the level; the guest wishes it. */
   protected pick(levelId: string): void {
-    if (this.seat()?.seat === 0) {
+    if (this.isHost()) {
       this.gameState.setLevel(levelId);
+    } else if (this.guestSpeaks()) {
+      this.guestRoom.suggest(levelId);
     }
+  }
+
+  protected toggleReady(): void {
+    this.guestRoom.toggleReady();
+  }
+
+  /** A text naming the opponent - its `anon` form without their profile. */
+  private byOpponent(
+    named: TranslationKey,
+    anon: TranslationKey,
+    params: Record<string, string> = {}
+  ): string {
+    const name = this.opponentName();
+    return name === undefined
+      ? this.i18n.t(anon, params)
+      : this.i18n.t(named, { ...params, name });
   }
 
   private card(id: string): LevelCard {

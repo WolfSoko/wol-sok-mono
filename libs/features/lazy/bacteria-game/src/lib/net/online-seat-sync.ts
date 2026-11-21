@@ -15,6 +15,7 @@ import {
   GameStateStore,
   OnlineSeat,
 } from '../state/game.states';
+import { GuestRoom } from './guest-room';
 import type { Lockstep } from './lockstep';
 import type { OnlineSetup } from './net-message';
 import {
@@ -69,6 +70,9 @@ export class OnlineSeatSync {
 
   public constructor() {
     this.online.events$.subscribe((event) => this.follow(event));
+    // Started with the seat, so the guest's word heard before the room is
+    // on screen - say during the matchmaking's first match - is kept.
+    inject(GuestRoom);
   }
 
   /** True while an online connection is under way, or being made. */

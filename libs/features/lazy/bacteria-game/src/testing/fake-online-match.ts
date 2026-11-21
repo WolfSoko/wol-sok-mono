@@ -2,7 +2,7 @@ import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import type { Ruleset } from '@wolsok/feat-shared-bacteria-engine';
 import { Lockstep } from '../lib/net/lockstep';
-import type { OnlineStart } from '../lib/net/net-message';
+import type { NetFeature, OnlineStart } from '../lib/net/net-message';
 import {
   IDLE_LOBBY,
   type OnlineEvent,
@@ -29,6 +29,8 @@ export class FakeOnlineMatch implements Pick<
   public readonly available: boolean;
   public readonly lobby = signal<OnlineLobby>(IDLE_LOBBY);
   public readonly peer = signal<string | null>(null);
+  /** What the other device understands - the room unless a spec says not. */
+  public readonly peerFeatures = signal<readonly NetFeature[]>(['room']);
   /** What the spec tells the game, as the other device would. */
   public readonly events = new Subject<OnlineEvent>();
   public readonly events$ = this.events.asObservable();
@@ -75,6 +77,14 @@ export class FakeOnlineMatch implements Pick<
   public readonly leave = jest.fn(() => this.lobby.set(IDLE_LOBBY));
   public readonly share = jest.fn();
   public readonly offerColors = jest.fn();
+  public readonly sendRoom = jest.fn();
+
+  public peerHas(feature: NetFeature): boolean {
+    return (
+      this.lobby().phase === 'connected' &&
+      this.peerFeatures().includes(feature)
+    );
+  }
   /** A lockstep for the connected seat, sending nowhere. */
   public readonly startMatch = jest.fn(
     (_start: OnlineStart): Lockstep | null =>

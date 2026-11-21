@@ -46,6 +46,15 @@ export const online = {
     pick: 'Pick the next level',
     choosing: '{name} is choosing the level…',
     choosingAnon: 'Your opponent is choosing the level…',
+    /** The guest's picker: a wish only, the host still picks. */
+    suggest: 'Suggest the next level',
+    yourWish: 'Your wish',
+    wants: '{name} wants this',
+    wantsAnon: 'Your opponent wants this',
+    suggests: '{name} suggests {level}',
+    suggestsAnon: 'Your opponent suggests {level}',
+    ready: 'Ready',
+    imReady: "I'm ready",
   },
   notices: {
     badCode: 'A code has six letters and digits.',

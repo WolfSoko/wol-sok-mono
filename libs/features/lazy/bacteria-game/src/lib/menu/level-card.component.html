@@ -38,6 +38,9 @@
   </span>
   <span class="title">{{ level.title }}</span>
   <span class="card-foot">
+    @if (tag(); as tag) {
+      <span class="card-tag">{{ tag }}</span>
+    }
     @if (level.lock !== null) {
       <span class="lock-reason">{{ level.lock }}</span>
     } @else if (showMedals()) {

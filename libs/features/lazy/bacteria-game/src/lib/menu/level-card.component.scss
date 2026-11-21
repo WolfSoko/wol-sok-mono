@@ -168,3 +168,13 @@
     }
   }
 }
+
+// A word on the card, such as whose wish it is.
+.card-tag {
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--bw-gold) 22%, transparent);
+  color: var(--bw-gold);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

@@ -516,6 +516,13 @@ play each other.
   device override `gpu-int` keeps WebGL2 on it (`ArenaLayout.softwareWebGl`,
   part of the canvas key, so changing the override builds a fresh
   canvas): CI's GPU e2e runs that way on SwiftShader.
+- Each `hello` also names the features the device understands beyond
+  `NET_VERSION` (`f`, `NET_FEATURES` in `net/net-message.ts`): a released
+  client drops a message kind it does not know and the hello fields it does
+  not read, so a new message ships as a feature sent only where
+  `OnlineMatchService.peerHas(feature)`, not as a `NET_VERSION` bump that
+  parts the releases. The first is `room`: the guest's wish and ready in the
+  online room (`GuestRoom`, `net/guest-room.ts`).
 - Online, each `hello` names the rulesets the device offers
   (`PlayerService.rulesetOffers`) and the host's `start` the agreed one
   (`agreedRuleset`): `gpu-int` only if both offer it. An agreed `gpu-int`

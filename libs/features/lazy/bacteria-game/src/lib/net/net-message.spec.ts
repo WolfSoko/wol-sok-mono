@@ -1,3 +1,8 @@
+import {
+  LEVELS,
+  MATCH_LEVELS,
+  playableOnline,
+} from '@wolsok/feat-shared-bacteria-engine';
 import { agreedRuleset, NET_VERSION, parseNetMessage } from './net-message';
 
 const send = (value: unknown) => JSON.stringify(value);
@@ -9,6 +14,7 @@ describe('parseNetMessage', () => {
       v: NET_VERSION,
       id: null,
       r: ['cpu'],
+      f: [],
     });
     expect(
       parseNetMessage(
@@ -19,12 +25,21 @@ describe('parseNetMessage', () => {
       v: NET_VERSION,
       id: 'uid_1-A',
       r: ['cpu', 'gpu-int'],
+      f: [],
     });
     expect(
       parseNetMessage(
         send({ k: 'hello', v: NET_VERSION, id: '../x', r: ['gpu', 7, 'cpu'] })
       )
-    ).toEqual({ k: 'hello', v: NET_VERSION, id: null, r: ['cpu'] });
+    ).toEqual({ k: 'hello', v: NET_VERSION, id: null, r: ['cpu'], f: [] });
+    expect(
+      parseNetMessage(
+        send({ k: 'room', wish: 'corridors', readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: 'corridors', readyFor: 'petri-dish' });
+    expect(
+      parseNetMessage(send({ k: 'room', wish: null, readyFor: null }))
+    ).toEqual({ k: 'room', wish: null, readyFor: null });
     expect(
       parseNetMessage(
         send({ k: 'setup', levelId: 'petri-dish', colors: ['orange', 'blue'] })
@@ -79,6 +94,56 @@ describe('parseNetMessage', () => {
       h: 99,
     });
     expect(parseNetMessage(send({ k: 'bye' }))).toEqual({ k: 'bye' });
+  });
+
+  it('reads the features a hello names, keeping only known ones', () => {
+    expect(
+      parseNetMessage(
+        send({ k: 'hello', v: NET_VERSION, id: null, r: [], f: ['room'] })
+      )
+    ).toMatchObject({ k: 'hello', f: ['room'] });
+    expect(
+      parseNetMessage(
+        send({
+          k: 'hello',
+          v: NET_VERSION,
+          id: null,
+          r: [],
+          f: ['chat', 7, 'room', 'room'],
+        })
+      )
+    ).toMatchObject({ k: 'hello', f: ['room'] });
+    // An older release's hello names no features: still a hello.
+    expect(
+      parseNetMessage(send({ k: 'hello', v: NET_VERSION, id: null, r: [] }))
+    ).toMatchObject({ k: 'hello', f: [] });
+    expect(
+      parseNetMessage(send({ k: 'hello', v: NET_VERSION, f: 'room' }))
+    ).toMatchObject({ k: 'hello', f: [] });
+  });
+
+  it('keeps the version, so released clients still play this one', () => {
+    expect(NET_VERSION).toMatch(/^3\//);
+  });
+
+  it('reads a level that plays no online match as none, keeping the rest', () => {
+    const bigMap = LEVELS.find((level) => !playableOnline(level));
+    expect(bigMap).toBeDefined();
+    expect(MATCH_LEVELS.map(({ id }) => id)).toContain('petri-dish');
+    expect(
+      parseNetMessage(
+        send({ k: 'room', wish: bigMap?.id, readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: null, readyFor: 'petri-dish' });
+    // A newer build's level: its wish is unknown here, its ready still holds.
+    expect(
+      parseNetMessage(
+        send({ k: 'room', wish: 'not-yet-built', readyFor: 'petri-dish' })
+      )
+    ).toEqual({ k: 'room', wish: null, readyFor: 'petri-dish' });
+    expect(
+      parseNetMessage(send({ k: 'room', wish: 3, readyFor: true }))
+    ).toEqual({ k: 'room', wish: null, readyFor: null });
   });
 
   it('drops what is no message of this game', () => {
