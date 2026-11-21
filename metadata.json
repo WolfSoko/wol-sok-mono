@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZNVYH12KWP6NPYD3305MX0",
+  "strategy": "manual-commit",
+  "branch": "3171-trailing-slash-redirect",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "docs/plans/3171-wolsok-de-trailing-slash-urls-career-blog-fall-back-to-the-home-page.md",
+    "docs/specs/3171-wolsok-de-trailing-slash-urls-career-blog-fall-back-to-the-home-page.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 54,
+    "cache_creation_tokens": 110856,
+    "cache_read_tokens": 2808482,
+    "output_tokens": 16200,
+    "api_call_count": 25
+  }
+}
