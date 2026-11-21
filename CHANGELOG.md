@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.176.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.1...v74.176.2) (2026-11-21)
+
+### Bug Fixes
+
+* **feat-bacteria-rendering:** switch off dithering and add a ?gldebug diagnostic for the arena smears ([#3182](https://github.com/WolfSoko/wol-sok-mono/issues/3182)) ([7dfe2f1](https://github.com/WolfSoko/wol-sok-mono/commit/7dfe2f1ba3f89319d84bbf88ccb27962817f9736)), references [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174) [#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174)
+
 ## [74.176.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.0...v74.176.1) (2026-11-21)
 
 ### Bug Fixes
