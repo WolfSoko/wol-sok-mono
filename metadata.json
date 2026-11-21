@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.11.6",
+  "checkpoint_id": "01M7ZP9J8XCWV3QRYG68HR0X4B",
+  "strategy": "manual-commit",
+  "branch": "3171-trailing-slash-redirect",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "libs/public/spa-cdk-stack/README.md",
+    "libs/public/spa-cdk-stack/src/lib/spa/spa.construct.ts",
+    "libs/public/spa-cdk-stack/src/lib/spa/trailing-slash-redirect.ts",
+    "libs/public/spa-cdk-stack/src/lib/stack-spa.spec.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0/metadata.json",
+      "transcript": "/0/full.jsonl",
+      "compact_transcript": "/0/transcript.jsonl",
+      "content_hash": "/0/content_hash.txt",
+      "prompt": "/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 19960,
+    "cache_read_tokens": 2163038,
+    "output_tokens": 8295,
+    "api_call_count": 14,
+    "subagent_tokens": {
+      "input_tokens": 46,
+      "cache_creation_tokens": 268532,
+      "cache_read_tokens": 1395196,
+      "output_tokens": 13077,
+      "api_call_count": 22
+    }
+  }
+}
