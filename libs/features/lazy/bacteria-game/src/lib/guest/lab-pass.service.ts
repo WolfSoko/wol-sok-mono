@@ -15,6 +15,9 @@ import { GuestNotice } from './guest-notice.service';
 import { labPassSteps, nextStep } from './lab-pass';
 import { SignIn } from './sign-in.service';
 
+/** A field of the profile editor a step of the pass leads to. */
+export type EditorField = 'name' | 'motto';
+
 /** The achievement the completed pass earns. */
 export const LAB_PASS_ACHIEVEMENT: AchievementId = 'lab-member';
 
@@ -73,33 +76,56 @@ export class LabPass {
       this.account.cloud &&
       this.social.available &&
       this.account.profile() !== null &&
+      // Nothing until the device and the profile have answered: a card put
+      // away, or a step done, would flash up meanwhile.
+      this.notice.known() &&
+      this.social.profileLoaded() &&
       this.progress.loaded() &&
       (this.earnedNow() || (!this.held() && !this.notice.dismissedLately()))
   );
 
   /** True while a guest should hear that an unused guest account is deleted. */
   public readonly urgent = this.notice.visible;
+  /** True when the guest came back after a long pause. */
+  public readonly cameBack = this.notice.cameBack;
 
-  /** The sign-ins already led to the profile. */
-  private readonly onboarded = signal(0);
+  /** The sign-ins whose onboarding was decided. */
+  private readonly settledSignIns = signal(0);
+  private readonly onboardingState = signal(false);
   /**
    * True when a sign-in of this visit brought a player without a profile
    * of their own: the main menu then opens the profile to make one.
    */
-  public readonly onboardingDue = computed(
-    () =>
-      this.signIn.signIns() > this.onboarded() &&
-      this.next() === 'profile' &&
-      this.social.profileLoaded()
-  );
+  public readonly onboardingDue = this.onboardingState.asReadonly();
   /** True while the profile editor welcomes a player who just signed in. */
   private readonly welcomingState = signal(false);
   public readonly welcoming = this.welcomingState.asReadonly();
+  /** The editor's field a step of the pass leads to, null for none. */
+  private readonly focusState = signal<EditorField | null>(null);
+  public readonly editorFocus = this.focusState.asReadonly();
 
   public constructor() {
     effect(() => {
       if (this.next() === null && this.progress.loaded() && !this.held()) {
         untracked(() => this.earn());
+      }
+    });
+    // Each sign-in is judged once, as soon as the signed-in player's
+    // profile has answered: onboarding only for one without a profile.
+    effect(() => {
+      const signIns = this.signIn.signIns();
+      const player = this.account.profile();
+      if (
+        signIns > untracked(this.settledSignIns) &&
+        player !== null &&
+        !player.guest &&
+        this.social.profileLoaded()
+      ) {
+        const due = this.next() === 'profile';
+        untracked(() => {
+          this.settledSignIns.set(signIns);
+          this.onboardingState.set(due);
+        });
       }
     });
   }
@@ -117,13 +143,24 @@ export class LabPass {
 
   /** The main menu opened the profile for the sign-in's onboarding. */
   public startOnboarding(): void {
-    this.onboarded.set(this.signIn.signIns());
+    this.onboardingState.set(false);
     this.welcomingState.set(true);
+    this.focusState.set('name');
   }
 
   /** The profile editor has welcomed the player. */
   public endOnboarding(): void {
     this.welcomingState.set(false);
+  }
+
+  /** Asks the profile editor to focus a field, once it shows. */
+  public focusEditor(field: EditorField): void {
+    this.focusState.set(field);
+  }
+
+  /** The editor focused the field it was asked to. */
+  public editorFocused(): void {
+    this.focusState.set(null);
   }
 
   private earn(): void {

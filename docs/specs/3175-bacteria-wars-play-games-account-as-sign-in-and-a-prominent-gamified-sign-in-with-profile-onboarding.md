@@ -78,6 +78,20 @@ PR ("Part of #3175"):
 - **The card is one component** (`guest/lab-pass-card.component.ts`)
   replacing `GuestBannerComponent` in the main menu; the account chip stays
   for players who completed or put the pass away.
+- **The install offer keeps its place.** The card shows from a guest's first
+  visit, so it would hide the offer of the Android app and the PWA for most
+  players. It takes the offer's place only while the guest's deletion note is
+  due; otherwise the offer, where there is one, comes first and the card
+  follows once it is put away.
+- **The step's button lands on its field.** "Make profile" opens the profile
+  with the name focused, "Write motto" with the motto focused
+  (`LabPass.focusEditor`).
+- **A sign-in is judged once**, when the signed-in player's profile has
+  answered: onboarding follows only for one without a stored profile, so a
+  later change in the steps never sends the player to the profile.
+- **Friends follow the player.** The friends list starts empty at every
+  account switch (`SocialService`), so the last step is never taken as done
+  with the friends of the guest before.
 - **Without the cloud** (no sign-in) the pass never shows and the
   achievement cannot be earned.
 

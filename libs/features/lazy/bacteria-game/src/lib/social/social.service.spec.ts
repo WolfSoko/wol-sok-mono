@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { firstValueFrom, take, throwError, toArray } from 'rxjs';
+import { firstValueFrom, NEVER, take, throwError, toArray } from 'rxjs';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
@@ -120,6 +120,23 @@ describe('SocialService', () => {
       },
     ]);
     expect([...new Set(presence.watched)]).toEqual(['bob']);
+  });
+
+  it('drops the friends of the player before a switch, until the next answers', async () => {
+    const players = service();
+    await social.saveProfile('bob', { ...defaultProfile('bob'), name: 'Bob' });
+    await players.addFriend('bob');
+    TestBed.tick();
+    expect(players.friends()).toHaveLength(1);
+    const watch = social.watchFriends.bind(social);
+    jest
+      .spyOn(social, 'watchFriends')
+      .mockImplementation((me) => (me === 'cleo' ? NEVER : watch(me)));
+
+    account.switchTo('cleo');
+    TestBed.tick();
+
+    expect(players.friends()).toEqual([]);
   });
 
   it('answers requests and challenges', async () => {

@@ -470,7 +470,12 @@ export class SocialService {
       switchMap((me) =>
         me === null || social === null
           ? of([])
-          : watch(social, me).pipe(catchError(() => of([])))
+          : // Nothing of the player before: the lists start
+            // empty at a switch, until the new player's answer.
+            watch(social, me).pipe(
+              startWith([] as T[]),
+              catchError(() => of([]))
+            )
       )
     );
   }

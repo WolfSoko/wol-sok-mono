@@ -15,7 +15,9 @@ describe('LabPassCardComponent', () => {
     done: () => number;
     justEarned: typeof justEarned;
     urgent: typeof urgent;
+    cameBack: ReturnType<typeof signal<boolean>>;
     dismiss: jest.Mock;
+    focusEditor: jest.Mock;
     close: jest.Mock;
   };
   let signIn: {
@@ -41,7 +43,9 @@ describe('LabPassCardComponent', () => {
       done: computed(() => steps().filter(({ done }) => done).length),
       justEarned,
       urgent,
+      cameBack: signal(false),
       dismiss: jest.fn(),
+      focusEditor: jest.fn(),
       close: jest.fn(),
     };
     signIn = {
@@ -89,6 +93,25 @@ describe('LabPassCardComponent', () => {
     expect(text(fixture.nativeElement)).toContain(
       'If you do not open the game for 90 days'
     );
+  });
+
+  it('welcomes a guest back after a long pause', async () => {
+    const { fixture } = await render();
+    urgent.set(true);
+    pass.cameBack.set(true);
+    await fixture.whenStable();
+
+    expect(text(fixture.nativeElement)).toContain('Welcome back!');
+  });
+
+  it.each([
+    ['profile', { signedIn: true }, 'name'],
+    ['motto', { signedIn: true, profileSaved: true }, 'motto'],
+  ] as const)('opens the %s step on its field', async (_, done, field) => {
+    const { fixture } = await render(done);
+    buttons(fixture.nativeElement)[0].click();
+
+    expect(pass.focusEditor).toHaveBeenCalledWith(field);
   });
 
   it.each([

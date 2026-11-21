@@ -45,6 +45,9 @@ export class GuestNotice {
     );
   });
 
+  /** True once the device has told what it keeps of the visits. */
+  public readonly known = computed(() => this.visits() !== undefined);
+
   /**
    * True while "Later" keeps the main menu's card away - false until the
    * device has answered.

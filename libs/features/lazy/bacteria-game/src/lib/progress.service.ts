@@ -323,7 +323,7 @@ export class ProgressService {
       ...held,
       achievements: { ...held.achievements, [id]: today() },
     };
-    this.store(progress, (stored) => stored);
+    this.store(progress);
     return true;
   }
 
@@ -390,7 +390,7 @@ export class ProgressService {
   /** Holds the progress here and writes it ({@link storedWith}). */
   private store(
     progress: Progress,
-    count: (progress: Progress) => Progress
+    count?: (progress: Progress) => Progress
   ): void {
     this.document.apply(progress, storedWith(progress, count));
   }

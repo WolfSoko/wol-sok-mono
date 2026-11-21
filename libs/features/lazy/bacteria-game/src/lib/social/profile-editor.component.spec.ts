@@ -56,6 +56,18 @@ describe('ProfileEditorComponent', () => {
     expect(labPass.welcoming()).toBe(false);
   });
 
+  it('opens on the motto when the Lab Pass asks for it', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const labPass = TestBed.inject(LabPass);
+    labPass.focusEditor('motto');
+    const host = await render();
+
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="motto"]')
+    );
+    expect(labPass.editorFocus()).toBeNull();
+  });
+
   it('welcomes nobody who opens the profile on their own', async () => {
     account.profile.set({ guest: false, name: 'Ada' });
     const host = await render();

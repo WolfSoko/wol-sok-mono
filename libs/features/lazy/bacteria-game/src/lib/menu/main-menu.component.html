@@ -30,7 +30,9 @@
 
     @if (stats.asking()) {
       <feat-lazy-bac-game-stats-banner />
-    } @else if (labPass.visible()) {
+    } @else if (
+      labPass.visible() && (labPass.urgent() || !installOffer.visible())
+    ) {
       <feat-lazy-bac-game-lab-pass-card (open)="open.emit($event)" />
     } @else if (installOffer.visible()) {
       <feat-lazy-bac-game-install-banner />

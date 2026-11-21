@@ -30,7 +30,9 @@ describe('LabPass', () => {
     grantAchievement: jest.Mock;
   };
   let notice: {
+    known: ReturnType<typeof signal<boolean>>;
     visible: ReturnType<typeof signal<boolean>>;
+    cameBack: ReturnType<typeof signal<boolean>>;
     dismissedLately: ReturnType<typeof signal<boolean>>;
     dismiss: jest.Mock;
   };
@@ -56,7 +58,9 @@ describe('LabPass', () => {
       }),
     };
     notice = {
+      known: signal(true),
       visible: signal(false),
+      cameBack: signal(false),
       dismissedLately: signal(false),
       dismiss: jest.fn(),
     };
@@ -147,6 +151,18 @@ describe('LabPass', () => {
     expect(progress.grantAchievement).not.toHaveBeenCalled();
   });
 
+  it('waits for the device and the profile before it shows', () => {
+    notice.known.set(false);
+    social.profileLoaded.set(false);
+    const labPass = pass();
+    expect(labPass.visible()).toBe(false);
+
+    notice.known.set(true);
+    expect(labPass.visible()).toBe(false);
+    social.profileLoaded.set(true);
+    expect(labPass.visible()).toBe(true);
+  });
+
   it('stays away while "Later" holds', () => {
     const labPass = pass();
 
@@ -167,23 +183,54 @@ describe('LabPass', () => {
     const labPass = pass();
     expect(labPass.onboardingDue()).toBe(false);
 
+    // The new player's profile has not answered yet.
+    social.profileLoaded.set(false);
     player.set({ guest: false, name: 'Ada' });
     signIns.set(1);
+    TestBed.tick();
+    expect(labPass.onboardingDue()).toBe(false);
+
+    social.profileLoaded.set(true);
+    TestBed.tick();
     expect(labPass.onboardingDue()).toBe(true);
 
     labPass.startOnboarding();
+    TestBed.tick();
     expect(labPass.onboardingDue()).toBe(false);
     expect(labPass.welcoming()).toBe(true);
+    expect(labPass.editorFocus()).toBe('name');
+    labPass.editorFocused();
     labPass.endOnboarding();
     expect(labPass.welcoming()).toBe(false);
+    expect(labPass.editorFocus()).toBeNull();
   });
 
-  it('asks for no onboarding when the account has a profile', () => {
+  it('settles a sign-in onto an account with a profile for good', () => {
     const labPass = pass();
     player.set({ guest: false, name: 'Ada' });
     social.storedAvatar.set(AVATAR);
     signIns.set(1);
-
+    TestBed.tick();
     expect(labPass.onboardingDue()).toBe(false);
+
+    // Later in the visit the profile step opens again: no onboarding.
+    social.storedAvatar.set(null);
+    TestBed.tick();
+    expect(labPass.onboardingDue()).toBe(false);
+  });
+
+  it('grants nothing for the friends of the player before a switch', () => {
+    // The guest had a friend; the account signed in to has a profile with
+    // a motto, its friends not yet read: SocialService starts them empty.
+    social.friends.set([{ uid: 'friend' }]);
+    const labPass = pass();
+    player.set({ guest: false, name: 'Ada' });
+    social.storedAvatar.set(AVATAR);
+    social.profile.set({ motto: 'Grow or go' });
+    social.friends.set([]);
+    TestBed.tick();
+
+    expect(labPass.next()).toBe('friend');
+    expect(progress.grantAchievement).not.toHaveBeenCalled();
   });
 });

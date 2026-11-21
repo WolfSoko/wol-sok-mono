@@ -20,6 +20,7 @@ import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
 import { I18nService } from '../i18n/i18n.service';
 import { LabPass } from '../guest/lab-pass.service';
+import { InstallOffer } from '../support/install-offer.service';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -511,11 +512,53 @@ describe('MainMenuComponent and the Lab Pass', () => {
     return { fixture, open };
   }
 
-  const quietPass = () => ({
-    visible: signal(false),
-    onboardingDue: signal(false),
-    startOnboarding: jest.fn(),
+  it('gives way to the install offer while the pass is not urgent', () => {
+    const urgent = signal(false);
+    const offer = {
+      visible: signal(true),
+      platform: 'other',
+      storeUrl: null,
+      canInstallWebApp: signal(false),
+      dismiss: jest.fn(),
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: LabPass,
+          useValue: {
+            ...quietPass(),
+            visible: signal(true),
+            urgent,
+            steps: signal([]),
+            next: signal('sign-in'),
+            done: signal(0),
+            justEarned: signal(false),
+            cameBack: signal(false),
+          },
+        },
+        { provide: InstallOffer, useValue: offer },
+      ],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const card = () => host.querySelector('feat-lazy-bac-game-lab-pass-card');
+
+    expect(card()).toBeNull();
+    urgent.set(true);
+    fixture.detectChanges();
+    expect(card()).not.toBeNull();
   });
+
+  function quietPass() {
+    return {
+      visible: signal(false),
+      onboardingDue: signal(false),
+      startOnboarding: jest.fn(),
+    };
+  }
 
   it('opens the profile once a sign-in brought no profile', () => {
     const pass = quietPass();

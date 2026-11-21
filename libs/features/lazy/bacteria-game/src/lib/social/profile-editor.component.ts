@@ -65,14 +65,21 @@ export class ProfileEditorComponent {
   private readonly nameInput =
     viewChild<ElementRef<HTMLInputElement>>('nameInput');
 
+  private readonly mottoInput =
+    viewChild<ElementRef<HTMLInputElement>>('mottoInput');
+  /** The name the welcome greets, as saved - not as it is being typed. */
+  protected readonly welcomeName = computed(
+    () => this.social.profile()?.name ?? ''
+  );
+
   public constructor() {
-    // The welcome starts with the name: focused once, as the field shows.
-    let focused = false;
+    // A step of the Lab Pass opens on its field: focused once it shows.
     afterRenderEffect(() => {
-      const input = this.nameInput();
-      if (!focused && input !== undefined && this.labPass.welcoming()) {
-        focused = true;
+      const field = this.labPass.editorFocus();
+      const input = field === 'motto' ? this.mottoInput() : this.nameInput();
+      if (field !== null && input !== undefined) {
         input.nativeElement.focus();
+        this.labPass.editorFocused();
       }
     });
     inject(DestroyRef).onDestroy(() => this.labPass.endOnboarding());

@@ -56,7 +56,6 @@ export const profile = {
       'A guest account is deleted when the game was not opened for {days} days.',
   },
   guest: {
-    title: 'Keep your progress',
     welcomeBack: 'Welcome back!',
     note: 'You play as a guest. If you do not open the game for {days} days, your guest account goes, and with it your progress, your friends and your places on the leaderboards. Sign in with Google and all of it stays, on every device.',
     later: 'Later',

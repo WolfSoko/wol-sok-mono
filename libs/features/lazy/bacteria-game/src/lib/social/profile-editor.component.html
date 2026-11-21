@@ -1,7 +1,7 @@
 @if (draft(); as profile) {
   @if (labPass.welcoming()) {
     <p class="welcome" role="status">
-      {{ "profile.labPass.welcome" | t: { name: profile.name } }}
+      {{ "profile.labPass.welcome" | t: { name: welcomeName() } }}
     </p>
   }
   <div class="card">
@@ -26,6 +26,7 @@
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ "profile.editor.motto" | t }}</mat-label>
         <input
+          #mottoInput
           matInput
           name="motto"
           autocomplete="off"

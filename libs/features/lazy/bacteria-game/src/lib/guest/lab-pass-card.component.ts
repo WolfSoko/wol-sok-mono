@@ -11,28 +11,32 @@ import { ACHIEVEMENT_XP } from '@wolsok/feat-shared-bacteria-engine';
 import { achievementKeys } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { LabPassStepId } from './lab-pass';
-import { LAB_PASS_ACHIEVEMENT, LabPass } from './lab-pass.service';
+import { EditorField, LAB_PASS_ACHIEVEMENT, LabPass } from './lab-pass.service';
 import { GUEST_IDLE_DAYS } from './guest-visits';
 import { SignIn } from './sign-in.service';
 
 /** Where a step of the pass is done, outside the card. */
 export type LabPassPage = 'profile' | 'friends';
 
-const PAGE_OF: Readonly<
-  Record<Exclude<LabPassStepId, 'sign-in'>, LabPassPage>
+/** Where a step leads, and the editor's field it opens on. */
+const TARGET_OF: Readonly<
+  Record<
+    Exclude<LabPassStepId, 'sign-in'>,
+    { page: LabPassPage; field?: EditorField }
+  >
 > = {
-  profile: 'profile',
-  motto: 'profile',
-  friend: 'friends',
+  profile: { page: 'profile', field: 'name' },
+  motto: { page: 'profile', field: 'motto' },
+  friend: { page: 'friends' },
 };
 
 /** Where each step's cell sits in the dish, around its centre. */
-const CELLS = [
-  { x: 14, y: 14 },
-  { x: 26, y: 14 },
-  { x: 14, y: 26 },
-  { x: 26, y: 26 },
-] as const;
+const CELLS: Readonly<Record<LabPassStepId, { x: number; y: number }>> = {
+  'sign-in': { x: 14, y: 14 },
+  profile: { x: 26, y: 14 },
+  motto: { x: 14, y: 26 },
+  friend: { x: 26, y: 26 },
+};
 
 /**
  * The Lab Pass in the main menu: a dish whose cells fill step by step, the
@@ -45,21 +49,17 @@ const CELLS = [
   selector: 'feat-lazy-bac-game-lab-pass-card',
   imports: [MatButtonModule, MatIconModule, TranslatePipe],
   template: `
-    @let title =
-      (pass.justEarned()
-        ? 'profile.labPass.earnedTitle'
-        : 'profile.labPass.title'
-      ) | t;
+    @let title = titleKey() | t;
     @let achievement = achievementName | t;
     <aside class="banner" [attr.aria-label]="title">
       <svg class="badge dish" viewBox="0 0 40 40" aria-hidden="true">
         <circle class="rim" cx="20" cy="20" r="18" />
-        @for (step of pass.steps(); track step.id; let i = $index) {
+        @for (step of pass.steps(); track step.id) {
           <circle
             class="cell"
             [class.done]="step.done"
-            [attr.cx]="cells[i].x"
-            [attr.cy]="cells[i].y"
+            [attr.cx]="cells[step.id].x"
+            [attr.cy]="cells[step.id].y"
             r="4.5"
           />
         }
@@ -88,7 +88,7 @@ const CELLS = [
       @if (!pass.justEarned()) {
         <ol class="steps">
           @for (step of pass.steps(); track step.id) {
-            <li [class.done]="step.done" [class.next]="step.id === next()">
+            <li [class.done]="step.done" [class.next]="step.id === pass.next()">
               <mat-icon aria-hidden="true">{{
                 step.done ? 'check_circle' : 'radio_button_unchecked'
               }}</mat-icon>
@@ -107,7 +107,7 @@ const CELLS = [
           >
             {{ 'profile.labPass.close' | t }}
           </button>
-        } @else if (next(); as step) {
+        } @else if (pass.next(); as step) {
           <button
             mat-flat-button
             type="button"
@@ -145,7 +145,13 @@ export class LabPassCardComponent {
   protected readonly xp = ACHIEVEMENT_XP;
   protected readonly achievementName =
     achievementKeys(LAB_PASS_ACHIEVEMENT).name;
-  protected readonly next = computed(() => this.pass.next());
+  /** "Welcome back!" to a guest after a long pause, else the pass's name. */
+  protected readonly titleKey = computed(() => {
+    if (this.pass.justEarned()) return 'profile.labPass.earnedTitle';
+    return this.pass.urgent() && this.pass.cameBack()
+      ? 'profile.guest.welcomeBack'
+      : 'profile.labPass.title';
+  });
 
   protected stepKey(id: LabPassStepId) {
     return `profile.labPass.steps.${id}` as const;
@@ -163,7 +169,11 @@ export class LabPassCardComponent {
     if (step === 'sign-in') {
       void this.signIn.signIn();
     } else {
-      this.open.emit(PAGE_OF[step]);
+      const { page, field } = TARGET_OF[step];
+      if (field !== undefined) {
+        this.pass.focusEditor(field);
+      }
+      this.open.emit(page);
     }
   }
 }

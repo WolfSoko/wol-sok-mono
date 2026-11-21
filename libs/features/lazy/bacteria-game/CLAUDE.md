@@ -382,7 +382,8 @@ storage until then. Settings stay with the device either way.
   when the pass's card adds that an unused guest account goes after
   `GUEST_IDLE_DAYS` (keep it equal to the functions' constant): from the
   third day or at once after a pause of more than 30 days; "Later" puts the
-  card away for two weeks, and the install offer waits behind it. The
+  card away for two weeks. The install offer waits behind the card only
+  while that note is due; otherwise the card waits behind the offer. The
   privacy page names what the device keeps.
 - The Lab Pass (`guest/lab-pass.ts`, `LabPass`) is the sign-in made a quest:
   sign in, save a profile, write a motto, add a friend. Its steps follow
