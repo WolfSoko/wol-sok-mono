@@ -59,15 +59,22 @@ export class CampaignService {
     continueText: continueText(this.furthestLevel(), this.difficulty()),
   }));
 
-  /** True while the campaign's ladder applies - against the computer, no free play. */
+  /**
+   * True while the campaign's ladder applies - against the computer, no free
+   * play, and not in an online room, whose host picks any level that plays
+   * online for the two players.
+   */
   private readonly onLadder = computed(
-    () => this.mode() === 'vs-computer' && !this.settings.value('freePlay')
+    () =>
+      this.mode() === 'vs-computer' &&
+      !this.settings.value('freePlay') &&
+      this.store.online() === null
   );
 
   /**
    * Why each level is still locked, by level id - the open ones are absent,
-   * and all of them in free play and between two players, who have nothing
-   * to prove to the computer.
+   * and all of them in free play, between two players and online, who have
+   * nothing to prove to the computer.
    */
   public readonly locks = computed((): Readonly<Record<string, string>> =>
     this.onLadder() ? this.progress.ladderLocks() : {}

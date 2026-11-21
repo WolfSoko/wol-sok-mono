@@ -53,6 +53,19 @@ describe('CampaignService', () => {
     expect(campaign.locks()).toEqual({});
   });
 
+  it('leaves the level of an online room to its host, locked on the ladder or not', () => {
+    const campaign = create();
+    store.update({
+      online: { seat: 0, levelId: LEVELS[0].id, colors: ['orange', 'blue'] },
+    });
+
+    gameState.setLevel(LEVELS[6].id);
+    TestBed.tick();
+
+    expect(campaign.locks()).toEqual({});
+    expect(store.levelId()).toBe(LEVELS[6].id);
+  });
+
   it('falls back to the furthest open level from a locked one', () => {
     storeWin(LEVELS[0].id);
     create();

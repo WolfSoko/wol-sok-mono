@@ -87,6 +87,21 @@ describe('OnlineRoomComponent', () => {
     expect(host.querySelector('.choosing')).toBeNull();
   });
 
+  it("changes the host's next match, which goes to the guest", () => {
+    const online = TestBed.inject(OnlineMatchService) as unknown as FakeOnlineMatch;
+    TestBed.inject(GameStateService);
+    online.connect(0);
+    const { fixture, host } = render();
+
+    host.querySelectorAll<HTMLButtonElement>('.pick button')[1].click();
+    fixture.detectChanges();
+
+    expect(store.online()?.levelId).toBe(MATCH_LEVELS[1].id);
+    expect(online.share).toHaveBeenLastCalledWith(
+      expect.objectContaining({ levelId: MATCH_LEVELS[1].id })
+    );
+  });
+
   it("shows the guest the host's pick as it changes, without a picker", () => {
     store.update({ online: seat(1) });
     const { fixture, host } = render();
