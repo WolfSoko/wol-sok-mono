@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { english, GameText } from '@wolsok/feat-shared-bacteria-engine';
 import {
+  AchievementId,
   addCouchWin,
   addDailyAttempt,
   addEndlessRun,
@@ -305,6 +306,25 @@ export class ProgressService {
       ...earned,
       training: missionResult(mission.id, shortfall, first, this.training()),
     };
+  }
+
+  /**
+   * Grants an achievement no match earns - the Lab Pass's - and tells
+   * whether it is new. Nothing is granted before the storage has answered:
+   * until then a held one is not known, and granting it again would move
+   * its day.
+   */
+  public grantAchievement(id: AchievementId): boolean {
+    const held = this.progress();
+    if (!this.loaded() || held.achievements[id] != null) {
+      return false;
+    }
+    const progress: Progress = {
+      ...held,
+      achievements: { ...held.achievements, [id]: today() },
+    };
+    this.store(progress, (stored) => stored);
+    return true;
   }
 
   /** The day each training mission was done. */
