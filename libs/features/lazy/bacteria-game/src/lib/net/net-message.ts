@@ -2,6 +2,7 @@ import {
   BALANCE_VERSION,
   isInteger,
   isLevelId,
+  isMatchLevel,
   isObject,
   isRuleset,
   Ruleset,
@@ -16,6 +17,28 @@ import { parseJson } from '@wolsok/utils-json';
  * balance table, or the same inputs play another match.
  */
 export const NET_VERSION = `3/${BALANCE_VERSION}`;
+
+/**
+ * What a device understands beyond {@link NET_VERSION}, named in its hello.
+ * A released client drops a message kind it does not know and the hello
+ * fields it does not read, so a new message joins the protocol as a
+ * feature - sent only to a peer that named it - instead of a new version
+ * that would part the releases.
+ */
+export const NET_FEATURES = ['room'] as const;
+
+/** One feature of {@link NET_FEATURES}. */
+export type NetFeature = (typeof NET_FEATURES)[number];
+
+/**
+ * What the guest says in the room between matches (feature `room`): the
+ * level it would like next, if any, and whether it is ready.
+ */
+export interface GuestRoomState {
+  /** A level that plays online, or null for no wish. */
+  wish: string | null;
+  ready: boolean;
+}
 
 /** What one seat puts in before one tick, on the engine's input grid. */
 export interface TickInput {
@@ -63,9 +86,16 @@ export function agreedRuleset(
 export type NetMessage =
   /**
    * The first word each side says: which version of the game it runs, who
-   * plays it - their uid, for their profile - and the rulesets it offers.
+   * plays it - their uid, for their profile - the rulesets it offers and
+   * the features it understands.
    */
-  | { k: 'hello'; v: string; id: string | null; r: Ruleset[] }
+  | {
+      k: 'hello';
+      v: string;
+      id: string | null;
+      r: Ruleset[];
+      f: NetFeature[];
+    }
   /** The host changed the setup of the next match. */
   | ({ k: 'setup' } & OnlineSetup)
   /**
@@ -112,7 +142,14 @@ export function parseNetMessage(data: unknown): NetMessage | null {
         v,
         id: isPlayerId(id) ? id : null,
         r: ['cpu', ...new Set(offers)],
+        f: parseFeatures(value['f']),
       };
+    }
+    case 'room': {
+      const { wish, ready } = value;
+      return (wish === null || isMatchLevel(wish)) && typeof ready === 'boolean'
+        ? { k: 'room', wish, ready }
+        : null;
     }
     case 'setup': {
       const setup = parseSetup(value);
@@ -168,6 +205,17 @@ function parseSetup(value: Record<string, unknown>): OnlineSetup | null {
   const levelId = value['levelId'];
   const colors = validColorPair(value['colors']);
   return isLevelId(levelId) && colors != null ? { levelId, colors } : null;
+}
+
+/**
+ * The known features a hello names - none for an older release's hello,
+ * which names none, or for anything that is no list.
+ */
+function parseFeatures(value: unknown): NetFeature[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+  return NET_FEATURES.filter((feature) => value.includes(feature));
 }
 
 /** Two finite numbers no further from 0 than `limit`. */
