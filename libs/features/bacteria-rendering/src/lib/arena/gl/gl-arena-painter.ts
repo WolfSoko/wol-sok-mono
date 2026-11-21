@@ -8,7 +8,14 @@ import {
   Zone,
 } from '@wolsok/feat-shared-bacteria-engine';
 import { GridWar } from '@wolsok/feat-shared-bacteria-engine/gpu';
-import { ArenaFrame, ArenaPainter, PaintedColony } from '../arena-painter';
+import {
+  ArenaFrame,
+  ArenaPainter,
+  CapturedLayer,
+  PaintedColony,
+  PainterDiagnostics,
+} from '../arena-painter';
+import { checkGl, diagnose } from '../../gl/gl-diagnostics';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
 import { ArenaTheme } from '../arena-theme';
@@ -288,6 +295,8 @@ export class GlArenaPainter implements ArenaPainter {
   private readonly detail: number;
   /** What of the arena the frame being painted shows. */
   private view: Rect;
+  /** The simulation's glow the last frame added - for the diagnostic. */
+  private lastGlow: WebGLTexture | null = null;
 
   /** A painter for the canvas, or null where WebGL2 is not available. */
   public static create(
@@ -389,6 +398,15 @@ export class GlArenaPainter implements ArenaPainter {
     return rendererOf(this.gl);
   }
 
+  public diagnose(): PainterDiagnostics {
+    const diagnostics = diagnose(this.gl);
+    return {
+      renderer: this.renderer(),
+      errors: () => diagnostics.errors(),
+      captureLayers: () => this.captureLayers(),
+    };
+  }
+
   /**
    * Hands the context back to the browser right away rather than once the
    * canvas is collected - a page may only hold a few WebGL contexts.
@@ -464,10 +482,12 @@ export class GlArenaPainter implements ArenaPainter {
     this.weapons.update(frame);
     // Laid before the frame's own target is bound: no switch between them.
     this.layWalls(resources, frame.walls, theme);
+    checkGl(gl, 'walls layer');
     this.view = frame.view;
     // Every colony's cells and blur before the frame's own target is bound:
     // a GPU that renders in tiles stores and loads a target at each switch.
     const colonies = this.prepareColonies(resources, frame);
+    checkGl(gl, 'colony cells');
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.viewport(0, 0, this.renderWidth, this.renderHeight);
@@ -494,6 +514,7 @@ export class GlArenaPainter implements ArenaPainter {
     gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
     this.useAlphaBlend();
+    checkGl(gl, 'floor');
 
     this.background.clear();
     pushMotes(this.background, theme, this.motes);
@@ -503,12 +524,15 @@ export class GlArenaPainter implements ArenaPainter {
     pushDynamicWalls(this.background, theme, this.motes, frame.dynamicWalls);
     this.drawShapes(this.background);
     this.drawWeaponLayer(this.weapons.ground, false);
+    checkGl(gl, 'ground');
 
     for (const colony of colonies) {
       this.drawColony(frame, colony);
     }
+    checkGl(gl, 'colonies');
     if (!frame.reducedMotion) {
       this.drawEffects(frame);
+      checkGl(gl, 'glow');
     }
     // The weapons over the colonies - the clouds, the ice and the membrane,
     // then their flashes, shockwaves and sparks as light. The crosshairs
@@ -529,6 +553,7 @@ export class GlArenaPainter implements ArenaPainter {
       this.unit
     );
     this.drawShapes(this.foreground);
+    checkGl(gl, 'weapons and crosshairs');
     this.ambience = frame.ambience ?? null;
     this.ambienceMoves = this.ambience != null && !frame.reducedMotion;
     this.packWisps(theme);
@@ -573,6 +598,7 @@ export class GlArenaPainter implements ArenaPainter {
     if (ambience != null && this.ambienceMoves) {
       this.drawAmbience(ambience);
     }
+    checkGl(gl, 'copy to canvas');
   }
 
   /**
@@ -968,6 +994,7 @@ export class GlArenaPainter implements ArenaPainter {
       const { minX, minY, maxX, maxY } = layer.bounds;
       growBounds(around, minX, minY, maxX, maxY);
     }
+    this.lastGlow = effects;
     if (effects == null) {
       return;
     }
@@ -1133,6 +1160,82 @@ export class GlArenaPainter implements ArenaPainter {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
   }
 
+  /**
+   * The layers the diagnostic saves: the frame kept as the trail, the
+   * simulation's glow, and each colony's cells and density - read back from
+   * the GPU, which waits for it.
+   */
+  private captureLayers(): CapturedLayer[] {
+    const resources = this.resources;
+    if (resources == null) {
+      return [];
+    }
+    const { width, height } = this;
+    const layers = [
+      // Row 0 of the frame is the bottom of the view.
+      this.readLayer(
+        'trail',
+        resources.trail.texture,
+        this.renderWidth,
+        this.renderHeight,
+        true
+      ),
+    ];
+    if (this.lastGlow != null) {
+      layers.push(this.readLayer('glow', this.lastGlow, width, height, false));
+    }
+    resources.colonies.forEach((targets, index) => {
+      const name = `colony ${index + 1}`;
+      layers.push(
+        this.readLayer(
+          `${name} cells`,
+          targets.cells.texture,
+          width,
+          height,
+          false
+        ),
+        this.readLayer(
+          `${name} density`,
+          targets.density.texture,
+          width,
+          height,
+          false
+        )
+      );
+    });
+    return layers;
+  }
+
+  /** Reads a texture back, through a framebuffer made for it. */
+  private readLayer(
+    label: string,
+    texture: WebGLTexture,
+    width: number,
+    height: number,
+    bottomUp: boolean
+  ): CapturedLayer {
+    const gl = this.gl;
+    const framebuffer = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
+    gl.framebufferTexture2D(
+      gl.FRAMEBUFFER,
+      gl.COLOR_ATTACHMENT0,
+      gl.TEXTURE_2D,
+      texture,
+      0
+    );
+    const read = new Uint8Array(width * height * 4);
+    gl.readPixels(0, 0, width, height, gl.RGBA, gl.UNSIGNED_BYTE, read);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.deleteFramebuffer(framebuffer);
+    return {
+      label,
+      width,
+      height,
+      pixels: bottomUp ? flipRows(read, width, height) : read,
+    };
+  }
+
   /** Compiles the programs and allocates every buffer, texture and target. */
   private setup(): Resources {
     const gl = this.gl;
@@ -1263,4 +1366,21 @@ export class GlArenaPainter implements ArenaPainter {
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     return target;
   }
+}
+
+/** RGBA rows in the other order: the bottom row first becomes the top. */
+export function flipRows(
+  pixels: Uint8Array,
+  width: number,
+  height: number
+): Uint8Array {
+  const row = width * 4;
+  const flipped = new Uint8Array(pixels.length);
+  for (let y = 0; y < height; y++) {
+    flipped.set(
+      pixels.subarray(y * row, (y + 1) * row),
+      (height - 1 - y) * row
+    );
+  }
+  return flipped;
 }

@@ -1,3 +1,4 @@
+import type { GlErrorCount } from '../gl/gl-diagnostics';
 import type { GpuTimer } from '../gl/gpu-timer';
 import type { DishAmbience } from './ambience';
 import {
@@ -130,8 +131,32 @@ export interface ArenaPainter {
    * first call; null where the painter has no GPU or it cannot be timed.
    */
   gpuTimer?(): GpuTimer | null;
+  /**
+   * Turns on the `?gldebug` diagnostic for the painter's context: from now
+   * on every pass is checked for GL errors, which stalls the GPU. Absent
+   * where the painter has no GL context.
+   */
+  diagnose?(): PainterDiagnostics;
   /** Lets go of what the painter holds on the canvas - it is done drawing. */
   dispose(): void;
+}
+
+/** What the `?gldebug` diagnostic reads of a GL painter. */
+export interface PainterDiagnostics {
+  /** The GPU and driver, as unmasked as the browser tells. */
+  readonly renderer: string;
+  /** The GL errors since the diagnostic was turned on, by pass. */
+  errors(): GlErrorCount[];
+  /** The painter's layers as they are now - see {@link CapturedLayer}. */
+  captureLayers(): CapturedLayer[];
+}
+
+/** A layer read back from the GPU: RGBA bytes, the top row first. */
+export interface CapturedLayer {
+  label: string;
+  width: number;
+  height: number;
+  pixels: Uint8Array;
 }
 
 /**

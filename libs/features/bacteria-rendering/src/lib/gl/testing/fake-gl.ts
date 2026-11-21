@@ -14,6 +14,8 @@ export interface FakeGl {
   callsOf(name: string, ...args: unknown[]): number;
   /** Queues an error for `getError`, after the ones already queued. */
   failNext(code: number): void;
+  /** Queues an error for `getError` once that method is called next. */
+  failOn(method: string, code: number): void;
 }
 
 /** The value a constant of the fake context has. */
@@ -32,6 +34,7 @@ export function fakeGl(): FakeGl {
   const calls = new Map<string, unknown[][]>();
   const errors: number[] = [];
   const methods = new Map<string, jest.Mock>();
+  const failing = new Map<string, number>();
   const results: Record<string, (...args: unknown[]) => unknown> = {
     getProgramParameter: () => true,
     getShaderParameter: () => true,
@@ -61,6 +64,11 @@ export function fakeGl(): FakeGl {
           const made = calls.get(name) ?? [];
           made.push(args);
           calls.set(name, made);
+          const failure = failing.get(name);
+          if (failure != null) {
+            failing.delete(name);
+            errors.push(failure);
+          }
           return result(...args);
         });
         methods.set(name, method);
@@ -78,5 +86,6 @@ export function fakeGl(): FakeGl {
           args.every((arg, index) => Object.is(made[index], arg))
       ).length,
     failNext: (code) => errors.push(code),
+    failOn: (method, code) => failing.set(method, code),
   };
 }

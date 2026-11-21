@@ -20,6 +20,7 @@ import {
   ReportSink,
 } from '@wolsok/feat-shared-bacteria-engine/gpu';
 import { activeRects, reachSinceReport } from './active-area';
+import { checkGl } from './gl-diagnostics';
 import {
   bindTexture,
   sharedQuad,
@@ -400,6 +401,7 @@ export class GpuCellPasses implements CellPasses {
 
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
     gl.bindVertexArray(null);
+    checkGl(gl, 'simulation tick');
   }
 
   /**

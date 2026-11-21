@@ -1,8 +1,11 @@
 import { Cells, gameBalance } from '@wolsok/feat-shared-bacteria-engine';
+import type { ArenaFrame, PaintedColony } from '../arena-painter';
+import { arenaTheme } from '../arena-theme';
 import { ColonyTint, TINT_MODES, WHOLE_COLONY } from '../weapon-fx';
 import { fakeGl, glConstant } from '../../gl/testing/fake-gl';
 import {
   encodeCells,
+  flipRows,
   GlArenaPainter,
   packTints,
   passMargins,
@@ -168,5 +171,112 @@ describe('GlArenaPainter', () => {
     canvas.dispatchEvent(new Event('webglcontextrestored'));
 
     expect(fake.callsOf('disable', DITHER)).toBe(2);
+  });
+});
+
+describe('GlArenaPainter diagnostic', () => {
+  const WIDTH = 32;
+  const HEIGHT = 16;
+
+  function painted() {
+    const fake = fakeGl();
+    const canvas = document.createElement('canvas');
+    canvas.width = WIDTH * 2;
+    canvas.height = HEIGHT * 2;
+    jest
+      .spyOn(canvas, 'getContext')
+      .mockReturnValue(fake.gl as unknown as RenderingContext);
+    const painter = GlArenaPainter.create(canvas, WIDTH, HEIGHT, 2, 1);
+    if (painter == null) {
+      throw new Error('No painter on the fake context');
+    }
+    painter.setFloor(arenaTheme('petri-dish'), []);
+    return { fake, painter };
+  }
+
+  /** A colony drawn out of the GPU simulation's state. */
+  const GPU_COLONY = {
+    kind: 'state',
+    look: 'slime',
+    color: [255, 140, 0, 255],
+    boostTarget: null,
+    state: {},
+    effects: {},
+    owner: 1,
+    bounds: { minX: 4, minY: 4, maxX: 10, maxY: 8 },
+  } as unknown as PaintedColony;
+
+  function frame(colonies: readonly PaintedColony[] = []): ArenaFrame {
+    return {
+      clear: false,
+      deltaTimeSec: 1 / 60,
+      timeSec: 1,
+      view: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
+      walls: [],
+      dynamicWalls: [],
+      colonies,
+      reducedMotion: false,
+      nutrients: [],
+      balance: gameBalance,
+      cursors: [],
+      weaponFires: [],
+      weaponEffects: [],
+      seatColors: new Map(),
+      particleBudget: 0,
+    };
+  }
+
+  it('never asks for GL errors while nobody diagnoses the painter', () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame([GPU_COLONY]));
+    painter.showLastFrame();
+
+    expect(fake.callsOf('getError')).toBe(0);
+  });
+
+  it('counts an error under the pass that raised it', () => {
+    const { fake, painter } = painted();
+    const diagnostics = painter.diagnose();
+    // The floor's opacity is the first float uniform of a frame without colonies.
+    fake.failOn('uniform1f', glConstant('INVALID_OPERATION'));
+
+    painter.paint(frame());
+
+    expect(diagnostics.errors()).toEqual([
+      { pass: 'floor', error: 'INVALID_OPERATION', count: 1 },
+    ]);
+    expect(diagnostics.renderer).toBe('fake renderer');
+  });
+
+  it("captures the trail, the glow and each colony's cells and density", () => {
+    const { painter } = painted();
+    painter.paint(frame([GPU_COLONY]));
+
+    const layers = painter.diagnose().captureLayers();
+
+    expect(
+      layers.map(({ label, width, height, pixels }) => ({
+        label,
+        width,
+        height,
+        bytes: pixels.length,
+      }))
+    ).toEqual([
+      { label: 'trail', width: 64, height: 32, bytes: 64 * 32 * 4 },
+      { label: 'glow', width: 32, height: 16, bytes: 32 * 16 * 4 },
+      { label: 'colony 1 cells', width: 32, height: 16, bytes: 32 * 16 * 4 },
+      { label: 'colony 1 density', width: 32, height: 16, bytes: 32 * 16 * 4 },
+    ]);
+  });
+});
+
+describe('flipRows', () => {
+  it('puts the bottom row first on top', () => {
+    const pixels = Uint8Array.from([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]);
+
+    expect(Array.from(flipRows(pixels, 1, 3))).toEqual([
+      3, 3, 3, 3, 2, 2, 2, 2, 1, 1, 1, 1,
+    ]);
   });
 });
