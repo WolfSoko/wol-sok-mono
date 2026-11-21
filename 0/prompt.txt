@@ -1,0 +1,40 @@
+<task-notification>
+<task-id>brc3lm8ne</task-id>
+<summary>Monitor event: "PR #3173 checks and CodeRabbit review"</summary>
+<event>Self-Healing: neutral</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>brc3lm8ne</task-id>
+<summary>Monitor event: "PR #3173 checks and CodeRabbit review"</summary>
+<event>Analyze (javascript): success
+claude-review: success
+CodeQL: success
+Self-Healing: neutral</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>brc3lm8ne</task-id>
+<summary>Monitor event: "PR #3173 checks and CodeRabbit review"</summary>
+<event>claude: skipped
+claude: skipped
+claude: skipped
+CodeQL: success
+Self-Healing: neutral</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>brc3lm8ne</task-id>
+<summary>Monitor event: "PR #3173 checks and CodeRabbit review"</summary>
+<event>CodeRabbit review posted (1)</event>
+If this event is something the user would act on now, send a PushNotification. Routine or benign output doesn't need one.
+</task-notification>
