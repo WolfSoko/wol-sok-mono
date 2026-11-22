@@ -4,7 +4,6 @@ export type MenuScreen =
   | 'new-game'
   | 'colony'
   | 'profile'
-  // Every achievement, opened from the profile.
   | 'achievements'
   | 'friends'
   | 'settings'

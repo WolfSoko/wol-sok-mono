@@ -7,7 +7,6 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { rankFor } from '@wolsok/feat-shared-bacteria-engine';
 import { rankKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -15,6 +14,7 @@ import { RankBadgeComponent } from '../rank/rank-badge.component';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { AvatarComponent } from '../social/avatar.component';
 import { SocialService } from '../social/social.service';
+import { AchievementCountComponent } from './achievement-count.component';
 import { AchievementTally } from './achievement-tally';
 
 /** The picture's width in CSS pixels; `.dish` in the stylesheet fits it. */
@@ -34,9 +34,9 @@ const EMBLEM_SIZE = 72;
 @Component({
   selector: 'feat-lazy-bac-game-profile-card',
   imports: [
+    AchievementCountComponent,
     AvatarComponent,
     MatIconModule,
-    MatProgressBarModule,
     RankBadgeComponent,
     RankStandingComponent,
     TranslatePipe,

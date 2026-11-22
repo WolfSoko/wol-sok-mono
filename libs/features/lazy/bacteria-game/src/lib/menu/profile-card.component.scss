@@ -107,32 +107,12 @@ $colony: var(--bw-player, var(--bw-gold));
   }
 }
 
-.trophy {
-  @include screen.trophy(2.25rem);
-}
-
-.trophies-text {
+.count {
   flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
 }
 
 .trophies-title {
   font-weight: 700;
-}
-
-.trophies-count {
-  @include screen.figure;
-
-  font-size: 1.15rem;
-}
-
-.trophies-bar {
-  @include screen.bar;
-
-  --mat-progress-bar-track-height: 0.35rem;
-  --mat-progress-bar-active-indicator-height: 0.35rem;
 }
 
 .chevron {

@@ -7,7 +7,6 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { ACHIEVEMENTS, Progress } from '@wolsok/feat-shared-bacteria-engine';
 import {
   achievementKeys,
@@ -16,6 +15,7 @@ import {
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { AchievementCountComponent } from './achievement-count.component';
 import { achievementTally } from './achievement-tally';
 import { ScreenHeaderComponent } from './screen-header.component';
 
@@ -26,9 +26,9 @@ import { ScreenHeaderComponent } from './screen-header.component';
 @Component({
   selector: 'feat-lazy-bac-game-achievements',
   imports: [
+    AchievementCountComponent,
     GameTextPipe,
     MatIconModule,
-    MatProgressBarModule,
     ScreenHeaderComponent,
     TranslatePipe,
   ],

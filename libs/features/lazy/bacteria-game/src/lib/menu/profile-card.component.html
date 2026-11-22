@@ -2,28 +2,28 @@
 @let rankName = rankKey(rank.rank.id) | t;
 @let shown = player();
 <div class="emblem">
-  @if (shown) {
-    <span class="dish">
+  <span class="dish">
+    @if (shown) {
       <feat-lazy-bac-game-avatar
         [avatar]="shown.avatar"
         [size]="pictureSize"
         [label]="shown.name"
       />
-    </span>
+    } @else {
+      <feat-lazy-bac-game-rank-badge
+        [name]="rankName"
+        [number]="rank.number"
+        [size]="emblemSize"
+      />
+    }
+  </span>
+  @if (shown) {
     <feat-lazy-bac-game-rank-badge
       class="pin"
       [name]="rankName"
       [number]="rank.number"
       [size]="pinSize"
     />
-  } @else {
-    <span class="dish">
-      <feat-lazy-bac-game-rank-badge
-        [name]="rankName"
-        [number]="rank.number"
-        [size]="emblemSize"
-      />
-    </span>
   }
 </div>
 
@@ -40,19 +40,8 @@
 </div>
 
 <button type="button" class="trophies" (click)="achievements.emit()">
-  @let count = tally();
-  <mat-icon class="trophy" aria-hidden="true">emoji_events</mat-icon>
-  <span class="trophies-text">
+  <feat-lazy-bac-game-achievement-count class="count" [tally]="tally()">
     <span class="trophies-title">{{ "profile.achievements.title" | t }}</span>
-    <span class="trophies-count"
-      >{{ count.earned }} {{ "common.of" | t: { total: count.total } }}</span
-    >
-    <mat-progress-bar
-      class="trophies-bar"
-      mode="determinate"
-      aria-hidden="true"
-      [value]="count.percent"
-    />
-  </span>
+  </feat-lazy-bac-game-achievement-count>
   <mat-icon class="chevron" aria-hidden="true">chevron_right</mat-icon>
 </button>

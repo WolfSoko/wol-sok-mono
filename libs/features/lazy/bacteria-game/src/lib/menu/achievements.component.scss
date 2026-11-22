@@ -11,40 +11,7 @@
 .progress {
   @include screen.panel;
 
-  display: flex;
-  align-items: center;
-  gap: 1rem;
   padding: 1rem 1.25rem;
-}
-
-.trophy {
-  @include screen.trophy(3rem);
-
-  filter: drop-shadow(
-    0 0 10px color-mix(in srgb, var(--bw-gold) 45%, transparent)
-  );
-}
-
-.progress-text {
-  flex: 1 1 auto;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.earned-count {
-  @include screen.figure;
-
-  font-size: 2rem;
-}
-
-.of {
-  font-weight: 600;
-  color: var(--bw-muted);
-}
-
-.bar {
-  @include screen.bar;
 }
 
 .achievements {

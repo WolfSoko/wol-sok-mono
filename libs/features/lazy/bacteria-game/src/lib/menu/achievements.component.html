@@ -4,23 +4,11 @@
   (back)="back.emit()"
 />
 
-<section class="progress">
-  @let count = tally();
-  <mat-icon class="trophy" aria-hidden="true">emoji_events</mat-icon>
-  <div class="progress-text">
-    <span class="count">
-      <span class="earned-count">{{ count.earned }}</span
-      >{{ " "
-      }}<span class="of">{{ "common.of" | t: { total: count.total } }}</span>
-    </span>
-    <mat-progress-bar
-      class="bar"
-      mode="determinate"
-      [attr.aria-label]="'profile.achievements.progress' | t"
-      [value]="count.percent"
-    />
-  </div>
-</section>
+<feat-lazy-bac-game-achievement-count
+  class="progress"
+  [large]="true"
+  [tally]="tally()"
+/>
 
 <ul class="achievements">
   @for (achievement of achievementList(); track achievement.id) {

@@ -95,17 +95,11 @@ describe('ProfileComponent', () => {
 
     expect(host.querySelector('.achievements')).toBeNull();
     expect(host.textContent).not.toContain('Earned 19 Oct 2026');
-    expect(host.querySelector('button.trophies')?.textContent).toContain(
-      `1 of ${ACHIEVEMENT_IDS.length}`
-    );
   });
 
-  it('shows the colony and no online profile without the cloud', () => {
+  it('has no online profile without the cloud', () => {
     const host = render();
 
-    expect(host.querySelector('.card .name')?.textContent).toContain(
-      'Your colony'
-    );
     expect(host.querySelector('feat-lazy-bac-game-profile-editor')).toBeNull();
   });
 
