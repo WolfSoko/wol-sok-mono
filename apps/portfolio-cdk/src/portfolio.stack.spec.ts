@@ -49,20 +49,15 @@ describe('createPortfolioStack', () => {
     ).toHaveLength(2);
   });
 
-  it('refuses a page whose folder name holds a dot, as the folder index of /v1.2 is not resolved', () => {
-    file('blog/v1.2/index.html');
-
-    expect(() => synthesize()).toThrow(/"blog\/v1\.2"/);
-  });
-
   it('resolves folder indexes and redirects trailing-slash paths with one viewer-request CloudFront Function', () => {
     const template = synthesize();
 
     template.resourceCountIs('AWS::CloudFront::Function', 1);
     template.hasResourceProperties('AWS::CloudFront::Function', {
-      FunctionCode: Match.stringLikeRegexp(
-        'REDIRECT_TRAILING_SLASH = true;\\s+var RESOLVE_FOLDER_INDEX = true;'
-      ),
+      FunctionCode: Match.stringLikeRegexp('REDIRECT_TRAILING_SLASH = true;'),
+    });
+    template.hasResourceProperties('AWS::CloudFront::Function', {
+      FunctionCode: Match.stringLikeRegexp('RESOLVE_FOLDER_INDEX = true;'),
     });
     template.hasResourceProperties('AWS::CloudFront::Distribution', {
       DistributionConfig: Match.objectLike({

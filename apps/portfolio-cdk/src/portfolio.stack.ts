@@ -1,6 +1,6 @@
 import { SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy } from 'aws-cdk-lib';
-import { prerenderedPages } from './prerendered-pages';
+import { resolvablePages } from './prerendered-pages';
 
 const STACK_NAME = 'Portfolio';
 
@@ -39,23 +39,4 @@ export function createPortfolioStack(
       ...pages.map((page) => `${page}/index.html`),
     ],
   });
-}
-
-/**
- * The prerendered pages, refusing one whose folder name holds a `.`: the
- * folder index is resolved only for a path without one in its last segment,
- * so such a page would deploy and never be reached.
- */
-function resolvablePages(buildOutputPath: string): string[] {
-  const pages = prerenderedPages(buildOutputPath);
-  const unreachable = pages.find((page) =>
-    page.split('/').at(-1)?.includes('.')
-  );
-  if (unreachable !== undefined) {
-    throw new Error(
-      `The page "${unreachable}" has a "." in its folder name, so ` +
-        `/${unreachable} would not be served from its index.html. Rename it.`
-    );
-  }
-  return pages;
 }

@@ -20,3 +20,22 @@ export function prerenderedPages(root: string, prefix = ''): string[] {
       return [...own, ...prerenderedPages(root, page)];
     });
 }
+
+/**
+ * The prerendered pages, refusing one whose folder name holds a `.`: the
+ * folder index is resolved only for a path without one in its last segment,
+ * so such a page would deploy and never be reached.
+ */
+export function resolvablePages(buildOutputPath: string): string[] {
+  const pages = prerenderedPages(buildOutputPath);
+  const unreachable = pages.find((page) =>
+    page.split('/').at(-1)?.includes('.')
+  );
+  if (unreachable !== undefined) {
+    throw new Error(
+      `The page "${unreachable}" has a "." in its folder name, so ` +
+        `/${unreachable} would not be served from its index.html. Rename it.`
+    );
+  }
+  return pages;
+}
