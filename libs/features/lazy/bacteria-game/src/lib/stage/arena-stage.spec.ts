@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { ElementRef, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type { AnimationState, WsThanosDirective } from '@wolsok/thanos';
 import { Subject } from 'rxjs';
@@ -17,12 +17,16 @@ describe('ArenaStage', () => {
   let declaring: ReturnType<typeof signal<boolean>>;
 
   /** Binds the stage to a host without a template, but for its effect. */
-  function bind(thanos: Partial<WsThanosDirective> = {}): void {
+  function bind(
+    thanos: Partial<WsThanosDirective> = {},
+    frame?: HTMLDivElement
+  ): void {
     const host: ArenaStageHost = {
       arenaView: signal(undefined),
       ambienceCanvas: signal(undefined),
       minimapCanvas: signal(undefined),
-      arenaFrame: () => undefined,
+      arenaFrame: () =>
+        frame === undefined ? undefined : new ElementRef(frame),
       thanos: () => thanos as WsThanosDirective,
       declaring,
     };
@@ -132,6 +136,101 @@ describe('ArenaStage', () => {
 
       expect(vaporize$).not.toHaveBeenCalled();
       expect(done).toHaveBeenCalled();
+    });
+  });
+
+  describe('the dissolve at the end of a match', () => {
+    let effect: Subject<AnimationState>;
+    let vaporize$: jest.Mock;
+    let frame: HTMLDivElement;
+
+    beforeEach(() => {
+      effect = new Subject<AnimationState>();
+      vaporize$ = jest.fn(() => effect);
+      frame = document.createElement('div');
+      bind({ vaporize$ }, frame);
+    });
+
+    it('hides the arena once the dust has settled', () => {
+      const done = jest.fn();
+      stage.dissolve().subscribe({ complete: done });
+      expect(vaporize$).toHaveBeenCalledTimes(1);
+      expect(frame.style.visibility).toBe('');
+
+      effect.complete();
+
+      expect(done).toHaveBeenCalled();
+      expect(frame.style.visibility).toBe('hidden');
+    });
+
+    it('leaves the reset after it no second effect, and the arena hidden', () => {
+      stage.dissolve().subscribe();
+      effect.complete();
+      const done = jest.fn();
+
+      stage.vaporize().subscribe({ complete: done });
+
+      expect(done).toHaveBeenCalled();
+      expect(vaporize$).toHaveBeenCalledTimes(1);
+      expect(frame.style.visibility).toBe('hidden');
+    });
+
+    it('lets a reset begun while the dust still blows wait for it', () => {
+      stage.dissolve().subscribe();
+      const done = jest.fn();
+
+      stage.vaporize().subscribe({ complete: done });
+      expect(done).not.toHaveBeenCalled();
+      effect.complete();
+
+      expect(done).toHaveBeenCalled();
+      expect(vaporize$).toHaveBeenCalledTimes(1);
+    });
+
+    it('vaporizes again on the reset after that one', () => {
+      stage.dissolve().subscribe();
+      effect.complete();
+      stage.vaporize().subscribe();
+
+      stage.vaporize().subscribe();
+
+      expect(vaporize$).toHaveBeenCalledTimes(2);
+    });
+
+    it('settles even when the effect fails', () => {
+      const consoleError = jest
+        .spyOn(console, 'error')
+        .mockImplementation(() => undefined);
+      try {
+        bind(
+          {
+            vaporize$: () => {
+              throw new Error('no context');
+            },
+          },
+          frame
+        );
+        const done = jest.fn();
+
+        stage.dissolve().subscribe({ complete: done });
+
+        expect(done).toHaveBeenCalled();
+        expect(frame.style.visibility).toBe('hidden');
+      } finally {
+        consoleError.mockRestore();
+      }
+    });
+
+    it('simply hides the arena while the effect is off', async () => {
+      settings.set('vaporize', 'off');
+      const done = jest.fn();
+
+      stage.dissolve().subscribe({ complete: done });
+      await Promise.resolve();
+
+      expect(vaporize$).not.toHaveBeenCalled();
+      expect(done).toHaveBeenCalled();
+      expect(frame.style.visibility).toBe('hidden');
     });
   });
 });

@@ -285,15 +285,24 @@ describe('WinnerComponent', () => {
     const played = LEVELS[0];
     const picked = LEVELS[1];
 
-    /** The result of an online match, opened once the match ended. */
-    function onlineResult(seat: 0 | 1): ComponentFixture<WinnerComponent> {
+    /**
+     * The result of an online match, opened once the match ended - and once
+     * the arena turned to dust, by when the connection may be gone already
+     * (`connected` false).
+     */
+    function onlineResult(
+      seat: 0 | 1,
+      connected = true
+    ): ComponentFixture<WinnerComponent> {
       store.update({
         winner: createPlayer({ id: 1, name: 'Opponent', isBot: seat === 0 }),
         levelId: played.id,
         endedBy: 'annihilation',
         endedOn: played.id,
         endedOnline: true,
-        online: { seat, levelId: played.id, colors: ['orange', 'blue'] },
+        online: connected
+          ? { seat, levelId: played.id, colors: ['orange', 'blue'] }
+          : null,
         earnings: null,
       });
       const result = TestBed.createComponent(WinnerComponent);
@@ -354,6 +363,21 @@ describe('WinnerComponent', () => {
         result.nativeElement.querySelector('feat-lazy-bac-game-online-room')
       ).toBeNull();
       expect(shown).not.toContain('Play ');
+    });
+
+    it('first shows the online result after the opponent left during the dust', () => {
+      const result = onlineResult(0, false);
+
+      const shown = textOf(result);
+      expect(shown).toContain('Your opponent ate the other colony - they win.');
+      expect(shown).not.toContain('computer');
+      expect(shown).toContain('The connection to your opponent is gone.');
+      expect(
+        result.nativeElement.querySelector('feat-lazy-bac-game-online-room')
+      ).toBeNull();
+      expect(
+        result.nativeElement.querySelector('.level-info')?.textContent
+      ).toContain(played.name);
     });
 
     it('says the opponent is gone after a forfeit, without the room', () => {

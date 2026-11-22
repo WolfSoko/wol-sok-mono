@@ -11,7 +11,14 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import type { WsThanosDirective, WsThanosOptions } from '@wolsok/thanos';
 import { ResizedEvent } from '@wolsok/ui-kit';
 import { asapScheduler, firstValueFrom, Observable, of, timer } from 'rxjs';
-import { filter, map, takeUntil, timeout } from 'rxjs/operators';
+import {
+  filter,
+  map,
+  shareReplay,
+  takeUntil,
+  tap,
+  timeout,
+} from 'rxjs/operators';
 import {
   ArenaLayout,
   ArenaPainter,
@@ -56,6 +63,7 @@ import { PlayerService } from '../state/player.service';
 import { PlayerStore } from '../state/player.store';
 import { arenaPointFromClient } from '../touch-controls';
 import { randomWindDirection, vaporizePixels } from '../vaporize-effect';
+import { effectOver } from './effect-over';
 
 /**
  * The vaporize snap's volume at full effects. The game's effects are short
@@ -276,6 +284,11 @@ export class ArenaStage {
 
   /** Draws the arena - on the GPU where the browser can; the view builds it. */
   private painter: ArenaPainter | null = null;
+  /**
+   * The dust a match end left, see {@link dissolve}: the reset after it
+   * takes it instead of vaporizing again.
+   */
+  private dust: Observable<void> | null = null;
   /** True while the arena frame is hidden, see {@link hideUntilPainted}. */
   private arenaHidden = false;
   /** True once the stage rendered what follows the effect, while hidden. */
@@ -380,10 +393,39 @@ export class ArenaStage {
   }
 
   /**
+   * Turns the ended match's arena to dust before its result shows,
+   * completing once the effect is over, whatever it came to (see
+   * `effectOver`). The arena then stays out of sight under the result
+   * ({@link hideUntilPainted}): the directive fades its container back in,
+   * which would show the last frame again. The reset after it takes this
+   * dust from {@link vaporize} instead of playing the effect a second time.
+   */
+  public dissolve(): Observable<void> {
+    const dust = effectOver(() => this.snap()).pipe(
+      tap(() => this.hideUntilPainted()),
+      shareReplay({ bufferSize: 1, refCount: false })
+    );
+    this.dust = dust;
+    return dust;
+  }
+
+  /**
    * Turns the last frame to dust, completing once the effect is over - at
-   * the set length plus some slack at the latest.
+   * the set length plus some slack at the latest. After a match end's
+   * {@link dissolve} it plays nothing: it completes with that dissolve, once
+   * it is over, and leaves the arena hidden.
    */
   public vaporize(): Observable<void> {
+    const dust = this.dust;
+    if (dust !== null) {
+      this.dust = null;
+      return dust;
+    }
+    return this.snap();
+  }
+
+  /** Plays the vaporize effect on the arena as it stands. */
+  private snap(): Observable<void> {
     // Never a snapshot of a hidden arena, see hideUntilPainted.
     this.revealArena();
     // Switched off, the arena simply clears - still after the caller is

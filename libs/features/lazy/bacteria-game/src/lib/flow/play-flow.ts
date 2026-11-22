@@ -10,8 +10,8 @@ import {
   untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { defer, Observable, of, Subject } from 'rxjs';
-import { catchError, defaultIfEmpty, last, map, tap } from 'rxjs/operators';
+import { Observable, Subject } from 'rxjs';
+import { finalize, map, tap } from 'rxjs/operators';
 import { armedTap } from '../armed-tap';
 import { StageBusy } from '../busy/stage-busy';
 import { CampaignService } from '../campaign.service';
@@ -27,6 +27,7 @@ import { GameSettingsService } from '../settings.service';
 import { GameSoundService } from '../sound/game-sound.service';
 import { levelMusic } from '@wolsok/feat-bacteria-sound';
 import { ArenaStage } from '../stage/arena-stage';
+import { effectOver } from '../stage/effect-over';
 import { StageFrame } from '../stage/stage-frame';
 import { StageFullscreen } from '../stage/stage-fullscreen';
 import {
@@ -84,6 +85,11 @@ export class PlayFlow {
    */
   public readonly resetting = signal(false);
   /**
+   * True while the ended match's arena turns to dust, before its result
+   * shows (see {@link dissolveArena}).
+   */
+  public readonly dissolving = signal(false);
+  /**
    * Fires each time the arena is clear again after a reset, whatever the
    * reset came to - for what waited for it, as an online start does.
    */
@@ -93,7 +99,7 @@ export class PlayFlow {
    * the menu screens - or none, while a match is on.
    */
   public readonly panel = computed<StagePanel>(() => {
-    if (this.resetting()) {
+    if (this.resetting() || this.dissolving()) {
       return null;
     }
     if (this.hud.matchOver()) {
@@ -457,28 +463,38 @@ export class PlayFlow {
   }
 
   /**
+   * Turns the ended match's arena to dust, its result showing only once the
+   * effect is over - whatever it came to, so the result always comes. The
+   * reset after it plays no second effect (`ArenaStage.dissolve`).
+   */
+  public dissolveArena(): void {
+    this.dissolving.set(true);
+    this.arenaStage
+      .dissolve()
+      .pipe(
+        finalize(() => this.dissolving.set(false)),
+        takeUntilDestroyed(this.destroyRef)
+      )
+      .subscribe();
+  }
+
+  /**
    * Pauses, vaporizes the canvas and returns to the start screen, completing
-   * once the arena is clear again.
+   * once the arena is clear again - after a match end's dissolve without a
+   * second effect, once that one is over.
    *
-   * The animation is allowed to finish without emitting - what matters is that
-   * it is over, so the reset hangs off the completion rather than off a value.
-   * An effect that fails - even at once, while `ArenaStage.vaporize` sets it up -
-   * is over too: the error is logged here and the reset goes on, so
-   * `resetting` never sticks.
+   * The reset hangs off the effect being over (`effectOver`): an effect that
+   * fails - even at once, while `ArenaStage.vaporize` sets it up - is over
+   * too, the error logged and the reset going on, so `resetting` never
+   * sticks.
    */
   public resetGame$(): Observable<void> {
-    return defer(() => {
+    return effectOver(() => {
       this.stageMoves++;
       this.resetting.set(true);
       this.gameStateService.pause();
       return this.arenaStage.vaporize();
     }).pipe(
-      catchError((error: unknown) => {
-        console.error('The arena could not be vaporized', error);
-        return of(undefined);
-      }),
-      defaultIfEmpty(undefined),
-      last(),
       tap(() => {
         // The effect has just faded the container back in.
         this.arenaStage.hideUntilPainted();
