@@ -56,6 +56,21 @@ describe('SignIn', () => {
     }
   );
 
+  it('keeps counting successful sign-ins across a cancellation and sign-out', async () => {
+    const signIn = TestBed.inject(SignIn);
+    await signIn.signIn();
+    await signIn.signOut();
+    expect(signIn.signIns()).toBe(1);
+
+    outcome = 'cancelled';
+    await signIn.signIn();
+    expect(signIn.signIns()).toBe(1);
+
+    outcome = 'signed-in';
+    await signIn.signIn();
+    expect(signIn.signIns()).toBe(2);
+  });
+
   it('counts a sign-out', async () => {
     await TestBed.inject(SignIn).signOut();
 

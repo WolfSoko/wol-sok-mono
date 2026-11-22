@@ -477,6 +477,28 @@ describe('ProgressService', () => {
       expect(progress.achievements()['lab-member']).toBe('2026-01-02');
     });
 
+    it('can grant after a late load without replacing existing progress', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          achievements: { 'first-blood': '2026-01-02' },
+          endlessBest: 9,
+        },
+      });
+      expect(progress.grantAchievement('lab-member')).toBe(false);
+      storage.flush();
+
+      expect(progress.grantAchievement('lab-member')).toBe(true);
+      storage.flush();
+
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        achievements: {
+          'first-blood': '2026-01-02',
+          'lab-member': expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        },
+        endlessBest: 9,
+      });
+    });
+
     it('keeps the deeper endless run, the stored one or the new one', () => {
       const progress = createWith({
         [PROGRESS_STORAGE_KEY]: { endlessBest: 9 },

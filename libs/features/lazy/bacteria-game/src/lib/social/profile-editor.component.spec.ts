@@ -56,6 +56,29 @@ describe('ProfileEditorComponent', () => {
     expect(labPass.welcoming()).toBe(false);
   });
 
+  it('keeps the welcome while editing and clears it after saving', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    TestBed.inject(LabPass).startOnboarding();
+    const host = await render();
+    const welcome = () => host.querySelector('.welcome')?.textContent;
+    const name = host.querySelector<HTMLInputElement>('input[name="name"]')!;
+
+    expect(welcome()).toContain('Ada');
+    name.value = 'Cleo';
+    name.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(welcome()).toContain('Ada');
+
+    Array.from(host.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Save'))
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(social.get('profiles/ada')).toMatchObject({ name: 'Cleo' });
+    expect(host.querySelector('.welcome')).toBeNull();
+  });
+
   it('opens on the motto when the Lab Pass asks for it', async () => {
     account.profile.set({ guest: false, name: 'Ada' });
     const labPass = TestBed.inject(LabPass);

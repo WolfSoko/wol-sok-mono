@@ -163,6 +163,30 @@ describe('LabPass', () => {
     expect(progress.grantAchievement).toHaveBeenCalledTimes(1);
   });
 
+  it('does not announce a reward when the grant is declined', () => {
+    progress.grantAchievement.mockReturnValue(false);
+    completeAll();
+    const labPass = pass();
+
+    expect(progress.grantAchievement).toHaveBeenCalledWith('lab-member');
+    expect(labPass.justEarned()).toBe(false);
+    expect(analytics.events).toEqual([]);
+  });
+
+  it('waits for a confirmed profile even when all other steps are done', () => {
+    completeAll();
+    social.profileLoaded.set(false);
+    const labPass = pass();
+
+    expect(labPass.next()).toBe('profile');
+    expect(progress.grantAchievement).not.toHaveBeenCalled();
+
+    social.profileLoaded.set(true);
+    TestBed.tick();
+
+    expect(labPass.justEarned()).toBe(true);
+  });
+
   it('stays away for a player who holds Lab Member', () => {
     progress.achievements.set({ 'lab-member': '2026-01-02' });
     completeAll();
@@ -238,6 +262,22 @@ describe('LabPass', () => {
     social.storedAvatar.set(null);
     TestBed.tick();
     expect(labPass.onboardingDue()).toBe(false);
+  });
+
+  it('checks a new sign-in after an earlier sign-in needed no onboarding', () => {
+    const labPass = pass();
+    player.set({ guest: false, name: 'Ada' });
+    social.storedAvatar.set(AVATAR);
+    signIns.set(1);
+    TestBed.tick();
+    expect(labPass.onboardingDue()).toBe(false);
+
+    player.set({ guest: false, name: 'Cleo' });
+    social.storedAvatar.set(null);
+    signIns.set(2);
+    TestBed.tick();
+
+    expect(labPass.onboardingDue()).toBe(true);
   });
 
   it('grants nothing for the friends of the player before a switch', () => {

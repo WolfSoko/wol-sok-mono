@@ -546,9 +546,21 @@ describe('MainMenuComponent and the Lab Pass', () => {
     const host: HTMLElement = fixture.nativeElement;
     const card = () => host.querySelector('feat-lazy-bac-game-lab-pass-card');
 
+    const install = () =>
+      host.querySelector('feat-lazy-bac-game-install-banner');
+
+    expect(install()).not.toBeNull();
     expect(card()).toBeNull();
+
+    offer.visible.set(false);
+    fixture.detectChanges();
+    expect(install()).toBeNull();
+    expect(card()).not.toBeNull();
+
+    offer.visible.set(true);
     urgent.set(true);
     fixture.detectChanges();
+    expect(install()).toBeNull();
     expect(card()).not.toBeNull();
   });
 

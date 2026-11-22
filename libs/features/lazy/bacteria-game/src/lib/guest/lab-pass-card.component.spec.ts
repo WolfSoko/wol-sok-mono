@@ -22,8 +22,8 @@ describe('LabPassCardComponent', () => {
   };
   let signIn: {
     signIn: jest.Mock;
-    ready: () => boolean;
-    failed: () => boolean;
+    ready: ReturnType<typeof signal<boolean>>;
+    failed: ReturnType<typeof signal<boolean>>;
   };
 
   async function render(start: Partial<LabPassFacts> = {}) {
@@ -50,8 +50,8 @@ describe('LabPassCardComponent', () => {
     };
     signIn = {
       signIn: jest.fn(() => Promise.resolve()),
-      ready: () => true,
-      failed: () => false,
+      ready: signal(true),
+      failed: signal(false),
     };
     TestBed.configureTestingModule({
       providers: [
@@ -82,6 +82,28 @@ describe('LabPassCardComponent', () => {
 
     buttons(element)[0].click();
     expect(signIn.signIn).toHaveBeenCalled();
+  });
+
+  it('blocks sign-in while it is unavailable and allows retry after a failure', async () => {
+    const { fixture } = await render();
+    const [go] = buttons(fixture.nativeElement);
+    signIn.ready.set(false);
+    await fixture.whenStable();
+
+    expect(go.disabled).toBe(true);
+    go.click();
+    expect(signIn.signIn).not.toHaveBeenCalled();
+
+    signIn.failed.set(true);
+    signIn.ready.set(true);
+    await fixture.whenStable();
+
+    expect(
+      fixture.nativeElement.querySelector('.failed[role="status"]')
+    ).not.toBeNull();
+    expect(go.disabled).toBe(false);
+    go.click();
+    expect(signIn.signIn).toHaveBeenCalledTimes(1);
   });
 
   it('tells a guest due for it that an unused account is deleted', async () => {
