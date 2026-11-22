@@ -1,3 +1,4 @@
+@use '../menu/screen';
 @use '../colony';
 @use '../pad';
 
@@ -19,7 +20,7 @@
   @include pad.fab(88px, var(--seat-color));
 
   mat-icon {
-    @include pad.fab-icon(2rem);
+    @include screen.icon-size(2rem);
   }
 
   .boost-state {

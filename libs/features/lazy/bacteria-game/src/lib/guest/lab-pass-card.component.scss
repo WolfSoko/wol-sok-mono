@@ -1,3 +1,4 @@
+@use '../menu/screen';
 @use '../menu-banner';
 
 @include menu-banner.banner;
@@ -48,9 +49,7 @@
   }
 
   .mat-icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    font-size: 1.1rem;
+    @include screen.icon-size(1.1rem);
   }
 
   .done {

@@ -48,7 +48,7 @@ export class AchievementsComponent {
   /** Names where the way back leads - the profile, where the screen opens. */
   public readonly backLabel = input.required<string>();
 
-  /** Back to the profile, where the screen was opened. */
+  /** Back to where the screen was opened, which `backLabel` names. */
   public readonly back = output<void>();
 
   /** Every achievement, earned ones with their day, the rest with their condition. */

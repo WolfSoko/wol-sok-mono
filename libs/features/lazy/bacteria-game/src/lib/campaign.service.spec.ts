@@ -141,11 +141,15 @@ describe('CampaignService', () => {
     expect(store.snapshot().levelId).toBe(LEVELS[5].id);
   });
 
-  it('counts the achievements earned for the main menu', () => {
+  it('counts the achievements earned for the main menu, no unknown one', () => {
     localStorage.setItem(
       PROGRESS_STORAGE_KEY,
       JSON.stringify({
-        achievements: { blitz: '2026-10-19', 'lab-member': '2026-11-20' },
+        achievements: {
+          blitz: '2026-10-19',
+          'lab-member': '2026-11-20',
+          retired: '2026-01-01',
+        },
       })
     );
 

@@ -27,10 +27,3 @@
   width: $size;
   height: $size;
 }
-
-// The button's icon.
-@mixin fab-icon($size) {
-  width: $size;
-  height: $size;
-  font-size: $size;
-}

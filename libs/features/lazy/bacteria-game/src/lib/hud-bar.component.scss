@@ -1,3 +1,4 @@
+@use 'menu/screen';
 @use 'colony';
 
 // A band along the top edge of the screen, laid over the arena by the stage:
@@ -55,9 +56,7 @@
   opacity: 0.85;
 
   mat-icon {
-    width: 1em;
-    height: 1em;
-    font-size: 1em;
+    @include screen.icon-size(1em);
   }
 }
 

@@ -1,3 +1,4 @@
+@use '../menu/screen';
 @use '../pad';
 
 :host {
@@ -21,7 +22,7 @@
   border: 2px solid var(--weapon);
 
   mat-icon {
-    @include pad.fab-icon(1.6rem);
+    @include screen.icon-size(1.6rem);
 
     color: var(--weapon);
   }

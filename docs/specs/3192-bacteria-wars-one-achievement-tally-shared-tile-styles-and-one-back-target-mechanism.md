@@ -49,16 +49,17 @@ before.
   `tile` (the button base plus `&:focus-visible { @include focus-ring; }`)
   and `icon-size($size)` (the triple). Each tile keeps its own layout, hover
   and border; my-colony's skin keeps its `:has(.wear:focus-visible)` with
-  `focus-ring`. Stylesheets outside `menu/` that `@use` the screen module
-  already (or can with a relative path) take `icon-size` too; the rest stay.
+  `focus-ring`. Every game stylesheet with an icon triple takes `icon-size`,
+  through a relative `@use` of the screen module where needed, and the pads'
+  `fab-icon`, the same triple, gives way to it.
 - **The visually-hidden class is defined once per app's global styles**:
   `apps/bacteria-game-remote/src/styles.scss` adds
   `@include cdk.a11y-visually-hidden;` as the shell's `styles.scss` already
   does, and the six component stylesheets drop theirs. That is CDK's
   documented way, and the class is global anyway.
-- **One back target**: `stage-screens.ts` gets `backPanel(screen, paused)`,
-  the panel the way back leads to (`'pause'` while paused, else
-  `parentScreen(screen)`), and `backLabelKey(panel)`, the text key naming it
+- **One back target**: `stage-screens.ts` gets `backTarget(screen, paused)`
+  (type `BackTarget`), where the way back leads (`'pause'` while paused, else
+  `parentScreen(screen)`), and `backLabelKey(target)`, the text key naming it
   (`pause` → `stage.pause.back`, `profile` → `profile.title`, else
   `common.menu`). `PlayFlow.backLabel` (renamed from `settingsBackLabel`)
   translates it for the open screen; the game passes it to the settings and
