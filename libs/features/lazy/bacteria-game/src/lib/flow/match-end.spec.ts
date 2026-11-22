@@ -11,7 +11,7 @@ import { GameSoundService } from '../sound/game-sound.service';
 import { StageInput } from '../stage/stage-input';
 import { GameStateService } from '../state/game-state.service';
 import { STAGE_PROVIDERS } from '../stage-providers';
-import { ArenaStage } from '../stage/arena-stage';
+import { ArenaStage, VAPORIZE_SLACK_MS } from '../stage/arena-stage';
 import { GameState, GameStateStore } from '../state/game.states';
 import { MatchEnd } from './match-end';
 import { PlayFlow } from './play-flow';
@@ -196,7 +196,7 @@ describe('MatchEnd: the dust before the result', () => {
       const ms = TestBed.inject(GameSettingsService).value('vaporizeMs');
 
       endMatch();
-      jest.advanceTimersByTime(ms + 5_000 - 1);
+      jest.advanceTimersByTime(ms + VAPORIZE_SLACK_MS - 1);
       expect(flow.panel()).toBeNull();
       jest.advanceTimersByTime(2);
 

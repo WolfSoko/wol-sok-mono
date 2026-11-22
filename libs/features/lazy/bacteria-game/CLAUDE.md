@@ -651,7 +651,9 @@ play each other.
   frame. The reset after the result takes that dust from `vaporize()`
   once instead of playing a second effect (a reset begun during the
   dissolve waits for it); every other reset (Quit, Give up) vaporizes as
-  before.
+  before. A start (`PlayFlow.startGame`) drops leftover dust and shows the
+  arena with its first frame (`ArenaStage.newMatch`); online starts that
+  come in over a result reset first (`OnlineFlow.whenArenaClear`).
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
   (`ArenaStage.hideUntilPainted`) and shows it again only once both the

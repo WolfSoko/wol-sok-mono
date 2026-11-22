@@ -77,7 +77,7 @@ const SNAP_LEVEL = 0.3;
  * of the canvas included - may take before the stage goes on without it:
  * a snapshot that never completes must not leave the stage without a menu.
  */
-const VAPORIZE_SLACK_MS = 5_000;
+export const VAPORIZE_SLACK_MS = 5_000;
 
 /** Room kept free around the arena for its frame, in CSS pixels. */
 const ARENA_FRAME_PX = 6;
@@ -401,9 +401,15 @@ export class ArenaStage {
    * dust from {@link vaporize} instead of playing the effect a second time.
    */
   public dissolve(): Observable<void> {
-    const dust = effectOver(() => this.snap()).pipe(
-      tap(() => this.hideUntilPainted()),
-      shareReplay({ bufferSize: 1, refCount: false })
+    const dust: Observable<void> = effectOver(() => this.playVaporize()).pipe(
+      // Not once a match started meanwhile, which dropped this dust, nor
+      // once a reset took it, which hides the arena itself.
+      tap(() => {
+        if (this.dust === dust) {
+          this.hideUntilPainted();
+        }
+      }),
+      shareReplay({ bufferSize: 1, refCount: true })
     );
     this.dust = dust;
     return dust;
@@ -421,11 +427,11 @@ export class ArenaStage {
       this.dust = null;
       return dust;
     }
-    return this.snap();
+    return this.playVaporize();
   }
 
   /** Plays the vaporize effect on the arena as it stands. */
-  private snap(): Observable<void> {
+  private playVaporize(): Observable<void> {
     // Never a snapshot of a hidden arena, see hideUntilPainted.
     this.revealArena();
     // Switched off, the arena simply clears - still after the caller is
@@ -484,6 +490,17 @@ export class ArenaStage {
     this.arenaHidden = true;
     this.stageRendered = false;
     this.arenaPainted = false;
+  }
+
+  /**
+   * A match starts: dust a match end left is no longer the reset's to take,
+   * and an arena the dust hid comes back with the new match's first frame -
+   * a start without a reset (an online start always resets first) must not
+   * play under a hidden arena, nor hand its own reset that dust.
+   */
+  public newMatch(): void {
+    this.dust = null;
+    this.stageRenderedAfterReset();
   }
 
   /** The stage rendered what follows the effect: one of the two waits over. */

@@ -221,6 +221,37 @@ describe('ArenaStage', () => {
       }
     });
 
+    it('leaves no dust to a match that starts without a reset', () => {
+      stage.dissolve().subscribe();
+      effect.complete();
+
+      stage.newMatch();
+      stage.vaporize().subscribe();
+
+      expect(vaporize$).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows the arena again with the first frame of a match started after the dust', () => {
+      stage.dissolve().subscribe();
+      effect.complete();
+      expect(frame.style.visibility).toBe('hidden');
+
+      stage.newMatch();
+      expect(frame.style.visibility).toBe('hidden');
+      stage.arenaPaintedAfterReset();
+
+      expect(frame.style.visibility).toBe('');
+    });
+
+    it('hides no arena of a match that started while the dust still blew', () => {
+      stage.dissolve().subscribe();
+
+      stage.newMatch();
+      effect.complete();
+
+      expect(frame.style.visibility).toBe('');
+    });
+
     it('simply hides the arena while the effect is off', async () => {
       settings.set('vaporize', 'off');
       const done = jest.fn();

@@ -201,9 +201,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     });
     trackScreenViews(
       computed(() =>
-        this.flow.resetting() || this.flow.dissolving()
-          ? null
-          : (this.flow.panel() ?? 'match')
+        this.flow.clearingArena() ? null : (this.flow.panel() ?? 'match')
       )
     );
     reportUserProperties();

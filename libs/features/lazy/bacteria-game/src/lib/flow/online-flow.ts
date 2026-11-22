@@ -131,24 +131,24 @@ export class OnlineFlow {
   /**
    * Starts an automatic online match on the level the matchmaking picked -
    * a random level that plays online if it has none - once the arena is
-   * clear, as the reset under way would end the match, and switched only
-   * then, so it does not flash up under the dust.
+   * clear, as the reset under way would end the match - a result on screen
+   * cleared first - and switched only then, so it does not flash up under
+   * the dust.
    */
   private startMatchmadeMatch(): void {
     const levelId =
       this.matchmaker.matchLevel()?.levelId ??
       pickMatchLevel(null, null, Math.random).levelId;
-    if (this.flow.resetting()) {
-      this.pendingStart = () => {
-        if (this.store.snapshot().online?.seat === 0) {
-          this.gameStateService.setLevel(levelId);
-          this.flow.startGame();
-        }
-      };
-      return;
-    }
-    this.gameStateService.setLevel(levelId);
-    this.flow.startGame();
+    const play = () => {
+      this.gameStateService.setLevel(levelId);
+      this.flow.startGame();
+    };
+    // Once the arena is clear, only while this device still hosts.
+    this.whenArenaClear(play, () => {
+      if (this.store.snapshot().online?.seat === 0) {
+        play();
+      }
+    });
   }
 
   /**
@@ -156,19 +156,29 @@ export class OnlineFlow {
    * is clear: a result on screen is cleared first.
    */
   private followOnlineStart(): void {
+    this.whenArenaClear(() => this.startOnlineMatch());
+  }
+
+  /**
+   * Starts at once on a clear stage (`now`), and else once the arena is
+   * clear (`later`): after the reset under way, or after a reset of its own
+   * while a result is on screen or the ended match still turns to dust - a
+   * start there would play under the dust and leave the arena hidden.
+   */
+  private whenArenaClear(now: () => void, later: () => void = now): void {
     const resetting = this.flow.resetting();
-    if (resetting || this.hud.matchOver()) {
-      this.pendingStart = () => this.startOnlineMatch();
-      if (!resetting) {
-        // Not resetGame: that gives the online match up.
-        this.flow
-          .resetGame$()
-          .pipe(takeUntilDestroyed(this.destroyRef))
-          .subscribe();
-      }
+    if (!resetting && !this.hud.matchOver()) {
+      now();
       return;
     }
-    this.startOnlineMatch();
+    this.pendingStart = later;
+    if (!resetting) {
+      // Not resetGame: that gives the online match up.
+      this.flow
+        .resetGame$()
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe();
+    }
   }
 
   private startOnlineMatch(): void {

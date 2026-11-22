@@ -90,6 +90,13 @@ export class PlayFlow {
    */
   public readonly dissolving = signal(false);
   /**
+   * True while the arena turns to dust - the ended match's before its
+   * result, or the last one's on a reset: no panel shows meanwhile.
+   */
+  public readonly clearingArena = computed(
+    () => this.resetting() || this.dissolving()
+  );
+  /**
    * Fires each time the arena is clear again after a reset, whatever the
    * reset came to - for what waited for it, as an online start does.
    */
@@ -99,7 +106,7 @@ export class PlayFlow {
    * the menu screens - or none, while a match is on.
    */
   public readonly panel = computed<StagePanel>(() => {
-    if (this.resetting() || this.dissolving()) {
+    if (this.clearingArena()) {
       return null;
     }
     if (this.hud.matchOver()) {
@@ -427,6 +434,7 @@ export class PlayFlow {
     this.sound.matchStart(levelMusic(this.hud.level().id));
     this.haptics.matchStart();
     this.stageFrame.newMatch();
+    this.arenaStage.newMatch();
     this.gameStateService.startMatch(this.arenaStage.arena());
     // The countdown shows the new match's start, not the last board.
     if (this.hud.countingDown()) {
