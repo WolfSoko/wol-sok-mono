@@ -46,6 +46,8 @@ function rootFirebaseConfigsOf(project) {
 
 const CDK_DEPLOY_EXECUTOR = '@wolsok/nx-aws-cdk-v2:deploy';
 const CDK_DEPLOY_INPUTS = ['production', '^production'];
+// They hold specs and test configs; `production` builds on the stack's own.
+const TEST_INCLUDING_INPUTS = ['default', '^default'];
 // A Gradle project without Nx dependencies: its implicit `default` is already
 // exactly its folder, and an edit of its project.json alone would upload an
 // unchanged app to Play.
@@ -89,7 +91,10 @@ void describe('deploy inputs', () => {
   void it('are declared by every deploy target', () => {
     const undeclared = deployTargets()
       .filter(({ project }) => !IMPLICIT_DEPLOY_INPUTS.has(project.json.name))
-      .filter(({ deploy }) => !Array.isArray(deploy.inputs))
+      .filter(
+        ({ deploy }) =>
+          !Array.isArray(deploy.inputs) || deploy.inputs.length === 0
+      )
       .map(({ project }) => project.path);
     assert.deepEqual(undeclared, []);
   });
@@ -99,12 +104,18 @@ void describe('deploy inputs', () => {
       ({ deploy }) => deploy.executor === CDK_DEPLOY_EXECUTOR
     );
     assert.ok(stacks.length > 0, `no ${CDK_DEPLOY_EXECUTOR} target found`);
-    const missing = stacks.flatMap(({ project, deploy }) =>
-      CDK_DEPLOY_INPUTS.filter(
-        (input) => !stringInputs(deploy.inputs).includes(input)
-      ).map((input) => `${project.path} deploy: ${input}`)
-    );
-    assert.deepEqual(missing, []);
+    const wrong = stacks.flatMap(({ project, deploy }) => {
+      const inputs = stringInputs(deploy.inputs);
+      return [
+        ...CDK_DEPLOY_INPUTS.filter((input) => !inputs.includes(input)).map(
+          (input) => `${project.path} deploy: missing ${input}`
+        ),
+        ...TEST_INCLUDING_INPUTS.filter((input) => inputs.includes(input)).map(
+          (input) => `${project.path} deploy: drop ${input}`
+        ),
+      ];
+    });
+    assert.deepEqual(wrong, []);
   });
 
   void it('exempt only deploy targets that exist', () => {
