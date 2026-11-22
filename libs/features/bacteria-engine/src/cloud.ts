@@ -166,10 +166,16 @@ export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
   featureToggles,
+  parseToggleText,
+  resolveToggles,
+  TOGGLE_STATES,
+  toggleText,
 } from './lib/state/cloud/feature-toggles';
 export type {
   FeatureToggle,
   FeatureToggles,
+  FeatureToggleStates,
+  ToggleState,
 } from './lib/state/cloud/feature-toggles';
 export type {
   RankedMatch,

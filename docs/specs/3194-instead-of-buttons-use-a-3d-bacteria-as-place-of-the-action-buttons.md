@@ -142,10 +142,9 @@ After the change:
 10. A look at the running game (screenshot in the PR) with the toggle forced
     on in a local build.
 
-## Open questions
+## Resolved questions
 
-- Should Settings, Help, Support and Admin also be parts of the cell? The spec
-  keeps them as a small row below it, so the cell holds the actions and
-  stays readable on a phone.
-- Is `admin` meant as "the owner" (`GameAccount.owner()`, the admin claim
-  with a Google sign-in), as the spec assumes?
+- Settings, Help, Support and Admin stay a small icon row below the cell
+  (owner's decision of 2026-11-22).
+- `admin` means the owner (`GameAccount.owner()`, the admin claim) (owner's
+  decision of 2026-11-22).

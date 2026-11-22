@@ -1,6 +1,6 @@
 import { isEntryId, parseBoardId } from './boards';
 import { hasOnlyCommandKeys } from './command-documents';
-import { type FeatureToggles, parseToggleValues } from './feature-toggles';
+import { type FeatureToggleStates, parseToggleValues } from './feature-toggles';
 import { isObject } from '../is-object';
 
 /**
@@ -93,8 +93,8 @@ export type AdminCommand =
       'toggles.set',
       null,
       {
-        /** The toggles to change, at least one. */
-        values: Partial<FeatureToggles>;
+        /** The toggles to change, at least one, each to its state. */
+        values: Partial<FeatureToggleStates>;
       }
     >;
 
