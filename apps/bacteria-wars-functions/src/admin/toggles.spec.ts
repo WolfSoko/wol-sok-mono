@@ -21,12 +21,19 @@ describe('the toggles in a Remote Config template', () => {
           matchmaking: { defaultValue: { value: 'FALSE' } },
           leaderboards: { defaultValue: { useInAppDefault: true } },
           rankedDaily: { defaultValue: { value: 'maybe' } },
+          bacteriumMenu: { defaultValue: { value: 'admin' } },
+          rankedEndless: { defaultValue: { value: 'true' } },
         })
       )
-    ).toEqual({ ...FEATURE_TOGGLES, matchmaking: false });
+    ).toEqual({
+      ...FEATURE_TOGGLES,
+      matchmaking: 'off',
+      bacteriumMenu: 'admin',
+      rankedEndless: 'on',
+    });
   });
 
-  it('set a boolean default and drop conditions, in a copy', () => {
+  it('set a text default and drop conditions, in a copy', () => {
     const original = template({
       rankedDaily: {
         defaultValue: { value: 'true' },
@@ -34,10 +41,17 @@ describe('the toggles in a Remote Config template', () => {
       },
       other: { defaultValue: { value: 'x' } },
     });
-    const set = withToggles(original, { rankedDaily: false });
+    const set = withToggles(original, {
+      rankedDaily: 'off',
+      bacteriumMenu: 'admin',
+    });
     expect(set.parameters['rankedDaily']).toMatchObject({
       defaultValue: { value: 'false' },
-      valueType: 'BOOLEAN',
+      valueType: 'STRING',
+    });
+    expect(set.parameters['bacteriumMenu']).toMatchObject({
+      defaultValue: { value: 'admin' },
+      valueType: 'STRING',
     });
     expect(set.parameters['rankedDaily']?.conditionalValues).toBeUndefined();
     expect(set.parameters['other']).toEqual({ defaultValue: { value: 'x' } });
@@ -56,8 +70,8 @@ describe('the toggles in a Remote Config template', () => {
         },
       },
     } as RemoteConfigTemplate;
-    expect(togglesOf(grouped).matchmaking).toBe(false);
-    const set = withToggles(grouped, { matchmaking: true });
+    expect(togglesOf(grouped).matchmaking).toBe('off');
+    const set = withToggles(grouped, { matchmaking: 'on' });
     expect(set.parameters['matchmaking']).toBeUndefined();
     expect(
       set.parameterGroups['game']?.parameters['matchmaking']?.defaultValue
