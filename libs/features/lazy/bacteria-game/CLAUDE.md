@@ -647,7 +647,20 @@ play each other.
   the set length plus `VAPORIZE_SLACK_MS` (a capture that finishes later
   must not lay its canvas over the menu), an effect that fails - at once
   included - is logged and the reset goes on, and `resetting` is cleared
-  even when `GameStateService.reset()` throws.
+  even when `GameStateService.reset()` throws. Both the reset and the
+  dissolve below take "the effect is over" from `effectOver`
+  (`stage/effect-over.ts`), which logs a failure and completes.
+- A match end turns the arena to dust before its result (#3185):
+  `MatchEnd` plays the end's sound and buzz and calls
+  `PlayFlow.dissolveArena()`, which runs `ArenaStage.dissolve` while
+  `dissolving` is true (the panel shows nothing, as while `resetting`);
+  the result panel comes once the effect is over, over the hidden arena
+  frame. The reset after the result takes that dust from `vaporize()`
+  once instead of playing a second effect (a reset begun during the
+  dissolve waits for it); every other reset (Quit, Give up) vaporizes as
+  before. A start (`PlayFlow.startGame`) drops leftover dust and shows the
+  arena with its first frame (`ArenaStage.newMatch`); online starts that
+  come in over a result reset first (`OnlineFlow.whenArenaClear`).
 - The directive fades its element back in by itself when it is done. The
   stage hides `.arena-frame` the moment the effect is over
   (`ArenaStage.hideUntilPainted`) and shows it again only once both the

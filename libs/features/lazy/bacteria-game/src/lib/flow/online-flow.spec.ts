@@ -77,6 +77,35 @@ describe('OnlineFlow', () => {
       cleared.next();
       expect(start).toHaveBeenCalledTimes(1);
     });
+    it('clears a result on screen before the host starts it', () => {
+      const cleared = (flow as unknown as { cleared: Subject<void> }).cleared;
+      const reset = jest
+        .spyOn(flow, 'resetGame$')
+        .mockReturnValue(new Subject<void>());
+      const start = jest
+        .spyOn(flow, 'startGame')
+        .mockImplementation(() => undefined);
+      online.start();
+      store.update({
+        endedBy: 'annihilation',
+        online: {
+          seat: 0,
+          levelId: MATCH_LEVELS[0].id,
+          colors: ['orange', 'blue'],
+        },
+      });
+
+      match.events.next({
+        type: 'connected',
+        auto: true,
+        seat: 0,
+      } as OnlineEvent);
+      expect(reset).toHaveBeenCalledTimes(1);
+      expect(start).not.toHaveBeenCalled();
+
+      cleared.next();
+      expect(start).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('the host’s start', () => {

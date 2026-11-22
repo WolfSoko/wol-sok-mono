@@ -54,7 +54,8 @@ export class MatchEnd {
   }
 
   /**
-   * Clears the arena after a match and, unless the player heads back to the
+   * Clears the arena after a match - turned to dust already, so without a
+   * second effect - and, unless the player heads back to the
    * menu, kicks off the next one right away - on the following level for
    * "next level".
    */
@@ -126,12 +127,16 @@ export class MatchEnd {
     }
   }
 
-  /** Plays the end of the match, and the medallion it earned after it. */
+  /**
+   * Plays the end of the match, and the medallion it earned after it, as
+   * the arena turns to dust - its result shows once the dust settled.
+   */
   private finishMatch(): void {
     const medal = this.store.snapshot().earnings?.award?.medal ?? null;
     const result = this.matchResult();
     this.sound.matchEnd(result, medal);
     this.haptics.matchEnd(result, medal != null);
+    this.flow.dissolveArena();
   }
 
   /**
