@@ -1,4 +1,4 @@
-import { signal } from '@angular/core';
+import { type Provider, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import type {
   ArenaPainter,
@@ -8,6 +8,9 @@ import { GameStateService } from '../state/game-state.service';
 import { isBigMap, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerService } from '../state/player.service';
 import * as layerSheet from '../gl-debug/layer-sheet';
+import { FakeGameAccount } from '../../testing/fake-game-account';
+import { GameSettingsService } from '../settings.service';
+import { GameAccount } from '../storage/game-account';
 import { ArenaStage } from './arena-stage';
 import { StageFrame } from './stage-frame';
 
@@ -44,9 +47,11 @@ describe('StageFrame', () => {
   beforeEach(() => setUp());
 
   /** The stage's frame, with the address as it stands - `?gldebug` is read now. */
-  function setUp(): void {
+  function setUp(providers: Provider[] = []): void {
     localStorage.clear();
-    TestBed.configureTestingModule({ providers: [ArenaStage, StageFrame] });
+    TestBed.configureTestingModule({
+      providers: [ArenaStage, StageFrame, ...providers],
+    });
     const canvas = document.createElement('canvas');
     arenaView = {
       clearNext: jest.fn(),
@@ -152,6 +157,7 @@ describe('StageFrame', () => {
         renderer: 'Adreno (TM) 740',
         errors: jest.fn(() => []),
         captureLayers: jest.fn(() => LAYERS),
+        stop: jest.fn(),
       };
       return {
         diagnostics,
@@ -186,6 +192,48 @@ describe('StageFrame', () => {
         renderer: 'Adreno (TM) 740',
         errors: [],
       });
+    });
+
+    /** The stage set up again, for the owner. */
+    function asOwner(): FakeGameAccount {
+      const account = new FakeGameAccount('guest');
+      account.owner.set(true);
+      TestBed.resetTestingModule();
+      setUp([{ provide: GameAccount, useValue: account }]);
+      return account;
+    }
+
+    it("diagnoses the painter once the owner's switch is on, and stops when it goes off", () => {
+      asOwner();
+      const { painter, diagnostics } = diagnosable();
+      frame.onPainterChange(painter);
+      const settings = TestBed.inject(GameSettingsService);
+      expect(painter.diagnose).not.toHaveBeenCalled();
+
+      settings.set('glDebug', true);
+      TestBed.tick();
+      expect(painter.diagnose).toHaveBeenCalledTimes(1);
+      expect(frame.hudGl()).not.toBeNull();
+
+      settings.set('glDebug', false);
+      TestBed.tick();
+      expect(diagnostics.stop).toHaveBeenCalledTimes(1);
+      expect(frame.hudGl()).toBeNull();
+    });
+
+    it('stops the diagnostic when the owner signs out', () => {
+      const account = asOwner();
+      const { painter, diagnostics } = diagnosable();
+      frame.onPainterChange(painter);
+      TestBed.inject(GameSettingsService).set('glDebug', true);
+      TestBed.tick();
+
+      account.owner.set(false);
+      TestBed.tick();
+
+      expect(diagnostics.stop).toHaveBeenCalledTimes(1);
+      expect(frame.hudGl()).toBeNull();
+      expect(frame.showsBreakdown()).toBe(false);
     });
 
     it("saves the painter's layers as a sheet", () => {

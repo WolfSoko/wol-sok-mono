@@ -217,6 +217,15 @@
     >
       {{ "settings.screen.showFps" | t }}
     </mat-slide-toggle>
+    @if (glDebug.canSwitch()) {
+      <mat-slide-toggle
+        [checked]="settings.value('glDebug')"
+        (change)="settings.set('glDebug', $event.checked)"
+      >
+        {{ "settings.screen.glDebug" | t }}
+      </mat-slide-toggle>
+      <p class="section-note">{{ "settings.screen.glDebugNote" | t }}</p>
+    }
     <div class="option-picker">
       <span class="option-label">{{ "settings.simulation.choice" | t }}</span>
       <mat-button-toggle-group

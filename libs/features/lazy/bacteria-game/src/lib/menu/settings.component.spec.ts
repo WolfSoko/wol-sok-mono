@@ -7,6 +7,9 @@ import { I18nService } from '../i18n/i18n.service';
 import { provideGameToggles } from '../../testing/fake-game-toggles';
 import { GameSettingsService, SETTINGS_STORAGE_KEY } from '../settings.service';
 import { SettingsComponent } from './settings.component';
+import { FakeGameAccount } from '../../testing/fake-game-account';
+import { GameAccount } from '../storage/game-account';
+import { GlDebugService } from '../gl-debug/gl-debug.service';
 
 describe('SettingsComponent', () => {
   beforeEach(() => {
@@ -152,6 +155,35 @@ describe('SettingsComponent', () => {
         await (await slideToggle('Meine Matches speichern')).isChecked()
       ).toBe(true);
       expect(text()).toContain('Online-Matches werden immer aufbewahrt.');
+    });
+  });
+
+  describe("the owner's GL diagnostic", () => {
+    const LABEL = 'GL diagnostic';
+
+    function playingAs(owner: boolean): void {
+      const account = new FakeGameAccount('guest');
+      account.owner.set(owner);
+      TestBed.configureTestingModule({
+        providers: [{ provide: GameAccount, useValue: account }],
+      });
+    }
+
+    it('is not offered to anyone but the owner', async () => {
+      playingAs(false);
+      const { text } = await render();
+
+      expect(text()).not.toContain(LABEL);
+    });
+
+    it('turns the diagnostic on for the owner', async () => {
+      playingAs(true);
+      const { slideToggle } = await render();
+
+      await (await slideToggle(LABEL)).toggle();
+
+      expect(TestBed.inject(GameSettingsService).value('glDebug')).toBe(true);
+      expect(TestBed.inject(GlDebugService).on()).toBe(true);
     });
   });
 });

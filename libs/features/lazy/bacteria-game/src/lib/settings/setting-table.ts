@@ -45,6 +45,11 @@ export interface SettingSpec<T> {
 export const SETTINGS = {
   /** Whether the frame rate badge is shown on the arena. */
   showFps: flag(false, { reported: true }),
+  /**
+   * Whether the owner runs the GL diagnostic (`GlDebugService`) - in force
+   * and shown only while the owner plays, switched off on sign-out.
+   */
+  glDebug: flag(false),
   /** Every level open against the computer, instead of the campaign ladder. */
   freePlay: flag(false, { reported: true }),
   /**
