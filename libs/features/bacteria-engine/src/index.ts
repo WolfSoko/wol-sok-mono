@@ -60,6 +60,8 @@ export {
 export type { Avatar, PlayerCard, Profile } from './lib/social/profile';
 export { ACHIEVEMENT_IDS } from './lib/state/progress/achievement-ids';
 export type { AchievementId } from './lib/state/progress/achievement-ids';
+export { achievementTally } from './lib/state/progress/achievement-tally';
+export type { AchievementTally } from './lib/state/progress/achievement-tally';
 export {
   ACHIEVEMENTS,
   achievementTexts,

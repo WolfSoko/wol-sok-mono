@@ -7,7 +7,11 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ACHIEVEMENTS, Progress } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  ACHIEVEMENTS,
+  achievementTally,
+  Progress,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   achievementKeys,
   achievementTexts,
@@ -16,7 +20,6 @@ import {
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { AchievementCountComponent } from './achievement-count.component';
-import { achievementTally } from './achievement-tally';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**

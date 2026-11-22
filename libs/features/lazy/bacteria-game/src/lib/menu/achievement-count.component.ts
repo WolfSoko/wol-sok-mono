@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { TranslatePipe } from '../i18n/translate.pipe';
-import { AchievementTally } from './achievement-tally';
+import { AchievementTally } from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * How far the player got with the achievements: a trophy, "3 of 15" and a

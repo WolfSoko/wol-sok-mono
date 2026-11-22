@@ -1,4 +1,4 @@
-import { ACHIEVEMENT_IDS } from '@wolsok/feat-shared-bacteria-engine';
+import { ACHIEVEMENT_IDS } from './achievement-ids';
 import { achievementTally } from './achievement-tally';
 
 describe('achievementTally', () => {
