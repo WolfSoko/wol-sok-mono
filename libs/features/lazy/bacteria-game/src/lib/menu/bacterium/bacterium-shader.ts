@@ -169,7 +169,7 @@ void main() {
   if (uHot >= 0 && uHot < uLobeCount) {
     vec4 hot = uLobes[uHot];
     float away = length(p.xy - vec2(hot.x * uAspect, hot.y));
-    colour += uRim * 0.6 * smoothstep(hot.z * 1.6, hot.z * 0.5, away);
+    colour += uRim * 0.6 * (1.0 - smoothstep(hot.z * 0.5, hot.z * 1.6, away));
   }
   outColor = vec4(colour, 1.0);
 }
