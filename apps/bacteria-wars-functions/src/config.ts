@@ -103,11 +103,11 @@ export const RELAY_TTL_S = 60 * 60;
  * (#3175 step 2), is deployed. It needs the secret
  * `PLAY_GAMES_CLIENT_SECRET` (the web OAuth client's), the game server
  * credential in Play Console and the Token Creator role for custom tokens:
- * a deploy of a function whose secret does not exist fails, so it stays
- * off until the owner has set all three up. Off, the game's sign-in
- * commands get no answer and time out; nothing else changes.
+ * a deploy of a function whose secret does not exist fails, so it was
+ * off until the owner had set all three up (done on 2026-11-22). Off, the
+ * game's sign-in commands get no answer and time out; nothing else changes.
  */
-export const PLAY_GAMES_ON = false;
+export const PLAY_GAMES_ON = true;
 
 /**
  * The web OAuth client of the Cloud project `bacteria-wars` ("Web client
