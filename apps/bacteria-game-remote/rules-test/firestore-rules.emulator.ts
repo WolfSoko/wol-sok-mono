@@ -863,7 +863,11 @@ describe('adminCommands', () => {
       });
     await assertSucceeds(
       send(
-        toggles({ rankedDaily: 'off', matchmaking: 'on', bacteriumMenu: 'admin' })
+        toggles({
+          rankedDaily: 'off',
+          matchmaking: 'on',
+          bacteriumMenu: 'admin',
+        })
       )
     );
     await assertFails(send(toggles({})));
