@@ -29,11 +29,11 @@ const NX_TASK_TARGET_ENV = 'NX_TASK_TARGET_TARGET';
 export const PLAYWRIGHT_TARGETS = { e2e: 'e2e', ci: 'e2e-ci' } as const;
 
 /**
- * The targets the plugin infers beside the spec files that never load the
- * config: the readiness gates and the merge of the atomized reports.
+ * The targets the plugin infers beside the atomized spec files that never
+ * load the config: the ci readiness gate and the merge of the reports. (The
+ * gate `e2e--wait-for-webserver` matches no Playwright target anyway.)
  */
 const NON_PLAYWRIGHT_TARGETS: ReadonlySet<string> = new Set([
-  `${PLAYWRIGHT_TARGETS.e2e}--wait-for-webserver`,
   `${PLAYWRIGHT_TARGETS.ci}--wait-for-webserver`,
   `${PLAYWRIGHT_TARGETS.ci}--merge-reports`,
 ]);

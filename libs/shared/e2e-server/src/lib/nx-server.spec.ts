@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
@@ -12,6 +12,23 @@ import {
 const WORKSPACE = join(__dirname, '../../../../..');
 const OPTIONS = { cwd: WORKSPACE, timeout: 2000 };
 const URL = 'http://127.0.0.1:9199';
+
+interface NxJson {
+  readonly plugins: readonly (
+    | string
+    | {
+        readonly plugin: string;
+        readonly options?: {
+          readonly targetName?: string;
+          readonly ciTargetName?: string;
+        };
+      }
+  )[];
+}
+
+function readJson<T>(path: string): T {
+  return JSON.parse(readFileSync(join(WORKSPACE, path), 'utf8')) as T;
+}
 
 describe('nxServer', () => {
   it('starts the Nx target when Playwright runs by hand', () => {
@@ -62,13 +79,35 @@ describe('nxServer', () => {
   // Named after the plugin's targets: a rename there would silently start a
   // second server from Playwright inside the project's own tasks again.
   it('knows the Playwright targets nx.json names', () => {
-    const nxJson = JSON.parse(readFileSync(join(WORKSPACE, 'nx.json'), 'utf8'));
-    const plugin = nxJson.plugins.find(
-      (entry: { plugin?: string }) => entry.plugin === '@nx/playwright/plugin'
+    const playwright = readJson<NxJson>('nx.json').plugins.find(
+      (entry) =>
+        typeof entry !== 'string' && entry.plugin === '@nx/playwright/plugin'
+    );
+    const options = typeof playwright === 'string' ? {} : playwright?.options;
+
+    expect(options?.targetName).toBe(PLAYWRIGHT_TARGETS.e2e);
+    // the plugin's default
+    expect(options?.ciTargetName ?? 'e2e-ci').toBe(PLAYWRIGHT_TARGETS.ci);
+  });
+
+  // The task's project is compared with the target's: a server of another
+  // project would start twice inside the config's own e2e tasks. The apps'
+  // configs and project files are inputs of this lib's test target.
+  it.each(
+    readdirSync(join(WORKSPACE, 'apps')).filter((app) =>
+      existsSync(join(WORKSPACE, 'apps', app, 'playwright.config.ts'))
+    )
+  )('serves only targets of its own project in apps/%s', (app) => {
+    const config = readFileSync(
+      join(WORKSPACE, 'apps', app, 'playwright.config.ts'),
+      'utf8'
+    );
+    const { name } = readJson<{ name: string }>(`apps/${app}/project.json`);
+    const servedProjects = [...config.matchAll(/nxServer\(\s*'([^':]+):/g)].map(
+      ([, project]) => project
     );
 
-    expect(plugin.options.targetName).toBe(PLAYWRIGHT_TARGETS.e2e);
-    expect(plugin.options.ciTargetName ?? 'e2e-ci').toBe(PLAYWRIGHT_TARGETS.ci);
+    expect(servedProjects.filter((project) => project !== name)).toEqual([]);
   });
 
   it('names a waiting script that exists', () => {
