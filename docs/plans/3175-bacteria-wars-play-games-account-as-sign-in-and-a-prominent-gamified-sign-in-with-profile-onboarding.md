@@ -74,3 +74,34 @@ Spec: the step 2 section of the same spec. Game lib =
    secret, erasure), docs/analytics unaffected. Checks:
    `npx nx affected -t lint,lint-templates,test,typecheck-specs,test-emulator --base=origin/main`,
    format, `bacteria-game-remote` production build (budgets).
+
+# Plan: #3175 step 3 — achievements on Play Games
+
+Spec: the step 3 section of the same spec. Functions =
+`apps/bacteria-wars-functions/src`. Test first in every task; all commits
+`feat(bacteria-wars-functions): ...` unless named.
+
+1. **Games API handle** — `play-games/player.ts`: `PlayGamesApi`
+   (`definitions()`, `states()`, `unlock(id)`, paging bound, null on a
+   refusal) bound to the exchanged token; `playGamesPlayer` answers
+   `{ playerId, displayName, games }`, no token field.
+   Tests: `player.spec.ts` (URLs, `language=en-US`, bearer, paging,
+   refusals, no token in the answer).
+2. **The decision** — `play-games/achievements.ts`: pure
+   `achievementsToUnlock(earned, definitions, states)` → ids to unlock and
+   names Play lacks or lists twice, by the English names of `ACHIEVEMENTS`.
+   Tests: `achievements.spec.ts`.
+3. **The sync** — same file: `syncPlayGamesAchievements(db, uid, games, log)`
+   reads `players/{uid}/storage/bacteria-game.progress` (`PROGRESS_KEY`),
+   unlocks one by one, logs failures. `signInPlayGames` answers
+   `sync: { uid, games } | null`; `runPlayGamesSignIn` runs the injected
+   `syncAchievements` after the result is written, catching and logging;
+   `main.ts` wires it. Tests: `achievements.emulator.ts` (injected API),
+   `sign-in.emulator.ts` rows for `sync`, a command spec that the
+   document holds no access token.
+4. **Privacy policy** — `apps/bacteria-game-remote/src/app/privacy`
+   (English and German, the Android / Play Games section), spec line.
+   Commit `feat(bacteria-game-remote): ...`.
+5. **Docs** — CLAUDE.md's `playGamesSignIn` bullet (the sync, no stored
+   token). Checks: `npx nx affected -t lint,lint-templates,test,typecheck-specs,test-emulator --base=origin/main`,
+   `npx nx format:write`.
