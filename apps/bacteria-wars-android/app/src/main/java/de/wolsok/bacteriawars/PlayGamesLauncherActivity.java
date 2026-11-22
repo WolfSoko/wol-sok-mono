@@ -32,6 +32,11 @@ public class PlayGamesLauncherActivity extends LauncherActivity {
   private final Handler handler = new Handler(Looper.getMainLooper());
   @Nullable private String serverAuthCode;
   private boolean launched;
+  /**
+   * Set once the activity is gone: the SDK's listeners are not bound to it,
+   * so a late answer must neither launch nor ask the SDK again.
+   */
+  private boolean destroyed;
 
   @Override
   protected boolean shouldLaunchImmediately() {
@@ -51,6 +56,9 @@ public class PlayGamesLauncherActivity extends LauncherActivity {
         .isAuthenticated()
         .addOnCompleteListener(
             authenticated -> {
+              if (destroyed || launched) {
+                return;
+              }
               if (!authenticated.isSuccessful()
                   || !authenticated.getResult().isAuthenticated()) {
                 launchWith(null);
@@ -66,13 +74,14 @@ public class PlayGamesLauncherActivity extends LauncherActivity {
 
   @Override
   protected void onDestroy() {
+    destroyed = true;
     handler.removeCallbacksAndMessages(null);
     super.onDestroy();
   }
 
   /** Starts Chrome once, with the code where there is one. */
   private void launchWith(@Nullable String code) {
-    if (launched || isFinishing()) {
+    if (launched || destroyed || isFinishing()) {
       return;
     }
     launched = true;
