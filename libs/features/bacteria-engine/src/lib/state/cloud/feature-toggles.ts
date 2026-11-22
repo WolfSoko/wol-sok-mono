@@ -5,9 +5,9 @@ import { isObject } from '../is-object';
  * only (`admin`, to try a feature in production first), or on for
  * everyone.
  */
-export type ToggleState = 'off' | 'admin' | 'on';
+export const TOGGLE_STATES = ['off', 'admin', 'on'] as const;
 
-export const TOGGLE_STATES: readonly ToggleState[] = ['off', 'admin', 'on'];
+export type ToggleState = (typeof TOGGLE_STATES)[number];
 
 /**
  * The owner's feature toggles (ADR 0012): Remote Config parameters of the
