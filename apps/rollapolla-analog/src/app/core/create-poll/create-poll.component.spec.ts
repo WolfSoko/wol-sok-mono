@@ -41,10 +41,14 @@ describe('CreatePollComponent', () => {
   });
 
   it('adds options up to the maximum', () => {
-    for (let i = 0; i < 20; i++) {
-      button('add-option-button').click();
-      fixture.detectChanges();
+    // from the two starting options, the last two clicks find no room left;
+    // the button is only re-rendered once, so the guard alone caps the list
+    const addOption = button('add-option-button');
+    for (let i = 0; i < PollsRepoPort.MAX_OPTIONS; i++) {
+      addOption.click();
     }
+    fixture.detectChanges();
+
     expect(optionInputs()).toHaveLength(PollsRepoPort.MAX_OPTIONS);
     expect(button('add-option-button').disabled).toBe(true);
   });
