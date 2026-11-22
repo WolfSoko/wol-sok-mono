@@ -2,6 +2,7 @@ import { signal } from '@angular/core';
 import type { User, UserCredential } from 'firebase/auth';
 import { map, Observable, ReplaySubject } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
+import { customTokenUid } from './custom-token';
 import { isOwnerToken } from './owner-token';
 import { beforeRetry, errorCode } from './retry';
 import type {
@@ -23,8 +24,10 @@ const NETWORK_ERROR = 'auth/network-request-failed';
 
 /**
  * The player as Firebase Auth knows them: a guest - an anonymous account,
- * signed in to without asking - until they sign in with Google. Linking
- * the guest to Google keeps its uid, so the progress stays where it is.
+ * signed in to without asking - until they sign in with Google, or the
+ * Android app hands over their Play Games player (a custom token, #3175).
+ * Linking the guest to Google keeps its uid, so the progress stays where
+ * it is.
  */
 export class FirebaseGameAccount implements GameAccount {
   public readonly cloud = true;
@@ -76,9 +79,12 @@ export class FirebaseGameAccount implements GameAccount {
     const user = auth.currentUser;
     let error: unknown;
     try {
-      const credential: UserCredential = user?.isAnonymous
-        ? await authSdk.linkWithPopup(user, provider, popups)
-        : await authSdk.signInWithPopup(auth, provider, popups);
+      // A guest, or an account of a Play Games player, has no provider:
+      // Google joins it, under its uid.
+      const credential: UserCredential =
+        user !== null && user.providerData.length === 0
+          ? await authSdk.linkWithPopup(user, provider, popups)
+          : await authSdk.signInWithPopup(auth, provider, popups);
       // Linking keeps the user, so no auth state change tells the profile.
       this.profileState.set(profileOf(credential.user));
       return 'signed-in';
@@ -111,6 +117,28 @@ export class FirebaseGameAccount implements GameAccount {
       this.adoptingGuest = false;
       console.error('Could not sign in with Google', signInError);
       return 'failed';
+    }
+  }
+
+  public async signInWithToken(token: string): Promise<boolean> {
+    const { auth, authSdk } = this.connection;
+    const uid = customTokenUid(token);
+    if (uid === null) {
+      console.error('Not a sign-in token');
+      return false;
+    }
+    // Another account takes over from the guest, as a Google account that
+    // played elsewhere does; the same account only gets a new session.
+    this.adoptingGuest = uid !== auth.currentUser?.uid;
+    try {
+      const credential = await authSdk.signInWithCustomToken(auth, token);
+      // The same uid is no auth state change, so the profile is told here.
+      this.profileState.set(profileOf(credential.user));
+      return true;
+    } catch (error) {
+      this.adoptingGuest = false;
+      console.error('Could not sign in with Play Games', error);
+      return false;
     }
   }
 
@@ -169,7 +197,9 @@ function profileOf(user: User): PlayerProfile {
   if (user.isAnonymous) {
     return { guest: true, name: null };
   }
-  // A linked guest keeps its empty profile; the Google profile has the name.
+  // A linked guest keeps its empty profile; the Google profile has the
+  // name. An account of a Play Games player has no provider: its name is
+  // the account's, the Play Games one the functions gave it.
   const google = user.providerData.find(
     (profile) => profile.providerId === 'google.com'
   );

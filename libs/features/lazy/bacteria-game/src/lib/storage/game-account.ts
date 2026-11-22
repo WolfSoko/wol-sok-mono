@@ -4,9 +4,15 @@ import { GameCloud } from './game-cloud';
 
 /** Who plays, as the profile shows them. */
 export interface PlayerProfile {
-  /** True for a guest account, one nobody has signed in to. */
+  /**
+   * True for a guest account, one nobody has signed in to - with Google,
+   * or with Play Games in the Android app.
+   */
   guest: boolean;
-  /** The name of the Google account signed in to, null for a guest. */
+  /**
+   * The name of the account signed in to (Google's, or the Play Games
+   * player's), null for a guest.
+   */
   name: string | null;
   /** The photo of the Google account, where it has one. */
   photoUrl?: string;
@@ -67,6 +73,14 @@ export abstract class GameAccount {
    * already: then it takes over, and adopts what the guest played here.
    */
   public abstract signIn(): Promise<SignInOutcome>;
+
+  /**
+   * Signs in with a custom token the functions answered a Play Games
+   * sign-in with (#3175): the session is no guest's any more. For another
+   * account than the one playing, that one takes over and adopts what the
+   * guest played here. False when the token is refused.
+   */
+  public abstract signInWithToken(token: string): Promise<boolean>;
 
   /** Signs out of Google; a new guest plays on, from the start. */
   public abstract signOut(): Promise<void>;

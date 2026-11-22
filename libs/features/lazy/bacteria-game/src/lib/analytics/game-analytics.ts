@@ -122,7 +122,7 @@ export type GameEvents = {
     method: 'native' | 'copy';
     content_type: 'friend_invite' | 'ghost_run';
   };
-  login: { method: 'google' };
+  login: { method: 'google' | 'play_games' };
   login_failed: { reason: 'cancelled' | 'failed' };
   logout: Record<string, never>;
 };

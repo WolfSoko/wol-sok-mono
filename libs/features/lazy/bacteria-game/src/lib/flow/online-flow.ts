@@ -16,6 +16,7 @@ import {
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { pickMatchLevel } from '@wolsok/feat-shared-bacteria-engine';
+import { dropHash } from './drop-hash';
 import { PlayFlow } from './play-flow';
 
 /**
@@ -202,7 +203,7 @@ export class OnlineFlow {
     ) {
       return;
     }
-    await this.dropHash();
+    await dropHash(this.router);
   }
 
   /**
@@ -228,17 +229,10 @@ export class OnlineFlow {
     }
     // Only while the address still carries it: the player may have moved on.
     if (this.document.location.hash === match[0]) {
-      await this.dropHash();
+      await dropHash(this.router);
     }
     if (from !== null) {
       this.inviteOffer.set({ token, from });
     }
-  }
-
-  /** Takes the hash out of the address - through the router, which holds it. */
-  private async dropHash(): Promise<void> {
-    await this.router.navigateByUrl(this.router.url.split('#')[0], {
-      replaceUrl: true,
-    });
   }
 }

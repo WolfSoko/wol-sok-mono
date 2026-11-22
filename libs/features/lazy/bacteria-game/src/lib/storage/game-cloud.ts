@@ -23,6 +23,8 @@ import { banned, type GameModeration } from './game-moderation';
 import { FirestoreGameModeration } from './firestore-game-moderation';
 import type { GameRanked } from './game-ranked';
 import { FirestoreGameRanked } from './firestore-game-ranked';
+import { FirestoreGamePlayGames } from './firestore-game-play-games';
+import type { GamePlayGames } from './game-play-games';
 import { NoGameToggles } from './no-game-toggles';
 import { LocalGameStorage } from './local-game-storage';
 import { RemoteConfigGameToggles } from './remote-config-game-toggles';
@@ -72,6 +74,7 @@ export class GameCloud {
     boards: GameBoards;
     moderation: GameModeration;
     ranked: GameRanked;
+    playGames: GamePlayGames;
   } | null = null;
   /** The replays on this device, one for all who ask. */
   private localReplays: GameReplays | null = null;
@@ -157,6 +160,14 @@ export class GameCloud {
   }
 
   /**
+   * The Play Games sign-in of the Android app (#3175) - null without a
+   * project, where there is no account to sign in to.
+   */
+  public playGames(): GamePlayGames | null {
+    return this.connected()?.playGames ?? null;
+  }
+
+  /**
    * Where the recorded matches go: to the project once it takes them (see
    * {@link GameCloudOptions.replays}), else onto this device.
    */
@@ -219,6 +230,7 @@ export class GameCloud {
         boards: new FirestoreGameBoards(connection),
         moderation,
         ranked: new FirestoreGameRanked(connection, account.playerIds),
+        playGames: new FirestoreGamePlayGames(connection, account.playerIds),
       };
     }
     return this.backend;
