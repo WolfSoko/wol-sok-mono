@@ -1,8 +1,3 @@
-@use '@angular/cdk';
-
-// The announcement for a screen reader; the big number is what the eye sees.
-@include cdk.a11y-visually-hidden;
-
 // Over the middle of the arena; the pointer goes through it.
 :host {
   position: absolute;

@@ -1,5 +1,6 @@
 import { english, GameText } from '../../i18n/game-text';
 import { ACHIEVEMENT_IDS } from './achievement-ids';
+import { achievementTally } from './achievement-tally';
 import { BOT_DIFFICULTIES, BotDifficulty } from '../match/bot-controller';
 import { isLadderLevel, LEVELS } from '../levels/levels';
 import { MatchRecord, medalText, MedalTier } from './medallions';
@@ -79,12 +80,9 @@ export function xpOf(progress: Progress): number {
       xp += medal === null ? 0 : MEDAL_XP[medal];
     }
   }
-  const achievements = ACHIEVEMENT_IDS.filter(
-    (id) => progress.achievements[id] != null
-  ).length;
   return (
     xp +
-    achievements * ACHIEVEMENT_XP +
+    achievementTally(progress.achievements).earned * ACHIEVEMENT_XP +
     missionsDone(progress.training) * MISSION_XP
   );
 }

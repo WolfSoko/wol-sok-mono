@@ -221,6 +221,7 @@
               <feat-lazy-bac-game-achievements
                 class="screen"
                 [achievements]="progress.achievements()"
+                [backLabel]="flow.backLabel()"
                 (back)="flow.back()"
               />
             }
@@ -242,7 +243,7 @@
                 stageFullscreen.nativeFullscreenSupported()
               "
               [nativeFullscreen]="stageFullscreen.nativeFullscreen()"
-              [backLabel]="flow.settingsBackLabel()"
+              [backLabel]="flow.backLabel()"
               [vibrationSupported]="vibrationSupported"
               (soundChange)="setSound($event)"
               (effectsChange)="setEffects($event)"

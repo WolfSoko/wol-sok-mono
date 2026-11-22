@@ -7,7 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { rankFor } from '@wolsok/feat-shared-bacteria-engine';
+import { AchievementTally, rankFor } from '@wolsok/feat-shared-bacteria-engine';
 import { rankKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { RankBadgeComponent } from '../rank/rank-badge.component';
@@ -15,7 +15,6 @@ import { RankStandingComponent } from '../rank/rank-standing.component';
 import { AvatarComponent } from '../social/avatar.component';
 import { SocialService } from '../social/social.service';
 import { AchievementCountComponent } from './achievement-count.component';
-import { AchievementTally } from './achievement-tally';
 
 /** The picture's width in CSS pixels; `.dish` in the stylesheet fits it. */
 const PICTURE_SIZE = 96;

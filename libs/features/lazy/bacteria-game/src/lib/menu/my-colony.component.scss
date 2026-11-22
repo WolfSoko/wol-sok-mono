@@ -1,7 +1,4 @@
-@use '@angular/cdk';
 @use 'screen';
-
-@include cdk.a11y-visually-hidden;
 
 :host {
   @include screen.screen;
@@ -76,8 +73,7 @@
   }
 
   &:has(.wear:focus-visible) {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
+    @include screen.focus-ring;
   }
 
   &.picked {

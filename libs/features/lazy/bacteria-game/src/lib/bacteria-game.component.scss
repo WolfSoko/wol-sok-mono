@@ -129,9 +129,7 @@
 
   mat-icon {
     flex: none;
-    width: 1.1rem;
-    height: 1.1rem;
-    font-size: 1.1rem;
+    @include screen.icon-size(1.1rem);
   }
 }
 

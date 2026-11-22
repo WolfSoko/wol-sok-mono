@@ -17,12 +17,12 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { AccountComponent } from './account.component';
-import { achievementTally } from './achievement-tally';
 import { ProfileCardComponent } from './profile-card.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { ProfileEditorComponent } from '../social/profile-editor.component';
 import { SocialService } from '../social/social.service';
 import {
+  achievementTally,
   BOT_DIFFICULTIES,
   dnaEarned,
   LEVELS,

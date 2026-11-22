@@ -7,7 +7,6 @@
 
 .level-card {
   @include screen.panel;
-
   // The colours of the level's arena, where it has them.
   background: linear-gradient(
     160deg,
@@ -22,18 +21,12 @@
   min-height: 7.5rem;
   padding: 0.85rem 1rem;
   border-radius: 1rem;
-  color: var(--bw-text);
-  font: inherit;
   text-align: left;
-  cursor: pointer;
+
+  @include screen.tile;
 
   &:hover:not(:disabled) {
     border-color: var(--bw-line-strong);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
   }
 
   &.current {
@@ -115,9 +108,7 @@
 }
 
 .lock {
-  font-size: 1.2rem;
-  width: 1.2rem;
-  height: 1.2rem;
+  @include screen.icon-size(1.2rem);
 }
 
 .title {

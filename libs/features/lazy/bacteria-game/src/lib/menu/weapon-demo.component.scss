@@ -1,3 +1,5 @@
+@use 'screen';
+
 // The demo of a weapon on its card: a dish in which it plays, looped.
 :host {
   position: relative;
@@ -79,9 +81,7 @@
   position: absolute;
   right: 0.15rem;
   bottom: 0.15rem;
-  width: 1rem;
-  height: 1rem;
-  font-size: 1rem;
+  @include screen.icon-size(1rem);
   color: var(--weapon);
 }
 

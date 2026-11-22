@@ -2,6 +2,7 @@ import { computed, effect, inject, Injectable, untracked } from '@angular/core';
 import { ProgressService } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import {
+  achievementTally,
   activeArena,
   CampaignSummary,
   continueText,
@@ -54,7 +55,7 @@ export class CampaignService {
   public readonly summary = computed((): CampaignSummary => ({
     openLevels: LEVELS.length - Object.keys(this.progress.ladderLocks()).length,
     medals: medalTally(this.progress.medals()),
-    achievements: Object.keys(this.progress.achievements()).length,
+    achievements: achievementTally(this.progress.achievements()).earned,
     xp: this.progress.xp(),
     continueLabel: `${getLevel(this.furthestLevel()).name} · ${difficultyOption(this.difficulty())?.name ?? ''}`,
     continueText: continueText(this.furthestLevel(), this.difficulty()),

@@ -1,4 +1,5 @@
-import { ACHIEVEMENTS, Progress } from '@wolsok/feat-shared-bacteria-engine';
+import { ACHIEVEMENT_IDS } from './achievement-ids';
+import { Progress } from './progress';
 
 /** How far the player got with the achievements. */
 export interface AchievementTally {
@@ -14,9 +15,9 @@ export interface AchievementTally {
 export function achievementTally(
   achievements: Progress['achievements']
 ): AchievementTally {
-  const total = ACHIEVEMENTS.length;
-  const earned = ACHIEVEMENTS.filter(
-    ({ id }) => achievements[id] != null
+  const total = ACHIEVEMENT_IDS.length;
+  const earned = ACHIEVEMENT_IDS.filter(
+    (id) => achievements[id] != null
   ).length;
   return { earned, total, percent: Math.round((100 * earned) / total) };
 }

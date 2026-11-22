@@ -7,7 +7,11 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { ACHIEVEMENTS, Progress } from '@wolsok/feat-shared-bacteria-engine';
+import {
+  ACHIEVEMENTS,
+  achievementTally,
+  Progress,
+} from '@wolsok/feat-shared-bacteria-engine';
 import {
   achievementKeys,
   achievementTexts,
@@ -16,7 +20,6 @@ import {
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { AchievementCountComponent } from './achievement-count.component';
-import { achievementTally } from './achievement-tally';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
@@ -42,7 +45,10 @@ export class AchievementsComponent {
   /** The day each achievement was earned. */
   public readonly achievements = input<Progress['achievements']>({});
 
-  /** Back to the profile, where the screen was opened. */
+  /** Names where the way back leads - the profile, where the screen opens. */
+  public readonly backLabel = input.required<string>();
+
+  /** Back to where the screen was opened, which `backLabel` names. */
   public readonly back = output<void>();
 
   /** Every achievement, earned ones with their day, the rest with their condition. */

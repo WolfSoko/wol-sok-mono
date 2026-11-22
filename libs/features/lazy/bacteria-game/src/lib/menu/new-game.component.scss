@@ -66,26 +66,18 @@
   align-items: flex-start;
   gap: 0.35rem;
   padding: 1.1rem 1.25rem;
-  color: var(--bw-text);
-  font: inherit;
   text-align: left;
-  cursor: pointer;
+
+  @include screen.tile;
 
   mat-icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: 2rem;
+    @include screen.icon-size(2rem);
     color: var(--bw-gold);
   }
 
   &:hover {
     border-color: var(--bw-line-strong);
     background: var(--bw-surface-raised);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
   }
 
   &.current {
@@ -255,9 +247,7 @@
 
   mat-icon {
     flex: none;
-    font-size: 1.2rem;
-    width: 1.2rem;
-    height: 1.2rem;
+    @include screen.icon-size(1.2rem);
   }
 }
 

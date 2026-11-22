@@ -1,4 +1,9 @@
-import { MenuScreen, opensFrom, parentScreen } from './stage-screens';
+import {
+  backLabelKey,
+  MenuScreen,
+  opensFrom,
+  parentScreen,
+} from './stage-screens';
 
 describe('parentScreen', () => {
   it('leads from the achievements back to the profile', () => {
@@ -23,5 +28,16 @@ describe('opensFrom', () => {
     expect(opensFrom('menu', 'profile')).toBe(false);
     expect(opensFrom('pause', 'profile')).toBe(false);
     expect(opensFrom(null, 'profile')).toBe(false);
+  });
+});
+
+describe('backLabelKey', () => {
+  it('names the screen the way back leads to', () => {
+    expect(backLabelKey('achievements', false)).toBe('profile.title');
+    expect(backLabelKey('settings', false)).toBe('common.menu');
+  });
+
+  it('names the pause menu for the menu while the match is paused', () => {
+    expect(backLabelKey('settings', true)).toBe('stage.pause.back');
   });
 });

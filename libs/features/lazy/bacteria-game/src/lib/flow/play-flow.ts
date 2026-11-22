@@ -38,7 +38,7 @@ import {
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { playKindOf } from './play-kind';
-import { opensFrom, parentScreen } from './stage-screens';
+import { backLabelKey, opensFrom, parentScreen } from './stage-screens';
 import type { MenuScreen, StagePanel } from './stage-screens';
 
 /**
@@ -126,9 +126,12 @@ export class PlayFlow {
     const panel = this.panel();
     return panel !== null && panel !== 'pause' && panel !== 'over';
   });
-  /** The settings' way back: to the pause menu during a match. */
-  public readonly settingsBackLabel = computed(() =>
-    this.i18n.t(this.hud.paused() ? 'stage.pause.back' : 'common.menu')
+  /**
+   * Names where `back()` leads from the open screen - the pause menu, the
+   * profile or the menu - for its back button.
+   */
+  public readonly backLabel = computed(() =>
+    this.i18n.t(backLabelKey(this.screen(), this.hud.paused()))
   );
 
   public constructor() {

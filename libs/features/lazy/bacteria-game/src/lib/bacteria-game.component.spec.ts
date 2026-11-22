@@ -306,6 +306,7 @@ describe('BacteriaGameComponent', () => {
 
       component['flow'].show('settings');
       expect(component['flow'].panel()).toBe('settings');
+      expect(component['flow'].backLabel()).toBe('Pause menu');
 
       component.onKeyDown(keyEvent('Escape', document.body));
       expect(component['flow'].panel()).toBe('pause');
@@ -546,7 +547,16 @@ describe('BacteriaGameComponent', () => {
 
       expect(component['hud'].clockLabel()).toBe('Spielzeit');
       expect(component['hud'].difficultyName()).toBe('Schwer');
-      expect(component['flow'].settingsBackLabel()).toBe('Menü');
+      expect(component['flow'].backLabel()).toBe('Menü');
+    });
+
+    it('names the profile as the way back from the achievements, in German', () => {
+      create();
+      TestBed.inject(I18nService).setLanguage('de');
+
+      component['flow'].show('achievements');
+
+      expect(component['flow'].backLabel()).toBe('Profil');
     });
   });
 
