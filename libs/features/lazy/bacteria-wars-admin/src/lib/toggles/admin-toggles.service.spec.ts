@@ -5,7 +5,7 @@ import {
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminTogglesService } from './admin-toggles.service';
 
-/** Remote Config holding `matchmaking: false`, the rest unset (static). */
+/** Remote Config holding `matchmaking` off, the rest unset (static). */
 function remoteConfig() {
   const settings = { minimumFetchIntervalMillis: 3_600_000 };
   const intervals: number[] = [];
@@ -42,8 +42,8 @@ describe('AdminTogglesService', () => {
     const state = await setUp(rc).read(false);
     expect(state).toEqual({
       available: true,
-      values: { ...FEATURE_TOGGLES, matchmaking: false },
-      set: { matchmaking: false },
+      values: { ...FEATURE_TOGGLES, matchmaking: 'off' },
+      set: { matchmaking: 'off' },
     });
     expect(rc.sdk.fetchAndActivate).not.toHaveBeenCalled();
   });

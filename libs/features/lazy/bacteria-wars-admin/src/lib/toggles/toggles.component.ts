@@ -6,12 +6,14 @@ import {
   signal,
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
   type FeatureToggle,
-  type FeatureToggles,
+  type FeatureToggleStates,
+  TOGGLE_STATES,
+  type ToggleState,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import {
   AdminI18n,
@@ -19,18 +21,19 @@ import {
   AdminTextPipe,
 } from '../i18n/admin-i18n.service';
 import { AdminActionsService } from '../moderation/admin-actions.service';
-import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
+import { AdminTogglesService, type TogglesRead } from './admin-toggles.service';
 
 /**
  * The feature toggles (ADR 0012): what Remote Config holds, each toggle's
- * default, and switches that publish the changes through `toggles.set` -
+ * default, and a three-way switch per toggle (off, on for the owner only,
+ * on, #3194) that publishes the changes through `toggles.set` -
  * with a reason and a fresh sign-in, like every command that changes what
  * players get. Players' devices fetch at most once an hour.
  */
 @Component({
   selector: 'feat-lazy-bac-admin-toggles',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [AdminTextPipe, MatButtonModule, MatSlideToggleModule],
+  imports: [AdminTextPipe, MatButtonModule, MatButtonToggleModule],
   template: `
     <p class="hint">{{ 'toggles.hint' | adminT }}</p>
     @if (failed()) {
@@ -43,19 +46,30 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
       <ul class="toggles">
         @for (key of keys; track key) {
           <li>
-            <mat-slide-toggle
-              [checked]="draft()[key]"
+            <span class="name">{{ nameKey(key) | adminT }}</span>
+            <mat-button-toggle-group
+              hideSingleSelectionIndicator
+              [attr.data-toggle]="key"
+              [attr.aria-label]="
+                'toggles.stateLabel' | adminT: { toggle: nameKey(key) | adminT }
+              "
+              [value]="draft()[key]"
               [disabled]="!state.available || busy()"
-              (change)="setDraft(key, $event.checked)"
+              (change)="setDraft(key, $event.value)"
             >
-              {{ nameKey(key) | adminT }}
-            </mat-slide-toggle>
+              @for (option of states; track option) {
+                <mat-button-toggle [value]="option">
+                  {{ stateKey(option) | adminT }}
+                </mat-button-toggle>
+              }
+            </mat-button-toggle-group>
             <small>
               @if (key in state.set) {
                 {{ 'toggles.fromRemoteConfig' | adminT }}
               } @else {
                 {{
-                  'toggles.default' | adminT: { value: onOff(defaults[key]) }
+                  'toggles.default'
+                    | adminT: { value: stateKey(defaults[key]) | adminT }
                 }}
               }
               @if (draft()[key] !== state.values[key]) {
@@ -115,6 +129,7 @@ import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
     .toggles li {
       display: flex;
       flex-direction: column;
+      align-items: flex-start;
       gap: 0.25rem;
     }
     .buttons {
@@ -131,14 +146,15 @@ export class TogglesComponent {
 
   protected readonly keys = FEATURE_TOGGLE_KEYS;
   protected readonly defaults = FEATURE_TOGGLES;
-  protected readonly state = signal<ToggleState | null>(null);
+  protected readonly states = TOGGLE_STATES;
+  protected readonly state = signal<TogglesRead | null>(null);
   protected readonly failed = signal(false);
   protected readonly saving = signal(false);
   protected readonly loading = signal(false);
   /** While a read or a publish runs, the draft and its buttons are locked. */
   protected readonly busy = computed(() => this.saving() || this.loading());
   /** The switches as the owner set them, before publishing. */
-  protected readonly draft = signal<FeatureToggles>({ ...FEATURE_TOGGLES });
+  protected readonly draft = signal<FeatureToggleStates>({ ...FEATURE_TOGGLES });
   /** The names of the toggles last published, for the note under them. */
   protected readonly published = signal<string | null>(null);
   /** The toggles the draft changes, against what Remote Config holds. */
@@ -157,12 +173,12 @@ export class TogglesComponent {
     return `toggles.name.${key}`;
   }
 
-  protected onOff(on: boolean): string {
-    return this.i18n.t(on ? 'toggles.on' : 'toggles.off');
+  protected stateKey(state: ToggleState): AdminTextKey {
+    return `toggles.state.${state}`;
   }
 
-  protected setDraft(key: FeatureToggle, on: boolean): void {
-    this.draft.update((draft) => ({ ...draft, [key]: on }));
+  protected setDraft(key: FeatureToggle, state: ToggleState): void {
+    this.draft.update((draft) => ({ ...draft, [key]: state }));
   }
 
   /** Reads the toggles and resets the draft to them; one read at a time. */
@@ -190,9 +206,10 @@ export class TogglesComponent {
     if (changed.length === 0) {
       return;
     }
+    const draft = this.draft();
     const values = Object.fromEntries(
-      changed.map((key) => [key, this.draft()[key]])
-    ) as Partial<FeatureToggles>;
+      changed.map((key) => [key, draft[key]])
+    ) as Partial<FeatureToggleStates>;
     this.saving.set(true);
     try {
       const result = await this.actions.run({
@@ -208,7 +225,7 @@ export class TogglesComponent {
           changed
             .map(
               (key) =>
-                `${this.i18n.t(this.nameKey(key))}: ${this.onOff(values[key] === true)}`
+                `${this.i18n.t(this.nameKey(key))}: ${this.i18n.t(this.stateKey(draft[key]))}`
             )
             .join(', ')
         );
