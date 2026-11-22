@@ -337,7 +337,7 @@ describe('signInPlayGames', () => {
         player: (code) =>
           playGamesPlayer(code, { id: 'web', secret: 'shh' }, fetchFn),
         syncAchievements: (uid, games) =>
-          syncPlayGamesAchievements(db, uid, games, NOW),
+          syncPlayGamesAchievements(db, uid, games, () => NOW),
       });
 
       const written = JSON.stringify(await everyDocument());

@@ -361,8 +361,9 @@ PR ("Part of #3175"):
    achievements in English (`GET games/v1/achievements?language=en-US`),
    `states()` the player's (`GET games/v1/players/me/achievements`), and
    `unlock(id)` unlocks one (`POST games/v1/achievements/{id}/unlock`, empty
-   body). Each follows `nextPageToken` up to a bound and answers null on a
-   refusal of Google. The token is never a field of what `player.ts`
+   body). The listings follow `nextPageToken` up to five pages and answer
+   `truncated` rather than a list cut off there; every call answers
+   Google's refusal with its status. The token is never a field of what `player.ts`
    returns, so nothing can write it out by mistake.
 2. **The sign-in names whom to sync.** `signInPlayGames` answers, beside
    the result and the token, `sync: { uid, games }` for the uid it settled
@@ -399,9 +400,10 @@ PR ("Part of #3175"):
   the acceptance forbids.
 - **After the result, not before**: the game waits up to 30 s for the
   result, and a slow Games API must not make it give up on the sign-in.
-  The trigger's 60 s cover the exchange and about twenty calls of at most
-  10 s each only in the worst case; a run that times out has written its
-  result already, and the next start unlocks the rest.
+  The trigger runs up to 120 s: the sign-in, then the sync, which starts
+  unlocks only within `SYNC_BUDGET_MS` (60 s) of its start, each call
+  bounded to 10 s; what is left is logged as `deferred` and unlocks at the
+  next start (CodeRabbit on PR #3193).
 - **The settled account's progress**: on a take-over the guest's progress
   joins the account in the game only after the sign-in, so its new
   achievements reach Play at the next start. Never the writer's on a

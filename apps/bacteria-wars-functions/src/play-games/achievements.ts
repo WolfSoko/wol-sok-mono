@@ -20,6 +20,12 @@ import type {
   PlayGamesApi,
 } from './games-api';
 
+/**
+ * How long the sync may start unlocks, from its start: with the sign-in
+ * before it and one last call after it, within the trigger's 120 s.
+ */
+export const SYNC_BUDGET_MS = 60_000;
+
 /** What to unlock, and the earned names Play could not be matched on. */
 export interface UnlockPlan {
   unlock: AchievementDefinition[];
@@ -61,22 +67,33 @@ export function achievementsToUnlock(
 export type SyncOutcome =
   | 'banned'
   | 'nothing-earned'
-  | { refused: 'definitions' | 'states'; status: number; scope: boolean }
-  | (Omit<UnlockPlan, 'unlock'> & { unlocked: string[]; failed: string[] });
+  | {
+      refused: 'definitions' | 'states';
+      status: number | 'truncated';
+      scope: boolean;
+    }
+  | (Omit<UnlockPlan, 'unlock'> & {
+      unlocked: string[];
+      failed: string[];
+      /** Left for the next start: the budget ran out before them. */
+      deferred: string[];
+    });
 
 /**
  * Unlocks on Play what `uid` has earned (its stored progress) - never for
  * a banned account, whose progress a ban keeps off Play. A failed unlock
  * is logged and the next one still goes; a refusal for the token's scope
- * is logged as its own case.
+ * is logged as its own case. Unlocks start only within
+ * {@link SYNC_BUDGET_MS}; the rest wait for the next app start.
  */
 export async function syncPlayGamesAchievements(
   db: Firestore,
   uid: string,
   games: PlayGamesApi,
-  now: number
+  clock: () => number = Date.now
 ): Promise<SyncOutcome> {
-  if (await isBanned(db, uid, now)) {
+  const deadline = clock() + SYNC_BUDGET_MS;
+  if (await isBanned(db, uid, clock())) {
     logger.info('Play Games achievements not synced: the account is banned');
     return 'banned';
   }
@@ -99,7 +116,12 @@ export async function syncPlayGamesAchievements(
   );
   const unlocked: string[] = [];
   const failed: string[] = [];
+  const deferred: string[] = [];
   for (const { id, name } of unlock) {
+    if (clock() >= deadline) {
+      deferred.push(name);
+      continue;
+    }
     const answer = await games.unlock(id).catch(() => null);
     if (answer?.ok === true) {
       unlocked.push(name);
@@ -115,15 +137,11 @@ export async function syncPlayGamesAchievements(
       }
     }
   }
-  if (unlocked.length + failed.length + missing.length + ambiguous.length > 0) {
-    logger.info('Play Games achievements synced', {
-      unlocked,
-      failed,
-      missing,
-      ambiguous,
-    });
+  const outcome = { unlocked, failed, deferred, missing, ambiguous };
+  if (Object.values(outcome).some((names) => names.length > 0)) {
+    logger.info('Play Games achievements synced', outcome);
   }
-  return { unlocked, failed, missing, ambiguous };
+  return outcome;
 }
 
 /** The achievements `uid`'s stored progress holds - none when unreadable. */
@@ -148,7 +166,7 @@ async function earnedAchievements(
 
 function refusedListing(
   call: 'definitions' | 'states',
-  { status, scope }: { status: number; scope: boolean }
+  { status, scope }: { status: number | 'truncated'; scope: boolean }
 ): SyncOutcome {
   if (scope) {
     logScopeRefusal(call, status);
@@ -158,7 +176,7 @@ function refusedListing(
   return { refused: call, status, scope };
 }
 
-function logScopeRefusal(call: string, status: number): void {
+function logScopeRefusal(call: string, status: number | 'truncated'): void {
   logger.warn('Play Games refused the token’s scope for achievements', {
     call,
     status,

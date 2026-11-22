@@ -207,7 +207,8 @@ export const playGamesSignIn = PLAY_GAMES_ON
         document: `${PLAY_GAMES_SIGN_INS}/{id}`,
         memory: '256MiB',
         cpu: 'gcf_gen1',
-        timeoutSeconds: 60,
+        // The sign-in, then the achievement sync's budget and its last call.
+        timeoutSeconds: 120,
         secrets: [PLAY_GAMES_CLIENT_SECRET, BAN_TOMBSTONE_KEY],
       },
       withSentry(async (event) => {
@@ -236,7 +237,7 @@ export const playGamesSignIn = PLAY_GAMES_ON
               ),
             accounts: async () => authAccounts(await auth()),
             syncAchievements: (uid, games) =>
-              syncPlayGamesAchievements(db(), uid, games, Date.now()),
+              syncPlayGamesAchievements(db(), uid, games),
             now: Date.now,
           }
         );

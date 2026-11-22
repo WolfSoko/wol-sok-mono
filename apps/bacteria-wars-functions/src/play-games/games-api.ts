@@ -29,7 +29,8 @@ export type GamesAnswer<T> =
   | { ok: true; value: T }
   | {
       ok: false;
-      status: number;
+      /** Google's status, or `truncated` past the page bound. */
+      status: number | 'truncated';
       /** True when Google refused the token's scope. */
       scope: boolean;
     };
@@ -78,6 +79,11 @@ export function gamesApi(
       if (pageToken === null) {
         break;
       }
+    }
+    // A list cut off at the bound would pass achievements on later pages
+    // for missing ones: no answer rather than a wrong one.
+    if (pageToken !== null) {
+      return { ok: false as const, status: 'truncated' as const, scope: false };
     }
     return { ok: true as const, value: items };
   }
@@ -135,7 +141,7 @@ export function gamesApi(
  */
 async function refusal(
   response: Response
-): Promise<{ ok: false; status: number; scope: boolean }> {
+): Promise<{ ok: false; status: number | 'truncated'; scope: boolean }> {
   const challenge = response.headers.get('www-authenticate') ?? '';
   const body = await response.text().catch(() => '');
   const scope =

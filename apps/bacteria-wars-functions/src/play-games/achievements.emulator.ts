@@ -30,11 +30,11 @@ async function storeProgress(uid: string, ...earned: string[]) {
     .set({ json: JSON.stringify({ achievements }) });
 }
 
-function sync(setup: FakeGamesSetup, uid = 'a') {
+function sync(setup: FakeGamesSetup, uid = 'a', clock = () => NOW) {
   const fake = fakeGamesApi(setup);
   return {
     calls: fake.calls,
-    outcome: syncPlayGamesAchievements(db, uid, fake.games, NOW),
+    outcome: syncPlayGamesAchievements(db, uid, fake.games, clock),
   };
 }
 
@@ -59,6 +59,7 @@ describe('syncPlayGamesAchievements', () => {
     expect(await outcome).toEqual({
       unlocked: ['Pacifist', 'Blitz'],
       failed: [],
+      deferred: [],
       missing: [],
       ambiguous: [],
     });
@@ -68,6 +69,33 @@ describe('syncPlayGamesAchievements', () => {
       'unlock P-pacifist',
       'unlock P-blitz',
     ]);
+  });
+
+  it('starts no unlock past its budget, leaving the rest for the next start', async () => {
+    await storeProgress('a', 'first-blood', 'pacifist', 'blitz');
+    // Each unlock takes 35 s: the third would start past the budget.
+    let at = NOW;
+    const fake = fakeGamesApi({
+      definitions: onPlay('first-blood', 'pacifist', 'blitz'),
+      onUnlock: () => {
+        at += 35_000;
+      },
+    });
+    const outcome = await syncPlayGamesAchievements(
+      db,
+      'a',
+      fake.games,
+      () => at
+    );
+
+    expect(outcome).toMatchObject({
+      unlocked: ['First Blood', 'Pacifist'],
+      deferred: ['Blitz'],
+    });
+    expect(info).toHaveBeenCalledWith(
+      'Play Games achievements synced',
+      expect.objectContaining({ deferred: ['Blitz'] })
+    );
   });
 
   it('skips and logs an earned achievement Play does not list', async () => {

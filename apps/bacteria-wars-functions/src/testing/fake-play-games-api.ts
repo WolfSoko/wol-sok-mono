@@ -13,6 +13,8 @@ export interface FakeGamesSetup {
   refuse?: { call: 'definitions' | 'states'; status: number; scope: boolean };
   /** Play ids whose unlock Google refuses, or (`'throw'`) never answers. */
   failUnlock?: Record<string, { status: number; scope: boolean } | 'throw'>;
+  /** Runs at each unlock, say to let a fake clock run on. */
+  onUnlock?: () => void;
 }
 
 /**
@@ -47,6 +49,7 @@ export function fakeGamesApi(setup: FakeGamesSetup = {}) {
     },
     unlock: async (id): Promise<GamesAnswer<void>> => {
       calls.push(`unlock ${id}`);
+      setup.onUnlock?.();
       const failure = setup.failUnlock?.[id];
       if (failure === 'throw') {
         throw new TypeError('fetch failed');

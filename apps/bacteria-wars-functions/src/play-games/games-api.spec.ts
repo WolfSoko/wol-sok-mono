@@ -79,14 +79,25 @@ describe('gamesApi', () => {
     ]);
   });
 
-  it('stops following pages after a bound', async () => {
-    const page = () => answer(200, { items: [], nextPageToken: 'again' });
+  it('answers truncated rather than a list cut off at the page bound', async () => {
+    const page = () =>
+      answer(200, { items: [{ id: 'C', name: 'N' }], nextPageToken: 'again' });
     const fetchFn = fakeFetch(page(), page(), page(), page(), page(), page());
     expect(await gamesApi('at', fetchFn).definitions()).toEqual({
-      ok: true,
-      value: [],
+      ok: false,
+      status: 'truncated',
+      scope: false,
     });
     expect(fetchFn).toHaveBeenCalledTimes(5);
+  });
+
+  it('reads a last page within the bound', async () => {
+    const more = () => answer(200, { items: [], nextPageToken: 'again' });
+    const fetchFn = fakeFetch(more(), more(), more(), more(), answer(200, {}));
+    expect(await gamesApi('at', fetchFn).states()).toEqual({
+      ok: true,
+      value: new Map(),
+    });
   });
 
   it('unlocks one achievement with an empty POST', async () => {
