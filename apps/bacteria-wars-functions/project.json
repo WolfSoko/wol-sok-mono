@@ -46,6 +46,7 @@
         "{workspaceRoot}/apps/bacteria-game-remote/firestore.indexes.json",
         "{workspaceRoot}/apps/bacteria-game-remote/firestore.rules",
         "{workspaceRoot}/apps/bacteria-game-remote/database.rules.json",
+        "{workspaceRoot}/apps/bacteria-wars-android/app/google-services.json",
         "{workspaceRoot}/firebase.bacteria-game-remote.json"
       ],
       "options": {

@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase-admin/firestore';
+import { applyPlayGamesTombstone } from '../admin/tombstones';
 import { runReplayCommand } from '../replays/command';
 import { useEmulatorDb } from '../testing/emulator';
 import { erasureAt } from '../testing/erasure';
@@ -181,6 +182,51 @@ describe('the account part', () => {
       await erasePart('account', erasureAt(db, NOW), 'ada');
       expect((await tombstone('t-old')).get('reason')).toBe('cheating');
       expect(await exists('bans/ada')).toBe(false);
+    });
+
+    describe('linked to a Play Games player', () => {
+      const playGamesTombstoneOf = (playerId: string) => `pg-${playerId}`;
+      beforeEach(() => db.doc('playGamesLinks/p1').set({ uid: 'ada' }));
+
+      it('keeps the ban by the player, and bans the next account it signs in to', async () => {
+        await seedBan(until);
+        const realtime = fakeRealtime({ bans: { ada: until } });
+        await erasePart(
+          'account',
+          { ...erasureAt(db, NOW, realtime), playGamesTombstoneOf },
+          'ada'
+        );
+        expect((await tombstone('pg-p1')).get('reason')).toBe('cheating');
+        expect(await exists('playGamesLinks/p1')).toBe(false);
+
+        // The player starts the app again, as a fresh guest.
+        expect(
+          await applyPlayGamesTombstone(db, realtime, 'guest-2', 'pg-p1', NOW)
+        ).toBe(true);
+        expect((await db.doc('bans/guest-2').get()).get('reason')).toBe(
+          'cheating'
+        );
+      });
+
+      it('keeps no tombstone for an account without a ban', async () => {
+        await erasePart(
+          'account',
+          { ...erasureAt(db, NOW), playGamesTombstoneOf },
+          'ada'
+        );
+        expect((await tombstone('pg-p1')).exists).toBe(false);
+        expect(await exists('playGamesLinks/p1')).toBe(false);
+        expect(
+          await applyPlayGamesTombstone(
+            db,
+            fakeRealtime(),
+            'guest-2',
+            'pg-p1',
+            NOW
+          )
+        ).toBe(false);
+        expect(await exists('bans/guest-2')).toBe(false);
+      });
     });
 
     it('writes no tombstone for a ban that ended', async () => {

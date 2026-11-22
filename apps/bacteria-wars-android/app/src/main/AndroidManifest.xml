@@ -32,8 +32,10 @@
       android:name="asset_statements"
       android:resource="@string/asset_statements" />
 
+    <!-- The launcher: Chrome with the game, and the player's Play Games sign-in in the
+         launch URL's fragment (PlayGamesLauncherActivity). -->
     <activity
-      android:name="com.google.androidbrowserhelper.trusted.LauncherActivity"
+      android:name="de.wolsok.bacteriawars.PlayGamesLauncherActivity"
       android:exported="true">
       <meta-data
         android:name="android.support.customtabs.trusted.DEFAULT_URL"

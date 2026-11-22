@@ -221,6 +221,30 @@ service cloud.firestore {
           (request.resource.data.type in ['feature', 'unfeature', 'anonymise'] && isAdmin()));
     }
 
+    // The Play Games sign-in of the Android app (#3175): the player hands
+    // the one-time code the app got from Play Games, playGamesSignIn links
+    // the Play Games player and writes the result and a custom token back.
+    // Allowed while a ban holds: it changes nothing anyone else reads, and
+    // the ban stays with the uid. Only the writer reads it back, and
+    // deletes it once read.
+    match /playGamesSignIns/{id} {
+      allow get, delete: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() &&
+        request.resource.data.keys().hasOnly(['uid', 'code', 'createdAt', 'expireAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.code is string &&
+        request.resource.data.code.size() > 0 &&
+        request.resource.data.code.size() <= 512 &&
+        request.resource.data.createdAt == request.time &&
+        isCommandExpiry(request.resource.data.expireAt);
+    }
+
+    // Which game account each Play Games player is linked to: the
+    // functions' alone.
+    match /playGamesLinks/{playerId} {
+      allow read, write: if false;
+    }
+
     // Stored replays, written by the functions only: a player reads those
     // they played, a page of 50 at most, and the bytes one at a time.
     match /replays/{id} {

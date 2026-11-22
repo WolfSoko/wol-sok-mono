@@ -30,6 +30,7 @@ import { FeatureTogglesService } from './feature-toggles.service';
 import { MatchEnd } from './flow/match-end';
 import { MatchSetup } from './flow/match-setup';
 import { OnlineFlow } from './flow/online-flow';
+import { PlayGamesHandover } from './play-games/play-games-handover';
 import { PlayFlow } from './flow/play-flow';
 import { GpuSelfTestService } from './gpu-choice/gpu-self-test.service';
 import { SimulationOverrideService } from './gpu-choice/simulation-override.service';
@@ -147,6 +148,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   protected readonly flow = inject(PlayFlow);
   protected readonly setup = inject(MatchSetup);
   protected readonly onlineFlow = inject(OnlineFlow);
+  private readonly playGamesHandover = inject(PlayGamesHandover);
   protected readonly matchEnd = inject(MatchEnd);
 
   /**
@@ -208,6 +210,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     // does not carry over.
     this.gameStateService.endSeries();
     this.onlineFlow.start();
+    this.playGamesHandover.start();
     this.checkGpu();
 
     // A resumed match picks its music up where the match clock stands, so

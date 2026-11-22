@@ -223,11 +223,26 @@ export const PLAYER_DATA: readonly PlayerData[] = [
     erase: 'custom',
     how: 'deleteAccount: stats/accounts is lowered once for an account countAccount counted.',
   },
+  // The Play Games sign-in (#3175, `play-games/sign-in.ts`).
+  {
+    store: 'firestore',
+    path: 'playGamesLinks/{playerId}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
+  {
+    store: 'firestore',
+    path: 'playGamesSignIns/{id}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
   {
     store: 'firestore',
     path: 'banTombstones/{id}',
     erase: 'keep',
-    why: "Keyed by a hash of the Google provider's id, no uid: keeps a ban past the deletion.",
+    why: "Keyed by a hash of the Google provider's id or a linked Play Games player's, no uid: keeps a ban past the deletion.",
   },
 
   // Replays (`replays/forget.ts`).

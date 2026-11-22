@@ -1,3 +1,4 @@
+import { PLAY_GAMES_CLAIM } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { logger } from 'firebase-functions/logger';
 import { GUEST_IDLE_DAYS } from '../config';
 
@@ -54,7 +55,8 @@ export function lastActiveAt(user: GuestRecord): number | null {
 
 /**
  * True for a guest - an account without any sign-in provider (anonymous,
- * or one that unlinked its last) and no admin claim - unused for longer
+ * or one that unlinked its last), no admin claim and no Play Games player
+ * linked to it (`playGames`, #3175) - unused for longer
  * than {@link GUEST_IDLE_MS}. An account whose last use is unknown stays.
  */
 export function isIdleGuest(user: GuestRecord, now: number): boolean {
@@ -62,6 +64,7 @@ export function isIdleGuest(user: GuestRecord, now: number): boolean {
   return (
     user.providerData.length === 0 &&
     user.customClaims?.['admin'] !== true &&
+    user.customClaims?.[PLAY_GAMES_CLAIM] !== true &&
     at !== null &&
     now - at > GUEST_IDLE_MS
   );

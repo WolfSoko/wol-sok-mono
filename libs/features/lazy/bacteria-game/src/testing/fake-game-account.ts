@@ -77,6 +77,10 @@ export class FakeGameAccount implements GameAccount {
     return Promise.resolve('signed-in');
   }
 
+  public signInWithToken(): Promise<boolean> {
+    return Promise.resolve(true);
+  }
+
   public signOut(): Promise<void> {
     return Promise.resolve();
   }

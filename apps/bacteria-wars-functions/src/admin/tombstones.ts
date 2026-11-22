@@ -14,6 +14,9 @@ import { writeAudit } from './records';
  * guessed from outside. Written with the ban and when a banned account is
  * deleted; checked when an account signs up with Google, and once after a
  * guest links Google. Read by functions only, and gone with the ban (TTL).
+ * A Play Games player linked to a banned account leaves one too, keyed by
+ * an HMAC of `play-games:` and its player id (#3175): checked before the
+ * player is linked to an account again.
  */
 
 /** The parts of an Auth user a tombstone is keyed by. */
@@ -37,6 +40,36 @@ export function tombstoneId(key: string, user: ProviderInfo): string | null {
   return google === undefined
     ? null
     : createHmac('sha256', key).update(google.uid).digest('hex');
+}
+
+/**
+ * The tombstone id of a Play Games player: an HMAC of its player id, in a
+ * key space apart from the Google provider uids'.
+ */
+export function playGamesTombstoneId(key: string, playerId: string): string {
+  return createHmac('sha256', key)
+    .update(`play-games:${playerId}`)
+    .digest('hex');
+}
+
+/**
+ * Whether the Play Games player's tombstone (`id`) holds - and if so, bans
+ * `uid`, the account it signs in to, unless a ban holds for it already
+ * (as {@link applyTombstone} does for a Google identity).
+ */
+export async function applyPlayGamesTombstone(
+  db: Firestore,
+  realtime: Realtime,
+  uid: string,
+  id: string,
+  now: number
+): Promise<boolean> {
+  const tombstone = banOf((await db.doc(`banTombstones/${id}`).get()).data());
+  if (tombstone === null || !banHolds(tombstone, now)) {
+    return false;
+  }
+  await banByTombstone(db, realtime, uid, id, now);
+  return true;
 }
 
 /**

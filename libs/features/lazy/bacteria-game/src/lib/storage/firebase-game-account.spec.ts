@@ -2,9 +2,11 @@ import { firstValueFrom } from 'rxjs';
 import {
   type FakeFirebaseAuth,
   type FakeToken,
+  playGamesToken,
   fakeToken,
   googleUser,
   guestUser,
+  playGamesUser,
 } from '../../testing/fake-firebase-auth';
 import {
   FakeFirebase,
@@ -67,6 +69,83 @@ describe('FirebaseGameAccount', () => {
     expect(await account.signIn()).toBe('signed-in');
 
     expect(switches.at(-1)).toEqual({ playerId: 'ada', adoptsGuest: true });
+  });
+
+  describe('the Play Games sign-in', () => {
+    it('makes the guest a signed-in player, without a switch', async () => {
+      expect(
+        await account.signInWithToken(playGamesToken('guest-1'), 'guest-1')
+      ).toBe(true);
+      await settle();
+
+      expect(switches).toEqual([{ playerId: 'guest-1', adoptsGuest: false }]);
+      expect(account.profile()).toEqual({
+        guest: false,
+        name: 'Player guest-1',
+      });
+    });
+
+    it('lets the account of the player take over and adopt the guest', async () => {
+      expect(
+        await account.signInWithToken(playGamesToken('ada'), 'guest-1')
+      ).toBe(true);
+
+      expect(switches.at(-1)).toEqual({ playerId: 'ada', adoptsGuest: true });
+    });
+
+    it('adopts nothing at a later switch after a same-account token', async () => {
+      await account.signInWithToken(playGamesToken('guest-1'), 'guest-1');
+      await account.signOut();
+      await settle();
+
+      expect(switches.at(-1)).toEqual({
+        playerId: 'guest-2',
+        adoptsGuest: false,
+      });
+    });
+
+    it('refuses a token Auth refuses', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => undefined);
+      auth.signInWithCustomToken.mockRejectedValueOnce({
+        code: 'auth/invalid-custom-token',
+      });
+      expect(
+        await account.signInWithToken(playGamesToken('ada'), 'guest-1')
+      ).toBe(false);
+      expect(switches).toHaveLength(1);
+    });
+
+    it('drops a token that arrives after the player changed', async () => {
+      auth.become(googleUser('g', 'Ada'));
+      await settle();
+
+      expect(
+        await account.signInWithToken(playGamesToken('ada'), 'guest-1')
+      ).toBe(false);
+      expect(auth.signInWithCustomToken).not.toHaveBeenCalled();
+      expect(switches.at(-1)).toEqual({ playerId: 'g', adoptsGuest: false });
+    });
+
+    it('keeps the session of a player signed in to the same account', async () => {
+      auth.become(googleUser('guest-1', 'Ada'));
+
+      expect(
+        await account.signInWithToken(playGamesToken('guest-1'), 'guest-1')
+      ).toBe(false);
+      expect(auth.signInWithCustomToken).not.toHaveBeenCalled();
+    });
+
+    it('links Google to the account of a Play Games player', async () => {
+      auth.become(playGamesUser('guest-1', 'PlayAda'));
+      auth.linkWithPopup.mockResolvedValue({
+        user: googleUser('guest-1', 'Ada'),
+      });
+
+      expect(await account.signIn()).toBe('signed-in');
+
+      expect(auth.linkWithPopup).toHaveBeenCalled();
+      expect(auth.signInWithPopup).not.toHaveBeenCalled();
+    });
   });
 
   it('starts a new guest, adopting nothing, after signing out', async () => {

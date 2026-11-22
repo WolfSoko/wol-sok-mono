@@ -53,6 +53,21 @@ describe('PrivacyComponent', () => {
     expect(en).toContain('forwards the message to our Gmail inbox');
   });
 
+  it('says the app signs you in to the game with Play Games, in both languages', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain('meldet die App dich auch im Spiel an');
+    expect(de).toContain('speichern die Spieler-ID zusammen mit der User-ID');
+    expect(en).toContain('the app also signs you in to the game');
+    expect(en).toContain('store the player ID with the user ID');
+    expect(en).toContain('Firestore deletes it after a day');
+    expect(en).toContain('We do not store the access token');
+    expect(de).toContain('löscht Firestore es nach einem Tag');
+    // A ban follows the Play Games player past a deletion.
+    expect(de).toContain('Hashwert der Play-Spiele-Spieler-ID');
+    expect(en).toContain('a hash of the Play Games player ID');
+  });
+
   it('has each section on the cloud in both languages', async () => {
     const page = await open();
     const pairs = [

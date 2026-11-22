@@ -134,3 +134,51 @@ describe('firestore.indexes.json', () => {
     });
   }
 });
+
+describe('the TTL of command documents', () => {
+  const rules = readFileSync(join(__dirname, '../firestore.rules'), 'utf8');
+  const { fieldOverrides } = read('../firestore.indexes.json') as {
+    fieldOverrides: {
+      collectionGroup: string;
+      fieldPath: string;
+      ttl?: boolean;
+    }[];
+  };
+  // Every collection whose rules take a command's `expireAt` relies on the
+  // TTL to remove what no function deleted - directly or through a helper
+  // function of the rules that checks it (`isAdminCommand`).
+  const checks = [
+    'isCommandExpiry',
+    ...Array.from(
+      rules.matchAll(/function (\w+)\([^)]*\) \{((?:(?!\n {4}\}).)*)/gs)
+    )
+      .filter(([, , body]) => body.includes('isCommandExpiry('))
+      .map(([, name]) => name),
+  ];
+  const expiring = Array.from(
+    rules.matchAll(/match \/(\w+)\/\{\w+\} \{((?:(?!\n {4}\}).)*)/gs)
+  )
+    .filter(([, , body]) => checks.some((check) => body.includes(`${check}(`)))
+    .map(([, collection]) => collection);
+
+  it('finds the command collections in the rules', () => {
+    expect(expiring).toEqual(
+      expect.arrayContaining([
+        'replaySubmissions',
+        'replayCommands',
+        'adminCommands',
+        'playGamesSignIns',
+      ])
+    );
+  });
+
+  it.each(expiring)('removes %s by its expireAt', (collection) => {
+    expect(fieldOverrides).toContainEqual(
+      expect.objectContaining({
+        collectionGroup: collection,
+        fieldPath: 'expireAt',
+        ttl: true,
+      })
+    );
+  });
+});

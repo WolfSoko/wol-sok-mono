@@ -50,6 +50,25 @@ export function googleUser(uid: string, name: string): FakeUser {
   };
 }
 
+/** The account of a Play Games player: no provider, the functions' name. */
+export function playGamesUser(uid: string, name: string): FakeUser {
+  return {
+    uid,
+    isAnonymous: false,
+    displayName: name,
+    email: null,
+    providerData: [],
+  };
+}
+
+/**
+ * The functions' answer for `uid`: a custom token the fake's
+ * `signInWithCustomToken` signs in to that uid with.
+ */
+export function playGamesToken(uid: string): { value: string; uid: string } {
+  return { value: `custom-token:${uid}`, uid };
+}
+
 /**
  * A token with these claims, signed in with Google at
  * {@link FAKE_AUTH_TIME} unless `signInProvider` or `authTime` (ms since
@@ -98,6 +117,14 @@ export class FakeFirebaseAuth {
   );
   public readonly linkWithPopup = jest.fn();
   public readonly signInWithPopup = jest.fn();
+  /** Signs in as the Play Games player the token names, `Player <uid>`. */
+  public readonly signInWithCustomToken = jest.fn(
+    async (_auth: unknown, token: string) => {
+      const uid = token.replace(/^custom-token:/, '');
+      this.become(playGamesUser(uid, `Player ${uid}`));
+      return { user: this.currentUser };
+    }
+  );
   public readonly signInWithCredential = jest.fn(
     async (_auth: unknown, credential: string) => {
       this.become(googleUser(credential, credential));
@@ -127,6 +154,7 @@ export class FakeFirebaseAuth {
     linkWithPopup: this.linkWithPopup,
     signInWithPopup: this.signInWithPopup,
     signInWithCredential: this.signInWithCredential,
+    signInWithCustomToken: this.signInWithCustomToken,
     browserPopupRedirectResolver: {},
     GoogleAuthProvider: Object.assign(class {}, {
       credentialFromError: (error: { credential?: string }) =>

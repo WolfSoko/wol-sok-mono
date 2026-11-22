@@ -74,6 +74,21 @@ export type {
   ReplayCommandType,
 } from './lib/state/cloud/command-documents';
 export {
+  parsePlayGamesSignIn,
+  PLAY_GAMES_CLAIM,
+  PLAY_GAMES_CODE_MAX,
+  PLAY_GAMES_FRAGMENT_KEY,
+  PLAY_GAMES_LINKS,
+  PLAY_GAMES_SIGN_INS,
+  PLAY_GAMES_TOKEN_KEY,
+  PLAY_GAMES_TOKEN_UID_KEY,
+  playGamesCodeOf,
+} from './lib/state/cloud/play-games-sign-in';
+export type {
+  PlayGamesSignIn,
+  PlayGamesSignInError,
+} from './lib/state/cloud/play-games-sign-in';
+export {
   ATTEMPT_DAYS,
   attemptExpireAt,
   attemptSeed,

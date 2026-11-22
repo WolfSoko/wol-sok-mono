@@ -198,6 +198,12 @@
       "indexes": []
     },
     {
+      "collectionGroup": "playGamesSignIns",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "counters",
       "fieldPath": "expireAt",
       "ttl": true,

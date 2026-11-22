@@ -20,7 +20,10 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
-import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import {
+  parseTurnKey,
+  PLAY_GAMES_SIGN_INS,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
   ACCOUNTS_DOC,
@@ -34,6 +37,8 @@ import { remoteTogglesOf } from './admin/toggles';
 import {
   checkGoogleLink,
   googleProviderOf,
+  applyPlayGamesTombstone,
+  playGamesTombstoneId,
   tombstoneId,
 } from './admin/tombstones';
 import { runHourly } from './boards/hourly';
@@ -50,6 +55,8 @@ import {
   FEATURE_BEST_ON,
   GUEST_CLEANUP_ON,
   HOURLY_ON,
+  PLAY_GAMES_ON,
+  PLAY_GAMES_WEB_CLIENT_ID,
   REGION,
   RELAY_ON,
   RETRY_FOR_MS,
@@ -63,6 +70,10 @@ import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
+import { userRecordOf } from './auth-users';
+import { authAccounts } from './play-games/accounts';
+import { playGamesPlayer } from './play-games/player';
+import { runPlayGamesSignIn } from './play-games/command';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
@@ -97,6 +108,8 @@ const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
  * `tools-relay:turn-key` stores: only `refreshRelay` names it.
  */
 const CLOUDFLARE_TURN_KEY = defineSecret('CLOUDFLARE_TURN_KEY');
+/** The web OAuth client's secret, for Play Games' server auth codes. */
+const PLAY_GAMES_CLIENT_SECRET = defineSecret('PLAY_GAMES_CLIENT_SECRET');
 
 /** The feature toggles in Remote Config, loaded on first use. */
 const toggles = remoteTogglesOf(async () =>
@@ -178,6 +191,59 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
   })
 );
 
+/**
+ * The Play Games sign-in of the Android app (#3175 step 2): links the
+ * player behind the command's code to its writer's account, or hands a
+ * guest the account the player is linked to, and writes a custom token for
+ * the account it settled on beside the result. Off with `PLAY_GAMES_ON`.
+ */
+export const playGamesSignIn = PLAY_GAMES_ON
+  ? onDocumentCreatedWithAuthContext(
+      {
+        document: `${PLAY_GAMES_SIGN_INS}/{id}`,
+        memory: '256MiB',
+        cpu: 'gcf_gen1',
+        timeoutSeconds: 60,
+        secrets: [PLAY_GAMES_CLIENT_SECRET, BAN_TOMBSTONE_KEY],
+      },
+      withSentry(async (event) => {
+        const data = event.data?.data();
+        if (data === undefined) {
+          return;
+        }
+        const client = {
+          id: PLAY_GAMES_WEB_CLIENT_ID,
+          secret: PLAY_GAMES_CLIENT_SECRET.value(),
+        };
+        const result = await runPlayGamesSignIn(
+          db(),
+          event.params.id,
+          data,
+          event.authType === 'unauthenticated' ? undefined : event.authId,
+          {
+            player: (code) => playGamesPlayer(code, client, fetch),
+            tombstone: (playerId, uid) =>
+              applyPlayGamesTombstone(
+                db(),
+                realtime,
+                uid,
+                playGamesTombstoneOf(playerId),
+                Date.now()
+              ),
+            accounts: async () => authAccounts(await auth()),
+            now: Date.now,
+          }
+        );
+        if (result !== null && !result.ok) {
+          logger.info('Play Games sign-in refused', {
+            id: event.params.id,
+            result,
+          });
+        }
+      })
+    )
+  : undefined;
+
 /** An expired or deleted replay takes its blob and reports along. */
 export const cleanReplay = onDocumentDeleted(
   { document: 'replays/{id}', memory: '256MiB', cpu: 'gcf_gen1' },
@@ -190,6 +256,11 @@ function erasureOf(
   now: number = Date.now()
 ): ErasureContext {
   return { db: db(), realtime, now, tombstone };
+}
+
+/** The tombstone id of a Play Games player, with the server key. */
+function playGamesTombstoneOf(playerId: string): string {
+  return playGamesTombstoneId(BAN_TOMBSTONE_KEY.value(), playerId);
 }
 
 /**
@@ -238,7 +309,10 @@ export const deletePlayerBoards = v1
     withSentry(async (user) => {
       const erased = await erasePart(
         'account',
-        erasureOf(tombstoneId(BAN_TOMBSTONE_KEY.value(), user)),
+        {
+          ...erasureOf(tombstoneId(BAN_TOMBSTONE_KEY.value(), user)),
+          playGamesTombstoneOf,
+        },
         user.uid
       );
       logger.info('Board data of a deleted account', {
@@ -298,19 +372,9 @@ async function* authUsers(): AsyncGenerator<UserRecord> {
   } while (pageToken !== undefined);
 }
 
-/**
- * The Auth user, read afresh - null for one that does not exist; other
- * failures throw.
- */
+/** The Auth user, read afresh - null for one that does not exist. */
 async function userRecord(uid: string): Promise<UserRecord | null> {
-  try {
-    return await (await auth()).getUser(uid);
-  } catch (error) {
-    if ((error as { code?: unknown } | null)?.code === 'auth/user-not-found') {
-      return null;
-    }
-    throw error;
-  }
+  return userRecordOf(await auth(), uid);
 }
 
 /**

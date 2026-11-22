@@ -8,8 +8,9 @@ import com.google.android.gms.games.PlayGamesSdk;
  * the player in to Play Games against the game project named by
  * {@code com.google.android.gms.games.APP_ID} in the manifest, silently: the
  * SDK shows its welcome popup over the app's own activity, which has handed
- * over to Chrome by then. Nothing reads the sign-in yet; it puts the game into
- * the player's Play Games library and is the ground for achievements later.
+ * over to Chrome by then. {@link PlayGamesLauncherActivity} hands the sign-in
+ * to the game (#3175); it also puts the game into the player's Play Games
+ * library.
  * The SDK only registers for activity callbacks here, so a process Chrome
  * starts for the Digital Goods services costs nothing more.
  */

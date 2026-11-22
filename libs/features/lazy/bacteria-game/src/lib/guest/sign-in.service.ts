@@ -1,11 +1,15 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { filter, firstValueFrom } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { ProgressService } from '../progress.service';
 import { GameAccount } from '../storage/game-account';
+import type { PlayGamesToken } from '../storage/game-play-games';
 
 /**
  * Signing in with Google and out again, for every button that offers it:
- * the profile's, the main menu's and the guest's notices. One at a time,
+ * the profile's, the main menu's and the guest's notices - and with the
+ * token of the Android app's Play Games sign-in (#3175). One at a time,
  * and a sign-in only once the guest's progress is here: an account that
  * played elsewhere adopts what the guest has, and the guest's stored
  * progress is out of reach once the account has taken over.
@@ -26,6 +30,7 @@ export class SignIn {
   public readonly ready = computed(
     () => !this.busy() && this.progress.loaded()
   );
+  private readonly ready$ = toObservable(this.ready);
 
   public async signIn(): Promise<void> {
     if (!this.ready()) return;
@@ -39,6 +44,28 @@ export class SignIn {
         this.analytics.track('login_failed', { reason: outcome });
       }
     });
+  }
+
+  /**
+   * Signs in with the custom token of a Play Games sign-in, once a sign-in
+   * can start. Silent, as Play Games' own sign-in is: a refused token
+   * leaves the player as they are and shows no failure. Counts for the Lab
+   * Pass only when a guest became a signed-in player - every later start of
+   * the app just renews the session.
+   */
+  public async signInWithToken(
+    token: PlayGamesToken,
+    writer: string
+  ): Promise<void> {
+    await firstValueFrom(this.ready$.pipe(filter(Boolean)));
+    const wasGuest = this.account.profile()?.guest === true;
+    await this.whileBusy(async () => {
+      if ((await this.account.signInWithToken(token, writer)) && wasGuest) {
+        this.signInCount.update((count) => count + 1);
+        this.analytics.track('login', { method: 'play_games' });
+      }
+    });
+    this.failed.set(false);
   }
 
   public async signOut(): Promise<void> {
