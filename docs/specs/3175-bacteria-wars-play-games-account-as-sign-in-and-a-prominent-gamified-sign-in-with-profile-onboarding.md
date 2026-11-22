@@ -258,6 +258,13 @@ PR ("Part of #3175"):
   (`bans/{uid}`), and the link only ever settles on an existing uid, so a
   banned account stays banned, and a banned guest taken over by its linked
   account leaves its ban where it was.
+- **A ban follows the Play Games player past a deletion** (manager's
+  decision on request 1545). Deleting a banned account with a link keeps a
+  ban tombstone keyed by an HMAC of `play-games:` and the player id
+  (`playGamesTombstoneId`, `BAN_TOMBSTONE_KEY`), beside the Google one,
+  read before the link is erased (`deleteAccount`). `signInPlayGames`
+  checks it first: while it holds, the writer is banned
+  (`applyPlayGamesTombstone`) and nothing is linked (`banned`).
 - **Each code counts once.** Google's token endpoint takes a code once;
   the trigger runs once per document (`create`, retries off), the token is
   minted only for the uid the transaction settled on, and the writer check
