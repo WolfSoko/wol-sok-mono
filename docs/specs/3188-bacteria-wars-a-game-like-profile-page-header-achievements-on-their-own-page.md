@@ -70,6 +70,11 @@ After the change:
   which the screen's back button and the Escape handler of
   `BacteriaGameComponent` both call (Escape so also plays the navigation
   step the back buttons play).
+- **Loaded when first opened**: the stage renders the profile and the
+  achievements screen inside `@defer (on immediate)`, so neither (nor the
+  editor, the cabinet and the card they bring) weighs on the game's start.
+  The card and the screen show the count through one part,
+  `AchievementCountComponent` (trophy, "{earned} of {total}", bar).
 - **Analytics**: the new screen is a `screen_view` like every other
   (`firebase_screen: achievements`), from `trackScreenViews`; nothing new is
   sent. `docs/analytics.md` lists it. The privacy policy names no screens, so
