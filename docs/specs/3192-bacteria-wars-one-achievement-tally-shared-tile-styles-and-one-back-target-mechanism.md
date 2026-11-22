@@ -57,15 +57,20 @@ before.
   `@include cdk.a11y-visually-hidden;` as the shell's `styles.scss` already
   does, and the six component stylesheets drop theirs. That is CDK's
   documented way, and the class is global anyway.
-- **One back target**: `stage-screens.ts` gets `backTarget(screen, paused)`
-  (type `BackTarget`), where the way back leads (`'pause'` while paused, else
-  `parentScreen(screen)`), and `backLabelKey(target)`, the text key naming it
-  (`pause` → `stage.pause.back`, `profile` → `profile.title`, else
-  `common.menu`). `PlayFlow.backLabel` (renamed from `settingsBackLabel`)
+- **One back target**: `stage-screens.ts` gets `backLabelKey(screen, paused)`,
+  the text naming where `PlayFlow.back()` leads: `parentScreen(screen)`'s
+  (`profile` → `profile.title`, else `common.menu`), and `stage.pause.back`
+  where that is the menu while paused, since the stage shows the pause menu
+  for the menu then. `PlayFlow.backLabel` (renamed from `settingsBackLabel`)
   translates it for the open screen; the game passes it to the settings and
   the achievements screen, which loses its hard-coded label and takes a
-  `backLabel` input like the settings. `PlayFlow.back()` stays as it is (on a
-  pause, showing `menu` already shows the pause panel).
+  required `backLabel` input like the settings'. `PlayFlow.back()` stays as
+  it is.
+- **The mixins sit before a rule's first nested rule**, after its
+  declarations, so Sass emits each rule once, as before (the main menu's tile
+  keeps it first: its `font-weight` and `line-height` must follow
+  `font: inherit`). The profile editor's own `.visually-hidden` gives way to
+  the CDK class.
 
 ## Acceptance
 

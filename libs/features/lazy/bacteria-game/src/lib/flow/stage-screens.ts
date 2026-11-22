@@ -29,27 +29,25 @@ export function parentScreen(screen: MenuScreen): MenuScreen {
   return PARENT_OF[screen] ?? 'menu';
 }
 
-/** Where the way back from a screen leads: a menu screen, or the pause menu. */
-export type BackTarget = MenuScreen | 'pause';
-
-/**
- * Where the way back from the open screen leads: the pause menu while the
- * match is paused, which only the settings open on top of, else the screen
- * it was opened from.
- */
-export function backTarget(screen: MenuScreen, paused: boolean): BackTarget {
-  return paused ? 'pause' : parentScreen(screen);
-}
-
-/** The texts naming where the way back leads, the menu's unless listed. */
-const BACK_LABEL_KEYS: Readonly<Partial<Record<BackTarget, TranslationKey>>> = {
-  pause: 'stage.pause.back',
+/** The texts naming the screens a way back leads to, the menu's unless listed. */
+const BACK_LABEL_KEYS: Readonly<Partial<Record<MenuScreen, TranslationKey>>> = {
   profile: 'profile.title',
 };
 
-/** The text naming a way back's target, for the screen's back button. */
-export function backLabelKey(target: BackTarget): TranslationKey {
-  return BACK_LABEL_KEYS[target] ?? 'common.menu';
+/**
+ * Names where the way back from a screen leads (`parentScreen`), for its
+ * back button - the pause menu instead of the menu while the match is
+ * paused, as the stage shows the pause menu for the menu then.
+ */
+export function backLabelKey(
+  screen: MenuScreen,
+  paused: boolean
+): TranslationKey {
+  const parent = parentScreen(screen);
+  if (paused && parent === 'menu') {
+    return 'stage.pause.back';
+  }
+  return BACK_LABEL_KEYS[parent] ?? 'common.menu';
 }
 
 /** True for `screen` itself and the screens opened from it. */

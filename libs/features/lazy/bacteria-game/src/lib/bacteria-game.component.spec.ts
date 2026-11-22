@@ -550,18 +550,13 @@ describe('BacteriaGameComponent', () => {
       expect(component['flow'].backLabel()).toBe('Menü');
     });
 
-    it('names where the way back leads from the open screen', () => {
+    it('names the profile as the way back from the achievements, in German', () => {
       create();
-      const flow = component['flow'];
-      flow.show('achievements');
-      expect(flow.backLabel()).toBe('Profile');
-
-      flow.show('settings');
-      expect(flow.backLabel()).toBe('Menu');
-
       TestBed.inject(I18nService).setLanguage('de');
-      flow.show('achievements');
-      expect(flow.backLabel()).toBe('Profil');
+
+      component['flow'].show('achievements');
+
+      expect(component['flow'].backLabel()).toBe('Profil');
     });
   });
 

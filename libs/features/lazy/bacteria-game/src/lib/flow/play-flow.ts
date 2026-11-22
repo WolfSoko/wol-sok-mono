@@ -38,12 +38,7 @@ import {
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { playKindOf } from './play-kind';
-import {
-  backLabelKey,
-  backTarget,
-  opensFrom,
-  parentScreen,
-} from './stage-screens';
+import { backLabelKey, opensFrom, parentScreen } from './stage-screens';
 import type { MenuScreen, StagePanel } from './stage-screens';
 
 /**
@@ -136,7 +131,7 @@ export class PlayFlow {
    * profile or the menu - for its back button.
    */
   public readonly backLabel = computed(() =>
-    this.i18n.t(backLabelKey(backTarget(this.screen(), this.hud.paused())))
+    this.i18n.t(backLabelKey(this.screen(), this.hud.paused()))
   );
 
   public constructor() {

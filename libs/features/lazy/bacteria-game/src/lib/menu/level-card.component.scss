@@ -7,8 +7,6 @@
 
 .level-card {
   @include screen.panel;
-  @include screen.tile;
-
   // The colours of the level's arena, where it has them.
   background: linear-gradient(
     160deg,
@@ -24,6 +22,8 @@
   padding: 0.85rem 1rem;
   border-radius: 1rem;
   text-align: left;
+
+  @include screen.tile;
 
   &:hover:not(:disabled) {
     border-color: var(--bw-line-strong);

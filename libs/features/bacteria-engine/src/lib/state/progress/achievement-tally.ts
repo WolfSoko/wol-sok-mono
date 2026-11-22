@@ -11,10 +11,7 @@ export interface AchievementTally {
   readonly percent: number;
 }
 
-/**
- * Counts the achievements earned of those the game has, ignoring unknown
- * ids - the one count XP, the main menu and the profile take.
- */
+/** Counts the achievements earned of those the game has, ignoring unknown ids. */
 export function achievementTally(
   achievements: Progress['achievements']
 ): AchievementTally {

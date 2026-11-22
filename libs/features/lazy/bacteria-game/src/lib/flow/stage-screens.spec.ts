@@ -1,6 +1,5 @@
 import {
   backLabelKey,
-  backTarget,
   MenuScreen,
   opensFrom,
   parentScreen,
@@ -32,21 +31,13 @@ describe('opensFrom', () => {
   });
 });
 
-describe('backTarget', () => {
-  it('leads back to the pause menu while the match is paused', () => {
-    expect(backTarget('settings', true)).toBe('pause');
-  });
-
-  it('leads back to the parent screen otherwise', () => {
-    expect(backTarget('achievements', false)).toBe('profile');
-    expect(backTarget('settings', false)).toBe('menu');
-  });
-});
-
 describe('backLabelKey', () => {
-  it('names the pause menu, the profile and the menu', () => {
-    expect(backLabelKey('pause')).toBe('stage.pause.back');
-    expect(backLabelKey('profile')).toBe('profile.title');
-    expect(backLabelKey('menu')).toBe('common.menu');
+  it('names the screen the way back leads to', () => {
+    expect(backLabelKey('achievements', false)).toBe('profile.title');
+    expect(backLabelKey('settings', false)).toBe('common.menu');
+  });
+
+  it('names the pause menu for the menu while the match is paused', () => {
+    expect(backLabelKey('settings', true)).toBe('stage.pause.back');
   });
 });
