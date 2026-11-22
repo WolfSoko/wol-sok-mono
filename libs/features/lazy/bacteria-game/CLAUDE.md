@@ -637,7 +637,9 @@ play each other.
   raymarched SDF in an orthographic view, so a lobe sits right under its
   button), drawn by `bacterium-renderer.ts` at 30 fps at most and 1.5
   device pixels a CSS pixel. No three.js: it would break the
-  `allScript` budget. The parts are real buttons and links over the
+  `allScript` budget. The main menu loads it in a `@defer` block, its own
+  chunk, so a player without the toggle downloads none of it; specs await
+  `whenStable()` before they look for it. The parts are real buttons and links over the
   canvas, which is `aria-hidden`. `BACTERIUM_RENDERER` answers null
   without WebGL2, on a software renderer (SwiftShader takes about 200 ms a
   frame) or for a shader the device refuses; then a CSS cell with the same
