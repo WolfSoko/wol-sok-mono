@@ -12,7 +12,8 @@ import { RankBadgeComponent } from './rank-badge.component';
 
 /**
  * Where an XP count stands: the rank's emblem and name, the XP and the bar
- * towards the next rank. The main menu's card and the profile show it.
+ * towards the next rank. The main menu's card and the profile's player card
+ * show it.
  */
 @Component({
   selector: 'feat-lazy-bac-game-rank-standing',
@@ -21,11 +22,13 @@ import { RankBadgeComponent } from './rank-badge.component';
     @let rank = standing();
     @let name = rankKey(rank.rank.id) | t;
     <div class="rank">
-      <feat-lazy-bac-game-rank-badge
-        [name]="name"
-        [number]="rank.number"
-        [size]="badgeSize()"
-      />
+      @if (emblem()) {
+        <feat-lazy-bac-game-rank-badge
+          [name]="name"
+          [number]="rank.number"
+          [size]="badgeSize()"
+        />
+      }
       <span class="rank-text">
         <span class="rank-label">{{
           'match.rank.of' | t: { number: rank.number, count: rankCount }
@@ -56,6 +59,8 @@ export class RankStandingComponent {
   public readonly xp = input.required<number>();
   /** The emblem's width and height in CSS pixels. */
   public readonly badgeSize = input(64);
+  /** False leaves the emblem out, where the screen shows it elsewhere. */
+  public readonly emblem = input(true);
 
   protected readonly standing = computed(() => rankFor(this.xp()));
   protected readonly rankCount = RANKS.length;

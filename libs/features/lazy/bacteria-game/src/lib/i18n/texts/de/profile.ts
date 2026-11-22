@@ -15,9 +15,15 @@ export const profile: Translation<typeof en> = {
     couchMatches: 'Matches zu zweit',
   },
   tally: 'Medaillen nach Metall',
+  card: {
+    local: 'Deine Kolonie',
+    motto: '„{motto}“',
+  },
   achievements: {
     title: 'Erfolge',
     earned: 'Freigeschaltet am {date}',
+    progress: 'Freigeschaltete Erfolge',
+    locked: 'Noch nicht freigeschaltet',
   },
   cabinet: {
     title: 'Medaillen',

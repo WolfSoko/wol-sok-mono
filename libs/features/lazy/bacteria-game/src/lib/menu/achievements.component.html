@@ -1,0 +1,40 @@
+<feat-lazy-bac-game-screen-header
+  [title]="'profile.achievements.title' | t"
+  [backLabel]="'profile.title' | t"
+  (back)="back.emit()"
+/>
+
+<feat-lazy-bac-game-achievement-count
+  class="progress"
+  [large]="true"
+  [tally]="tally()"
+/>
+
+<ul class="achievements">
+  @for (achievement of achievementList(); track achievement.id) {
+    @let earned = achievement.earnedOn !== null;
+    <li [class.earned]="earned">
+      @let name = achievement.name | t;
+      <span class="badge" aria-hidden="true">
+        @if (earned) {
+          {{ name[0] }}
+        } @else {
+          <mat-icon>lock</mat-icon>
+        }
+      </span>
+      <span class="achievement-text">
+        <span class="achievement-name">{{ name }}</span>
+        <span class="achievement-note">
+          @if (achievement.earnedOn; as day) {
+            {{ "profile.achievements.earned" | t: { date: formatDay()(day) } }}
+          } @else {
+            <span class="cdk-visually-hidden"
+              >{{ "profile.achievements.locked" | t }}:
+            </span>
+            {{ achievement.condition | gameText }}
+          }
+        </span>
+      </span>
+    </li>
+  }
+</ul>

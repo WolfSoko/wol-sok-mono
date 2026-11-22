@@ -4,6 +4,7 @@ export type MenuScreen =
   | 'new-game'
   | 'colony'
   | 'profile'
+  | 'achievements'
   | 'friends'
   | 'settings'
   | 'help'
@@ -15,3 +16,22 @@ export type MenuScreen =
 
 /** What is laid over the arena right now, nothing while a match is on. */
 export type StagePanel = MenuScreen | 'pause' | 'over' | null;
+
+/** The screens opened from another screen than the menu, and that screen. */
+const PARENT_OF: Readonly<Partial<Record<MenuScreen, MenuScreen>>> = {
+  achievements: 'profile',
+};
+
+/** Where the way back from a screen leads: the menu, unless it was opened elsewhere. */
+export function parentScreen(screen: MenuScreen): MenuScreen {
+  return PARENT_OF[screen] ?? 'menu';
+}
+
+/** True for `screen` itself and the screens opened from it. */
+export function opensFrom(panel: StagePanel, screen: MenuScreen): boolean {
+  return (
+    panel === screen ||
+    (panel !== null &&
+      (PARENT_OF as Record<string, MenuScreen>)[panel] === screen)
+  );
+}

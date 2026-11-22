@@ -13,9 +13,15 @@ export const profile = {
     couchMatches: 'Two-player matches',
   },
   tally: 'Medallions by metal',
+  card: {
+    local: 'Your colony',
+    motto: '“{motto}”',
+  },
   achievements: {
     title: 'Achievements',
     earned: 'Earned {date}',
+    progress: 'Achievements earned',
+    locked: 'Not earned yet',
   },
   cabinet: {
     title: 'Medallions',

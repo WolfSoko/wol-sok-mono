@@ -1,0 +1,81 @@
+@use '@angular/cdk';
+@use 'screen';
+
+// "Locked:" before a condition, for a screen reader.
+@include cdk.a11y-visually-hidden;
+
+:host {
+  @include screen.screen;
+}
+
+.progress {
+  @include screen.panel;
+
+  padding: 1rem 1.25rem;
+}
+
+.achievements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px dashed var(--bw-line);
+    border-radius: 0.9rem;
+    background: var(--bw-surface);
+
+    &.earned {
+      border: 1px solid var(--bw-gold);
+      background: var(--bw-surface-raised);
+      box-shadow: 0 0 14px -6px var(--bw-gold);
+
+      .badge {
+        background: var(--bw-gold);
+        color: var(--bw-ground);
+      }
+    }
+  }
+}
+
+.badge {
+  @include screen.figure;
+
+  flex: 0 0 2.5rem;
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  // A hexagon, as the rank emblems are.
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--bw-surface-raised);
+  color: var(--bw-faint);
+  font-size: 1.1rem;
+
+  .mat-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+}
+
+.achievement-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.achievement-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.achievement-note {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}

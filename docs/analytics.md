@@ -84,7 +84,8 @@ Usage statistics and the button in the privacy policy change it. Choice in
 `localStorage` `bacteria-wars-stats-consent`.
 
 The game keeps one URL, so its screens are `screen_view` events
-(`firebase_screen`: `menu`, `new-game`, `colony`, `profile`, `friends`,
+(`firebase_screen`: `menu`, `new-game`, `colony`, `profile`,
+`achievements`, `friends`,
 `settings`, `help`, `evolution`, `leaderboards`, `my-matches`, `replay`,
 `pause`, `over`, `match`), from the stage's panel (`trackScreenViews`). The
 routes (`/`, `/privacy`, `/impressum`, `/watch/:publicId`, `/admin`) are

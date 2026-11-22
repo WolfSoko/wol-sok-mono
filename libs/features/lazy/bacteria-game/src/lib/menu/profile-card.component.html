@@ -1,0 +1,47 @@
+@let rank = standing();
+@let rankName = rankKey(rank.rank.id) | t;
+@let shown = player();
+<div class="emblem">
+  <span class="dish">
+    @if (shown) {
+      <feat-lazy-bac-game-avatar
+        [avatar]="shown.avatar"
+        [size]="pictureSize"
+        [label]="shown.name"
+      />
+    } @else {
+      <feat-lazy-bac-game-rank-badge
+        [name]="rankName"
+        [number]="rank.number"
+        [size]="emblemSize"
+      />
+    }
+  </span>
+  @if (shown) {
+    <feat-lazy-bac-game-rank-badge
+      class="pin"
+      [name]="rankName"
+      [number]="rank.number"
+      [size]="pinSize"
+    />
+  }
+</div>
+
+<div class="who">
+  <h3 class="name">{{ shown?.name ?? ("profile.card.local" | t) }}</h3>
+  @if (shown?.motto; as motto) {
+    <p class="motto">{{ "profile.card.motto" | t: { motto } }}</p>
+  }
+  <feat-lazy-bac-game-rank-standing
+    class="standing"
+    [xp]="xp()"
+    [emblem]="false"
+  />
+</div>
+
+<button type="button" class="trophies" (click)="achievements.emit()">
+  <feat-lazy-bac-game-achievement-count class="count" [tally]="tally()">
+    <span class="trophies-title">{{ "profile.achievements.title" | t }}</span>
+  </feat-lazy-bac-game-achievement-count>
+  <mat-icon class="chevron" aria-hidden="true">chevron_right</mat-icon>
+</button>

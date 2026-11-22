@@ -12,6 +12,7 @@ import { LEVELS, replayOf } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from '../state/player.store';
 import { stubActivation, stubFullscreen } from '../../testing/fullscreen-stubs';
 import { LabPass } from '../guest/lab-pass.service';
+import { GameSoundService } from '../sound/game-sound.service';
 import { PlayFlow } from './play-flow';
 
 describe('PlayFlow', () => {
@@ -47,7 +48,7 @@ describe('PlayFlow', () => {
   describe('the screens', () => {
     it('tells the Lab Pass when the player moves on to another screen', () => {
       TestBed.resetTestingModule();
-      const labPass = { moveOn: jest.fn() };
+      const labPass = { moveOn: jest.fn(), endOnboarding: jest.fn() };
       TestBed.configureTestingModule({
         providers: [
           ...STAGE_PROVIDERS,
@@ -66,6 +67,42 @@ describe('PlayFlow', () => {
       screens.show('settings');
       TestBed.tick();
       expect(labPass.moveOn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('the Lab Pass welcome', () => {
+    it('stays on the achievements and ends once the player leaves the profile', () => {
+      const labPass = TestBed.inject(LabPass);
+      flow.show('profile');
+      TestBed.tick();
+      labPass.startOnboarding();
+
+      flow.show('achievements');
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(true);
+
+      flow.back();
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(true);
+
+      flow.back();
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(false);
+    });
+  });
+
+  describe('the way back', () => {
+    it('leads from a screen to where it was opened, with a step', () => {
+      const navigate = jest.spyOn(TestBed.inject(GameSoundService), 'navigate');
+      flow.show('profile');
+      flow.show('achievements');
+      navigate.mockClear();
+
+      flow.back();
+      expect(flow.screen()).toBe('profile');
+      flow.back();
+      expect(flow.screen()).toBe('menu');
+      expect(navigate).toHaveBeenCalledTimes(2);
     });
   });
 

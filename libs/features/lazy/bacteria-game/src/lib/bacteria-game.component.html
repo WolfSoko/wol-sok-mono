@@ -187,7 +187,7 @@
               (seriesLengthChange)="setup.selectSeriesLength($event)"
               (headStartChange)="setup.selectHeadStart($event)"
               (start)="flow.startNewGame($event)"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("colony") {
@@ -198,25 +198,39 @@
               [locked]="hud.running()"
               [colorLocks]="progress.colorLocks()"
               (colorChange)="setup.selectColor($event)"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("profile") {
-            <feat-lazy-bac-game-profile
-              class="screen"
-              [medals]="progress.medals()"
-              [achievements]="progress.achievements()"
-              [totals]="progress.totals()"
-              [xp]="progress.xp()"
-              (back)="flow.show('menu')"
-            />
+            <!-- Not needed to start the game: loaded when first opened. -->
+            @defer (on immediate) {
+              <feat-lazy-bac-game-profile
+                class="screen"
+                [medals]="progress.medals()"
+                [achievements]="progress.achievements()"
+                [totals]="progress.totals()"
+                [xp]="progress.xp()"
+                (back)="flow.back()"
+                (openAchievements)="flow.show('achievements')"
+              />
+            }
+          }
+          @case ("achievements") {
+            <!-- Not needed to start the game: loaded when first opened. -->
+            @defer (on immediate) {
+              <feat-lazy-bac-game-achievements
+                class="screen"
+                [achievements]="progress.achievements()"
+                (back)="flow.back()"
+              />
+            }
           }
           @case ("friends") {
             <feat-lazy-bac-game-friends-screen
               class="screen"
               [canChallenge]="onlineFlow.lobby().phase === 'idle'"
               (challenge)="onlineFlow.challengeFriend($event)"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("settings") {
@@ -237,39 +251,39 @@
               [arenaLocks]="progress.arenaLocks()"
               [activeArena]="campaign.activeArena()"
               (nativeFullscreenChange)="stageFullscreen.setNative($event)"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("evolution") {
             <feat-lazy-bac-game-evolution
               class="screen"
               [color]="hud.colonyRgb()[0]"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("leaderboards") {
             <feat-lazy-bac-game-leaderboards
               class="screen"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("my-matches") {
             <feat-lazy-bac-game-my-matches
               class="screen"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("replay") {
             <feat-lazy-bac-game-replay-screen
               class="screen"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
           @case ("help") {
             <feat-lazy-bac-game-help
               class="screen"
               [colorNames]="hud.colorNames()"
-              (back)="flow.show('menu')"
+              (back)="flow.back()"
             />
           }
         }
