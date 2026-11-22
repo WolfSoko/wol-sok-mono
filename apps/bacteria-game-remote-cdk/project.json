@@ -10,6 +10,7 @@
   },
   "targets": {
     "deploy": {
+      "inputs": ["production", "^production"],
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",
       "options": {
         "output": "{workspaceRoot}/dist/{projectRoot}",
