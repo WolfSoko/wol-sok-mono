@@ -1,9 +1,17 @@
+import { MAX_FLAGELLA } from './bacterium-look';
+
 /** The most lobes the shader draws: every item but the nucleus. */
 export const MAX_LOBES = 9;
 
+/** How far each flagellum turns about the long axis from the first. */
+const FLAGELLUM_TURNS = Array.from({ length: MAX_FLAGELLA }, (_, i) => {
+  const angle = i * 2.1;
+  return `vec2(${Math.cos(angle).toFixed(5)}, ${Math.sin(angle).toFixed(5)})`;
+}).join(', ');
+
 /** A triangle covering the canvas; the fragment shader does the rest. */
 export const BACTERIUM_VERTEX = `#version 300 es
-in vec2 aCorner;
+layout(location = 0) in vec2 aCorner;
 out vec2 vUv;
 void main() {
   vUv = aCorner;
@@ -18,9 +26,10 @@ void main() {
  * the menu's lobes smoothly joined to it at the anchors the buttons sit
  * on, and what the player's rank adds - pili round the membrane, flagella
  * from the poles, organelles glowing through. The body turns about its
- * long axis; the lobes stay put under their buttons. The lobe `uHot`
- * names swells and lights up (-1 none, `MAX_LOBES` the nucleus, which
- * glows brighter).
+ * long axis by `uTurn` (its cosine and sine, the same for every pixel of
+ * a frame); the lobes stay put under their buttons. The lobe `uHot` names
+ * swells by `uHotSwell` and lights up (-1 none, `MAX_LOBES` the nucleus,
+ * which glows brighter).
  */
 export const BACTERIUM_FRAGMENT = `#version 300 es
 precision highp float;
@@ -30,6 +39,8 @@ out vec4 outColor;
 
 uniform float uAspect;
 uniform float uTime;
+uniform vec2 uTurn;
+uniform float uHotSwell;
 uniform vec4 uLobes[${MAX_LOBES}];
 uniform int uLobeCount;
 uniform int uHot;
@@ -44,16 +55,16 @@ uniform vec3 uRim;
 const float HALF_LENGTH = 0.42;
 const float RADIUS = 0.5;
 const int STEPS = 56;
+const vec2 FLAGELLUM_TURNS[${MAX_FLAGELLA}] = vec2[${MAX_FLAGELLA}](${FLAGELLUM_TURNS});
 
 float smin(float a, float b, float k) {
   float h = clamp(0.5 + 0.5 * (b - a) / k, 0.0, 1.0);
   return mix(b, a, h) - k * h * (1.0 - h);
 }
 
-vec3 turnX(vec3 p, float angle) {
-  float c = cos(angle);
-  float s = sin(angle);
-  return vec3(p.x, c * p.y - s * p.z, s * p.y + c * p.z);
+/** p turned about the x axis by the angle whose cosine and sine are cs. */
+vec3 turnX(vec3 p, vec2 cs) {
+  return vec3(p.x, cs.x * p.y - cs.y * p.z, cs.y * p.y + cs.x * p.z);
 }
 
 float body(vec3 p) {
@@ -74,12 +85,12 @@ float pili(vec3 turned) {
 
 float flagella(vec3 turned) {
   float best = 10.0;
-  for (int i = 0; i < 6; i++) {
+  for (int i = 0; i < ${MAX_FLAGELLA}; i++) {
     if (float(i) >= uFlagella) {
       break;
     }
     float side = mod(float(i), 2.0) < 1.0 ? 1.0 : -1.0;
-    vec3 q = turnX(turned, float(i) * 2.1);
+    vec3 q = turnX(turned, FLAGELLUM_TURNS[i]);
     q.x *= side;
     float along = clamp((q.x - 0.78) / 0.55, 0.0, 1.0);
     float wave = 0.07 * along * sin(10.0 * q.x - uTime * 5.0 + float(i));
@@ -97,7 +108,7 @@ float lobes(vec3 p) {
       break;
     }
     vec4 lobe = uLobes[i];
-    float swell = i == uHot ? 1.22 + 0.04 * sin(uTime * 4.0) : 1.0;
+    float swell = i == uHot ? uHotSwell : 1.0;
     vec3 centre = vec3(lobe.x * uAspect, lobe.y, 0.12);
     best = min(best, length(p - centre) - lobe.z * swell);
   }
@@ -105,7 +116,7 @@ float lobes(vec3 p) {
 }
 
 float cell(vec3 p) {
-  vec3 turned = turnX(p, uTime * 0.35);
+  vec3 turned = turnX(p, uTurn);
   float d = body(p) - pili(turned);
   d = smin(d, lobes(p), 0.14);
   return min(d, flagella(turned));
@@ -120,7 +131,7 @@ vec3 normalAt(vec3 p) {
 
 /** The organelles' light reaching the membrane at p. */
 float organelleGlow(vec3 p) {
-  vec3 turned = turnX(p * 1.15, uTime * 0.35);
+  vec3 turned = turnX(p * 1.15, uTurn);
   float sum = 0.0;
   for (int i = 0; i < 8; i++) {
     if (float(i) >= uOrganelles) {

@@ -64,20 +64,6 @@ export const BACTERIUM_ANCHORS: Readonly<
   gallery: rim(355, 0.15),
 };
 
-/** The order the items are read in: the nucleus, then round the rim. */
-const ORDER: readonly BacteriumItemId[] = [
-  'play',
-  'online',
-  'training',
-  'colony',
-  'evolution',
-  'profile',
-  'friends',
-  'leaderboards',
-  'my-matches',
-  'gallery',
-];
-
 /** A menu item on the cell: its text, icon, badge and where it leads. */
 export interface BacteriumItem {
   id: BacteriumItemId;
@@ -108,43 +94,39 @@ export interface BacteriumMenuState {
   gallery: { url: string; external: boolean };
 }
 
-/** The items the cell offers, in reading order. */
+/**
+ * The items the cell offers in reading order: the nucleus, then round the
+ * rim.
+ */
 export function bacteriumItems(state: BacteriumMenuState): BacteriumItem[] {
-  const items: Record<BacteriumItemId, BacteriumItem | null> = {
-    play: item('play', 'newGame.title', 'play_arrow'),
-    online: state.online
-      ? item('online', 'newGame.modes.online.name', 'public')
-      : null,
-    training: state.training
-      ? item('training', 'training.menu.title', 'school')
-      : null,
-    colony: item('colony', 'colony.title', 'bubble_chart', {
+  return [
+    item('play', 'newGame.title', 'play_arrow'),
+    state.online ? item('online', 'newGame.modes.online.name', 'public') : null,
+    state.training ? item('training', 'training.menu.title', 'school') : null,
+    item('colony', 'colony.title', 'bubble_chart', {
       count: state.colonyDna,
       countKey: 'colony.menu.ready',
     }),
-    evolution: item('evolution', 'evolution.menu.tile', 'biotech', {
+    item('evolution', 'evolution.menu.tile', 'biotech', {
       count: state.evolveDna,
       countKey: 'evolution.menu.ready',
     }),
-    profile: item('profile', 'profile.title', 'person'),
-    friends: state.friends
+    item('profile', 'profile.title', 'person'),
+    state.friends
       ? item('friends', 'social.friends.title', 'group', {
           count: state.friendRequests,
           countKey: 'menu.friendRequests',
         })
       : null,
-    leaderboards: state.leaderboards
+    state.leaderboards
       ? item('leaderboards', 'boards.title', 'leaderboard')
       : null,
-    'my-matches': item('my-matches', 'replay.matches.title', 'smart_display'),
-    gallery: {
+    item('my-matches', 'replay.matches.title', 'smart_display'),
+    {
       ...item('gallery', 'menu.gallery', 'video_library'),
       link: state.gallery,
     },
-  };
-  return ORDER.map((id) => items[id]).filter(
-    (entry): entry is BacteriumItem => entry !== null
-  );
+  ].filter((entry): entry is BacteriumItem => entry !== null);
 }
 
 function item(

@@ -1,8 +1,10 @@
-import { type Rgb as ColonyRgb } from '@wolsok/feat-bacteria-rendering';
-import { RANKS, rankFor } from '@wolsok/feat-shared-bacteria-engine';
-
-/** An RGB colour, each channel 0 to 1, as the shader takes it. */
-export type Rgb = readonly [number, number, number];
+import { mix, type Rgb } from '@wolsok/feat-bacteria-rendering';
+import {
+  DEFAULT_COLORS,
+  getColonyColor,
+  RANKS,
+  rankFor,
+} from '@wolsok/feat-shared-bacteria-engine';
 
 /**
  * What the main menu's bacterium looks like at a player's progress (#3194):
@@ -23,15 +25,20 @@ export interface BacteriumLook {
   glow: number;
   /** How much the membrane breathes, in the cell's half height. */
   wobble: number;
-  /** The membrane's colour (by rank) and the rim light's (the player's). */
+  /**
+   * The membrane's colour (by rank) and the rim light's (the player's),
+   * each channel 0 to 1, as the shader takes them.
+   */
   body: Rgb;
   rim: Rgb;
 }
 
-/** The rim's colour where no colony colour is given: the game's green. */
-export const DEFAULT_PLAYER_RGB: ColonyRgb = [76, 175, 80];
+/** The rim's colour where no colony colour is given: the first player's. */
+export const DEFAULT_PLAYER_RGB: Rgb = getColonyColor(DEFAULT_COLORS[0]).rgb;
 
-const MAX_FLAGELLA = 6;
+/** The most flagella a cell grows. */
+export const MAX_FLAGELLA = 6;
+
 const MAX_PILI = 24;
 const MAX_ORGANELLES = 8;
 
@@ -47,7 +54,7 @@ const BODIES: readonly Rgb[] = [
  * The look a player's XP earns, its rim lit in `player`, their colony's
  * colour (0 to 255 a channel, as the arena's palette holds it).
  */
-export function bacteriumLook(xp: number, player: ColonyRgb): BacteriumLook {
+export function bacteriumLook(xp: number, player: Rgb): BacteriumLook {
   const standing = rankFor(xp);
   const growth = Math.min(
     1,
@@ -70,19 +77,11 @@ function blend(growth: number): Rgb {
   const at = growth * (BODIES.length - 1);
   const low = BODIES[Math.floor(at)];
   const high = BODIES[Math.min(BODIES.length - 1, Math.floor(at) + 1)];
-  return mixRgb(low, high, at - Math.floor(at));
-}
-
-function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {
-  return [
-    a[0] + (b[0] - a[0]) * t,
-    a[1] + (b[1] - a[1]) * t,
-    a[2] + (b[2] - a[2]) * t,
-  ];
+  return mix(low, high, at - Math.floor(at));
 }
 
 /** A colour as CSS `rgb()`, for the cell drawn without WebGL. */
-export function cssRgb([r, g, b]: Rgb, alpha = 1): string {
+export function cssRgb([r, g, b]: Rgb): string {
   const channel = (value: number) => Math.round(value * 255);
-  return `rgb(${channel(r)} ${channel(g)} ${channel(b)} / ${alpha})`;
+  return `rgb(${channel(r)} ${channel(g)} ${channel(b)})`;
 }

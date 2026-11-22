@@ -50,8 +50,8 @@
   color: var(--bw-soft);
 }
 
-// Holds the bacterium's box while its chunk loads, so nothing jumps.
-.bacterium-space {
+// The bacterium's box, held while its chunk loads, so nothing jumps.
+.bacterium {
   width: 100%;
   max-width: 34rem;
   aspect-ratio: 4 / 3;

@@ -165,6 +165,6 @@ describe('bacteriumLook', () => {
   });
 
   it('writes its colours as CSS', () => {
-    expect(cssRgb([1, 0.5, 0], 0.5)).toBe('rgb(255 128 0 / 0.5)');
+    expect(cssRgb([1, 0.5, 0])).toBe('rgb(255 128 0)');
   });
 });

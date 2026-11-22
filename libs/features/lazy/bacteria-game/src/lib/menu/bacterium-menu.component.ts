@@ -13,10 +13,12 @@ import {
   untracked,
   viewChild,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import {
   prefersReducedMotion,
-  type Rgb as ColonyRgb,
+  type Rgb,
+  rgba,
 } from '@wolsok/feat-bacteria-rendering';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import {
@@ -55,7 +57,7 @@ const FRAME_MS = 1000 / 30;
  */
 @Component({
   selector: 'feat-lazy-bac-game-bacterium-menu',
-  imports: [MatIconModule, TranslatePipe],
+  imports: [MatIconModule, NgTemplateOutlet, TranslatePipe],
   templateUrl: './bacterium-menu.component.html',
   styleUrl: './bacterium-menu.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -72,7 +74,7 @@ export class BacteriumMenuComponent {
   /** The player's XP, which the cell's look grows with. */
   public readonly xp = input(0);
   /** The player's colony colour, 0 to 255 a channel: the rim light's. */
-  public readonly player = input<ColonyRgb>(DEFAULT_PLAYER_RGB);
+  public readonly player = input<Rgb>(DEFAULT_PLAYER_RGB);
 
   /** A part picked that is no link. */
   public readonly pick = output<BacteriumItemId>();
@@ -82,7 +84,7 @@ export class BacteriumMenuComponent {
   );
   protected readonly colours = computed(() => ({
     body: cssRgb(this.look().body),
-    rim: cssRgb(this.look().rim),
+    rim: rgba(this.player()),
   }));
   /** True where the cell is drawn with CSS rather than WebGL. */
   protected readonly fallback = signal(false);
@@ -90,7 +92,7 @@ export class BacteriumMenuComponent {
   protected readonly hot = signal<BacteriumItemId | null>(null);
 
   /** The lobes round the rim: every part but the nucleus. */
-  private readonly lobes = computed(() =>
+  protected readonly lobes = computed(() =>
     this.items().filter((item) => item.id !== 'play')
   );
 

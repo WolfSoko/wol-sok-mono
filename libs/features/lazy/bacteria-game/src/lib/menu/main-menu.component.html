@@ -46,19 +46,20 @@
       />
     }
     @if (showsBacterium()) {
-      <!-- Its own chunk: only a player with the toggle on downloads it. -->
-      @defer (on immediate) {
-        <feat-lazy-bac-game-bacterium-menu
-          [items]="bacteriumItems()"
-          [xp]="campaign().xp"
-          [player]="playerColor()"
-          [attr.aria-label]="'menu.bacterium.label' | t"
-          role="navigation"
-          (pick)="pickPart($event)"
-        />
-      } @placeholder {
-        <div class="bacterium-space"></div>
-      }
+      <div class="bacterium">
+        <!-- Its own chunk: only a player with the toggle on downloads it.
+             The box holds its place while it loads. -->
+        @defer (on immediate) {
+          <feat-lazy-bac-game-bacterium-menu
+            [items]="bacteriumItems()"
+            [xp]="campaign().xp"
+            [player]="playerColor()"
+            [attr.aria-label]="'menu.bacterium.label' | t"
+            role="navigation"
+            (pick)="pickPart($event)"
+          />
+        }
+      </div>
     } @else {
       <div class="actions">
         <button

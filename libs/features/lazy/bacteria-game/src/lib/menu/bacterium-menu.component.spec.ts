@@ -118,13 +118,13 @@ describe('BacteriumMenuComponent', () => {
     expect(last().lobes).toHaveLength(ITEMS.length - 1);
     expect(last().hot).toBe(-1);
 
-    spot('online')?.dispatchEvent(new Event('focus'));
+    spot('online')?.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
     fixture.detectChanges();
     frame(1000);
     // Online is the first lobe after the nucleus.
     expect(last().hot).toBe(0);
 
-    spot('play')?.dispatchEvent(new Event('pointerenter'));
+    spot('play')?.closest('li')?.dispatchEvent(new Event('pointerenter'));
     fixture.detectChanges();
     frame(2000);
     expect(last().hot).toBe(MAX_LOBES);
