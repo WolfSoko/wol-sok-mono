@@ -19,13 +19,38 @@ describe('nxServer', () => {
     });
   });
 
-  it('only waits inside an Nx task, which starts the server itself', () => {
+  it.each(['e2e', 'e2e-ci', 'e2e-ci--e2e/online.spec.ts'])(
+    'only waits inside its own project’s %s task, where Nx starts the server',
+    (target) => {
+      const server = nxServer('app:emulators', URL, OPTIONS, {
+        NX_TASK_TARGET_PROJECT: 'app',
+        NX_TASK_TARGET_TARGET: target,
+      });
+
+      expect(server.command).toBe(`node ${WAIT_FOR_SERVER_SCRIPT} ${URL} 2000`);
+      expect(server.reuseExistingServer).toBe(true);
+    }
+  );
+
+  // A nested `nx` call inside any other task builds the project graph with
+  // these variables set, and @nx/playwright caches what it inferred under a
+  // key that leaves them out (#3120): the config must read as by hand there.
+  it.each([
+    [
+      'another project’s e2e task',
+      'angular-examples',
+      'e2e-ci--e2e/home.spec.ts',
+    ],
+    ['another project’s test task', 'tools', 'test'],
+    ['its own project’s other task', 'app', 'test-emulator'],
+    ['its own project’s readiness gate', 'app', 'e2e--wait-for-webserver'],
+  ])('starts the Nx target inside %s', (_, project, target) => {
     const server = nxServer('app:emulators', URL, OPTIONS, {
-      NX_TASK_TARGET_PROJECT: 'app',
+      NX_TASK_TARGET_PROJECT: project,
+      NX_TASK_TARGET_TARGET: target,
     });
 
-    expect(server.command).toBe(`node ${WAIT_FOR_SERVER_SCRIPT} ${URL} 2000`);
-    expect(server.reuseExistingServer).toBe(true);
+    expect(server.command).toBe('npx nx run app:emulators');
   });
 
   it('names a waiting script that exists', () => {

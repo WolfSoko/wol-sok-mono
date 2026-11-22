@@ -17,22 +17,37 @@ export interface NxServerOptions {
 export const WAIT_FOR_SERVER_SCRIPT =
   'libs/shared/e2e-server/src/wait-for-server.mjs';
 
-/** Set by Nx in every task it runs. */
-const NX_TASK_ENV = 'NX_TASK_TARGET_PROJECT';
+/** The project and target of the task Nx runs, set in every task. */
+const NX_TASK_PROJECT_ENV = 'NX_TASK_TARGET_PROJECT';
+const NX_TASK_TARGET_ENV = 'NX_TASK_TARGET_TARGET';
+
+/**
+ * The targets that run Playwright, as `@nx/playwright/plugin` infers them
+ * (`targetName` in `nx.json`, the default `ciTargetName` and its atomized
+ * `e2e-ci--<spec file>` tasks), but not its readiness gate
+ * `e2e--wait-for-webserver`, which never loads the config.
+ */
+const PLAYWRIGHT_TARGET = /^e2e(-ci(--.+)?)?$/;
 
 /**
  * The `webServer` entry of the Nx target `target` (`app:serve-e2e`), which
  * serves `url`.
  *
  * Run by hand, Playwright starts the target where nothing answers yet. Run
- * as an Nx task, Nx starts the target as the task's continuous dependency,
- * so Playwright only waits for it: Nx stops and restarts continuous tasks
- * between the batches an Nx Cloud agent runs, and a second start of the
- * same server, from Playwright, fails on its taken ports while the first
- * still boots ("Process from config.webServer exited early"). `@nx/playwright`
- * reads the config outside any task, so it still infers the dependency from
- * the `nx run` command. A hand-written target that runs Playwright needs
- * that dependency too, or its servers never start.
+ * as one of the project's own Playwright tasks, Nx starts the target as the
+ * task's continuous dependency, so Playwright only waits for it: Nx stops and
+ * restarts continuous tasks between the batches an Nx Cloud agent runs, and a
+ * second start of the same server, from Playwright, fails on its taken ports
+ * while the first still boots ("Process from config.webServer exited early").
+ *
+ * Everywhere else the entry reads as by hand, inside other tasks too: a nested
+ * `nx` call in any task (a Playwright `webServer` of another app, a test that
+ * runs `nx show`) builds the project graph with the task's variables set, and
+ * `@nx/playwright` infers the serve dependencies and the readiness gate only
+ * from an `nx run` command. It caches that result under a key that leaves the
+ * task's variables out, so a waiting command read there once dropped the gate
+ * from every later graph on the worker (#3120). A hand-written target that
+ * runs Playwright needs the dependency too, or its servers never start.
  */
 export function nxServer(
   target: string,
@@ -40,13 +55,24 @@ export function nxServer(
   options: NxServerOptions,
   env: Readonly<Record<string, string | undefined>> = process.env
 ): NxServer {
-  const insideNxTask = env[NX_TASK_ENV] !== undefined;
   return {
-    command: insideNxTask
+    command: insideOwnPlaywrightTask(target, env)
       ? `node ${WAIT_FOR_SERVER_SCRIPT} ${url} ${options.timeout}`
       : `npx nx run ${target}`,
     url,
     reuseExistingServer: true,
     ...options,
   };
+}
+
+/** Whether Nx runs a Playwright task of the project that owns `target`. */
+function insideOwnPlaywrightTask(
+  target: string,
+  env: Readonly<Record<string, string | undefined>>
+): boolean {
+  const [project] = target.split(':');
+  return (
+    env[NX_TASK_PROJECT_ENV] === project &&
+    PLAYWRIGHT_TARGET.test(env[NX_TASK_TARGET_ENV] ?? '')
+  );
 }
