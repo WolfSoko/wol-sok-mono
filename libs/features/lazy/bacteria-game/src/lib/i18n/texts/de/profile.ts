@@ -59,7 +59,6 @@ export const profile: Translation<typeof en> = {
       'Ein Gastkonto wird gelöscht, wenn das Spiel {days} Tage lang nicht geöffnet wurde.',
   },
   guest: {
-    title: 'Behalte deinen Fortschritt',
     welcomeBack: 'Schön, dass du wieder da bist!',
     note: 'Du spielst als Gast. Öffnest du das Spiel {days} Tage lang nicht, wird dein Gastkonto gelöscht – und mit ihm dein Fortschritt, deine Freunde und deine Plätze in den Ranglisten. Melde dich mit Google an, dann bleibt alles, auf jedem Gerät.',
     later: 'Später',
@@ -74,5 +73,35 @@ export const profile: Translation<typeof en> = {
       'Deine gespeicherten Matches gehören zu deinem Gastkonto. Melde dich mit Google an, damit sie bleiben.',
     success:
       'Gut gespielt! Melde dich mit Google an, damit du behältst, was du dir verdient hast – auf jedem Gerät.',
+  },
+  labPass: {
+    title: 'Laborausweis',
+    progress: '{done} von {total} erledigt',
+    reward: 'Füll ihn aus und verdiene dir {achievement}.',
+    steps: {
+      'sign-in': 'Mit Google anmelden',
+      profile: 'Profil anlegen',
+      motto: 'Motto schreiben',
+      friend: 'Einen Freund hinzufügen',
+    },
+    hints: {
+      'sign-in':
+        'Melde dich an, damit dein Fortschritt auf jedem Gerät bleibt.',
+      profile: 'Wähle deinen Namen und dein Aussehen.',
+      motto: 'Erzähl den anderen, was deine Kolonie antreibt.',
+      friend:
+        'Füge einen Freund hinzu, um ihn online zu sehen und herauszufordern.',
+    },
+    go: {
+      'sign-in': 'Anmelden',
+      profile: 'Profil anlegen',
+      motto: 'Motto schreiben',
+      friend: 'Freunde finden',
+    },
+    earnedTitle: 'Willkommen im Labor!',
+    earned: 'Du hast {achievement} verdient: +{xp} XP.',
+    close: 'Super',
+    welcome:
+      'Willkommen im Labor, {name}! Wähle Namen und Aussehen und speichere.',
   },
 };

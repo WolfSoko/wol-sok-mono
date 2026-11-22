@@ -18,10 +18,10 @@ describe('GuestNotice', () => {
   beforeEach(() => jest.spyOn(Date, 'now').mockReturnValue(NOW));
   afterEach(() => jest.restoreAllMocks());
 
-  function start(stored?: Partial<GuestVisits>): GuestNotice {
+  function start(stored?: Partial<GuestVisits>, guest = true): GuestNotice {
     TestBed.resetTestingModule();
     account = new FakeGameAccount();
-    account.profile.set({ guest: true, name: null });
+    account.profile.set({ guest, name: guest ? null : 'Ada' });
     device = new LateGameStorage(
       stored === undefined ? {} : { [GUEST_NOTICE_KEY]: stored }
     );
@@ -90,6 +90,22 @@ describe('GuestNotice', () => {
     expect(storedVisits()).toMatchObject({ dismissedAt: expect.any(Number) });
   });
 
+  it('remembers Later even after a signed-in player returns on another day', () => {
+    const notice = start(undefined, false);
+
+    notice.dismiss();
+
+    expect(notice.dismissedLately()).toBe(true);
+    const saved = storedVisits() as GuestVisits;
+    expect(saved.dismissedAt).toBe(NOW);
+
+    jest.spyOn(Date, 'now').mockReturnValue(NOW + 14 * DAY_MS - 1);
+    expect(start(saved, false).dismissedLately()).toBe(true);
+
+    jest.spyOn(Date, 'now').mockReturnValue(NOW + 14 * DAY_MS);
+    expect(start(saved, false).dismissedLately()).toBe(false);
+  });
+
   it('welcomes a guest back after a long pause, put away or not', () => {
     const notice = start({
       days: 1,
@@ -130,5 +146,10 @@ describe('GuestNotice', () => {
 
     expect(notice.visible()).toBe(false);
     expect(notice.successHintDue()).toBe(false);
+    expect(notice.known()).toBe(false);
+    expect(notice.dismissedLately()).toBe(false);
+    device.flush();
+    expect(notice.known()).toBe(true);
+    expect(notice.visible()).toBe(true);
   });
 });

@@ -93,6 +93,10 @@ const GLYPHS: Record<string, string> = {
     <circle cx="184" cy="206" r="42" fill="${ORANGE_BODY}"/>
     <circle cx="328" cy="206" r="42" fill="${BLUE_BODY}"/>
     <path d="M130 344h108M274 344h108" stroke="${CREAM}" stroke-width="${STROKE}" stroke-linecap="round"/>`,
+  // A lab pass: a card with the player's cell and two lines of their name.
+  'lab-member': `<rect x="128" y="168" width="256" height="176" rx="22" stroke="${CREAM}" stroke-width="${STROKE}" fill="none"/>
+    <circle cx="198" cy="236" r="34" fill="${ORANGE_BODY}"/>
+    <path d="M262 226h76M262 262h52M168 304h170" stroke="${SILVER}" stroke-width="18" stroke-linecap="round"/>`,
 };
 
 /** The dish of the app icon, the glyph glowing on its agar. */

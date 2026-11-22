@@ -11,6 +11,7 @@ import { GameState, GameStateStore } from '../state/game.states';
 import { LEVELS, replayOf } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from '../state/player.store';
 import { stubActivation, stubFullscreen } from '../../testing/fullscreen-stubs';
+import { LabPass } from '../guest/lab-pass.service';
 import { PlayFlow } from './play-flow';
 
 describe('PlayFlow', () => {
@@ -42,6 +43,31 @@ describe('PlayFlow', () => {
   function spyOnStart(): jest.SpyInstance {
     return jest.spyOn(flow, 'startGame').mockImplementation(() => undefined);
   }
+
+  describe('the screens', () => {
+    it('tells the Lab Pass when the player moves on to another screen', () => {
+      TestBed.resetTestingModule();
+      const labPass = { moveOn: jest.fn() };
+      TestBed.configureTestingModule({
+        providers: [
+          ...STAGE_PROVIDERS,
+          { provide: LabPass, useValue: labPass },
+        ],
+      });
+      const screens = TestBed.inject(PlayFlow);
+      TestBed.tick();
+      labPass.moveOn.mockClear();
+
+      screens.show('settings');
+      TestBed.tick();
+      expect(labPass.moveOn).toHaveBeenCalledTimes(1);
+
+      // The same screen again is no move.
+      screens.show('settings');
+      TestBed.tick();
+      expect(labPass.moveOn).toHaveBeenCalledTimes(1);
+    });
+  });
 
   describe('a new game', () => {
     it('sets the game up for the mode picked', () => {

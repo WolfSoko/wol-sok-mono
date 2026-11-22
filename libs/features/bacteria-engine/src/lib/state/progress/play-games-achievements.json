@@ -152,5 +152,16 @@
       "name": "Couch-Krieg",
       "description": "Spiele 10 Partien zu zweit"
     }
+  },
+  "lab-member": {
+    "points": 10,
+    "en-US": {
+      "name": "Lab Member",
+      "description": "Complete your Lab Pass"
+    },
+    "de-DE": {
+      "name": "Labormitglied",
+      "description": "Fülle deinen Laborausweis aus"
+    }
   }
 }

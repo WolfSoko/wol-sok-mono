@@ -31,6 +31,14 @@ describe('achievements', () => {
     expect(getAchievement('siege').name).toBe('Siege');
   });
 
+  it('never earns Lab Member by a match: the Lab Pass grants it', () => {
+    const winAll = { ...WIN, boostsFired: 0, durationSec: 30, lost: 0 };
+    expect(earnedBy(winAll)).not.toContain('lab-member');
+    expect(getAchievement('lab-member').earned(EMPTY_PROGRESS, winAll)).toBe(
+      false
+    );
+  });
+
   it('earns nothing for a plain win before the totals count it', () => {
     expect(earnedBy(WIN)).toEqual([]);
   });

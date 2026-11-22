@@ -31,8 +31,10 @@ describe('SignIn', () => {
   });
 
   it('counts a sign-in with Google', async () => {
-    await TestBed.inject(SignIn).signIn();
+    const signIn = TestBed.inject(SignIn);
+    await signIn.signIn();
 
+    expect(signIn.signIns()).toBe(1);
     expect(analytics.events).toEqual([
       { name: 'login', params: { method: 'google' } },
     ]);
@@ -47,11 +49,27 @@ describe('SignIn', () => {
       await signIn.signIn();
 
       expect(signIn.failed()).toBe(how === 'failed');
+      expect(signIn.signIns()).toBe(0);
       expect(analytics.events).toEqual([
         { name: 'login_failed', params: { reason: how } },
       ]);
     }
   );
+
+  it('keeps counting successful sign-ins across a cancellation and sign-out', async () => {
+    const signIn = TestBed.inject(SignIn);
+    await signIn.signIn();
+    await signIn.signOut();
+    expect(signIn.signIns()).toBe(1);
+
+    outcome = 'cancelled';
+    await signIn.signIn();
+    expect(signIn.signIns()).toBe(1);
+
+    outcome = 'signed-in';
+    await signIn.signIn();
+    expect(signIn.signIns()).toBe(2);
+  });
 
   it('counts a sign-out', async () => {
     await TestBed.inject(SignIn).signOut();

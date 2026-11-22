@@ -375,14 +375,27 @@ storage until then. Settings stay with the device either way.
   2026-10-26). `SignIn` is the one way every button signs in and out; it
   waits for `ProgressService.loaded`. The main menu has
   `AccountChipComponent` (sign in, or the player's picture to the profile)
-  and `GuestBannerComponent`; `GuestSignInComponent` is the line on Friends,
-  Leaderboards, My matches and, once per device after a success, the
-  result screen. `GuestNotice` counts the days the game was opened on the
-  device (`GUEST_NOTICE_KEY` in `DeviceStorage`) and shows the banner, which
-  says an unused guest account goes after `GUEST_IDLE_DAYS` (keep it equal
-  to the functions' constant), from the third day or at once after a pause
-  of more than 30 days; "Later" puts it away for two weeks, and the install
-  offer waits behind it. The privacy page names what the device keeps.
+  and the Lab Pass (`LabPassCardComponent`, #3175); `GuestSignInComponent`
+  is the line on Friends, Leaderboards, My matches and, once per device
+  after a success, the result screen. `GuestNotice` counts the days the game
+  was opened on the device (`GUEST_NOTICE_KEY` in `DeviceStorage`) and says
+  when the pass's card adds that an unused guest account goes after
+  `GUEST_IDLE_DAYS` (keep it equal to the functions' constant): from the
+  third day or at once after a pause of more than 30 days; "Later" puts the
+  card away for two weeks. The install offer waits behind the card only
+  while that note is due; otherwise the card waits behind the offer. The
+  privacy page names what the device keeps.
+- The Lab Pass (`guest/lab-pass.ts`, `LabPass`) is the sign-in made a quest:
+  sign in, save a profile, write a motto, add a friend. Its steps follow
+  from what the game knows (nothing of the pass is stored); complete, it
+  grants the achievement `lab-member` through
+  `ProgressService.grantAchievement`, the one achievement no match earns. A
+  sign-in that brings no stored profile opens the profile, whose editor
+  welcomes the player (`LabPass.welcoming`); one made on the profile itself
+  is welcomed by the editor showing there, which takes `onboardingDue`.
+  Either only on the screen of the sign-in: `PlayFlow` calls
+  `LabPass.moveOn` whenever its panel changes, which drops a sign-in not
+  judged yet.
 - `playerIds` follows `players` from the same replaying subject, which keeps
   a switch before it tells anyone: a service that stores right as it hears of
   a switch stores for the next player. Between a sign-out and the next guest

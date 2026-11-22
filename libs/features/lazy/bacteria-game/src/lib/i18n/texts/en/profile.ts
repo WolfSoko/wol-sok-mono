@@ -56,7 +56,6 @@ export const profile = {
       'A guest account is deleted when the game was not opened for {days} days.',
   },
   guest: {
-    title: 'Keep your progress',
     welcomeBack: 'Welcome back!',
     note: 'You play as a guest. If you do not open the game for {days} days, your guest account goes, and with it your progress, your friends and your places on the leaderboards. Sign in with Google and all of it stays, on every device.',
     later: 'Later',
@@ -71,5 +70,33 @@ export const profile = {
       'Your saved matches belong to your guest account. Sign in with Google to keep them.',
     success:
       'Well played! Sign in with Google to keep what you earned, on every device.',
+  },
+  labPass: {
+    title: 'Lab Pass',
+    progress: '{done} of {total} done',
+    reward: 'Complete it to earn {achievement}.',
+    steps: {
+      'sign-in': 'Sign in with Google',
+      profile: 'Make your profile',
+      motto: 'Write a motto',
+      friend: 'Add a friend',
+    },
+    hints: {
+      'sign-in': 'Sign in to keep your progress on every device.',
+      profile: 'Choose your name and your look.',
+      motto: 'Tell other players what drives your colony.',
+      friend: 'Add a friend to see them online and challenge them.',
+    },
+    go: {
+      'sign-in': 'Sign in',
+      profile: 'Make profile',
+      motto: 'Write motto',
+      friend: 'Find friends',
+    },
+    earnedTitle: 'Welcome to the lab!',
+    earned: 'You earned {achievement}: +{xp} XP.',
+    close: 'Great',
+    welcome:
+      'Welcome to the lab, {name}! Pick your name and your look, then save.',
   },
 };

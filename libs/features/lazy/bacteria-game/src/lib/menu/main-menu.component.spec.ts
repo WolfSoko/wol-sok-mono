@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
@@ -18,6 +19,8 @@ import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
 import { I18nService } from '../i18n/i18n.service';
+import { LabPass } from '../guest/lab-pass.service';
+import { InstallOffer } from '../support/install-offer.service';
 import { MainMenuComponent } from './main-menu.component';
 
 const CAMPAIGN: CampaignSummary = {
@@ -493,5 +496,95 @@ describe('MainMenuComponent admin tile', () => {
     fixture.detectChanges();
 
     expect(tile(host)?.textContent).toContain('Verwaltung');
+  });
+});
+
+describe('MainMenuComponent and the Lab Pass', () => {
+  function renderWith(pass: Partial<LabPass>) {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [{ provide: LabPass, useValue: pass }],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    const open = jest.fn();
+    fixture.componentInstance.open.subscribe(open);
+    return { fixture, open };
+  }
+
+  it('gives way to the install offer while the pass is not urgent', () => {
+    const urgent = signal(false);
+    const offer = {
+      visible: signal(true),
+      platform: 'other',
+      storeUrl: null,
+      canInstallWebApp: signal(false),
+      dismiss: jest.fn(),
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        {
+          provide: LabPass,
+          useValue: {
+            ...quietPass(),
+            visible: signal(true),
+            urgent,
+            steps: signal([]),
+            next: signal('sign-in'),
+            done: signal(0),
+            justEarned: signal(false),
+            cameBack: signal(false),
+          },
+        },
+        { provide: InstallOffer, useValue: offer },
+      ],
+    });
+    const fixture = TestBed.createComponent(MainMenuComponent);
+    fixture.componentRef.setInput('campaign', CAMPAIGN);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const card = () => host.querySelector('feat-lazy-bac-game-lab-pass-card');
+
+    const install = () =>
+      host.querySelector('feat-lazy-bac-game-install-banner');
+
+    expect(install()).not.toBeNull();
+    expect(card()).toBeNull();
+
+    offer.visible.set(false);
+    fixture.detectChanges();
+    expect(install()).toBeNull();
+    expect(card()).not.toBeNull();
+
+    offer.visible.set(true);
+    urgent.set(true);
+    fixture.detectChanges();
+    expect(install()).toBeNull();
+    expect(card()).not.toBeNull();
+  });
+
+  function quietPass() {
+    return {
+      visible: signal(false),
+      onboardingDue: signal(false),
+      startOnboarding: jest.fn(),
+    };
+  }
+
+  it('opens the profile once a sign-in brought no profile', () => {
+    const pass = quietPass();
+    const { fixture, open } = renderWith(pass);
+    fixture.detectChanges();
+    expect(open).not.toHaveBeenCalled();
+
+    pass.onboardingDue.set(true);
+    pass.startOnboarding.mockImplementation(() =>
+      pass.onboardingDue.set(false)
+    );
+    fixture.detectChanges();
+
+    expect(pass.startOnboarding).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith('profile');
   });
 });

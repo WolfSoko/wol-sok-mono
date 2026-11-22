@@ -407,6 +407,23 @@ describe('ProgressService', () => {
     });
   });
 
+  describe('granting an achievement', () => {
+    it('grants it once, with its XP, and keeps it across visits', () => {
+      const progress = create();
+      const xp = progress.xp();
+
+      expect(progress.grantAchievement('lab-member')).toBe(true);
+      expect(progress.grantAchievement('lab-member')).toBe(false);
+
+      expect(progress.achievements()['lab-member']).toMatch(
+        /^\d{4}-\d{2}-\d{2}$/
+      );
+      expect(progress.xp()).toBe(xp + 50);
+      TestBed.resetTestingModule();
+      expect(create().achievements()['lab-member']).toBeDefined();
+    });
+  });
+
   describe('with storage that answers late', () => {
     let storage: LateGameStorage;
 
@@ -444,6 +461,42 @@ describe('ProgressService', () => {
       });
       expect(progress.medal(dailyLevelId(day), 'hard')).toBeNull();
       jest.useRealTimers();
+    });
+
+    it('grants nothing before the storage has answered', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          achievements: { 'lab-member': '2026-01-02' },
+        },
+      });
+
+      expect(progress.grantAchievement('lab-member')).toBe(false);
+      storage.flush();
+
+      expect(progress.grantAchievement('lab-member')).toBe(false);
+      expect(progress.achievements()['lab-member']).toBe('2026-01-02');
+    });
+
+    it('can grant after a late load without replacing existing progress', () => {
+      const progress = createWith({
+        [PROGRESS_STORAGE_KEY]: {
+          achievements: { 'first-blood': '2026-01-02' },
+          endlessBest: 9,
+        },
+      });
+      expect(progress.grantAchievement('lab-member')).toBe(false);
+      storage.flush();
+
+      expect(progress.grantAchievement('lab-member')).toBe(true);
+      storage.flush();
+
+      expect(storage.stored(PROGRESS_STORAGE_KEY)).toMatchObject({
+        achievements: {
+          'first-blood': '2026-01-02',
+          'lab-member': expect.stringMatching(/^\d{4}-\d{2}-\d{2}$/),
+        },
+        endlessBest: 9,
+      });
     });
 
     it('keeps the deeper endless run, the stored one or the new one', () => {

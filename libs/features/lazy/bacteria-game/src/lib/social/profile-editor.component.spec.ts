@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import {
@@ -8,11 +9,14 @@ import { I18nService } from '../i18n/i18n.service';
 import { GameAccount } from '../storage/game-account';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
+import { LabPass } from '../guest/lab-pass.service';
+import { SignIn } from '../guest/sign-in.service';
 import { ProfileEditorComponent } from './profile-editor.component';
 
 describe('ProfileEditorComponent', () => {
   let social: FakeGameSocial;
   let account: FakeGameAccount;
+  let signIns: ReturnType<typeof signal<number>>;
 
   let fixture: ReturnType<
     typeof TestBed.createComponent<ProfileEditorComponent>
@@ -30,12 +34,92 @@ describe('ProfileEditorComponent', () => {
     TestBed.resetTestingModule();
     social = new FakeGameSocial();
     account = new FakeGameAccount('ada');
+    signIns = signal(0);
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
+        { provide: SignIn, useValue: { signIns } },
         provideFakeGameCloud({ social, presence: new FakeGamePresence() }),
       ],
     });
+  });
+
+  it('welcomes a player who just signed in, from the name', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const labPass = TestBed.inject(LabPass);
+    labPass.startOnboarding();
+    const host = await render();
+
+    expect(host.querySelector('.welcome')?.textContent).toContain(
+      'Welcome to the lab'
+    );
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="name"]')
+    );
+
+    fixture.destroy();
+    expect(labPass.welcoming()).toBe(false);
+  });
+
+  it('keeps the welcome while editing and clears it after saving', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    TestBed.inject(LabPass).startOnboarding();
+    const host = await render();
+    const welcome = () => host.querySelector('.welcome')?.textContent;
+    const name = host.querySelector<HTMLInputElement>('input[name="name"]')!;
+
+    expect(welcome()).toContain('Ada');
+    name.value = 'Cleo';
+    name.dispatchEvent(new Event('input'));
+    fixture.detectChanges();
+    expect(welcome()).toContain('Ada');
+
+    Array.from(host.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Save'))
+      ?.click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(social.get('profiles/ada')).toMatchObject({ name: 'Cleo' });
+    expect(host.querySelector('.welcome')).toBeNull();
+  });
+
+  it('welcomes a sign-in made on the profile itself, there and then', async () => {
+    const labPass = TestBed.inject(LabPass);
+    const host = await render();
+
+    account.profile.set({ guest: false, name: 'Ada' });
+    signIns.set(1);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The main menu, once back, has no onboarding left to open.
+    expect(labPass.onboardingDue()).toBe(false);
+    expect(host.querySelector('.welcome')?.textContent).toContain(
+      'Welcome to the lab'
+    );
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="name"]')
+    );
+  });
+
+  it('opens on the motto when the Lab Pass asks for it', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const labPass = TestBed.inject(LabPass);
+    labPass.focusEditor('motto');
+    const host = await render();
+
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="motto"]')
+    );
+    expect(labPass.editorFocus()).toBeNull();
+  });
+
+  it('welcomes nobody who opens the profile on their own', async () => {
+    account.profile.set({ guest: false, name: 'Ada' });
+    const host = await render();
+
+    expect(host.querySelector('.welcome')).toBeNull();
   });
 
   it('saves the name, the motto and the picture picked', async () => {
