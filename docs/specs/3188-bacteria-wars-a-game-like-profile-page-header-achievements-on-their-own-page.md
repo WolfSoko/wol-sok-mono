@@ -54,7 +54,10 @@ After the change:
 - **The editor is untouched**: `ProfileEditorComponent` keeps its markup,
   its Lab Pass welcome and its field focus. Its section stays first below
   the card, so the Lab Pass's "Make profile" and "Write motto" still land on a
-  visible, focused field (#3175).
+  visible, focused field (#3175). The sign-in's welcome belongs to the
+  profile and the screens opened from it: it ends when the player leaves
+  them (`PlayFlow`, `opensFrom` in `flow/stage-screens.ts`) or saves, not
+  when the editor goes, so a look at the achievements keeps it.
 - **The achievements screen** is `menu/achievements.component.*`
   (`feat-lazy-bac-game-achievements`), a new `MenuScreen` `'achievements'`.
   It takes the list, its day formatting and its texts from the profile
