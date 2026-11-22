@@ -45,6 +45,9 @@ export class AchievementsComponent {
   /** The day each achievement was earned. */
   public readonly achievements = input<Progress['achievements']>({});
 
+  /** Names where the way back leads - the profile, where the screen opens. */
+  public readonly backLabel = input.required<string>();
+
   /** Back to the profile, where the screen was opened. */
   public readonly back = output<void>();
 

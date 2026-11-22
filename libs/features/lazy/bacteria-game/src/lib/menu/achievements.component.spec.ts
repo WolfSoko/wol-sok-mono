@@ -7,6 +7,7 @@ describe('AchievementsComponent', () => {
   function render(achievements: object = {}) {
     const fixture = TestBed.createComponent(AchievementsComponent);
     fixture.componentRef.setInput('achievements', achievements);
+    fixture.componentRef.setInput('backLabel', 'Profile');
     fixture.detectChanges();
     return { fixture, host: fixture.nativeElement as HTMLElement };
   }
@@ -50,7 +51,7 @@ describe('AchievementsComponent', () => {
     expect(lab?.textContent).toContain('Earned 20 Nov 2026');
   });
 
-  it('leads back to the profile', () => {
+  it('leads back where its label says', () => {
     const { fixture, host } = render();
     const back = jest.fn();
     fixture.componentInstance.back.subscribe(back);
@@ -73,6 +74,5 @@ describe('AchievementsComponent', () => {
     expect(item(host, 'Labormitglied')?.textContent).toContain(
       'Fülle deinen Laborausweis aus'
     );
-    expect(host.querySelector('button.back')?.textContent).toContain('Profil');
   });
 });

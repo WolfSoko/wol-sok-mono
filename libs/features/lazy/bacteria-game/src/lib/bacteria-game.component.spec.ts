@@ -306,6 +306,7 @@ describe('BacteriaGameComponent', () => {
 
       component['flow'].show('settings');
       expect(component['flow'].panel()).toBe('settings');
+      expect(component['flow'].backLabel()).toBe('Pause menu');
 
       component.onKeyDown(keyEvent('Escape', document.body));
       expect(component['flow'].panel()).toBe('pause');
@@ -546,7 +547,21 @@ describe('BacteriaGameComponent', () => {
 
       expect(component['hud'].clockLabel()).toBe('Spielzeit');
       expect(component['hud'].difficultyName()).toBe('Schwer');
-      expect(component['flow'].settingsBackLabel()).toBe('Menü');
+      expect(component['flow'].backLabel()).toBe('Menü');
+    });
+
+    it('names where the way back leads from the open screen', () => {
+      create();
+      const flow = component['flow'];
+      flow.show('achievements');
+      expect(flow.backLabel()).toBe('Profile');
+
+      flow.show('settings');
+      expect(flow.backLabel()).toBe('Menu');
+
+      TestBed.inject(I18nService).setLanguage('de');
+      flow.show('achievements');
+      expect(flow.backLabel()).toBe('Profil');
     });
   });
 
