@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.179.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.2...v74.179.3) (2026-11-22)
+
+### Bug Fixes
+
+* **shared-e2e-server:** wait only inside the server's own e2e tasks ([#3203](https://github.com/WolfSoko/wol-sok-mono/issues/3203)) ([007a53a](https://github.com/WolfSoko/wol-sok-mono/commit/007a53a19dc7a6826e36c79efed4150694b73a21)), references [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120)
+
 ## [74.179.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.1...v74.179.2) (2026-11-22)
 
 ### Bug Fixes
