@@ -53,6 +53,16 @@ describe('PrivacyComponent', () => {
     expect(en).toContain('forwards the message to our Gmail inbox');
   });
 
+  it('says the app signs you in to the game with Play Games, in both languages', async () => {
+    const { de, en } = texts(await open());
+
+    expect(de).toContain('meldet die App dich auch im Spiel an');
+    expect(de).toContain('speichern die Spieler-ID zusammen mit der User-ID');
+    expect(en).toContain('the app also signs you in to the game');
+    expect(en).toContain('store the player ID with the user ID');
+    expect(en).toContain('We store neither the code nor the access token');
+  });
+
   it('has each section on the cloud in both languages', async () => {
     const page = await open();
     const pairs = [

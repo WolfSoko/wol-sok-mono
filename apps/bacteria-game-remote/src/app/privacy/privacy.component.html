@@ -589,6 +589,21 @@
       App wickelt Google Play ab; dafür gilt die Datenschutzerklärung von
       Google.
     </p>
+    <p>
+      Mit dieser Anmeldung meldet die App dich auch im Spiel an: Beim Start gibt
+      sie dem Spiel einen einmaligen Code von Google Play Spiele mit, den das
+      Spiel an unsere Cloud Functions (Abschnitt 4) sendet. Sie tauschen ihn bei
+      Google gegen deine Play-Spiele-Spieler-ID und deinen Spielernamen ein und
+      speichern die Spieler-ID zusammen mit der User-ID deines Spielkontos,
+      damit du in der App auf jedem Gerät mit demselben Konto und Spielstand
+      spielst. Hat dein Konto noch keinen Namen, bekommt es deinen Spielernamen,
+      den das Spiel für dein Online-Profil vorschlägt. Den Code und den
+      Zugangsschlüssel, den Google dafür ausgibt, speichern wir nicht. Ein so
+      verknüpftes Konto ist kein Gastkonto mehr und wird nicht nach 90 Tagen
+      ohne Nutzung gelöscht. Rechtsgrundlage ist Art. 6 Abs. 1 lit. b DSGVO, die
+      Bereitstellung deines Spielkontos. Die Verknüpfung besteht, bis du dein
+      Konto löschst (Abschnitt 12).
+    </p>
 
     @switch (ads.networkName) {
       @case ("adinplay") {
@@ -1459,6 +1474,20 @@
       above about the game in the browser applies. The browser's own privacy
       policy applies to the browser. Google Play handles downloading and
       updating the app, under Google's privacy policy.
+    </p>
+    <p>
+      With this sign-in the app also signs you in to the game: on start it hands
+      the game a one-time code from Google Play Games, which the game sends to
+      our Cloud Functions (section 4). They exchange it at Google for your Play
+      Games player ID and player name and store the player ID with the user ID
+      of your game account, so that in the app you play with the same account
+      and progress on every device. If your account has no name yet, it gets
+      your player name, which the game suggests for your online profile. We
+      store neither the code nor the access token Google issues for it. An
+      account linked this way is no guest account any more and is not deleted
+      after 90 days without use. The legal basis is Art. 6(1)(b) GDPR, providing
+      your game account. The link lasts until you delete your account (section
+      12).
     </p>
 
     @switch (ads.networkName) {
