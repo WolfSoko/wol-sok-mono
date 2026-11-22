@@ -38,7 +38,14 @@ export async function runCommandDocument(
     result = await run(uid);
   } catch (error) {
     logger.error('Command failed', { path, error });
-    await answer(db, path, { ok: false, error: 'internal' }, alsoWrite);
+    // The command's error goes on, even if its answer cannot be written.
+    await answer(db, path, { ok: false, error: 'internal' }, alsoWrite).catch(
+      (writeError: unknown) =>
+        logger.error('Could not answer a failed command', {
+          path,
+          error: writeError,
+        })
+    );
     throw error;
   }
   return answer(db, path, result, alsoWrite);

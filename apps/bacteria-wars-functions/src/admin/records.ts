@@ -8,6 +8,7 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';
 import { hasGrpcCode, ignoreNotFound } from '../grpc';
 import type { ModerationChange } from './moderation';
@@ -122,7 +123,14 @@ export async function runAudited(
   } catch (error) {
     // Audited as failed, with what is known: the action may have run in
     // part, and the owner sees that in the audit.
-    await completeAudit(audit, { change: 'internal' });
+    // The action's error goes on, even if its audit cannot be completed.
+    await completeAudit(audit, { change: 'internal' }).catch(
+      (writeError: unknown) =>
+        logger.error('Could not audit a failed action', {
+          commandId,
+          error: writeError,
+        })
+    );
     throw error;
   }
   return completeAudit(audit, action);
