@@ -75,7 +75,7 @@
             },
             {
               "type": "anyScript",
-              "baseline": "653kb",
+              "baseline": "579kb",
               "maximumWarning": "5%",
               "maximumError": "10%"
             },
