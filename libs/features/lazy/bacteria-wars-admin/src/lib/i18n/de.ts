@@ -204,7 +204,7 @@ export const DE: Translation<typeof EN> = {
     },
   },
   toggles: {
-    hint: 'Feature-Schalter in Remote Config: aus, nur für dich an (Admin) oder für alle an. Geräte der Spieler holen sie höchstens einmal pro Stunde.',
+    hint: 'Feature-Schalter in Remote Config: aus, nur für dich an (Admin) oder für alle an. Geräte der Spieler holen sie höchstens einmal pro Stunde. Ältere Versionen ohne Admin lesen Admin als Standard: Ein standardmäßig eingeschalteter Schalter bleibt dort an.',
     unavailable:
       'Remote Config ist hier nicht erreichbar (Emulatoren); die Standardwerte werden gezeigt.',
     failed: 'Die Schalter ließen sich nicht lesen.',
