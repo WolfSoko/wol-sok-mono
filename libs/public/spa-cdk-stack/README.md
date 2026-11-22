@@ -92,6 +92,19 @@ new SpaStack(app, 'Site', {
 Both options share one function, as a cache behaviour takes one per event; see
 their doc comments.
 
+A page whose folder name holds a `.` (`blog/v1.2/index.html`) is not resolved,
+as `/blog/v1.2` looks like a file. `servesFolderIndex(path)` is the deployed
+function's rule in TypeScript, so a stack can refuse such pages at synth:
+
+```ts
+import { servesFolderIndex } from '@wolsok/spa-cdk-stack';
+
+const unreachable = pages.filter((page) => !servesFolderIndex(`/${page}`));
+if (unreachable.length > 0) {
+  throw new Error(`Not served from their index.html: ${unreachable}`);
+}
+```
+
 ## Building
 
 ## Running unit tests
