@@ -373,7 +373,7 @@ export class SpaConstruct extends Construct {
     options: Required<ViewerRequestOptions>
   ): CloudFrontFunction {
     const tasks = [
-      ...(options.redirectTrailingSlash ? ['Redirects /path/ to /path'] : []),
+      ...(options.redirectTrailingSlash ? ['redirects /path/ to /path'] : []),
       ...(options.resolveFolderIndex
         ? ['serves /path from /path/index.html']
         : []),
@@ -381,7 +381,7 @@ export class SpaConstruct extends Construct {
     return new CloudFrontFunction(this, 'ViewerRequest', {
       code: FunctionCode.fromInline(viewerRequestSource(options)),
       runtime: FunctionRuntime.JS_2_0,
-      comment: tasks.join(', '),
+      comment: `Viewer request: ${tasks.join(', ')}`,
     });
   }
 

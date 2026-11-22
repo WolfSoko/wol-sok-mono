@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pagesByDepth, prerenderedPages } from './prerendered-pages';
+import { prerenderedPages } from './prerendered-pages';
 
 describe('prerenderedPages', () => {
   let root: string;
@@ -36,38 +36,5 @@ describe('prerenderedPages', () => {
     file('docs/guide/index.html');
 
     expect(prerenderedPages(root)).toEqual(['docs/guide']);
-  });
-});
-
-describe('pagesByDepth', () => {
-  const PAGES = [
-    'career',
-    'blog',
-    'blog/bacteria-wars-turn-relay',
-    'privacy',
-    'docs/a/b',
-    'blog/second-post',
-  ];
-
-  it('groups the pages by depth, shallowest first', () => {
-    expect(pagesByDepth(PAGES)).toEqual([
-      ['career', 'blog', 'privacy'],
-      ['blog/bacteria-wars-turn-relay', 'blog/second-post'],
-      ['docs/a/b'],
-    ]);
-  });
-
-  it('never puts a page beside a page below it, as one upload unpacks them into one folder', () => {
-    for (const group of pagesByDepth(PAGES)) {
-      for (const page of group) {
-        expect(group.filter((other) => other.startsWith(`${page}/`))).toEqual(
-          []
-        );
-      }
-    }
-  });
-
-  it('has no group for no pages', () => {
-    expect(pagesByDepth([])).toEqual([]);
   });
 });

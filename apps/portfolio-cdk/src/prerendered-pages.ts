@@ -20,23 +20,3 @@ export function prerenderedPages(root: string, prefix = ''): string[] {
       return [...own, ...prerenderedPages(root, page)];
     });
 }
-
-/**
- * The pages grouped by their depth (`career`, `blog` before
- * `blog/<slug>`), one upload each: a deployment unpacks all its sources
- * into one folder, where the bare-path file `blog` leaves no room for the
- * folder `blog/` that `blog/<slug>` needs (`Not a directory`). Within one
- * depth no page can be the folder of another.
- */
-export function pagesByDepth(pages: readonly string[]): string[][] {
-  const groups = new Map<number, string[]>();
-  for (const page of pages) {
-    const depth = page.split('/').length;
-    const group = groups.get(depth) ?? [];
-    group.push(page);
-    groups.set(depth, group);
-  }
-  return [...groups.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([, group]) => group);
-}

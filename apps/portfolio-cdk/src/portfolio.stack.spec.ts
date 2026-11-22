@@ -5,11 +5,6 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createPortfolioStack } from './portfolio.stack';
 
-const HTML_UPLOAD = {
-  'cache-control': 'no-cache',
-  'content-type': 'text/html; charset=utf-8',
-};
-
 describe('createPortfolioStack', () => {
   let buildOutput: string;
 
@@ -35,28 +30,40 @@ describe('createPortfolioStack', () => {
 
   afterEach(() => rmSync(buildOutput, { recursive: true, force: true }));
 
-  it('synthesizes pages below other pages, uploading them one depth at a time, no-cache and as HTML', () => {
+  it('uploads each page once, under the key the build wrote, no-cache', () => {
     const deployments = Object.values(
       synthesize().findResources('Custom::CDKBucketDeployment')
     ).map(({ Properties }) => Properties);
 
-    const pageUploads = deployments.filter(
-      ({ SystemMetadata }) =>
-        SystemMetadata?.['content-type'] === HTML_UPLOAD['content-type']
-    );
-    for (const { SystemMetadata } of pageUploads) {
-      expect(SystemMetadata).toEqual(HTML_UPLOAD);
-    }
-    // career, privacy and blog first, blog/bacteria-wars-turn-relay alone.
     expect(
-      pageUploads.map(({ SourceObjectKeys }) => SourceObjectKeys.length)
-    ).toEqual([3, 1]);
+      deployments.filter(
+        ({ SystemMetadata }) => SystemMetadata?.['content-type'] !== undefined
+      )
+    ).toEqual([]);
+    // The main upload, index.html and the no-cache files (pages included).
+    expect(deployments).toHaveLength(3);
+    expect(
+      deployments.filter(
+        ({ SystemMetadata }) => SystemMetadata?.['cache-control'] === 'no-cache'
+      )
+    ).toHaveLength(2);
   });
 
-  it('redirects trailing-slash paths with a viewer-request CloudFront Function', () => {
+  it('refuses a page whose folder name holds a dot, as the folder index of /v1.2 is not resolved', () => {
+    file('blog/v1.2/index.html');
+
+    expect(() => synthesize()).toThrow(/"blog\/v1\.2"/);
+  });
+
+  it('resolves folder indexes and redirects trailing-slash paths with one viewer-request CloudFront Function', () => {
     const template = synthesize();
 
     template.resourceCountIs('AWS::CloudFront::Function', 1);
+    template.hasResourceProperties('AWS::CloudFront::Function', {
+      FunctionCode: Match.stringLikeRegexp(
+        'REDIRECT_TRAILING_SLASH = true;\\s+var RESOLVE_FOLDER_INDEX = true;'
+      ),
+    });
     template.hasResourceProperties('AWS::CloudFront::Distribution', {
       DistributionConfig: Match.objectLike({
         DefaultCacheBehavior: Match.objectLike({

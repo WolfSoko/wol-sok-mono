@@ -1,9 +1,6 @@
 import { SpaStack } from '@wolsok/spa-cdk-stack';
 import { App, RemovalPolicy } from 'aws-cdk-lib';
-import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
-import { readFileSync } from 'node:fs';
-import { join } from 'node:path';
-import { pagesByDepth, prerenderedPages } from './prerendered-pages';
+import { prerenderedPages } from './prerendered-pages';
 
 const STACK_NAME = 'Portfolio';
 
@@ -11,19 +8,18 @@ const STACK_NAME = 'Portfolio';
  * The stack of wolsok.de, serving the prerendered portfolio below
  * `buildOutputPath`.
  *
- * Each prerendered page is at <page>/index.html, but CloudFront in front of
- * S3 resolves no folder index: /privacy would fall back to the home page.
- * So every page, nested ones such as /blog/<slug> too, is uploaded once more
- * under its bare path. A trailing slash (/career/) would miss both and fall
- * back to the home page too, so it redirects to the bare path.
+ * Each prerendered page is at <page>/index.html, which CloudFront in front of
+ * S3 does not resolve for /<page> by itself, so the SPA stack's viewer-request
+ * function does (`resolveFolderIndex`). A trailing slash (/career/) redirects
+ * to the bare path, so each page keeps one URL.
  */
 export function createPortfolioStack(
   app: App,
   buildOutputPath: string
 ): SpaStack {
-  const pages = prerenderedPages(buildOutputPath);
+  const pages = resolvablePages(buildOutputPath);
 
-  const stack = new SpaStack(app, STACK_NAME, {
+  return new SpaStack(app, STACK_NAME, {
     env: {
       region: 'eu-central-1',
       account: '088632064895',
@@ -31,6 +27,7 @@ export function createPortfolioStack(
     buildOutputPath,
     domainName: 'wolsok.de',
     bucketRemovalPolicy: RemovalPolicy.DESTROY,
+    resolveFolderIndex: true,
     redirectTrailingSlash: true,
     // Crawlers and AdSense read these by name; a page changes with each release.
     noCacheFiles: [
@@ -42,20 +39,23 @@ export function createPortfolioStack(
       ...pages.map((page) => `${page}/index.html`),
     ],
   });
+}
 
-  // One upload per depth: in a single one the file `blog` would block the
-  // folder `blog/` of `blog/<slug>` (see pagesByDepth).
-  for (const group of pagesByDepth(pages)) {
-    stack.spa.addExtraAssets(
-      group.map((page) =>
-        Source.data(
-          page,
-          readFileSync(join(buildOutputPath, page, 'index.html'), 'utf8')
-        )
-      ),
-      CacheControl.noCache(),
-      'text/html; charset=utf-8'
+/**
+ * The prerendered pages, refusing one whose folder name holds a `.`: the
+ * folder index is resolved only for a path without one in its last segment,
+ * so such a page would deploy and never be reached.
+ */
+function resolvablePages(buildOutputPath: string): string[] {
+  const pages = prerenderedPages(buildOutputPath);
+  const unreachable = pages.find((page) =>
+    page.split('/').at(-1)?.includes('.')
+  );
+  if (unreachable !== undefined) {
+    throw new Error(
+      `The page "${unreachable}" has a "." in its folder name, so ` +
+        `/${unreachable} would not be served from its index.html. Rename it.`
     );
   }
-  return stack;
+  return pages;
 }
