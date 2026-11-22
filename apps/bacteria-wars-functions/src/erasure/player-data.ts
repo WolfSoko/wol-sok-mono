@@ -242,7 +242,7 @@ export const PLAYER_DATA: readonly PlayerData[] = [
     store: 'firestore',
     path: 'banTombstones/{id}',
     erase: 'keep',
-    why: "Keyed by a hash of the Google provider's id, no uid: keeps a ban past the deletion.",
+    why: "Keyed by a hash of the Google provider's id or a linked Play Games player's, no uid: keeps a ban past the deletion.",
   },
 
   // Replays (`replays/forget.ts`).

@@ -19,6 +19,8 @@ import {
 export interface PlayGamesCommandDeps {
   /** The player behind a code, null when Google refuses it. */
   player: (code: string) => Promise<PlayGamesPlayer | null>;
+  /** See `PlayGamesSignInDeps.tombstone`. */
+  tombstone: (playerId: string, uid: string) => Promise<boolean>;
   /** Auth, loaded only for a command that runs. */
   accounts: () => Promise<PlayGamesAccounts>;
   now: () => number;
@@ -54,6 +56,7 @@ export async function runPlayGamesSignIn(
       }
       answer = await signInPlayGames(db, uid, command.code, {
         player: deps.player,
+        tombstone: deps.tombstone,
         accounts: await deps.accounts(),
         now: deps.now(),
       });

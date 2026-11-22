@@ -113,7 +113,7 @@ describe('the exported functions', () => {
     }
   });
 
-  it('export playGamesSignIn only with PLAY_GAMES_ON, with its client secret only', () => {
+  it('export playGamesSignIn only with PLAY_GAMES_ON, with its client secret and the tombstone key', () => {
     const endpoint = functions['playGamesSignIn']?.__endpoint as
       | (Endpoint & { secretEnvironmentVariables?: { key: string }[] })
       | undefined;
@@ -121,7 +121,7 @@ describe('the exported functions', () => {
     if (endpoint !== undefined) {
       expect(
         endpoint.secretEnvironmentVariables?.map(({ key }) => key)
-      ).toEqual(['PLAY_GAMES_CLIENT_SECRET']);
+      ).toEqual(['PLAY_GAMES_CLIENT_SECRET', 'BAN_TOMBSTONE_KEY']);
     }
   });
 

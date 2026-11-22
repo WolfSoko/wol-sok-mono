@@ -37,6 +37,8 @@ import { remoteTogglesOf } from './admin/toggles';
 import {
   checkGoogleLink,
   googleProviderOf,
+  applyPlayGamesTombstone,
+  playGamesTombstoneId,
   tombstoneId,
 } from './admin/tombstones';
 import { runHourly } from './boards/hourly';
@@ -202,7 +204,7 @@ export const playGamesSignIn = PLAY_GAMES_ON
         memory: '256MiB',
         cpu: 'gcf_gen1',
         timeoutSeconds: 60,
-        secrets: [PLAY_GAMES_CLIENT_SECRET],
+        secrets: [PLAY_GAMES_CLIENT_SECRET, BAN_TOMBSTONE_KEY],
       },
       withSentry(async (event) => {
         const data = event.data?.data();
@@ -220,6 +222,14 @@ export const playGamesSignIn = PLAY_GAMES_ON
           event.authType === 'unauthenticated' ? undefined : event.authId,
           {
             player: (code) => playGamesPlayer(code, client, fetch),
+            tombstone: (playerId, uid) =>
+              applyPlayGamesTombstone(
+                db(),
+                realtime,
+                uid,
+                playGamesTombstoneOf(playerId),
+                Date.now()
+              ),
             accounts: async () => authAccounts(await auth()),
             now: Date.now,
           }
@@ -246,6 +256,11 @@ function erasureOf(
   now: number = Date.now()
 ): ErasureContext {
   return { db: db(), realtime, now, tombstone };
+}
+
+/** The tombstone id of a Play Games player, with the server key. */
+function playGamesTombstoneOf(playerId: string): string {
+  return playGamesTombstoneId(BAN_TOMBSTONE_KEY.value(), playerId);
 }
 
 /**
@@ -294,7 +309,10 @@ export const deletePlayerBoards = v1
     withSentry(async (user) => {
       const erased = await erasePart(
         'account',
-        erasureOf(tombstoneId(BAN_TOMBSTONE_KEY.value(), user)),
+        {
+          ...erasureOf(tombstoneId(BAN_TOMBSTONE_KEY.value(), user)),
+          playGamesTombstoneOf,
+        },
         user.uid
       );
       logger.info('Board data of a deleted account', {

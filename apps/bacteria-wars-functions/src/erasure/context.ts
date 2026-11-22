@@ -16,6 +16,13 @@ export interface ErasureContext extends Stores {
    */
   tombstone: string | null;
   /**
+   * The tombstone id of a Play Games player linked to the account
+   * (`playGamesTombstoneId` with the server key) - absent where no Play
+   * Games player can follow, as for `erasePlayer`'s guests. Only the
+   * `account` part reads it.
+   */
+  playGamesTombstoneOf?: (playerId: string) => string;
+  /**
    * Told instead of lowering `stats/accounts`, when the caller sums the
    * accounts it erased and lowers the count once (`guestCleanup`).
    */

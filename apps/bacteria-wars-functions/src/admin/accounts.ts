@@ -1,4 +1,7 @@
-import { banHolds } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import {
+  banHolds,
+  PLAY_GAMES_LINKS,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import {
   FieldValue,
   type Firestore,
@@ -86,7 +89,8 @@ export function accountsChange(
  * `uncount` claims that first, so a retried or doubled erase lowers it no
  * further (with `uncounted`, the caller lowers it). Both ban documents go
  * once a banned account's tombstone is written - by the id of its Google
- * provider (`tombstone`), and those its bans noted - so the ban survives
+ * provider (`tombstone`), its linked Play Games players
+ * (`playGamesTombstoneOf`) and those its bans noted - so the ban survives
  * the deletion. Runs for banned accounts too: a deletion must erase the
  * player's data. Throws when a step fails, after the others ran; returns
  * the documents it deleted.
@@ -97,12 +101,13 @@ export async function deleteAccount(
 ): Promise<number> {
   const { db, realtime, tombstone, uncounted, now } = ctx;
   // What goes with `boardMembers` and `moderation` - read before them.
-  const [counted, moderation, boardRefs] = await Promise.all([
+  const [counted, moderation, boardRefs, playGamesIds] = await Promise.all([
     uncount(db, uid),
     db.doc(`moderation/${uid}`).get(),
     boardRefsOf(db, uid),
+    playGamesTombstonesOf(ctx, uid),
   ]);
-  const ids = new Set(notedTombstones(moderation.data()));
+  const ids = new Set([...notedTombstones(moderation.data()), ...playGamesIds]);
   if (tombstone !== null) {
     ids.add(tombstone);
   }
@@ -123,6 +128,25 @@ export async function deleteAccount(
     ),
   ]);
   return boards + listed;
+}
+
+/**
+ * The tombstone ids of the Play Games players linked to `uid` (#3175) -
+ * read before `eraseListed` takes the links, so a banned player who
+ * deletes the account cannot link a new one unbanned.
+ */
+async function playGamesTombstonesOf(
+  { db, playGamesTombstoneOf }: ErasureContext,
+  uid: string
+): Promise<string[]> {
+  if (playGamesTombstoneOf === undefined) {
+    return [];
+  }
+  const links = await db
+    .collection(PLAY_GAMES_LINKS)
+    .where('uid', '==', uid)
+    .get();
+  return links.docs.map((link) => playGamesTombstoneOf(link.id));
 }
 
 /**

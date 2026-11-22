@@ -33,6 +33,12 @@ export interface PlayGamesAccounts {
 export interface PlayGamesSignInDeps {
   /** The player behind the code, null when Google refuses it. */
   player: (code: string) => Promise<PlayGamesPlayer | null>;
+  /**
+   * Applies the ban tombstone of a Play Games player to `uid`: true (and
+   * `uid` banned) when a banned account linked to the player was deleted
+   * and its ban still holds.
+   */
+  tombstone: (playerId: string, uid: string) => Promise<boolean>;
   accounts: PlayGamesAccounts;
   now: number;
 }
@@ -54,13 +60,14 @@ export interface PlayGamesSignInAnswer {
  * signed-in one) or a take-over. A Google session keeps its own token, so
  * its sign-in provider (which the owner's rights hang on) stays Google.
  * A link to an account that is gone counts as none. Bans stay with their
- * uid: nothing here touches one.
+ * uid, and a Play Games player's ban tombstone (left by a deleted banned
+ * account) bans the writer and links nothing.
  */
 export async function signInPlayGames(
   db: Firestore,
   writerUid: string,
   code: string,
-  { player: playerOf, accounts, now }: PlayGamesSignInDeps
+  { player: playerOf, tombstone, accounts, now }: PlayGamesSignInDeps
 ): Promise<PlayGamesSignInAnswer> {
   const [player, writerAccount] = await Promise.all([
     playerOf(code),
@@ -71,6 +78,11 @@ export async function signInPlayGames(
   }
   if (writerAccount === null) {
     return refused('no-account');
+  }
+  // A banned player who deleted the account takes the ban to the next one,
+  // which gets no link: the ban, not the player, is what follows.
+  if (await tombstone(player.playerId, writerUid)) {
+    return refused('banned');
   }
   const writer = { uid: writerUid, hasProvider: writerAccount.hasProvider };
   const known = new Map([[writerUid, writerAccount]]);

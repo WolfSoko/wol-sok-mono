@@ -66,7 +66,12 @@ function deps(
   accounts: PlayGamesAccounts,
   player: PlayGamesPlayer | null = PLAYER
 ) {
-  return { player: async () => player, accounts, now: NOW };
+  return {
+    player: async () => player,
+    tombstone: async () => false,
+    accounts,
+    now: NOW,
+  };
 }
 
 describe('signInPlayGames', () => {
@@ -152,6 +157,21 @@ describe('signInPlayGames', () => {
     expect(fake.tokens).toEqual([]);
   });
 
+  it('bans the writer and links nothing while the player’s ban tombstone holds', async () => {
+    const fake = fakeAccounts({ g: guest() });
+    const tombstone = jest.fn(async () => true);
+    expect(
+      await signInPlayGames(db, 'g', 'code', {
+        ...deps(fake.accounts),
+        tombstone,
+      })
+    ).toEqual({ result: { ok: false, error: 'banned' }, token: null });
+    expect(tombstone).toHaveBeenCalledWith('p1', 'g');
+    expect(await link()).toBeNull();
+    expect(fake.updates).toEqual([]);
+    expect(fake.tokens).toEqual([]);
+  });
+
   it('leaves a ban where it is', async () => {
     await db.doc('bans/g').set({ reason: 'cheating', until: null });
     await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
@@ -173,6 +193,7 @@ describe('signInPlayGames', () => {
     ) =>
       runPlayGamesSignIn(db, 'c1', data, authId, {
         player: async () => PLAYER,
+        tombstone: async () => false,
         accounts: async () => fake.accounts,
         now: () => NOW,
       });

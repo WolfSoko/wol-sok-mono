@@ -33,13 +33,15 @@ export const PLAY_GAMES_CLAIM = 'playGames';
 
 /**
  * Why a Play Games sign-in was refused: the player is linked to another
- * Google account while the writer has one of its own, Google refused the
- * code (expired, used, or for another client), or the account is gone.
+ * account while the writer has a Google sign-in of its own, Google refused
+ * the code (expired, used, or for another client), the account is gone,
+ * or the player's ban tombstone holds (the writer is banned now).
  */
 export type PlayGamesSignInError =
   | 'linked-elsewhere'
   | 'play-games-refused'
-  | 'no-account';
+  | 'no-account'
+  | 'banned';
 
 /** A Play Games sign-in without its envelope. */
 export interface PlayGamesSignIn {
