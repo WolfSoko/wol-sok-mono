@@ -103,7 +103,8 @@ export function withToggles(
  * A plain copy of what `publishTemplate` sends, its data deep-copied. The
  * SDK's template is a class whose `etag` is a getter, which
  * `structuredClone` drops, and the SDK refuses to publish without it
- * (#3212), so `etag` and `version` are carried over by name.
+ * (#3212), so `etag` is carried over by name. No `version`: the SDK would
+ * send its old description along, so each publish gets none.
  */
 function copyOf(template: RemoteConfigTemplate): RemoteConfigTemplate {
   const { conditions, parameters, parameterGroups } = structuredClone({
@@ -116,7 +117,6 @@ function copyOf(template: RemoteConfigTemplate): RemoteConfigTemplate {
     parameters,
     parameterGroups,
     etag: template.etag,
-    version: template.version,
   };
 }
 

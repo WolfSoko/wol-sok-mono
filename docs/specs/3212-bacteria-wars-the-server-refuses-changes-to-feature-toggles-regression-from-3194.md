@@ -44,9 +44,9 @@ object with an own `etag`, so it could not see the gap.
 
 - **Copy the template's data, and carry the `etag` over by name.**
   `withToggles` returns a plain `RemoteConfigTemplate`: a deep copy of
-  `conditions`, `parameters` and `parameterGroups`, plus `etag` and
-  `version` read through the template's accessors. The Admin SDK reads
-  exactly those fields on publish, and `withToggles` stays pure and keeps
+  `conditions`, `parameters` and `parameterGroups`, plus `etag` read
+  through the template's getter. No `version`: the SDK would send its old
+  description along with each publish. `withToggles` stays pure and keeps
   the caller's template unchanged.
 - **The spec takes the SDK's real template.** It builds its templates with
   `createTemplateFromJSON` of `firebase-admin/remote-config` (on an app

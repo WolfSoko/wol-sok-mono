@@ -2,7 +2,6 @@ import { FEATURE_TOGGLES } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { deleteApp, initializeApp } from 'firebase-admin/app';
 import {
   getRemoteConfig,
-  type RemoteConfig,
   type RemoteConfigTemplate,
 } from 'firebase-admin/remote-config';
 import { remoteTogglesOf, setToggles, togglesOf, withToggles } from './toggles';
@@ -24,29 +23,33 @@ const template = (
     JSON.stringify({ conditions: [], parameters, parameterGroups, etag: 'e1' })
   );
 
-/** What the SDK sends on publish, its HTTP request stubbed. */
-interface PutRequest {
-  (template: RemoteConfigTemplate, etag: string): Promise<unknown>;
-}
+/** What the SDK sends on publish, with the template and its ETag. */
+type PutRequest = (
+  template: RemoteConfigTemplate,
+  etag: string
+) => Promise<unknown>;
 
-function stubbedPublish(
-  config: RemoteConfig
-): jest.Mock<ReturnType<PutRequest>, Parameters<PutRequest>> {
+/**
+ * Remote Config holding `held`, its publish running the SDK's own checks
+ * and stopping at the HTTP request, whose calls it returns.
+ */
+function remoteHolding(
+  held: RemoteConfigTemplate
+): jest.SpyInstance<ReturnType<PutRequest>, Parameters<PutRequest>> {
+  jest.spyOn(remoteConfig, 'getTemplate').mockResolvedValue(held);
   const client = (
-    config as unknown as { client: { sendPutRequest: PutRequest } }
+    remoteConfig as unknown as { client: { sendPutRequest: PutRequest } }
   ).client;
-  const put = jest.fn<ReturnType<PutRequest>, Parameters<PutRequest>>(
-    async (sent) => ({
+  return jest
+    .spyOn(client, 'sendPutRequest')
+    .mockImplementation(async (sent) => ({
       headers: { etag: 'e2' },
       data: {
         conditions: sent.conditions,
         parameters: sent.parameters,
         parameterGroups: sent.parameterGroups,
       },
-    })
-  );
-  client.sendPutRequest = put;
-  return put;
+    }));
 }
 
 describe('the toggles in a Remote Config template', () => {
@@ -117,16 +120,12 @@ describe('the toggles in a Remote Config template', () => {
 });
 
 describe('setting toggles in Remote Config', () => {
+  const toggles = remoteTogglesOf(async () => remoteConfig);
+  afterEach(() => jest.restoreAllMocks());
+
   it('publishes the template it read, with its ETag (#3212)', async () => {
-    const put = stubbedPublish(remoteConfig);
-    const toggles = remoteTogglesOf(
-      async () =>
-        ({
-          getTemplate: async () =>
-            template({ rankedDaily: { defaultValue: { value: 'true' } } }),
-          publishTemplate: (sent: RemoteConfigTemplate) =>
-            remoteConfig.publishTemplate(sent),
-        }) as unknown as RemoteConfig
+    const put = remoteHolding(
+      template({ rankedDaily: { defaultValue: { value: 'true' } } })
     );
 
     await toggles.update(() => ({ bacteriumMenu: 'admin' }));
@@ -143,15 +142,7 @@ describe('setting toggles in Remote Config', () => {
   });
 
   it('publishes only the toggle the owner changed, so no other one flips', async () => {
-    const put = stubbedPublish(remoteConfig);
-    const toggles = remoteTogglesOf(
-      async () =>
-        ({
-          getTemplate: async () => template({}),
-          publishTemplate: (sent: RemoteConfigTemplate) =>
-            remoteConfig.publishTemplate(sent),
-        }) as unknown as RemoteConfig
-    );
+    const put = remoteHolding(template({}));
 
     await setToggles(toggles, { ...FEATURE_TOGGLES, bacteriumMenu: 'admin' });
 
