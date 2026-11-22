@@ -17,8 +17,13 @@
 import { chromium } from '@playwright/test';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
+import {
+  BLUE,
+  ColonyColors,
+  DISH_DEFS,
+  ORANGE,
+} from '@wolsok/feat-shared-bacteria-art';
 import { render, svgPage, toIco } from '../icons/render-icons';
-import { BLUE, ColonyColors, DISH_DEFS, ORANGE } from './dish';
 
 const srcDir = resolve('apps/bacteria-game-remote/src');
 const iconsDir = join(srcDir, 'icons');

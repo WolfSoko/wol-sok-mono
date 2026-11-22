@@ -46,7 +46,7 @@
     "achievement-icons": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsx ./tools/bacteria-game/generate-achievement-icons.ts"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/generate-achievement-icons.ts"
       }
     },
     "promo-video": {

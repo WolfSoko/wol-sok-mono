@@ -65,6 +65,9 @@
       "@wolsok/feat-bacteria-sound": [
         "./libs/features/bacteria-sound/src/index.ts"
       ],
+      "@wolsok/feat-shared-bacteria-art": [
+        "./libs/features/bacteria-art/src/index.ts"
+      ],
       "@wolsok/feat-shared-bacteria-engine": [
         "./libs/features/bacteria-engine/src/index.ts"
       ],
