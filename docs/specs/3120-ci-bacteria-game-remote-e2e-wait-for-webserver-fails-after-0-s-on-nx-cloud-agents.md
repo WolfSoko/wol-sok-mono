@@ -46,8 +46,11 @@ npx nx show project bacteria-game-remote --json                                 
 ## Goal
 
 Building the graph gives every `nxServer` config the same targets, whichever
-task the `nx` call is nested in. So a nested `nx` call can no longer drop the
-gate or the serve dependencies from a worker's graph.
+task outside the project's own Playwright tasks the `nx` call is nested in. So
+a nested `nx` call there can no longer drop the gate or the serve dependencies
+from a worker's graph. Inside the project's own Playwright tasks no graph is
+built (no `globalSetup`, no `nx` call in `e2e/`); CLAUDE.md keeps that as a
+convention.
 
 ## Non-goals
 

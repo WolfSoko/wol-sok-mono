@@ -103,10 +103,13 @@ describe('nxServer', () => {
       'utf8'
     );
     const { name } = readJson<{ name: string }>(`apps/${app}/project.json`);
+    const calls = config.match(/nxServer\(/g) ?? [];
     const servedProjects = [...config.matchAll(/nxServer\(\s*'([^':]+):/g)].map(
       ([, project]) => project
     );
 
+    // a target written any other way would go unchecked
+    expect(servedProjects).toHaveLength(calls.length);
     expect(servedProjects.filter((project) => project !== name)).toEqual([]);
   });
 

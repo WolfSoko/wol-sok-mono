@@ -8,11 +8,7 @@
     "test": {
       "executor": "@nx/jest:jest",
       "inputs": [
-        "default",
-        "^production",
-        "{workspaceRoot}/jest.preset.cjs",
-        "{workspaceRoot}/jest.config.ts",
-        "{workspaceRoot}/.codecov.yml",
+        "...",
         "{workspaceRoot}/apps/*/playwright.config.ts",
         "{workspaceRoot}/apps/*/project.json"
       ],
