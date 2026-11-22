@@ -145,16 +145,30 @@ describe('the TTL of command documents', () => {
     }[];
   };
   // Every collection whose rules take a command's `expireAt` relies on the
-  // TTL to remove what no function deleted.
+  // TTL to remove what no function deleted - directly or through a helper
+  // function of the rules that checks it (`isAdminCommand`).
+  const checks = [
+    'isCommandExpiry',
+    ...Array.from(
+      rules.matchAll(/function (\w+)\([^)]*\) \{((?:(?!\n {4}\}).)*)/gs)
+    )
+      .filter(([, , body]) => body.includes('isCommandExpiry('))
+      .map(([, name]) => name),
+  ];
   const expiring = Array.from(
     rules.matchAll(/match \/(\w+)\/\{\w+\} \{((?:(?!\n {4}\}).)*)/gs)
   )
-    .filter(([, , body]) => body.includes('isCommandExpiry('))
+    .filter(([, , body]) => checks.some((check) => body.includes(`${check}(`)))
     .map(([, collection]) => collection);
 
   it('finds the command collections in the rules', () => {
     expect(expiring).toEqual(
-      expect.arrayContaining(['replayCommands', 'playGamesSignIns'])
+      expect.arrayContaining([
+        'replaySubmissions',
+        'replayCommands',
+        'adminCommands',
+        'playGamesSignIns',
+      ])
     );
   });
 
