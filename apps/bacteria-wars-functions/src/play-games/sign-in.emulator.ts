@@ -117,23 +117,12 @@ describe('signInPlayGames', () => {
     expect(fake.tokens).toEqual(['a']);
   });
 
-  it('moves the link from an account without provider to a Google writer', async () => {
-    await db.doc('playGamesLinks/p1').set({ uid: 'pg', linkedAt: 1 });
-    const fake = fakeAccounts({ a: google(), pg: linkedPlayer() });
-    expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: null }
-    );
-    expect((await link())?.['uid']).toBe('a');
-    // The account left behind counts as a guest again, for guestCleanup.
-    expect(fake.updates).toEqual([
-      ['pg', {}, undefined],
-      ['a', { admin: true, playGames: true }, undefined],
-    ]);
-  });
-
-  it('refuses a Google writer while another Google account holds the player', async () => {
+  it.each([
+    ['another Google account', google],
+    ['an account without provider', linkedPlayer],
+  ])('refuses a Google writer while %s holds the player', async (_, other) => {
     await db.doc('playGamesLinks/p1').set({ uid: 'other', linkedAt: 1 });
-    const fake = fakeAccounts({ a: google(), other: google() });
+    const fake = fakeAccounts({ a: google(), other: other() });
     expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
       { result: { ok: false, error: 'linked-elsewhere' }, token: null }
     );

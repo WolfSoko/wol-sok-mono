@@ -35,16 +35,12 @@ describe('settleLink', () => {
     });
   });
 
-  it('moves the link from an account without provider to a Google writer', () => {
-    expect(settleLink({ writer: google, linked: playGamesOnly })).toEqual({
-      kind: 'move',
-      uid: 'google',
-      from: 'pg',
-    });
-  });
-
-  it('refuses a Google writer while another Google account holds the player', () => {
+  it('refuses a Google writer while another account holds the player', () => {
     expect(settleLink({ writer: google, linked: otherGoogle })).toEqual({
+      kind: 'refuse',
+    });
+    // Its progress may never have joined the writer: the link stays.
+    expect(settleLink({ writer: google, linked: playGamesOnly })).toEqual({
       kind: 'refuse',
     });
   });

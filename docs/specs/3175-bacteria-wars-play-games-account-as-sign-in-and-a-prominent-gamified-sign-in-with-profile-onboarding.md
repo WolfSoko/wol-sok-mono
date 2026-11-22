@@ -188,14 +188,16 @@ PR ("Part of #3175"):
    - a link to the writer: it stays;
    - a link to another account while the writer is a guest: that account
      takes over (it is the one the player made on another phone);
-   - a link to an account without provider while the writer has one
-     (Google): the link moves to the writer, and the account left behind
-     loses its claim and counts as a guest again. A Google account
-     outranks it as it outranks a guest; usually it has just adopted that
-     account's progress on this phone (`credential-already-in-use`);
-   - a link to another Google account while the writer has one too:
+   - a link to another account while the writer has a provider (Google):
      refused, `linked-elsewhere`, nothing changes (one Play Games player is
      one game account; the game shows nothing, the player keeps playing).
+     This holds for a linked account without a provider too: moving the
+     link would leave that account to `guestCleanup`, with progress the
+     writer may never have adopted (manager's decision on the review,
+     2026-11-22). Known limit: a Play Games account that a Google account
+     adopted on this phone (`credential-already-in-use`) stays linked to
+     the Play Games account; relinking it needs the adoption itself to
+     record it (raised as a follow-up).
      The account it settles on gets the custom claim `playGames: true` (read
      afresh and written only when it changes) and, when it has no display
      name, the Play Games name (`displayName` of its Auth record). The result

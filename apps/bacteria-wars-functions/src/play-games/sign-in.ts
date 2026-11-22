@@ -79,7 +79,7 @@ export async function signInPlayGames(
           ? writer
           : await linkAccountOf(accounts, linkedUid);
     const settled = settleLink({ writer, linked });
-    if (settled.kind === 'link' || settled.kind === 'move') {
+    if (settled.kind === 'link') {
       tx.set(ref, { uid: settled.uid, linkedAt: Timestamp.fromMillis(now) });
     }
     return settled;
@@ -87,10 +87,7 @@ export async function signInPlayGames(
   if (outcome.kind === 'refuse') {
     return refused('linked-elsewhere');
   }
-  if (outcome.kind === 'move') {
-    await setClaim(accounts, outcome.from, false);
-  }
-  if (!(await setClaim(accounts, outcome.uid, true, player.displayName))) {
+  if (!(await markLinked(accounts, outcome.uid, player.displayName))) {
     return refused('no-account');
   }
   const needsToken = !writer.hasProvider || outcome.uid !== writerUid;
@@ -109,27 +106,26 @@ async function linkAccountOf(
 }
 
 /**
- * Sets or clears the `playGames` claim of `uid`, read afresh right before
- * so a claim granted meanwhile survives, and gives a nameless account
- * `name`. Writes nothing when nothing changes; false when it is gone.
+ * Sets the `playGames` claim of `uid`, with its claims read afresh right
+ * before so a claim granted meanwhile survives, and gives a nameless
+ * account `name`. Writes nothing when nothing changes; false when the
+ * account is gone.
  */
-async function setClaim(
+async function markLinked(
   accounts: PlayGamesAccounts,
   uid: string,
-  linked: boolean,
-  name: string | null = null
+  name: string | null
 ): Promise<boolean> {
   const account = await accounts.account(uid);
   if (account === null) {
     return false;
   }
-  const { [PLAY_GAMES_CLAIM]: had, ...others } = account.claims;
   const displayName =
     account.displayName === null && name !== null ? name : undefined;
-  if ((had === true) !== linked || displayName !== undefined) {
+  if (account.claims[PLAY_GAMES_CLAIM] !== true || displayName !== undefined) {
     await accounts.update(
       uid,
-      linked ? { ...others, [PLAY_GAMES_CLAIM]: true } : others,
+      { ...account.claims, [PLAY_GAMES_CLAIM]: true },
       displayName
     );
   }

@@ -27,15 +27,12 @@ export interface LinkFacts {
  * - `keep`: the writer is linked already;
  * - `take-over`: the writer is a guest, and the player's account (made on
  *   another phone, or before a sign-out) takes over from it;
- * - `move`: the writer signed in with Google, and the player's account has
- *   no provider: a Google account outranks it, as it outranks a guest - in
- *   the usual case the Google account has just adopted it on this phone;
- * - `refuse`: the writer and the player's account both have a provider
- *   (two Google accounts), and neither may take the other's player.
+ * - `refuse`: the writer has a sign-in of its own (Google) while the
+ *   player is linked to another account, which neither may take: moving
+ *   the link could leave that account's progress to `guestCleanup`.
  */
 export type LinkOutcome =
   | { kind: 'link' | 'keep' | 'take-over'; uid: string }
-  | { kind: 'move'; uid: string; from: string }
   | { kind: 'refuse' };
 
 export function settleLink({ writer, linked }: LinkFacts): LinkOutcome {
@@ -45,10 +42,7 @@ export function settleLink({ writer, linked }: LinkFacts): LinkOutcome {
   if (linked.uid === writer.uid) {
     return { kind: 'keep', uid: writer.uid };
   }
-  if (!writer.hasProvider) {
-    return { kind: 'take-over', uid: linked.uid };
-  }
-  return linked.hasProvider
+  return writer.hasProvider
     ? { kind: 'refuse' }
-    : { kind: 'move', uid: writer.uid, from: linked.uid };
+    : { kind: 'take-over', uid: linked.uid };
 }
