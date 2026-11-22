@@ -5,6 +5,7 @@ import {
   type PlayGamesSignInError,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
+import { updatePlayGamesClaim } from './claim';
 import { type LinkAccount, settleLink } from './link';
 import type { PlayGamesPlayer } from './player';
 
@@ -143,11 +144,9 @@ async function linkAccountOf(
 }
 
 /**
- * Sets the `playGames` claim of `uid` and gives a nameless account `name`.
- * `seen` (read moments ago) decides whether anything changes - nothing is
- * written then, the usual case at every later start. Otherwise the claims
- * are read afresh right before the write, so a claim granted meanwhile
- * survives. False when the account is gone.
+ * Marks `uid` as linked ({@link updatePlayGamesClaim}) - only where `seen`
+ * (read moments ago) needs it, so nothing is written at the usual later
+ * start. False when the account is gone.
  */
 async function markLinked(
   accounts: PlayGamesAccounts,
@@ -155,19 +154,9 @@ async function markLinked(
   seen: PlayGamesAccount,
   name: string | null
 ): Promise<boolean> {
-  if (!needsMark(seen, name)) {
-    return true;
-  }
-  const account = await accounts.account(uid);
-  if (account === null) {
-    return false;
-  }
-  await accounts.update(
-    uid,
-    { ...account.claims, [PLAY_GAMES_CLAIM]: true },
-    account.displayName === null && name !== null ? name : undefined
+  return (
+    !needsMark(seen, name) || updatePlayGamesClaim(accounts, uid, true, name)
   );
-  return true;
 }
 
 function needsMark(account: PlayGamesAccount, name: string | null): boolean {

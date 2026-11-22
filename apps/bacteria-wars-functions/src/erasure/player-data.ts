@@ -238,6 +238,22 @@ export const PLAYER_DATA: readonly PlayerData[] = [
     erase: 'field',
     field: 'uid',
   },
+  // A Google account adopting a Play-only account (#3187,
+  // `play-games/adoption.ts`): both live a day at most.
+  {
+    store: 'firestore',
+    path: 'playGamesReleases/{uid}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
+  {
+    store: 'firestore',
+    path: 'playGamesAdoptions/{id}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
   {
     store: 'firestore',
     path: 'banTombstones/{id}',

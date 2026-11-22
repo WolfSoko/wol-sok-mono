@@ -125,6 +125,14 @@ describe('the exported functions', () => {
     }
   });
 
+  it('export playGamesAdoption only with PLAY_GAMES_ON, without a secret', () => {
+    const endpoint = functions['playGamesAdoption']?.__endpoint as
+      | (Endpoint & { secretEnvironmentVariables?: { key: string }[] })
+      | undefined;
+    expect(endpoint === undefined).toBe(!PLAY_GAMES_ON);
+    expect(endpoint?.secretEnvironmentVariables ?? []).toEqual([]);
+  });
+
   describe('acceptReplay', () => {
     const submission = { uid: 'ada', attempt: 'd_2026-10-25_1' };
     const created = (minutesAgo: number): CreatedEvent => ({

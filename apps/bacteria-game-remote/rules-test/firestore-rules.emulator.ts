@@ -462,6 +462,125 @@ describe('playGamesSignIns', () => {
   });
 });
 
+describe('the Play Games adoption', () => {
+  const NONCE = '0123456789abcdef0123456789abcdef';
+  const PLAY_ONLY = {
+    playGames: true,
+    firebase: { sign_in_provider: 'custom' },
+  };
+  const GOOGLE = { firebase: { sign_in_provider: 'google.com' } };
+  const release = (uid: string, extra: object = {}) => ({
+    uid,
+    nonce: NONCE,
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+  const adoption = (uid: string, extra: object = {}) => ({
+    uid,
+    from: 'ada',
+    nonce: NONCE,
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+
+  describe('playGamesReleases', () => {
+    const put = (uid: string, token: object, data: object, id = uid) =>
+      setDoc(doc(db(uid, token), `playGamesReleases/${id}`), data);
+
+    it('takes a release from a Play-only session in its own name, again too', async () => {
+      await assertSucceeds(put('ada', PLAY_ONLY, release('ada')));
+      await assertSucceeds(put('ada', PLAY_ONLY, release('ada')));
+      await assertFails(put('ada', PLAY_ONLY, release('bob'), 'bob'));
+      await assertFails(put('ada', PLAY_ONLY, release('bob')));
+    });
+
+    it('refuses a guest, a Google session and an account without the claim', async () => {
+      await assertFails(
+        put(
+          'ada',
+          { playGames: true, firebase: { sign_in_provider: 'anonymous' } },
+          release('ada')
+        )
+      );
+      await assertFails(
+        put('ada', { ...GOOGLE, playGames: true }, release('ada'))
+      );
+      await assertFails(
+        put('ada', { firebase: { sign_in_provider: 'custom' } }, release('ada'))
+      );
+    });
+
+    it('refuses a banned account', async () => {
+      await seed('bans/ada', { until: null });
+      await assertFails(put('ada', PLAY_ONLY, release('ada')));
+    });
+
+    it('refuses a bad nonce or an extra field', async () => {
+      await assertFails(put('ada', PLAY_ONLY, release('ada', { nonce: 'x' })));
+      await assertFails(put('ada', PLAY_ONLY, release('ada', { extra: 1 })));
+      await assertFails(
+        put('ada', PLAY_ONLY, release('ada', { createdAt: Timestamp.now() }))
+      );
+    });
+
+    it('lets nobody read it, its writer included', async () => {
+      await seed('playGamesReleases/ada', { uid: 'ada', nonce: NONCE });
+      await assertFails(
+        getDoc(doc(db('ada', PLAY_ONLY), 'playGamesReleases/ada'))
+      );
+      await assertFails(
+        getDoc(doc(db('bob', GOOGLE), 'playGamesReleases/ada'))
+      );
+    });
+  });
+
+  describe('playGamesAdoptions', () => {
+    const add = (uid: string, token: object, data: object, id = 'a1') =>
+      setDoc(doc(db(uid, token), `playGamesAdoptions/${id}`), data);
+
+    it('takes an adoption from a Google session in its own name', async () => {
+      await assertSucceeds(add('bob', GOOGLE, adoption('bob')));
+      await assertFails(add('bob', GOOGLE, adoption('eve'), 'a2'));
+    });
+
+    it('refuses a session without Google, itself as from, or a banned writer', async () => {
+      await assertFails(add('bob', PLAY_ONLY, adoption('bob')));
+      await assertFails(
+        add('bob', GOOGLE, adoption('bob', { from: 'bob' }), 'a2')
+      );
+      await assertFails(
+        add('bob', GOOGLE, adoption('bob', { from: 'a/b' }), 'a3')
+      );
+      await seed('bans/bob', { until: null });
+      await assertFails(add('bob', GOOGLE, adoption('bob'), 'a4'));
+    });
+
+    it('refuses a bad nonce or an extra field', async () => {
+      await assertFails(add('bob', GOOGLE, adoption('bob', { nonce: 'x' })));
+      await assertFails(
+        add('bob', GOOGLE, adoption('bob', { extra: 1 }), 'a2')
+      );
+    });
+
+    it('lets only the writer read it back, never rewrite it', async () => {
+      await seed('playGamesAdoptions/a5', { uid: 'bob', from: 'ada' });
+      await assertFails(
+        getDoc(doc(db('eve', GOOGLE), 'playGamesAdoptions/a5'))
+      );
+      await assertSucceeds(
+        getDoc(doc(db('bob', GOOGLE), 'playGamesAdoptions/a5'))
+      );
+      await assertFails(
+        updateDoc(doc(db('bob', GOOGLE), 'playGamesAdoptions/a5'), {
+          from: 'eve',
+        })
+      );
+    });
+  });
+});
+
 describe('playGamesLinks', () => {
   it('is closed to every client, its own player included', async () => {
     await seed('playGamesLinks/p1', { uid: 'ada' });

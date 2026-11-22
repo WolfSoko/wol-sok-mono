@@ -239,6 +239,42 @@ service cloud.firestore {
         isCommandExpiry(request.resource.data.expireAt);
     }
 
+    // A Google account adopting a Play-only account (#3187): right before
+    // the switch, the Play-only session (a custom token of a linked Play
+    // Games player) releases itself with a nonce made in its tab. Nobody
+    // reads it, so the nonce stays with that tab; overwritten by a second
+    // try, TTL takes it after a day, the adoption deletes it once used.
+    match /playGamesReleases/{uid} {
+      allow create, update: if signedIn() && uid == request.auth.uid &&
+        request.auth.token.get('playGames', false) == true &&
+        request.auth.token.firebase.sign_in_provider == 'custom' &&
+        notBanned() &&
+        request.resource.data.keys().hasOnly(['uid', 'nonce', 'createdAt', 'expireAt']) &&
+        request.resource.data.uid == uid &&
+        isAdoptionNonce(request.resource.data.nonce) &&
+        request.resource.data.createdAt == request.time &&
+        isCommandExpiry(request.resource.data.expireAt);
+    }
+
+    // Once the Play-only account's progress landed in it, the Google
+    // account names the account it adopted and the release's nonce; the
+    // playGamesAdoption trigger moves the Play Games links and writes the
+    // result back. Only the writer reads it.
+    match /playGamesAdoptions/{id} {
+      allow get: if signedIn() && resource.data.uid == request.auth.uid;
+      allow create: if signedIn() &&
+        request.auth.token.firebase.sign_in_provider == 'google.com' &&
+        notBanned() &&
+        request.resource.data.keys().hasOnly(['uid', 'from', 'nonce', 'createdAt', 'expireAt']) &&
+        request.resource.data.uid == request.auth.uid &&
+        request.resource.data.from is string &&
+        request.resource.data.from.matches('[A-Za-z0-9]{1,128}') &&
+        request.resource.data.from != request.auth.uid &&
+        isAdoptionNonce(request.resource.data.nonce) &&
+        request.resource.data.createdAt == request.time &&
+        isCommandExpiry(request.resource.data.expireAt);
+    }
+
     // Which game account each Play Games player is linked to: the
     // functions' alone.
     match /playGamesLinks/{playerId} {
@@ -360,6 +396,11 @@ service cloud.firestore {
     // No ban holds for the writer (ADR 0012): there is none, or it ended -
     // inclusive, like the functions' check. Every client write asks it;
     // deletes stay allowed, so a banned player can still erase their data.
+    // A Play Games adoption's nonce (`isAdoptionNonce` of the engine).
+    function isAdoptionNonce(nonce) {
+      return nonce is string && nonce.matches('[0-9a-f]{32}');
+    }
+
     function notBanned() {
       let ban = /databases/$(database)/documents/bans/$(request.auth.uid);
       return !exists(ban) ||

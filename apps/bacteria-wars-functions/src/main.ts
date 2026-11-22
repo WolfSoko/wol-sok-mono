@@ -22,6 +22,7 @@ import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
 import {
   parseTurnKey,
+  PLAY_GAMES_ADOPTIONS,
   PLAY_GAMES_SIGN_INS,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
@@ -72,6 +73,7 @@ import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { userRecordOf } from './auth-users';
 import { authAccounts } from './play-games/accounts';
+import { runPlayGamesAdoption } from './play-games/adoption-command';
 import { playGamesPlayer } from './play-games/player';
 import { runPlayGamesSignIn } from './play-games/command';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
@@ -236,6 +238,44 @@ export const playGamesSignIn = PLAY_GAMES_ON
         );
         if (result !== null && !result.ok) {
           logger.info('Play Games sign-in refused', {
+            id: event.params.id,
+            result,
+          });
+        }
+      })
+    )
+  : undefined;
+
+/**
+ * A Google account adopting a Play-only account (#3187): moves the Play
+ * Games links of the account it adopted to it, once that account released
+ * itself in the same tab and its progress landed. Off with `PLAY_GAMES_ON`.
+ */
+export const playGamesAdoption = PLAY_GAMES_ON
+  ? onDocumentCreatedWithAuthContext(
+      {
+        document: `${PLAY_GAMES_ADOPTIONS}/{id}`,
+        memory: '256MiB',
+        cpu: 'gcf_gen1',
+        timeoutSeconds: 60,
+      },
+      withSentry(async (event) => {
+        const data = event.data?.data();
+        if (data === undefined) {
+          return;
+        }
+        const result = await runPlayGamesAdoption(
+          db(),
+          event.params.id,
+          data,
+          event.authType === 'unauthenticated' ? undefined : event.authId,
+          {
+            accounts: async () => authAccounts(await auth()),
+            now: Date.now,
+          }
+        );
+        if (result !== null && !result.ok) {
+          logger.info('Play Games adoption refused', {
             id: event.params.id,
             result,
           });

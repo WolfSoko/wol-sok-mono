@@ -1,11 +1,13 @@
 import { useEmulatorDb } from '../testing/emulator';
 import { runPlayGamesSignIn } from './command';
 import type { PlayGamesPlayer } from './player';
+import { type PlayGamesAccounts, signInPlayGames } from './sign-in';
 import {
-  type PlayGamesAccount,
-  type PlayGamesAccounts,
-  signInPlayGames,
-} from './sign-in';
+  fakeAccounts,
+  google,
+  guest,
+  linkedPlayer,
+} from '../testing/fake-play-games-accounts';
 
 /**
  * The Play Games sign-in against the Firestore emulator (`test-emulator`):
@@ -17,47 +19,6 @@ const db = useEmulatorDb();
 
 const NOW = Date.UTC(2026, 10, 22, 12);
 const PLAYER: PlayGamesPlayer = { playerId: 'p1', displayName: 'PlayAda' };
-
-const guest = (): PlayGamesAccount => ({
-  hasProvider: false,
-  displayName: null,
-  claims: {},
-});
-const google = (): PlayGamesAccount => ({
-  hasProvider: true,
-  displayName: 'Ada',
-  claims: { admin: true },
-});
-const linkedPlayer = (): PlayGamesAccount => ({
-  hasProvider: false,
-  displayName: 'PlayAda',
-  claims: { playGames: true },
-});
-
-/** Auth with the given accounts; logs what was written and minted. */
-function fakeAccounts(known: Record<string, PlayGamesAccount>) {
-  const updates: [string, Record<string, unknown>, string | undefined][] = [];
-  const tokens: string[] = [];
-  const accounts: PlayGamesAccounts = {
-    account: async (uid) => known[uid] ?? null,
-    update: async (uid, claims, displayName) => {
-      updates.push([uid, claims, displayName]);
-      const account = known[uid];
-      if (account !== undefined) {
-        known[uid] = {
-          ...account,
-          claims,
-          displayName: displayName ?? account.displayName,
-        };
-      }
-    },
-    customToken: async (uid) => {
-      tokens.push(uid);
-      return `token-for-${uid}`;
-    },
-  };
-  return { accounts, updates, tokens };
-}
 
 const link = async () =>
   (await db.doc('playGamesLinks/p1').get()).data() ?? null;
