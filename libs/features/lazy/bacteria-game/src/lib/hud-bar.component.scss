@@ -1,8 +1,4 @@
-@use '@angular/cdk';
 @use 'colony';
-
-// The clock's and the goal's labels for a screen reader.
-@include cdk.a11y-visually-hidden;
 
 // A band along the top edge of the screen, laid over the arena by the stage:
 // see-through, and only its buttons take a touch - the rest of a drag goes

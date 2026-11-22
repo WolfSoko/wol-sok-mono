@@ -37,25 +37,18 @@
 // A mission card is a button, like the mode cards before it.
 .mission {
   @include screen.panel;
+  @include screen.tile;
 
   display: flex;
   align-items: center;
   gap: 0.9rem;
   width: 100%;
   padding: 0.8rem 1.1rem;
-  color: var(--bw-text);
-  font: inherit;
   text-align: left;
-  cursor: pointer;
 
   &:hover {
     border-color: var(--bw-line-strong);
     background: var(--bw-surface-raised);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
   }
 
   &.current {
@@ -65,9 +58,7 @@
 
 .mission-icon {
   flex: none;
-  width: 1.75rem;
-  height: 1.75rem;
-  font-size: 1.75rem;
+  @include screen.icon-size(1.75rem);
   color: var(--bw-gold);
 }
 

@@ -82,6 +82,7 @@ $colony: var(--bw-player, var(--bw-gold));
 // The way to the achievements, in the look of the main menu's tiles.
 .trophies {
   @include screen.panel;
+  @include screen.tile;
 
   flex: 1 1 13rem;
   display: flex;
@@ -91,19 +92,11 @@ $colony: var(--bw-player, var(--bw-gold));
   padding: 0.8rem 1rem;
   border-color: var(--bw-line-strong);
   background: var(--bw-surface-glass);
-  color: var(--bw-text);
-  font: inherit;
   text-align: left;
-  cursor: pointer;
 
   &:hover {
     border-color: var(--bw-gold);
     box-shadow: 0 0 16px -4px var(--bw-gold);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
   }
 }
 

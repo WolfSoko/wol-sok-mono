@@ -1,3 +1,5 @@
+@use '../menu/screen';
+
 :host {
   display: flex;
   flex-direction: column;
@@ -74,8 +76,7 @@
 
   &:focus-visible,
   &:focus-within {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 1px;
+    @include screen.focus-ring(1px);
   }
 }
 

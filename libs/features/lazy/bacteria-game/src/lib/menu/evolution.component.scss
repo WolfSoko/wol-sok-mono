@@ -1,7 +1,4 @@
-@use '@angular/cdk';
 @use 'screen';
-
-@include cdk.a11y-visually-hidden;
 
 :host {
   @include screen.screen;
@@ -78,9 +75,7 @@
   box-shadow: 0 0 14px color-mix(in srgb, var(--weapon) 50%, transparent);
 
   mat-icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    font-size: 1.1rem;
+    @include screen.icon-size(1.1rem);
     color: var(--weapon);
   }
 }
@@ -345,9 +340,7 @@
   gap: 0.2rem;
 
   mat-icon {
-    width: 0.95rem;
-    height: 0.95rem;
-    font-size: 0.95rem;
+    @include screen.icon-size(0.95rem);
   }
 }
 

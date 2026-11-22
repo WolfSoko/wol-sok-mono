@@ -307,9 +307,7 @@
 
 .mission-icon {
   flex: none;
-  width: 2.25rem;
-  height: 2.25rem;
-  font-size: 2.25rem;
+  @include screen.icon-size(2.25rem);
 }
 
 .mission-line {

@@ -1,4 +1,5 @@
 /* You can add global styles to this file, and also import other style files */
+@use '@angular/cdk';
 @import 'normalize.css/normalize.css';
 // Fonts and icons come from npm (Fontsource, material-icons) and are served
 // from this site: no request goes to Google Fonts, and the build fetches
@@ -37,3 +38,7 @@ body {
     color,
     background-color 500ms ease;
 }
+
+// The CDK's visually hidden class, for the game's texts only a screen reader
+// reads. One global definition for every component; the shell has its own.
+@include cdk.a11y-visually-hidden;

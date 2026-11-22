@@ -76,9 +76,7 @@
   color: var(--bw-muted);
 
   mat-icon {
-    width: 1rem;
-    height: 1rem;
-    font-size: 1rem;
+    @include screen.icon-size(1rem);
   }
 }
 

@@ -1,7 +1,4 @@
-@use '@angular/cdk';
 @use 'screen';
-
-@include cdk.a11y-visually-hidden;
 
 :host {
   @include screen.screen;
@@ -130,6 +127,7 @@
 
 .tile {
   @include screen.panel;
+  @include screen.tile;
 
   display: flex;
   flex-direction: column;
@@ -140,8 +138,6 @@
   min-height: 4.75rem;
   padding: 0.5rem 0.4rem;
   border-radius: 0.9rem;
-  color: var(--bw-text);
-  font: inherit;
   position: relative;
   font-weight: 700;
   line-height: 1.15;
@@ -151,15 +147,9 @@
   hyphens: auto;
   overflow-wrap: anywhere;
   text-decoration: none;
-  cursor: pointer;
 
   &:hover {
     border-color: var(--bw-line-strong);
-  }
-
-  &:focus-visible {
-    outline: 3px solid var(--bw-gold);
-    outline-offset: 2px;
   }
 
   mat-icon {

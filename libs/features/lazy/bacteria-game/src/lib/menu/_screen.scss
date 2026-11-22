@@ -95,6 +95,31 @@
   font-size: 1.2rem;
 }
 
+// The gold ring a focused control wears.
+@mixin focus-ring($offset: 2px) {
+  outline: 3px solid var(--bw-gold);
+  outline-offset: $offset;
+}
+
+// A button drawn as a tile or card: the screens' text, the page's font, and
+// the focus ring. Its look, layout and hover stay the tile's own.
+@mixin tile {
+  color: var(--bw-text);
+  font: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// A Material icon of a size other than its 24px: box and glyph alike.
+@mixin icon-size($size) {
+  width: $size;
+  height: $size;
+  font-size: $size;
+}
+
 // Numbers and figures in the display face.
 @mixin figure {
   font-family: var(--bw-display);
