@@ -65,18 +65,18 @@ describe('SprintTrainingComponent Ansagen', () => {
     );
   });
 
-  it('counts down to the next Intervall within at most 5 s', () => {
+  it('counts down to the next Intervall over the whole current one', () => {
     clickPrimary();
     advance(5000 + 6000);
 
     expect(countdown()).toEqual({
-      countdownTime: 5000,
+      countdownTime: 10_000,
       timeLeft: 4000,
       countdownTo: 'recovery',
     });
   });
 
-  it('uses the whole Intervall as window when it is shorter than 5 s', () => {
+  it('counts the last Intervall down to the end of the training', () => {
     clickPrimary();
     advance(5000 + 11_000);
 

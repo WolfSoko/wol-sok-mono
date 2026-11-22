@@ -1,5 +1,6 @@
 import {
   div,
+  milliseconds,
   Milliseconds,
   SECOND_IN_MS,
   Seconds,
@@ -16,6 +17,9 @@ import { CountdownTarget } from '../model/training/training-name';
  * start of the Intervall (#3098).
  */
 export const CUE_LEAD = SECOND_IN_MS;
+
+/** the next Intervall is announced at most this long before it starts */
+export const ANNOUNCEMENT_WINDOW = milliseconds(5000);
 
 /** announcement opens the window, beeps count it down, start ends it */
 export type CueKind = 'announcement' | 'beep' | 'start';
@@ -51,17 +55,30 @@ export function countdownCue({
   countdownTo,
 }: CountdownModel): CountdownCue | null {
   const secondsLeft = cueSecond(timeLeft);
-  const windowSeconds = Math.round(div(countdownTime, SECOND_IN_MS));
-  const kind = cueKindOf(secondsLeft, windowSeconds);
+  const kind = cueKindOf(secondsLeft, announcedSeconds(countdownTime));
   return kind ? { kind, secondsLeft, countdownTo } : null;
 }
 
+/**
+ * The seconds the announcement names: at most {@link ANNOUNCEMENT_WINDOW},
+ * and one {@link CUE_LEAD} short of a countdown that starts inside it (the
+ * Vorlauf, a short Intervall), so the announcement gets its lead before the
+ * first beep as in a long Intervall (#3110). It rounds down: a part second
+ * left after the lead is no room for a lead of its own.
+ */
+function announcedSeconds(countdownTime: Milliseconds): number {
+  const announcedWindow = milliseconds(
+    Math.min(ANNOUNCEMENT_WINDOW, subtract(countdownTime, CUE_LEAD))
+  );
+  return Math.max(0, Math.floor(div(announcedWindow, SECOND_IN_MS)));
+}
+
 function cueKindOf(secondsLeft: number, windowSeconds: number): CueKind | null {
-  if (secondsLeft === windowSeconds) {
-    return 'announcement';
-  }
   if (secondsLeft === 0) {
     return 'start';
+  }
+  if (secondsLeft === windowSeconds) {
+    return 'announcement';
   }
   if (secondsLeft > 0 && secondsLeft < windowSeconds) {
     return 'beep';

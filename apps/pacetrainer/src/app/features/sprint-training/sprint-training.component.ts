@@ -7,7 +7,6 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { IntervalCountdownService } from '../../shared/interval-countdown/interval-countdown.service';
-import { milliseconds } from '@wolsok/utils-time';
 import { TrainingRun } from '../../shared/training-run/training-run';
 import { CountDownCircleComponent } from '../../shared/ui/count-down-circle/count-down-circle.component';
 import { ScreenWakeLockService } from '../../shared/wake-lock/screen-wake-lock.service';
@@ -16,9 +15,6 @@ import { SprintFormComponent } from '../training-configuration/sprint-training-f
 import { SprintTrainingOverviewComponent } from '../training-configuration/sprint-training-overview.component';
 import { TrainingLiveStateComponent } from '../training-live-state/training-live-state.component';
 import { SummaryComponent } from './summary.component';
-
-/** Ansagen start at most this long before the next Intervall */
-const ANNOUNCEMENT_WINDOW = milliseconds(5000);
 
 @Component({
   selector: 'pace-sprint-training',
@@ -63,7 +59,7 @@ export class SprintTrainingComponent {
         case 'running':
         case 'paused':
           this.countdownService.updateCountdown(
-            milliseconds(Math.min(ANNOUNCEMENT_WINDOW, run.current.duration)),
+            run.current.duration,
             run.current.left,
             run.next
           );
