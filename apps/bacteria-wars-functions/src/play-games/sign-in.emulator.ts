@@ -10,8 +10,8 @@ import {
 /**
  * The Play Games sign-in against the Firestore emulator (`test-emulator`):
  * the link transaction, the marks and the token, with Auth and Google's
- * exchange faked. Each of the four outcomes of `settleLink`, a relink of a
- * gone account, and what the sign-in must never do.
+ * exchange faked. Each outcome of `settleLink`, a relink of a gone
+ * account, and what the sign-in must never do.
  */
 const db = useEmulatorDb();
 
@@ -28,6 +28,11 @@ const google = (): PlayGamesAccount => ({
   displayName: 'Ada',
   claims: { admin: true },
 });
+const linkedPlayer = (): PlayGamesAccount => ({
+  hasProvider: false,
+  displayName: 'PlayAda',
+  claims: { playGames: true },
+});
 
 /** Auth with the given accounts; logs what was written and minted. */
 function fakeAccounts(known: Record<string, PlayGamesAccount>) {
@@ -37,6 +42,14 @@ function fakeAccounts(known: Record<string, PlayGamesAccount>) {
     account: async (uid) => known[uid] ?? null,
     update: async (uid, claims, displayName) => {
       updates.push([uid, claims, displayName]);
+      const account = known[uid];
+      if (account !== undefined) {
+        known[uid] = {
+          ...account,
+          claims,
+          displayName: displayName ?? account.displayName,
+        };
+      }
     },
     customToken: async (uid) => {
       tokens.push(uid);
@@ -57,46 +70,46 @@ function deps(
 }
 
 describe('signInPlayGames', () => {
-  it('links a new player to the writer and answers its token', async () => {
+  it('links a new player to a guest and answers its token', async () => {
     const fake = fakeAccounts({ g: guest() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      {
-        result: { ok: true },
-        token: 'token-for-g',
-      }
+      { result: { ok: true }, token: 'token-for-g' }
     );
-    expect(await link()).toEqual({
-      uid: 'g',
-      linkedAt: expect.objectContaining({ toMillis: expect.any(Function) }),
-    });
+    expect((await link())?.['uid']).toBe('g');
     expect((await link())?.['linkedAt'].toMillis()).toBe(NOW);
     // A guest has no name: it gets the Play Games one.
     expect(fake.updates).toEqual([['g', { playGames: true }, 'PlayAda']]);
   });
 
-  it('keeps a link to the writer, and its claims and name', async () => {
+  it('keeps a link to a Google writer, with its claims, name and own session', async () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
     const fake = fakeAccounts({ a: google() });
+    // No token: a custom-token session would lose the Google provider the
+    // owner's rights hang on.
     expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
-      {
-        result: { ok: true },
-        token: 'token-for-a',
-      }
+      { result: { ok: true }, token: null }
     );
     expect(await link()).toEqual({ uid: 'a', linkedAt: 1 });
     expect(fake.updates).toEqual([
       ['a', { admin: true, playGames: true }, undefined],
     ]);
+    expect(fake.tokens).toEqual([]);
+  });
+
+  it('writes nothing to Auth at a later start of a linked player', async () => {
+    await db.doc('playGamesLinks/p1').set({ uid: 'g', linkedAt: 1 });
+    const fake = fakeAccounts({ g: linkedPlayer() });
+    expect(
+      (await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).token
+    ).toBe('token-for-g');
+    expect(fake.updates).toEqual([]);
   });
 
   it('hands a guest the account the player is linked to', async () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
     const fake = fakeAccounts({ g: guest(), a: google() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      {
-        result: { ok: true },
-        token: 'token-for-a',
-      }
+      { result: { ok: true }, token: 'token-for-a' }
     );
     expect(await link()).toEqual({ uid: 'a', linkedAt: 1 });
     // Only the settled account is marked, and only it gets a token.
@@ -104,14 +117,25 @@ describe('signInPlayGames', () => {
     expect(fake.tokens).toEqual(['a']);
   });
 
-  it('refuses a Google account while the player is linked elsewhere', async () => {
-    await db.doc('playGamesLinks/p1').set({ uid: 'other', linkedAt: 1 });
-    const fake = fakeAccounts({ a: google(), other: guest() });
+  it('moves the link from an account without provider to a Google writer', async () => {
+    await db.doc('playGamesLinks/p1').set({ uid: 'pg', linkedAt: 1 });
+    const fake = fakeAccounts({ a: google(), pg: linkedPlayer() });
     expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
-      {
-        result: { ok: false, error: 'linked-elsewhere' },
-        token: null,
-      }
+      { result: { ok: true }, token: null }
+    );
+    expect((await link())?.['uid']).toBe('a');
+    // The account left behind counts as a guest again, for guestCleanup.
+    expect(fake.updates).toEqual([
+      ['pg', {}, undefined],
+      ['a', { admin: true, playGames: true }, undefined],
+    ]);
+  });
+
+  it('refuses a Google writer while another Google account holds the player', async () => {
+    await db.doc('playGamesLinks/p1').set({ uid: 'other', linkedAt: 1 });
+    const fake = fakeAccounts({ a: google(), other: google() });
+    expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
+      { result: { ok: false, error: 'linked-elsewhere' }, token: null }
     );
     expect(await link()).toEqual({ uid: 'other', linkedAt: 1 });
     expect(fake.updates).toEqual([]);
@@ -120,11 +144,11 @@ describe('signInPlayGames', () => {
 
   it('relinks a player whose account is gone', async () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'deleted', linkedAt: 1 });
-    const fake = fakeAccounts({ a: google() });
+    const fake = fakeAccounts({ g: guest() });
     expect(
-      (await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).token
-    ).toBe('token-for-a');
-    expect((await link())?.['uid']).toBe('a');
+      (await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).token
+    ).toBe('token-for-g');
+    expect((await link())?.['uid']).toBe('g');
   });
 
   it('answers play-games-refused for a code Google refuses, and links nothing', async () => {

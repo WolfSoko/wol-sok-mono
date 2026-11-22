@@ -72,6 +72,7 @@ import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
 import { runCommandDocument } from './commands/run-command-document';
 import { authAccounts } from './play-games/accounts';
+import { claimSignIn } from './play-games/claim';
 import { playGamesPlayer } from './play-games/player';
 import { signInPlayGames } from './play-games/sign-in';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
@@ -212,6 +213,7 @@ export const playGamesSignIn = PLAY_GAMES_ON
         if (data === undefined) {
           return;
         }
+        const path = `${PLAY_GAMES_SIGN_INS}/${event.params.id}`;
         let token: string | null = null;
         const client = {
           id: PLAY_GAMES_WEB_CLIENT_ID,
@@ -220,12 +222,16 @@ export const playGamesSignIn = PLAY_GAMES_ON
         const accounts = authAccounts(await auth());
         const result = await runCommandDocument(
           db(),
-          `${PLAY_GAMES_SIGN_INS}/${event.params.id}`,
+          path,
           data,
           event.authType === 'unauthenticated' ? undefined : event.authId,
           async (uid) => {
             if (command === null) {
               return { ok: false, error: 'invalid' };
+            }
+            // A second delivery of the same create leaves it to the first.
+            if (!(await claimSignIn(db(), path))) {
+              return null;
             }
             const answer = await signInPlayGames(db(), uid, command.code, {
               player: (code) => playGamesPlayer(code, client, fetch),
@@ -237,7 +243,7 @@ export const playGamesSignIn = PLAY_GAMES_ON
           },
           () => (token === null ? {} : { [PLAY_GAMES_TOKEN_KEY]: token })
         );
-        if (!result?.ok) {
+        if (result !== null && !result.ok) {
           logger.info('Play Games sign-in refused', {
             id: event.params.id,
             result,
