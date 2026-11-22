@@ -32,6 +32,7 @@ import { MatchSetup } from './flow/match-setup';
 import { OnlineFlow } from './flow/online-flow';
 import { PlayGamesHandover } from './play-games/play-games-handover';
 import { PlayFlow } from './flow/play-flow';
+import { parentScreen } from './flow/stage-screens';
 import { GpuSelfTestService } from './gpu-choice/gpu-self-test.service';
 import { SimulationOverrideService } from './gpu-choice/simulation-override.service';
 import { GameHapticsService } from './haptics.service';
@@ -46,6 +47,7 @@ import { HelpComponent } from './menu/help.component';
 import { MainMenuComponent } from './menu/main-menu.component';
 import { MyColonyComponent } from './menu/my-colony.component';
 import { NewGameComponent } from './menu/new-game.component';
+import { AchievementsComponent } from './menu/achievements.component';
 import { ProfileComponent } from './menu/profile.component';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
@@ -102,6 +104,7 @@ import { WinnerComponent } from './winner-info/winner.component';
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
+    AchievementsComponent,
     EvolutionComponent,
     TranslatePipe,
     ArenaViewComponent,
@@ -326,7 +329,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (playing()) {
       this.flow.togglePause();
     } else if (this.flow.screen() !== 'menu') {
-      this.flow.screen.set('menu');
+      this.flow.screen.set(parentScreen(this.flow.screen()));
     } else if (paused()) {
       this.flow.togglePause();
     } else {

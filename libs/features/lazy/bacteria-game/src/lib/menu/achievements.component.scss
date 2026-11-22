@@ -1,0 +1,114 @@
+@use '@angular/cdk';
+@use 'screen';
+
+// "Locked:" before a condition, for a screen reader.
+@include cdk.a11y-visually-hidden;
+
+:host {
+  @include screen.screen;
+}
+
+.progress {
+  @include screen.panel;
+
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+}
+
+.trophy {
+  flex: 0 0 auto;
+  width: 3rem;
+  height: 3rem;
+  font-size: 3rem;
+  color: var(--bw-gold);
+  filter: drop-shadow(0 0 10px rgb(233 185 73 / 45%));
+}
+
+.progress-text {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.earned-count {
+  @include screen.figure;
+
+  font-size: 2rem;
+}
+
+.of {
+  font-weight: 600;
+  color: var(--bw-muted);
+}
+
+.bar {
+  @include screen.bar;
+}
+
+.achievements {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px dashed var(--bw-line);
+    border-radius: 0.9rem;
+
+    &.earned {
+      border: 1px solid var(--bw-gold);
+      background: var(--bw-surface-raised);
+      box-shadow: 0 0 14px -6px var(--bw-gold);
+
+      .badge {
+        background: var(--bw-gold);
+        color: var(--bw-ground);
+      }
+    }
+  }
+}
+
+.badge {
+  @include screen.figure;
+
+  flex: 0 0 2.5rem;
+  display: grid;
+  place-items: center;
+  height: 2.5rem;
+  // A hexagon, as the rank emblems are.
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background: var(--bw-surface-raised);
+  color: var(--bw-faint);
+  font-size: 1.1rem;
+
+  .mat-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    font-size: 1.1rem;
+  }
+}
+
+.achievement-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.achievement-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.achievement-note {
+  font-size: 0.8rem;
+  color: var(--bw-muted);
+}

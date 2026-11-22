@@ -233,6 +233,14 @@ describe('BacteriaGameComponent', () => {
       expect(component['flow'].panel()).toBe('menu');
     });
 
+    it('goes back from the achievements to the profile', () => {
+      create();
+
+      component['flow'].show('achievements');
+      component.onKeyDown(keyEvent('Escape', document.body));
+      expect(component['flow'].panel()).toBe('profile');
+    });
+
     it('takes no key while the work of a tap waits to run', () => {
       create();
       component['flow'].show('new-game');
