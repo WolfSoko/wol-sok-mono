@@ -56,7 +56,9 @@ change has to find it, or show that it no longer happens.
    `beforeEach`/`afterEach` hooks that collect the page's console errors,
    failed requests and responses with status ≥ 400. On a failure it prints
    them to stdout, which lands in the Nx Cloud task log, and attaches them
-   to the report. The config keeps the screenshot of a failed test
+   to the report. Each entry holds only the URL, the status code and the
+   message, never request headers or bodies, since the Nx Cloud log is
+   public. The config keeps the screenshot of a failed test
    (`screenshot: 'only-on-failure'`) and the trace on retry, as now.
    Reason: if the CI run on the PR goes red, the log has to name the cause
    (a failed `remoteEntry.json`, a shared bundle 404, a bootstrap error), so
@@ -72,7 +74,9 @@ change has to find it, or show that it no longer happens.
      configuration) than Playwright's nested start.
      If the run passes without a fix, the PR says so. Three green CI runs of
      `angular-examples:e2e-ci--e2e/home.spec.ts` on the PR (re-runs count)
-     are then the evidence, and the exception goes away.
+     are then the evidence, and the exception goes away. A run counts only
+     when it executed the task (its log shows the Playwright run, not a
+     cache hit), and the PR links each run.
 4. **If a root cause can't be fixed in this repo, ask the manager** before
    keeping any exception. A new exception would need a reason that names
    the cause.

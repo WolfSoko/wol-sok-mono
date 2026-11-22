@@ -3,7 +3,10 @@
 Spec: `docs/specs/3202-angular-examples-e2e-move-to-nxserver-instead-of-letting-playwright-start-nx-run-inside-the-task.md`.
 
 Starts once PR #3203 (#3120) is on `main`. The branch
-`3202-angular-examples-e2e-nxserver` comes off that `main`.
+`3202-angular-examples-e2e-nxserver` is rebased onto that `main`. Check the
+spec against #3203's final wording first. Its last commit adds the "outside
+the project's own Playwright tasks" convention to CLAUDE.md, Testing, and
+task 2's CLAUDE.md edit sits with that bullet.
 
 ## Tasks
 
@@ -46,7 +49,8 @@ Starts once PR #3203 (#3120) is on `main`. The branch
      run CI again. If the cause lies outside the repo, ask the manager a
      `question` before keeping an exception.
    - Green: re-run the CI workflow until three runs passed on the head,
-     then note the runs in the PR description.
+     each one executed, not a cache hit, and link each run in the PR
+     description.
 5. **Review, test, merge** (role steps 5-7)
    - Code review by a fresh subagent against the spec, fixes, review
      comment on the PR. List each acceptance point with its result in the
