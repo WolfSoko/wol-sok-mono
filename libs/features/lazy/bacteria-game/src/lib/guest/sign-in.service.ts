@@ -4,6 +4,7 @@ import { filter, firstValueFrom } from 'rxjs';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { ProgressService } from '../progress.service';
 import { GameAccount } from '../storage/game-account';
+import type { PlayGamesToken } from '../storage/game-play-games';
 
 /**
  * Signing in with Google and out again, for every button that offers it:
@@ -29,6 +30,7 @@ export class SignIn {
   public readonly ready = computed(
     () => !this.busy() && this.progress.loaded()
   );
+  private readonly ready$ = toObservable(this.ready);
 
   public async signIn(): Promise<void> {
     if (!this.ready()) return;
@@ -44,8 +46,6 @@ export class SignIn {
     });
   }
 
-  private readonly ready$ = toObservable(this.ready);
-
   /**
    * Signs in with the custom token of a Play Games sign-in, once a sign-in
    * can start. Silent, as Play Games' own sign-in is: a refused token
@@ -53,7 +53,10 @@ export class SignIn {
    * Pass only when a guest became a signed-in player - every later start of
    * the app just renews the session.
    */
-  public async signInWithToken(token: string, writer: string): Promise<void> {
+  public async signInWithToken(
+    token: PlayGamesToken,
+    writer: string
+  ): Promise<void> {
     await firstValueFrom(this.ready$.pipe(filter(Boolean)));
     const wasGuest = this.account.profile()?.guest === true;
     await this.whileBusy(async () => {

@@ -31,11 +31,15 @@ describe('FirestoreGamePlayGames', () => {
 
   it('sends the code in the player’s name and answers the token', async () => {
     const signedIn = playGames.signIn('4/0Ab');
-    const path = await answer({ result: { ok: true }, token: 'tok' });
+    const path = await answer({
+      result: { ok: true },
+      token: 'tok',
+      tokenUid: 'guest-1',
+    });
 
     expect(await signedIn).toEqual({
       ok: true,
-      token: 'tok',
+      token: { value: 'tok', uid: 'guest-1' },
       writer: 'guest-1',
     });
     expect(fake.writes[0]).toMatchObject({
@@ -65,8 +69,12 @@ describe('FirestoreGamePlayGames', () => {
     expect(fake.writes).toEqual([]);
 
     players.next('guest-2');
-    await answer({ result: { ok: true }, token: 't' });
-    expect(await signedIn).toEqual({ ok: true, token: 't', writer: 'guest-2' });
+    await answer({ result: { ok: true }, token: 't', tokenUid: 'guest-2' });
+    expect(await signedIn).toEqual({
+      ok: true,
+      token: { value: 't', uid: 'guest-2' },
+      writer: 'guest-2',
+    });
     expect(fake.writes[0]).toMatchObject({ data: { uid: 'guest-2' } });
   });
 

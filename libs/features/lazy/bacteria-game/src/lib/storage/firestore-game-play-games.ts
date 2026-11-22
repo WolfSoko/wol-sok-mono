@@ -2,21 +2,21 @@ import {
   parseCommandResult,
   PLAY_GAMES_SIGN_INS,
   PLAY_GAMES_TOKEN_KEY,
+  PLAY_GAMES_TOKEN_UID_KEY,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { DocumentSnapshot } from 'firebase/firestore';
 import { filter, firstValueFrom, from, Observable, take, timeout } from 'rxjs';
 import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
+import { signedIn } from './firestore-values';
 import type { GamePlayGames, PlayGamesAnswer } from './game-play-games';
 
 /**
- * How long the sign-in waits for the functions: a cold start, Google's
- * exchange and a transaction fit well within it.
+ * How long each step of the sign-in waits - the first player, the write
+ * and the functions' answer: a cold start, Google's exchange and a
+ * transaction fit well within it.
  */
 export const PLAY_GAMES_ANSWER_MS = 30_000;
-
-/** How long it waits for the first player - a guest is signed in to first. */
-const PLAYER_MS = 30_000;
 
 /**
  * {@link GamePlayGames} on Firestore: a command document
@@ -33,12 +33,7 @@ export class FirestoreGamePlayGames implements GamePlayGames {
   public async signIn(code: string): Promise<PlayGamesAnswer | null> {
     const { db, dbSdk } = this.connection;
     try {
-      const uid = await firstValueFrom(
-        this.playerIds.pipe(
-          filter((id): id is string => id !== null),
-          timeout(PLAYER_MS)
-        )
-      );
+      const uid = await signedIn(this.playerIds, PLAY_GAMES_ANSWER_MS);
       const ref = dbSdk.doc(dbSdk.collection(db, PLAY_GAMES_SIGN_INS));
       // Awaited: the rules let the writer read it only once it exists. An
       // offline device holds the write until it is back, so the wait has
@@ -52,14 +47,20 @@ export class FirestoreGamePlayGames implements GamePlayGames {
         ).pipe(timeout(PLAY_GAMES_ANSWER_MS))
       );
       try {
-        const answer = await firstValueFrom(
-          snapshotsOf((next, error) => dbSdk.onSnapshot(ref, next, error)).pipe(
+        const answered = await firstValueFrom(
+          new Observable<DocumentSnapshot>((subscriber) =>
+            dbSdk.onSnapshot(
+              ref,
+              (snapshot) => subscriber.next(snapshot),
+              (error) => subscriber.error(error)
+            )
+          ).pipe(
             filter((snapshot) => snapshot.get('result') !== undefined),
             take(1),
             timeout(PLAY_GAMES_ANSWER_MS)
           )
         );
-        return answerOf(answer, uid);
+        return answerOf(answered, uid);
       } finally {
         // Answered or not, it holds a code and maybe a token: gone now, and
         // TTL takes it should this delete fail. Not awaited: offline, the
@@ -75,21 +76,6 @@ export class FirestoreGamePlayGames implements GamePlayGames {
   }
 }
 
-/** The snapshots a listener started by `listen` tells, until unsubscribed. */
-function snapshotsOf(
-  listen: (
-    next: (snapshot: DocumentSnapshot) => void,
-    error: (error: unknown) => void
-  ) => () => void
-): Observable<DocumentSnapshot> {
-  return new Observable<DocumentSnapshot>((subscriber) =>
-    listen(
-      (snapshot) => subscriber.next(snapshot),
-      (error) => subscriber.error(error)
-    )
-  );
-}
-
 function answerOf(
   snapshot: DocumentSnapshot,
   writer: string
@@ -98,10 +84,11 @@ function answerOf(
   if (result === null) {
     return null;
   }
-  const token: unknown = snapshot.get(PLAY_GAMES_TOKEN_KEY);
-  return {
-    ...result,
-    token: typeof token === 'string' ? token : null,
-    writer,
-  };
+  const value: unknown = snapshot.get(PLAY_GAMES_TOKEN_KEY);
+  const uid: unknown = snapshot.get(PLAY_GAMES_TOKEN_UID_KEY);
+  const token =
+    typeof value === 'string' && typeof uid === 'string'
+      ? { value, uid }
+      : null;
+  return { ...result, token, writer };
 }

@@ -1,6 +1,7 @@
 import { inject, Injectable, Signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { GameCloud } from './game-cloud';
+import type { PlayGamesToken } from './game-play-games';
 
 /** Who plays, as the profile shows them. */
 export interface PlayerProfile {
@@ -83,7 +84,7 @@ export abstract class GameAccount {
    * sign-out is dropped. False when nothing was signed in to.
    */
   public abstract signInWithToken(
-    token: string,
+    token: PlayGamesToken,
     writer: string
   ): Promise<boolean>;
 

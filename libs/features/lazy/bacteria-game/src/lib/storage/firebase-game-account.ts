@@ -2,7 +2,6 @@ import { signal } from '@angular/core';
 import type { User, UserCredential } from 'firebase/auth';
 import { map, Observable, ReplaySubject } from 'rxjs';
 import type { FirebaseConnection } from './firebase-connection';
-import { customTokenUid } from './custom-token';
 import { isOwnerToken } from './owner-token';
 import { beforeRetry, errorCode } from './retry';
 import type {
@@ -11,6 +10,7 @@ import type {
   PlayerSwitch,
   SignInOutcome,
 } from './game-account';
+import type { PlayGamesToken } from './game-play-games';
 
 /** Sign-in errors that mean the player closed the popup or started another. */
 const CANCELLED = new Set([
@@ -121,26 +121,21 @@ export class FirebaseGameAccount implements GameAccount {
   }
 
   public async signInWithToken(
-    token: string,
+    { value, uid }: PlayGamesToken,
     writer: string
   ): Promise<boolean> {
     const { auth, authSdk } = this.connection;
-    const uid = customTokenUid(token);
     const user = auth.currentUser;
-    if (uid === null) {
-      console.error('Not a sign-in token');
-      return false;
-    }
     // Another player plays since the sign-in was sent - or one already
     // signed in to this account, whose session needs no new token.
-    if (user?.uid !== writer || (uid === user.uid && !user.isAnonymous)) {
+    if (user?.uid !== writer || (uid === writer && !user.isAnonymous)) {
       return false;
     }
     // Another account takes over from the guest, as a Google account that
     // played elsewhere does; the same account only gets a new session.
-    this.adoptingGuest = uid !== auth.currentUser?.uid;
+    this.adoptingGuest = uid !== writer;
     try {
-      const credential = await authSdk.signInWithCustomToken(auth, token);
+      const credential = await authSdk.signInWithCustomToken(auth, value);
       // The same uid is no auth state change, so the profile is told here.
       this.profileState.set(profileOf(credential.user));
       return true;

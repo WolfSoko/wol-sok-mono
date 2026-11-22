@@ -1,4 +1,4 @@
-import { filter, firstValueFrom, type Observable } from 'rxjs';
+import { filter, firstValueFrom, type Observable, timeout } from 'rxjs';
 
 /**
  * A Firestore timestamp in whole milliseconds - null for anything else;
@@ -30,11 +30,16 @@ export function millisOf(
   return null;
 }
 
-/** The uid of whoever plays, once someone does. */
+/**
+ * The uid of whoever plays, once someone does - rejecting after
+ * `timeoutMs`, where one is given.
+ */
 export function signedIn(
-  playerIds: Observable<string | null>
+  playerIds: Observable<string | null>,
+  timeoutMs?: number
 ): Promise<string> {
+  const uids = playerIds.pipe(filter((uid): uid is string => uid !== null));
   return firstValueFrom(
-    playerIds.pipe(filter((uid): uid is string => uid !== null))
+    timeoutMs === undefined ? uids : uids.pipe(timeout(timeoutMs))
   );
 }

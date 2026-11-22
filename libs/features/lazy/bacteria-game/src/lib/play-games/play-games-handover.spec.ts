@@ -19,7 +19,11 @@ describe('PlayGamesHandover', () => {
 
   beforeEach(() => {
     hash = '#play-games=4%2F0Ab';
-    answer = { ok: true, token: 'tok', writer: 'guest-1' };
+    answer = {
+      ok: true,
+      token: { value: 'tok', uid: 'guest-1' },
+      writer: 'guest-1',
+    };
     playGames = { signIn: jest.fn(async () => answer) };
     cloudPlayGames = playGames;
     signInWithToken = jest.fn(async () => undefined);
@@ -62,7 +66,10 @@ describe('PlayGamesHandover', () => {
       replaceUrl: true,
     });
     expect(playGames.signIn).toHaveBeenCalledWith('4/0Ab');
-    expect(signInWithToken).toHaveBeenCalledWith('tok', 'guest-1');
+    expect(signInWithToken).toHaveBeenCalledWith(
+      { value: 'tok', uid: 'guest-1' },
+      'guest-1'
+    );
   });
 
   it('does nothing without a code', async () => {
@@ -117,7 +124,10 @@ describe('PlayGamesHandover', () => {
     first(null);
     await new Promise((resolve) => setTimeout(resolve, 5));
     expect(playGames.signIn).toHaveBeenLastCalledWith('second');
-    expect(signInWithToken).toHaveBeenCalledWith('tok', 'guest-1');
+    expect(signInWithToken).toHaveBeenCalledWith(
+      { value: 'tok', uid: 'guest-1' },
+      'guest-1'
+    );
   });
 
   it('takes the code of a later start of the running game', async () => {

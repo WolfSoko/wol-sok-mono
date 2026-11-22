@@ -3,9 +3,8 @@ import { DestroyRef, inject, Injectable } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { playGamesCodeOf } from '@wolsok/feat-shared-bacteria-engine/cloud';
-import { EMPTY, fromEvent } from 'rxjs';
-import { delay } from 'rxjs/operators';
 import { dropHash } from '../flow/drop-hash';
+import { hashLinks } from '../flow/hash-links';
 import { SignIn } from '../guest/sign-in.service';
 import { GameCloud } from '../storage/game-cloud';
 
@@ -32,17 +31,13 @@ export class PlayGamesHandover {
 
   /** Takes the code of the start, and of every start of the running game. */
   public start(): void {
-    void this.take();
-    // The app opens the running game again by a new hash only (see
-    // `OnlineFlow.start`), read a task after the router's sync.
-    const view = this.document.defaultView;
-    (view === null ? EMPTY : fromEvent(view, 'hashchange'))
-      .pipe(delay(0), takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => void this.take());
+    hashLinks(this.document)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((hash) => void this.take(hash));
   }
 
-  private async take(): Promise<void> {
-    const code = playGamesCodeOf(this.document.location.hash);
+  private async take(hash: string): Promise<void> {
+    const code = playGamesCodeOf(hash);
     if (code === null) {
       return;
     }
@@ -56,10 +51,10 @@ export class PlayGamesHandover {
     }
     this.busy = true;
     try {
-      for (let next: string | null = code; next !== null;) {
+      let next: string | null = code;
+      while (next !== null) {
         this.waiting = null;
-        const answered = await this.hand(next);
-        next = answered ? null : this.waiting;
+        next = (await this.hand(next)) ? null : this.waiting;
       }
     } finally {
       this.busy = false;

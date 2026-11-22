@@ -62,16 +62,11 @@ export function playGamesUser(uid: string, name: string): FakeUser {
 }
 
 /**
- * A custom token for `uid`, shaped as Firebase's: a JWT whose payload
- * names the uid. The fake's `signInWithCustomToken` reads it the same way.
+ * The functions' answer for `uid`: a custom token the fake's
+ * `signInWithCustomToken` signs in to that uid with.
  */
-export function fakeCustomToken(uid: string): string {
-  const base64url = (value: object) =>
-    btoa(JSON.stringify(value))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  return `${base64url({ alg: 'RS256' })}.${base64url({ uid })}.signature`;
+export function playGamesToken(uid: string): { value: string; uid: string } {
+  return { value: `custom-token:${uid}`, uid };
 }
 
 /**
@@ -125,7 +120,7 @@ export class FakeFirebaseAuth {
   /** Signs in as the Play Games player the token names, `Player <uid>`. */
   public readonly signInWithCustomToken = jest.fn(
     async (_auth: unknown, token: string) => {
-      const uid = JSON.parse(atob(token.split('.')[1] ?? ''))['uid'] as string;
+      const uid = token.replace(/^custom-token:/, '');
       this.become(playGamesUser(uid, `Player ${uid}`));
       return { user: this.currentUser };
     }
