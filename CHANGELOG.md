@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.177.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.3...v74.177.0) (2026-11-22)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the Lab Pass, a gamified sign-in with profile onboarding ([#3181](https://github.com/WolfSoko/wol-sok-mono/issues/3181)) ([93e7f80](https://github.com/WolfSoko/wol-sok-mono/commit/93e7f8095ab893409fb0fe822cc192de41e0d1a3)), closes [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175), references [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175)
+
 ## [74.176.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.2...v74.176.3) (2026-11-22)
 
 ### Bug Fixes
