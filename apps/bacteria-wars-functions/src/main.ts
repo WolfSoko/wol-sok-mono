@@ -74,6 +74,7 @@ import { tooOldToRetry } from './limits';
 import { userRecordOf } from './auth-users';
 import { authAccounts } from './play-games/accounts';
 import { runPlayGamesAdoption } from './play-games/adoption-command';
+import { syncPlayGamesAchievements } from './play-games/achievements';
 import { playGamesPlayer } from './play-games/player';
 import { runPlayGamesSignIn } from './play-games/command';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
@@ -197,7 +198,8 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
  * The Play Games sign-in of the Android app (#3175 step 2): links the
  * player behind the command's code to its writer's account, or hands a
  * guest the account the player is linked to, and writes a custom token for
- * the account it settled on beside the result. Off with `PLAY_GAMES_ON`.
+ * the account it settled on beside the result; then unlocks that account's
+ * earned achievements on Play Games (step 3). Off with `PLAY_GAMES_ON`.
  */
 export const playGamesSignIn = PLAY_GAMES_ON
   ? onDocumentCreatedWithAuthContext(
@@ -205,7 +207,8 @@ export const playGamesSignIn = PLAY_GAMES_ON
         document: `${PLAY_GAMES_SIGN_INS}/{id}`,
         memory: '256MiB',
         cpu: 'gcf_gen1',
-        timeoutSeconds: 60,
+        // The sign-in, then the achievement sync's budget and its last call.
+        timeoutSeconds: 120,
         secrets: [PLAY_GAMES_CLIENT_SECRET, BAN_TOMBSTONE_KEY],
       },
       withSentry(async (event) => {
@@ -233,6 +236,8 @@ export const playGamesSignIn = PLAY_GAMES_ON
                 Date.now()
               ),
             accounts: async () => authAccounts(await auth()),
+            syncAchievements: (uid, games) =>
+              syncPlayGamesAchievements(db(), uid, games),
             now: Date.now,
           }
         );

@@ -75,6 +75,21 @@ describe('PrivacyComponent', () => {
     );
   });
 
+  it('says the game reports its achievements to Play Games, in both languages', async () => {
+    const { de, en } = texts(await open());
+
+    expect(en).toContain(
+      'report the achievements your game account has earned to Google Play Games'
+    );
+    expect(en).toContain('neither the access token nor a refresh token');
+    expect(en).toContain('A suspended account reports nothing');
+    expect(de).toContain(
+      'die Erfolge, die dein Spielkonto errungen hat, an Google Play Spiele'
+    );
+    expect(de).toContain('weder den Zugangsschlüssel noch einen Schlüssel');
+    expect(de).toContain('Ein gesperrtes Konto meldet nichts');
+  });
+
   it('has each section on the cloud in both languages', async () => {
     const page = await open();
     const pairs = [

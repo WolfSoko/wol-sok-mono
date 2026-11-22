@@ -7,6 +7,7 @@ import {
 import { type Firestore, Timestamp } from 'firebase-admin/firestore';
 import { updatePlayGamesClaim } from './claim';
 import { type LinkAccount, settleLink } from './link';
+import type { PlayGamesApi } from './games-api';
 import type { PlayGamesPlayer } from './player';
 
 /** An account as the sign-in reads it from Auth. */
@@ -44,11 +45,20 @@ export interface PlayGamesSignInDeps {
   now: number;
 }
 
-/** The sign-in's answer: the result, and a token where the game needs one. */
+/**
+ * The sign-in's answer: the result, a token where the game needs one, and
+ * whose achievements go to Play (step 3).
+ */
 export interface PlayGamesSignInAnswer {
   result: CommandResult & { error?: PlayGamesSignInError };
   /** A custom token, and the uid it signs in to. */
   token: { value: string; uid: string } | null;
+  /**
+   * The account the player is linked to and its Games API, for the
+   * achievement sync - null on every refusal, so a player only ever gets
+   * the achievements of its own account.
+   */
+  sync: { uid: string; games: PlayGamesApi } | null;
 }
 
 /**
@@ -126,6 +136,7 @@ export async function signInPlayGames(
     token: needsToken
       ? { value: await accounts.customToken(outcome.uid), uid: outcome.uid }
       : null,
+    sync: { uid: outcome.uid, games: player.games },
   };
 }
 
@@ -167,5 +178,5 @@ function needsMark(account: PlayGamesAccount, name: string | null): boolean {
 }
 
 function refused(error: PlayGamesSignInError): PlayGamesSignInAnswer {
-  return { result: { ok: false, error }, token: null };
+  return { result: { ok: false, error }, token: null, sync: null };
 }

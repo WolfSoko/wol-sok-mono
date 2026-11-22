@@ -8,11 +8,11 @@ PR ("Part of #3175"):
 - **Step 1 — the Lab Pass** (deployed in 74.177.0): signing in becomes a quest
   of its own in the main menu, with a profile onboarding and a reward. Web
   only, testable in CI.
-- **Step 2 — Play Games as sign-in** (specified below): the Play Games
+- **Step 2 — Play Games as sign-in** (deployed in 74.178.1): the Play Games
   account of the Android app signs the player in, linked to the game
   account. It needs the Android app, a Cloud Function, an OAuth secret and a
   check on a real device.
-- **Step 3 — achievements on Play Games** (outlined below): the game's
+- **Step 3 — achievements on Play Games** (specified below): the game's
   achievements unlock on Play Games for a player who starts the app.
 
 ## Step 1: the Lab Pass
@@ -326,37 +326,141 @@ PR ("Part of #3175"):
 
 ## Step 3: achievements on Play Games
 
-The game's achievements unlock on Play Games for a player who starts the
-Android app. Its own step and PR after step 2, which it builds on: the code
-the app hands over at every launch also allows the Games API for that
-player for an hour.
+### Goal
 
-- **When**: at every app start, in the same `playGamesSignIn` trigger, after
-  the link is settled: it reads the account's progress
-  (`players/{uid}/storage/bacteria-game.progress`), lists Play's
-  achievements (`GET games/v1/achievements`, English names) and the
-  player's states (`GET games/v1/players/me/achievements`), and unlocks
-  (`POST games/v1/achievements/{id}/unlock`) each one the game has earned and
-  Play still shows locked, matched by the English name of
-  `play-games-achievements.json` (as the deploy's sync matches them). An
-  achievement earned during a session reaches Play with the next app start.
-- **No stored tokens**: the trigger keeps neither the access nor a refresh
-  token, so there is no per-player secret to guard or erase; that is why
-  the sync waits for the next start instead of following every match.
-- **Not blocking**: a failed unlock is logged and leaves the sign-in's
-  result as it is.
-- **Definitions**: the sync unlocks only what Play lists, so it depends on
-  the achievements existing on Play, not on who put them there. Play shows
-  drafts to testers; for everyone else they unlock once published. Lab
-  Member was published by hand (manual step 141, checked off 2026-11-22).
-  Whether the deploy's service account may now edit the Play Games project
-  (156895060649) is not known yet: step 3 reads the next Android deploy's
-  log first, and an achievement missing on Play is skipped (logged), never
-  an error.
-- **Acceptance**: no access or refresh token is stored anywhere; unit
-  specs for the matching (earned × locked × Play's
-  list), an emulator spec with an injected Games API, the privacy policy
-  (the achievements the game reports to Play Games), and the phone check.
+1. **Earned achievements unlock on Play Games.** At every start of the
+   Android app, each achievement the game account has earned (the keys of
+   `achievements` in its stored progress, granted ones such as Lab Member
+   included) is unlocked on Play Games for the Play Games player the start
+   signed in, where Play still shows it locked.
+2. **Nothing is kept.** The sync uses the access token of the code the app
+   hands over (step 2) and only inside the trigger's run: no access or
+   refresh token is stored, logged or written beside the result.
+3. **The sign-in never waits for it and never fails for it.** The result
+   and the custom token are written first; the sync follows in the same
+   run, and every failure of it is logged and changes nothing.
+
+### Non-goals
+
+- Unlocking right when a match earns an achievement: without a stored
+  token the server can reach Play only while a fresh code is at hand, so
+  an achievement earned during a session reaches Play with the next app
+  start.
+- Unlocking from the browser game (Play Games has no web sign-in) or from
+  the Android SDK (the game runs in Chrome, step 2's non-goals).
+- Incremental achievements, events or leaderboards: the game's
+  achievements are all standard ones.
+- Creating or editing the definitions on Play: that stays the deploy's sync
+  (`tools/bacteria-game/play-games.ts`).
+
+### How it works
+
+1. **The token stays in a closure.** `playGamesPlayer` (`play-games/player.ts`)
+   answers the player with a `games` handle, a `PlayGamesApi` bound to the
+   access token of the code exchange: `definitions()` lists Play's
+   achievements in English (`GET games/v1/achievements?language=en-US`),
+   `states()` the player's (`GET games/v1/players/me/achievements`), and
+   `unlock(id)` unlocks one (`POST games/v1/achievements/{id}/unlock`, empty
+   body). The listings follow `nextPageToken` up to five pages and answer
+   `truncated` rather than a list cut off there; every call answers
+   Google's refusal with its status. The token is never a field of what `player.ts`
+   returns, so nothing can write it out by mistake.
+2. **The sign-in names whom to sync.** `signInPlayGames` answers, beside
+   the result and the token, `sync: { uid, games }` for the uid it settled
+   on (link, keep or take-over) and null for every refusal
+   (`play-games-refused`, `no-account`, `banned`, `linked-elsewhere`): a
+   Play Games player gets only the achievements of the account it is
+   linked to.
+3. **The command syncs after the result.** `runPlayGamesSignIn`
+   (`play-games/command.ts`) runs the sync once `runCommandDocument` wrote
+   the result, through an injected `syncAchievements(uid, games)` dep, and
+   catches and logs whatever it throws.
+4. **The sync** (`play-games/achievements.ts`, `syncPlayGamesAchievements`)
+   reads `players/{uid}/storage/bacteria-game.progress` (`PROGRESS_KEY`,
+   `parseProgress` of its `json`, as `rankProgress` does), and when it has
+   earned anything, lists the definitions and the player's states, decides
+   with the pure `achievementsToUnlock(earned, definitions, states)` and
+   unlocks each one in turn. A failed unlock is logged and the next one
+   still goes.
+5. **The match is by English name**, as the deploy's sync matches the
+   definitions: the game's `ACHIEVEMENTS` (engine main entry) give each id
+   its English name, which `play-games-achievements.spec.ts` keeps equal to
+   the file's `en-US` name. An earned achievement Play does not list (not
+   published, and the player no tester) is skipped and logged once by
+   name; one Play shows `UNLOCKED` is skipped silently; one without a state
+   for the player, `HIDDEN` or `REVEALED`, is unlocked. Two definitions of
+   the same English name count as none (logged), since the game could not
+   tell which one is its own.
+
+### Decisions
+
+- **In the sign-in trigger, not a trigger of its own**: the code is
+  single-use and the exchange happens there, so only that run holds a
+  token. A second trigger would need the token handed on, which is what
+  the acceptance forbids.
+- **After the result, not before**: the game waits up to 30 s for the
+  result, and a slow Games API must not make it give up on the sign-in.
+  The trigger runs up to 120 s: the sign-in, then the sync, which starts
+  unlocks only within `SYNC_BUDGET_MS` (60 s) of its start, each call
+  bounded to 10 s; what is left is logged as `deferred` and unlocks at the
+  next start (CodeRabbit on PR #3193).
+- **The settled account's progress**: on a take-over the guest's progress
+  joins the account in the game only after the sign-in, so its new
+  achievements reach Play at the next start. Never the writer's on a
+  refusal: `linked-elsewhere` means the player belongs to another account.
+- **The `games_lite` scope suffices**: a server auth code of
+  `requestServerSideAccess` carries the default scopes `GAMES_LITE` and
+  `DRIVE_APPFOLDER`
+  ([server access](https://developer.android.com/games/pgs/android/server-access)),
+  and
+  [`achievementDefinitions.list`](https://developer.android.com/games/services/web/api/rest/v1/achievementDefinitions/list),
+  [`achievements.list`](https://developer.android.com/games/services/web/api/rest/v1/achievements/list)
+  and
+  [`achievements.unlock`](https://developer.android.com/games/services/web/api/rest/v1/achievements/unlock)
+  accept `games` or `games_lite`. The app's request stays as it is. A
+  refusal for the scope (a 403 with `insufficient_scope`,
+  `ACCESS_TOKEN_SCOPE_INSUFFICIENT` or `insufficientPermissions`) is logged
+  as its own case, so the logs show it; the phone check proves the scope.
+- **No sync for a banned account** (manager's decision on request 1558):
+  a ban keeps the account's progress off Play; the sync checks the ban
+  (`isBanned`) first and logs the skip.
+- **No new data**: nothing is stored, so `PLAYER_DATA` and the erasure stay
+  as they are. Play Games keeps the unlocks under the player's Google
+  account; the privacy policy says that the game reports them.
+- **Logs carry no player id or token**: an achievement's English name and
+  Google's status code only.
+
+### Acceptance
+
+- No access or refresh token is stored anywhere: not in Firestore (the
+  command document holds its result and the custom token only), not in a
+  log line (an emulator spec runs the whole command with Google faked,
+  including an error body that names the token, and searches every
+  written document and log line for both tokens), and `player.ts`
+  answers no token field (spec).
+- A banned account syncs nothing, and the skip is logged (emulator spec).
+- `achievementsToUnlock` (unit specs): earned × locked × Play's list:
+  unlocks earned achievements that are `HIDDEN`, `REVEALED` or without a
+  state; skips `UNLOCKED`; skips and names one Play does not list; skips a
+  name Play lists twice; never unlocks an achievement the game has not
+  earned or Play lists under a name the game does not know.
+- `PlayGamesApi` (unit specs with a fake `fetch`): the three URLs with
+  `language=en-US` and the bearer token, paging, null on a refusal.
+- An emulator spec with an injected Games API: a sign-in that settles on
+  an account with stored progress unlocks its locked earned achievements
+  after the result is written; a refusal (`linked-elsewhere`, `banned`,
+  `play-games-refused`) syncs nothing; a failing unlock or listing leaves
+  the result `ok` and its token in place; an account without progress
+  calls no Games API.
+- The privacy policy says, in English and German, that the game reports
+  the achievements it earned to Play Games at each app start (spec).
+- The phone check (manual step): an achievement earned in the game shows
+  unlocked in Play Games after the next app start.
+
+### Open questions
+
+- None for the build. Whether Play shows a draft achievement unlocked for
+  a tester is checked on the phone; it does not change the code.
 
 ## Decided
 
