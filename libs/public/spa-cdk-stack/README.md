@@ -59,7 +59,8 @@ new SpaStack(app, 'MyApp', {
 Each `addExtraAssets` call is one deployment, which unpacks all its sources into
 one folder. So a file and a path below it, such as a page uploaded under its bare
 path `blog` and another under `blog/first-post`, cannot share a call: the
-construct throws at synth. Add the deeper paths in a call of their own:
+construct throws at synth (prerendered pages need no such uploads with
+`resolveFolderIndex`, below). Add the deeper paths in a call of their own:
 
 ```ts
 stack.spa.addExtraAssets(
@@ -72,10 +73,24 @@ stack.spa.addExtraAssets(
 );
 ```
 
-A site that uploads its prerendered pages under their bare paths (`/about`
-holding `about/index.html`) can set `redirectTrailingSlash: true`, which
-redirects `/about/` to `/about` (see its doc comment); without bare-path objects
-the target falls back to `index.html` like any other miss.
+CloudFront in front of S3 resolves no folder index, so a prerendered page at
+`about/index.html` would answer `/about` with the `index.html` fallback. Set
+`resolveFolderIndex: true` and a viewer-request CloudFront Function serves an
+extension-less path (no `.` in its last segment) from its `index.html`, while
+the browser keeps `/about`; the page needs no second upload under its bare path.
+Add `redirectTrailingSlash: true` to redirect `/about/` to `/about`, so each
+page keeps one URL:
+
+```ts
+new SpaStack(app, 'Site', {
+  // ...
+  resolveFolderIndex: true,
+  redirectTrailingSlash: true,
+});
+```
+
+Both options share one function, as a cache behaviour takes one per event; see
+their doc comments.
 
 ## Building
 

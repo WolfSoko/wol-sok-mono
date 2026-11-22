@@ -1,22 +1,22 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { pagesByDepth, prerenderedPages } from './prerendered-pages';
+import { prerenderedPages, resolvablePages } from './prerendered-pages';
+
+let root: string;
+
+function file(path: string): void {
+  mkdirSync(join(root, path, '..'), { recursive: true });
+  writeFileSync(join(root, path), '');
+}
+
+beforeEach(() => {
+  root = mkdtempSync(join(tmpdir(), 'portfolio-'));
+});
+
+afterEach(() => rmSync(root, { recursive: true, force: true }));
 
 describe('prerenderedPages', () => {
-  let root: string;
-
-  function file(path: string): void {
-    mkdirSync(join(root, path, '..'), { recursive: true });
-    writeFileSync(join(root, path), '');
-  }
-
-  beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'portfolio-'));
-  });
-
-  afterEach(() => rmSync(root, { recursive: true, force: true }));
-
   it('lists every folder with an index.html, nested ones too', () => {
     file('index.html');
     file('career/index.html');
@@ -39,35 +39,17 @@ describe('prerenderedPages', () => {
   });
 });
 
-describe('pagesByDepth', () => {
-  const PAGES = [
-    'career',
-    'blog',
-    'blog/bacteria-wars-turn-relay',
-    'privacy',
-    'docs/a/b',
-    'blog/second-post',
-  ];
+describe('resolvablePages', () => {
+  it('lists the pages whose folder names hold no dot', () => {
+    file('career/index.html');
+    file('blog/v1-2/index.html');
 
-  it('groups the pages by depth, shallowest first', () => {
-    expect(pagesByDepth(PAGES)).toEqual([
-      ['career', 'blog', 'privacy'],
-      ['blog/bacteria-wars-turn-relay', 'blog/second-post'],
-      ['docs/a/b'],
-    ]);
+    expect(resolvablePages(root).sort()).toEqual(['blog/v1-2', 'career']);
   });
 
-  it('never puts a page beside a page below it, as one upload unpacks them into one folder', () => {
-    for (const group of pagesByDepth(PAGES)) {
-      for (const page of group) {
-        expect(group.filter((other) => other.startsWith(`${page}/`))).toEqual(
-          []
-        );
-      }
-    }
-  });
+  it('refuses a page whose folder name holds a dot, as /v1.2 is not served from its index.html', () => {
+    file('blog/v1.2/index.html');
 
-  it('has no group for no pages', () => {
-    expect(pagesByDepth([])).toEqual([]);
+    expect(() => resolvablePages(root)).toThrow(/"blog\/v1\.2"/);
   });
 });

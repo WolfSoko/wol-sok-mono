@@ -1,3 +1,4 @@
+import { servesFolderIndex } from '@wolsok/spa-cdk-stack';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -22,21 +23,18 @@ export function prerenderedPages(root: string, prefix = ''): string[] {
 }
 
 /**
- * The pages grouped by their depth (`career`, `blog` before
- * `blog/<slug>`), one upload each: a deployment unpacks all its sources
- * into one folder, where the bare-path file `blog` leaves no room for the
- * folder `blog/` that `blog/<slug>` needs (`Not a directory`). Within one
- * depth no page can be the folder of another.
+ * The prerendered pages, refusing one whose folder name holds a `.`: the
+ * folder index is resolved only for a path without one in its last segment,
+ * so such a page would deploy and never be reached.
  */
-export function pagesByDepth(pages: readonly string[]): string[][] {
-  const groups = new Map<number, string[]>();
-  for (const page of pages) {
-    const depth = page.split('/').length;
-    const group = groups.get(depth) ?? [];
-    group.push(page);
-    groups.set(depth, group);
+export function resolvablePages(buildOutputPath: string): string[] {
+  const pages = prerenderedPages(buildOutputPath);
+  const unreachable = pages.find((page) => !servesFolderIndex(`/${page}`));
+  if (unreachable !== undefined) {
+    throw new Error(
+      `The page "${unreachable}" has a "." in its folder name, so ` +
+        `/${unreachable} would not be served from its index.html. Rename it.`
+    );
   }
-  return [...groups.entries()]
-    .sort(([a], [b]) => a - b)
-    .map(([, group]) => group);
+  return pages;
 }

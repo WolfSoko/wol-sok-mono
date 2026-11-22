@@ -8,6 +8,7 @@ import {
   AllowedMethods,
   Distribution,
   FunctionCode,
+  FunctionAssociation,
   FunctionEventType,
   FunctionRuntime,
   Function as CloudFrontFunction,
@@ -33,7 +34,7 @@ import {
 } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
 import { assertNoFileIsAnotherSourcesFolder } from './deployment-sources';
-import { TRAILING_SLASH_REDIRECT_SOURCE } from './trailing-slash-redirect';
+import { ViewerRequestOptions, viewerRequestSource } from './viewer-request';
 
 export interface SpaProps {
   domainName: string;
@@ -65,12 +66,23 @@ export interface SpaProps {
   /**
    * Answer a path ending in `/` (other than `/`) with a permanent redirect to
    * the path without it, query string kept, so `/about/` goes to `/about`
-   * instead of falling back to index.html. Only for sites that upload their
-   * pages under bare paths as well: without an `about` object the target
-   * falls back too. Takes the default behaviour's viewer-request slot.
+   * instead of falling back to index.html. Pair it with resolveFolderIndex
+   * for prerendered pages, so the target resolves. Takes the default
+   * behaviour's viewer-request slot, which it shares with resolveFolderIndex.
    * @default false
    */
   redirectTrailingSlash?: boolean;
+  /**
+   * Serve an extension-less path (no `.` in its last segment) from its folder
+   * index, `/about` from `about/index.html`, as CloudFront with an S3 origin
+   * resolves none itself; the browser keeps the URL. A path ending in `/` is
+   * served from `index.html` below it, unless redirectTrailingSlash redirects
+   * it first. For prerendered sites, whose pages then need no upload under
+   * their bare path. Takes the default behaviour's viewer-request slot, which
+   * it shares with redirectTrailingSlash.
+   * @default false
+   */
+  resolveFolderIndex?: boolean;
 }
 
 interface DeploymentOptions {
@@ -292,8 +304,12 @@ export class SpaConstruct extends Construct {
     siteBucket: IBucket,
     {
       extraAllowedOrigins = [],
-      redirectTrailingSlash = false,
-    }: Pick<SpaProps, 'extraAllowedOrigins' | 'redirectTrailingSlash'>
+      redirectTrailingSlash,
+      resolveFolderIndex,
+    }: Pick<
+      SpaProps,
+      'extraAllowedOrigins' | 'redirectTrailingSlash' | 'resolveFolderIndex'
+    >
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
       this,
@@ -334,14 +350,10 @@ export class SpaConstruct extends Construct {
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        functionAssociations: redirectTrailingSlash
-          ? [
-              {
-                eventType: FunctionEventType.VIEWER_REQUEST,
-                function: this.createTrailingSlashRedirect(),
-              },
-            ]
-          : undefined,
+        functionAssociations: this.viewerRequestAssociations({
+          redirectTrailingSlash,
+          resolveFolderIndex,
+        }),
       },
     });
     new CfnOutput(this, `${this.spaName}-DistributionId`, {
@@ -350,12 +362,25 @@ export class SpaConstruct extends Construct {
     return distribution;
   }
 
-  private createTrailingSlashRedirect(): CloudFrontFunction {
-    return new CloudFrontFunction(this, 'TrailingSlashRedirect', {
-      code: FunctionCode.fromInline(TRAILING_SLASH_REDIRECT_SOURCE),
+  /** The viewer-request function both options share, or none without them. */
+  private viewerRequestAssociations(
+    options: ViewerRequestOptions
+  ): FunctionAssociation[] | undefined {
+    const tasks = [
+      options.redirectTrailingSlash && 'redirects /path/ to /path',
+      options.resolveFolderIndex && 'serves /path from /path/index.html',
+    ].filter(Boolean);
+    if (tasks.length === 0) {
+      return undefined;
+    }
+    const viewerRequest = new CloudFrontFunction(this, 'ViewerRequest', {
+      code: FunctionCode.fromInline(viewerRequestSource(options)),
       runtime: FunctionRuntime.JS_2_0,
-      comment: 'Redirects /path/ to /path',
+      comment: `Viewer request: ${tasks.join(', ')}`,
     });
+    return [
+      { eventType: FunctionEventType.VIEWER_REQUEST, function: viewerRequest },
+    ];
   }
 
   private createARecord(

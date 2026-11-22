@@ -5,7 +5,10 @@ import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaCertificateStack, SpaStack, SpaStackProps } from './spa/spa.stack';
 import { CacheControl, Source } from 'aws-cdk-lib/aws-s3-deployment';
-import { TRAILING_SLASH_REDIRECT_SOURCE } from './spa/trailing-slash-redirect';
+import {
+  ViewerRequestOptions,
+  viewerRequestSource,
+} from './spa/viewer-request';
 
 // Mock the fromLookup method
 vitest.mock('aws-cdk-lib/aws-route53', () => {
@@ -226,25 +229,32 @@ describe('SpaCdkStack', () => {
     });
   });
 
-  describe('trailing-slash redirect', () => {
-    it('should redirect on viewer request with a CloudFront Function when enabled', () => {
-      const { template } = testStackFactory({ redirectTrailingSlash: true });
+  describe('viewer-request function', () => {
+    it.each<ViewerRequestOptions>([
+      { redirectTrailingSlash: true },
+      { resolveFolderIndex: true },
+      { redirectTrailingSlash: true, resolveFolderIndex: true },
+    ])(
+      'should add one CloudFront Function on viewer request for %o',
+      (options) => {
+        const { template } = testStackFactory(options);
 
-      template().resourceCountIs('AWS::CloudFront::Function', 1);
-      template().hasResourceProperties('AWS::CloudFront::Function', {
-        FunctionConfig: Match.objectLike({ Runtime: 'cloudfront-js-2.0' }),
-        FunctionCode: TRAILING_SLASH_REDIRECT_SOURCE,
-      });
-      template().hasResourceProperties('AWS::CloudFront::Distribution', {
-        DistributionConfig: Match.objectLike({
-          DefaultCacheBehavior: Match.objectLike({
-            FunctionAssociations: [
-              Match.objectLike({ EventType: 'viewer-request' }),
-            ],
+        template().resourceCountIs('AWS::CloudFront::Function', 1);
+        template().hasResourceProperties('AWS::CloudFront::Function', {
+          FunctionConfig: Match.objectLike({ Runtime: 'cloudfront-js-2.0' }),
+          FunctionCode: viewerRequestSource(options),
+        });
+        template().hasResourceProperties('AWS::CloudFront::Distribution', {
+          DistributionConfig: Match.objectLike({
+            DefaultCacheBehavior: Match.objectLike({
+              FunctionAssociations: [
+                Match.objectLike({ EventType: 'viewer-request' }),
+              ],
+            }),
           }),
-        }),
-      });
-    });
+        });
+      }
+    );
 
     it('should add no function by default', () => {
       const { template } = testStackFactory();
