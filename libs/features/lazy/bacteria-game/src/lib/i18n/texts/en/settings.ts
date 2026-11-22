@@ -48,6 +48,9 @@ export const settings = {
   screen: {
     title: 'Screen',
     showFps: 'Show the frame rate',
+    glDebug: 'GL diagnostic',
+    glDebugNote:
+      'For the owner: the renderer, GL errors and a button that saves the layers in the HUD. Slows the GPU down; nothing leaves this device.',
     fullscreen: 'Browser fullscreen',
   },
   matches: {

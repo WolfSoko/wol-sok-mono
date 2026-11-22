@@ -15,7 +15,7 @@ import {
   PaintedColony,
   PainterDiagnostics,
 } from '../arena-painter';
-import { checkGl, diagnose } from '../../gl/gl-diagnostics';
+import { checkGl, diagnose, undiagnose } from '../../gl/gl-diagnostics';
 import { flipRows, readFramebuffer, readTexture } from '../../gl/readback';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
@@ -37,11 +37,19 @@ import {
   sharedQuad,
   createTarget,
   createTexture,
+  BOX_VERTEX,
   FULLSCREEN_VERTEX,
   useExactOutput,
   Program,
   Target,
 } from '../../gl/gl-utils';
+import {
+  canvasBox,
+  type CellBox,
+  clipBox,
+  isEmptyBox,
+  type PixelBox,
+} from './canvas-box';
 import {
   BLIT_FRAGMENT,
   BLUR_FRAGMENT,
@@ -108,9 +116,6 @@ export function packTints(
   }
   return count;
 }
-
-/** A box of arena cells, `[x0, y0, x1, y1]` - x1 and y1 just past it. */
-export type CellBox = readonly [number, number, number, number];
 
 /**
  * Packs a colony into the cells texture, two bytes per arena cell: its
@@ -416,6 +421,7 @@ export class GlArenaPainter implements ArenaPainter {
       renderer: this.renderer(),
       errors: () => diagnostics.errors(),
       captureLayers: () => this.captureLayers(),
+      stop: () => undiagnose(this.gl),
     };
   }
 
@@ -800,10 +806,12 @@ export class GlArenaPainter implements ArenaPainter {
     const { programs } = resources;
     const { layer, bounds, margin, targets } = prepared;
     const { color, boostTarget, look } = layer;
-    gl.enable(gl.SCISSOR_TEST);
-    this.scissorCanvas(bounds, margin.colony);
+    const box = this.canvasBoxOf(bounds, margin.colony);
+    if (isEmptyBox(box)) {
+      return;
+    }
     const program = programs.colony;
-    this.useFullscreen(program);
+    this.useBox(program, box);
     bindTexture(gl, 0, targets.density.texture, program.uniforms['uDensity']);
     bindTexture(gl, 1, targets.cells.texture, program.uniforms['uCells']);
     this.setView(program);
@@ -853,7 +861,6 @@ export class GlArenaPainter implements ArenaPainter {
       gl.uniform4fv(program.uniforms['uTintModes'], this.tintModes);
     }
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.disable(gl.SCISSOR_TEST);
   }
 
   /** The colony's cells grown by a margin, clamped to the arena. */
@@ -867,23 +874,30 @@ export class GlArenaPainter implements ArenaPainter {
   }
 
   /**
-   * Scissors a pass on the frame's target, whose row 0 is the bottom of the
-   * view - cut to the target, which a box out of view misses altogether.
+   * The pixels of the frame's target a pass around the colony's cells
+   * covers, row 0 at the bottom of the view - cut to the target, which a
+   * box out of view misses altogether.
    */
-  private scissorCanvas(bounds: CellBounds, margin: number): void {
-    const [x0, y0, x1, y1] = this.box(bounds, margin);
-    const view = this.view;
-    const width = this.renderWidth;
-    const height = this.renderHeight;
-    const scale = width / view.width;
-    const clampX = (x: number) => Math.min(Math.max(x, 0), width);
-    const clampY = (y: number) => Math.min(Math.max(y, 0), height);
-    // Out to whole pixels - at a scale like 7.5 a cell edge falls inside one.
-    const left = clampX(Math.floor((x0 - view.x) * scale));
-    const right = clampX(Math.ceil((x1 - view.x) * scale));
-    const bottom = clampY(Math.floor(height - (y1 - view.y) * scale));
-    const top = clampY(Math.ceil(height - (y0 - view.y) * scale));
-    this.gl.scissor(left, bottom, right - left, top - bottom);
+  private canvasBoxOf(bounds: CellBounds, margin: number): PixelBox {
+    return canvasBox(
+      this.box(bounds, margin),
+      this.view,
+      this.renderWidth,
+      this.renderHeight
+    );
+  }
+
+  /**
+   * Readies a pass onto the frame's target to draw only its box: a quad of
+   * the box, never a scissor, which some Android GPUs (Mali) get wrong on
+   * a target kept from frame to frame - old frames come back inside the
+   * scissored box (#3174).
+   */
+  private useBox(program: Program, box: PixelBox): void {
+    this.gl.useProgram(program.program);
+    this.gl.bindVertexArray(this.resources?.quad ?? null);
+    const [x0, y0, x1, y1] = clipBox(box, this.renderWidth, this.renderHeight);
+    this.gl.uniform4f(program.uniforms['uBox'], x0, y0, x1, y1);
   }
 
   /** Hands a pass that draws onto the canvas the part of the arena it shows. */
@@ -1013,9 +1027,11 @@ export class GlArenaPainter implements ArenaPainter {
     if (effects == null) {
       return;
     }
-    gl.enable(gl.SCISSOR_TEST);
-    this.scissorCanvas(around, MARGIN.effects);
-    this.useFullscreen(program);
+    const box = this.canvasBoxOf(around, MARGIN.effects);
+    if (isEmptyBox(box)) {
+      return;
+    }
+    this.useBox(program, box);
     bindTexture(gl, 0, effects, program.uniforms['uEffects']);
     this.setView(program);
     gl.uniform2f(program.uniforms['uArena'], this.width, this.height);
@@ -1024,7 +1040,6 @@ export class GlArenaPainter implements ArenaPainter {
     gl.uniform1f(program.uniforms['uTime'], frame.timeSec);
     gl.blendFuncSeparate(gl.ONE, gl.ONE, gl.ZERO, gl.ONE);
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    gl.disable(gl.SCISSOR_TEST);
     this.useAlphaBlend();
   }
 
@@ -1271,7 +1286,8 @@ export class GlArenaPainter implements ArenaPainter {
         'uSource',
         'uStep',
       ]),
-      colony: createProgram(gl, FULLSCREEN_VERTEX, COLONY_FRAGMENT, [
+      colony: createProgram(gl, BOX_VERTEX, COLONY_FRAGMENT, [
+        'uBox',
         'uDensity',
         'uCells',
         'uView',
@@ -1296,7 +1312,8 @@ export class GlArenaPainter implements ArenaPainter {
         'uMaxEnergy',
         'uSuperMaxEnergy',
       ]),
-      effects: createProgram(gl, FULLSCREEN_VERTEX, EFFECTS_FRAGMENT, [
+      effects: createProgram(gl, BOX_VERTEX, EFFECTS_FRAGMENT, [
+        'uBox',
         'uEffects',
         'uView',
         'uArena',

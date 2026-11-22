@@ -50,6 +50,9 @@ export const settings: Translation<typeof en> = {
   screen: {
     title: 'Bildschirm',
     showFps: 'Bildrate anzeigen',
+    glDebug: 'GL-Diagnose',
+    glDebugNote:
+      'Für den Betreiber: Renderer, GL-Fehler und ein Knopf zum Speichern der Ebenen im HUD. Bremst die GPU; nichts verlässt dieses Gerät.',
     fullscreen: 'Browser-Vollbild',
   },
   matches: {

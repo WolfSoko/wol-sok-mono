@@ -169,3 +169,20 @@ void main() {
   vNdc = aCorner * 2.0 - 1.0;
   gl_Position = vec4(vNdc, 0.0, 1.0);
 }`;
+
+/**
+ * The shared quad stretched over a box, given as `uBox` in clip space
+ * (`[x0, y0, x1, y1]`), with the same `vNdc` as {@link FULLSCREEN_VERTEX},
+ * so a full-screen fragment shader draws just that box. For passes onto a
+ * target kept from frame to frame, in place of a scissor: some Android GPUs
+ * (Mali) bring a tile's old content back into a kept target around a
+ * scissored draw (#3174).
+ */
+export const BOX_VERTEX = `#version 300 es
+layout(location = 0) in vec2 aCorner;
+uniform vec4 uBox;
+out vec2 vNdc;
+void main() {
+  vNdc = mix(uBox.xy, uBox.zw, aCorner);
+  gl_Position = vec4(vNdc, 0.0, 1.0);
+}`;

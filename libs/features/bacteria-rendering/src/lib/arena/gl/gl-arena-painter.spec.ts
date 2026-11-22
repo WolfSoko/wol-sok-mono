@@ -243,6 +243,59 @@ describe('GlArenaPainter diagnostic', () => {
     expect(diagnostics.renderer).toBe('fake renderer');
   });
 
+  /** The boxes set as `uBox`, in clip space, in the order they were set. */
+  function boxesOf(fake: ReturnType<typeof painted>['fake']): number[][] {
+    return (fake.calls.get('uniform4f') ?? [])
+      .filter(([location]) => (location as { name: string }).name === 'uBox')
+      .map(([, ...box]) => box as number[]);
+  }
+
+  it('draws the colony and its glow onto the frame as quads of their box, never scissored', () => {
+    const { fake, painter } = painted();
+    const SCISSOR_TEST = glConstant('SCISSOR_TEST');
+    const scissoredBefore = fake.callsOf('enable', SCISSOR_TEST);
+
+    painter.paint(frame([GPU_COLONY]));
+
+    // Only the colony's passes on the arena grid are scissored.
+    expect(fake.callsOf('enable', SCISSOR_TEST) - scissoredBefore).toBe(1);
+    const [colony, glow] = boxesOf(fake);
+    // Cells 4 to 10 and 4 to 8 of 32×16, on 64×32 pixels, row 0 at the bottom.
+    const cells = [-0.75, -0.125, -0.3125, 0.5];
+    expect(colony[0]).toBeLessThanOrEqual(cells[0]);
+    expect(colony[1]).toBeLessThanOrEqual(cells[1]);
+    expect(colony[2]).toBeGreaterThanOrEqual(cells[2]);
+    expect(colony[3]).toBeGreaterThanOrEqual(cells[3]);
+    expect(colony).not.toEqual([-1, -1, 1, 1]);
+    // The glow reaches 4 cells out: cells 0 to 15 and 0 to 13.
+    expect(glow).toEqual([-1, -0.625, -0.0625, 1]);
+  });
+
+  it('draws no glow for colonies all out of view', () => {
+    const { fake, painter } = painted();
+    const view = { x: 24, y: 0, width: 8, height: 4 };
+    const drawsOf = (painting: ArenaFrame) => {
+      const before = fake.callsOf('drawArrays');
+      painter.paint(painting);
+      return fake.callsOf('drawArrays') - before;
+    };
+
+    const withoutColonies = drawsOf({ ...frame(), view });
+
+    expect(drawsOf({ ...frame([GPU_COLONY]), view })).toBe(withoutColonies);
+    expect(boxesOf(fake)).toEqual([]);
+  });
+
+  it('asks for no GL errors once the diagnostic is stopped', () => {
+    const { fake, painter } = painted();
+    painter.diagnose().stop();
+    const asked = fake.callsOf('getError');
+
+    painter.paint(frame([GPU_COLONY]));
+
+    expect(fake.callsOf('getError')).toBe(asked);
+  });
+
   it("captures the trail, the glow and each colony's cells and density", () => {
     const { painter } = painted();
     painter.paint(frame([GPU_COLONY]));

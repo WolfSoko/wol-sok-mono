@@ -149,6 +149,8 @@ export interface PainterDiagnostics {
   errors(): GlErrorCount[];
   /** The painter's layers as they are now - see {@link CapturedLayer}. */
   captureLayers(): CapturedLayer[];
+  /** Turns the diagnostic off: the passes are no longer checked for errors. */
+  stop(): void;
 }
 
 /** A layer read back from the GPU: RGBA bytes, the top row first. */

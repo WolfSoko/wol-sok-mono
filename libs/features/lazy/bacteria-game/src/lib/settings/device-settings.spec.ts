@@ -18,6 +18,7 @@ const SAMPLES: {
   };
 } = {
   showFps: { valid: true, invalid: 'yes' },
+  glDebug: { valid: true, invalid: 'on' },
   freePlay: { valid: true, invalid: 1 },
   arena: { valid: LEVELS[3].id, invalid: 'moon' },
   sound: { valid: false, invalid: 'off' },

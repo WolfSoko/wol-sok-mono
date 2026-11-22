@@ -2,7 +2,7 @@
  * A WebGL2 context for specs that only care which calls were made: every
  * method is a `jest.fn`, created on first use and recorded in `calls`. A
  * constant (an upper-case name) is a number of its own. Objects come back
- * as fresh `{}`, and checks pass: programs link, shaders compile,
+ * as fresh `{}` (a uniform location as `{ name }`), and checks pass: programs link, shaders compile,
  * framebuffers are complete. `getError` gives the codes queued with
  * `failNext`, then `NO_ERROR`.
  */
@@ -39,7 +39,8 @@ export function fakeGl(): FakeGl {
     getProgramParameter: () => true,
     getShaderParameter: () => true,
     checkFramebufferStatus: () => glConstant('FRAMEBUFFER_COMPLETE'),
-    getUniformLocation: () => ({}),
+    // Named, so a spec can tell which uniform a call set.
+    getUniformLocation: (_program, name) => ({ name }),
     getExtension: () => null,
     getParameter: () => 'fake renderer',
     isVertexArray: () => true,

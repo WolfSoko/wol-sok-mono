@@ -544,12 +544,17 @@ play each other.
   arena draws wrong: for the page's session the HUD shows the frame
   breakdown, the WebGL renderer and the GL errors per pass, and "Save GL
   layers" downloads the painter's layers (trail, glow, each colony's cells
-  and density, colours and alpha) as one PNG. Nothing is stored or sent.
-  The painter (`ArenaPainter.diagnose()`) and the GPU simulation then call
+  and density, colours and alpha) as one PNG. Nothing is sent. The owner
+  can also switch it on in Settings → Screen (`glDebug`, shown and in force
+  only while `GameAccount.owner()`, cleared on sign-out; `GlDebugService`),
+  where no query can be typed, as in the Android app. The painter
+  (`ArenaPainter.diagnose()`, `stop()`) and the GPU simulation then call
   `getError` after each pass (`gl/gl-diagnostics.ts`, `checkGl`), which
-  stalls the GPU, so never without the flag. Both GL contexts render with
+  stalls the GPU, so never while it is off. Both GL contexts render with
   dithering off (`useExactOutput`, `gl/gl-utils.ts`): the glow packs colony
-  ids into an RGBA8 alpha.
+  ids into an RGBA8 alpha. The colony and glow passes onto the kept trail
+  draw a quad of their box (`BOX_VERTEX`, `arena/gl/canvas-box.ts`), never
+  a scissor, which Mali GPUs got wrong there.
 
 ## Usage statistics
 

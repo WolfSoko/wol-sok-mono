@@ -196,6 +196,14 @@ export class StageFrame {
       });
     });
 
+    // The GL diagnostic follows its switch at once, on the painter there is.
+    effect(() => {
+      const on = this.glDebug.on();
+      untracked(() =>
+        on ? this.diagnose(this.stage.currentPainter()) : this.stopDiagnosing()
+      );
+    });
+
     this.gameStateService.frames$
       .pipe(takeUntilDestroyed())
       .subscribe((frame) => this.runFrame(frame));
@@ -237,6 +245,13 @@ export class StageFrame {
     const diagnostics = painter?.diagnose?.() ?? null;
     this.diagnosed =
       painter == null || diagnostics == null ? null : { painter, diagnostics };
+    this.showGl();
+  }
+
+  /** Turns the GL diagnostic off: no more checks, no line in the HUD. */
+  private stopDiagnosing(): void {
+    this.diagnosed?.diagnostics.stop();
+    this.diagnosed = null;
     this.showGl();
   }
 

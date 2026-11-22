@@ -1,4 +1,4 @@
-import { checkGl, diagnose, GlDiagnostics } from './gl-diagnostics';
+import { checkGl, diagnose, undiagnose, GlDiagnostics } from './gl-diagnostics';
 import { fakeGl, glConstant } from './testing/fake-gl';
 
 describe('GlDiagnostics', () => {
@@ -63,5 +63,15 @@ describe('checkGl', () => {
     expect(diagnostics.errors()).toEqual([
       { pass: 'sim', error: 'INVALID_VALUE', count: 1 },
     ]);
+  });
+
+  it('checks nothing more once the diagnostic is stopped', () => {
+    const fake = fakeGl();
+    diagnose(fake.gl);
+
+    undiagnose(fake.gl);
+    checkGl(fake.gl, 'sim');
+
+    expect(fake.callsOf('getError')).toBe(0);
   });
 });

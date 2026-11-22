@@ -32,6 +32,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { TranslationKey } from '../i18n/game-texts';
 import { GameSettingsService, MAX_VOLUME } from '../settings.service';
+import { GlDebugService } from '../gl-debug/gl-debug.service';
 import { VAPORIZE_DURATIONS, VAPORIZE_QUALITIES } from '../vaporize-effect';
 import { ScreenHeaderComponent } from './screen-header.component';
 
@@ -62,6 +63,8 @@ import { ScreenHeaderComponent } from './screen-header.component';
 })
 export class SettingsComponent {
   protected readonly settings = inject(GameSettingsService);
+  /** The owner's switch for the GL diagnostic - see `GlDebugService`. */
+  protected readonly glDebug = inject(GlDebugService);
   /** The usage statistics' switch, only where the game measures. */
   protected readonly stats = inject(StatsConsent);
   private readonly i18n = inject(I18nService);

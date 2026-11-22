@@ -71,7 +71,7 @@ describe('SETTINGS', () => {
     }
   });
 
-  it('reports what players pick, not the volumes or what the game remembers', () => {
+  it("reports what players pick, not the volumes, the owner's diagnostic or what the game remembers", () => {
     const unreported = Object.entries(SETTINGS)
       .filter(([, spec]) => !spec.reported)
       .map(([key]) => key);
@@ -79,6 +79,7 @@ describe('SETTINGS', () => {
     expect(unreported.sort()).toEqual([
       'arena',
       'effectsVolume',
+      'glDebug',
       'matchLevel',
       'musicVolume',
       'recordingHintShown',
