@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.178.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.177.0...v74.178.0) (2026-11-22)
+
+### Features
+
+* **feat-lazy-bacteria-game:** report whether an online match runs direct or through the TURN relay ([#3162](https://github.com/WolfSoko/wol-sok-mono/issues/3162)) ([043c596](https://github.com/WolfSoko/wol-sok-mono/commit/043c596e18f982ef10d1e0431b7cbb15ccc59232)), closes [#3154](https://github.com/WolfSoko/wol-sok-mono/issues/3154), references [#3154](https://github.com/WolfSoko/wol-sok-mono/issues/3154) [#3154](https://github.com/WolfSoko/wol-sok-mono/issues/3154)
+
 ## [74.177.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.3...v74.177.0) (2026-11-22)
 
 ### Features
