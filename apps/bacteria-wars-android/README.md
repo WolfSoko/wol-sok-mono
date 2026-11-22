@@ -36,14 +36,27 @@ What the shell adds:
   `BacteriaWarsApplication`: on every launch it signs the player in to Play
   Games against the project named by `com.google.android.gms.games.APP_ID`
   in the manifest, silently, since the app's own activity has handed over to
-  Chrome before the SDK could show its welcome popup. Nothing reads that
-  sign-in yet: it puts the game into the player's Play Games library and is
-  the ground for achievements, which are still to come. The game runs in
-  Chrome, which reaches no native SDK, so earning them will take the Play
-  Games REST API with the player's Google sign-in on the web. Gradle fills
+  Chrome before the SDK could show its welcome popup. It puts the game into
+  the player's Play Games library, and the launcher hands the sign-in to the
+  game (next point). Gradle fills
   the id from the `project_number` of `app/google-services.json`, since the
   game project sits on the game's Cloud project; the deploy reads the same
   number for the achievements.
+- the Play Games sign-in in the game (#3175): the launcher,
+  `PlayGamesLauncherActivity` (a `LauncherActivity` that holds Chrome back
+  for at most 3 s), asks Play Games for a one-time server auth code for the
+  Cloud project's web OAuth client (`default_web_client_id`, which the
+  `google-services` plugin takes from `google-services.json`) and opens the
+  game with it in the fragment, `#play-games=<code>`. The game sends it to
+  the function `playGamesSignIn`, which links the Play Games player to the
+  game account (`playGamesLinks/{playerId}`) and answers a custom token, so
+  the player is signed in to the same account on every phone. Chrome starts
+  the moment Play Games answers, at once without a signed-in player, and a
+  link with a fragment of its own starts unchanged. Needs the web client as
+  a "Game server" credential of the Play Games project, its secret as the
+  function secret `PLAY_GAMES_CLIENT_SECRET`, and `PLAY_GAMES_ON` in the
+  functions' `config.ts`. Achievements still unlock only in the game; the
+  next step of #3175 brings them to Play Games.
 
 ## Build
 
