@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.179.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.178.4...v74.179.0) (2026-11-22)
+
+### Features
+
+* **bacteria-wars-functions:** unlock the earned achievements on Play Games at each app start ([#3193](https://github.com/WolfSoko/wol-sok-mono/issues/3193)) ([1497a21](https://github.com/WolfSoko/wol-sok-mono/commit/1497a21b1d5e3f0c300fbbe8b4092f72dfb45a91)), references [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175) [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175)
+* **spa-cdk-stack:** resolve folder indexes on request ([#3178](https://github.com/WolfSoko/wol-sok-mono/issues/3178)) ([ac6a227](https://github.com/WolfSoko/wol-sok-mono/commit/ac6a22795d17770a519793db7723d657c0cf2432)), references [#3196](https://github.com/WolfSoko/wol-sok-mono/issues/3196)
+
+### Refactorings
+
+* **feat-lazy-bacteria-game:** one achievement tally, shared tile styles, one back target ([#3197](https://github.com/WolfSoko/wol-sok-mono/issues/3197)) ([a606b47](https://github.com/WolfSoko/wol-sok-mono/commit/a606b473dc8f0dde083411f73ec3ece424ca5148)), references [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192) [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192) [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192) [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192) [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192) [#3192](https://github.com/WolfSoko/wol-sok-mono/issues/3192)
+
+### Chore
+
+* **release:** publish ([c1e4e9b](https://github.com/WolfSoko/wol-sok-mono/commit/c1e4e9bb9539411f7799492cb986af0f481f4361))
+
 ## [74.178.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.178.3...v74.178.4) (2026-11-22)
 
 ## [74.178.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.178.2...v74.178.3) (2026-11-22)
