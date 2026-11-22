@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.180.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.0...v74.180.1) (2026-11-22)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** keep the template ETag when setting toggles ([#3214](https://github.com/WolfSoko/wol-sok-mono/issues/3214)) ([965b733](https://github.com/WolfSoko/wol-sok-mono/commit/965b7334012655658c5b25797832fb5b0d1bb032)), references [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212) [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212) [#2653](https://github.com/WolfSoko/wol-sok-mono/issues/2653) [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212)
+
 ## [74.180.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.3...v74.180.0) (2026-11-22)
 
 ### Features
