@@ -50,6 +50,14 @@
   color: var(--bw-soft);
 }
 
+// The bacterium's box, held while its chunk loads, so nothing jumps.
+.bacterium {
+  width: 100%;
+  max-width: 34rem;
+  aspect-ratio: 4 / 3;
+  margin-inline: auto;
+}
+
 .actions {
   display: flex;
   flex-direction: column;

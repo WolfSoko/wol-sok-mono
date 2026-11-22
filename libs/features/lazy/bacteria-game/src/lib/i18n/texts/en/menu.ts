@@ -4,6 +4,10 @@ export const menu = {
     'Steer your colony, swallow theirs. {levels} dishes, a level a day, endless runs - and a friend to beat.',
   newGameNote: 'Training, campaign, daily, endless, free, two players, online',
   more: 'More',
+  bacterium: {
+    /** The bacterium menu's parts, for a screen reader (#3194). */
+    label: 'Your bacterium: play and the game\u2019s screens',
+  },
   /** The public gallery's page, `/replays` on the game's site. */
   gallery: 'Matches of the day',
   /** The owner's way to the admin area. */

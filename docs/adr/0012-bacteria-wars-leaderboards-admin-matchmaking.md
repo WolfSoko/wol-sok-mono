@@ -787,18 +787,26 @@ admin text lands in the game chunk.
 The owner switches whole features on and off from the admin area, without
 a release (decided 2026-10-25: Remote Config).
 
-- **Where they live**: Remote Config of the game's project, one boolean
+- **Where they live**: Remote Config of the game's project, one
   parameter per toggle. Clients fetch them with the Remote Config SDK; the
-  defaults are `FEATURE_TOGGLES` in the game lib (`state/cloud/feature-toggles.ts`),
+  defaults are `FEATURE_TOGGLES` in the engine (`state/cloud/feature-toggles.ts`),
   what the game does without Remote Config, so a client that cannot fetch
   them plays as before.
+- **Three states** ([#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194)): each toggle is `off`, `admin` (on only
+  while the owner plays, `GameAccount.owner`, to try a feature in
+  production first) or `on`. The parameter is a STRING holding `"false"`,
+  `"admin"` or `"true"` (`toggleText`): a client released before the
+  states reads `"true"` and `"false"` as it did and `"admin"` as unset,
+  its default. The game resolves the states with `resolveToggles`, so
+  every reader of a toggle still gets a boolean.
 - **The toggles**: `rankedDaily`, `rankedEndless`, `matchmaking`,
   `leaderboards`, `deterministicSimulation` (the rollout switch of ADR
-  0015), all on by default.
+  0015), all on by default, and `bacteriumMenu` (the main menu as a 3D
+  bacterium, #3194), off by default.
 - **Setting them**: the admin command `toggles.set` (`target: null`,
   `args.values` with one or more toggles, a reason, a sign-in within the
   hour like the destructive types) publishes the template from
-  `adminCommand`: a boolean default per changed toggle, where the
+  `adminCommand`: the state's text as the default of each changed toggle, where the
   parameter sits (in its group, if the owner put it in one), and no
   conditional values, so every client gets what the admin area shows. The
   template is read once and published with its ETag: a template changed

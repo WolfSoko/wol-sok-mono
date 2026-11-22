@@ -7,6 +7,9 @@ export const menu: Translation<typeof en> = {
   newGameNote:
     'Training, Kampagne, Tageslevel, Endlos, Frei, Zwei Spieler, Online',
   more: 'Mehr',
+  bacterium: {
+    label: 'Dein Bakterium: Spielen und die Bereiche des Spiels',
+  },
   gallery: 'Matches des Tages',
   admin: 'Verwaltung',
   friendRequests: {

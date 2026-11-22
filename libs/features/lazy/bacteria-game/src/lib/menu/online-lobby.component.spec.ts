@@ -5,7 +5,7 @@ import { MatSelectHarness } from '@angular/material/select/testing';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { BehaviorSubject } from 'rxjs';
 import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
-import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import { type FeatureToggleStates } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeGameModeration } from '../../testing/fake-game-moderation';
 import { I18nService } from '../i18n/i18n.service';
@@ -237,12 +237,12 @@ describe('OnlineLobbyComponent', () => {
   });
 
   describe('while the owner has paused matchmaking', () => {
-    let toggles: BehaviorSubject<Partial<FeatureToggles>>;
+    let toggles: BehaviorSubject<Partial<FeatureToggleStates>>;
     let matchmaker: MatchmakerService;
 
     beforeEach(() => {
       localStorage.clear();
-      toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+      toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
       TestBed.configureTestingModule({
         providers: [provideGameToggles(toggles)],
       });
@@ -262,7 +262,7 @@ describe('OnlineLobbyComponent', () => {
     });
 
     it('says random matches are paused and points to a code instead', () => {
-      toggles.next({ matchmaking: false });
+      toggles.next({ matchmaking: 'off' });
       const host = render({});
 
       expect(find(host)).toBeNull();
@@ -274,7 +274,7 @@ describe('OnlineLobbyComponent', () => {
     });
 
     it('takes the pause back when switched on again, in German too', () => {
-      toggles.next({ matchmaking: false });
+      toggles.next({ matchmaking: 'off' });
       TestBed.inject(GameSettingsService);
       TestBed.inject(I18nService).setLanguage('de');
       const fixture = TestBed.createComponent(OnlineLobbyComponent);
@@ -283,7 +283,7 @@ describe('OnlineLobbyComponent', () => {
       const host: HTMLElement = fixture.nativeElement;
       expect(text(host)).toContain('Zufällige Matches sind gerade pausiert.');
 
-      toggles.next({ matchmaking: true });
+      toggles.next({ matchmaking: 'on' });
       fixture.detectChanges();
 
       expect(find(host)?.textContent).toContain('Gegner finden');

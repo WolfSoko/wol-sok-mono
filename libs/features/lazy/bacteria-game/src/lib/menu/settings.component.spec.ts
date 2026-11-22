@@ -106,7 +106,7 @@ describe('SettingsComponent', () => {
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideGameToggles({ deterministicSimulation: false })],
+      providers: [provideGameToggles({ deterministicSimulation: 'off' })],
     });
     expect(check((await render()).fixture.nativeElement)).toBeNull();
   });
