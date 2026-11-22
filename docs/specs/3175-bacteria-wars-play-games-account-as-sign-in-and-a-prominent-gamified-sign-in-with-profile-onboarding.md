@@ -407,10 +407,21 @@ PR ("Part of #3175"):
   achievements reach Play at the next start. Never the writer's on a
   refusal: `linked-elsewhere` means the player belongs to another account.
 - **The `games_lite` scope suffices**: a server auth code of
-  `requestServerSideAccess` carries `games_lite` (and `drive.appdata`) by
-  default, and `achievementDefinitions.list`, `achievements.list` and
-  `achievements.unlock` accept `games` or `games_lite` (Google's Games API
-  reference). The app's request stays as it is.
+  `requestServerSideAccess` carries the default scopes `GAMES_LITE` and
+  `DRIVE_APPFOLDER`
+  ([server access](https://developer.android.com/games/pgs/android/server-access)),
+  and
+  [`achievementDefinitions.list`](https://developer.android.com/games/services/web/api/rest/v1/achievementDefinitions/list),
+  [`achievements.list`](https://developer.android.com/games/services/web/api/rest/v1/achievements/list)
+  and
+  [`achievements.unlock`](https://developer.android.com/games/services/web/api/rest/v1/achievements/unlock)
+  accept `games` or `games_lite`. The app's request stays as it is. A
+  refusal for the scope (a 403 with `insufficient_scope`,
+  `ACCESS_TOKEN_SCOPE_INSUFFICIENT` or `insufficientPermissions`) is logged
+  as its own case, so the logs show it; the phone check proves the scope.
+- **No sync for a banned account** (manager's decision on request 1558):
+  a ban keeps the account's progress off Play; the sync checks the ban
+  (`isBanned`) first and logs the skip.
 - **No new data**: nothing is stored, so `PLAYER_DATA` and the erasure stay
   as they are. Play Games keeps the unlocks under the player's Google
   account; the privacy policy says that the game reports them.
@@ -420,9 +431,12 @@ PR ("Part of #3175"):
 ### Acceptance
 
 - No access or refresh token is stored anywhere: not in Firestore (the
-  command document holds its result and the custom token only, emulator
-  spec reading the whole document), not in a log line, and `player.ts`
+  command document holds its result and the custom token only), not in a
+  log line (an emulator spec runs the whole command with Google faked,
+  including an error body that names the token, and searches every
+  written document and log line for both tokens), and `player.ts`
   answers no token field (spec).
+- A banned account syncs nothing, and the skip is logged (emulator spec).
 - `achievementsToUnlock` (unit specs): earned × locked × Play's list:
   unlocks earned achievements that are `HIDDEN`, `REVEALED` or without a
   state; skips `UNLOCKED`; skips and names one Play does not list; skips a
