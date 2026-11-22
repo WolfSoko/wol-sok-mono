@@ -14,8 +14,8 @@ The spec `adds options up to the maximum` in `apps/rollapolla-analog/src/app/cor
 
 ## Decisions
 
-- **Change detection once, not after every click.** The test clicks 20 times and runs `fixture.detectChanges()` after each click, so it renders the growing list of Material form fields 20 times (up to 10 fields each). The click handler `addOption()` changes the form array without change detection, and its guard `options.length < maxOptions` caps the list, so the rendering between clicks proves nothing. The test clicks, then runs change detection once and asserts.
-- **More clicks than there is room for.** The test clicks `MAX_OPTIONS` times from the two starting options, so it tries `MAX_OPTIONS + 2` options and the guard refuses the last two clicks, named after the constant instead of the magic `20`, so the cap is still exercised: the list must stop at `MAX_OPTIONS`.
+- **Change detection once, not after every click.** The test clicks 20 times and runs `fixture.detectChanges()` after each click, so it renders the growing list of Material form fields 20 times (up to 10 fields each). Those renders are what disabled the button after the eighth click: from then on the disabled native button swallowed the clicks, so the old test checked the `[disabled]` binding and never reached the guard `options.length < maxOptions` in `addOption()`. The click handler changes the form array without change detection, so the new test clicks, then runs change detection once and asserts; the guard alone caps the list, and the one render checks the binding.
+- **More clicks than there is room for.** The test clicks `MAX_OPTIONS` times, the count named after the constant instead of the magic `20`. From the two starting options it tries `MAX_OPTIONS + 2` options, so the guard refuses the last two clicks and the list must stop at `MAX_OPTIONS`.
 - **The disabled state is asserted after the one render**, as before.
 
 ## Acceptance
