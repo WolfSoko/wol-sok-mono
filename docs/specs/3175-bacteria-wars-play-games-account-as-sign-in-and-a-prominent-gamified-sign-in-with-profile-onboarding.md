@@ -307,10 +307,14 @@ player for an hour.
   the sync waits for the next start instead of following every match.
 - **Not blocking**: a failed unlock is logged and leaves the sign-in's
   result as it is.
-- **Drafts**: Play shows achievements to testers while they are drafts; for
-  everyone else they unlock once published (the owner's Publish in Play
-  Console). The deploy's sync of the definitions still needs the service
-  account's access to the Play Games project (manual step 141).
+- **Definitions**: the sync unlocks only what Play lists, so it depends on
+  the achievements existing on Play, not on who put them there. Play shows
+  drafts to testers; for everyone else they unlock once published. Lab
+  Member was published by hand (manual step 141, checked off 2026-11-22).
+  Whether the deploy's service account may now edit the Play Games project
+  (156895060649) is not known yet: step 3 reads the next Android deploy's
+  log first, and an achievement missing on Play is skipped (logged), never
+  an error.
 - **Acceptance**: unit specs for the matching (earned × locked × Play's
   list), an emulator spec with an injected Games API, the privacy policy
   (the achievements the game reports to Play Games), and the phone check.
