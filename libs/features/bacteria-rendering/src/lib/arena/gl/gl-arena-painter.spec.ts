@@ -286,6 +286,16 @@ describe('GlArenaPainter diagnostic', () => {
     expect(boxesOf(fake)).toEqual([]);
   });
 
+  it('asks for no GL errors once the diagnostic is stopped', () => {
+    const { fake, painter } = painted();
+    painter.diagnose().stop();
+    const asked = fake.callsOf('getError');
+
+    painter.paint(frame([GPU_COLONY]));
+
+    expect(fake.callsOf('getError')).toBe(asked);
+  });
+
   it("captures the trail, the glow and each colony's cells and density", () => {
     const { painter } = painted();
     painter.paint(frame([GPU_COLONY]));

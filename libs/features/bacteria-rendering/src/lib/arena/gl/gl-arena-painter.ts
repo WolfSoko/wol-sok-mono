@@ -15,7 +15,7 @@ import {
   PaintedColony,
   PainterDiagnostics,
 } from '../arena-painter';
-import { checkGl, diagnose } from '../../gl/gl-diagnostics';
+import { checkGl, diagnose, undiagnose } from '../../gl/gl-diagnostics';
 import { flipRows, readFramebuffer, readTexture } from '../../gl/readback';
 import { paintArenaBackground } from '../arena-renderer';
 import { layerScale, paintZoneLayer } from '../zone-decal';
@@ -421,6 +421,7 @@ export class GlArenaPainter implements ArenaPainter {
       renderer: this.renderer(),
       errors: () => diagnostics.errors(),
       captureLayers: () => this.captureLayers(),
+      stop: () => undiagnose(this.gl),
     };
   }
 

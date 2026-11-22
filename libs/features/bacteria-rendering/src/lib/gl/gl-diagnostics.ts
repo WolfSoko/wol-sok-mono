@@ -78,6 +78,14 @@ export function diagnose(gl: WebGL2RenderingContext): GlDiagnostics {
   return diagnostics;
 }
 
+/**
+ * Turns the diagnostic off for a context: nothing checks for errors in it
+ * any more, and a later `diagnose` counts from nothing.
+ */
+export function undiagnose(gl: WebGL2RenderingContext): void {
+  DIAGNOSED.delete(gl);
+}
+
 /** Checks for errors after a pass - only where the context is diagnosed. */
 export function checkGl(gl: WebGL2RenderingContext, pass: string): void {
   DIAGNOSED.get(gl)?.check(pass);
