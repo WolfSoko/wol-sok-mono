@@ -22,7 +22,7 @@ export class DeviceAccount implements GameAccount {
     return Promise.resolve('failed');
   }
 
-  public signInWithToken(): Promise<boolean> {
+  public signInWithToken(_token: string, _writer: string): Promise<boolean> {
     return Promise.resolve(false);
   }
 

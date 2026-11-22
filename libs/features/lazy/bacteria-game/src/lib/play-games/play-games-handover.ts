@@ -27,6 +27,8 @@ export class PlayGamesHandover {
   private readonly destroyRef = inject(DestroyRef);
   /** True while a code is on its way: the app hands one per start. */
   private busy = false;
+  /** The newest code that came while another was on its way. */
+  private waiting: string | null = null;
 
   /** Takes the code of the start, and of every start of the running game. */
   public start(): void {
@@ -47,20 +49,39 @@ export class PlayGamesHandover {
     // Out of the address before anything else: a code is used once, and a
     // shared or reloaded address must never carry it.
     await dropHash(this.router);
-    const playGames = this.cloud.playGames();
-    if (playGames === null || this.busy) {
+    if (this.busy) {
+      // Sent once the one on its way is done, should that one fail.
+      this.waiting = code;
       return;
     }
     this.busy = true;
     try {
-      const answer = await playGames.signIn(code);
-      if (answer?.token != null) {
-        await this.signIn.signInWithToken(answer.token);
-      } else if (answer !== null) {
-        console.info('Play Games sign-in refused', answer.error);
+      for (let next: string | null = code; next !== null;) {
+        this.waiting = null;
+        const answered = await this.hand(next);
+        next = answered ? null : this.waiting;
       }
     } finally {
       this.busy = false;
+      this.waiting = null;
     }
+  }
+
+  /** Sends one code; true once the functions answered it. */
+  private async hand(code: string): Promise<boolean> {
+    const playGames = this.cloud.playGames();
+    if (playGames === null) {
+      return true;
+    }
+    const answer = await playGames.signIn(code);
+    if (answer === null) {
+      return false;
+    }
+    if (answer.token !== null) {
+      await this.signIn.signInWithToken(answer.token, answer.writer);
+    } else if (!answer.ok) {
+      console.info('Play Games sign-in refused', answer.error);
+    }
+    return true;
   }
 }

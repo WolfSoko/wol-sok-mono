@@ -4,7 +4,7 @@ import {
   PLAY_GAMES_TOKEN_KEY,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { DocumentSnapshot } from 'firebase/firestore';
-import { filter, firstValueFrom, Observable, take, timeout } from 'rxjs';
+import { filter, firstValueFrom, from, Observable, take, timeout } from 'rxjs';
 import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
 import type { GamePlayGames, PlayGamesAnswer } from './game-play-games';
@@ -21,7 +21,8 @@ const PLAYER_MS = 30_000;
 /**
  * {@link GamePlayGames} on Firestore: a command document
  * `playGamesSignIns/{id}` in the first player's name, read back until the
- * functions wrote its result, then deleted - it holds a sign-in token.
+ * functions wrote its result, then deleted, answered or not - it holds the
+ * code and maybe a sign-in token.
  */
 export class FirestoreGamePlayGames implements GamePlayGames {
   public constructor(
@@ -39,22 +40,34 @@ export class FirestoreGamePlayGames implements GamePlayGames {
         )
       );
       const ref = dbSdk.doc(dbSdk.collection(db, PLAY_GAMES_SIGN_INS));
-      // Awaited: the rules let the writer read it only once it exists.
-      await dbSdk.setDoc(ref, {
-        ...commandEnvelope(dbSdk, uid, Date.now()),
-        code,
-      });
-      const answer = await firstValueFrom(
-        snapshotsOf((next, error) => dbSdk.onSnapshot(ref, next, error)).pipe(
-          filter((snapshot) => snapshot.get('result') !== undefined),
-          take(1),
-          timeout(PLAY_GAMES_ANSWER_MS)
-        )
+      // Awaited: the rules let the writer read it only once it exists. An
+      // offline device holds the write until it is back, so the wait has
+      // an end; the write still goes once online, and TTL takes it then.
+      await firstValueFrom(
+        from(
+          dbSdk.setDoc(ref, {
+            ...commandEnvelope(dbSdk, uid, Date.now()),
+            code,
+          })
+        ).pipe(timeout(PLAY_GAMES_ANSWER_MS))
       );
-      await dbSdk.deleteDoc(ref).catch((error: unknown) => {
-        console.warn('The Play Games sign-in could not be deleted', error);
-      });
-      return answerOf(answer);
+      try {
+        const answer = await firstValueFrom(
+          snapshotsOf((next, error) => dbSdk.onSnapshot(ref, next, error)).pipe(
+            filter((snapshot) => snapshot.get('result') !== undefined),
+            take(1),
+            timeout(PLAY_GAMES_ANSWER_MS)
+          )
+        );
+        return answerOf(answer, uid);
+      } finally {
+        // Answered or not, it holds a code and maybe a token: gone now, and
+        // TTL takes it should this delete fail. Not awaited: offline, the
+        // delete waits for the network, the answer must not.
+        dbSdk.deleteDoc(ref).catch((error: unknown) => {
+          console.warn('The Play Games sign-in could not be deleted', error);
+        });
+      }
     } catch (error) {
       console.warn('The Play Games sign-in got no answer', error);
       return null;
@@ -77,11 +90,18 @@ function snapshotsOf(
   );
 }
 
-function answerOf(snapshot: DocumentSnapshot): PlayGamesAnswer | null {
+function answerOf(
+  snapshot: DocumentSnapshot,
+  writer: string
+): PlayGamesAnswer | null {
   const result = parseCommandResult(snapshot.get('result'));
   if (result === null) {
     return null;
   }
   const token: unknown = snapshot.get(PLAY_GAMES_TOKEN_KEY);
-  return { ...result, token: typeof token === 'string' ? token : null };
+  return {
+    ...result,
+    token: typeof token === 'string' ? token : null,
+    writer,
+  };
 }

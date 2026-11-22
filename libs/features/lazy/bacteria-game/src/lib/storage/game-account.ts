@@ -78,9 +78,14 @@ export abstract class GameAccount {
    * Signs in with a custom token the functions answered a Play Games
    * sign-in with (#3175): the session is no guest's any more. For another
    * account than the one playing, that one takes over and adopts what the
-   * guest played here. False when the token is refused.
+   * guest played here. Only while `writer`, the player the sign-in was
+   * sent for, still plays: a token that arrives after a switch or a
+   * sign-out is dropped. False when nothing was signed in to.
    */
-  public abstract signInWithToken(token: string): Promise<boolean>;
+  public abstract signInWithToken(
+    token: string,
+    writer: string
+  ): Promise<boolean>;
 
   /** Signs out of Google; a new guest plays on, from the start. */
   public abstract signOut(): Promise<void>;

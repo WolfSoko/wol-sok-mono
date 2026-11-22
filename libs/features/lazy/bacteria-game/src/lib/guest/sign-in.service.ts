@@ -53,11 +53,11 @@ export class SignIn {
    * Pass only when a guest became a signed-in player - every later start of
    * the app just renews the session.
    */
-  public async signInWithToken(token: string): Promise<void> {
+  public async signInWithToken(token: string, writer: string): Promise<void> {
     await firstValueFrom(this.ready$.pipe(filter(Boolean)));
     const wasGuest = this.account.profile()?.guest === true;
     await this.whileBusy(async () => {
-      if ((await this.account.signInWithToken(token)) && wasGuest) {
+      if ((await this.account.signInWithToken(token, writer)) && wasGuest) {
         this.signInCount.update((count) => count + 1);
         this.analytics.track('login', { method: 'play_games' });
       }

@@ -17,6 +17,11 @@ export interface PlayGamesAnswer {
   ok: boolean;
   /** Why not: `linked-elsewhere`, `play-games-refused`, … */
   error?: string;
-  /** The custom token for the account the player settled on. */
+  /**
+   * The custom token for the account the player settled on - null where
+   * the session needs none (a Google account keeps its own).
+   */
   token: string | null;
+  /** The player the sign-in was written for: the token is for their session. */
+  writer: string;
 }

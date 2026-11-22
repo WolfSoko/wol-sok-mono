@@ -33,7 +33,11 @@ describe('FirestoreGamePlayGames', () => {
     const signedIn = playGames.signIn('4/0Ab');
     const path = await answer({ result: { ok: true }, token: 'tok' });
 
-    expect(await signedIn).toEqual({ ok: true, token: 'tok' });
+    expect(await signedIn).toEqual({
+      ok: true,
+      token: 'tok',
+      writer: 'guest-1',
+    });
     expect(fake.writes[0]).toMatchObject({
       path,
       data: { uid: 'guest-1', code: '4/0Ab' },
@@ -50,6 +54,7 @@ describe('FirestoreGamePlayGames', () => {
       ok: false,
       error: 'play-games-refused',
       token: null,
+      writer: 'guest-1',
     });
   });
 
@@ -61,13 +66,28 @@ describe('FirestoreGamePlayGames', () => {
 
     players.next('guest-2');
     await answer({ result: { ok: true }, token: 't' });
-    expect(await signedIn).toEqual({ ok: true, token: 't' });
+    expect(await signedIn).toEqual({ ok: true, token: 't', writer: 'guest-2' });
     expect(fake.writes[0]).toMatchObject({ data: { uid: 'guest-2' } });
   });
 
   it('gives up when no answer comes in time', async () => {
     jest.useFakeTimers();
     jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const signedIn = playGames.signIn('code');
+    await jest.advanceTimersByTimeAsync(PLAY_GAMES_ANSWER_MS + 1);
+
+    expect(await signedIn).toBeNull();
+    // Unanswered, it goes all the same: it holds the code.
+    expect(fake.deleted()).toHaveLength(1);
+    jest.useRealTimers();
+  });
+
+  it('gives up on a write an offline device holds back', async () => {
+    jest.useFakeTimers();
+    jest.spyOn(console, 'warn').mockImplementation(() => undefined);
+    jest
+      .spyOn(fake.dbSdk, 'setDoc')
+      .mockImplementation(() => new Promise<void>(() => undefined));
     const signedIn = playGames.signIn('code');
     await jest.advanceTimersByTimeAsync(PLAY_GAMES_ANSWER_MS + 1);
 

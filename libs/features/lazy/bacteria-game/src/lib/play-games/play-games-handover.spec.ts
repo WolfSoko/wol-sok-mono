@@ -19,7 +19,7 @@ describe('PlayGamesHandover', () => {
 
   beforeEach(() => {
     hash = '#play-games=4%2F0Ab';
-    answer = { ok: true, token: 'tok' };
+    answer = { ok: true, token: 'tok', writer: 'guest-1' };
     playGames = { signIn: jest.fn(async () => answer) };
     cloudPlayGames = playGames;
     signInWithToken = jest.fn(async () => undefined);
@@ -62,7 +62,7 @@ describe('PlayGamesHandover', () => {
       replaceUrl: true,
     });
     expect(playGames.signIn).toHaveBeenCalledWith('4/0Ab');
-    expect(signInWithToken).toHaveBeenCalledWith('tok');
+    expect(signInWithToken).toHaveBeenCalledWith('tok', 'guest-1');
   });
 
   it('does nothing without a code', async () => {
@@ -75,7 +75,12 @@ describe('PlayGamesHandover', () => {
 
   it('signs in with nothing when the functions refuse or never answer', async () => {
     jest.spyOn(console, 'info').mockImplementation(() => undefined);
-    answer = { ok: false, error: 'linked-elsewhere', token: null };
+    answer = {
+      ok: false,
+      error: 'linked-elsewhere',
+      token: null,
+      writer: 'guest-1',
+    };
     await start();
     expect(signInWithToken).not.toHaveBeenCalled();
 
@@ -91,6 +96,28 @@ describe('PlayGamesHandover', () => {
 
     expect(navigateByUrl).toHaveBeenCalled();
     expect(signInWithToken).not.toHaveBeenCalled();
+  });
+
+  it('sends a code that came while another was on its way, should that one fail', async () => {
+    let first!: (value: PlayGamesAnswer | null) => void;
+    playGames.signIn
+      .mockImplementationOnce(
+        () =>
+          new Promise<PlayGamesAnswer | null>((resolve) => (first = resolve))
+      )
+      .mockImplementationOnce(async () => answer);
+    await start();
+    hash = '#play-games=second';
+    TestBed.inject(DOCUMENT).defaultView?.dispatchEvent(
+      new Event('hashchange')
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(playGames.signIn).toHaveBeenCalledTimes(1);
+
+    first(null);
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    expect(playGames.signIn).toHaveBeenLastCalledWith('second');
+    expect(signInWithToken).toHaveBeenCalledWith('tok', 'guest-1');
   });
 
   it('takes the code of a later start of the running game', async () => {

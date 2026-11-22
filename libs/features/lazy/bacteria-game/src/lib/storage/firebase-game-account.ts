@@ -120,11 +120,20 @@ export class FirebaseGameAccount implements GameAccount {
     }
   }
 
-  public async signInWithToken(token: string): Promise<boolean> {
+  public async signInWithToken(
+    token: string,
+    writer: string
+  ): Promise<boolean> {
     const { auth, authSdk } = this.connection;
     const uid = customTokenUid(token);
+    const user = auth.currentUser;
     if (uid === null) {
       console.error('Not a sign-in token');
+      return false;
+    }
+    // Another player plays since the sign-in was sent - or one already
+    // signed in to this account, whose session needs no new token.
+    if (user?.uid !== writer || (uid === user.uid && !user.isAnonymous)) {
       return false;
     }
     // Another account takes over from the guest, as a Google account that

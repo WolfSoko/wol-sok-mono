@@ -84,7 +84,7 @@ describe('SignIn', () => {
   describe('with a Play Games token', () => {
     it('counts a guest that became a signed-in player', async () => {
       const signIn = TestBed.inject(SignIn);
-      await signIn.signInWithToken('token');
+      await signIn.signInWithToken('token', 'guest');
 
       expect(signIn.signIns()).toBe(1);
       expect(analytics.events).toEqual([
@@ -95,7 +95,7 @@ describe('SignIn', () => {
     it('counts no renewed session of a signed-in player', async () => {
       profile.set({ guest: false, name: 'Ada' });
       const signIn = TestBed.inject(SignIn);
-      await signIn.signInWithToken('token');
+      await signIn.signInWithToken('token', 'guest');
 
       expect(signIn.signIns()).toBe(0);
       expect(analytics.events).toEqual([]);
@@ -104,7 +104,7 @@ describe('SignIn', () => {
     it('shows no failure for a refused token', async () => {
       tokenAccepted = false;
       const signIn = TestBed.inject(SignIn);
-      await signIn.signInWithToken('token');
+      await signIn.signInWithToken('token', 'guest');
 
       expect(signIn.failed()).toBe(false);
       expect(signIn.signIns()).toBe(0);
