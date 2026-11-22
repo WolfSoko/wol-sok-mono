@@ -9,7 +9,7 @@ import { GpuSelfTestService } from '../gpu-choice/gpu-self-test.service';
 import { cpuSimulation } from '@wolsok/feat-shared-bacteria-engine';
 import {
   attemptSeed,
-  type FeatureToggles,
+  type FeatureToggleStates,
   type RankedRun,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { PlayerService } from '../state/player.service';
@@ -48,7 +48,7 @@ describe('RankedService', () => {
   function configure(
     options: {
       cloud?: boolean;
-      toggles?: Partial<FeatureToggles>;
+      toggles?: Partial<FeatureToggleStates>;
       gpu?: boolean;
     } = {}
   ): RankedService {
@@ -104,7 +104,7 @@ describe('RankedService', () => {
 
     it('hides it while the owner switched a mode off, and without the cloud', () => {
       expect(
-        configure({ toggles: { rankedDaily: false } }).offer('daily', true)
+        configure({ toggles: { rankedDaily: 'off' } }).offer('daily', true)
       ).toBeNull();
       TestBed.resetTestingModule();
       expect(configure({ cloud: false }).offer('endless', true)).toBeNull();

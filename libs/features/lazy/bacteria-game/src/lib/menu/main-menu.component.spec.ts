@@ -14,7 +14,7 @@ import {
   continueText,
   LEVELS,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import { type FeatureToggleStates } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
 import { SupportDialogComponent } from '../support/support-dialog.component';
@@ -253,7 +253,7 @@ describe('MainMenuComponent', () => {
   });
 
   it('shows the leaderboards only with the cloud, while the toggle is on', () => {
-    const toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+    const toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideGameToggles(toggles)],
@@ -276,7 +276,7 @@ describe('MainMenuComponent', () => {
     tile()?.click();
     expect(open).toHaveBeenCalledWith('leaderboards');
 
-    toggles.next({ leaderboards: false });
+    toggles.next({ leaderboards: 'off' });
     menu.detectChanges();
     expect(tile()).toBeUndefined();
   });

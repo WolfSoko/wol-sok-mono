@@ -6,17 +6,19 @@ import {
 } from '@angular/core';
 import { isObservable, type Observable, of } from 'rxjs';
 import { FeatureTogglesService } from '../lib/feature-toggles.service';
-import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import type { FeatureToggleStates } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameToggles } from '../lib/storage/game-toggles';
 
 /**
- * The owner's feature toggles for a spec: `toggles` as the port says them -
+ * The owner's feature toggles for a spec: their states as the port says them -
  * a fixed set, or a subject the spec drives - with
  * `FeatureTogglesService` reading them from the start, as it does once the
  * game rendered.
  */
 export function provideGameToggles(
-  toggles: Partial<FeatureToggles> | Observable<Partial<FeatureToggles>> = {}
+  toggles:
+    | Partial<FeatureToggleStates>
+    | Observable<Partial<FeatureToggleStates>> = {}
 ): EnvironmentProviders {
   const set = isObservable(toggles) ? toggles : of(toggles);
   return makeEnvironmentProviders([

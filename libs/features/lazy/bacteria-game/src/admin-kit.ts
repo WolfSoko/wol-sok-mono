@@ -104,8 +104,10 @@ export type {
 export {
   FEATURE_TOGGLE_KEYS,
   FEATURE_TOGGLES,
+  TOGGLE_STATES,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 export type {
   FeatureToggle,
-  FeatureToggles,
+  FeatureToggleStates,
+  ToggleState,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
