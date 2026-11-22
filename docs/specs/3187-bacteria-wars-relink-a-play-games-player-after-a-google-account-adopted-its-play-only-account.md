@@ -23,6 +23,16 @@ before, in the same tab, and A's progress is in B.
 - No migration of accounts adopted before this ships (the case is rare; such
   a player keeps `linked-elsewhere` until an owner fixes the link by hand).
 
+## Known limits
+
+- Progress made on a second device of A after the handover (the Android app
+  on another phone, still in A's custom-token session) stays under A. That
+  device's next start hands it to B (its Play Games sign-in finds the link on
+  B and takes the session over, adopting what the page holds). It is lost
+  only if that device stays unopened until `guestCleanup` takes A
+  (`GUEST_IDLE_DAYS`, 90 days). Freezing A's storage in the rules would cost
+  a read on every storage write of every player.
+
 ## Decisions
 
 The manager approved the handshake with five conditions (request 1549);

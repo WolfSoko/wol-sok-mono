@@ -255,14 +255,19 @@ describe('playerDocument', () => {
     it('lands no receipt for a value that never loaded', async () => {
       create({ stored: { [KEY]: ['gold'] } });
       account.seed('ada', {});
+      const update = jest.spyOn(account.storageOf('ada'), 'update');
       const landings: Promise<boolean>[] = [];
 
       account.switchTo('ada', true, {
         id: 'nonce-1',
         landed: (stored) => landings.push(stored),
       });
+      await answerAll();
 
       expect(await Promise.all(landings)).toEqual([false]);
+      expect(update).not.toHaveBeenCalledWith(KEY, expect.any(Function), {
+        once: 'nonce-1',
+      });
     });
 
     it('lists the receipt id for a guest who held nothing too', async () => {
