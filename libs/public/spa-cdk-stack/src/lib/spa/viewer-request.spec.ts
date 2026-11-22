@@ -1,5 +1,9 @@
 import { runInNewContext } from 'node:vm';
-import { ViewerRequestOptions, viewerRequestSource } from './viewer-request';
+import {
+  servesFolderIndex,
+  ViewerRequestOptions,
+  viewerRequestSource,
+} from './viewer-request';
 
 type QueryString = Record<
   string,
@@ -138,5 +142,18 @@ describe('viewer request', () => {
     it.each(ASSETS)('passes %s on unchanged', (uri) => {
       expect(uriOf(handler({ request: request(uri) }))).toBe(uri);
     });
+  });
+
+  describe('servesFolderIndex', () => {
+    const handler = handlerFor({ resolveFolderIndex: true });
+
+    it.each([...ASSETS.slice(1), '/career', '/blog/x', '/v1.2', '/a.b/c'])(
+      'agrees with the deployed function on %s',
+      (uri) => {
+        const resolved = uriOf(handler({ request: request(uri) })) !== uri;
+
+        expect(servesFolderIndex(uri)).toBe(resolved);
+      }
+    );
   });
 });

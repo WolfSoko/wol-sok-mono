@@ -3,20 +3,20 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { prerenderedPages, resolvablePages } from './prerendered-pages';
 
+let root: string;
+
+function file(path: string): void {
+  mkdirSync(join(root, path, '..'), { recursive: true });
+  writeFileSync(join(root, path), '');
+}
+
+beforeEach(() => {
+  root = mkdtempSync(join(tmpdir(), 'portfolio-'));
+});
+
+afterEach(() => rmSync(root, { recursive: true, force: true }));
+
 describe('prerenderedPages', () => {
-  let root: string;
-
-  function file(path: string): void {
-    mkdirSync(join(root, path, '..'), { recursive: true });
-    writeFileSync(join(root, path), '');
-  }
-
-  beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'portfolio-'));
-  });
-
-  afterEach(() => rmSync(root, { recursive: true, force: true }));
-
   it('lists every folder with an index.html, nested ones too', () => {
     file('index.html');
     file('career/index.html');
@@ -40,19 +40,6 @@ describe('prerenderedPages', () => {
 });
 
 describe('resolvablePages', () => {
-  let root: string;
-
-  function file(path: string): void {
-    mkdirSync(join(root, path, '..'), { recursive: true });
-    writeFileSync(join(root, path), '');
-  }
-
-  beforeEach(() => {
-    root = mkdtempSync(join(tmpdir(), 'portfolio-'));
-  });
-
-  afterEach(() => rmSync(root, { recursive: true, force: true }));
-
   it('lists the pages whose folder names hold no dot', () => {
     file('career/index.html');
     file('blog/v1-2/index.html');

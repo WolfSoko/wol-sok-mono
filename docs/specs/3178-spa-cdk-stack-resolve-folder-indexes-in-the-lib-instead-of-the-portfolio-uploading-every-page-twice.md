@@ -57,7 +57,9 @@ and the portfolio drops its duplicate uploads and `pagesByDepth`.
 3. **Extension-less means no `.` in the last segment.** `/main-ABC.js`,
    `/blog/x/nat-walls.svg`, `/ads.txt` pass unchanged. A page whose folder name
    holds a dot (`/blog/v1.2`) would not be resolved, so `portfolio-cdk` fails
-   at synth on such a page rather than deploying a page nobody reaches.
+   at synth on such a page rather than deploying a page nobody reaches The
+   lib exports the rule as `servesFolderIndex(path)`, which the portfolio's
+   check calls and the spec holds equal to the deployed function.
 4. **`redirectTrailingSlash`'s doc comment loses its "only for sites that
    upload their pages under bare paths" rule**: with `resolveFolderIndex` the
    bare path resolves without such uploads. The README says to use both

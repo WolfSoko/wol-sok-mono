@@ -7,6 +7,15 @@ export interface ViewerRequestOptions {
 }
 
 /**
+ * Whether `resolveFolderIndex` serves `path` from its `index.html`: no `.` in
+ * its last segment. The deployed function holds the same rule in ES5, and the
+ * spec checks that both agree.
+ */
+export function servesFolderIndex(path: string): boolean {
+  return path.indexOf('.', path.lastIndexOf('/')) < 0;
+}
+
+/**
  * The source of the CloudFront Function behind `SpaProps.redirectTrailingSlash`
  * and `SpaProps.resolveFolderIndex`, for runtime `cloudfront-js-2.0` (plain
  * ES5). A cache behaviour takes one function per event, so both options share
@@ -41,7 +50,7 @@ function handler(event) {
     }
     return request;
   }
-  if (RESOLVE_FOLDER_INDEX && uri.slice(uri.lastIndexOf('/')).indexOf('.') < 0) {
+  if (RESOLVE_FOLDER_INDEX && uri.indexOf('.', uri.lastIndexOf('/')) < 0) {
     request.uri = uri + '/index.html';
   }
   return request;

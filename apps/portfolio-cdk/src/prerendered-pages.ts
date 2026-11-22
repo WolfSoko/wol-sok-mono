@@ -1,3 +1,4 @@
+import { servesFolderIndex } from '@wolsok/spa-cdk-stack';
 import { readdirSync } from 'node:fs';
 import { join } from 'node:path';
 
@@ -28,9 +29,7 @@ export function prerenderedPages(root: string, prefix = ''): string[] {
  */
 export function resolvablePages(buildOutputPath: string): string[] {
   const pages = prerenderedPages(buildOutputPath);
-  const unreachable = pages.find((page) =>
-    page.split('/').at(-1)?.includes('.')
-  );
+  const unreachable = pages.find((page) => !servesFolderIndex(`/${page}`));
   if (unreachable !== undefined) {
     throw new Error(
       `The page "${unreachable}" has a "." in its folder name, so ` +

@@ -8,6 +8,7 @@ import {
   AllowedMethods,
   Distribution,
   FunctionCode,
+  FunctionAssociation,
   FunctionEventType,
   FunctionRuntime,
   Function as CloudFrontFunction,
@@ -303,8 +304,8 @@ export class SpaConstruct extends Construct {
     siteBucket: IBucket,
     {
       extraAllowedOrigins = [],
-      redirectTrailingSlash = false,
-      resolveFolderIndex = false,
+      redirectTrailingSlash,
+      resolveFolderIndex,
     }: Pick<
       SpaProps,
       'extraAllowedOrigins' | 'redirectTrailingSlash' | 'resolveFolderIndex'
@@ -349,18 +350,10 @@ export class SpaConstruct extends Construct {
         compress: true,
         allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
         viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        functionAssociations:
-          redirectTrailingSlash || resolveFolderIndex
-            ? [
-                {
-                  eventType: FunctionEventType.VIEWER_REQUEST,
-                  function: this.createViewerRequestFunction({
-                    redirectTrailingSlash,
-                    resolveFolderIndex,
-                  }),
-                },
-              ]
-            : undefined,
+        functionAssociations: this.viewerRequestAssociations({
+          redirectTrailingSlash,
+          resolveFolderIndex,
+        }),
       },
     });
     new CfnOutput(this, `${this.spaName}-DistributionId`, {
@@ -369,20 +362,25 @@ export class SpaConstruct extends Construct {
     return distribution;
   }
 
-  private createViewerRequestFunction(
-    options: Required<ViewerRequestOptions>
-  ): CloudFrontFunction {
+  /** The viewer-request function both options share, or none without them. */
+  private viewerRequestAssociations(
+    options: ViewerRequestOptions
+  ): FunctionAssociation[] | undefined {
     const tasks = [
-      ...(options.redirectTrailingSlash ? ['redirects /path/ to /path'] : []),
-      ...(options.resolveFolderIndex
-        ? ['serves /path from /path/index.html']
-        : []),
-    ];
-    return new CloudFrontFunction(this, 'ViewerRequest', {
+      options.redirectTrailingSlash && 'redirects /path/ to /path',
+      options.resolveFolderIndex && 'serves /path from /path/index.html',
+    ].filter(Boolean);
+    if (tasks.length === 0) {
+      return undefined;
+    }
+    const viewerRequest = new CloudFrontFunction(this, 'ViewerRequest', {
       code: FunctionCode.fromInline(viewerRequestSource(options)),
       runtime: FunctionRuntime.JS_2_0,
       comment: `Viewer request: ${tasks.join(', ')}`,
     });
+    return [
+      { eventType: FunctionEventType.VIEWER_REQUEST, function: viewerRequest },
+    ];
   }
 
   private createARecord(
