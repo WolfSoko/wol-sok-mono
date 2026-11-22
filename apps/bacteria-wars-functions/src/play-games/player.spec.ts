@@ -23,10 +23,17 @@ describe('playGamesPlayer', () => {
       answer(200, { access_token: 'at', expires_in: 3599 }),
       answer(200, { playerId: 'p1', displayName: 'Ada' })
     );
-    expect(await playGamesPlayer('4/0Ab', CLIENT, fetchFn)).toEqual({
+    const player = await playGamesPlayer('4/0Ab', CLIENT, fetchFn);
+    expect(player).toEqual({
       playerId: 'p1',
       displayName: 'Ada',
+      games: expect.any(Object),
     });
+    expect(Object.keys(player ?? {})).toEqual([
+      'playerId',
+      'displayName',
+      'games',
+    ]);
     const [tokenUrl, tokenInit] = fetchFn.mock.calls[0] as [
       string,
       RequestInit,
@@ -55,9 +62,24 @@ describe('playGamesPlayer', () => {
       answer(200, { access_token: 'at' }),
       answer(200, { playerId: 'p1' })
     );
-    expect(await playGamesPlayer('c', CLIENT, fetchFn)).toEqual({
+    expect(await playGamesPlayer('c', CLIENT, fetchFn)).toMatchObject({
       playerId: 'p1',
       displayName: null,
+    });
+  });
+
+  it('hands the token to the Games API handle', async () => {
+    const fetchFn = fakeFetch(
+      answer(200, { access_token: 'secret-token' }),
+      answer(200, { playerId: 'p1' }),
+      answer(200, { newlyUnlocked: true })
+    );
+    const player = await playGamesPlayer('c', CLIENT, fetchFn);
+    // Only inside the handle: nothing the player answers shows it.
+    expect(JSON.stringify(player)).not.toContain('secret-token');
+    await player?.games.unlock('C1');
+    expect(fetchFn.mock.calls[2][1].headers).toEqual({
+      Authorization: 'Bearer secret-token',
     });
   });
 

@@ -2,10 +2,11 @@
  * The Play Games player behind a one-time server auth code (#3175 step 2):
  * the code is exchanged at Google's token endpoint for an access token of
  * the player, which reads `games/v1/players/me`. Nothing of it is kept but
- * the player's id and name.
+ * the player's id and name; the token itself goes on only inside the
+ * player's `games` handle (step 3), never as a value of its own.
  */
 
-import { isObject } from '@wolsok/feat-shared-bacteria-engine';
+import { gamesApi, type PlayGamesApi, stringOf } from './games-api';
 
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
 /** Each call to Google gets this long, well within the trigger's minute. */
@@ -21,6 +22,8 @@ export interface OAuthClient {
 export interface PlayGamesPlayer {
   playerId: string;
   displayName: string | null;
+  /** The Games API for this player, valid while the token is (an hour). */
+  games: PlayGamesApi;
 }
 
 /**
@@ -50,7 +53,7 @@ export async function playGamesPlayer(
   if (!token.ok) {
     return null;
   }
-  const accessToken = stringField(await token.json(), 'access_token');
+  const accessToken = stringOf(await token.json(), 'access_token');
   if (accessToken === null) {
     return null;
   }
@@ -62,16 +65,12 @@ export async function playGamesPlayer(
     return null;
   }
   const body: unknown = await player.json();
-  const playerId = stringField(body, 'playerId');
+  const playerId = stringOf(body, 'playerId');
   return playerId === null
     ? null
-    : { playerId, displayName: stringField(body, 'displayName') };
-}
-
-function stringField(body: unknown, key: string): string | null {
-  if (!isObject(body)) {
-    return null;
-  }
-  const value = body[key];
-  return typeof value === 'string' && value.length > 0 ? value : null;
+    : {
+        playerId,
+        displayName: stringOf(body, 'displayName'),
+        games: gamesApi(accessToken, fetchFn),
+      };
 }

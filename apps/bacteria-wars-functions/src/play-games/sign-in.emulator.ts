@@ -1,6 +1,8 @@
 import { useEmulatorDb } from '../testing/emulator';
-import { runPlayGamesSignIn } from './command';
-import type { PlayGamesPlayer } from './player';
+import { type PlayGamesCommandDeps, runPlayGamesSignIn } from './command';
+import { logger } from 'firebase-functions/logger';
+import { syncPlayGamesAchievements } from './achievements';
+import { playGamesPlayer, type PlayGamesPlayer } from './player';
 import { type PlayGamesAccounts, signInPlayGames } from './sign-in';
 import {
   fakeAccounts,
@@ -8,6 +10,7 @@ import {
   guest,
   linkedPlayer,
 } from '../testing/fake-play-games-accounts';
+import { fakeGamesApi } from '../testing/fake-play-games-api';
 
 /**
  * The Play Games sign-in against the Firestore emulator (`test-emulator`):
@@ -18,7 +21,12 @@ import {
 const db = useEmulatorDb();
 
 const NOW = Date.UTC(2026, 10, 22, 12);
-const PLAYER: PlayGamesPlayer = { playerId: 'p1', displayName: 'PlayAda' };
+const GAMES = fakeGamesApi().games;
+const PLAYER: PlayGamesPlayer = {
+  playerId: 'p1',
+  displayName: 'PlayAda',
+  games: GAMES,
+};
 
 const link = async () =>
   (await db.doc('playGamesLinks/p1').get()).data() ?? null;
@@ -39,7 +47,11 @@ describe('signInPlayGames', () => {
   it('links a new player to a guest and answers its token', async () => {
     const fake = fakeAccounts({ g: guest() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: { value: 'token-for-g', uid: 'g' } }
+      {
+        result: { ok: true },
+        token: { value: 'token-for-g', uid: 'g' },
+        sync: { uid: 'g', games: GAMES },
+      }
     );
     expect((await link())?.['uid']).toBe('g');
     expect((await link())?.['linkedAt'].toMillis()).toBe(NOW);
@@ -53,7 +65,7 @@ describe('signInPlayGames', () => {
     // No token: a custom-token session would lose the Google provider the
     // owner's rights hang on.
     expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: null }
+      { result: { ok: true }, token: null, sync: { uid: 'a', games: GAMES } }
     );
     expect(await link()).toEqual({ uid: 'a', linkedAt: 1 });
     expect(fake.updates).toEqual([
@@ -75,7 +87,12 @@ describe('signInPlayGames', () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
     const fake = fakeAccounts({ g: guest(), a: google() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: { value: 'token-for-a', uid: 'a' } }
+      {
+        result: { ok: true },
+        token: { value: 'token-for-a', uid: 'a' },
+        // The linked account's achievements, not the guest's.
+        sync: { uid: 'a', games: GAMES },
+      }
     );
     expect(await link()).toEqual({ uid: 'a', linkedAt: 1 });
     // Only the settled account is marked, and only it gets a token.
@@ -90,7 +107,11 @@ describe('signInPlayGames', () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'other', linkedAt: 1 });
     const fake = fakeAccounts({ a: google(), other: other() });
     expect(await signInPlayGames(db, 'a', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: false, error: 'linked-elsewhere' }, token: null }
+      {
+        result: { ok: false, error: 'linked-elsewhere' },
+        token: null,
+        sync: null,
+      }
     );
     expect(await link()).toEqual({ uid: 'other', linkedAt: 1 });
     expect(fake.updates).toEqual([]);
@@ -113,6 +134,7 @@ describe('signInPlayGames', () => {
     ).toEqual({
       result: { ok: false, error: 'play-games-refused' },
       token: null,
+      sync: null,
     });
     expect(await link()).toBeNull();
     expect(fake.tokens).toEqual([]);
@@ -126,7 +148,11 @@ describe('signInPlayGames', () => {
         ...deps(fake.accounts),
         tombstone,
       })
-    ).toEqual({ result: { ok: false, error: 'banned' }, token: null });
+    ).toEqual({
+      result: { ok: false, error: 'banned' },
+      token: null,
+      sync: null,
+    });
     expect(tombstone).toHaveBeenCalledWith('p1', 'g');
     expect(await link()).toBeNull();
     expect(fake.updates).toEqual([]);
@@ -150,13 +176,16 @@ describe('signInPlayGames', () => {
     const run = (
       data: Record<string, unknown>,
       authId: string | undefined,
-      fake: ReturnType<typeof fakeAccounts>
+      fake: ReturnType<typeof fakeAccounts>,
+      more: Partial<PlayGamesCommandDeps> = {}
     ) =>
       runPlayGamesSignIn(db, 'c1', data, authId, {
         player: async () => PLAYER,
         tombstone: async () => false,
         accounts: async () => fake.accounts,
+        syncAchievements: async () => undefined,
         now: () => NOW,
+        ...more,
       });
 
     it('writes the token and its uid beside the result', async () => {
@@ -171,6 +200,142 @@ describe('signInPlayGames', () => {
         tokenUid: 'g',
         claimedAt: expect.anything(),
       });
+    });
+
+    it('syncs the settled account’s achievements once the result is written', async () => {
+      const data = { uid: 'g', code: 'code' };
+      await db.doc(PATH).set(data);
+      await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
+      const synced: [string, unknown, unknown][] = [];
+      const syncAchievements = async (uid: string, games: unknown) => {
+        synced.push([uid, games, (await db.doc(PATH).get()).get('result')]);
+      };
+
+      await run(data, 'g', fakeAccounts({ g: guest(), a: google() }), {
+        syncAchievements,
+      });
+      expect(synced).toEqual([
+        ['a', GAMES, expect.objectContaining({ ok: true })],
+      ]);
+    });
+
+    it.each([
+      [
+        'linked-elsewhere',
+        { a: google(), other: google() },
+        {},
+        async () =>
+          db.doc('playGamesLinks/p1').set({ uid: 'other', linkedAt: 1 }),
+      ],
+      [
+        'play-games-refused',
+        { a: google() },
+        { player: async () => null },
+        null,
+      ],
+      ['banned', { a: google() }, { tombstone: async () => true }, null],
+    ] as const)(
+      'syncs nothing on %s',
+      async (error, accounts, more, before) => {
+        const data = { uid: 'a', code: 'code' };
+        await db.doc(PATH).set(data);
+        await before?.();
+        const syncAchievements = jest.fn(async () => undefined);
+
+        expect(
+          await run(data, 'a', fakeAccounts({ ...accounts }), {
+            ...more,
+            syncAchievements,
+          })
+        ).toEqual({ ok: false, error });
+        expect(syncAchievements).not.toHaveBeenCalled();
+      }
+    );
+
+    it('syncs nothing for a command written in another uid’s name', async () => {
+      const data = { uid: 'a', code: 'code' };
+      await db.doc(PATH).set(data);
+      const syncAchievements = jest.fn(async () => undefined);
+      await run(data, 'eve', fakeAccounts({ a: google() }), {
+        syncAchievements,
+      });
+      expect(syncAchievements).not.toHaveBeenCalled();
+    });
+
+    it('keeps the result and the token when the sync fails', async () => {
+      const data = { uid: 'g', code: 'code' };
+      await db.doc(PATH).set(data);
+      jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+
+      expect(
+        await run(data, 'g', fakeAccounts({ g: guest() }), {
+          syncAchievements: async () => {
+            throw new TypeError('fetch failed');
+          },
+        })
+      ).toEqual({ ok: true });
+      expect((await db.doc(PATH).get()).data()).toMatchObject({
+        result: { ok: true },
+        token: 'token-for-g',
+      });
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Play Games achievement sync failed',
+        { error: 'TypeError' }
+      );
+      jest.restoreAllMocks();
+    });
+
+    it('stores and logs the access token nowhere', async () => {
+      const ACCESS = 'ya29.secret-access-token';
+      const REFRESH = '1//secret-refresh-token';
+      const data = { uid: 'g', code: 'code' };
+      await db.doc(PATH).set(data);
+      await db.doc('players/g/storage/bacteria-game.progress').set({
+        json: JSON.stringify({ achievements: { 'first-blood': '2026-11-20' } }),
+      });
+      const lines: unknown[] = [];
+      for (const level of ['debug', 'info', 'log', 'warn', 'error'] as const) {
+        jest
+          .spyOn(logger, level)
+          .mockImplementation((...args: unknown[]) => void lines.push(args));
+      }
+      // Google answers everything, the unlock with a refusal that names the
+      // token, as an error body might.
+      const fetchFn = (async (url: string) => {
+        const body = url.endsWith('/token')
+          ? { access_token: ACCESS, refresh_token: REFRESH }
+          : url.endsWith('/players/me')
+            ? { playerId: 'p1', displayName: 'PlayAda' }
+            : url.includes('/players/me/achievements')
+              ? { items: [] }
+              : url.includes('/achievements?')
+                ? { items: [{ id: 'P1', name: 'First Blood' }] }
+                : { error: `bad token ${ACCESS}` };
+        return new Response(JSON.stringify(body), {
+          status: url.endsWith('/unlock') ? 401 : 200,
+        });
+      }) as typeof fetch;
+
+      await run(data, 'g', fakeAccounts({ g: guest() }), {
+        player: (code) =>
+          playGamesPlayer(code, { id: 'web', secret: 'shh' }, fetchFn),
+        syncAchievements: (uid, games) =>
+          syncPlayGamesAchievements(db, uid, games, NOW),
+      });
+
+      const written = JSON.stringify(
+        (await db.collection('playGamesSignIns').get()).docs.map((doc) =>
+          doc.data()
+        )
+      );
+      const logged = JSON.stringify(lines);
+      expect(written).toContain('token-for-g');
+      expect(logged).toContain('First Blood');
+      for (const secret of [ACCESS, REFRESH]) {
+        expect(written).not.toContain(secret);
+        expect(logged).not.toContain(secret);
+      }
+      jest.restoreAllMocks();
     });
 
     it('runs a second delivery of the same command not at all', async () => {

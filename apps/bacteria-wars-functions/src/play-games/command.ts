@@ -6,8 +6,10 @@ import {
   PLAY_GAMES_TOKEN_UID_KEY,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Firestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
 import { claimCommand } from '../commands/claim-command';
 import { runCommandDocument } from '../commands/run-command-document';
+import type { PlayGamesApi } from './games-api';
 import type { PlayGamesPlayer } from './player';
 import {
   type PlayGamesAccounts,
@@ -23,6 +25,8 @@ export interface PlayGamesCommandDeps {
   tombstone: (playerId: string, uid: string) => Promise<boolean>;
   /** Auth, loaded only for a command that runs. */
   accounts: () => Promise<PlayGamesAccounts>;
+  /** Unlocks `uid`'s earned achievements on Play (step 3). */
+  syncAchievements: (uid: string, games: PlayGamesApi) => Promise<unknown>;
   now: () => number;
 }
 
@@ -30,7 +34,9 @@ export interface PlayGamesCommandDeps {
  * Runs `playGamesSignIns/{id}` (#3175 step 2) through
  * `runCommandDocument`: once per command (`claimCommand`, since its code is
  * single-use), for its writer, and writes the custom token and the uid it
- * is for beside the result where the sign-in answered one.
+ * is for beside the result where the sign-in answered one. Then, with the
+ * result written, it syncs the linked account's achievements to Play:
+ * the game never waits for that, and nothing of it fails the sign-in.
  */
 export async function runPlayGamesSignIn(
   db: Firestore,
@@ -41,7 +47,7 @@ export async function runPlayGamesSignIn(
 ): Promise<CommandResult | null> {
   const path = `${PLAY_GAMES_SIGN_INS}/${id}`;
   let answer: PlayGamesSignInAnswer | null = null;
-  return runCommandDocument(
+  const result = await runCommandDocument(
     db,
     path,
     data,
@@ -70,4 +76,14 @@ export async function runPlayGamesSignIn(
             [PLAY_GAMES_TOKEN_UID_KEY]: answer.token.uid,
           }
   );
+  // `answer` is set inside `run`, which TypeScript's narrowing cannot see.
+  const sync = (answer as PlayGamesSignInAnswer | null)?.sync ?? null;
+  if (sync !== null) {
+    await deps.syncAchievements(sync.uid, sync.games).catch((error) => {
+      logger.warn('Play Games achievement sync failed', {
+        error: error instanceof Error ? error.name : 'unknown',
+      });
+    });
+  }
+  return result;
 }

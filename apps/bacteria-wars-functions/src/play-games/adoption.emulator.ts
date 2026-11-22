@@ -5,6 +5,7 @@ import {
   guest,
   linkedPlayer,
 } from '../testing/fake-play-games-accounts';
+import { fakeGamesApi } from '../testing/fake-play-games-api';
 import { useEmulatorDb } from '../testing/emulator';
 import { adoptPlayGamesAccount } from './adoption';
 import { runPlayGamesAdoption } from './adoption-command';
@@ -180,19 +181,25 @@ describe('adoptPlayGamesAccount', () => {
       now: NOW,
     });
     const deps = {
-      player: async () => ({ playerId: 'p1', displayName: 'PlayAda' }),
+      player: async () => ({
+        playerId: 'p1',
+        displayName: 'PlayAda',
+        games: fakeGamesApi().games,
+      }),
       tombstone: async () => false,
       accounts: fake.accounts,
       now: NOW,
     };
 
-    expect(await signInPlayGames(db, 'b', 'code', deps)).toEqual({
+    expect(await signInPlayGames(db, 'b', 'code', deps)).toMatchObject({
       result: { ok: true },
       token: null,
+      sync: { uid: 'b' },
     });
-    expect(await signInPlayGames(db, 'g', 'code', deps)).toEqual({
+    expect(await signInPlayGames(db, 'g', 'code', deps)).toMatchObject({
       result: { ok: true },
       token: { value: 'token-for-b', uid: 'b' },
+      sync: { uid: 'b' },
     });
   });
 });
