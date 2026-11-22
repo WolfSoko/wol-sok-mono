@@ -5,7 +5,11 @@
  * the player's id and name.
  */
 
+import { isObject } from '@wolsok/feat-shared-bacteria-engine';
+
 const TOKEN_URL = 'https://oauth2.googleapis.com/token';
+/** Each call to Google gets this long, well within the trigger's minute. */
+const FETCH_TIMEOUT_MS = 10_000;
 const PLAYER_URL = 'https://games.googleapis.com/games/v1/players/me';
 
 /** The web OAuth client the app asks Play Games for codes for. */
@@ -41,6 +45,7 @@ export async function playGamesPlayer(
       // empty rather than missing.
       redirect_uri: '',
     }).toString(),
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!token.ok) {
     return null;
@@ -51,6 +56,7 @@ export async function playGamesPlayer(
   }
   const player = await fetchFn(PLAYER_URL, {
     headers: { Authorization: `Bearer ${accessToken}` },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
   if (!player.ok) {
     return null;
@@ -63,9 +69,9 @@ export async function playGamesPlayer(
 }
 
 function stringField(body: unknown, key: string): string | null {
-  if (typeof body !== 'object' || body === null) {
+  if (!isObject(body)) {
     return null;
   }
-  const value = (body as Record<string, unknown>)[key];
+  const value = body[key];
   return typeof value === 'string' && value.length > 0 ? value : null;
 }

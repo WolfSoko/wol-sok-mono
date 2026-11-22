@@ -1,23 +1,19 @@
 import type { Auth } from 'firebase-admin/auth';
+import { userRecordOf } from '../auth-users';
 import type { PlayGamesAccounts } from './sign-in';
 
 /** {@link PlayGamesAccounts} on Firebase Auth. */
 export function authAccounts(auth: Auth): PlayGamesAccounts {
   return {
     async account(uid) {
-      try {
-        const user = await auth.getUser(uid);
-        return {
-          hasProvider: user.providerData.length > 0,
-          displayName: user.displayName ?? null,
-          claims: user.customClaims ?? {},
-        };
-      } catch (error) {
-        if ((error as { code?: unknown }).code === 'auth/user-not-found') {
-          return null;
-        }
-        throw error;
-      }
+      const user = await userRecordOf(auth, uid);
+      return user === null
+        ? null
+        : {
+            hasProvider: user.providerData.length > 0,
+            displayName: user.displayName ?? null,
+            claims: user.customClaims ?? {},
+          };
     },
     async update(uid, claims, displayName) {
       // Claims replace each other whole: `claims` carries the old ones.

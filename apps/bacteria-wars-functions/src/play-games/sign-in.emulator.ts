@@ -1,5 +1,5 @@
-import { runCommandDocument } from '../commands/run-command-document';
 import { useEmulatorDb } from '../testing/emulator';
+import { runPlayGamesSignIn } from './command';
 import type { PlayGamesPlayer } from './player';
 import {
   type PlayGamesAccount,
@@ -73,7 +73,7 @@ describe('signInPlayGames', () => {
   it('links a new player to a guest and answers its token', async () => {
     const fake = fakeAccounts({ g: guest() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: 'token-for-g' }
+      { result: { ok: true }, token: { value: 'token-for-g', uid: 'g' } }
     );
     expect((await link())?.['uid']).toBe('g');
     expect((await link())?.['linkedAt'].toMillis()).toBe(NOW);
@@ -101,7 +101,7 @@ describe('signInPlayGames', () => {
     const fake = fakeAccounts({ g: linkedPlayer() });
     expect(
       (await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).token
-    ).toBe('token-for-g');
+    ).toEqual({ value: 'token-for-g', uid: 'g' });
     expect(fake.updates).toEqual([]);
   });
 
@@ -109,7 +109,7 @@ describe('signInPlayGames', () => {
     await db.doc('playGamesLinks/p1').set({ uid: 'a', linkedAt: 1 });
     const fake = fakeAccounts({ g: guest(), a: google() });
     expect(await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).toEqual(
-      { result: { ok: true }, token: 'token-for-a' }
+      { result: { ok: true }, token: { value: 'token-for-a', uid: 'a' } }
     );
     expect(await link()).toEqual({ uid: 'a', linkedAt: 1 });
     // Only the settled account is marked, and only it gets a token.
@@ -136,7 +136,7 @@ describe('signInPlayGames', () => {
     const fake = fakeAccounts({ g: guest() });
     expect(
       (await signInPlayGames(db, 'g', 'code', deps(fake.accounts))).token
-    ).toBe('token-for-g');
+    ).toEqual({ value: 'token-for-g', uid: 'g' });
     expect((await link())?.['uid']).toBe('g');
   });
 
@@ -164,18 +164,63 @@ describe('signInPlayGames', () => {
     expect((await db.doc('bans/a').get()).exists).toBe(false);
   });
 
-  it('settles nothing for a command written in another uid’s name', async () => {
-    const path = 'playGamesSignIns/c1';
-    const data = { uid: 'a', code: 'code' };
-    await db.doc(path).set(data);
-    const fake = fakeAccounts({ a: google(), eve: guest() });
-    const result = await runCommandDocument(db, path, data, 'eve', (uid) =>
-      signInPlayGames(db, uid, 'code', deps(fake.accounts)).then(
-        ({ result: answer }) => answer
-      )
-    );
-    expect(result).toEqual({ ok: false, error: 'not-writer' });
-    expect(await link()).toBeNull();
-    expect(fake.tokens).toEqual([]);
+  describe('as a command', () => {
+    const PATH = 'playGamesSignIns/c1';
+    const run = (
+      data: Record<string, unknown>,
+      authId: string | undefined,
+      fake: ReturnType<typeof fakeAccounts>
+    ) =>
+      runPlayGamesSignIn(db, 'c1', data, authId, {
+        player: async () => PLAYER,
+        accounts: async () => fake.accounts,
+        now: () => NOW,
+      });
+
+    it('writes the token and its uid beside the result', async () => {
+      const data = { uid: 'g', code: 'code' };
+      await db.doc(PATH).set(data);
+      const fake = fakeAccounts({ g: guest() });
+
+      expect(await run(data, 'g', fake)).toEqual({ ok: true });
+      expect((await db.doc(PATH).get()).data()).toMatchObject({
+        result: { ok: true },
+        token: 'token-for-g',
+        tokenUid: 'g',
+        claimedAt: expect.anything(),
+      });
+    });
+
+    it('runs a second delivery of the same command not at all', async () => {
+      const data = { uid: 'g', code: 'code' };
+      await db.doc(PATH).set(data);
+      const fake = fakeAccounts({ g: guest() });
+      await run(data, 'g', fake);
+
+      expect(await run(data, 'g', fake)).toBeNull();
+      expect(fake.tokens).toEqual(['g']);
+    });
+
+    it('answers malformed for a command without a code', async () => {
+      const data = { uid: 'g' };
+      await db.doc(PATH).set(data);
+      expect(await run(data, 'g', fakeAccounts({ g: guest() }))).toEqual({
+        ok: false,
+        error: 'malformed',
+      });
+    });
+
+    it('settles nothing for a command written in another uid’s name', async () => {
+      const data = { uid: 'a', code: 'code' };
+      await db.doc(PATH).set(data);
+      const fake = fakeAccounts({ a: google(), eve: guest() });
+
+      expect(await run(data, 'eve', fake)).toEqual({
+        ok: false,
+        error: 'not-writer',
+      });
+      expect(await link()).toBeNull();
+      expect(fake.tokens).toEqual([]);
+    });
   });
 });

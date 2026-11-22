@@ -43,7 +43,10 @@ describe('playGamesPlayer', () => {
     });
     expect(fetchFn.mock.calls[1]).toEqual([
       'https://games.googleapis.com/games/v1/players/me',
-      { headers: { Authorization: 'Bearer at' } },
+      {
+        headers: { Authorization: 'Bearer at' },
+        signal: expect.any(AbortSignal),
+      },
     ]);
   });
 

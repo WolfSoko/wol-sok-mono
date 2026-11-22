@@ -1,14 +1,13 @@
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
 
 /**
- * Claims a Play Games sign-in for this delivery of its trigger: Firestore
- * may deliver one create twice, and a second run with the same one-time
- * code would be refused by Google and overwrite the first run's result
- * (with its token) by `play-games-refused`. True for the one delivery that
- * marks it (`claimedAt`); false for any other, for a command answered
- * already, and for one the player deleted meanwhile.
+ * Claims a command document for one delivery of its trigger: Firestore
+ * may deliver one create twice, and a command that must not run twice (a
+ * one-time code, say) answers null from `runCommandDocument`'s `run` for
+ * every delivery but the one this marks (`claimedAt`). False as well for a
+ * command answered already, and for one deleted meanwhile.
  */
-export async function claimSignIn(
+export async function claimCommand(
   db: Firestore,
   path: string
 ): Promise<boolean> {

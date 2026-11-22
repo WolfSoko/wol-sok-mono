@@ -81,6 +81,7 @@ export {
   PLAY_GAMES_LINKS,
   PLAY_GAMES_SIGN_INS,
   PLAY_GAMES_TOKEN_KEY,
+  PLAY_GAMES_TOKEN_UID_KEY,
   playGamesCodeOf,
 } from './lib/state/cloud/play-games-sign-in';
 export type {

@@ -25,6 +25,9 @@ export const PLAY_GAMES_CODE_MAX = 512;
 /** The field beside `result` the trigger writes the custom token into. */
 export const PLAY_GAMES_TOKEN_KEY = 'token';
 
+/** The field beside it naming the uid the token signs in to. */
+export const PLAY_GAMES_TOKEN_UID_KEY = 'tokenUid';
+
 /** The custom claim of an account a Play Games player is linked to. */
 export const PLAY_GAMES_CLAIM = 'playGames';
 
@@ -43,7 +46,7 @@ export interface PlayGamesSignIn {
   code: string;
 }
 
-const SIGN_IN_KEYS = ['code', PLAY_GAMES_TOKEN_KEY];
+const SIGN_IN_KEYS = ['code', PLAY_GAMES_TOKEN_KEY, PLAY_GAMES_TOKEN_UID_KEY];
 
 /**
  * Reads a Play Games sign-in - null for anything that is not exactly one:

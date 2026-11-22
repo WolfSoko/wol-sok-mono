@@ -21,10 +21,8 @@ import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
 import {
-  parsePlayGamesSignIn,
   parseTurnKey,
   PLAY_GAMES_SIGN_INS,
-  PLAY_GAMES_TOKEN_KEY,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
@@ -70,11 +68,10 @@ import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
-import { runCommandDocument } from './commands/run-command-document';
+import { userRecordOf } from './auth-users';
 import { authAccounts } from './play-games/accounts';
-import { claimSignIn } from './play-games/claim';
 import { playGamesPlayer } from './play-games/player';
-import { signInPlayGames } from './play-games/sign-in';
+import { runPlayGamesSignIn } from './play-games/command';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
@@ -209,39 +206,23 @@ export const playGamesSignIn = PLAY_GAMES_ON
       },
       withSentry(async (event) => {
         const data = event.data?.data();
-        const command = parsePlayGamesSignIn(data);
         if (data === undefined) {
           return;
         }
-        const path = `${PLAY_GAMES_SIGN_INS}/${event.params.id}`;
-        let token: string | null = null;
         const client = {
           id: PLAY_GAMES_WEB_CLIENT_ID,
           secret: PLAY_GAMES_CLIENT_SECRET.value(),
         };
-        const accounts = authAccounts(await auth());
-        const result = await runCommandDocument(
+        const result = await runPlayGamesSignIn(
           db(),
-          path,
+          event.params.id,
           data,
           event.authType === 'unauthenticated' ? undefined : event.authId,
-          async (uid) => {
-            if (command === null) {
-              return { ok: false, error: 'invalid' };
-            }
-            // A second delivery of the same create leaves it to the first.
-            if (!(await claimSignIn(db(), path))) {
-              return null;
-            }
-            const answer = await signInPlayGames(db(), uid, command.code, {
-              player: (code) => playGamesPlayer(code, client, fetch),
-              accounts,
-              now: Date.now(),
-            });
-            token = answer.token;
-            return answer.result;
-          },
-          () => (token === null ? {} : { [PLAY_GAMES_TOKEN_KEY]: token })
+          {
+            player: (code) => playGamesPlayer(code, client, fetch),
+            accounts: async () => authAccounts(await auth()),
+            now: Date.now,
+          }
         );
         if (result !== null && !result.ok) {
           logger.info('Play Games sign-in refused', {
@@ -373,19 +354,9 @@ async function* authUsers(): AsyncGenerator<UserRecord> {
   } while (pageToken !== undefined);
 }
 
-/**
- * The Auth user, read afresh - null for one that does not exist; other
- * failures throw.
- */
+/** The Auth user, read afresh - null for one that does not exist. */
 async function userRecord(uid: string): Promise<UserRecord | null> {
-  try {
-    return await (await auth()).getUser(uid);
-  } catch (error) {
-    if ((error as { code?: unknown } | null)?.code === 'auth/user-not-found') {
-      return null;
-    }
-    throw error;
-  }
+  return userRecordOf(await auth(), uid);
 }
 
 /**

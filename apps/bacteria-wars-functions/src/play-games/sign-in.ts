@@ -40,7 +40,8 @@ export interface PlayGamesSignInDeps {
 /** The sign-in's answer: the result, and a token where the game needs one. */
 export interface PlayGamesSignInAnswer {
   result: CommandResult & { error?: PlayGamesSignInError };
-  token: string | null;
+  /** A custom token, and the uid it signs in to. */
+  token: { value: string; uid: string } | null;
 }
 
 /**
@@ -61,14 +62,18 @@ export async function signInPlayGames(
   code: string,
   { player: playerOf, accounts, now }: PlayGamesSignInDeps
 ): Promise<PlayGamesSignInAnswer> {
-  const player = await playerOf(code);
+  const [player, writerAccount] = await Promise.all([
+    playerOf(code),
+    accounts.account(writerUid),
+  ]);
   if (player === null) {
     return refused('play-games-refused');
   }
-  const writer = await linkAccountOf(accounts, writerUid);
-  if (writer === null) {
+  if (writerAccount === null) {
     return refused('no-account');
   }
+  const writer = { uid: writerUid, hasProvider: writerAccount.hasProvider };
+  const known = new Map([[writerUid, writerAccount]]);
   const ref = db.collection(PLAY_GAMES_LINKS).doc(player.playerId);
   const outcome = await db.runTransaction(async (tx) => {
     const linkedUid: unknown = (await tx.get(ref)).get('uid');
@@ -77,7 +82,7 @@ export async function signInPlayGames(
         ? null
         : linkedUid === writerUid
           ? writer
-          : await linkAccountOf(accounts, linkedUid);
+          : await linkAccountOf(accounts, linkedUid, known);
     const settled = settleLink({ writer, linked });
     if (settled.kind === 'link') {
       tx.set(ref, { uid: settled.uid, linkedAt: Timestamp.fromMillis(now) });
@@ -87,49 +92,77 @@ export async function signInPlayGames(
   if (outcome.kind === 'refuse') {
     return refused('linked-elsewhere');
   }
-  if (!(await markLinked(accounts, outcome.uid, player.displayName))) {
+  const settledAccount = known.get(outcome.uid) ?? null;
+  if (
+    settledAccount === null ||
+    !(await markLinked(
+      accounts,
+      outcome.uid,
+      settledAccount,
+      player.displayName
+    ))
+  ) {
     return refused('no-account');
   }
-  const needsToken = !writer.hasProvider || outcome.uid !== writerUid;
+  // The server cannot tell an anonymous session from a custom-token one,
+  // so every account without a provider gets a token; the game keeps a
+  // session that is signed in already.
+  const needsToken = !writer.hasProvider || outcome.kind === 'take-over';
   return {
     result: { ok: true },
-    token: needsToken ? await accounts.customToken(outcome.uid) : null,
+    token: needsToken
+      ? { value: await accounts.customToken(outcome.uid), uid: outcome.uid }
+      : null,
   };
 }
 
+/** The account as the decision sees it, kept in `known` for later. */
 async function linkAccountOf(
   accounts: PlayGamesAccounts,
-  uid: string
+  uid: string,
+  known: Map<string, PlayGamesAccount>
 ): Promise<LinkAccount | null> {
   const account = await accounts.account(uid);
-  return account === null ? null : { uid, hasProvider: account.hasProvider };
+  if (account === null) {
+    return null;
+  }
+  known.set(uid, account);
+  return { uid, hasProvider: account.hasProvider };
 }
 
 /**
- * Sets the `playGames` claim of `uid`, with its claims read afresh right
- * before so a claim granted meanwhile survives, and gives a nameless
- * account `name`. Writes nothing when nothing changes; false when the
- * account is gone.
+ * Sets the `playGames` claim of `uid` and gives a nameless account `name`.
+ * `seen` (read moments ago) decides whether anything changes - nothing is
+ * written then, the usual case at every later start. Otherwise the claims
+ * are read afresh right before the write, so a claim granted meanwhile
+ * survives. False when the account is gone.
  */
 async function markLinked(
   accounts: PlayGamesAccounts,
   uid: string,
+  seen: PlayGamesAccount,
   name: string | null
 ): Promise<boolean> {
+  if (!needsMark(seen, name)) {
+    return true;
+  }
   const account = await accounts.account(uid);
   if (account === null) {
     return false;
   }
-  const displayName =
-    account.displayName === null && name !== null ? name : undefined;
-  if (account.claims[PLAY_GAMES_CLAIM] !== true || displayName !== undefined) {
-    await accounts.update(
-      uid,
-      { ...account.claims, [PLAY_GAMES_CLAIM]: true },
-      displayName
-    );
-  }
+  await accounts.update(
+    uid,
+    { ...account.claims, [PLAY_GAMES_CLAIM]: true },
+    account.displayName === null && name !== null ? name : undefined
+  );
   return true;
+}
+
+function needsMark(account: PlayGamesAccount, name: string | null): boolean {
+  return (
+    account.claims[PLAY_GAMES_CLAIM] !== true ||
+    (account.displayName === null && name !== null)
+  );
 }
 
 function refused(error: PlayGamesSignInError): PlayGamesSignInAnswer {
