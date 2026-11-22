@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.180.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.3...v74.180.0) (2026-11-22)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the main menu as a 3D bacterium, toggles with Off/Admin/On ([#3209](https://github.com/WolfSoko/wol-sok-mono/issues/3209)) ([25ab837](https://github.com/WolfSoko/wol-sok-mono/commit/25ab8372b5e05477a90d93b15a099835c80df9f1)), closes [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194), references [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194)
+
 ## [74.179.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.2...v74.179.3) (2026-11-22)
 
 ### Bug Fixes
