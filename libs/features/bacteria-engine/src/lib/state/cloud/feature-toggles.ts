@@ -68,7 +68,9 @@ export function parseToggleValues(
   }
   const entries = Object.entries(value);
   return entries.length > 0 &&
-    entries.every(([key, state]) => isFeatureToggle(key) && isToggleState(state))
+    entries.every(
+      ([key, state]) => isFeatureToggle(key) && isToggleState(state)
+    )
     ? (Object.fromEntries(entries) as Partial<FeatureToggleStates>)
     : null;
 }

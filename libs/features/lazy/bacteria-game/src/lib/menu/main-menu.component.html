@@ -87,11 +87,7 @@
       </div>
     }
 
-    <nav
-      class="tiles"
-      [class.utility]="showsBacterium()"
-      [attr.aria-label]="'menu.more' | t"
-    >
+    <nav class="tiles" [attr.aria-label]="'menu.more' | t">
       @if (!showsBacterium()) {
         <button
           type="button"

@@ -2,6 +2,8 @@
 // the parts laid over their lobes. Positions come from BACTERIUM_ANCHORS
 // through inline left/top, so the CSS only centres each part on its point.
 
+@use 'screen';
+
 :host {
   position: relative;
   display: block;
@@ -105,14 +107,11 @@
   }
 
   &:focus-visible {
-    outline: 2px solid var(--bw-gold);
-    outline-offset: 2px;
+    @include screen.focus-ring;
   }
 
   mat-icon {
-    width: 1.2rem;
-    height: 1.2rem;
-    font-size: 1.2rem;
+    @include screen.icon-size(1.2rem);
   }
 }
 
@@ -125,9 +124,7 @@
   font: 700 1.05rem / 1.1 var(--bw-display);
 
   mat-icon {
-    width: 2rem;
-    height: 2rem;
-    font-size: 2rem;
+    @include screen.icon-size(2rem);
   }
 }
 

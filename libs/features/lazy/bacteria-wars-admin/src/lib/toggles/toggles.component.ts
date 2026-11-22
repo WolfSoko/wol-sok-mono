@@ -154,7 +154,9 @@ export class TogglesComponent {
   /** While a read or a publish runs, the draft and its buttons are locked. */
   protected readonly busy = computed(() => this.saving() || this.loading());
   /** The switches as the owner set them, before publishing. */
-  protected readonly draft = signal<FeatureToggleStates>({ ...FEATURE_TOGGLES });
+  protected readonly draft = signal<FeatureToggleStates>({
+    ...FEATURE_TOGGLES,
+  });
   /** The names of the toggles last published, for the note under them. */
   protected readonly published = signal<string | null>(null);
   /** The toggles the draft changes, against what Remote Config holds. */
