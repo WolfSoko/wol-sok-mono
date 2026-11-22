@@ -1,4 +1,5 @@
 import { Subject } from 'rxjs';
+import type { ConnectionRoute } from '../lib/net/connection-route';
 import {
   type PeerConnection,
   type PeerTransport,
@@ -30,7 +31,10 @@ class PairedEnd implements PeerConnection {
   /** What `opened` rejects with once this end closes before it opened. */
   private closedBy: Error = new Error('The connection closed.');
 
-  public constructor() {
+  /** `carried`: what `route()` reports - once it settles, for a promise. */
+  public constructor(
+    private readonly carried: ConnectionRoute | Promise<ConnectionRoute>
+  ) {
     this.opened = new Promise((resolve, reject) => {
       this.resolveOpened = resolve;
       this.ended.subscribe(() => reject(this.closedBy));
@@ -66,6 +70,10 @@ class PairedEnd implements PeerConnection {
     }
     // Later, as over the network: a reply never re-enters the sender.
     queueMicrotask(() => other.receive(message));
+  }
+
+  public async route(): Promise<ConnectionRoute> {
+    return this.carried;
   }
 
   /** Closes this end before it opened, `opened` rejecting with `error`. */
@@ -116,6 +124,11 @@ export interface PairedTransport extends PeerTransport {
    * a kind, with a plain error for null.
    */
   failNextGuest(kind: UnreachableKind | null): void;
+  /**
+   * Lets both ends of the links made from now on report `route` - once it
+   * settles, for a promise.
+   */
+  routeAs(route: ConnectionRoute | Promise<ConnectionRoute>): void;
   /** The relay each offer and answer was made with, in order. */
   readonly relays: readonly {
     side: 'host' | 'guest';
@@ -134,6 +147,7 @@ export function pairedTransport(): PairedTransport {
   let made = 0;
   let lastGuest: PairedEnd | null = null;
   let nextFailure: Error | null = null;
+  let route: ConnectionRoute | Promise<ConnectionRoute> = 'direct';
   const relays: { side: 'host' | 'guest'; relay: readonly RelayServer[] }[] =
     [];
   return {
@@ -147,10 +161,13 @@ export function pairedTransport(): PairedTransport {
           ? new Error('The connection failed.')
           : new PeerUnreachableError(kind);
     },
+    routeAs(next) {
+      route = next;
+    },
     supported: () => true,
     async offer(relay) {
       relays.push({ side: 'host', relay: relay.servers });
-      const host = new PairedEnd();
+      const host = new PairedEnd(route);
       const offer = `offer-${++made}`;
       offers.set(offer, host);
       return { link: host, offer };
@@ -162,7 +179,7 @@ export function pairedTransport(): PairedTransport {
         throw new Error(`No open offer "${offer}".`);
       }
       offers.delete(offer);
-      const guest = new PairedEnd();
+      const guest = new PairedEnd(route);
       const answer = `answer-${++made}`;
       host.pair(guest, answer);
       lastGuest = guest;

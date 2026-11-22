@@ -1,5 +1,6 @@
 import { Observable, Subject } from 'rxjs';
 import type { RelayServer } from '../storage/game-relay';
+import { type ConnectionRoute, connectionRoute } from './connection-route';
 import { iceServers } from './ice-servers';
 import {
   type PeerConnection,
@@ -186,6 +187,19 @@ class PeerLink implements PeerConnection {
   public send(message: string): void {
     if (this.channel.readyState === 'open') {
       this.channel.send(message);
+    }
+  }
+
+  /**
+   * The route of the pair ICE selected, from the connection's statistics -
+   * `unknown` where the browser cannot tell.
+   */
+  public async route(): Promise<ConnectionRoute> {
+    try {
+      return connectionRoute(await this.connection.getStats());
+    } catch (error) {
+      console.warn('The route of the link could not be read', error);
+      return 'unknown';
     }
   }
 

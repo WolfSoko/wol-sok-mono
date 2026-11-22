@@ -514,15 +514,23 @@ export class OnlineMatchService {
     this.greeted = true;
     this.update({ phase: 'connected', notice: null });
     const { role, auto } = this.lobby();
-    this.analytics.track('online_connected', {
-      role: role ?? 'none',
-      matchmade: auto,
-    });
+    this.trackConnected(role ?? 'none', auto);
     this.events.next({
       type: 'connected',
       seat: role === 'host' ? 0 : 1,
       auto,
     });
+  }
+
+  /**
+   * Reports the link, with its route once the statistics told it - the
+   * game goes on meanwhile.
+   */
+  private trackConnected(role: string, matchmade: boolean): void {
+    const routed = this.link?.route() ?? Promise.resolve('unknown' as const);
+    void routed.then((route) =>
+      this.analytics.track('online_connected', { role, matchmade, route })
+    );
   }
 
   private onClosed(link: PeerConnection): void {
