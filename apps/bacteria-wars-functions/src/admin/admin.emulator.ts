@@ -490,6 +490,39 @@ describe('toggles.set', () => {
       )
     ).toEqual({ ok: false, error: 'unchanged' });
   });
+
+  it('audits a Remote Config failure, answers internal and throws it on', async () => {
+    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const failure = new Error('ETag must be a non-empty string.');
+    const ctx: AdminContext = {
+      ...context(),
+      toggles: {
+        update: async () => {
+          throw failure;
+        },
+      },
+    };
+    // On to `withSentry`, which reports it.
+    await expect(
+      command(
+        'c1',
+        {
+          type: 'toggles.set',
+          target: null,
+          args: { values: { rankedDaily: 'admin' } },
+        },
+        ctx
+      )
+    ).rejects.toBe(failure);
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      type: 'toggles.set',
+      ok: false,
+      error: 'internal',
+    });
+    expect(
+      (await db.doc('adminCommands/c1').get()).get('result')
+    ).toMatchObject({ ok: false, error: 'internal' });
+  });
 });
 
 describe('board.verify', () => {

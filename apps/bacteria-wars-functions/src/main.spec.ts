@@ -87,6 +87,23 @@ describe('the exported functions', () => {
     ]);
   });
 
+  it('never retry a command document, whose failure runCommandDocument throws on', () => {
+    // A retry would run a toggles.set, a ban or a replay's feature twice.
+    const commands = [
+      'adminCommand',
+      'replayCommand',
+      ...(PLAY_GAMES_ON ? ['playGamesSignIn', 'playGamesAdoption'] : []),
+    ];
+    for (const name of commands) {
+      const trigger = functions[name]?.__endpoint.eventTrigger;
+      expect([name, trigger === undefined, trigger?.retry]).toEqual([
+        name,
+        false,
+        false,
+      ]);
+    }
+  });
+
   it('never retry the scheduled runs', () => {
     const scheduled = [
       'hourly',
