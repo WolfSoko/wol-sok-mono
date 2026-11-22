@@ -87,14 +87,17 @@ After the change:
     Colony, Evolution, Profile, Friends, Leaderboards, My matches, Matches of
     the day around the membrane). Settings, Help, Support and Admin stay as
     a small row of icon tiles under the bacterium: utilities, not actions.
-  - `bacterium-look.ts`: `bacteriumLook(rankIndex)`, what the rank adds:
+  - `bacterium-look.ts`: `bacteriumLook(xp, playerColour)`, what the rank adds:
     flagella count (0 → 6), pili (0 → 24), organelles (1 → 8), glow, wobble,
-    membrane shimmer. Rank from `rankFor(xp)` (8 ranks, Spore to Superbug).
+    membrane shimmer and the membrane's colour. Rank from `rankFor(xp)` (8
+    ranks, Spore to Superbug); built: the way to the next rank counts too,
+    so the cell grows a little with every match rather than only at a new
+    rank.
   - `bacterium-shader.ts`: the GLSL (WebGL2) of a raymarched signed distance
     field: a capsule body, a lobe per anchor (the hovered or focused one
     swells and lights up), the nucleus, organelles, flagella and pili as
     animated tubes, lit with a soft rim light in the player's colony colour
-    (`--bw-player`).
+    (the stage's `HudState.colonyRgb`, the colour `--bw-player` is made of).
   - `bacterium-renderer.ts`: sets up the context, draws a frame per
     animation frame at a capped resolution (device pixel ratio at most 1.5,
     30 fps), stops when the tab is hidden or the component goes.
@@ -106,16 +109,20 @@ After the change:
 - **Fallbacks**: without WebGL2, on a software renderer (`isSoftwareRenderer`
   from `@wolsok/feat-bacteria-rendering`, which would take hundreds of ms a
   frame) or when the shader fails, the cell is drawn by CSS (radial
-  gradients, same anchors, same rank looks reduced to glow and ring count).
+  gradients, same anchors, same rank looks reduced to colours and glow; built:
+  no ring count). A WebGL context the browser takes back later switches to
+  it too.
   With reduced motion (`prefersReducedMotion`) the shader draws one still
   frame and redraws only on hover/focus.
 - **Online**: the item opens the new game on the online mode
   (`PlayFlow.openNewGameOn({ kind: 'online', step: 'start' })`) through a new
   main-menu output `online`, shown where `OnlineFlow.available`; it waits
   behind `StageBusy` like New game.
-- **Layout**: the cell fills the hero's width up to 32 rem, square, labels
-  outside the membrane on wide screens and inside on phones (below 30 rem
-  the labels shrink to icons with the text under them).
+- **Layout** (built, changed from a square up to 32 rem with labels outside
+  the membrane): the cell fills the hero's width up to 34 rem in a 4:3 box,
+  which fits the rod-shaped body with less empty space; each label sits on
+  its own lobe, the button over the part it names. In a box below 26 rem
+  (a phone) the labels shrink to icons with the text under them.
 
 ## Acceptance
 
