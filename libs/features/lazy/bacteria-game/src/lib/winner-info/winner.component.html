@@ -151,7 +151,11 @@
   <ul class="news" [attr.aria-label]="'match.news.label' | t">
     @for (achievement of earned(); track achievement.id) {
       <li class="chip">
-        <mat-icon class="badge" aria-hidden="true">emoji_events</mat-icon>
+        <feat-lazy-bac-game-achievement-icon
+          class="achievement-icon"
+          [id]="achievement.id"
+          [earned]="true"
+        />
         <span class="chip-text">
           <span class="chip-label">{{ "match.news.achievement" | t }}</span>
           <span class="chip-name">{{ achievement.name | gameText }}</span>

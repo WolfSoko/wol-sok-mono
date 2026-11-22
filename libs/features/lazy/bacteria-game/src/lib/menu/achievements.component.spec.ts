@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { achievementIconDataUrl } from '@wolsok/feat-shared-bacteria-art';
 import { ACHIEVEMENT_IDS } from '@wolsok/feat-shared-bacteria-engine';
 import { I18nService } from '../i18n/i18n.service';
 import { AchievementsComponent } from './achievements.component';
@@ -30,6 +31,21 @@ describe('AchievementsComponent', () => {
     const siege = item(host, 'Siege');
     expect(siege?.classList.contains('earned')).toBe(false);
     expect(siege?.textContent).toContain('5 minutes or more');
+  });
+
+  it('shows each achievement with its Play Games icon, locked ones greyed', () => {
+    const { host } = render({ blitz: '2026-10-19' });
+
+    const icon = (name: string) =>
+      item(host, name)?.querySelector('feat-lazy-bac-game-achievement-icon');
+    expect(icon('Blitz')?.querySelector('img')?.getAttribute('src')).toBe(
+      achievementIconDataUrl('blitz')
+    );
+    expect(icon('Blitz')?.classList.contains('locked')).toBe(false);
+    expect(icon('Siege')?.querySelector('img')?.getAttribute('src')).toBe(
+      achievementIconDataUrl('siege')
+    );
+    expect(icon('Siege')?.classList.contains('locked')).toBe(true);
   });
 
   it('counts the achievements earned', () => {

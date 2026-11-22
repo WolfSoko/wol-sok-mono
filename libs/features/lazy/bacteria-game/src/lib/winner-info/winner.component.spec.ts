@@ -11,6 +11,7 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { type RankedOutcome } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { OneMatch } from '../state/match-rules';
+import { achievementIconDataUrl } from '@wolsok/feat-shared-bacteria-art';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {
@@ -187,6 +188,23 @@ describe('WinnerComponent', () => {
       fixture.nativeElement.querySelectorAll('.chip-name') as Element[]
     ).map((name) => name.textContent?.trim());
     expect(names).toEqual(['Blitz', 'Pacifist']);
+  });
+
+  it('shows each earned achievement with its Play Games icon', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({ achievements: ['blitz'] }),
+    });
+    fixture.detectChanges();
+
+    const icon = fixture.nativeElement.querySelector(
+      '.chip feat-lazy-bac-game-achievement-icon'
+    ) as HTMLElement | null;
+    expect(icon?.querySelector('img')?.getAttribute('src')).toBe(
+      achievementIconDataUrl('blitz')
+    );
+    expect(icon?.classList.contains('locked')).toBe(false);
   });
 
   it('adds up the XP and shows the way to the next rank', () => {

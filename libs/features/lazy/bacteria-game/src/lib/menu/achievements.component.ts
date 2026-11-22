@@ -6,7 +6,6 @@ import {
   input,
   output,
 } from '@angular/core';
-import { MatIconModule } from '@angular/material/icon';
 import {
   ACHIEVEMENTS,
   achievementTally,
@@ -20,6 +19,7 @@ import {
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { AchievementCountComponent } from './achievement-count.component';
+import { AchievementIconComponent } from './achievement-icon.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
@@ -30,8 +30,8 @@ import { ScreenHeaderComponent } from './screen-header.component';
   selector: 'feat-lazy-bac-game-achievements',
   imports: [
     AchievementCountComponent,
+    AchievementIconComponent,
     GameTextPipe,
-    MatIconModule,
     ScreenHeaderComponent,
     TranslatePipe,
   ],
