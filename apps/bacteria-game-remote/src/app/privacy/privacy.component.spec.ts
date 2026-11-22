@@ -63,6 +63,9 @@ describe('PrivacyComponent', () => {
     expect(en).toContain('Firestore deletes it after a day');
     expect(en).toContain('We do not store the access token');
     expect(de).toContain('löscht Firestore es nach einem Tag');
+    // A ban follows the Play Games player past a deletion.
+    expect(de).toContain('Hashwert der Play-Spiele-Spieler-ID');
+    expect(en).toContain('a hash of the Play Games player ID');
   });
 
   it('has each section on the cloud in both languages', async () => {
