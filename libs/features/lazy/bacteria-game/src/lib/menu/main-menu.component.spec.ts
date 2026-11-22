@@ -305,6 +305,12 @@ describe('MainMenuComponent', () => {
       menu.detectChanges();
     });
 
+    // The bacterium is deferred: it renders once its chunk has loaded.
+    const settle = async () => {
+      menu.detectChanges();
+      await menu.whenStable();
+      menu.detectChanges();
+    };
     const element = () => menu.nativeElement as HTMLElement;
     const cell = () =>
       element().querySelector('feat-lazy-bac-game-bacterium-menu');
@@ -315,29 +321,29 @@ describe('MainMenuComponent', () => {
         (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
       );
 
-    it('stays the buttons and tiles while the toggle is off', () => {
+    it('stays the buttons and tiles while the toggle is off', async () => {
       expect(cell()).toBeNull();
       expect(element().querySelector('.actions')).not.toBeNull();
     });
 
-    it('shows to the owner only while the toggle is admin', () => {
+    it('shows to the owner only while the toggle is admin', async () => {
       toggles.next({ bacteriumMenu: 'admin' });
-      menu.detectChanges();
+      await settle();
       expect(cell()).toBeNull();
 
       account.owner.set(true);
-      menu.detectChanges();
+      await settle();
       expect(cell()).not.toBeNull();
       expect(element().querySelector('.actions')).toBeNull();
 
       account.owner.set(false);
-      menu.detectChanges();
+      await settle();
       expect(cell()).toBeNull();
     });
 
-    it('shows to everyone while the toggle is on, the utilities as tiles', () => {
+    it('shows to everyone while the toggle is on, the utilities as tiles', async () => {
       toggles.next({ bacteriumMenu: 'on' });
-      menu.detectChanges();
+      await settle();
       expect(cell()).not.toBeNull();
       expect(tileNames()).toEqual([
         expect.stringContaining('Settings'),
@@ -347,7 +353,7 @@ describe('MainMenuComponent', () => {
 
     it('leads each part where its tile or button led, online too', async () => {
       toggles.next({ bacteriumMenu: 'on' });
-      menu.detectChanges();
+      await settle();
       const component = menu.componentInstance;
       const newGame = jest.fn();
       const online = jest.fn();
@@ -380,10 +386,10 @@ describe('MainMenuComponent', () => {
       expect(part('gallery')?.getAttribute('href')).toContain('/replays');
     });
 
-    it('offers online, friends and the boards only where the tiles would', () => {
+    it('offers online, friends and the boards only where the tiles would', async () => {
       toggles.next({ bacteriumMenu: 'on' });
       menu.componentRef.setInput('onlineAvailable', false);
-      menu.detectChanges();
+      await settle();
       expect(part('online')).toBeNull();
       expect(part('friends')).toBeNull();
       expect(part('leaderboards')).toBeNull();
@@ -391,7 +397,7 @@ describe('MainMenuComponent', () => {
       menu.componentRef.setInput('onlineAvailable', true);
       menu.componentRef.setInput('cloudAvailable', true);
       menu.componentRef.setInput('friendRequests', 2);
-      menu.detectChanges();
+      await settle();
       expect(part('online')).not.toBeNull();
       expect(part('friends')?.textContent).toContain('2 friend requests');
       expect(part('leaderboards')).not.toBeNull();

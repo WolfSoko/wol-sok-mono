@@ -46,13 +46,18 @@
       />
     }
     @if (showsBacterium()) {
-      <feat-lazy-bac-game-bacterium-menu
-        [items]="bacteriumItems()"
-        [xp]="campaign().xp"
-        [attr.aria-label]="'menu.bacterium.label' | t"
-        role="navigation"
-        (pick)="pickPart($event)"
-      />
+      <!-- Its own chunk: only a player with the toggle on downloads it. -->
+      @defer (on immediate) {
+        <feat-lazy-bac-game-bacterium-menu
+          [items]="bacteriumItems()"
+          [xp]="campaign().xp"
+          [attr.aria-label]="'menu.bacterium.label' | t"
+          role="navigation"
+          (pick)="pickPart($event)"
+        />
+      } @placeholder {
+        <div class="bacterium-space"></div>
+      }
     } @else {
       <div class="actions">
         <button
