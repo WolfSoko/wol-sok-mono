@@ -79,5 +79,28 @@ describe('GlDebugService', () => {
       account.owner.set(true);
       expect(service.on()).toBe(false);
     });
+
+    it('keeps a stored switch while the owner signs in at the start of a visit', () => {
+      const settings = TestBed.inject(GameSettingsService);
+      settings.set('glDebug', true);
+      const service = TestBed.inject(GlDebugService);
+      TestBed.tick();
+
+      account.owner.set(true);
+      TestBed.tick();
+
+      expect(service.on()).toBe(true);
+      expect(settings.value('glDebug')).toBe(true);
+    });
+
+    it('leaves ?gldebug on for anyone, through a sign-out too', () => {
+      history.replaceState(null, '', '/?gldebug');
+      const { service } = switchedOn();
+
+      account.owner.set(false);
+      TestBed.tick();
+
+      expect(service.on()).toBe(true);
+    });
   });
 });
