@@ -195,9 +195,12 @@ PR ("Part of #3175"):
      link would leave that account to `guestCleanup`, with progress the
      writer may never have adopted (manager's decision on the review,
      2026-11-22). Known limit: a Play Games account that a Google account
-     adopted on this phone (`credential-already-in-use`) stays linked to
-     the Play Games account; relinking it needs the adoption itself to
-     record it (raised as a follow-up).
+     adopted on this phone (`credential-already-in-use`) is relinked by
+     the adoption itself since
+     [#3187](https://github.com/WolfSoko/wol-sok-mono/issues/3187)
+     (`playGamesAdoption`, a release of the Play-only tab and the adopted
+     progress checked on the server), so the Google account keeps the link
+     and answers no `linked-elsewhere` there.
      The account it settles on gets the custom claim `playGames: true` (read
      afresh and written only when it changes) and, when it has no display
      name, the Play Games name (`displayName` of its Auth record). The result

@@ -110,7 +110,9 @@ export function playerDocument<T>(
 
   /** Adds `guest` to the stored value - once, where it has an `id`. */
   const adoptOnce = (guest: T, id?: string): Promise<boolean> => {
-    if (equal(guest, empty)) {
+    // An empty value with an id still lists the id: the functions check
+    // every document's for a proven adoption (#3187).
+    if (id === undefined && equal(guest, empty)) {
       return Promise.resolve(true);
     }
     return storage.update(key, (stored) => adopt(parse(stored), guest), {
@@ -123,28 +125,41 @@ export function playerDocument<T>(
    * stored it. One the storage dropped stays for the account's next start:
    * the rules refuse it after a sign-out, though the account takes it later.
    */
-  const landAdoption = (id: string, guest: T, recorded: Promise<unknown>) => {
-    void Promise.all([adoptOnce(guest, id), recorded]).then(([stored]) => {
+  const landAdoption = (
+    id: string,
+    guest: T,
+    recorded: Promise<unknown>
+  ): Promise<boolean> =>
+    Promise.all([adoptOnce(guest, id), recorded]).then(([stored]) => {
       if (stored) {
         adoptions.remove(id);
       }
+      return stored;
     });
-  };
 
-  const switchTo = ({ playerId, adoptsGuest }: PlayerSwitch): void => {
+  const switchTo = ({
+    playerId,
+    adoptsGuest,
+    adoption,
+  }: PlayerSwitch): void => {
     const guest = value();
     loaded.set(false);
     value.set(empty);
     onSwitch?.();
-    if (!adoptsGuest || equal(guest, empty)) {
+    if (!adoptsGuest || (adoption === undefined && equal(guest, empty))) {
       return;
     }
     if (playerId === null || !account.cloud) {
       void adoptOnce(guest);
       return;
     }
-    const id = uniqueId();
-    landAdoption(id, guest, adoptions.record(id, playerId, guest));
+    const id = adoption?.id ?? uniqueId();
+    const stored = landAdoption(
+      id,
+      guest,
+      adoptions.record(id, playerId, guest)
+    );
+    adoption?.landed(stored);
   };
 
   /**
@@ -156,7 +171,7 @@ export function playerDocument<T>(
     adoptions.of(owner).pipe(
       tap((pending) => {
         for (const [id, { value: guest }] of Object.entries(pending)) {
-          landAdoption(id, parse(guest), Promise.resolve());
+          void landAdoption(id, parse(guest), Promise.resolve());
         }
       }),
       ignoreElements()

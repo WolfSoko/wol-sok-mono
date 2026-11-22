@@ -66,6 +66,13 @@ describe('PrivacyComponent', () => {
     // A ban follows the Play Games player past a deletion.
     expect(de).toContain('Hashwert der Play-Spiele-Spieler-ID');
     expect(en).toContain('a hash of the Play Games player ID');
+    // An adoption by a Google account moves the link (#3187).
+    expect(en).toContain(
+      'then link your Play Games player to the Google account'
+    );
+    expect(de).toContain(
+      'verknüpfen deinen Play-Spiele-Spieler danach mit dem Google-Konto'
+    );
   });
 
   it('has each section on the cloud in both languages', async () => {

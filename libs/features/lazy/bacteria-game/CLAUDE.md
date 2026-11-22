@@ -363,7 +363,14 @@ storage until then. Settings stay with the device either way.
   stay. A Google account that already played elsewhere takes over instead:
   `GameAccount.players` tells a switch with `adoptsGuest`, and
   `ProgressService` adds the guest's progress to the account once
-  (`adoptProgress`). Any other switch (signing out starts a new guest) resets
+  (`adoptProgress`). A Play-only account (the Android app's custom-token
+  session, no provider) adopted so releases itself first
+  (`storage/play-games-adoption.ts`, #3187): the switch then carries an
+  `adoption` receipt whose id every `playerDocument` adopts under (an empty
+  value too) and reports its landing to, and only once all landed does the
+  account write `playGamesAdoptions`, which moves the Play Games link to the
+  Google account; otherwise it stays `linked-elsewhere`. Any other switch
+  (signing out starts a new guest) resets
   the service to the next player's progress. `playerDocument`
   (`storage/player-document.ts`) does that for a key: it follows `players`,
   starts over from `empty` on a switch, adopts the guest's value, moves the

@@ -31,6 +31,20 @@ export interface PlayerSwitch {
    * progress of its own: what they played as a guest here joins it, once.
    */
   adoptsGuest: boolean;
+  /**
+   * Set where the adoption must be proven to the functions: a Play-only
+   * account adopted by a Google account (#3187), whose Play Games link
+   * moves only once every player document landed its value.
+   */
+  adoption?: AdoptionReceipt;
+}
+
+/** What a player document does with an adoption the functions check. */
+export interface AdoptionReceipt {
+  /** The id each player document adopts the guest's value under. */
+  id: string;
+  /** Takes a document's landing: true once the storage stored it. */
+  landed(stored: Promise<boolean>): void;
 }
 
 /** How a sign-in ended. */
