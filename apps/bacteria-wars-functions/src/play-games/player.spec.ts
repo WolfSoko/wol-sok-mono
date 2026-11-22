@@ -33,7 +33,7 @@ describe('playGamesPlayer', () => {
     ];
     expect(tokenUrl).toBe('https://oauth2.googleapis.com/token');
     expect(
-      Object.fromEntries(new URLSearchParams(String(tokenInit.body)))
+      Object.fromEntries(new URLSearchParams(tokenInit.body as string))
     ).toEqual({
       code: '4/0Ab',
       client_id: 'web-client',

@@ -32,7 +32,7 @@ export interface PlayGamesAccounts {
 
 export interface PlayGamesSignInDeps {
   /** The player behind the code, null when Google refuses it. */
-  player(code: string): Promise<PlayGamesPlayer | null>;
+  player: (code: string) => Promise<PlayGamesPlayer | null>;
   accounts: PlayGamesAccounts;
   now: number;
 }
