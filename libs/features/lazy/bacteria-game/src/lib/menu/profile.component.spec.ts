@@ -90,11 +90,23 @@ describe('ProfileComponent', () => {
     expect(opened).toHaveBeenCalled();
   });
 
-  it('no longer lists the achievements itself', () => {
+  it("shows the achievements only as the card's count", () => {
     const host = render({}, { achievements: { blitz: '2026-10-19' } });
 
     expect(host.querySelector('.achievements')).toBeNull();
     expect(host.textContent).not.toContain('Earned 19 Oct 2026');
+    expect(host.querySelector('button.trophies')?.textContent).toContain(
+      `1 of ${ACHIEVEMENT_IDS.length}`
+    );
+  });
+
+  it('shows the colony and no online profile without the cloud', () => {
+    const host = render();
+
+    expect(host.querySelector('.card .name')?.textContent).toContain(
+      'Your colony'
+    );
+    expect(host.querySelector('feat-lazy-bac-game-profile-editor')).toBeNull();
   });
 
   it('shows all the DNA the XP has grown', () => {

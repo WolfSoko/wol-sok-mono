@@ -16,6 +16,7 @@ import {
 } from '../i18n/game-texts';
 import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
+import { achievementTally } from './achievement-tally';
 import { ScreenHeaderComponent } from './screen-header.component';
 
 /**
@@ -54,15 +55,9 @@ export class AchievementsComponent {
     }))
   );
 
-  protected readonly earnedCount = computed(
-    () => this.achievementList().filter((a) => a.earnedOn !== null).length
-  );
-
-  protected readonly achievementCount = ACHIEVEMENTS.length;
-
-  /** The share earned, in percent. */
-  protected readonly earnedPercent = computed(() =>
-    Math.round((100 * this.earnedCount()) / this.achievementCount)
+  /** How many are earned, of how many, and the share. */
+  protected readonly tally = computed(() =>
+    achievementTally(this.achievements())
   );
 
   /** A day as the screen shows it - "19 Oct 2026" - for the locale. */

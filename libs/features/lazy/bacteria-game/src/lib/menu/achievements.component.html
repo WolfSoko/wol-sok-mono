@@ -4,24 +4,20 @@
   (back)="back.emit()"
 />
 
-<section
-  class="progress"
-  [attr.aria-label]="'profile.achievements.progress' | t"
->
+<section class="progress">
+  @let count = tally();
   <mat-icon class="trophy" aria-hidden="true">emoji_events</mat-icon>
   <div class="progress-text">
     <span class="count">
-      <span class="earned-count">{{ earnedCount() }}</span
+      <span class="earned-count">{{ count.earned }}</span
       >{{ " "
-      }}<span class="of">{{
-        "common.of" | t: { total: achievementCount }
-      }}</span>
+      }}<span class="of">{{ "common.of" | t: { total: count.total } }}</span>
     </span>
     <mat-progress-bar
       class="bar"
       mode="determinate"
       [attr.aria-label]="'profile.achievements.progress' | t"
-      [value]="earnedPercent()"
+      [value]="count.percent"
     />
   </div>
 </section>

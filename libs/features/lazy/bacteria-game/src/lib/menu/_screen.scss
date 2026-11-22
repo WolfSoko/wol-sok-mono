@@ -142,3 +142,12 @@
 
   border-radius: 0.3rem;
 }
+
+// The gold trophy in front of the achievements' count, `$size` wide.
+@mixin trophy($size) {
+  flex: 0 0 auto;
+  width: $size;
+  height: $size;
+  font-size: $size;
+  color: var(--bw-gold);
+}

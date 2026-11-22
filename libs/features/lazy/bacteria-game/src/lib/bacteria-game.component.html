@@ -216,7 +216,7 @@
             <feat-lazy-bac-game-achievements
               class="screen"
               [achievements]="progress.achievements()"
-              (back)="flow.show('profile')"
+              (back)="flow.back()"
             />
           }
           @case ("friends") {

@@ -79,7 +79,7 @@ $colony: var(--bw-player, var(--bw-gold));
   margin-top: 0.4rem;
 }
 
-// The way to the achievements, a tile as in the main menu.
+// The way to the achievements, in the look of the main menu's tiles.
 .trophies {
   @include screen.panel;
 
@@ -96,19 +96,19 @@ $colony: var(--bw-player, var(--bw-gold));
   text-align: left;
   cursor: pointer;
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     border-color: var(--bw-gold);
     box-shadow: 0 0 16px -4px var(--bw-gold);
+  }
+
+  &:focus-visible {
+    outline: 3px solid var(--bw-gold);
+    outline-offset: 2px;
   }
 }
 
 .trophy {
-  flex: 0 0 auto;
-  width: 2.25rem;
-  height: 2.25rem;
-  font-size: 2.25rem;
-  color: var(--bw-gold);
+  @include screen.trophy(2.25rem);
 }
 
 .trophies-text {
@@ -129,16 +129,10 @@ $colony: var(--bw-player, var(--bw-gold));
 }
 
 .trophies-bar {
-  height: 0.35rem;
-  border-radius: 0.2rem;
-  background: var(--bw-line);
-  overflow: hidden;
-}
+  @include screen.bar;
 
-.trophies-fill {
-  display: block;
-  height: 100%;
-  background: var(--bw-gold);
+  --mat-progress-bar-track-height: 0.35rem;
+  --mat-progress-bar-active-indicator-height: 0.35rem;
 }
 
 .chevron {

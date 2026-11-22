@@ -92,6 +92,45 @@ describe('BacteriaGameComponent', () => {
     );
   }
 
+  /**
+   * Lets a test render the stage's template. jsdom has no `ResizeObserver`
+   * and draws on no canvas: the arena gets a painter that paints nothing,
+   * the other canvases a context of null, which they take.
+   */
+  /** An arena painter that paints nothing, for a rendered stage. */
+  function paintingNothing(): Provider {
+    const painter: ArenaPainter = {
+      kind: 'canvas',
+      setFloor: () => undefined,
+      paint: () => undefined,
+      showLastFrame: () => undefined,
+      dispose: () => undefined,
+    };
+    return { provide: ARENA_PAINTER_FACTORY, useValue: () => painter };
+  }
+
+  function stubRendering(): void {
+    let getContext: jest.SpyInstance;
+
+    beforeEach(() => {
+      Object.assign(globalThis, {
+        ResizeObserver: class {
+          observe(): void {}
+          unobserve(): void {}
+          disconnect(): void {}
+        },
+      });
+      getContext = jest
+        .spyOn(HTMLCanvasElement.prototype, 'getContext')
+        .mockImplementation(() => null);
+    });
+
+    afterEach(() => {
+      getContext.mockRestore();
+      delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver;
+    });
+  }
+
   describe('entering the page', () => {
     it('opens embedded in the page on a desktop, on the main menu', () => {
       const arena = create(false, false);
@@ -425,31 +464,32 @@ describe('BacteriaGameComponent', () => {
 
     /**
      * The stage after the effect waits for its own render, so these tests
-     * render the template - the one place in this file that does. jsdom has
-     * no `ResizeObserver` and draws on no canvas: the arena gets a painter
-     * that paints nothing, the other canvases a context of null, which they
-     * take.
+     * render the template.
      */
+    describe('the achievements screen', () => {
+      stubRendering();
+
+      it('opens the achievements from the profile and leads back to it', () => {
+        create(false, true, true, [paintingNothing()]);
+        component['flow'].show('profile');
+        fixture.detectChanges();
+        const host: HTMLElement = fixture.nativeElement;
+
+        host.querySelector<HTMLButtonElement>('button.trophies')?.click();
+        fixture.detectChanges();
+        expect(component['flow'].panel()).toBe('achievements');
+
+        host
+          .querySelector<HTMLButtonElement>(
+            'feat-lazy-bac-game-achievements button.back'
+          )
+          ?.click();
+        expect(component['flow'].panel()).toBe('profile');
+      });
+    });
+
     describe('the hidden arena', () => {
-      let getContext: jest.SpyInstance;
-
-      beforeEach(() => {
-        Object.assign(globalThis, {
-          ResizeObserver: class {
-            observe(): void {}
-            unobserve(): void {}
-            disconnect(): void {}
-          },
-        });
-        getContext = jest
-          .spyOn(HTMLCanvasElement.prototype, 'getContext')
-          .mockImplementation(() => null);
-      });
-
-      afterEach(() => {
-        getContext.mockRestore();
-        delete (globalThis as { ResizeObserver?: unknown }).ResizeObserver;
-      });
+      stubRendering();
 
       /**
        * Runs a match through the vaporize effect to its end, with the arena
@@ -463,16 +503,7 @@ describe('BacteriaGameComponent', () => {
         render: () => void;
         paint: () => void;
       } {
-        const painter: ArenaPainter = {
-          kind: 'canvas',
-          setFloor: () => undefined,
-          paint: () => undefined,
-          showLastFrame: () => undefined,
-          dispose: () => undefined,
-        };
-        create(false, true, true, [
-          { provide: ARENA_PAINTER_FACTORY, useValue: () => painter },
-        ]);
+        create(false, true, true, [paintingNothing()]);
         startMatch('vs-computer');
         const div = document.createElement('div');
         (component as unknown as { arenaFrame: () => unknown }).arenaFrame =

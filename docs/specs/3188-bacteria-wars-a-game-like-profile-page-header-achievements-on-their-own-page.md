@@ -25,9 +25,8 @@ After the change:
 
 - **The card is a component of its own**, `menu/profile-card.component.*`
   (`feat-lazy-bac-game-profile-card`): the profile's stylesheet stays under the
-  component style budget, and the card can be tested on its own. Inputs: `xp`,
-  `earned` (achievements earned), `total` (achievements in the game); output:
-  `achievements`. It reads the player's saved profile from `SocialService`
+  component style budget, and the card can be tested on its own. Inputs: `xp` and
+  `tally`; output: `achievements`. It reads the player's saved profile from `SocialService`
   itself, as the editor does.
 - **What the card shows**:
   - The picture: the avatar of `SocialService.profile()` at 96 px inside a
@@ -40,11 +39,15 @@ After the change:
     rank is shown once. The summary keeps the rank ladder, the figures and
     the medallion tally.
   - The achievements button: a tile button like the main menu's tiles (a
-    plain `<button>`), with a trophy icon, "Achievements", "{earned} of
-    {total}" and a thin bar filled to the share earned.
+    plain `<button>`, with their gold focus ring), with a trophy icon,
+    "Achievements", "{earned} of {total}" and a thin `mat-progress-bar`.
   - Its look: the screens' panel with a radial glow of `--bw-player` behind
     the dish and faint cells drawn with CSS gradients - no images, no
     animation beyond what the rank bar has.
+- **One tally of the achievements**: `achievementTally(achievements)`
+  (`menu/achievement-tally.ts`: earned, total, share in whole percent,
+  unknown ids left out) is what the card and the achievements screen count
+  with, so the two never disagree.
 - **The saved profile, not the draft**: the card shows the stored name, motto
   and picture (`SocialService.profile()`), so it changes once the player
   saves - like every other place that shows the player to others.
@@ -63,15 +66,17 @@ After the change:
 - **The way back from the achievements leads to the profile**, by its button
   and by Escape. Which screen a screen goes back to is one pure function,
   `parentScreen(screen)` in `flow/stage-screens.ts` (`'achievements'` →
-  `'profile'`, every other screen → `'menu'`), used by the Escape handler of
-  `BacteriaGameComponent` instead of its fixed `'menu'`.
+  `'profile'`, every other screen → `'menu'`), asked by `PlayFlow.back()`,
+  which the screen's back button and the Escape handler of
+  `BacteriaGameComponent` both call (Escape so also plays the navigation
+  step the back buttons play).
 - **Analytics**: the new screen is a `screen_view` like every other
   (`firebase_screen: achievements`), from `trackScreenViews`; nothing new is
   sent. `docs/analytics.md` lists it. The privacy policy names no screens, so
   it needs no change.
 - **Texts** in English and German: `profile.card.*` (local name, achievements
-  button) and `profile.achievements.*` (screen title, back label, progress
-  bar label, locked). The keys of the achievement list move with it.
+  button) and `profile.achievements.*` (screen title, progress bar label,
+  locked); the back button reuses the profile's title. The keys of the achievement list move with it.
 
 ## Non-goals
 

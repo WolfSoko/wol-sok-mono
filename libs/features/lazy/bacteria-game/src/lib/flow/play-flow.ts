@@ -38,6 +38,7 @@ import {
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { playKindOf } from './play-kind';
+import { parentScreen } from './stage-screens';
 import type { MenuScreen, StagePanel } from './stage-screens';
 
 /**
@@ -204,6 +205,11 @@ export class PlayFlow {
       this.sound.navigate();
     }
     this.screen.set(screen);
+  }
+
+  /** Goes back from the open screen to where it was opened (`parentScreen`). */
+  public back(): void {
+    this.show(parentScreen(this.screen()));
   }
 
   /** Opens a new game on its first step. */

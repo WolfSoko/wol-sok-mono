@@ -6,7 +6,7 @@
     <span class="dish">
       <feat-lazy-bac-game-avatar
         [avatar]="shown.avatar"
-        [size]="96"
+        [size]="pictureSize"
         [label]="shown.name"
       />
     </span>
@@ -14,14 +14,14 @@
       class="pin"
       [name]="rankName"
       [number]="rank.number"
-      [size]="44"
+      [size]="pinSize"
     />
   } @else {
     <span class="dish">
       <feat-lazy-bac-game-rank-badge
         [name]="rankName"
         [number]="rank.number"
-        [size]="72"
+        [size]="emblemSize"
       />
     </span>
   }
@@ -40,15 +40,19 @@
 </div>
 
 <button type="button" class="trophies" (click)="achievements.emit()">
+  @let count = tally();
   <mat-icon class="trophy" aria-hidden="true">emoji_events</mat-icon>
   <span class="trophies-text">
     <span class="trophies-title">{{ "profile.achievements.title" | t }}</span>
     <span class="trophies-count"
-      >{{ earned() }} {{ "common.of" | t: { total: total() } }}</span
+      >{{ count.earned }} {{ "common.of" | t: { total: count.total } }}</span
     >
-    <span class="trophies-bar" aria-hidden="true"
-      ><span class="trophies-fill" [style.width.%]="earnedPercent()"></span
-    ></span>
+    <mat-progress-bar
+      class="trophies-bar"
+      mode="determinate"
+      aria-hidden="true"
+      [value]="count.percent"
+    />
   </span>
   <mat-icon class="chevron" aria-hidden="true">chevron_right</mat-icon>
 </button>

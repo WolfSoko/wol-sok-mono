@@ -9,8 +9,7 @@
   <feat-lazy-bac-game-profile-card
     class="card"
     [xp]="xp()"
-    [earned]="earnedCount()"
-    [total]="achievementCount"
+    [tally]="achievementTally()"
     (achievements)="openAchievements.emit()"
   />
   @if (social.available) {

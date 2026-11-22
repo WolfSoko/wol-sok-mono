@@ -12,6 +12,7 @@ import { LEVELS, replayOf } from '@wolsok/feat-shared-bacteria-engine';
 import { PlayerStore } from '../state/player.store';
 import { stubActivation, stubFullscreen } from '../../testing/fullscreen-stubs';
 import { LabPass } from '../guest/lab-pass.service';
+import { GameSoundService } from '../sound/game-sound.service';
 import { PlayFlow } from './play-flow';
 
 describe('PlayFlow', () => {
@@ -66,6 +67,21 @@ describe('PlayFlow', () => {
       screens.show('settings');
       TestBed.tick();
       expect(labPass.moveOn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('the way back', () => {
+    it('leads from a screen to where it was opened, with a step', () => {
+      const navigate = jest.spyOn(TestBed.inject(GameSoundService), 'navigate');
+      flow.show('profile');
+      flow.show('achievements');
+      navigate.mockClear();
+
+      flow.back();
+      expect(flow.screen()).toBe('profile');
+      flow.back();
+      expect(flow.screen()).toBe('menu');
+      expect(navigate).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -11,8 +11,11 @@ describe('ProfileCardComponent', () => {
   async function render(inputs: Record<string, unknown> = {}) {
     const fixture = TestBed.createComponent(ProfileCardComponent);
     fixture.componentRef.setInput('xp', 1000);
-    fixture.componentRef.setInput('earned', 3);
-    fixture.componentRef.setInput('total', 15);
+    fixture.componentRef.setInput('tally', {
+      earned: 3,
+      total: 15,
+      percent: 20,
+    });
     for (const [name, value] of Object.entries(inputs)) {
       fixture.componentRef.setInput(name, value);
     }
@@ -102,6 +105,9 @@ describe('ProfileCardComponent', () => {
       const button = host.querySelector<HTMLButtonElement>('button.trophies');
       expect(button?.textContent).toContain('Achievements');
       expect(button?.textContent).toContain('3 of 15');
+      expect(
+        button?.querySelector('mat-progress-bar')?.getAttribute('aria-valuenow')
+      ).toBe('20');
       button?.click();
 
       expect(opened).toHaveBeenCalled();

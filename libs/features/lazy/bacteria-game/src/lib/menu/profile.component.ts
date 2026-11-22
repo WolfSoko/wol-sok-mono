@@ -17,12 +17,12 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { AccountComponent } from './account.component';
+import { achievementTally } from './achievement-tally';
 import { ProfileCardComponent } from './profile-card.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { ProfileEditorComponent } from '../social/profile-editor.component';
 import { SocialService } from '../social/social.service';
 import {
-  ACHIEVEMENTS,
   BOT_DIFFICULTIES,
   dnaEarned,
   LEVELS,
@@ -125,11 +125,8 @@ export class ProfileComponent {
   protected readonly dna = computed(() => dnaEarned(this.xp()));
   protected readonly ranks = RANKS.map(({ id }) => ({ id, name: rankKey(id) }));
 
-  /** The achievements earned, of those the game has. */
-  protected readonly earnedCount = computed(
-    () =>
-      ACHIEVEMENTS.filter(({ id }) => this.achievements()[id] != null).length
+  /** How far the player got with the achievements, for the player card. */
+  protected readonly achievementTally = computed(() =>
+    achievementTally(this.achievements())
   );
-
-  protected readonly achievementCount = ACHIEVEMENTS.length;
 }

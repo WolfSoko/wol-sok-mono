@@ -7,6 +7,7 @@ import {
   output,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { rankFor } from '@wolsok/feat-shared-bacteria-engine';
 import { rankKey } from '../i18n/game-texts';
 import { TranslatePipe } from '../i18n/translate.pipe';
@@ -14,6 +15,14 @@ import { RankBadgeComponent } from '../rank/rank-badge.component';
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { AvatarComponent } from '../social/avatar.component';
 import { SocialService } from '../social/social.service';
+import { AchievementTally } from './achievement-tally';
+
+/** The picture's width in CSS pixels; `.dish` in the stylesheet fits it. */
+const PICTURE_SIZE = 96;
+/** The rank emblem pinned to the picture. */
+const PIN_SIZE = 40;
+/** The rank emblem standing in for the picture, without the cloud. */
+const EMBLEM_SIZE = 72;
 
 /**
  * The top of the profile, the player as the game shows them: their picture
@@ -27,6 +36,7 @@ import { SocialService } from '../social/social.service';
   imports: [
     AvatarComponent,
     MatIconModule,
+    MatProgressBarModule,
     RankBadgeComponent,
     RankStandingComponent,
     TranslatePipe,
@@ -41,10 +51,8 @@ export class ProfileCardComponent {
 
   /** The XP the progress is worth. */
   public readonly xp = input.required<number>();
-  /** How many achievements the player earned. */
-  public readonly earned = input.required<number>();
-  /** How many achievements the game has. */
-  public readonly total = input.required<number>();
+  /** How far the player got with the achievements. */
+  public readonly tally = input.required<AchievementTally>();
 
   /** Opens the achievements. */
   public readonly achievements = output<void>();
@@ -52,8 +60,7 @@ export class ProfileCardComponent {
   protected readonly standing = computed(() => rankFor(this.xp()));
   protected readonly rankKey = rankKey;
 
-  /** The share of the achievements earned, in percent. */
-  protected readonly earnedPercent = computed(() =>
-    this.total() === 0 ? 0 : (100 * this.earned()) / this.total()
-  );
+  protected readonly pictureSize = PICTURE_SIZE;
+  protected readonly pinSize = PIN_SIZE;
+  protected readonly emblemSize = EMBLEM_SIZE;
 }

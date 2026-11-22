@@ -18,12 +18,11 @@
 }
 
 .trophy {
-  flex: 0 0 auto;
-  width: 3rem;
-  height: 3rem;
-  font-size: 3rem;
-  color: var(--bw-gold);
-  filter: drop-shadow(0 0 10px rgb(233 185 73 / 45%));
+  @include screen.trophy(3rem);
+
+  filter: drop-shadow(
+    0 0 10px color-mix(in srgb, var(--bw-gold) 45%, transparent)
+  );
 }
 
 .progress-text {

@@ -32,7 +32,6 @@ import { MatchSetup } from './flow/match-setup';
 import { OnlineFlow } from './flow/online-flow';
 import { PlayGamesHandover } from './play-games/play-games-handover';
 import { PlayFlow } from './flow/play-flow';
-import { parentScreen } from './flow/stage-screens';
 import { GpuSelfTestService } from './gpu-choice/gpu-self-test.service';
 import { SimulationOverrideService } from './gpu-choice/simulation-override.service';
 import { GameHapticsService } from './haptics.service';
@@ -329,7 +328,7 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     if (playing()) {
       this.flow.togglePause();
     } else if (this.flow.screen() !== 'menu') {
-      this.flow.screen.set(parentScreen(this.flow.screen()));
+      this.flow.back();
     } else if (paused()) {
       this.flow.togglePause();
     } else {
