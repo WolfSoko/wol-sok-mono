@@ -63,13 +63,14 @@ export function countdownCue({
  * The seconds the announcement names: at most {@link ANNOUNCEMENT_WINDOW},
  * and one {@link CUE_LEAD} short of a countdown that starts inside it (the
  * Vorlauf, a short Intervall), so the announcement gets its lead before the
- * first beep as in a long Intervall (#3110).
+ * first beep as in a long Intervall (#3110). It rounds down: a part second
+ * left after the lead is no room for a lead of its own.
  */
 function announcedSeconds(countdownTime: Milliseconds): number {
-  const window = milliseconds(
+  const announcedWindow = milliseconds(
     Math.min(ANNOUNCEMENT_WINDOW, subtract(countdownTime, CUE_LEAD))
   );
-  return Math.max(0, Math.floor(div(window, SECOND_IN_MS)));
+  return Math.max(0, Math.floor(div(announcedWindow, SECOND_IN_MS)));
 }
 
 function cueKindOf(secondsLeft: number, windowSeconds: number): CueKind | null {

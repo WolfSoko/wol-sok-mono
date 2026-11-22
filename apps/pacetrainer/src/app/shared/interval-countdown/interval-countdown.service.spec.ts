@@ -5,6 +5,9 @@ import { milliseconds } from '@wolsok/utils-time';
 import { CountdownTarget } from '../model/training/training-name';
 import { IntervalCountdownService } from './interval-countdown.service';
 
+/** long enough to keep the full five-second window */
+const LONG_COUNTDOWN = 60_000;
+
 class FakeUtterance {
   public lang = '';
   public pitch = 1;
@@ -50,7 +53,7 @@ describe('IntervalCountdownService', () => {
   function countDown(
     timeLeft: number,
     countdownTo: CountdownTarget = 'sprint',
-    countdownTime = 60_000
+    countdownTime = LONG_COUNTDOWN
   ): void {
     service.updateCountdown(
       milliseconds(countdownTime),
