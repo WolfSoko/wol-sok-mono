@@ -74,6 +74,8 @@ function linkProgram(gl: WebGL2RenderingContext): WebGLProgram | null {
   const fragment = compile(gl, gl.FRAGMENT_SHADER, BACTERIUM_FRAGMENT);
   const program = gl.createProgram();
   if (vertex === null || fragment === null || program === null) {
+    gl.deleteShader(vertex);
+    gl.deleteShader(fragment);
     return null;
   }
   gl.attachShader(program, vertex);

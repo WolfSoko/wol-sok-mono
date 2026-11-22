@@ -36,25 +36,30 @@ class RecordingRenderer implements BacteriumRenderer {
 }
 
 describe('BacteriumMenuComponent', () => {
-  let frames: FrameRequestCallback[];
+  /** The animation frames asked for and not cancelled, by id. */
+  let frames: Map<number, FrameRequestCallback>;
+  let nextId: number;
 
   beforeEach(() => {
-    frames = [];
+    frames = new Map();
+    nextId = 0;
     jest
       .spyOn(globalThis, 'requestAnimationFrame')
-      .mockImplementation((callback) => frames.push(callback));
-    // Angular cancels a frame of its own scheduler too: keep the cell's.
+      .mockImplementation((callback) => {
+        frames.set(++nextId, callback);
+        return nextId;
+      });
     jest
       .spyOn(globalThis, 'cancelAnimationFrame')
-      .mockImplementation(() => undefined);
+      .mockImplementation((id) => frames.delete(id));
   });
 
   afterEach(() => jest.restoreAllMocks());
 
   /** Runs the animation frames asked for so far, at `now`. */
   function frame(now: number): void {
-    const due = frames;
-    frames = [];
+    const due = [...frames.values()];
+    frames.clear();
     for (const callback of due) {
       callback(now);
     }
@@ -150,5 +155,53 @@ describe('BacteriumMenuComponent', () => {
     expect(superbug.scenes[0].look.flagella).toBeGreaterThan(
       spore.scenes[0].look.flagella
     );
+  });
+
+  it('takes the CSS cell once the browser takes the WebGL context back', () => {
+    const renderer = new RecordingRenderer();
+    const { fixture, element } = render(renderer);
+    expect(element.classList).not.toContain('css-cell');
+
+    element
+      .querySelector('canvas')
+      ?.dispatchEvent(new Event('webglcontextlost'));
+    fixture.detectChanges();
+
+    expect(element.classList).toContain('css-cell');
+    const drawn = renderer.scenes.length;
+    frame(5000);
+    expect(renderer.scenes).toHaveLength(drawn);
+  });
+
+  it('stops animating while the page is hidden, and goes on once shown', () => {
+    let hidden = false;
+    jest.spyOn(document, 'hidden', 'get').mockImplementation(() => hidden);
+    const renderer = new RecordingRenderer();
+    render(renderer);
+    expect(frames.size).toBeGreaterThan(0);
+
+    hidden = true;
+    document.dispatchEvent(new Event('visibilitychange'));
+    frame(1000);
+    expect(frames.size).toBe(0);
+
+    hidden = false;
+    document.dispatchEvent(new Event('visibilitychange'));
+    const drawn = renderer.scenes.length;
+    frame(2000);
+    expect(renderer.scenes.length).toBeGreaterThan(drawn);
+  });
+
+  it("lights its rim in the player's colony colour", () => {
+    TestBed.resetTestingModule();
+    const renderer = new RecordingRenderer();
+    TestBed.configureTestingModule({
+      providers: [{ provide: BACTERIUM_RENDERER, useValue: () => renderer }],
+    });
+    const fixture = TestBed.createComponent(BacteriumMenuComponent);
+    fixture.componentRef.setInput('items', ITEMS);
+    fixture.componentRef.setInput('player', [255, 0, 0]);
+    fixture.detectChanges();
+    expect(renderer.scenes[0].look.rim).toEqual([1, 0, 0]);
   });
 });

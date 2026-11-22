@@ -14,14 +14,21 @@ import {
   viewChild,
 } from '@angular/core';
 import { MatIconModule } from '@angular/material/icon';
-import { prefersReducedMotion } from '@wolsok/feat-bacteria-rendering';
+import {
+  prefersReducedMotion,
+  type Rgb as ColonyRgb,
+} from '@wolsok/feat-bacteria-rendering';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import {
   BACTERIUM_ANCHORS,
   type BacteriumItem,
   type BacteriumItemId,
 } from './bacterium/bacterium-items';
-import { bacteriumLook, cssRgb } from './bacterium/bacterium-look';
+import {
+  bacteriumLook,
+  cssRgb,
+  DEFAULT_PLAYER_RGB,
+} from './bacterium/bacterium-look';
 import {
   BACTERIUM_RENDERER,
   type BacteriumRenderer,
@@ -41,8 +48,9 @@ const FRAME_MS = 1000 / 30;
  * The parts are real buttons (links for a page) laid over the cell at the
  * anchors the shader draws their lobes at, so keys, screen readers and
  * focus work as on the tiles; the canvas is decoration. Where WebGL cannot
- * draw it (`BACTERIUM_RENDERER` answers null) a CSS cell with the same
- * parts stands in. With reduced motion the cell holds still and redraws
+ * draw it (`BACTERIUM_RENDERER` answers null, or the context is lost
+ * later) a CSS cell with the same parts stands in. It animates only while
+ * the page is visible; with reduced motion the cell holds still and redraws
  * only when a part lights up.
  */
 @Component({
@@ -63,11 +71,15 @@ export class BacteriumMenuComponent {
   public readonly items = input.required<readonly BacteriumItem[]>();
   /** The player's XP, which the cell's look grows with. */
   public readonly xp = input(0);
+  /** The player's colony colour, 0 to 255 a channel: the rim light's. */
+  public readonly player = input<ColonyRgb>(DEFAULT_PLAYER_RGB);
 
   /** A part picked that is no link. */
   public readonly pick = output<BacteriumItemId>();
 
-  protected readonly look = computed(() => bacteriumLook(this.xp()));
+  protected readonly look = computed(() =>
+    bacteriumLook(this.xp(), this.player())
+  );
   protected readonly colours = computed(() => ({
     body: cssRgb(this.look().body),
     rim: cssRgb(this.look().rim),
@@ -89,28 +101,58 @@ export class BacteriumMenuComponent {
   private readonly createRenderer = inject(BACTERIUM_RENDERER);
   private readonly reducedMotion = prefersReducedMotion();
   private renderer: BacteriumRenderer | null = null;
+  /** The pending animation frame, 0 while none is. */
+  private frame = 0;
+  /** When the last animated frame was drawn. */
+  private last = 0;
 
   public constructor() {
     const destroyRef = inject(DestroyRef);
     afterNextRender(() => {
-      this.renderer = this.createRenderer(this.canvas().nativeElement);
+      const canvas = this.canvas().nativeElement;
+      this.renderer = this.createRenderer(canvas);
       if (this.renderer === null) {
         this.fallback.set(true);
         return;
       }
-      const stop = this.run(this.renderer);
+      const page = canvas.ownerDocument;
+      const onVisibility = () => this.runWhenSeen();
+      // A context the browser takes back (a GPU reset, a tab in the
+      // background on a phone) leaves the CSS cell in its place.
+      const onLost = () => {
+        this.stop();
+        this.renderer = null;
+        this.fallback.set(true);
+      };
+      const observer =
+        typeof ResizeObserver === 'function'
+          ? new ResizeObserver(() => this.resize())
+          : null;
+      page.addEventListener('visibilitychange', onVisibility);
+      canvas.addEventListener('webglcontextlost', onLost);
+      observer?.observe(canvas);
       destroyRef.onDestroy(() => {
-        stop();
+        page.removeEventListener('visibilitychange', onVisibility);
+        canvas.removeEventListener('webglcontextlost', onLost);
+        observer?.disconnect();
+        this.stop();
         this.renderer?.dispose();
         this.renderer = null;
       });
+      this.resize();
+      this.runWhenSeen();
     });
-    // A still cell draws again when what it shows changes.
+    // A still cell draws again when what it shows changes; a change of
+    // reduced motion starts or stops the animation.
     effect(() => {
       const scene = this.scene();
-      if (this.reducedMotion()) {
-        untracked(() => this.renderer?.draw(scene, 0));
-      }
+      const still = this.reducedMotion();
+      untracked(() => {
+        if (still) {
+          this.renderer?.draw(scene, 0);
+        }
+        this.runWhenSeen();
+      });
     });
   }
 
@@ -134,34 +176,44 @@ export class BacteriumMenuComponent {
     };
   });
 
-  /** Sizes and draws the cell until the returned stop is called. */
-  private run(renderer: BacteriumRenderer): () => void {
+  /** Sizes the drawing buffer to the canvas and draws a frame. */
+  private resize(): void {
+    const renderer = this.renderer;
+    if (renderer === null) {
+      return;
+    }
     const canvas = this.canvas().nativeElement;
-    const resize = () => {
-      renderer.resize(
-        canvas.clientWidth,
-        canvas.clientHeight,
-        globalThis.devicePixelRatio ?? 1
-      );
-      renderer.draw(this.scene(), performance.now());
-    };
-    const observer =
-      typeof ResizeObserver === 'function' ? new ResizeObserver(resize) : null;
-    observer?.observe(canvas);
-    resize();
-    let frame = 0;
-    let last = 0;
-    const tick = (now: number) => {
-      frame = requestAnimationFrame(tick);
-      if (!this.reducedMotion() && now - last >= FRAME_MS) {
-        last = now;
-        renderer.draw(this.scene(), now);
-      }
-    };
-    frame = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(frame);
-      observer?.disconnect();
-    };
+    renderer.resize(
+      canvas.clientWidth,
+      canvas.clientHeight,
+      globalThis.devicePixelRatio ?? 1
+    );
+    renderer.draw(this.scene(), this.reducedMotion() ? 0 : performance.now());
+  }
+
+  /** Animates while the cell can be seen and may move, else stops. */
+  private runWhenSeen(): void {
+    const runs =
+      this.renderer !== null &&
+      !this.canvas().nativeElement.ownerDocument.hidden &&
+      !this.reducedMotion();
+    if (!runs) {
+      this.stop();
+    } else if (this.frame === 0) {
+      this.frame = requestAnimationFrame(this.tick);
+    }
+  }
+
+  private readonly tick = (now: number): void => {
+    this.frame = requestAnimationFrame(this.tick);
+    if (now - this.last >= FRAME_MS) {
+      this.last = now;
+      this.renderer?.draw(this.scene(), now);
+    }
+  };
+
+  private stop(): void {
+    cancelAnimationFrame(this.frame);
+    this.frame = 0;
   }
 }
