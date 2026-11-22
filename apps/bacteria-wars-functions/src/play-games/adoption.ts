@@ -12,7 +12,7 @@ import {
   Timestamp,
   type Transaction,
 } from 'firebase-admin/firestore';
-import { readBan } from '../admin/bans';
+import { banOf } from '../admin/bans';
 import { timestampMillis } from '../timestamps';
 import { updatePlayGamesClaim } from './claim';
 import type { PlayGamesAccounts } from './sign-in';
@@ -22,7 +22,7 @@ export interface PlayGamesAdoptionDeps {
   now: number;
 }
 
-/** The adoption's answer: why nothing moved, or how many links did. */
+/** The adoption's answer: why nothing moved, if nothing did. */
 export type PlayGamesAdoptionResult = CommandResult & {
   error?: PlayGamesAdoptionError;
 };
@@ -55,10 +55,11 @@ export async function adoptPlayGamesAccount(
   if (!writer.hasProvider) {
     return refused('not-google');
   }
-  if (await eitherBanned(db, [writerUid, from], now)) {
-    return refused('banned');
-  }
   const outcome = await db.runTransaction(async (tx) => {
+    // In the transaction: a ban written meanwhile retries it and refuses.
+    if (await eitherBanned(db, tx, [writerUid, from], now)) {
+      return 'banned';
+    }
     if (!(await holdsRelease(db, tx, from, nonce, now))) {
       return 'no-release';
     }
@@ -91,10 +92,13 @@ export async function adoptPlayGamesAccount(
 
 async function eitherBanned(
   db: Firestore,
+  tx: Transaction,
   uids: readonly string[],
   now: number
 ): Promise<boolean> {
-  const bans = await Promise.all(uids.map((uid) => readBan(db, uid)));
+  const bans = await Promise.all(
+    uids.map(async (uid) => banOf((await tx.get(db.doc(`bans/${uid}`))).data()))
+  );
   return bans.some((ban) => banHolds(ban, now));
 }
 

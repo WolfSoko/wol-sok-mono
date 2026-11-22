@@ -140,9 +140,15 @@ export function playerDocument<T>(
   const switchTo = ({
     playerId,
     adoptsGuest,
-    adoption,
+    adoption: receipt,
   }: PlayerSwitch): void => {
     const guest = value();
+    // A value that never loaded is not the guest's: its adoption proves
+    // nothing to the functions (#3187), so it lands no receipt.
+    const adoption = loaded() ? receipt : undefined;
+    if (receipt !== undefined && adoption === undefined) {
+      receipt.landed(Promise.resolve(false));
+    }
     loaded.set(false);
     value.set(empty);
     onSwitch?.();

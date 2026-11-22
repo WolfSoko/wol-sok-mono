@@ -8,7 +8,7 @@ import { commandEnvelope } from './command-envelope';
 import type { FirebaseConnection } from './firebase-connection';
 
 /** How long the release may take before the switch goes on without it. */
-export const RELEASE_MS = 10_000;
+export const RELEASE_MS = 5_000;
 
 /**
  * A Google account adopting a Play-only account (#3187): the Play-only

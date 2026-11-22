@@ -252,6 +252,19 @@ describe('playerDocument', () => {
       expect(await Promise.all(landings)).toEqual([true]);
     });
 
+    it('lands no receipt for a value that never loaded', async () => {
+      create({ stored: { [KEY]: ['gold'] } });
+      account.seed('ada', {});
+      const landings: Promise<boolean>[] = [];
+
+      account.switchTo('ada', true, {
+        id: 'nonce-1',
+        landed: (stored) => landings.push(stored),
+      });
+
+      expect(await Promise.all(landings)).toEqual([false]);
+    });
+
     it('lists the receipt id for a guest who held nothing too', async () => {
       create();
 

@@ -396,15 +396,15 @@ service cloud.firestore {
     // No ban holds for the writer (ADR 0012): there is none, or it ended -
     // inclusive, like the functions' check. Every client write asks it;
     // deletes stay allowed, so a banned player can still erase their data.
-    // A Play Games adoption's nonce (`isAdoptionNonce` of the engine).
-    function isAdoptionNonce(nonce) {
-      return nonce is string && nonce.matches('[0-9a-f]{32}');
-    }
-
     function notBanned() {
       let ban = /databases/$(database)/documents/bans/$(request.auth.uid);
       return !exists(ban) ||
         (get(ban).data.until != null && get(ban).data.until <= request.time);
+    }
+
+    // A Play Games adoption's nonce (`isAdoptionNonce` of the engine).
+    function isAdoptionNonce(nonce) {
+      return nonce is string && nonce.matches('[0-9a-f]{32}');
     }
 
     // An admin command whole: its fields, writer, time and end, its reason,

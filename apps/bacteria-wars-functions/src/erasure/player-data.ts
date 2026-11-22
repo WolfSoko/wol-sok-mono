@@ -239,7 +239,9 @@ export const PLAYER_DATA: readonly PlayerData[] = [
     field: 'uid',
   },
   // A Google account adopting a Play-only account (#3187,
-  // `play-games/adoption.ts`): both live a day at most.
+  // `play-games/adoption.ts`): both live a day at most. An adoption also
+  // names the adopted account in `from`; that account is deleted only
+  // after 90 idle days, long after TTL took the adoption.
   {
     store: 'firestore',
     path: 'playGamesReleases/{uid}',
