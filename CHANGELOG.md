@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.179.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.1...v74.179.2) (2026-11-22)
+
+### Bug Fixes
+
+* **tools:** read only production inputs in the CDK stacks' deploy ([#3207](https://github.com/WolfSoko/wol-sok-mono/issues/3207)) ([fc64788](https://github.com/WolfSoko/wol-sok-mono/commit/fc6478876c200636e88b26b7108300a3a47ef9ce)), closes [#3142](https://github.com/WolfSoko/wol-sok-mono/issues/3142)
+
 ## [74.179.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.0...v74.179.1) (2026-11-22)
 
 ### Bug Fixes
