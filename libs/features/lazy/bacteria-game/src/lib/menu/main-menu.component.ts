@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { type Rgb } from '@wolsok/feat-bacteria-rendering';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
@@ -38,6 +39,7 @@ import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
 import { BacteriumMenuComponent } from './bacterium-menu.component';
+import { DEFAULT_PLAYER_RGB } from './bacterium/bacterium-look';
 import {
   type BacteriumItemId,
   bacteriumItems,
@@ -138,6 +140,8 @@ export class MainMenuComponent {
   public readonly missionsDone = input(0);
   /** True where online matches can be played: the bacterium's online part. */
   public readonly onlineAvailable = input(false);
+  /** The player's colony colour, which lights the bacterium's rim. */
+  public readonly playerColor = input<Rgb>(DEFAULT_PLAYER_RGB);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();

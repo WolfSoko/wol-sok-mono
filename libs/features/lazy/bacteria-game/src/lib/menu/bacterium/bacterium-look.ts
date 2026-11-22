@@ -1,3 +1,4 @@
+import { type Rgb as ColonyRgb } from '@wolsok/feat-bacteria-rendering';
 import { RANKS, rankFor } from '@wolsok/feat-shared-bacteria-engine';
 
 /** An RGB colour, each channel 0 to 1, as the shader takes it. */
@@ -6,7 +7,8 @@ export type Rgb = readonly [number, number, number];
 /**
  * What the main menu's bacterium looks like at a player's progress (#3194):
  * a Spore's cell is a plain, quiet capsule; each rank adds flagella, pili,
- * organelles, glow and life, up to a Superbug's.
+ * organelles, glow and life, up to a Superbug's. The rim light is the
+ * player's colony colour.
  */
 export interface BacteriumLook {
   /** From 0 (a new Spore) to 1 (Superbug): the rank and the way to the next. */
@@ -21,31 +23,36 @@ export interface BacteriumLook {
   glow: number;
   /** How much the membrane breathes, in the cell's half height. */
   wobble: number;
-  /** The membrane's and the rim light's colours. */
+  /** The membrane's colour (by rank) and the rim light's (the player's). */
   body: Rgb;
   rim: Rgb;
 }
 
+/** The rim's colour where no colony colour is given: the game's green. */
+export const DEFAULT_PLAYER_RGB: ColonyRgb = [76, 175, 80];
+
 const MAX_FLAGELLA = 6;
-const MAX_PILI = 36;
+const MAX_PILI = 24;
 const MAX_ORGANELLES = 8;
 
-/** The cell's colours from a Spore (first) to a Superbug (last). */
-const PALETTE: readonly { body: Rgb; rim: Rgb }[] = [
-  { body: [0.16, 0.42, 0.36], rim: [0.45, 0.95, 0.8] },
-  { body: [0.12, 0.36, 0.48], rim: [0.4, 0.85, 1] },
-  { body: [0.3, 0.2, 0.5], rim: [0.78, 0.55, 1] },
-  { body: [0.48, 0.32, 0.1], rim: [1, 0.78, 0.32] },
+/** The membrane's colour from a Spore (first) to a Superbug (last). */
+const BODIES: readonly Rgb[] = [
+  [0.16, 0.42, 0.36],
+  [0.12, 0.36, 0.48],
+  [0.3, 0.2, 0.5],
+  [0.48, 0.32, 0.1],
 ];
 
-/** The look a player's XP earns. */
-export function bacteriumLook(xp: number): BacteriumLook {
+/**
+ * The look a player's XP earns, its rim lit in `player`, their colony's
+ * colour (0 to 255 a channel, as the arena's palette holds it).
+ */
+export function bacteriumLook(xp: number, player: ColonyRgb): BacteriumLook {
   const standing = rankFor(xp);
   const growth = Math.min(
     1,
     (standing.number - 1 + standing.progress) / (RANKS.length - 1)
   );
-  const colour = blend(growth);
   return {
     growth,
     flagella: Math.round(growth * MAX_FLAGELLA),
@@ -53,21 +60,17 @@ export function bacteriumLook(xp: number): BacteriumLook {
     organelles: 1 + Math.round(growth * (MAX_ORGANELLES - 1)),
     glow: 0.25 + 0.75 * growth,
     wobble: 0.012 + 0.03 * growth,
-    body: colour.body,
-    rim: colour.rim,
+    body: blend(growth),
+    rim: [player[0] / 255, player[1] / 255, player[2] / 255],
   };
 }
 
-/** The palette's colour at `growth`, between its two nearest entries. */
-function blend(growth: number): { body: Rgb; rim: Rgb } {
-  const at = growth * (PALETTE.length - 1);
-  const low = PALETTE[Math.floor(at)];
-  const high = PALETTE[Math.min(PALETTE.length - 1, Math.floor(at) + 1)];
-  const t = at - Math.floor(at);
-  return {
-    body: mixRgb(low.body, high.body, t),
-    rim: mixRgb(low.rim, high.rim, t),
-  };
+/** The membrane's colour at `growth`, between its two nearest entries. */
+function blend(growth: number): Rgb {
+  const at = growth * (BODIES.length - 1);
+  const low = BODIES[Math.floor(at)];
+  const high = BODIES[Math.min(BODIES.length - 1, Math.floor(at) + 1)];
+  return mixRgb(low, high, at - Math.floor(at));
 }
 
 function mixRgb(a: Rgb, b: Rgb, t: number): Rgb {

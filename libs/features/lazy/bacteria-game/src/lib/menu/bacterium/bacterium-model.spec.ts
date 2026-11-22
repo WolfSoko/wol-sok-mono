@@ -5,7 +5,13 @@ import {
   bacteriumItems,
   type BacteriumMenuState,
 } from './bacterium-items';
-import { bacteriumLook, cssRgb } from './bacterium-look';
+import {
+  bacteriumLook as lookOf,
+  cssRgb,
+  DEFAULT_PLAYER_RGB,
+} from './bacterium-look';
+
+const bacteriumLook = (xp: number) => lookOf(xp, DEFAULT_PLAYER_RGB);
 
 const STATE: BacteriumMenuState = {
   training: true,
@@ -145,13 +151,17 @@ describe('bacteriumLook', () => {
       organelles: 8,
       glow: 1,
     });
-    expect(bacteriumLook(top).pili).toBeGreaterThan(30);
+    expect(bacteriumLook(top).pili).toBe(24);
   });
 
   it('grows on the way to the next rank too', () => {
     expect(bacteriumLook(400).growth).toBeGreaterThan(
       bacteriumLook(250).growth
     );
+  });
+
+  it("lights its rim in the player's colony colour", () => {
+    expect(lookOf(0, [255, 0, 51]).rim).toEqual([1, 0, 0.2]);
   });
 
   it('writes its colours as CSS', () => {

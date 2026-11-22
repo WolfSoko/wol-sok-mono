@@ -51,6 +51,7 @@
         <feat-lazy-bac-game-bacterium-menu
           [items]="bacteriumItems()"
           [xp]="campaign().xp"
+          [player]="playerColor()"
           [attr.aria-label]="'menu.bacterium.label' | t"
           role="navigation"
           (pick)="pickPart($event)"
