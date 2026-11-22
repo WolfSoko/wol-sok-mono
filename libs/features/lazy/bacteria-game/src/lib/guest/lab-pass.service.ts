@@ -95,7 +95,9 @@ export class LabPass {
   private readonly onboardingState = signal(false);
   /**
    * True when a sign-in of this visit brought a player without a profile
-   * of their own: the main menu then opens the profile to make one.
+   * of their own: the profile editor welcomes them, where it shows, or else
+   * the main menu opens the profile to make one - as long as the player is
+   * still on the screen they signed in on (see {@link moveOn}).
    */
   public readonly onboardingDue = this.onboardingState.asReadonly();
   /** True while the profile editor welcomes a player who just signed in. */
@@ -147,7 +149,17 @@ export class LabPass {
     this.earnedNow.set(false);
   }
 
-  /** The main menu opened the profile for the sign-in's onboarding. */
+  /**
+   * The player went on to another screen: a sign-in not judged yet, or an
+   * onboarding no screen took, is dropped, so the profile never opens later
+   * unasked. A welcome the profile already shows stays.
+   */
+  public moveOn(): void {
+    this.settledSignIns.set(this.signIn.signIns());
+    this.onboardingState.set(false);
+  }
+
+  /** The profile editor shows the sign-in's onboarding. */
   public startOnboarding(): void {
     this.onboardingState.set(false);
     this.welcomingState.set(true);

@@ -250,6 +250,35 @@ describe('LabPass', () => {
     expect(labPass.editorFocus()).toBeNull();
   });
 
+  it('drops the onboarding of a sign-in the player moved on from', () => {
+    const labPass = pass();
+    // Signed in, then off to another screen before the profile answered.
+    social.profileLoaded.set(false);
+    player.set({ guest: false, name: 'Ada' });
+    signIns.set(1);
+    TestBed.tick();
+    labPass.moveOn();
+    social.profileLoaded.set(true);
+    TestBed.tick();
+    expect(labPass.onboardingDue()).toBe(false);
+
+    // Due already, but no screen took it before the player moved on.
+    signIns.set(2);
+    TestBed.tick();
+    expect(labPass.onboardingDue()).toBe(true);
+    labPass.moveOn();
+    expect(labPass.onboardingDue()).toBe(false);
+  });
+
+  it('keeps the welcome the profile shows when the menu moves on to it', () => {
+    const labPass = pass();
+    labPass.startOnboarding();
+    labPass.moveOn();
+
+    expect(labPass.welcoming()).toBe(true);
+    expect(labPass.editorFocus()).toBe('name');
+  });
+
   it('settles a sign-in onto an account with a profile for good', () => {
     const labPass = pass();
     player.set({ guest: false, name: 'Ada' });

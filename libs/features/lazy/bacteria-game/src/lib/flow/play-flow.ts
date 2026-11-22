@@ -2,10 +2,12 @@ import {
   afterNextRender,
   computed,
   DestroyRef,
+  effect,
   inject,
   Injectable,
   Injector,
   signal,
+  untracked,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { defer, Observable, of, Subject } from 'rxjs';
@@ -15,6 +17,7 @@ import { StageBusy } from '../busy/stage-busy';
 import { CampaignService } from '../campaign.service';
 import { GameHapticsService } from '../haptics.service';
 import { HudState } from '../hud/hud-state';
+import { LabPass } from '../guest/lab-pass.service';
 import { I18nService } from '../i18n/i18n.service';
 import { DailyCard } from '../menu/menu-cards';
 import { NewGameEntry, opponentOf, PlayKind } from '../menu/play-modes';
@@ -61,6 +64,7 @@ export class PlayFlow {
   private readonly stageFullscreen = inject(StageFullscreen);
   private readonly arenaStage = inject(ArenaStage);
   private readonly stageFrame = inject(StageFrame);
+  private readonly labPass = inject(LabPass);
   private readonly cleared = new Subject<void>();
   /**
    * Counts the matches started and the resets begun: a start that waited -
@@ -112,6 +116,15 @@ export class PlayFlow {
   public readonly settingsBackLabel = computed(() =>
     this.i18n.t(this.hud.paused() ? 'stage.pause.back' : 'common.menu')
   );
+
+  public constructor() {
+    // A sign-in's onboarding belongs to the screen it was made on: once the
+    // player moves on, it never opens the profile unasked.
+    effect(() => {
+      this.panel();
+      untracked(() => this.labPass.moveOn());
+    });
+  }
 
   /** True while a ranked attempt is being declared. */
   public readonly declaring = signal(false);

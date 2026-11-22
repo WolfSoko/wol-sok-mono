@@ -4,6 +4,7 @@ import {
   Component,
   computed,
   DestroyRef,
+  effect,
   ElementRef,
   inject,
   linkedSignal,
@@ -73,6 +74,13 @@ export class ProfileEditorComponent {
   );
 
   public constructor() {
+    // A sign-in made here, on the profile, is welcomed here: the main menu
+    // would otherwise open the profile again once the player goes back.
+    effect(() => {
+      if (this.labPass.onboardingDue()) {
+        untracked(() => this.labPass.startOnboarding());
+      }
+    });
     // A step of the Lab Pass opens on its field: focused once it shows.
     afterRenderEffect(() => {
       const field = this.labPass.editorFocus();

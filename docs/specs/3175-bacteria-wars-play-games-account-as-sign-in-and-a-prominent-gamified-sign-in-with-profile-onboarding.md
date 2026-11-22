@@ -89,6 +89,15 @@ PR ("Part of #3175"):
 - **A sign-in is judged once**, when the signed-in player's profile has
   answered: onboarding follows only for one without a stored profile, so a
   later change in the steps never sends the player to the profile.
+- **A sign-in on the profile is welcomed there.** Where the profile editor
+  already shows (the profile screen has its own sign-in), it takes the
+  onboarding itself, so going back to the main menu does not open the
+  profile a second time.
+- **The onboarding stays where the sign-in was made.** Once the player goes
+  on to another screen (`PlayFlow`'s panel changes), a sign-in not judged
+  yet, or an onboarding no screen took, is dropped (`LabPass.moveOn`): the
+  profile never opens unasked later, when its answer arrives after the
+  player moved on.
 - **Friends follow the player.** The friends list starts empty at every
   account switch (`SocialService`), so the last step is never taken as done
   with the friends of the guest before.

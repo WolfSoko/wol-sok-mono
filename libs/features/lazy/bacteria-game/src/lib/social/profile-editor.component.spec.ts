@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import {
@@ -9,11 +10,13 @@ import { GameAccount } from '../storage/game-account';
 import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import { LabPass } from '../guest/lab-pass.service';
+import { SignIn } from '../guest/sign-in.service';
 import { ProfileEditorComponent } from './profile-editor.component';
 
 describe('ProfileEditorComponent', () => {
   let social: FakeGameSocial;
   let account: FakeGameAccount;
+  let signIns: ReturnType<typeof signal<number>>;
 
   let fixture: ReturnType<
     typeof TestBed.createComponent<ProfileEditorComponent>
@@ -31,9 +34,11 @@ describe('ProfileEditorComponent', () => {
     TestBed.resetTestingModule();
     social = new FakeGameSocial();
     account = new FakeGameAccount('ada');
+    signIns = signal(0);
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: account },
+        { provide: SignIn, useValue: { signIns } },
         provideFakeGameCloud({ social, presence: new FakeGamePresence() }),
       ],
     });
@@ -77,6 +82,25 @@ describe('ProfileEditorComponent', () => {
 
     expect(social.get('profiles/ada')).toMatchObject({ name: 'Cleo' });
     expect(host.querySelector('.welcome')).toBeNull();
+  });
+
+  it('welcomes a sign-in made on the profile itself, there and then', async () => {
+    const labPass = TestBed.inject(LabPass);
+    const host = await render();
+
+    account.profile.set({ guest: false, name: 'Ada' });
+    signIns.set(1);
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    // The main menu, once back, has no onboarding left to open.
+    expect(labPass.onboardingDue()).toBe(false);
+    expect(host.querySelector('.welcome')?.textContent).toContain(
+      'Welcome to the lab'
+    );
+    expect(document.activeElement).toBe(
+      host.querySelector('input[name="name"]')
+    );
   });
 
   it('opens on the motto when the Lab Pass asks for it', async () => {

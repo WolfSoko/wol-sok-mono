@@ -391,7 +391,11 @@ storage until then. Settings stay with the device either way.
   grants the achievement `lab-member` through
   `ProgressService.grantAchievement`, the one achievement no match earns. A
   sign-in that brings no stored profile opens the profile, whose editor
-  welcomes the player (`LabPass.welcoming`).
+  welcomes the player (`LabPass.welcoming`); one made on the profile itself
+  is welcomed by the editor showing there, which takes `onboardingDue`.
+  Either only on the screen of the sign-in: `PlayFlow` calls
+  `LabPass.moveOn` whenever its panel changes, which drops a sign-in not
+  judged yet.
 - `playerIds` follows `players` from the same replaying subject, which keeps
   a switch before it tells anyone: a service that stores right as it hears of
   a switch stores for the next player. Between a sign-out and the next guest
