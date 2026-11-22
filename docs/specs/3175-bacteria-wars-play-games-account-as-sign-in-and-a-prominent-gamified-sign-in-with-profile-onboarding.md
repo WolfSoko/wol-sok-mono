@@ -165,9 +165,11 @@ PR ("Part of #3175"):
    player is signed in and, if so, for a one-time server auth code
    (`GamesSignInClient.requestServerSideAccess(<web client id>, false)`),
    then launches Chrome (`launchTwa()`) with the code in the URL's fragment:
-   `https://bacteria-wars.wolsok.de/?source=twa#play-games=<code>`. It waits
-   at most 3 s (the splash stays on meanwhile); without the code it launches
-   the URL as today. A link with a fragment of its own (`#friend=…`) is
+   `https://bacteria-wars.wolsok.de/?source=twa#play-games=<code>`. It launches
+   the moment the SDK answers, and at once when Play Games is unavailable or
+   its silent sign-in failed, so the 3 s it waits at most (the splash stays
+   on meanwhile) are only the worst case; without the code it launches the
+   URL as today. A link with a fragment of its own (`#friend=…`) is
    launched unchanged.
 2. **The game hands the code on.** `PlayGamesHandover` (game lib,
    `play-games/`) reads the fragment once at start, takes it off the URL
@@ -234,15 +236,24 @@ PR ("Part of #3175"):
   both.
 - **Off switch.** The trigger is exported only with `PLAY_GAMES_ON` in
   `config.ts`. A deploy fails for a function whose secret is missing, so
-  the secret exists before the PR merges with `PLAY_GAMES_ON = true`
-  (manual step for the owner, below); the game writes no command where
-  the app hands no code, so the web game is unaffected either way.
+  `PLAY_GAMES_ON` stays `false` until the owner's steps 1-3 below are done
+  and a merge never breaks the deploy; the game writes no command where
+  the app hands no code, and a command nobody answers only times out.
+- **A Play Games sign-in changes no ban.** The ban is the uid's
+  (`bans/{uid}`), and the link only ever settles on an existing uid, so a
+  banned account stays banned, and a banned guest taken over by its linked
+  account leaves its ban where it was.
+- **Each code counts once.** Google's token endpoint takes a code once;
+  the trigger runs once per document (`create`, retries off), the token is
+  minted only for the uid the transaction settled on, and the writer check
+  of `runCommandDocument` keeps a command from settling a link in another
+  uid's name.
 - **Privacy policy** (sections 6 and the Android section): the app now
   hands the Play Games sign-in to the game; we store the Play Games player
   id with the account (`playGamesLinks`) and, when the account has no name,
   the Play Games name, until the account is deleted.
 
-### Manual steps for the owner (before the merge)
+### Manual steps for the owner (before `PLAY_GAMES_ON`)
 
 1. Play Console → Play Games Services → Configuration → Credentials: add a
    **Game server** credential with the Cloud project's web OAuth client
@@ -253,9 +264,9 @@ PR ("Part of #3175"):
 3. IAM: the functions' runtime service account gets **Service Account Token
    Creator** on itself, so `createCustomToken` can sign
    (`iam.serviceAccounts.signBlob`).
-4. After the Android release: a check on a real phone from the closed
+4. After the Android release (filed then): a check on a real phone from the closed
    testing track (first launch links, a second phone or a reinstall signs in
-   to the same account).
+   to the same account), measuring the cold start the hold adds.
 
 ### Acceptance
 
@@ -270,7 +281,9 @@ PR ("Part of #3175"):
   relinks a link whose account is gone, sets the claim and the name, and
   answers a token for the account it settled on; a failed exchange answers
   `play-games-refused` without a token (emulator spec with an injected
-  exchange; pure specs for the decision).
+  exchange; pure specs for each of the four cases). The token is minted
+  only for the settled uid, a command written for another uid settles
+  nothing, a banned account stays banned.
 - After the token sign-in the profile is signed in with the Play Games name;
   a switch adopts the guest's progress (game lib specs).
 - Rules: only the writer creates, reads and deletes its command, with exactly the
@@ -315,7 +328,8 @@ player for an hour.
   (156895060649) is not known yet: step 3 reads the next Android deploy's
   log first, and an achievement missing on Play is skipped (logged), never
   an error.
-- **Acceptance**: unit specs for the matching (earned × locked × Play's
+- **Acceptance**: no access or refresh token is stored anywhere; unit
+  specs for the matching (earned × locked × Play's
   list), an emulator spec with an injected Games API, the privacy policy
   (the achievements the game reports to Play Games), and the phone check.
 
