@@ -167,13 +167,14 @@ PR ("Part of #3175"):
    then launches Chrome (`launchTwa()`) with the code in the URL's fragment:
    `https://bacteria-wars.wolsok.de/?source=twa#play-games=<code>`. It launches
    the moment the SDK answers, and at once when Play Games is unavailable or
-   its silent sign-in failed, so the 3 s it waits at most (the splash stays
-   on meanwhile) are only the worst case; without the code it launches the
+   its silent sign-in failed, so the 3 s it waits at most (the app's dark
+   background stays on meanwhile; the splash image follows with Chrome) are only the worst case; without the code it launches the
    URL as today. A link with a fragment of its own (`#friend=…`) is
    launched unchanged.
 2. **The game hands the code on.** `PlayGamesHandover` (game lib,
    `play-games/`) reads the fragment once at start, takes it off the URL
-   (`history.replaceState`, so a reload or a shared link never carries it),
+   (through the router, as the game's other links, so a reload or a shared
+   link never carries it),
    waits for the first player (the guest or the account Firebase restored)
    and writes a command document `playGamesSignIns/{id}`:
    `commandEnvelope` + `code`. It waits up to 30 s for the result.
@@ -187,21 +188,33 @@ PR ("Part of #3175"):
    - a link to the writer: it stays;
    - a link to another account while the writer is a guest: that account
      takes over (it is the one the player made on another phone);
-   - a link to another account while the writer has a provider (Google):
+   - a link to an account without provider while the writer has one
+     (Google): the link moves to the writer, and the account left behind
+     loses its claim and counts as a guest again. A Google account
+     outranks it as it outranks a guest; usually it has just adopted that
+     account's progress on this phone (`credential-already-in-use`);
+   - a link to another Google account while the writer has one too:
      refused, `linked-elsewhere`, nothing changes (one Play Games player is
      one game account; the game shows nothing, the player keeps playing).
-     The account it settles on gets the custom claim `playGames: true` and,
-     when it has no display name, the Play Games name (`displayName` of its
-     Auth record). The result carries a custom token for that account
-     (`token`, from `createCustomToken`), next to `ok`.
-4. **The game signs in with it.** `GameAccount.signInWithToken(token)`
-   signs in with the custom token (`signInWithCustomToken`). For the same
+     The account it settles on gets the custom claim `playGames: true` (read
+     afresh and written only when it changes) and, when it has no display
+     name, the Play Games name (`displayName` of its Auth record). The result
+     carries a custom token for that account (`token`, from
+     `createCustomToken`), next to `ok`, only where the session needs one: a
+     writer without a provider, or a take-over. A Google session keeps its
+     own, since the owner's rights hang on its Google sign-in provider.
+4. **The game signs in with it.** `GameAccount.signInWithToken(token,
+   writer)` signs in with the custom token (`signInWithCustomToken`), only
+   while the player the command was written for still plays: a token that
+   arrives after a switch or a sign-out is dropped. For the same
    uid that changes no player, only the session: it is no anonymous one
    any more, so the profile says signed in. For another uid it switches
    with `adoptsGuest: true`, so the guest's progress joins the account, as
    the Google sign-in does today. The custom token is valid for an hour;
-   the game deletes the command document once it has read the result, and
-   the TTL takes one it could not, within a day. Only its writer reads it.
+   the game deletes the command document once it has read the result or
+   given up waiting, and the TTL on `expireAt` (`firestore.indexes.json`,
+   checked for every command collection by `firestore-indexes.spec.ts`)
+   takes one it could not, within a day. Only its writer reads it.
 
 ### Decisions
 
