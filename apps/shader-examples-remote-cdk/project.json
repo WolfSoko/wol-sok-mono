@@ -11,6 +11,7 @@
   },
   "targets": {
     "deploy": {
+      "inputs": ["production", "^production"],
       "dependsOn": ["^build"],
       "executor": "@wolsok/nx-aws-cdk-v2:deploy",
       "options": {
