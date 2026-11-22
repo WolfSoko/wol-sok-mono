@@ -9,6 +9,7 @@ import type { Firestore } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { claimCommand } from '../commands/claim-command';
 import { runCommandDocument } from '../commands/run-command-document';
+import type { SyncOutcome } from './achievements';
 import type { PlayGamesApi } from './games-api';
 import type { PlayGamesPlayer } from './player';
 import {
@@ -26,7 +27,7 @@ export interface PlayGamesCommandDeps {
   /** Auth, loaded only for a command that runs. */
   accounts: () => Promise<PlayGamesAccounts>;
   /** Unlocks `uid`'s earned achievements on Play (step 3). */
-  syncAchievements: (uid: string, games: PlayGamesApi) => Promise<unknown>;
+  syncAchievements: (uid: string, games: PlayGamesApi) => Promise<SyncOutcome>;
   now: () => number;
 }
 
@@ -46,7 +47,8 @@ export async function runPlayGamesSignIn(
   deps: PlayGamesCommandDeps
 ): Promise<CommandResult | null> {
   const path = `${PLAY_GAMES_SIGN_INS}/${id}`;
-  let answer: PlayGamesSignInAnswer | null = null;
+  // Set inside `run`; a holder, since narrowing cannot follow the callback.
+  const signedIn: { answer: PlayGamesSignInAnswer | null } = { answer: null };
   const result = await runCommandDocument(
     db,
     path,
@@ -60,24 +62,26 @@ export async function runPlayGamesSignIn(
       if (!(await claimCommand(db, path))) {
         return null;
       }
-      answer = await signInPlayGames(db, uid, command.code, {
+      const answer = await signInPlayGames(db, uid, command.code, {
         player: deps.player,
         tombstone: deps.tombstone,
         accounts: await deps.accounts(),
         now: deps.now(),
       });
+      signedIn.answer = answer;
       return answer.result;
     },
-    () =>
-      answer?.token == null
+    () => {
+      const token = signedIn.answer?.token ?? null;
+      return token === null
         ? {}
         : {
-            [PLAY_GAMES_TOKEN_KEY]: answer.token.value,
-            [PLAY_GAMES_TOKEN_UID_KEY]: answer.token.uid,
-          }
+            [PLAY_GAMES_TOKEN_KEY]: token.value,
+            [PLAY_GAMES_TOKEN_UID_KEY]: token.uid,
+          };
+    }
   );
-  // `answer` is set inside `run`, which TypeScript's narrowing cannot see.
-  const sync = (answer as PlayGamesSignInAnswer | null)?.sync ?? null;
+  const sync = signedIn.answer?.sync ?? null;
   if (sync !== null) {
     await deps.syncAchievements(sync.uid, sync.games).catch((error) => {
       logger.warn('Play Games achievement sync failed', {

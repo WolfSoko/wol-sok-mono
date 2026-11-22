@@ -1,3 +1,4 @@
+import type { CollectionReference } from 'firebase-admin/firestore';
 import { useEmulatorDb } from '../testing/emulator';
 import { type PlayGamesCommandDeps, runPlayGamesSignIn } from './command';
 import { logger } from 'firebase-functions/logger';
@@ -27,6 +28,21 @@ const PLAYER: PlayGamesPlayer = {
   displayName: 'PlayAda',
   games: GAMES,
 };
+
+/** Every document in Firestore, subcollections included. */
+async function everyDocument(): Promise<Record<string, unknown>> {
+  const found: Record<string, unknown> = {};
+  const walk = async (collections: CollectionReference[]) => {
+    for (const collection of collections) {
+      for (const doc of (await collection.get()).docs) {
+        found[doc.ref.path] = doc.data();
+        await walk(await doc.ref.listCollections());
+      }
+    }
+  };
+  await walk(await db.listCollections());
+  return found;
+}
 
 const link = async () =>
   (await db.doc('playGamesLinks/p1').get()).data() ?? null;
@@ -183,7 +199,7 @@ describe('signInPlayGames', () => {
         player: async () => PLAYER,
         tombstone: async () => false,
         accounts: async () => fake.accounts,
-        syncAchievements: async () => undefined,
+        syncAchievements: async () => 'nothing-earned' as const,
         now: () => NOW,
         ...more,
       });
@@ -209,6 +225,7 @@ describe('signInPlayGames', () => {
       const synced: [string, unknown, unknown][] = [];
       const syncAchievements = async (uid: string, games: unknown) => {
         synced.push([uid, games, (await db.doc(PATH).get()).get('result')]);
+        return 'nothing-earned' as const;
       };
 
       await run(data, 'g', fakeAccounts({ g: guest(), a: google() }), {
@@ -240,7 +257,7 @@ describe('signInPlayGames', () => {
         const data = { uid: 'a', code: 'code' };
         await db.doc(PATH).set(data);
         await before?.();
-        const syncAchievements = jest.fn(async () => undefined);
+        const syncAchievements = jest.fn(async () => 'nothing-earned' as const);
 
         expect(
           await run(data, 'a', fakeAccounts({ ...accounts }), {
@@ -255,7 +272,7 @@ describe('signInPlayGames', () => {
     it('syncs nothing for a command written in another uid’s name', async () => {
       const data = { uid: 'a', code: 'code' };
       await db.doc(PATH).set(data);
-      const syncAchievements = jest.fn(async () => undefined);
+      const syncAchievements = jest.fn(async () => 'nothing-earned' as const);
       await run(data, 'eve', fakeAccounts({ a: google() }), {
         syncAchievements,
       });
@@ -323,11 +340,7 @@ describe('signInPlayGames', () => {
           syncPlayGamesAchievements(db, uid, games, NOW),
       });
 
-      const written = JSON.stringify(
-        (await db.collection('playGamesSignIns').get()).docs.map((doc) =>
-          doc.data()
-        )
-      );
+      const written = JSON.stringify(await everyDocument());
       const logged = JSON.stringify(lines);
       expect(written).toContain('token-for-g');
       expect(logged).toContain('First Blood');

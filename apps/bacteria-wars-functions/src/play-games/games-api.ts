@@ -117,7 +117,12 @@ export function gamesApi(
         `${API}/achievements/${encodeURIComponent(id)}/unlock`,
         'POST'
       );
-      return response.ok ? { ok: true, value: undefined } : refusal(response);
+      if (!response.ok) {
+        return refusal(response);
+      }
+      // Its answer says only whether it was new; free the connection.
+      await response.body?.cancel();
+      return { ok: true, value: undefined };
     },
   };
 }

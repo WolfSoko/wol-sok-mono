@@ -107,6 +107,11 @@ export async function syncPlayGamesAchievements(
       failed.push(name);
       if (answer?.scope === true) {
         logScopeRefusal('unlock', answer.status);
+      } else {
+        logger.warn('Play Games refused to unlock an achievement', {
+          name,
+          status: answer?.status ?? null,
+        });
       }
     }
   }
