@@ -166,7 +166,7 @@ export class LabPass {
     this.focusState.set('name');
   }
 
-  /** The profile editor has welcomed the player. */
+  /** The welcome is over: the profile was saved, or the player left it. */
   public endOnboarding(): void {
     this.welcomingState.set(false);
   }

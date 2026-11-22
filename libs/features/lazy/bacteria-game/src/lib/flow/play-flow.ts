@@ -38,7 +38,7 @@ import {
 import { GameStateService } from '../state/game-state.service';
 import { GameStateStore } from '../state/game.states';
 import { playKindOf } from './play-kind';
-import { parentScreen } from './stage-screens';
+import { opensFrom, parentScreen } from './stage-screens';
 import type { MenuScreen, StagePanel } from './stage-screens';
 
 /**
@@ -133,10 +133,17 @@ export class PlayFlow {
 
   public constructor() {
     // A sign-in's onboarding belongs to the screen it was made on: once the
-    // player moves on, it never opens the profile unasked.
+    // player moves on, it never opens the profile unasked. The profile's
+    // welcome stays on the screens opened from it, and ends once the player
+    // leaves the profile.
     effect(() => {
-      this.panel();
-      untracked(() => this.labPass.moveOn());
+      const panel = this.panel();
+      untracked(() => {
+        this.labPass.moveOn();
+        if (!opensFrom(panel, 'profile')) {
+          this.labPass.endOnboarding();
+        }
+      });
     });
   }
 

@@ -1,4 +1,4 @@
-import { MenuScreen, parentScreen } from './stage-screens';
+import { MenuScreen, opensFrom, parentScreen } from './stage-screens';
 
 describe('parentScreen', () => {
   it('leads from the achievements back to the profile', () => {
@@ -11,4 +11,17 @@ describe('parentScreen', () => {
       expect(parentScreen(screen)).toBe('menu');
     }
   );
+});
+
+describe('opensFrom', () => {
+  it('holds for the screen itself and the screens opened from it', () => {
+    expect(opensFrom('profile', 'profile')).toBe(true);
+    expect(opensFrom('achievements', 'profile')).toBe(true);
+  });
+
+  it('holds for nothing else', () => {
+    expect(opensFrom('menu', 'profile')).toBe(false);
+    expect(opensFrom('pause', 'profile')).toBe(false);
+    expect(opensFrom(null, 'profile')).toBe(false);
+  });
 });

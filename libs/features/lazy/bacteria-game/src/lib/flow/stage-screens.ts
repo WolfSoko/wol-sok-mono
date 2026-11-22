@@ -26,3 +26,12 @@ const PARENT_OF: Readonly<Partial<Record<MenuScreen, MenuScreen>>> = {
 export function parentScreen(screen: MenuScreen): MenuScreen {
   return PARENT_OF[screen] ?? 'menu';
 }
+
+/** True for `screen` itself and the screens opened from it. */
+export function opensFrom(panel: StagePanel, screen: MenuScreen): boolean {
+  return (
+    panel === screen ||
+    (panel !== null &&
+      (PARENT_OF as Record<string, MenuScreen>)[panel] === screen)
+  );
+}

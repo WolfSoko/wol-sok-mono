@@ -48,7 +48,7 @@ describe('PlayFlow', () => {
   describe('the screens', () => {
     it('tells the Lab Pass when the player moves on to another screen', () => {
       TestBed.resetTestingModule();
-      const labPass = { moveOn: jest.fn() };
+      const labPass = { moveOn: jest.fn(), endOnboarding: jest.fn() };
       TestBed.configureTestingModule({
         providers: [
           ...STAGE_PROVIDERS,
@@ -67,6 +67,27 @@ describe('PlayFlow', () => {
       screens.show('settings');
       TestBed.tick();
       expect(labPass.moveOn).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('the Lab Pass welcome', () => {
+    it('stays on the achievements and ends once the player leaves the profile', () => {
+      const labPass = TestBed.inject(LabPass);
+      flow.show('profile');
+      TestBed.tick();
+      labPass.startOnboarding();
+
+      flow.show('achievements');
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(true);
+
+      flow.back();
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(true);
+
+      flow.back();
+      TestBed.tick();
+      expect(labPass.welcoming()).toBe(false);
     });
   });
 

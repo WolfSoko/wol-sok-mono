@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  DestroyRef,
   effect,
   ElementRef,
   inject,
@@ -90,7 +89,6 @@ export class ProfileEditorComponent {
         this.labPass.editorFocused();
       }
     });
-    inject(DestroyRef).onDestroy(() => this.labPass.endOnboarding());
   }
 
   protected readonly nameMax = NAME_MAX;

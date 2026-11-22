@@ -57,8 +57,10 @@ describe('ProfileEditorComponent', () => {
       host.querySelector('input[name="name"]')
     );
 
+    // Leaving for a screen opened from the profile keeps it: the flow ends
+    // it once the player leaves the profile (PlayFlow).
     fixture.destroy();
-    expect(labPass.welcoming()).toBe(false);
+    expect(labPass.welcoming()).toBe(true);
   });
 
   it('keeps the welcome while editing and clears it after saving', async () => {
