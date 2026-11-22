@@ -5,13 +5,15 @@ Issue: [#3175](https://github.com/WolfSoko/wol-sok-mono/issues/3175).
 The issue asks for two things. They ship as steps of this issue, each its own
 PR ("Part of #3175"):
 
-- **Step 1 — the Lab Pass** (this spec in full): signing in becomes a quest
+- **Step 1 — the Lab Pass** (deployed in 74.177.0): signing in becomes a quest
   of its own in the main menu, with a profile onboarding and a reward. Web
   only, testable in CI.
-- **Step 2 — Play Games as sign-in** (outlined below, specified in detail
-  before it starts): the Play Games account of the Android app signs the
-  player in, or is linked to the game account. It needs the Android app, a
-  Cloud Function, an OAuth secret and a check on a real device.
+- **Step 2 — Play Games as sign-in** (specified below): the Play Games
+  account of the Android app signs the player in, linked to the game
+  account. It needs the Android app, a Cloud Function, an OAuth secret and a
+  check on a real device.
+- **Step 3 — achievements on Play Games** (outlined below): the game's
+  achievements unlock on Play Games for a player who starts the app.
 
 ## Step 1: the Lab Pass
 
@@ -122,30 +124,201 @@ PR ("Part of #3175"):
   achievement spec stays green with the new entry.
 - Texts in English and German.
 
-## Step 2: Play Games as sign-in (outline)
+## Step 2: Play Games as sign-in
 
-Firebase Auth's Play Games provider exists only in the Android SDK; the game
-runs in Chrome (TWA) and gets no Play Games identity. The way that fits the
-repo's rules (the client never calls a function):
+### Goal
 
-1. The Android app asks Play Games for a one-time server auth code
-   (`GamesSignInClient.requestServerSideAccess`) after its silent sign-in
-   and hands it to the page in the launch URL's fragment.
-2. The game, signed in as its guest or Google account, writes a command
-   document with the code; a trigger exchanges it (OAuth client secret as a
-   function secret), reads the Play Games player id, and links it to the
-   uid (`playGamesLinks/{playerId}`, an entry in `PLAYER_DATA`).
-3. If the player id is linked to another uid already, the trigger answers
-   with a custom token for that uid, and the game signs in with it,
-   adopting the guest's progress as the Google sign-in does today.
-4. `guestCleanup` keeps accounts with a Play Games link.
+1. **The Play Games account signs the player in.** In the Android app the
+   player is signed in to Play Games silently at launch (PR #2586). From
+   this step on, that sign-in also counts in the game: the first launch
+   links the Play Games player to the game account that plays (guest or
+   Google), and every later launch, on any phone, signs in to that account
+   again, with its progress, friends and boards. A guest linked this way is
+   no guest any more: the Lab Pass's step 1 is done, the guest notice and the
+   90-day clean-up no longer apply, and the profile shows the Play Games
+   name until the player saves their own.
+2. **Nothing to tap.** The handover runs at every app start without a
+   button or a popup, as the Play Games sign-in itself does. It never blocks
+   the game: without Play Games, offline, or when anything fails, the game
+   starts as today.
+3. **Google sign-in still works.** A Play Games account can still sign in
+   with Google (it is linked, keeping its uid); a Google account that starts
+   the app gets the Play Games player linked to it.
 
-Open for that step: whether the fragment or Custom Tabs' postMessage carries
-the code; how a custom-token account shows as signed in (`profileOf`);
-privacy policy section for Play Games sign-in; a manual step for the OAuth
-secret.
+### Non-goals
+
+- Play Games sign-in on the web outside the app (Play Games has no web
+  sign-in; the browser game keeps Google).
+- Unlocking achievements on Play Games (step 3, below).
+- A Play Games button, or unlinking Play Games by hand: deleting the account
+  removes the link (erasure), signing out ends the session until the next
+  launch signs in again.
+- Firebase Auth's own Play Games provider: it exists only in the Android
+  SDK, and the game's Firebase session lives in Chrome.
+
+### How it works
+
+1. **The app asks for a code.** A launcher activity of the app's own
+   (`PlayGamesLauncherActivity`, a subclass of androidbrowserhelper's
+   `LauncherActivity`, replacing it in the manifest) holds the launch
+   (`shouldLaunchImmediately()` false), asks the Play Games SDK whether the
+   player is signed in and, if so, for a one-time server auth code
+   (`GamesSignInClient.requestServerSideAccess(<web client id>, false)`),
+   then launches Chrome (`launchTwa()`) with the code in the URL's fragment:
+   `https://bacteria-wars.wolsok.de/?source=twa#play-games=<code>`. It waits
+   at most 3 s (the splash stays on meanwhile); without the code it launches
+   the URL as today. A link with a fragment of its own (`#friend=…`) is
+   launched unchanged.
+2. **The game hands the code on.** `PlayGamesHandover` (game lib,
+   `play-games/`) reads the fragment once at start, takes it off the URL
+   (`history.replaceState`, so a reload or a shared link never carries it),
+   waits for the first player (the guest or the account Firebase restored)
+   and writes a command document `playGamesSignIns/{id}`:
+   `commandEnvelope` + `code`. It waits up to 30 s for the result.
+3. **A trigger links the player.** `playGamesSignIn` (functions,
+   `play-games/sign-in.ts`, through `runCommandDocument`) exchanges the
+   code at Google's token endpoint with the web OAuth client (id in
+   `config.ts`, secret `PLAY_GAMES_CLIENT_SECRET`), reads the player
+   (`GET games/v1/players/me`: `playerId`, `displayName`) and settles the
+   link `playGamesLinks/{playerId}` (`{ uid, linkedAt }`) in a transaction:
+   - no link, or a link to an account that is gone: it links the writer;
+   - a link to the writer: it stays;
+   - a link to another account while the writer is a guest: that account
+     takes over (it is the one the player made on another phone);
+   - a link to another account while the writer has a provider (Google):
+     refused, `linked-elsewhere`, nothing changes (one Play Games player is
+     one game account; the game shows nothing, the player keeps playing).
+     The account it settles on gets the custom claim `playGames: true` and,
+     when it has no display name, the Play Games name (`displayName` of its
+     Auth record). The result carries a custom token for that account
+     (`token`, from `createCustomToken`), next to `ok`.
+4. **The game signs in with it.** `GameAccount.signInWithToken(token)`
+   signs in with the custom token (`signInWithCustomToken`). For the same
+   uid that changes no player, only the session: it is no anonymous one
+   any more, so the profile says signed in. For another uid it switches
+   with `adoptsGuest: true`, so the guest's progress joins the account, as
+   the Google sign-in does today. The custom token is valid for an hour;
+   the game deletes the command document once it has read the result, and
+   the TTL takes one it could not, within a day. Only its writer reads it.
+
+### Decisions
+
+- **The fragment carries the code, not postMessage.** A fragment never
+  reaches a server or the service worker, works in Chrome and the WebView
+  fallback alike, and needs no message channel to Custom Tabs, which
+  `LauncherActivity` does not expose. The code is single-use, bound to the
+  app's web client and expires within minutes. The error reports drop the
+  hash already (`scrub.ts`), the analytics page views carry the route
+  pattern only.
+- **A command document, not a callable function**, as everywhere in the
+  game: the client never calls a function. `playGamesSignIns` takes
+  `uid`, `code` (a string of at most 512 characters), `createdAt`,
+  `expireAt`; only its writer reads and deletes it. It is allowed while a ban holds:
+  it changes no shared data, and a banned player keeps their account.
+- **The session becomes a custom-token one.** Linking a Play Games
+  identity to a Firebase account needs no Firebase provider: the link is
+  our own document, and the custom token makes the session no anonymous
+  one. `profileOf` takes an account without provider and not anonymous as
+  signed in (`guest: false`, name from the display name). Every place that
+  tells a guest by `isAnonymous` (owner check, Lab Pass, guest notice,
+  sign-in lines) follows from it. `signIn` (Google) links whenever the
+  account has no provider, anonymous or not, so a Play Games account keeps
+  its uid when it adds Google.
+- **The claim keeps the account.** `guestCleanup`'s `isIdleGuest` leaves an
+  account with `playGames: true` alone; an account without provider
+  otherwise still counts as a guest there.
+- **Erasure.** `playGamesLinks/{playerId}` gets a `PLAYER_DATA` entry
+  (`field` `uid`, erased by `account`), `playGamesSignIns/{id}` one as the
+  other command collections (erased by `account`, its pending ones). The
+  rules close `playGamesLinks` to clients; `player-data.spec.ts` checks
+  both.
+- **Off switch.** The trigger is exported only with `PLAY_GAMES_ON` in
+  `config.ts`. A deploy fails for a function whose secret is missing, so
+  the secret exists before the PR merges with `PLAY_GAMES_ON = true`
+  (manual step for the owner, below); the game writes no command where
+  the app hands no code, so the web game is unaffected either way.
+- **Privacy policy** (sections 6 and the Android section): the app now
+  hands the Play Games sign-in to the game; we store the Play Games player
+  id with the account (`playGamesLinks`) and, when the account has no name,
+  the Play Games name, until the account is deleted.
+
+### Manual steps for the owner (before the merge)
+
+1. Play Console → Play Games Services → Configuration → Credentials: add a
+   **Game server** credential with the Cloud project's web OAuth client
+   (the "Web client (auto created by Google Service)" of `bacteria-wars`),
+   so `requestServerSideAccess` may hand codes for it.
+2. `npx firebase functions:secrets:set PLAY_GAMES_CLIENT_SECRET --project bacteria-wars`
+   with that web client's secret.
+3. IAM: the functions' runtime service account gets **Service Account Token
+   Creator** on itself, so `createCustomToken` can sign
+   (`iam.serviceAccounts.signBlob`).
+4. After the Android release: a check on a real phone from the closed
+   testing track (first launch links, a second phone or a reinstall signs in
+   to the same account).
+
+### Acceptance
+
+- The app launches with `#play-games=<code>` when the player is signed in
+  to Play Games, within 3 s, and as today otherwise (Android build and
+  `lint-android` green in the `Android app` workflow; the phone check
+  above).
+- The game takes the code off the URL at once and writes exactly one
+  `playGamesSignIns` command for the first player; none without a code.
+- The trigger links a new player, keeps an existing link, hands a guest the
+  linked account, refuses `linked-elsewhere` for an account with a provider,
+  relinks a link whose account is gone, sets the claim and the name, and
+  answers a token for the account it settled on; a failed exchange answers
+  `play-games-refused` without a token (emulator spec with an injected
+  exchange; pure specs for the decision).
+- After the token sign-in the profile is signed in with the Play Games name;
+  a switch adopts the guest's progress (game lib specs).
+- Rules: only the writer creates, reads and deletes its command, with exactly the
+  listed fields; nobody reads or writes `playGamesLinks` (rules test).
+- `guestCleanup` keeps an idle account with `playGames: true` (spec).
+- Account deletion removes the link and pending commands
+  (`player-data.spec.ts`, `erasure.emulator.ts`).
+- The privacy policy says it, in English and German.
+
+### Open questions
+
+- Whether `requestServerSideAccess` hands a code within 3 s on a cold
+  start; if not, the first launch links nothing and the next one does.
+  The phone check decides whether the wait needs to grow.
+
+## Step 3: achievements on Play Games
+
+The game's achievements unlock on Play Games for a player who starts the
+Android app. Its own step and PR after step 2, which it builds on: the code
+the app hands over at every launch also allows the Games API for that
+player for an hour.
+
+- **When**: at every app start, in the same `playGamesSignIn` trigger, after
+  the link is settled: it reads the account's progress
+  (`players/{uid}/storage/bacteria-game.progress`), lists Play's
+  achievements (`GET games/v1/achievements`, English names) and the
+  player's states (`GET games/v1/players/me/achievements`), and unlocks
+  (`POST games/v1/achievements/{id}/unlock`) each one the game has earned and
+  Play still shows locked, matched by the English name of
+  `play-games-achievements.json` (as the deploy's sync matches them). An
+  achievement earned during a session reaches Play with the next app start.
+- **No stored tokens**: the trigger keeps neither the access nor a refresh
+  token, so there is no per-player secret to guard or erase; that is why
+  the sync waits for the next start instead of following every match.
+- **Not blocking**: a failed unlock is logged and leaves the sign-in's
+  result as it is.
+- **Drafts**: Play shows achievements to testers while they are drafts; for
+  everyone else they unlock once published (the owner's Publish in Play
+  Console). The deploy's sync of the definitions still needs the service
+  account's access to the Play Games project (manual step 141).
+- **Acceptance**: unit specs for the matching (earned × locked × Play's
+  list), an emulator spec with an injected Games API, the privacy policy
+  (the achievements the game reports to Play Games), and the phone check.
 
 ## Decided
 
+- The achievement sync is step 3 of this issue, its own PR after step 2:
+  it rides on step 2's code handover, and keeping it apart keeps step 2's
+  PR (app, function, rules, game, privacy) reviewable.
 - The reward is the achievement Lab Member (approved 2026-11-21); the owner
   publishes it on Play when they want.
