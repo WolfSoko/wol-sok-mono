@@ -107,7 +107,7 @@ dimension gets no data since and can be archived in GA4.
 | `level_up`                                                                                                           | `level` (rank number), `character` (rank id)                                                                                                                      | a match's XP reached a new rank                               |
 | `spend_virtual_currency`                                                                                             | `virtual_currency_name: dna`, `value`, `item_name`, `item_category` (`gene`, `weapon`, `skin`)                                                                    | `EvolutionService`                                            |
 | `setting_changed`                                                                                                    | `setting`, `value` (`reported` in `SETTINGS`, and `simulation`; a value set again counts as none)                                                                 | `GameSettingsService.set`, `SimulationOverrideService.choose` |
-| `login` / `login_failed` / `logout`                                                                                  | `method: google` / `reason` (`cancelled`, `failed`)                                                                                                               | `SignIn`                                                      |
+| `login` / `login_failed` / `logout`                                                                                  | `method: google` or `play_games` (a guest signed in by the Android app's Play Games handover) / `reason` (`cancelled`, `failed`)                                  | `SignIn`                                                      |
 | `profile_saved`                                                                                                      | `first`                                                                                                                                                           | `SocialService.saveProfile`                                   |
 | `friend_request_sent`, `friend_request_answered` (`accepted`), `friend_removed`, `invite_accepted`, `challenge_sent` |                                                                                                                                                                   | `SocialService`                                               |
 | `share`                                                                                                              | `method` (`native`, `copy`), `content_type` (`friend_invite`, `ghost_run`)                                                                                        | friends screen, result screen                                 |
@@ -124,7 +124,8 @@ dimension gets no data since and can be archived in GA4.
 
 User properties (`reportUserProperties`, from the stage): `language`,
 `platform` (`browser`, `web_app`, `android_app`), `account` (`guest`,
-`google`, `device`), `rank`, `free_play`.
+`google`, also for an account the Android app signed in to with Play Games,
+`device`), `rank`, `free_play`.
 
 The Android app's own Firebase Analytics (installs, launches) reports to the
 same project as its Android stream; the game inside the app reports to the web
