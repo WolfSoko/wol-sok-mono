@@ -209,6 +209,14 @@
               [totals]="progress.totals()"
               [xp]="progress.xp()"
               (back)="flow.show('menu')"
+              (openAchievements)="flow.show('achievements')"
+            />
+          }
+          @case ("achievements") {
+            <feat-lazy-bac-game-achievements
+              class="screen"
+              [achievements]="progress.achievements()"
+              (back)="flow.show('profile')"
             />
           }
           @case ("friends") {

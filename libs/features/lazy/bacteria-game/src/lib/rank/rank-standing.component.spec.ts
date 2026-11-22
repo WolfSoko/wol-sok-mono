@@ -21,6 +21,17 @@ describe('RankStandingComponent', () => {
     );
   });
 
+  it('leaves the emblem out when told to', () => {
+    const fixture = TestBed.createComponent(RankStandingComponent);
+    fixture.componentRef.setInput('xp', 1240);
+    fixture.componentRef.setInput('emblem', false);
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+
+    expect(host.querySelector('feat-lazy-bac-game-rank-badge')).toBeNull();
+    expect(host.querySelector('.rank-name')?.textContent).toBe('Bacillus');
+  });
+
   it('has no next rank at the top', () => {
     expect(render(20_000).querySelector('.xp-line')?.textContent).not.toContain(
       ' to '

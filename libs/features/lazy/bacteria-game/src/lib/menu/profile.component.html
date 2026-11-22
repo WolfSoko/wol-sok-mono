@@ -6,6 +6,13 @@
 </feat-lazy-bac-game-screen-header>
 
 <div class="body">
+  <feat-lazy-bac-game-profile-card
+    class="card"
+    [xp]="xp()"
+    [earned]="earnedCount()"
+    [total]="achievementCount"
+    (achievements)="openAchievements.emit()"
+  />
   @if (social.available) {
     <section class="online" aria-labelledby="online-title">
       <h3 id="online-title" class="section-title">
@@ -15,7 +22,6 @@
     </section>
   }
   <section class="summary" [attr.aria-label]="'profile.summary' | t">
-    <feat-lazy-bac-game-rank-standing [xp]="xp()" [badgeSize]="68" />
     <ol class="ranks" [attr.aria-label]="'profile.ranks' | t">
       @let rank = standing();
       @for (each of ranks; track each.id; let i = $index) {
@@ -75,36 +81,6 @@
           <feat-lazy-bac-game-medallion [tier]="metal.tier" [size]="40" />
           <span class="tally-count">{{ metal.count }}</span
           >{{ " " }}<span class="tally-name">{{ metal.name | t }}</span>
-        </li>
-      }
-    </ul>
-  </section>
-
-  <section class="achievements" aria-labelledby="achievements-title">
-    <h3 id="achievements-title" class="section-title">
-      {{ "profile.achievements.title" | t }}
-      <span class="of"
-        >{{ earnedCount() }}
-        {{ "common.of" | t: { total: achievementCount } }}</span
-      >
-    </h3>
-    <ul>
-      @for (achievement of achievementList(); track achievement.id) {
-        <li [class.earned]="achievement.earnedOn !== null">
-          @let name = achievement.name | t;
-          <span class="badge" aria-hidden="true">{{ name[0] }}</span>
-          <span class="achievement-text">
-            <span class="achievement-name">{{ name }}</span>
-            <span class="achievement-note">
-              @if (achievement.earnedOn; as day) {
-                {{
-                  "profile.achievements.earned" | t: { date: formatDay()(day) }
-                }}
-              } @else {
-                {{ achievement.condition | gameText }}
-              }
-            </span>
-          </span>
         </li>
       }
     </ul>

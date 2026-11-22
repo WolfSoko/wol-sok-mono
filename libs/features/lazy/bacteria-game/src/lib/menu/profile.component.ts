@@ -7,8 +7,6 @@ import {
   output,
 } from '@angular/core';
 import {
-  achievementKeys,
-  achievementTexts,
   difficultyKeys,
   GameTextPipe,
   levelNameText,
@@ -19,6 +17,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { MedallionComponent } from '../medallion/medallion.component';
 import { AccountComponent } from './account.component';
+import { ProfileCardComponent } from './profile-card.component';
 import { ScreenHeaderComponent } from './screen-header.component';
 import { ProfileEditorComponent } from '../social/profile-editor.component';
 import { SocialService } from '../social/social.service';
@@ -35,13 +34,13 @@ import {
   rankFor,
   RANKS,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { RankStandingComponent } from '../rank/rank-standing.component';
 import { AdSlotComponent } from '../support/ads/ad-slot.component';
 
 /**
- * The player's profile: what they have done over all their matches, every
- * medallion won, level by level and difficulty by difficulty, and the
- * achievements, earned or still to earn - and where it is all kept.
+ * The player's profile: their player card on top, which leads to the
+ * achievements, the online profile with what others and the public see,
+ * what they have done over all their matches, every medallion won, level
+ * by level and difficulty by difficulty - and where it is all kept.
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile',
@@ -50,8 +49,8 @@ import { AdSlotComponent } from '../support/ads/ad-slot.component';
     AdSlotComponent,
     GameTextPipe,
     MedallionComponent,
+    ProfileCardComponent,
     ProfileEditorComponent,
-    RankStandingComponent,
     ScreenHeaderComponent,
     TranslatePipe,
   ],
@@ -62,9 +61,8 @@ import { AdSlotComponent } from '../support/ads/ad-slot.component';
 export class ProfileComponent {
   /** The online profile is edited here, where the game has its cloud. */
   protected readonly social = inject(SocialService);
-  private readonly i18n = inject(I18nService);
   /** The locale the figures are written for. */
-  protected readonly locale = this.i18n.locale;
+  protected readonly locale = inject(I18nService).locale;
 
   /** Every medallion held, by level id, then by difficulty. */
   public readonly medals = input<Progress['medals']>({});
@@ -76,6 +74,8 @@ export class ProfileComponent {
   public readonly xp = input(0);
 
   public readonly back = output<void>();
+  /** Opens the achievements, from the player card. */
+  public readonly openAchievements = output<void>();
 
   protected readonly difficulties = BOT_DIFFICULTIES.map(({ id }) => ({
     id,
@@ -125,33 +125,10 @@ export class ProfileComponent {
   protected readonly dna = computed(() => dnaEarned(this.xp()));
   protected readonly ranks = RANKS.map(({ id }) => ({ id, name: rankKey(id) }));
 
-  /** Every achievement, earned ones with their day, the rest with their condition. */
-  protected readonly achievementList = computed(() =>
-    ACHIEVEMENTS.map(({ id }) => ({
-      id,
-      name: achievementKeys(id).name,
-      condition: achievementTexts(id).condition,
-      earnedOn: this.achievements()[id] ?? null,
-    }))
-  );
-
-  /** A day as the profile shows it - "19 Oct 2026" - for the locale. */
-  protected readonly formatDay = computed(() => {
-    const format = new Intl.DateTimeFormat(this.i18n.locale(), {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-      timeZone: 'UTC',
-    });
-    // The day is kept as "2026-10-19", the player's own calendar day.
-    return (day: string): string => {
-      const [year, month, date] = day.split('-').map(Number);
-      return format.format(new Date(Date.UTC(year, month - 1, date)));
-    };
-  });
-
+  /** The achievements earned, of those the game has. */
   protected readonly earnedCount = computed(
-    () => Object.keys(this.achievements()).length
+    () =>
+      ACHIEVEMENTS.filter(({ id }) => this.achievements()[id] != null).length
   );
 
   protected readonly achievementCount = ACHIEVEMENTS.length;

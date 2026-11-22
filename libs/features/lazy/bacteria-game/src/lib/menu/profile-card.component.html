@@ -1,0 +1,54 @@
+@let rank = standing();
+@let rankName = rankKey(rank.rank.id) | t;
+@let shown = player();
+<div class="emblem">
+  @if (shown) {
+    <span class="dish">
+      <feat-lazy-bac-game-avatar
+        [avatar]="shown.avatar"
+        [size]="96"
+        [label]="shown.name"
+      />
+    </span>
+    <feat-lazy-bac-game-rank-badge
+      class="pin"
+      [name]="rankName"
+      [number]="rank.number"
+      [size]="44"
+    />
+  } @else {
+    <span class="dish">
+      <feat-lazy-bac-game-rank-badge
+        [name]="rankName"
+        [number]="rank.number"
+        [size]="72"
+      />
+    </span>
+  }
+</div>
+
+<div class="who">
+  <h3 class="name">{{ shown?.name ?? ("profile.card.local" | t) }}</h3>
+  @if (shown?.motto; as motto) {
+    <p class="motto">{{ "profile.card.motto" | t: { motto } }}</p>
+  }
+  <feat-lazy-bac-game-rank-standing
+    class="standing"
+    [xp]="xp()"
+    [emblem]="false"
+  />
+</div>
+
+<button type="button" class="trophies" (click)="achievements.emit()">
+  <mat-icon class="trophy" aria-hidden="true">emoji_events</mat-icon>
+  <span class="trophies-text">
+    <span class="trophies-title">{{ "profile.achievements.title" | t }}</span>
+    <span class="trophies-count"
+      >{{ earned() }} {{ "common.of" | t: { total: total() } }}</span
+    >
+    <span class="trophies-bar" aria-hidden="true"
+      ><span class="trophies-fill" [style.width.%]="earnedPercent()"></span
+    ></span>
+  </span>
+  <mat-icon class="chevron" aria-hidden="true">chevron_right</mat-icon>
+</button>

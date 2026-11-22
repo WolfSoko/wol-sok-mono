@@ -1,5 +1,12 @@
 import { TestBed } from '@angular/core/testing';
+import { FakeGameAccount } from '../../testing/fake-game-account';
+import { provideFakeGameCloud } from '../../testing/fake-game-cloud';
+import {
+  FakeGamePresence,
+  FakeGameSocial,
+} from '../../testing/fake-game-social';
 import { I18nService } from '../i18n/i18n.service';
+import { GameAccount } from '../storage/game-account';
 import { ACHIEVEMENT_IDS, LEVELS } from '@wolsok/feat-shared-bacteria-engine';
 import { ProfileComponent } from './profile.component';
 
@@ -62,19 +69,32 @@ describe('ProfileComponent', () => {
     expect(figures).toContain('212');
   });
 
-  it('lists every achievement, earned ones with their day', () => {
+  it('opens with the player card, which leads to the achievements', () => {
+    const fixture = TestBed.createComponent(ProfileComponent);
+    fixture.componentRef.setInput('achievements', {
+      blitz: '2026-10-19',
+      'lab-member': '2026-11-20',
+    });
+    fixture.detectChanges();
+    const host: HTMLElement = fixture.nativeElement;
+    const opened = jest.fn();
+    fixture.componentInstance.openAchievements.subscribe(opened);
+
+    const body = host.querySelector('.body');
+    expect(body?.firstElementChild?.tagName.toLowerCase()).toBe(
+      'feat-lazy-bac-game-profile-card'
+    );
+    const trophies = host.querySelector<HTMLButtonElement>('button.trophies');
+    expect(trophies?.textContent).toContain(`2 of ${ACHIEVEMENT_IDS.length}`);
+    trophies?.click();
+    expect(opened).toHaveBeenCalled();
+  });
+
+  it('no longer lists the achievements itself', () => {
     const host = render({}, { achievements: { blitz: '2026-10-19' } });
 
-    const items = Array.from(host.querySelectorAll('.achievements li'));
-    expect(items).toHaveLength(ACHIEVEMENT_IDS.length);
-    const blitz = items.find((li) => li.textContent?.includes('Blitz'));
-    expect(blitz?.classList.contains('earned')).toBe(true);
-    expect(blitz?.textContent).toContain('Earned 19 Oct 2026');
-    const siege = items.find((li) => li.textContent?.includes('Siege'));
-    expect(siege?.textContent).toContain('5 minutes or more');
-    expect(host.querySelector('.achievements h3')?.textContent).toContain(
-      `1 of ${ACHIEVEMENT_IDS.length}`
-    );
+    expect(host.querySelector('.achievements')).toBeNull();
+    expect(host.textContent).not.toContain('Earned 19 Oct 2026');
   });
 
   it('shows all the DNA the XP has grown', () => {
@@ -85,7 +105,7 @@ describe('ProfileComponent', () => {
     );
   });
 
-  it('shows the rank and the way to the next', () => {
+  it('shows the rank on the card and on the ladder', () => {
     const host = render(
       {},
       {
@@ -123,9 +143,44 @@ describe('ProfileComponent', () => {
     expect(figures).toContain('Level gewonnen');
     expect(figures).toContain('27 von 42');
     expect(figures).toContain('18.430');
-    expect(host.querySelector('.achievements')?.textContent).toContain(
-      'Freigeschaltet am 19. Okt. 2026'
+    expect(host.querySelector('button.trophies')?.textContent).toContain(
+      `1 von ${ACHIEVEMENT_IDS.length}`
     );
     expect(host.querySelector('thead')?.textContent).toContain('Leicht');
+  });
+
+  describe('with the cloud', () => {
+    beforeEach(() => {
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: GameAccount, useValue: new FakeGameAccount('ada') },
+          provideFakeGameCloud({
+            social: new FakeGameSocial(),
+            presence: new FakeGamePresence(),
+          }),
+        ],
+      });
+    });
+
+    it('keeps the online profile with every privacy setting below the card', async () => {
+      const fixture = TestBed.createComponent(ProfileComponent);
+      fixture.detectChanges();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      const host: HTMLElement = fixture.nativeElement;
+
+      const card = host.querySelector('feat-lazy-bac-game-profile-card');
+      const editor = host.querySelector('feat-lazy-bac-game-profile-editor');
+      expect(card?.nextElementSibling?.contains(editor)).toBe(true);
+      const toggles = Array.from(host.querySelectorAll('mat-slide-toggle')).map(
+        (toggle) => toggle.textContent?.trim()
+      );
+      expect(toggles).toEqual([
+        "Friends see when I'm online",
+        'Show my name in public',
+        'Keep me off the leaderboards',
+        'Keep my matches out of the public gallery',
+      ]);
+    });
   });
 });
