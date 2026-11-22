@@ -4,6 +4,7 @@ import type {
   GameAccount,
   PlayerProfile,
   PlayerSwitch,
+  AdoptionReceipt,
   SignInOutcome,
 } from '../lib/storage/game-account';
 import type { GameStorage } from '../lib/storage/game-storage';
@@ -64,8 +65,16 @@ export class FakeGameAccount implements GameAccount {
     this.storages.set(playerId, new LateGameStorage(stored));
   }
 
-  public switchTo(playerId: string | null, adoptsGuest = false): void {
-    this.switches.next({ playerId, adoptsGuest });
+  public switchTo(
+    playerId: string | null,
+    adoptsGuest = false,
+    adoption?: AdoptionReceipt
+  ): void {
+    this.switches.next({
+      playerId,
+      adoptsGuest,
+      ...(adoption === undefined ? {} : { adoption }),
+    });
   }
 
   /** Answers everything asked of every player's storage so far. */

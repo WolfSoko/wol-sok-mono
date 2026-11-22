@@ -238,6 +238,24 @@ export const PLAYER_DATA: readonly PlayerData[] = [
     erase: 'field',
     field: 'uid',
   },
+  // A Google account adopting a Play-only account (#3187,
+  // `play-games/adoption.ts`): both live a day at most. An adoption also
+  // names the adopted account in `from`; that account is deleted only
+  // after 90 idle days, long after TTL took the adoption.
+  {
+    store: 'firestore',
+    path: 'playGamesReleases/{uid}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
+  {
+    store: 'firestore',
+    path: 'playGamesAdoptions/{id}',
+    part: 'account',
+    erase: 'field',
+    field: 'uid',
+  },
   {
     store: 'firestore',
     path: 'banTombstones/{id}',

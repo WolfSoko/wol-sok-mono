@@ -20,11 +20,13 @@ const OWNER_TOKEN = fakeToken({ admin: true, email_verified: true });
 
 describe('FirebaseGameAccount', () => {
   let auth: FakeFirebaseAuth;
+  let firebase: FakeFirebase;
   let account: FirebaseGameAccount;
   let switches: PlayerSwitch[];
 
   beforeEach(async () => {
     const fake = new FakeFirebase();
+    firebase = fake;
     auth = fake.auth;
     account = new FirebaseGameAccount(fake.connection());
     switches = [];
@@ -145,6 +147,77 @@ describe('FirebaseGameAccount', () => {
 
       expect(auth.linkWithPopup).toHaveBeenCalled();
       expect(auth.signInWithPopup).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('a Play-only account adopted by a Google account that played elsewhere (#3187)', () => {
+    /** The documents of a collection, by path. */
+    const docsOf = (collection: string) =>
+      [...firebase.docs].filter(([path]) => path.startsWith(`${collection}/`));
+
+    beforeEach(() => {
+      auth.become(playGamesUser('a', 'PlayAda'));
+      auth.linkWithPopup.mockRejectedValue({
+        code: 'auth/credential-already-in-use',
+        credential: 'b',
+      });
+    });
+
+    /** A player document that lands its adoption as `stored` says. */
+    const document = (stored: Promise<boolean>) =>
+      account.players.subscribe(({ adoption }) => adoption?.landed(stored));
+
+    it('releases the account, then hands its link over once every document landed', async () => {
+      document(Promise.resolve(true));
+      document(Promise.resolve(true));
+
+      expect(await account.signIn()).toBe('signed-in');
+      await settle();
+
+      const [[, release]] = docsOf('playGamesReleases');
+      const nonce = release['nonce'];
+      expect(nonce).toMatch(/^[0-9a-f]{32}$/);
+      expect(release['uid']).toBe('a');
+      expect(switches.at(-1)).toMatchObject({
+        playerId: 'b',
+        adoptsGuest: true,
+        adoption: { id: nonce },
+      });
+      expect(docsOf('playGamesAdoptions').map(([, data]) => data)).toEqual([
+        expect.objectContaining({ uid: 'b', from: 'a', nonce }),
+      ]);
+    });
+
+    it('hands nothing over while a document did not land', async () => {
+      document(Promise.resolve(true));
+      document(Promise.resolve(false));
+
+      await account.signIn();
+      await settle();
+
+      expect(docsOf('playGamesReleases')).toHaveLength(1);
+      expect(docsOf('playGamesAdoptions')).toEqual([]);
+    });
+
+    it('switches without an adoption when the release is refused', async () => {
+      firebase.refused.add('playGamesReleases/a');
+
+      expect(await account.signIn()).toBe('signed-in');
+      await settle();
+
+      expect(switches.at(-1)).toEqual({ playerId: 'b', adoptsGuest: true });
+      expect(docsOf('playGamesAdoptions')).toEqual([]);
+    });
+
+    it('releases nothing for a guest', async () => {
+      auth.become(guestUser('guest-2'));
+      await settle();
+
+      await account.signIn();
+      await settle();
+
+      expect(switches.at(-1)).toEqual({ playerId: 'b', adoptsGuest: true });
+      expect(docsOf('playGamesReleases')).toEqual([]);
     });
   });
 

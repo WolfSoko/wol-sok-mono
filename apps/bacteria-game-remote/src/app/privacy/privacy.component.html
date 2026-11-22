@@ -612,6 +612,16 @@
       Abs. 1 lit. b DSGVO, die Bereitstellung deines Spielkontos. Die
       Verknüpfung besteht, bis du dein Konto löschst (Abschnitt 12).
     </p>
+    <p>
+      Meldest du dich in einem so verknüpften Konto mit einem Google-Konto an,
+      das schon anderswo gespielt hat, übernimmt das Google-Konto deinen
+      Fortschritt, und unsere Cloud Functions verknüpfen deinen
+      Play-Spiele-Spieler danach mit dem Google-Konto. Dafür legt das Spiel zwei
+      kurze Dokumente mit den User-IDs beider Konten und einer Zufallszahl an:
+      Das erste löschen unsere Cloud Functions, sobald es genutzt ist, und
+      Firestore löscht beide spätestens nach einem Tag. Das frühere Konto ist
+      danach wieder ein Gastkonto und wird nach 90 Tagen ohne Nutzung gelöscht.
+    </p>
 
     @switch (ads.networkName) {
       @case ("adinplay") {
@@ -1504,6 +1514,16 @@
       any more and is not deleted after 90 days without use. The legal basis is
       Art. 6(1)(b) GDPR, providing your game account. The link lasts until you
       delete your account (section 12).
+    </p>
+    <p>
+      If you sign in to an account linked this way with a Google account that
+      has already played elsewhere, the Google account takes over your progress,
+      and our Cloud Functions then link your Play Games player to the Google
+      account. For this the game writes two short documents with the user IDs of
+      both accounts and a random number: our Cloud Functions delete the first
+      once it is used, and Firestore deletes both after a day at the latest. The
+      earlier account is then a guest account again and is deleted after 90 days
+      without use.
     </p>
 
     @switch (ads.networkName) {

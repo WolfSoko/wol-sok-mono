@@ -204,6 +204,18 @@
       "indexes": []
     },
     {
+      "collectionGroup": "playGamesReleases",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "playGamesAdoptions",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "counters",
       "fieldPath": "expireAt",
       "ttl": true,

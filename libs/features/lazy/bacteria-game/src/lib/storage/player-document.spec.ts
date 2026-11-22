@@ -222,6 +222,66 @@ describe('playerDocument', () => {
     });
   });
 
+  describe('an adoption the functions check (#3187)', () => {
+    /** Switches to ada with a receipt; answers the landings it took. */
+    async function switchWithReceipt(): Promise<{
+      update: jest.SpyInstance;
+      landings: Promise<boolean>[];
+    }> {
+      account.flush();
+      account.seed('ada', { [KEY]: ['silver'] });
+      const update = jest.spyOn(account.storageOf('ada'), 'update');
+      const landings: Promise<boolean>[] = [];
+      account.switchTo('ada', true, {
+        id: 'nonce-1',
+        landed: (stored) => landings.push(stored),
+      });
+      await answerAll();
+      return { update, landings };
+    }
+
+    it('adopts the guest under the receipt id and reports the landing', async () => {
+      create({ stored: { [KEY]: ['gold'] } });
+
+      const { update, landings } = await switchWithReceipt();
+
+      expect(update).toHaveBeenCalledWith(KEY, expect.any(Function), {
+        once: 'nonce-1',
+      });
+      expect(account.storageOf('ada').stored(KEY)).toEqual(['gold', 'silver']);
+      expect(await Promise.all(landings)).toEqual([true]);
+    });
+
+    it('lands no receipt for a value that never loaded', async () => {
+      create({ stored: { [KEY]: ['gold'] } });
+      account.seed('ada', {});
+      const update = jest.spyOn(account.storageOf('ada'), 'update');
+      const landings: Promise<boolean>[] = [];
+
+      account.switchTo('ada', true, {
+        id: 'nonce-1',
+        landed: (stored) => landings.push(stored),
+      });
+      await answerAll();
+
+      expect(await Promise.all(landings)).toEqual([false]);
+      expect(update).not.toHaveBeenCalledWith(KEY, expect.any(Function), {
+        once: 'nonce-1',
+      });
+    });
+
+    it('lists the receipt id for a guest who held nothing too', async () => {
+      create();
+
+      const { update, landings } = await switchWithReceipt();
+
+      expect(update).toHaveBeenCalledWith(KEY, expect.any(Function), {
+        once: 'nonce-1',
+      });
+      expect(await Promise.all(landings)).toEqual([true]);
+    });
+  });
+
   describe('an adoption the cloud has not stored yet', () => {
     const ADOPTIONS = `${KEY}.adoptions`;
 

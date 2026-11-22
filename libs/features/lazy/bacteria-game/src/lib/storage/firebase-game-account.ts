@@ -11,6 +11,11 @@ import type {
   SignInOutcome,
 } from './game-account';
 import type { PlayGamesToken } from './game-play-games';
+import {
+  type PendingAdoption,
+  releasePlayOnlyAccount,
+  writePlayGamesAdoption,
+} from './play-games-adoption';
 
 /** Sign-in errors that mean the player closed the popup or started another. */
 const CANCELLED = new Set([
@@ -51,6 +56,12 @@ export class FirebaseGameAccount implements GameAccount {
   );
   /** Set while this tab signs in to a Google account that played elsewhere. */
   private adoptingGuest = false;
+  /**
+   * Set while a Play-only account, released for it, signs in to a Google
+   * account that played elsewhere: its Play Games link moves along once
+   * its progress landed (#3187).
+   */
+  private pendingAdoption: PendingAdoption | null = null;
 
   public constructor(private readonly connection: FirebaseConnection) {
     const { auth, authSdk } = connection;
@@ -61,9 +72,10 @@ export class FirebaseGameAccount implements GameAccount {
       const playerId = user?.uid ?? null;
       if (playerId !== this.playerId) {
         this.playerId = playerId;
-        this.switches.next({ playerId, adoptsGuest: this.adoptingGuest });
+        this.switchTo(playerId);
       }
       this.adoptingGuest = false;
+      this.pendingAdoption = null;
       if (user === null) {
         void this.signInAsGuest();
       }
@@ -108,13 +120,19 @@ export class FirebaseGameAccount implements GameAccount {
       return 'failed';
     }
     // The Google account has played elsewhere: it takes over from the
-    // guest, and the guest's progress joins it.
+    // guest, and the guest's progress joins it. A Play-only account
+    // releases itself first, so its Play Games link can follow.
+    this.pendingAdoption =
+      user !== null && isPlayOnly(user)
+        ? await releasePlayOnlyAccount(this.connection, user.uid)
+        : null;
     this.adoptingGuest = true;
     try {
       await authSdk.signInWithCredential(auth, google);
       return 'signed-in';
     } catch (signInError) {
       this.adoptingGuest = false;
+      this.pendingAdoption = null;
       console.error('Could not sign in with Google', signInError);
       return 'failed';
     }
@@ -149,6 +167,51 @@ export class FirebaseGameAccount implements GameAccount {
   public async signOut(): Promise<void> {
     const { auth, authSdk } = this.connection;
     await authSdk.signOut(auth);
+  }
+
+  /**
+   * Tells the switch to `playerId`. With a pending adoption, every player
+   * document reports its landing while it hears of the switch, and the
+   * adoption is written only once all of them landed: a link never moves
+   * ahead of the progress.
+   */
+  private switchTo(playerId: string | null): void {
+    const pending =
+      this.adoptingGuest && playerId !== null ? this.pendingAdoption : null;
+    const landings: Promise<boolean>[] = [];
+    this.switches.next({
+      playerId,
+      adoptsGuest: this.adoptingGuest,
+      ...(pending === null
+        ? {}
+        : {
+            adoption: {
+              id: pending.nonce,
+              landed: (stored: Promise<boolean>) => landings.push(stored),
+            },
+          }),
+    });
+    if (pending !== null && playerId !== null) {
+      void this.handOverLink(playerId, pending, landings);
+    }
+  }
+
+  /** Writes the adoption once every landing stored its value. */
+  private async handOverLink(
+    writer: string,
+    pending: PendingAdoption,
+    landings: readonly Promise<boolean>[]
+  ): Promise<void> {
+    let landed: boolean[];
+    try {
+      landed = await Promise.all(landings);
+    } catch (error) {
+      console.warn('Could not adopt the Play Games account', error);
+      return;
+    }
+    if (landed.every(Boolean)) {
+      await writePlayGamesAdoption(this.connection, writer, pending);
+    }
   }
 
   /**
@@ -195,6 +258,11 @@ export class FirebaseGameAccount implements GameAccount {
       }
     }
   }
+}
+
+/** An account of a Play Games player alone: a custom token, no provider. */
+function isPlayOnly(user: User): boolean {
+  return !user.isAnonymous && user.providerData.length === 0;
 }
 
 function profileOf(user: User): PlayerProfile {

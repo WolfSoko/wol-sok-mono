@@ -89,6 +89,18 @@ export type {
   PlayGamesSignInError,
 } from './lib/state/cloud/play-games-sign-in';
 export {
+  ADOPTION_WINDOW_MS,
+  isAdoptionNonce,
+  parsePlayGamesAdoption,
+  PLAY_GAMES_ADOPTIONS,
+  PLAY_GAMES_NONCE_LENGTH,
+  PLAY_GAMES_RELEASES,
+} from './lib/state/cloud/play-games-adoption';
+export type {
+  PlayGamesAdoption,
+  PlayGamesAdoptionError,
+} from './lib/state/cloud/play-games-adoption';
+export {
   ATTEMPT_DAYS,
   attemptExpireAt,
   attemptSeed,
