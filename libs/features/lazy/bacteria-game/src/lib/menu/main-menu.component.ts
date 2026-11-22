@@ -37,6 +37,11 @@ import { RankStandingComponent } from '../rank/rank-standing.component';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaCounterComponent } from './dna-counter.component';
 import { DnaHelixComponent } from './dna-helix.component';
+import { BacteriumMenuComponent } from './bacterium-menu.component';
+import {
+  type BacteriumItemId,
+  bacteriumItems,
+} from './bacterium/bacterium-items';
 import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
@@ -89,6 +94,7 @@ export type MenuPage =
     GhostChallengeComponent,
     DnaCounterComponent,
     DnaHelixComponent,
+    BacteriumMenuComponent,
     InstallBannerComponent,
     StatsBannerComponent,
     AccountChipComponent,
@@ -130,6 +136,8 @@ export class MainMenuComponent {
   public readonly fullscreen = input(false);
   /** The training missions done - the way to the training shows until all are. */
   public readonly missionsDone = input(0);
+  /** True where online matches can be played: the bacterium's online part. */
+  public readonly onlineAvailable = input(false);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();
@@ -137,6 +145,8 @@ export class MainMenuComponent {
   public readonly continueCampaign = output<void>();
   /** To the training's missions. */
   public readonly training = output<void>();
+  /** Straight to the online lobby, from the bacterium's online part. */
+  public readonly online = output<void>();
   public readonly open = output<MenuPage>();
   public readonly soundChange = output<boolean>();
   /** Onto the whole screen (true) or back into the page (false). */
@@ -188,6 +198,26 @@ export class MainMenuComponent {
   protected readonly showsBoards = computed(
     () => this.cloudAvailable() && this.toggles().leaderboards
   );
+  /**
+   * The actions as the parts of a bacterium (#3194) while the owner's
+   * toggle shows it; then only the utilities stay tiles.
+   */
+  protected readonly showsBacterium = computed(
+    () => this.toggles().bacteriumMenu
+  );
+  /** The bacterium's parts: what the tiles and buttons offer, and online. */
+  protected readonly bacteriumItems = computed(() =>
+    bacteriumItems({
+      training: this.missionsDone() < this.totalMissions,
+      online: this.onlineAvailable(),
+      friends: this.cloudAvailable(),
+      leaderboards: this.showsBoards(),
+      colonyDna: this.colonyDna(),
+      evolveDna: this.evolveDna(),
+      friendRequests: this.friendRequests(),
+      gallery: { url: this.galleryUrl(), external: !this.onSite },
+    })
+  );
 
   protected readonly support = inject(GameSupport);
   protected readonly installOffer = inject(InstallOffer);
@@ -218,6 +248,26 @@ export class MainMenuComponent {
   );
   private readonly dialog = inject(MatDialog);
   private readonly analytics = injectGameAnalytics();
+
+  /** Where a part of the bacterium leads, as its tile or button did. */
+  protected pickPart(id: BacteriumItemId): void {
+    switch (id) {
+      case 'gallery':
+        // A link: the browser follows it.
+        return;
+      case 'play':
+        this.busyEmit(this.newGame);
+        return;
+      case 'online':
+        this.busyEmit(this.online);
+        return;
+      case 'training':
+        this.busyEmit(this.training);
+        return;
+      default:
+        this.open.emit(id);
+    }
+  }
 
   /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */
   protected openTips(): void {

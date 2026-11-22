@@ -22,6 +22,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { LabPass } from '../guest/lab-pass.service';
 import { InstallOffer } from '../support/install-offer.service';
 import { MainMenuComponent } from './main-menu.component';
+import { BACTERIUM_RENDERER } from './bacterium/bacterium-renderer';
 
 const CAMPAIGN: CampaignSummary = {
   openLevels: 5,
@@ -279,6 +280,122 @@ describe('MainMenuComponent', () => {
     toggles.next({ leaderboards: 'off' });
     menu.detectChanges();
     expect(tile()).toBeUndefined();
+  });
+
+  describe('as a bacterium (#3194)', () => {
+    let toggles: BehaviorSubject<Partial<FeatureToggleStates>>;
+    let account: FakeGameAccount;
+    let menu: ComponentFixture<MainMenuComponent>;
+
+    beforeEach(() => {
+      toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
+      account = new FakeGameAccount();
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [
+          provideGameToggles(toggles),
+          { provide: GameAccount, useValue: account },
+          // No WebGL in a spec: the CSS cell stands in.
+          { provide: BACTERIUM_RENDERER, useValue: () => null },
+        ],
+      });
+      menu = TestBed.createComponent(MainMenuComponent);
+      menu.componentRef.setInput('campaign', CAMPAIGN);
+      menu.componentRef.setInput('onlineAvailable', true);
+      menu.detectChanges();
+    });
+
+    const element = () => menu.nativeElement as HTMLElement;
+    const cell = () =>
+      element().querySelector('feat-lazy-bac-game-bacterium-menu');
+    const part = (id: string) =>
+      element().querySelector<HTMLElement>(`[data-part="${id}"] .spot`);
+    const tileNames = () =>
+      Array.from(element().querySelectorAll('.tiles .tile')).map(
+        (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+      );
+
+    it('stays the buttons and tiles while the toggle is off', () => {
+      expect(cell()).toBeNull();
+      expect(element().querySelector('.actions')).not.toBeNull();
+    });
+
+    it('shows to the owner only while the toggle is admin', () => {
+      toggles.next({ bacteriumMenu: 'admin' });
+      menu.detectChanges();
+      expect(cell()).toBeNull();
+
+      account.owner.set(true);
+      menu.detectChanges();
+      expect(cell()).not.toBeNull();
+      expect(element().querySelector('.actions')).toBeNull();
+
+      account.owner.set(false);
+      menu.detectChanges();
+      expect(cell()).toBeNull();
+    });
+
+    it('shows to everyone while the toggle is on, the utilities as tiles', () => {
+      toggles.next({ bacteriumMenu: 'on' });
+      menu.detectChanges();
+      expect(cell()).not.toBeNull();
+      expect(tileNames()).toEqual([
+        expect.stringContaining('Settings'),
+        expect.stringContaining('How to play'),
+      ]);
+    });
+
+    it('leads each part where its tile or button led, online too', async () => {
+      toggles.next({ bacteriumMenu: 'on' });
+      menu.detectChanges();
+      const component = menu.componentInstance;
+      const newGame = jest.fn();
+      const online = jest.fn();
+      const training = jest.fn();
+      const open = jest.fn();
+      component.newGame.subscribe(newGame);
+      component.online.subscribe(online);
+      component.training.subscribe(training);
+      component.open.subscribe(open);
+
+      part('play')?.click();
+      await menu.whenStable();
+      part('online')?.click();
+      await menu.whenStable();
+      part('training')?.click();
+      await menu.whenStable();
+      for (const id of ['colony', 'evolution', 'profile', 'my-matches']) {
+        part(id)?.click();
+      }
+
+      expect(newGame).toHaveBeenCalledTimes(1);
+      expect(online).toHaveBeenCalledTimes(1);
+      expect(training).toHaveBeenCalledTimes(1);
+      expect(open.mock.calls).toEqual([
+        ['colony'],
+        ['evolution'],
+        ['profile'],
+        ['my-matches'],
+      ]);
+      expect(part('gallery')?.getAttribute('href')).toContain('/replays');
+    });
+
+    it('offers online, friends and the boards only where the tiles would', () => {
+      toggles.next({ bacteriumMenu: 'on' });
+      menu.componentRef.setInput('onlineAvailable', false);
+      menu.detectChanges();
+      expect(part('online')).toBeNull();
+      expect(part('friends')).toBeNull();
+      expect(part('leaderboards')).toBeNull();
+
+      menu.componentRef.setInput('onlineAvailable', true);
+      menu.componentRef.setInput('cloudAvailable', true);
+      menu.componentRef.setInput('friendRequests', 2);
+      menu.detectChanges();
+      expect(part('online')).not.toBeNull();
+      expect(part('friends')?.textContent).toContain('2 friend requests');
+      expect(part('leaderboards')).not.toBeNull();
+    });
   });
 
   it('groups its tiles: progress, then players and matches, then the game', () => {

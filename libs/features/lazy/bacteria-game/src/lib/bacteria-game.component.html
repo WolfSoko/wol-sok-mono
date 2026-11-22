@@ -139,6 +139,8 @@
               (continueCampaign)="flow.continueCampaign()"
               [missionsDone]="progress.missionsDone()"
               (training)="flow.openTraining()"
+              [onlineAvailable]="onlineFlow.available"
+              (online)="flow.openNewGameOn({ kind: 'online', step: 'start' })"
               (open)="flow.show($event)"
               (soundChange)="setSound($event)"
               [fullscreen]="stageFullscreen.fullscreen()"

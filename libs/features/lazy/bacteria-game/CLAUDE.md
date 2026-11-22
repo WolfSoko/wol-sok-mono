@@ -278,9 +278,13 @@ storage until then. Settings stay with the device either way.
   from `FeatureTogglesService.toggles` only: `FEATURE_TOGGLES` at first,
   merged with what Remote Config says once it answered. The game asks
   (`FeatureTogglesService.start()`) after its first render, so Remote
-  Config stays off the start. A feature that must not change midway reads
+  Config stays off the start. Each toggle has a state, `off`, `admin` or
+  `on` (#3194): the port gives states, `FeatureTogglesService.states` keeps
+  them and `toggles` resolves them with `GameAccount.owner` (`admin` is on
+  for the owner only), so every reader still takes a boolean. A feature
+  that must not change midway reads
   its toggle as it starts (the simulation per match). Specs use
-  `provideGameToggles` (`src/testing/fake-game-toggles.ts`).
+  `provideGameToggles` (`src/testing/fake-game-toggles.ts`), with states.
 - Remote Config is reached only through `FirebaseConnection.remoteConfig()`
   in `firebase-connection.ts`: the SDK is imported on demand there (off the
   start), set up once on the game's named app, fetched at most hourly and
@@ -617,6 +621,27 @@ play each other.
   texts, colour names and the like are looked up by their id in the
   components; the engine renders only the English strings its state
   carries (`english()`), never another language.
+
+## The bacterium menu (#3194)
+
+- While the toggle `bacteriumMenu` is on (for the player), the main menu
+  shows its actions as the parts of a 3D bacterium
+  (`menu/bacterium-menu.component.*`) instead of the play buttons and
+  the tiles; Settings, Help, Support and Admin stay tiles below it. The
+  parts and where they sit are `menu/bacterium/bacterium-items.ts`
+  (`bacteriumItems`, offering what the tiles offer under the same
+  conditions, plus online; `BACTERIUM_ANCHORS`, which the shader and the
+  buttons both read), the look by XP `bacterium-look.ts`. A new menu item
+  gets its anchor and its place in `bacteriumItems`.
+- The cell is one WebGL2 fragment shader (`bacterium-shader.ts`, a
+  raymarched SDF in an orthographic view, so a lobe sits right under its
+  button), drawn by `bacterium-renderer.ts` at 30 fps at most and 1.5
+  device pixels a CSS pixel. No three.js: it would break the
+  `allScript` budget. The parts are real buttons and links over the
+  canvas, which is `aria-hidden`. `BACTERIUM_RENDERER` answers null
+  without WebGL2, on a software renderer (SwiftShader takes about 200 ms a
+  frame) or for a shader the device refuses; then a CSS cell with the same
+  parts stands in. Specs provide a renderer of their own (or `() => null`).
 
 ## Busy indicator
 
