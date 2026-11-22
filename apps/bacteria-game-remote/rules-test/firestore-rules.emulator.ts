@@ -7,6 +7,7 @@ import {
 import {
   Bytes,
   collection,
+  deleteDoc,
   doc,
   documentId,
   type Firestore,
@@ -412,6 +413,66 @@ describe('replayCommands', () => {
     await seed('replayCommands/c2', { uid: 'ada', type: 'remove' });
     await assertSucceeds(getDoc(doc(db('ada'), 'replayCommands/c2')));
     await assertFails(getDoc(doc(db('bob'), 'replayCommands/c2')));
+  });
+});
+
+describe('playGamesSignIns', () => {
+  const signIn = (uid: string, extra: object = {}) => ({
+    uid,
+    code: '4/0Ab-code',
+    createdAt: serverTimestamp(),
+    expireAt: inADay(),
+    ...extra,
+  });
+  const add = (writer: string, data: object, id = 's1') =>
+    setDoc(doc(db(writer), `playGamesSignIns/${id}`), data);
+
+  it('takes a code from a player in their own name', async () => {
+    await assertFails(add('ada', signIn('bob')));
+    await assertSucceeds(add('ada', signIn('ada')));
+  });
+
+  it('takes it from a banned player too', async () => {
+    await seed('bans/eve', { until: null });
+    await assertSucceeds(add('eve', signIn('eve')));
+  });
+
+  it('refuses an extra field, an empty or too long code, or a token', async () => {
+    await assertFails(add('ada', signIn('ada', { extra: 1 }), 'a'));
+    await assertFails(add('ada', signIn('ada', { token: 't' }), 'b'));
+    await assertFails(add('ada', signIn('ada', { code: '' }), 'c'));
+    await assertFails(add('ada', signIn('ada', { code: 7 }), 'd'));
+    await assertFails(
+      add('ada', signIn('ada', { code: 'x'.repeat(513) }), 'e')
+    );
+    await assertFails(
+      add('ada', signIn('ada', { createdAt: Timestamp.now() }), 'f')
+    );
+  });
+
+  it('lets only the writer read it back and delete it, never rewrite it', async () => {
+    await seed('playGamesSignIns/s2', { uid: 'ada', code: 'c', token: 't' });
+    await assertFails(getDoc(doc(db('bob'), 'playGamesSignIns/s2')));
+    await assertFails(deleteDoc(doc(db('bob'), 'playGamesSignIns/s2')));
+    await assertSucceeds(getDoc(doc(db('ada'), 'playGamesSignIns/s2')));
+    await assertFails(
+      updateDoc(doc(db('ada'), 'playGamesSignIns/s2'), { code: 'd' })
+    );
+    await assertSucceeds(deleteDoc(doc(db('ada'), 'playGamesSignIns/s2')));
+  });
+});
+
+describe('playGamesLinks', () => {
+  it('is closed to every client, its own player included', async () => {
+    await seed('playGamesLinks/p1', { uid: 'ada' });
+    await assertFails(getDoc(doc(db('ada'), 'playGamesLinks/p1')));
+    await assertFails(
+      getDocs(query(collection(db('ada'), 'playGamesLinks'), limit(1)))
+    );
+    await assertFails(
+      setDoc(doc(db('ada'), 'playGamesLinks/p2'), { uid: 'ada' })
+    );
+    await assertFails(deleteDoc(doc(db('ada'), 'playGamesLinks/p1')));
   });
 });
 
