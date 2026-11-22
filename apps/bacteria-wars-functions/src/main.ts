@@ -20,7 +20,12 @@ import {
 import { onRequest } from 'firebase-functions/v2/https';
 import { onSchedule } from 'firebase-functions/v2/scheduler';
 import * as v1 from 'firebase-functions/v1';
-import { parseTurnKey } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import {
+  parsePlayGamesSignIn,
+  parseTurnKey,
+  PLAY_GAMES_SIGN_INS,
+  PLAY_GAMES_TOKEN_KEY,
+} from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Auth, UserRecord } from 'firebase-admin/auth';
 import {
   ACCOUNTS_DOC,
@@ -50,6 +55,8 @@ import {
   FEATURE_BEST_ON,
   GUEST_CLEANUP_ON,
   HOURLY_ON,
+  PLAY_GAMES_ON,
+  PLAY_GAMES_WEB_CLIENT_ID,
   REGION,
   RELAY_ON,
   RETRY_FOR_MS,
@@ -63,6 +70,10 @@ import { publicProfileChanged } from './gallery/publish';
 import { handleSite } from './site/public-site';
 import type { AccountInfo } from './boards/verify-slice';
 import { tooOldToRetry } from './limits';
+import { runCommandDocument } from './commands/run-command-document';
+import { authAccounts } from './play-games/accounts';
+import { playGamesPlayer } from './play-games/player';
+import { signInPlayGames } from './play-games/sign-in';
 import { refreshRelay as refreshRelayOf } from './relay/refresh-relay';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
@@ -97,6 +108,8 @@ const BAN_TOMBSTONE_KEY = defineSecret('BAN_TOMBSTONE_KEY');
  * `tools-relay:turn-key` stores: only `refreshRelay` names it.
  */
 const CLOUDFLARE_TURN_KEY = defineSecret('CLOUDFLARE_TURN_KEY');
+/** The web OAuth client's secret, for Play Games' server auth codes. */
+const PLAY_GAMES_CLIENT_SECRET = defineSecret('PLAY_GAMES_CLIENT_SECRET');
 
 /** The feature toggles in Remote Config, loaded on first use. */
 const toggles = remoteTogglesOf(async () =>
@@ -177,6 +190,62 @@ export const replayCommand = onDocumentCreatedWithAuthContext(
     }
   })
 );
+
+/**
+ * The Play Games sign-in of the Android app (#3175 step 2): links the
+ * player behind the command's code to its writer's account, or hands a
+ * guest the account the player is linked to, and writes a custom token for
+ * the account it settled on beside the result. Off with `PLAY_GAMES_ON`.
+ */
+export const playGamesSignIn = PLAY_GAMES_ON
+  ? onDocumentCreatedWithAuthContext(
+      {
+        document: `${PLAY_GAMES_SIGN_INS}/{id}`,
+        memory: '256MiB',
+        cpu: 'gcf_gen1',
+        timeoutSeconds: 60,
+        secrets: [PLAY_GAMES_CLIENT_SECRET],
+      },
+      withSentry(async (event) => {
+        const data = event.data?.data();
+        const command = parsePlayGamesSignIn(data);
+        if (data === undefined) {
+          return;
+        }
+        let token: string | null = null;
+        const client = {
+          id: PLAY_GAMES_WEB_CLIENT_ID,
+          secret: PLAY_GAMES_CLIENT_SECRET.value(),
+        };
+        const accounts = authAccounts(await auth());
+        const result = await runCommandDocument(
+          db(),
+          `${PLAY_GAMES_SIGN_INS}/${event.params.id}`,
+          data,
+          event.authType === 'unauthenticated' ? undefined : event.authId,
+          async (uid) => {
+            if (command === null) {
+              return { ok: false, error: 'invalid' };
+            }
+            const answer = await signInPlayGames(db(), uid, command.code, {
+              player: (code) => playGamesPlayer(code, client, fetch),
+              accounts,
+              now: Date.now(),
+            });
+            token = answer.token;
+            return answer.result;
+          },
+          () => (token === null ? {} : { [PLAY_GAMES_TOKEN_KEY]: token })
+        );
+        if (!result?.ok) {
+          logger.info('Play Games sign-in refused', {
+            id: event.params.id,
+            result,
+          });
+        }
+      })
+    )
+  : undefined;
 
 /** An expired or deleted replay takes its blob and reports along. */
 export const cleanReplay = onDocumentDeleted(

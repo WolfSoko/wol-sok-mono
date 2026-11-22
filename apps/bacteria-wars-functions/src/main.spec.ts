@@ -2,7 +2,7 @@ import { rankDaily } from './boards/rank-daily';
 import { rankOnline } from './boards/rank-online';
 import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { checkGoogleLink } from './admin/tombstones';
-import { GUEST_CLEANUP_ON, RELAY_ON } from './config';
+import { GUEST_CLEANUP_ON, PLAY_GAMES_ON, RELAY_ON } from './config';
 
 jest.mock('./boards/rank-daily', () => ({
   ...jest.requireActual('./boards/rank-daily'),
@@ -110,6 +110,18 @@ describe('the exported functions', () => {
       expect(
         endpoint.secretEnvironmentVariables?.map(({ key }) => key)
       ).toEqual(['CLOUDFLARE_TURN_KEY']);
+    }
+  });
+
+  it('export playGamesSignIn only with PLAY_GAMES_ON, with its client secret only', () => {
+    const endpoint = functions['playGamesSignIn']?.__endpoint as
+      | (Endpoint & { secretEnvironmentVariables?: { key: string }[] })
+      | undefined;
+    expect(endpoint === undefined).toBe(!PLAY_GAMES_ON);
+    if (endpoint !== undefined) {
+      expect(
+        endpoint.secretEnvironmentVariables?.map(({ key }) => key)
+      ).toEqual(['PLAY_GAMES_CLIENT_SECRET']);
     }
   });
 

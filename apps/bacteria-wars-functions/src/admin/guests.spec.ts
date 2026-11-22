@@ -76,7 +76,7 @@ describe('guest accounts unused for 90 days', () => {
     expect(isIdleGuest(back, NOW)).toBe(false);
   });
 
-  it('never are accounts with a provider or the admin claim', () => {
+  it('never are accounts with a provider, the admin or the Play Games claim', () => {
     expect(
       isIdleGuest(
         guest('google', 400, {
@@ -87,6 +87,12 @@ describe('guest accounts unused for 90 days', () => {
     ).toBe(false);
     expect(
       isIdleGuest(guest('owner', 400, { customClaims: { admin: true } }), NOW)
+    ).toBe(false);
+    expect(
+      isIdleGuest(
+        guest('player', 400, { customClaims: { playGames: true } }),
+        NOW
+      )
     ).toBe(false);
   });
 });

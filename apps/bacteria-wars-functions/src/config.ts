@@ -98,6 +98,27 @@ export const RELAY_ON = true;
  */
 export const RELAY_TTL_S = 60 * 60;
 
+/**
+ * Whether `playGamesSignIn`, the Play Games sign-in of the Android app
+ * (#3175 step 2), is deployed. It needs the secret
+ * `PLAY_GAMES_CLIENT_SECRET` (the web OAuth client's), the game server
+ * credential in Play Console and the Token Creator role for custom tokens:
+ * a deploy of a function whose secret does not exist fails, so it stays
+ * off until the owner has set all three up. Off, the game's sign-in
+ * commands get no answer and time out; nothing else changes.
+ */
+export const PLAY_GAMES_ON = false;
+
+/**
+ * The web OAuth client of the Cloud project `bacteria-wars` ("Web client
+ * (auto created by Google Service)", client type 3 in the Android app's
+ * `google-services.json`): the app asks Play Games for server auth codes
+ * for it, and `playGamesSignIn` exchanges them with its secret. An OAuth
+ * client id is public.
+ */
+export const PLAY_GAMES_WEB_CLIENT_ID =
+  '156895060649-8v75607phdpnuccqjqsnvpacg438r52a.apps.googleusercontent.com';
+
 /** How many days a guest account may go unused before it is deleted. */
 export const GUEST_IDLE_DAYS = 90;
 
