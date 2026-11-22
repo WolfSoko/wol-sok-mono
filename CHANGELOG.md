@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.179.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.0...v74.179.1) (2026-11-22)
+
+### Bug Fixes
+
+* **pacetrainer:** leave every Ansage a lead before its first beep ([#3204](https://github.com/WolfSoko/wol-sok-mono/issues/3204)) ([c8223aa](https://github.com/WolfSoko/wol-sok-mono/commit/c8223aa406bc0f57bd38fa8dca6aef40ac853f95)), closes [#3110](https://github.com/WolfSoko/wol-sok-mono/issues/3110), references [#3110](https://github.com/WolfSoko/wol-sok-mono/issues/3110)
+
+### Testing
+
+* **rollapolla-analog:** render the create-poll form once in the max-options spec ([#3200](https://github.com/WolfSoko/wol-sok-mono/issues/3200)) ([0ad65d0](https://github.com/WolfSoko/wol-sok-mono/commit/0ad65d01b6f00514c09e3d5bf4e6e4ca8c9be2ef)), references [#3146](https://github.com/WolfSoko/wol-sok-mono/issues/3146) [#3146](https://github.com/WolfSoko/wol-sok-mono/issues/3146)
+
 ## [74.179.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.178.4...v74.179.0) (2026-11-22)
 
 ### Features

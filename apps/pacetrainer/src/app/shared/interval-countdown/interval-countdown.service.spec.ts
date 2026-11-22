@@ -5,6 +5,9 @@ import { milliseconds } from '@wolsok/utils-time';
 import { CountdownTarget } from '../model/training/training-name';
 import { IntervalCountdownService } from './interval-countdown.service';
 
+/** long enough to keep the full five-second window */
+const LONG_COUNTDOWN = 60_000;
+
 class FakeUtterance {
   public lang = '';
   public pitch = 1;
@@ -49,10 +52,11 @@ describe('IntervalCountdownService', () => {
 
   function countDown(
     timeLeft: number,
-    countdownTo: CountdownTarget = 'sprint'
+    countdownTo: CountdownTarget = 'sprint',
+    countdownTime = LONG_COUNTDOWN
   ): void {
     service.updateCountdown(
-      milliseconds(5000),
+      milliseconds(countdownTime),
       milliseconds(timeLeft),
       countdownTo
     );
@@ -92,6 +96,38 @@ describe('IntervalCountdownService', () => {
 
   it('sounds each cue once however many ticks fall into its second', () => {
     for (let timeLeft = 5999; timeLeft >= 0; timeLeft -= 50) {
+      countDown(timeLeft);
+    }
+
+    expect(spoken).toEqual(['Sprinten in 5 Sekunden!', 'Jetzt Sprinten!']);
+    expect(FakeAudioContext.frequencies).toEqual([
+      440, 880, 880, 880, 880, 660,
+    ]);
+  });
+
+  it('leaves the Ansage of the Vorlauf a second before its first beep', () => {
+    const soundsAt: number[] = [];
+    for (let timeLeft = 5000; timeLeft >= 0; timeLeft -= 50) {
+      const soundsBefore = FakeAudioContext.frequencies.length;
+      countDown(timeLeft, 'sprint', 5000);
+      if (FakeAudioContext.frequencies.length > soundsBefore) {
+        soundsAt.push(timeLeft);
+      }
+    }
+
+    expect(spoken).toEqual(['Sprinten in 4 Sekunden!', 'Jetzt Sprinten!']);
+    expect(FakeAudioContext.frequencies).toEqual([440, 880, 880, 880, 660]);
+    expect(soundsAt).toEqual([4950, 3950, 2950, 1950, 950]);
+  });
+
+  it('speaks no Ansage twice when paused and resumed inside the window', () => {
+    for (let timeLeft = 5999; timeLeft >= 3000; timeLeft -= 50) {
+      countDown(timeLeft);
+    }
+    for (let pausedTick = 0; pausedTick < 10; pausedTick++) {
+      countDown(2999);
+    }
+    for (let timeLeft = 2999; timeLeft >= 0; timeLeft -= 50) {
       countDown(timeLeft);
     }
 
