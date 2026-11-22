@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.176.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.2...v74.176.3) (2026-11-22)
+
+### Bug Fixes
+
+* **feat-bacteria-rendering:** draw the colony and glow passes as box quads, and an owner switch for the GL diagnostic ([#3174](https://github.com/WolfSoko/wol-sok-mono/issues/3174)) ([#3184](https://github.com/WolfSoko/wol-sok-mono/issues/3184)) ([dd2babe](https://github.com/WolfSoko/wol-sok-mono/commit/dd2babe27b3511f8f3c7cfce3eab3a2d886519e0))
+
 ## [74.176.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.176.1...v74.176.2) (2026-11-21)
 
 ### Bug Fixes
