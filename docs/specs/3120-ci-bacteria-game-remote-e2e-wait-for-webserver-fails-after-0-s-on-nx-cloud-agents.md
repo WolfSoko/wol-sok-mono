@@ -63,13 +63,15 @@ gate or the serve dependencies from a worker's graph.
   `nxServer` takes the project from its `target` (`app:serve-e2e` → `app`). It
   returns the waiting script only when `NX_TASK_TARGET_PROJECT` is that project
   and `NX_TASK_TARGET_TARGET` is a Playwright target (`e2e`, `e2e-ci` or an
-  atomized `e2e-ci--<file>`). Any other task, and every nested graph build in
+  atomized `e2e-ci--<file>`, but not the gates `e2e--wait-for-webserver` and
+  `e2e-ci--wait-for-webserver` or `e2e-ci--merge-reports`). So the server's
+  target has to belong to the project whose config names it. Any other task, and every nested graph build in
   them, gets `npx nx run <target>`. The plugin then infers the same targets
   there as in the main job.
   _Why:_ this is the smallest signal that tells "Playwright runs this config
   for its own tests" apart from "Nx reads it to build a graph inside some other
   task". Both target names come from `nx.json` (`targetName: "e2e"`, the
-  default `ciTargetName`), and the spec pins them.
+  default `ciTargetName`), and a spec reads `nx.json` to keep them equal.
 - **No change to the plugin cache or to `nx.json`.** The fix keeps graph-time
   output independent of the surrounding task, so the cache key Nx uses is
   correct again for these configs.

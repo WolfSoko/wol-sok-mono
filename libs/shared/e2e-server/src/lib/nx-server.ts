@@ -22,12 +22,21 @@ const NX_TASK_PROJECT_ENV = 'NX_TASK_TARGET_PROJECT';
 const NX_TASK_TARGET_ENV = 'NX_TASK_TARGET_TARGET';
 
 /**
- * The targets that run Playwright, as `@nx/playwright/plugin` infers them
- * (`targetName` in `nx.json`, the default `ciTargetName` and its atomized
- * `e2e-ci--<spec file>` tasks), but not its readiness gate
- * `e2e--wait-for-webserver`, which never loads the config.
+ * The targets that run Playwright, as `@nx/playwright/plugin` infers them:
+ * `targetName` and `ciTargetName` of its `nx.json` entry (the spec keeps them
+ * equal) and the atomized `e2e-ci--<spec file>` tasks.
  */
-const PLAYWRIGHT_TARGET = /^e2e(-ci(--.+)?)?$/;
+export const PLAYWRIGHT_TARGETS = { e2e: 'e2e', ci: 'e2e-ci' } as const;
+
+/**
+ * The targets the plugin infers beside the spec files that never load the
+ * config: the readiness gates and the merge of the atomized reports.
+ */
+const NON_PLAYWRIGHT_TARGETS: ReadonlySet<string> = new Set([
+  `${PLAYWRIGHT_TARGETS.e2e}--wait-for-webserver`,
+  `${PLAYWRIGHT_TARGETS.ci}--wait-for-webserver`,
+  `${PLAYWRIGHT_TARGETS.ci}--merge-reports`,
+]);
 
 /**
  * The `webServer` entry of the Nx target `target` (`app:serve-e2e`), which
@@ -46,7 +55,12 @@ const PLAYWRIGHT_TARGET = /^e2e(-ci(--.+)?)?$/;
  * `@nx/playwright` infers the serve dependencies and the readiness gate only
  * from an `nx run` command. It caches that result under a key that leaves the
  * task's variables out, so a waiting command read there once dropped the gate
- * from every later graph on the worker (#3120). A hand-written target that
+ * from every later graph on the worker (#3120). A graph built inside the
+ * project's own Playwright tasks would still do so; none is today (no
+ * `globalSetup`, no `nx` call in an `e2e/` folder), so keep it that way.
+ *
+ * `target` must belong to the project whose Playwright config holds the
+ * entry: the task's project is compared with it. A hand-written target that
  * runs Playwright needs the dependency too, or its servers never start.
  */
 export function nxServer(
@@ -73,6 +87,17 @@ function insideOwnPlaywrightTask(
   const [project] = target.split(':');
   return (
     env[NX_TASK_PROJECT_ENV] === project &&
-    PLAYWRIGHT_TARGET.test(env[NX_TASK_TARGET_ENV] ?? '')
+    isPlaywrightTarget(env[NX_TASK_TARGET_ENV] ?? '')
+  );
+}
+
+function isPlaywrightTarget(name: string): boolean {
+  if (NON_PLAYWRIGHT_TARGETS.has(name)) {
+    return false;
+  }
+  return (
+    name === PLAYWRIGHT_TARGETS.e2e ||
+    name === PLAYWRIGHT_TARGETS.ci ||
+    name.startsWith(`${PLAYWRIGHT_TARGETS.ci}--`)
   );
 }

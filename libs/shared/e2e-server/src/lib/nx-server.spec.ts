@@ -1,9 +1,13 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
-import { nxServer, WAIT_FOR_SERVER_SCRIPT } from './nx-server';
+import {
+  nxServer,
+  PLAYWRIGHT_TARGETS,
+  WAIT_FOR_SERVER_SCRIPT,
+} from './nx-server';
 
 const WORKSPACE = join(__dirname, '../../../../..');
 const OPTIONS = { cwd: WORKSPACE, timeout: 2000 };
@@ -20,7 +24,7 @@ describe('nxServer', () => {
   });
 
   it.each(['e2e', 'e2e-ci', 'e2e-ci--e2e/online.spec.ts'])(
-    'only waits inside its own project’s %s task, where Nx starts the server',
+    'only waits inside a %s task of its own project, where Nx starts the server',
     (target) => {
       const server = nxServer('app:emulators', URL, OPTIONS, {
         NX_TASK_TARGET_PROJECT: 'app',
@@ -37,13 +41,15 @@ describe('nxServer', () => {
   // key that leaves them out (#3120): the config must read as by hand there.
   it.each([
     [
-      'another project’s e2e task',
+      'an e2e task of another project',
       'angular-examples',
       'e2e-ci--e2e/home.spec.ts',
     ],
-    ['another project’s test task', 'tools', 'test'],
-    ['its own project’s other task', 'app', 'test-emulator'],
-    ['its own project’s readiness gate', 'app', 'e2e--wait-for-webserver'],
+    ['a test task of another project', 'tools', 'test'],
+    ['another task of its own project', 'app', 'test-emulator'],
+    ['the readiness gate of its own project', 'app', 'e2e--wait-for-webserver'],
+    ['the ci gate of its own project', 'app', 'e2e-ci--wait-for-webserver'],
+    ['the report merge of its own project', 'app', 'e2e-ci--merge-reports'],
   ])('starts the Nx target inside %s', (_, project, target) => {
     const server = nxServer('app:emulators', URL, OPTIONS, {
       NX_TASK_TARGET_PROJECT: project,
@@ -51,6 +57,18 @@ describe('nxServer', () => {
     });
 
     expect(server.command).toBe('npx nx run app:emulators');
+  });
+
+  // Named after the plugin's targets: a rename there would silently start a
+  // second server from Playwright inside the project's own tasks again.
+  it('knows the Playwright targets nx.json names', () => {
+    const nxJson = JSON.parse(readFileSync(join(WORKSPACE, 'nx.json'), 'utf8'));
+    const plugin = nxJson.plugins.find(
+      (entry: { plugin?: string }) => entry.plugin === '@nx/playwright/plugin'
+    );
+
+    expect(plugin.options.targetName).toBe(PLAYWRIGHT_TARGETS.e2e);
+    expect(plugin.options.ciTargetName ?? 'e2e-ci').toBe(PLAYWRIGHT_TARGETS.ci);
   });
 
   it('names a waiting script that exists', () => {
