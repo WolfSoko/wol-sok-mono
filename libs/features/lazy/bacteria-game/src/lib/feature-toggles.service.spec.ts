@@ -6,6 +6,7 @@ import {
   FEATURE_TOGGLES,
   type FeatureToggleStates,
   resolveToggles,
+  toggleText,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameAccount } from '../testing/fake-game-account';
 import { GameAccount } from './storage/game-account';
@@ -116,5 +117,36 @@ describe('FeatureTogglesService', () => {
     }
 
     expect(service.toggles()).toEqual({ ...DEFAULTS, leaderboards: false });
+  });
+
+  it('shows an admin toggle the admin area published to the owner, not to a guest', async () => {
+    // The text `toggles.set` writes into Remote Config for `admin`, read
+    // back through the game's own Remote Config adapter.
+    const account = new FakeGameAccount();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameAccount, useValue: account }],
+    });
+    TestBed.inject(GameCloud).use({
+      remoteConfig: async () => ({
+        config: {},
+        sdk: {
+          getValue: (_config: unknown, key: string) => ({
+            asString: () =>
+              key === 'bacteriumMenu' ? toggleText('admin') : '',
+            getSource: () => (key === 'bacteriumMenu' ? 'remote' : 'static'),
+          }),
+        },
+      }),
+    } as unknown as FirebaseConnection);
+    const service = TestBed.inject(FeatureTogglesService);
+    service.start();
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+
+    expect(service.states().bacteriumMenu).toBe('admin');
+    expect(service.toggles().bacteriumMenu).toBe(false);
+    account.owner.set(true);
+    expect(service.toggles().bacteriumMenu).toBe(true);
   });
 });
