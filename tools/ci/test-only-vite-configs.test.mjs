@@ -10,7 +10,12 @@
 import assert from 'node:assert/strict';
 import { dirname, matchesGlob } from 'node:path';
 import { describe, it } from 'node:test';
-import { gitLsFiles, readJson, readProjects } from './workspace-projects.mjs';
+import {
+  gitLsFiles,
+  projectOf,
+  readJson,
+  readProjects,
+} from './workspace-projects.mjs';
 
 const VITEST_CONFIG_EXCLUSION = '!{projectRoot}/vitest.config.*';
 
@@ -55,14 +60,6 @@ function productionInputProblems(production, viteBuildConfigs) {
  */
 function buildsWithVite(project) {
   return VITE_BUILD_EXECUTORS.has(project.targets?.build?.executor);
-}
-
-/** The deepest of the `projects` (`{ path, json }`) holding `file`. */
-function projectOf(file, projects) {
-  return projects
-    .map((project) => ({ ...project, root: dirname(project.path) }))
-    .filter(({ root }) => root === '.' || file.startsWith(`${root}/`))
-    .sort((a, b) => b.root.length - a.root.length)[0];
 }
 
 void describe('productionInputProblems', () => {
