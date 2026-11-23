@@ -12,10 +12,15 @@
 // The Android app (#3206) has no Nx dependencies, so a file outside its folder
 // that its deploy script reads counts only when its deploy names it.
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 import { posix } from 'node:path';
 import { describe, it } from 'node:test';
-import { ROOT, readProjects, stringInputs } from './workspace-projects.mjs';
+import {
+  ROOT,
+  readJson,
+  readProjects,
+  stringInputs,
+} from './workspace-projects.mjs';
 
 const PROJECT_NAME = '{projectName}';
 // A root config only: one under apps/ (emulators) is a file of its project.
@@ -55,42 +60,59 @@ const CDK_DEPLOY_INPUTS = ['production', '^production'];
 const TEST_INCLUDING_INPUTS = ['default', '^default'];
 const ANDROID_APP = 'bacteria-wars-android';
 const TSX_SCRIPT = /(?:^|\s)(?:\.\/)?(tools\/\S+\.ts)(?:\s|$)/;
-const RELATIVE_IMPORT = /\bfrom\s+'(\.{1,2}\/[^']+)'/g;
+// Every module specifier: `from '…'`, a bare `import '…'` and `import('…')`.
+const IMPORT = /(?:\bfrom\s+|\bimport\s*\(?\s*)'([^']+)'/g;
+const NODE_BUILTIN = /^node:/;
+// Files the deploy reads but does not name: every release bumps
+// `version.json`, so as an input it would upload the app to Play on every
+// release (#3206). The version code follows the release that deploys it.
+const UNNAMED_FILES = new Set(['version.json']);
 // A workspace file a module names literally, as `resolve('libs/…/x.json')`.
 const WORKSPACE_PATH = /'((?:apps|libs|tools)\/[^'\s]+\.\w+)'/g;
+const ALIASES = readJson('tsconfig.base.json').compilerOptions.paths;
 
 const PROJECTS = readProjects();
 
-/** A relative import's module, as tsx resolves it (`./x` is `./x.ts`). */
-function moduleFile(from, specifier) {
+/**
+ * The file an import resolves to, as tsx resolves it: a path alias through
+ * `tsconfig.base.json`, a relative `./x` as `./x.ts` or `./x/index.ts`, a
+ * data file (`../version.json`) as it is.
+ */
+function importedFile(from, specifier) {
+  if (!specifier.startsWith('.')) {
+    const [target] = ALIASES[specifier] ?? [];
+    assert.ok(target, `${from}: ${specifier} is no path alias`);
+    return posix.normalize(target);
+  }
   const path = posix.join(posix.dirname(from), specifier);
-  return [path, `${path}.ts`, `${path}/index.ts`].find(
-    (candidate) =>
-      existsSync(`${ROOT}/${candidate}`) && candidate.endsWith('.ts')
+  return [path, `${path}.ts`, `${path}/index.ts`].find((candidate) =>
+    statSync(`${ROOT}/${candidate}`, { throwIfNoEntry: false })?.isFile()
   );
 }
 
 /**
- * The script a deploy command runs, the modules it imports relatively,
- * transitively, and the workspace files those modules name literally.
+ * The script a deploy command runs, every module and data file it imports,
+ * transitively, through relative paths and path aliases alike, and the
+ * workspace files those modules name literally, less `UNNAMED_FILES`.
  */
 function filesReadBy(script) {
-  const modules = new Set();
-  const paths = new Set();
+  const read = new Set();
   const queue = [script];
   while (queue.length > 0) {
     const file = queue.shift();
-    if (modules.has(file)) continue;
-    modules.add(file);
+    if (read.has(file)) continue;
+    read.add(file);
+    if (!file.endsWith('.ts')) continue;
     const source = readFileSync(`${ROOT}/${file}`, 'utf8');
-    for (const [, specifier] of source.matchAll(RELATIVE_IMPORT)) {
-      const imported = moduleFile(file, specifier);
+    for (const [, specifier] of source.matchAll(IMPORT)) {
+      if (NODE_BUILTIN.test(specifier)) continue;
+      const imported = importedFile(file, specifier);
       assert.ok(imported, `${file}: cannot resolve ${specifier}`);
       queue.push(imported);
     }
-    for (const [, path] of source.matchAll(WORKSPACE_PATH)) paths.add(path);
+    for (const [, path] of source.matchAll(WORKSPACE_PATH)) read.add(path);
   }
-  return [...modules, ...paths];
+  return [...read].filter((file) => !UNNAMED_FILES.has(file));
 }
 
 function deployTargets() {

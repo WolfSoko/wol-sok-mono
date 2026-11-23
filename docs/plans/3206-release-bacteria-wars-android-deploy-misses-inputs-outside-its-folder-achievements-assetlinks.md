@@ -6,7 +6,7 @@
    them, outside `apps/bacteria-wars-android/`), drop `IMPLICIT_DEPLOY_INPUTS`
    and its test. `npx nx test tools` fails on the Android app.
 2. **Inputs (green).** `apps/bacteria-wars-android/project.json`: `deploy`
-   gets `inputs` (`production` and the six files). `npx nx test tools` green;
+   gets `inputs` (`production` and the eight files). `npx nx test tools` green;
    check acceptance 1-3 with `release-affected.mjs --files`.
 3. **Docs.** CLAUDE.md "Deploy inputs" and Android App paragraphs.
 4. `npx nx format:write`, `npx nx affected -t lint,lint-templates`, one commit

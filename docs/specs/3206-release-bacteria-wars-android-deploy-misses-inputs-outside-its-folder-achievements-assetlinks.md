@@ -34,14 +34,16 @@ selects `bacteria-wars-android` alone.
 ## Decisions
 
 1. **Inputs by name in the app's `project.json`:** `"inputs": ["production",
-   "{workspaceRoot}/…"]` with the six files of the table above except
+   "{workspaceRoot}/…"]` with the eight files of the table above except
    `version.json`. `production` rather than `default`, as every other deploy
    reads: the app has no specs today, and a test config added later stays out.
    No `^production`: the app has no Nx dependencies, and `implicitDependencies`
    on the engine or the remote would count all their files, not the one each.
 2. **`version.json` stays out:** every release bumps it, so as an input it
    would upload the app to Play on every release. The version code follows
-   the release that deploys the app for another reason, as today.
+   the release that deploys the app for another reason, as today. The
+   version lib's own sources are inputs: a change to how it reads the
+   version changes the version code (Codex review on #3223).
 3. **The deploy's own modules count:** `deploy-android.ts`, `play-tips.ts`
    and `youtube.ts` decide what reaches Play (bundle, listing, tips, videos)
    as much as `play-games.ts` decides the achievements; a fix in one of them
@@ -49,14 +51,19 @@ selects `bacteria-wars-android` alone.
    (`retry-once.ts`, `check-live-index.ts`) stay out of theirs: they change
    how a deploy runs, not what it deploys.
 4. **Guard derived from the script, in `deploy-inputs.test.mjs`:** a test
-   follows `deploy-android.ts`' relative imports (transitively) and collects
-   the workspace paths its modules name as string literals (`apps/…`,
-   `libs/…`, `tools/…` with a file extension); each module and each path
-   outside `apps/bacteria-wars-android/` must be a `{workspaceRoot}/…` input
-   of the deploy. So a new import or a new file the deploy reads fails the
-   test until it is named. The exemption `IMPLICIT_DEPLOY_INPUTS` and its
-   "exempt only deploy targets that exist" test go; the app now falls under
-   "are declared by every deploy target".
+   follows every import of `deploy-android.ts` (`from '…'`, bare `import '…'`,
+   `import('…')`), transitively, through relative paths and through the path
+   aliases of `tsconfig.base.json` alike, and collects the workspace paths its
+   modules name as string literals (`apps/…`, `libs/…`, `tools/…` with a file
+   extension); each module, data file and path outside
+   `apps/bacteria-wars-android/` must be a `{workspaceRoot}/…` input of the
+   deploy, except `version.json`, the one entry of `UNNAMED_FILES` (decision
+   2). So a new import, or a new workspace file the deploy names literally,
+   fails the test until it is named; a path the scripts build at run time
+   outside the app is not seen (none today), nor `tools/tsconfig.tools.json`,
+   which only resolves the aliases. The exemption `IMPLICIT_DEPLOY_INPUTS`
+   and its "exempt only deploy targets that exist" test go; the app now falls
+   under "are declared by every deploy target".
 5. **CLAUDE.md:** the "Deploy inputs" paragraph loses the Android exemption
    and names its inputs and the guard; the Android App section says that a
    file outside the app the deploy reads goes into the inputs.
@@ -71,12 +78,12 @@ selects `bacteria-wars-android` alone.
 ## Acceptance
 
 1. `node tools/ci/release-affected.mjs --files=<file> --target=deploy`
-   selects `bacteria-wars-android` for each of the six files in decision 1.
+   selects `bacteria-wars-android` for each of the eight files in decision 1.
 2. It does not select it for
-   `libs/features/bacteria-engine/src/lib/state/progress/play-games-achievements.spec.ts`
-   nor for `version.json`.
+   `libs/features/bacteria-engine/src/lib/state/progress/play-games-achievements.spec.ts`,
+   `libs/utils/version/src/version.spec.ts` nor `version.json`.
 3. `apps/bacteria-wars-android/store/tips.json` still selects it.
-4. `npx nx test tools` is green; it fails when one of the six inputs is
+4. `npx nx test tools` is green; it fails when one of the eight inputs is
    removed from the deploy, and when the deploy's inputs are removed.
 5. `IMPLICIT_DEPLOY_INPUTS` is gone from `deploy-inputs.test.mjs`.
 

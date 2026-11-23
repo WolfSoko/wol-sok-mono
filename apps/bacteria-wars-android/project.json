@@ -40,7 +40,9 @@
         "{workspaceRoot}/tools/bacteria-game/deploy-android.ts",
         "{workspaceRoot}/tools/bacteria-game/play-games.ts",
         "{workspaceRoot}/tools/bacteria-game/play-tips.ts",
-        "{workspaceRoot}/tools/youtube/youtube.ts"
+        "{workspaceRoot}/tools/youtube/youtube.ts",
+        "{workspaceRoot}/libs/utils/version/src/index.ts",
+        "{workspaceRoot}/libs/utils/version/src/version.ts"
       ],
       "options": {
         "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/deploy-android.ts"
