@@ -120,6 +120,14 @@ describe('IntervalCountdownService', () => {
     expect(soundsAt).toEqual([4950, 3950, 2950, 1950, 950]);
   });
 
+  it('announces the single second of a 2 s Intervall in the singular', () => {
+    for (let timeLeft = 2000; timeLeft >= 0; timeLeft -= 50) {
+      countDown(timeLeft, 'sprint', 2000);
+    }
+
+    expect(spoken).toEqual(['Sprinten in 1 Sekunde!', 'Jetzt Sprinten!']);
+  });
+
   it('speaks no Ansage twice when paused and resumed inside the window', () => {
     for (let timeLeft = 5999; timeLeft >= 3000; timeLeft -= 50) {
       countDown(timeLeft);

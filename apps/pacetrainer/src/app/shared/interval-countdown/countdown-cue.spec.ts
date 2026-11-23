@@ -201,6 +201,24 @@ describe('cueSound', () => {
     });
   });
 
+  it('names a single second in the singular', () => {
+    expect(
+      cueSound(
+        { kind: 'announcement', secondsLeft: 1, countdownTo: 'sprint' },
+        'Sprinten'
+      ).text
+    ).toBe('Sprinten in 1 Sekunde!');
+  });
+
+  it('counts the last second of the training in the singular', () => {
+    expect(
+      cueSound(
+        { kind: 'announcement', secondsLeft: 1, countdownTo: 'finished' },
+        'Fertig'
+      ).text
+    ).toBe('Noch 1 Sekunde!');
+  });
+
   it('beeps without words', () => {
     expect(
       cueSound(
