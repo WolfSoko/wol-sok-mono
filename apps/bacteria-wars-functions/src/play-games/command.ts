@@ -6,7 +6,7 @@ import {
   PLAY_GAMES_TOKEN_UID_KEY,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { Firestore } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/logger';
+import { logCaughtError, withoutMessage } from '../caught-errors';
 import { claimCommand } from '../commands/claim-command';
 import { runCommandDocument } from '../commands/run-command-document';
 import type { SyncOutcome } from './achievements';
@@ -84,8 +84,9 @@ export async function runPlayGamesSignIn(
   const sync = signedIn.answer?.sync ?? null;
   if (sync !== null) {
     await deps.syncAchievements(sync.uid, sync.games).catch((error) => {
-      logger.warn('Play Games achievement sync failed', {
-        error: error instanceof Error ? error.name : 'unknown',
+      // Its text may quote Google's answer, token and all.
+      logCaughtError('Play Games achievement sync failed', {
+        error: withoutMessage(error),
       });
     });
   }

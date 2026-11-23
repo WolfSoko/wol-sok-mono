@@ -9,8 +9,8 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { type ReplayKind } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FieldValue, type Firestore } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/logger';
 import type { Verdict } from '../boards/verify';
+import { logCaughtError } from '../caught-errors';
 
 /**
  * The level statistics (ADR 0016 §4): counters per level, bot difficulty
@@ -133,32 +133,59 @@ export function levelStatsCounts(
   };
 }
 
+/** How a failed count is logged and reported. */
+interface CountFailure {
+  /** The fixed message, the one text that leaves for Sentry. */
+  readonly message: string;
+  /** Fields for Cloud Logging only, beside the level. */
+  readonly fields?: Readonly<Record<string, unknown>>;
+}
+
 /**
- * Adds `counts` to the level statistics a replay counts into, with its key
- * as fields for the Balance view to query by.
+ * Adds `counts()` to the level statistics a replay counts into, with its
+ * key as fields for the Balance view to query by - and never in the way:
+ * a counter that fails (the shared document of a busy level, say) costs
+ * the statistics a match, not the caller its submission or sweep, and so
+ * does a header no key or count fits.
  */
 async function addToStats(
   db: Firestore,
   header: ReplayHeader,
   kind: ReplayKind,
-  counts: Record<string, unknown>
+  counts: () => Record<string, unknown>,
+  failure: CountFailure
 ): Promise<void> {
-  const key = levelStatsKey(header, kind);
-  await db
-    .doc(`levelStats/${levelStatsId(key)}`)
-    .set(
-      { ...key, updatedAt: FieldValue.serverTimestamp(), ...counts },
-      { merge: true }
-    );
+  try {
+    const key = levelStatsKey(header, kind);
+    await db
+      .doc(`levelStats/${levelStatsId(key)}`)
+      .set(
+        { ...key, updatedAt: FieldValue.serverTimestamp(), ...counts() },
+        { merge: true }
+      );
+  } catch (error) {
+    logCaughtError(failure.message, {
+      ...failure.fields,
+      level: header.levelId,
+      error,
+    });
+  }
 }
 
-/** Adds a stored local replay to its level statistics. */
+/**
+ * Adds the stored local replay `replayId` to its level statistics; never
+ * throws.
+ */
 export function countLevelStats(
   db: Firestore,
   header: ReplayHeader,
-  kind: ReplayKind
+  kind: ReplayKind,
+  replayId: string
 ): Promise<void> {
-  return addToStats(db, header, kind, levelStatsCounts(header));
+  return addToStats(db, header, kind, () => levelStatsCounts(header), {
+    message: 'Level statistics not counted',
+    fields: { id: replayId },
+  });
 }
 
 /**
@@ -181,13 +208,16 @@ export async function countRerun(
   if (verdict.state !== 'verified' || verdict.medal === undefined) {
     return;
   }
+  const { medal } = verdict;
   const one = FieldValue.increment(1);
-  try {
-    await addToStats(db, header, kind, {
+  await addToStats(
+    db,
+    header,
+    kind,
+    () => ({
       rerun: one,
-      ...(verdict.medal === null ? {} : { medals: { [verdict.medal]: one } }),
-    });
-  } catch (error) {
-    logger.warn('Re-run not counted', { level: header.levelId, error });
-  }
+      ...(medal === null ? {} : { medals: { [medal]: one } }),
+    }),
+    { message: 'Re-run not counted' }
+  );
 }
