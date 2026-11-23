@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from './fixtures/page-diagnostics';
 import { AngularExamplesPage } from './po/angular-examples.page';
 
 test('has main title', async ({ page }) => {
