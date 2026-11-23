@@ -109,6 +109,29 @@ change has to find it, or show that it no longer happens.
 7. `npx nx test shared-e2e-server` passes, together with the affected lint,
    lint-templates, typecheck-specs and format checks.
 
+## Root cause (found on the PR)
+
+The first CI run on the PR passed the home spec on Nx Cloud, but
+`angular-examples:lighthouse` got a 404 for `/` on the same worker. The
+shell's dev `serve` (`native-federation:build` with `dev: true`) and its
+production `build` both wrote `dist/apps/angular-examples`. The dev server
+clears the folder on start and writes its dev federation files there
+(`importmap.json`, `remoteEntry.json`, the `-dev.js` shared bundles), and it
+serves those files from there. On a worker that runs both tasks, each one
+clobbers the other:
+
+- the dev server emptied the production output Lighthouse serves (the 404);
+- a production build or a cache restore into the folder while the dev
+  server runs swaps its dev shared bundles for production ones. Reproduced
+  locally: the page then throws `ReferenceError: ngDevMode is not defined`
+  and `#main-toolbar` never appears, which is the 2026-10 failure.
+
+Playwright's nested start did not avoid it, it only made the overlap rarer.
+The fix gives the `development` configuration of `esbuild` its own output
+folder, `dist/apps/angular-examples-dev`. With it, the same local sequence
+(dev server up, production build into its folder, then the home spec) keeps
+both folders intact and passes.
+
 ## Open questions
 
 - Was the 2026-10 failure caused by the nested-call graph pollution that
