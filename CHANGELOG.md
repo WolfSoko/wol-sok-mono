@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.181.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.1...v74.181.2) (2026-11-23)
+
+### Bug Fixes
+
+* **feat-bacteria-rendering:** build each arena frame from the last one as a texture ([#3234](https://github.com/WolfSoko/wol-sok-mono/issues/3234)) ([201efaa](https://github.com/WolfSoko/wol-sok-mono/commit/201efaa5b79cdec8a6d1a6294dcb090086f57f19)), references [#3231](https://github.com/WolfSoko/wol-sok-mono/issues/3231) [#3231](https://github.com/WolfSoko/wol-sok-mono/issues/3231)
+
 ## [74.181.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.0...v74.181.1) (2026-11-23)
 
 ### Bug Fixes
