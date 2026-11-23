@@ -97,6 +97,12 @@ export function createTarget(
   return { texture, framebuffer };
 }
 
+/** Frees a target's framebuffer and texture. */
+export function deleteTarget(gl: WebGL2RenderingContext, target: Target): void {
+  gl.deleteFramebuffer(target.framebuffer);
+  gl.deleteTexture(target.texture);
+}
+
 /** A unit quad, corners from 0 to 1, as a triangle strip in attribute 0. */
 export interface Quad {
   vao: WebGLVertexArrayObject;
