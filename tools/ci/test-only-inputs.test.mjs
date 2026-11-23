@@ -55,7 +55,11 @@ function inProjects(paths, projects) {
     .map(({ file, project }) => ({ root: project.root, file }));
 }
 
-/** Whether `file` lies at one of the test-only patterns of its `root`. */
+/**
+ * Whether `file` lies at one of the test-only patterns of its `root`.
+ * `matchesGlob` skips dotfiles on `**\/*` where Nx matches them, so a
+ * dotfile below `e2e/` or `rules-test/` goes unchecked here; none is tracked.
+ */
 function isTestOnly({ root, file }) {
   return TEST_ONLY_PATTERNS.some((pattern) =>
     matchesGlob(file, `${root}/${pattern}`)
@@ -145,8 +149,11 @@ void describe('nx.json production', () => {
     assert.deepEqual(unexcluded(production, testOnly), []);
   });
 
-  void it('keeps every app entry point', () => {
-    const entries = inProjects(gitLsFiles('apps/*/src/main.ts'), projects);
+  void it('keeps every app and lib entry point', () => {
+    const entries = inProjects(
+      gitLsFiles('apps/*/src/main.ts', 'libs/**/src/index.ts'),
+      projects
+    );
     assert.ok(entries.length > 0, 'no app entry point tracked');
     assert.deepEqual(
       unexcluded(production, entries),
