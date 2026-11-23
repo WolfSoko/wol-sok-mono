@@ -500,13 +500,14 @@ flowchart LR
 ## Automated findings
 
 - **Circular dependencies:** none
-- **Tag constraint violations** (`.oxlintrc.json`): 6
-  - `angular-examples` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `bacteria-game-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `fourier-analysis-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `pacetrainer` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `rollapolla-analog` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `shader-examples-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
+- **Tag constraint violations** (`.oxlintrc.json`): none
+- **Recorded boundary exceptions** (imports only from files an override in `.oxlintrc.json` covers): 6
+  - `angular-examples` → `tools-federation`
+  - `bacteria-game-remote` → `tools-federation`
+  - `fourier-analysis-remote` → `tools-federation`
+  - `pacetrainer` → `tools-vite`
+  - `rollapolla-analog` → `tools-vite`
+  - `shader-examples-remote` → `tools-federation`
 - **Unused libraries:** none
 - **Projects without tags:** none
 - **Layer tags too coarse:** 1 projects in `libs/shared`/`libs/utils` do not carry their layer's tag, so the boundary rules cannot tell a utility from a shared domain lib
