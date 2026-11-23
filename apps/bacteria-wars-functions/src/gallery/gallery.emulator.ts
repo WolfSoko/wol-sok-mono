@@ -15,7 +15,10 @@ import type { Verdict } from '../boards/verify';
 import { runReplayCommand } from '../replays/command';
 import { dailyReplay, TICKS } from '../testing/daily-replay';
 import { useEmulatorDb } from '../testing/emulator';
+import { logger } from 'firebase-functions/logger';
+import { reportCaughtErrorsTo } from '../caught-errors';
 import { featureBest } from './feature-best';
+import * as publish from './publish';
 import { publicProfileChanged } from './publish';
 
 /**
@@ -141,6 +144,25 @@ describe('featureBest', () => {
     });
     expect(await pick()).toMatchObject({ skipped: 'done' });
     expect((await db.collection('publicReplays').get()).size).toBe(1);
+  });
+
+  it('reports a candidate that failed to publish, and still marks the day done', async () => {
+    const failure = new Error('publicReplays is busy');
+    const sink = jest.fn();
+    reportCaughtErrorsTo(sink);
+    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    jest.spyOn(publish, 'publishReplay').mockRejectedValueOnce(failure);
+    try {
+      await store('l_a', 'ada');
+      expect(await pick()).toMatchObject({ checked: 1, published: [] });
+      expect(sink).toHaveBeenCalledWith(failure, 'Candidate failed to publish');
+      expect(
+        (await db.doc('replayCandidates/2026-10-25').get()).get('done')
+      ).toBe(true);
+    } finally {
+      reportCaughtErrorsTo(null);
+      jest.restoreAllMocks();
+    }
   });
 
   it('keeps out a player who opted out, and an unverified match', async () => {
