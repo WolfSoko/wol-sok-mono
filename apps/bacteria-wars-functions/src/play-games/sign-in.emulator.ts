@@ -1,4 +1,5 @@
 import type { CollectionReference } from 'firebase-admin/firestore';
+import { reportCaughtErrorsTo } from '../caught-errors';
 import { useEmulatorDb } from '../testing/emulator';
 import { type PlayGamesCommandDeps, runPlayGamesSignIn } from './command';
 import { logger } from 'firebase-functions/logger';
@@ -279,15 +280,18 @@ describe('signInPlayGames', () => {
       expect(syncAchievements).not.toHaveBeenCalled();
     });
 
-    it('keeps the result and the token when the sync fails', async () => {
+    it('keeps the result and the token when the sync fails, and reports it without its message', async () => {
+      const ACCESS = 'ya29.secret-access-token';
       const data = { uid: 'g', code: 'code' };
       await db.doc(PATH).set(data);
-      jest.spyOn(logger, 'warn').mockImplementation(() => undefined);
+      const sink = jest.fn();
+      reportCaughtErrorsTo(sink);
+      jest.spyOn(logger, 'error').mockImplementation(() => undefined);
 
       expect(
         await run(data, 'g', fakeAccounts({ g: guest() }), {
           syncAchievements: async () => {
-            throw new TypeError('fetch failed');
+            throw new SyntaxError(`Unexpected token "bad token ${ACCESS}"`);
           },
         })
       ).toEqual({ ok: true });
@@ -295,10 +299,18 @@ describe('signInPlayGames', () => {
         result: { ok: true },
         token: 'token-for-g',
       });
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Play Games achievement sync failed',
-        { error: 'TypeError' }
+      expect(sink).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'SyntaxError', message: '' }),
+        'Play Games achievement sync failed'
       );
+      const [[reported]] = sink.mock.calls as [[Error]];
+      expect(reported.stack).not.toContain(ACCESS);
+      expect(
+        JSON.stringify((logger.error as jest.Mock).mock.calls, (_, value) =>
+          value instanceof Error ? value.stack : value
+        )
+      ).not.toContain(ACCESS);
+      reportCaughtErrorsTo(null);
       jest.restoreAllMocks();
     });
 
