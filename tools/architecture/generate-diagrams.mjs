@@ -329,8 +329,14 @@ function findings(projects, cycles, violations) {
       : '- **Tag constraint violations** (`.oxlintrc.json`): none'
   );
 
+  // Projects tagged `tools` are scripts run by their own targets or by other
+  // projects' commands (`tools-deploy`, `tools-relay`), which the project
+  // graph does not record, so no dependents does not make them unused.
   const orphans = projects.filter(
-    (p) => p.in === 0 && !['apps', 'infra', 'public'].includes(p.group)
+    (p) =>
+      p.in === 0 &&
+      !['apps', 'infra', 'public'].includes(p.group) &&
+      !p.tags.includes('tools')
   );
   out.push(
     orphans.length
