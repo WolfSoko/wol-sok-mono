@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.182.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.2...v74.182.0) (2026-11-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** bacterium parts glow gold while the DNA buys something ([#3232](https://github.com/WolfSoko/wol-sok-mono/issues/3232)) ([db08069](https://github.com/WolfSoko/wol-sok-mono/commit/db080696b6e9151e63acf49decebe31afc078ec6)), references [#3227](https://github.com/WolfSoko/wol-sok-mono/issues/3227) [#3227](https://github.com/WolfSoko/wol-sok-mono/issues/3227) [#3227](https://github.com/WolfSoko/wol-sok-mono/issues/3227)
+* **feat-lazy-bacteria-game:** show the Play Games achievement icons in the game ([#3228](https://github.com/WolfSoko/wol-sok-mono/issues/3228)) ([861ccdb](https://github.com/WolfSoko/wol-sok-mono/commit/861ccdbe46ab563d22519859147bf4a818b41e22)), references [#3211](https://github.com/WolfSoko/wol-sok-mono/issues/3211) [#3211](https://github.com/WolfSoko/wol-sok-mono/issues/3211)
+
 ## [74.181.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.1...v74.181.2) (2026-11-23)
 
 ### Bug Fixes
