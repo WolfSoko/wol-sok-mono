@@ -5,6 +5,7 @@
       <span
         class="css-lobe"
         [class.hot]="hot() === item.id"
+        [class.ready]="item.ready"
         [style.left.%]="left(item.id)"
         [style.top.%]="top(item.id)"
         [style.--lobe]="anchors[item.id].r"
@@ -18,6 +19,7 @@
       class="part"
       [class.play]="item.id === 'play'"
       [class.online]="item.id === 'online'"
+      [class.ready]="item.ready"
       [style.left.%]="left(item.id)"
       [style.top.%]="top(item.id)"
       [attr.data-part]="item.id"

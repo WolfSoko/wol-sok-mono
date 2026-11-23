@@ -192,6 +192,63 @@ describe('BacteriumMenuComponent', () => {
     expect(renderer.scenes.length).toBeGreaterThan(drawn);
   });
 
+  it('lights up the parts whose DNA buys something, and their lobes', () => {
+    const renderer = new RecordingRenderer();
+    const { element } = render(renderer);
+    const ready = Array.from(element.querySelectorAll('.part.ready'));
+    // ITEMS have DNA for My Colony only.
+    expect(ready.map((part) => part.getAttribute('data-part'))).toEqual([
+      'colony',
+    ]);
+    const lobes = renderer.scenes[renderer.scenes.length - 1].lobes;
+    const colony = ITEMS.filter((item) => item.id !== 'play').findIndex(
+      (item) => item.id === 'colony'
+    );
+    expect(lobes.map((lobe) => lobe.ready)).toEqual(
+      lobes.map((_, index) => index === colony)
+    );
+  });
+
+  it('redraws a still cell once a part gets ready', () => {
+    const original = globalThis.matchMedia;
+    globalThis.matchMedia = (query: string) =>
+      ({
+        matches: query.includes('reduce'),
+        media: query,
+        addEventListener: () => undefined,
+        removeEventListener: () => undefined,
+      }) as unknown as MediaQueryList;
+    try {
+      const renderer = new RecordingRenderer();
+      const { fixture } = render(renderer);
+      fixture.componentRef.setInput(
+        'items',
+        bacteriumItems({
+          training: true,
+          online: true,
+          friends: false,
+          leaderboards: false,
+          colonyDna: 4,
+          evolveDna: 2,
+          friendRequests: 0,
+          gallery: { url: '/replays', external: false },
+        })
+      );
+      fixture.detectChanges();
+      const last = renderer.scenes[renderer.scenes.length - 1];
+      expect(last.lobes.filter((lobe) => lobe.ready)).toHaveLength(2);
+      // Held still: drawn on the change, no animation frame asked for.
+      expect(frames.size).toBe(0);
+    } finally {
+      globalThis.matchMedia = original;
+    }
+  });
+
+  it('glows the CSS lobes of ready parts too', () => {
+    const { element } = render(null);
+    expect(element.querySelectorAll('.css-lobe.ready')).toHaveLength(1);
+  });
+
   it("lights its rim in the player's colony colour", () => {
     TestBed.resetTestingModule();
     const renderer = new RecordingRenderer();

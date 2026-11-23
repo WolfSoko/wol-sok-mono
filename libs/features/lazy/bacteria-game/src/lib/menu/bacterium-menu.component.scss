@@ -65,6 +65,11 @@
   &.hot {
     scale: 1.2;
   }
+
+  &.ready {
+    box-shadow: 0 0 1rem 0.2rem
+      color-mix(in srgb, var(--bw-gold) 60%, transparent);
+  }
 }
 
 .parts {
@@ -146,6 +151,25 @@
   text-align: center;
 }
 
+// A part whose DNA buys something glows gold, as the tiles did.
+.part.ready .spot {
+  --ready-glow: 0 0 16px 1px color-mix(in srgb, var(--bw-gold) 45%, transparent);
+
+  border-color: var(--bw-gold);
+  animation: ready-glow 1.8s ease-in-out infinite;
+}
+
+@keyframes ready-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--bw-gold) 0%, transparent);
+  }
+
+  50% {
+    box-shadow: var(--ready-glow);
+  }
+}
+
 // On a phone the names go under their icons, smaller.
 @container (max-width: 26rem) {
   .spot {
@@ -160,5 +184,11 @@
   .spot,
   .css-lobe {
     transition: none;
+  }
+
+  // Held still at its brightest rather than pulsing.
+  .part.ready .spot {
+    animation: none;
+    box-shadow: var(--ready-glow);
   }
 }

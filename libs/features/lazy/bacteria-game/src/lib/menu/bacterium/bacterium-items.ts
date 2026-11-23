@@ -73,6 +73,11 @@ export interface BacteriumItem {
   count: number;
   /** The text a screen reader hears for the badge, null without one. */
   countKey: TranslationKey | null;
+  /**
+   * True while the DNA counted on the badge buys something there: the part
+   * glows gold, as the My Colony and Evolution tiles did.
+   */
+  ready: boolean;
   /** A page to open rather than an item to pick, null for most. */
   link: { url: string; external: boolean } | null;
 }
@@ -106,16 +111,19 @@ export function bacteriumItems(state: BacteriumMenuState): BacteriumItem[] {
     item('colony', 'colony.title', 'bubble_chart', {
       count: state.colonyDna,
       countKey: 'colony.menu.ready',
+      buys: true,
     }),
     item('evolution', 'evolution.menu.tile', 'biotech', {
       count: state.evolveDna,
       countKey: 'evolution.menu.ready',
+      buys: true,
     }),
     item('profile', 'profile.title', 'person'),
     state.friends
       ? item('friends', 'social.friends.title', 'group', {
           count: state.friendRequests,
           countKey: 'menu.friendRequests',
+          buys: false,
         })
       : null,
     state.leaderboards
@@ -129,11 +137,18 @@ export function bacteriumItems(state: BacteriumMenuState): BacteriumItem[] {
   ].filter((entry): entry is BacteriumItem => entry !== null);
 }
 
+/** A part's count badge; `buys` when it counts DNA that buys something. */
+interface Badge {
+  count: number;
+  countKey: TranslationKey;
+  buys: boolean;
+}
+
 function item(
   id: BacteriumItemId,
   label: TranslationKey,
   icon: string,
-  badge: { count: number; countKey: TranslationKey } | null = null
+  badge: Badge | null = null
 ): BacteriumItem {
   const count = Math.max(0, badge?.count ?? 0);
   return {
@@ -142,6 +157,7 @@ function item(
     icon,
     count,
     countKey: count > 0 ? (badge?.countKey ?? null) : null,
+    ready: count > 0 && badge?.buys === true,
     link: null,
   };
 }
