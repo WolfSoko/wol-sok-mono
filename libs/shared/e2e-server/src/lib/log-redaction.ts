@@ -7,9 +7,9 @@
 /** An http(s) or ws(s) URL inside a text, up to the next whitespace. */
 const URL_IN_TEXT = /\b(?:https?|wss?):\/\/\S+/gi;
 
-/** Credentials, query and hash of a URL `new URL` refused. */
+/** Credentials of a URL `new URL` refused, and where its query or hash starts. */
 const CREDENTIALS = /\/\/[^/@]*@/;
-const QUERY_OR_HASH = /[?#].*$/;
+const QUERY_OR_HASH_START = /[?#]/;
 
 /** `url` without credentials, query and hash. */
 export function urlForLog(url: string): string {
@@ -21,8 +21,14 @@ export function urlForLog(url: string): string {
     parsed.hash = '';
     return parsed.href;
   } catch {
-    return url.replace(QUERY_OR_HASH, '').replace(CREDENTIALS, '//');
+    return withoutQueryOrHash(url).replace(CREDENTIALS, '//');
   }
+}
+
+/** `url` up to its first `?` or `#`; a single-character search stays linear. */
+function withoutQueryOrHash(url: string): string {
+  const start = url.search(QUERY_OR_HASH_START);
+  return start === -1 ? url : url.slice(0, start);
 }
 
 /** `text` with every URL in it reduced as `urlForLog` does. */

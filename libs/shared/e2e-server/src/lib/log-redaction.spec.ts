@@ -17,6 +17,13 @@ describe('urlForLog', () => {
   it('cuts query, hash and credentials off a URL it cannot parse', () => {
     expect(urlForLog('http://user:pw@[bad/x?token=1')).toBe('http://[bad/x');
   });
+
+  // CodeQL flagged a /[?#].*$/ fallback as slow on a long run of '#'.
+  it('cuts an unparsable URL with a long run of # in linear time', () => {
+    const url = `http://[bad/${'#'.repeat(100_000)}`;
+
+    expect(urlForLog(url)).toBe('http://[bad/');
+  });
 });
 
 describe('redactUrls', () => {

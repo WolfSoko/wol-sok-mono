@@ -37,7 +37,7 @@ function recordProblems(page: Page): string[] {
   );
   page.on('requestfailed', (request) =>
     lines.push(
-      `request failed: ${urlForLog(request.url())} (${request.failure()?.errorText ?? 'unknown'})`
+      `request failed: ${urlForLog(request.url())} (${redactUrls(request.failure()?.errorText ?? 'unknown')})`
     )
   );
   page.on('response', (response) => {
