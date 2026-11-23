@@ -37,6 +37,7 @@ import {
   sharedQuad,
   createTarget,
   createTexture,
+  deleteTarget,
   BOX_VERTEX,
   FULLSCREEN_VERTEX,
   useExactOutput,
@@ -80,6 +81,12 @@ import {
   TintMode,
   WeaponFx,
 } from '../weapon-fx';
+
+/**
+ * The texture unit the floor pass reads the last frame from - one no other
+ * pass of the frame uses, unbound right after (#3231).
+ */
+const PREVIOUS_UNIT = 2;
 
 /** Each tint mode's number in the colony shader. */
 const TINT_INDEX = Object.fromEntries(
@@ -237,8 +244,13 @@ interface Resources {
   blur: Target;
   /** Each colony's cells and density, by its place in the frame - grown as needed. */
   colonies: ColonyTargets[];
-  /** The frame being built - it survives into the next, for the trail. */
+  /** The last frame built - the next one is laid over it, for the trail. */
   trail: Target;
+  /**
+   * The target the next frame is built in, then swapped with the trail:
+   * no frame is drawn over what a target kept (#3231).
+   */
+  next: Target;
 }
 
 /**
@@ -247,10 +259,13 @@ interface Resources {
  * (see `WeaponFx`), the jam and the crosshairs. Per frame the CPU only packs each colony's cells into a small
  * texture and the shapes into one instance buffer.
  *
- * The frame is built in an offscreen texture that is kept between frames -
- * laying the floor over it at partial opacity is what leaves the trail -
- * and copied onto the canvas at the end. The drawing buffer is preserved,
- * so the vaporize effect can still read the arena off the canvas.
+ * The frame is built in an offscreen texture, from the last frame's: the
+ * floor laid over it at partial opacity is what leaves the trail. Two
+ * textures take turns, so the floor reads the last frame as a texture and
+ * writes every pixel of the new one, never blending over what a target
+ * kept - some phones' GPUs brought back stale parts of a kept target after
+ * power saving, smears that never faded (#3231). The finished frame is
+ * copied onto the canvas.
  *
  * A lost context (the GPU was reset, or the phone reclaimed it) is rebuilt
  * once the browser restores it; nothing is drawn in between.
@@ -471,9 +486,10 @@ export class GlArenaPainter implements ArenaPainter {
       gl.LINEAR
     );
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-    gl.deleteFramebuffer(old.framebuffer);
-    gl.deleteTexture(old.texture);
+    deleteTarget(gl, old);
     resources.trail = trail;
+    deleteTarget(gl, resources.next);
+    resources.next = this.frameTarget(width, height);
   }
 
   public setFloor(theme: ArenaTheme, zones: readonly Zone[]): void {
@@ -511,18 +527,20 @@ export class GlArenaPainter implements ArenaPainter {
     this.paintedColonies = frame.colonies;
     this.preparedColonies = colonies;
 
-    gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
+    const target = resources.next;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+    // Whatever it held is written over in full: no GPU has to load it.
+    gl.invalidateFramebuffer(gl.FRAMEBUFFER, [gl.COLOR_ATTACHMENT0]);
     gl.viewport(0, 0, this.renderWidth, this.renderHeight);
-    gl.enable(gl.BLEND);
-    this.useAlphaBlend();
+    gl.disable(gl.BLEND);
 
-    // Lay the floor over the previous frame, so movement leaves a short trail.
+    // Lay the floor over the last frame, so movement leaves a short trail.
     this.useFullscreen(programs.floor);
     bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
     this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
-    // A target without a frame yet takes the floor whole, or it would show
-    // the black it was cleared to through it.
+    // A frame without a last one to trail - a fresh target, a new floor -
+    // takes the floor whole, or it would show black through it.
     const floorAlpha = frame.clear || this.freshTrail ? 1 : 0.7;
     this.freshTrail = false;
     gl.uniform1f(programs.floor.uniforms['uAlpha'], floorAlpha);
@@ -530,11 +548,25 @@ export class GlArenaPainter implements ArenaPainter {
       programs.floor.uniforms['uHasZones'],
       resources.zones == null ? 0 : 1
     );
-    if (resources.zones != null) {
+    if (resources.zones == null) {
+      // A sampler is checked even where the shader skips it: pointed at
+      // the floor's unit, it never meets the simulation's integer mask,
+      // which would fail the draw and leave the frame undefined.
+      gl.uniform1i(programs.floor.uniforms['uZones'], 0);
+    } else {
       bindTexture(gl, 1, resources.zones, programs.floor.uniforms['uZones']);
     }
-    gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    bindTexture(
+      gl,
+      PREVIOUS_UNIT,
+      resources.trail.texture,
+      programs.floor.uniforms['uPrevious']
+    );
     gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    // Unbound at once: it is the target of the next frame.
+    gl.activeTexture(gl.TEXTURE0 + PREVIOUS_UNIT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    gl.enable(gl.BLEND);
     this.useAlphaBlend();
     checkGl(gl, 'floor');
 
@@ -579,6 +611,8 @@ export class GlArenaPainter implements ArenaPainter {
     this.ambience = frame.ambience ?? null;
     this.ambienceMoves = this.ambience != null && !frame.reducedMotion;
     this.packWisps(theme);
+    resources.next = resources.trail;
+    resources.trail = target;
     this.showLastFrame();
   }
 
@@ -889,9 +923,9 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * Readies a pass onto the frame's target to draw only its box: a quad of
-   * the box, never a scissor, which some Android GPUs (Mali) get wrong on
-   * a target kept from frame to frame - old frames come back inside the
-   * scissored box (#3174).
+   * the box, never a scissor, which some Android GPUs (Mali) got wrong on
+   * the frame's target while it was kept from frame to frame - old frames
+   * came back inside the scissored box (#3174).
    */
   private useBox(program: Program, box: PixelBox): void {
     this.gl.useProgram(program.program);
@@ -1183,7 +1217,9 @@ export class GlArenaPainter implements ArenaPainter {
       gl.UNSIGNED_BYTE,
       new Uint8Array(pixels.buffer)
     );
-    // The next frame lays the new floor down fully, no trail of the old one.
+    // The next frame lays the new floor down fully, no trail of the old
+    // one - and a snapshot before it shows black, not the old level.
+    this.freshTrail = true;
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);
@@ -1262,6 +1298,7 @@ export class GlArenaPainter implements ArenaPainter {
         'uFloor',
         'uZones',
         'uHasZones',
+        'uPrevious',
         'uView',
         'uArena',
         'uAlpha',
@@ -1357,6 +1394,7 @@ export class GlArenaPainter implements ArenaPainter {
     const blur = this.target(this.width, this.height, gl.LINEAR);
     // Sampled smoothly: scaled up to the canvas when it is the smaller.
     const trail = this.target(this.renderWidth, this.renderHeight, gl.LINEAR);
+    const next = this.frameTarget(this.renderWidth, this.renderHeight);
     this.freshTrail = true;
 
     return {
@@ -1370,7 +1408,16 @@ export class GlArenaPainter implements ArenaPainter {
       blur,
       colonies: [],
       trail,
+      next,
     };
+  }
+
+  /**
+   * A target a frame is built in - sampled smoothly, when it is scaled up
+   * to the canvas. Never cleared: each frame writes all of it.
+   */
+  private frameTarget(width: number, height: number): Target {
+    return createTarget(this.gl, this.gl.RGBA8, width, height, this.gl.LINEAR);
   }
 
   /** A target to render into, cleared to black. */

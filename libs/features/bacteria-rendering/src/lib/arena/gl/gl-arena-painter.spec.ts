@@ -333,3 +333,204 @@ describe('keepBox', () => {
     expect(kept).toEqual([0, 9, 0, 0, 0, 0]);
   });
 });
+
+describe('GlArenaPainter trail', () => {
+  const WIDTH = 32;
+  const HEIGHT = 16;
+  const FRAMEBUFFER = glConstant('FRAMEBUFFER');
+  const DRAW_FRAMEBUFFER = glConstant('DRAW_FRAMEBUFFER');
+  const TEXTURE0 = glConstant('TEXTURE0');
+  const BLEND = glConstant('BLEND');
+  const TRACKED = [
+    'activeTexture',
+    'bindTexture',
+    'bindFramebuffer',
+    'framebufferTexture2D',
+    'invalidateFramebuffer',
+    'enable',
+    'disable',
+    'drawArrays',
+    'drawArraysInstanced',
+  ];
+
+  /** One draw call and the GL state it ran with. */
+  interface Draw {
+    framebuffer: unknown;
+    /** The texture bound to each unit's TEXTURE_2D. */
+    units: ReadonlyMap<number, unknown>;
+    blend: boolean;
+  }
+
+  /** What the painter's calls did, replayed in the order they were made. */
+  interface Replay {
+    draws: Draw[];
+    /** The framebuffer bound when each frame target was invalidated. */
+    frameTargets: unknown[];
+    /** Each framebuffer's colour texture. */
+    textureOf: ReadonlyMap<unknown, unknown>;
+    /** How many draws had run when each frame target was invalidated. */
+    frameStarts: number[];
+  }
+
+  function replay(fake: ReturnType<typeof fakeGl>): Replay {
+    const methods = fake.gl as unknown as Record<string, jest.Mock>;
+    const timeline = TRACKED.flatMap((name) =>
+      methods[name].mock.calls.map((args, index) => ({
+        name,
+        args,
+        order: methods[name].mock.invocationCallOrder[index],
+      }))
+    ).sort((a, b) => a.order - b.order);
+    const units = new Map<number, unknown>();
+    const textureOf = new Map<unknown, unknown>();
+    const draws: Draw[] = [];
+    const frameTargets: unknown[] = [];
+    const frameStarts: number[] = [];
+    let unit = 0;
+    let framebuffer: unknown = null;
+    let blend = false;
+    for (const { name, args } of timeline) {
+      switch (name) {
+        case 'activeTexture':
+          unit = (args[0] as number) - TEXTURE0;
+          break;
+        case 'bindTexture':
+          units.set(unit, args[1]);
+          break;
+        case 'bindFramebuffer':
+          if (args[0] === FRAMEBUFFER || args[0] === DRAW_FRAMEBUFFER) {
+            framebuffer = args[1];
+          }
+          break;
+        case 'framebufferTexture2D':
+          textureOf.set(framebuffer, args[3]);
+          break;
+        case 'invalidateFramebuffer':
+          frameTargets.push(framebuffer);
+          frameStarts.push(draws.length);
+          break;
+        case 'enable':
+        case 'disable':
+          if (args[0] === BLEND) {
+            blend = name === 'enable';
+          }
+          break;
+        default:
+          draws.push({ framebuffer, units: new Map(units), blend });
+      }
+    }
+    return { draws, frameTargets, textureOf, frameStarts };
+  }
+
+  function frame(): ArenaFrame {
+    return {
+      clear: false,
+      deltaTimeSec: 1 / 60,
+      timeSec: 1,
+      view: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
+      walls: [],
+      dynamicWalls: [],
+      colonies: [],
+      reducedMotion: false,
+      nutrients: [],
+      balance: gameBalance,
+      cursors: [],
+      weaponFires: [],
+      weaponEffects: [],
+      seatColors: new Map(),
+      particleBudget: 0,
+    };
+  }
+
+  function painted() {
+    const painting = painterOnFakeContext(WIDTH, HEIGHT);
+    painting.painter.setFloor(arenaTheme('petri-dish'), []);
+    return painting;
+  }
+
+  /** The textures bound to any unit during a draw into a frame target. */
+  function sampledWhileDrawnInto({ draws, frameTargets, textureOf }: Replay) {
+    const targets = new Set(frameTargets);
+    return draws.filter(
+      ({ framebuffer, units }) =>
+        targets.has(framebuffer) &&
+        [...units.values()].includes(textureOf.get(framebuffer))
+    );
+  }
+
+  it('builds each frame in the other of two targets, laying the floor over the last one unblended', () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame());
+    painter.paint(frame());
+    painter.paint(frame());
+
+    const { draws, frameTargets, frameStarts, textureOf } = replay(fake);
+    expect(frameTargets).toHaveLength(3);
+    const [first, second, third] = frameTargets;
+    expect(second).not.toBe(first);
+    expect(third).toBe(first);
+    // The floor is the first draw of a frame: it writes the whole target
+    // from the last frame's texture rather than blending over what is kept.
+    const floor = draws[frameStarts[2]];
+    expect(floor.framebuffer).toBe(third);
+    expect(floor.blend).toBe(false);
+    expect([...floor.units.values()]).toContain(textureOf.get(second));
+  });
+
+  it('unbinds the last frame once the floor is laid on it', () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame());
+    painter.paint(frame());
+
+    const { draws, frameStarts } = replay(fake);
+    const afterFloor = draws[frameStarts[1] + 1];
+    expect(afterFloor).toBeDefined();
+    // The floor read it on unit 2; nothing after it in the frame may.
+    expect(draws[frameStarts[1]].units.get(2)).not.toBeNull();
+    expect(afterFloor.units.get(2)).toBeNull();
+  });
+
+  it("points the zones' sampler at the floor's unit on a level without zones", () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame());
+
+    const zones = (fake.calls.get('uniform1i') ?? []).filter(
+      ([location]) => (location as { name: string }).name === 'uZones'
+    );
+    expect(zones).toEqual([[{ name: 'uZones' }, 0]]);
+  });
+
+  it('shows the frame it built last', () => {
+    const { fake, painter } = painted();
+    painter.paint(frame());
+    painter.paint(frame());
+
+    painter.showLastFrame();
+
+    const { draws, frameTargets, textureOf } = replay(fake);
+    const shown = draws[draws.length - 1];
+    expect(shown.framebuffer).toBeNull();
+    expect(shown.units.get(0)).toBe(textureOf.get(frameTargets[1]));
+  });
+
+  it('never samples the target a frame is drawn into, after a new scale and a restored context too', () => {
+    const { fake, canvas, painter } = painted();
+
+    painter.paint(frame());
+    painter.showLastFrame();
+    painter.setRenderScale(0.5);
+    painter.paint(frame());
+    painter.paint(frame());
+    canvas.dispatchEvent(new Event('webglcontextlost'));
+    canvas.dispatchEvent(new Event('webglcontextrestored'));
+    painter.paint(frame());
+    painter.paint(frame());
+
+    const played = replay(fake);
+    expect(played.frameTargets).toHaveLength(5);
+    expect(sampledWhileDrawnInto(played)).toEqual([]);
+  });
+});
