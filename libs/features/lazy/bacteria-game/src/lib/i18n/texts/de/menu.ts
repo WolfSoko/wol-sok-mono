@@ -4,8 +4,6 @@ import type { Translation } from '@wolsok/feat-shared-bacteria-engine';
 export const menu: Translation<typeof en> = {
   tagline:
     'Steuere deine Kolonie, verschling die anderen. {levels} Schalen, jeden Tag ein neues Level, Endlos-Läufe – und Freunde, die du schlagen kannst.',
-  newGameNote:
-    'Training, Kampagne, Tageslevel, Endlos, Frei, Zwei Spieler, Online',
   more: 'Mehr',
   bacterium: {
     label: 'Dein Bakterium: Spielen und die Bereiche des Spiels',

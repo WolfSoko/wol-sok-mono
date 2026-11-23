@@ -54,8 +54,7 @@ describe('TogglesComponent', () => {
     expect(text).toContain('Matchmaking queue');
     expect(text).toContain('set in Remote Config');
     expect(text).toContain('default (On)');
-    expect(text).toContain('default (Off)');
-    expect(text).toContain('Bacterium main menu');
+    expect(text).toContain('Deterministic simulation');
     expect(button('Publish').disabled).toBe(true);
   });
 
@@ -63,20 +62,22 @@ describe('TogglesComponent', () => {
     const { run, read, settle, button, toggle, element } = render();
     await settle();
     toggle('leaderboards', 'Admin').click();
-    toggle('bacteriumMenu', 'Admin').click();
+    toggle('deterministicSimulation', 'Admin').click();
     await settle();
     expect(element.textContent).toContain('changed');
     button('Publish').click();
     await settle();
     expect(run).toHaveBeenCalledWith({
       type: 'toggles.set',
-      subject: 'Leaderboards, Bacterium main menu',
+      subject: 'Leaderboards, Deterministic simulation',
       target: null,
-      args: { values: { leaderboards: 'admin', bacteriumMenu: 'admin' } },
+      args: {
+        values: { leaderboards: 'admin', deterministicSimulation: 'admin' },
+      },
     });
     expect(read).toHaveBeenCalledTimes(2);
     expect(element.textContent).toContain(
-      'Published: Leaderboards: Admin, Bacterium main menu: Admin'
+      'Published: Leaderboards: Admin, Deterministic simulation: Admin'
     );
   });
 

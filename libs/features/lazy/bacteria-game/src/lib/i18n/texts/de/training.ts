@@ -71,6 +71,5 @@ export const training: Translation<(typeof ENGINE_EN)['training']> = {
   },
   menu: {
     title: 'Training',
-    note: 'Neu hier? {done} von {total} Missionen geschafft',
   },
 };

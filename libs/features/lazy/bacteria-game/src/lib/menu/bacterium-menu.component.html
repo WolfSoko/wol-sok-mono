@@ -46,7 +46,9 @@
           />
           @if (item.countKey; as countKey) {
             <span class="count" aria-hidden="true">{{ item.count }}</span>
-            <span class="cdk-visually-hidden">{{
+            <!-- A space, so a screen reader hears the label and the badge
+                 apart. -->
+            &ngsp;<span class="cdk-visually-hidden">{{
               countKey | t: { count: item.count }
             }}</span>
           }

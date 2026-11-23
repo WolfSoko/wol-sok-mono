@@ -801,8 +801,10 @@ a release (decided 2026-10-25: Remote Config).
   every reader of a toggle still gets a boolean.
 - **The toggles**: `rankedDaily`, `rankedEndless`, `matchmaking`,
   `leaderboards`, `deterministicSimulation` (the rollout switch of ADR
-  0015), all on by default, and `bacteriumMenu` (the main menu as a 3D
-  bacterium, #3194), off by default.
+  0015), all on by default. The toggle that held back the main menu as a
+  3D bacterium ([#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194))
+  was removed in [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210)
+  once the bacterium became the main menu for everyone.
 - **Setting them**: the admin command `toggles.set` (`target: null`,
   `args.values` with one or more toggles, a reason, a sign-in within the
   hour like the destructive types) publishes the template from

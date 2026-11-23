@@ -75,6 +75,5 @@ export const training = {
   /** The way into the training from the main menu. */
   menu: {
     title: 'Training',
-    note: 'New here? {done} of {total} missions done',
   },
 };

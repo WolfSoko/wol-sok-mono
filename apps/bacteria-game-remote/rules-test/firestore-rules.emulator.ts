@@ -866,7 +866,7 @@ describe('adminCommands', () => {
         toggles({
           rankedDaily: 'off',
           matchmaking: 'on',
-          bacteriumMenu: 'admin',
+          deterministicSimulation: 'admin',
         })
       )
     );

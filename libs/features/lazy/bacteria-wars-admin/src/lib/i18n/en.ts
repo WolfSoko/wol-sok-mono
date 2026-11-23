@@ -223,7 +223,6 @@ export const EN = {
       matchmaking: 'Matchmaking queue',
       leaderboards: 'Leaderboards',
       deterministicSimulation: 'Deterministic simulation',
-      bacteriumMenu: 'Bacterium main menu',
     },
   },
   bans: {

@@ -37,7 +37,6 @@ describe('FeatureTogglesService', () => {
     const service = withToggles();
     expect(service.states()).toEqual(FEATURE_TOGGLES);
     expect(service.toggles()).toEqual(DEFAULTS);
-    expect(service.toggles().bacteriumMenu).toBe(false);
   });
 
   it('takes what the owner set, the defaults for the rest', () => {
@@ -54,24 +53,26 @@ describe('FeatureTogglesService', () => {
 
   it('turns an admin toggle on for the owner only, as they sign in or out', () => {
     const service = withToggles();
-    set.next({ bacteriumMenu: 'admin', leaderboards: 'admin' });
+    set.next({ rankedEndless: 'admin', leaderboards: 'admin' });
 
-    expect(service.toggles().bacteriumMenu).toBe(false);
+    expect(service.toggles().rankedEndless).toBe(false);
     expect(service.toggles().leaderboards).toBe(false);
 
     account.owner.set(true);
-    expect(service.toggles().bacteriumMenu).toBe(true);
+    expect(service.toggles().rankedEndless).toBe(true);
     expect(service.toggles().leaderboards).toBe(true);
 
     account.owner.set(false);
-    expect(service.toggles().bacteriumMenu).toBe(false);
+    expect(service.toggles().rankedEndless).toBe(false);
   });
 
   it('turns an on toggle on for everyone', () => {
     const service = withToggles();
-    set.next({ bacteriumMenu: 'on' });
+    set.next({ leaderboards: 'off' });
+    expect(service.toggles().leaderboards).toBe(false);
 
-    expect(service.toggles().bacteriumMenu).toBe(true);
+    set.next({ leaderboards: 'on' });
+    expect(service.toggles().leaderboards).toBe(true);
   });
 
   it('asks the port only once started, and once however often started', () => {
@@ -131,9 +132,8 @@ describe('FeatureTogglesService', () => {
         config: {},
         sdk: {
           getValue: (_config: unknown, key: string) => ({
-            asString: () =>
-              key === 'bacteriumMenu' ? toggleText('admin') : '',
-            getSource: () => (key === 'bacteriumMenu' ? 'remote' : 'static'),
+            asString: () => (key === 'leaderboards' ? toggleText('admin') : ''),
+            getSource: () => (key === 'leaderboards' ? 'remote' : 'static'),
           }),
         },
       }),
@@ -144,9 +144,9 @@ describe('FeatureTogglesService', () => {
       await Promise.resolve();
     }
 
-    expect(service.states().bacteriumMenu).toBe('admin');
-    expect(service.toggles().bacteriumMenu).toBe(false);
+    expect(service.states().leaderboards).toBe('admin');
+    expect(service.toggles().leaderboards).toBe(false);
     account.owner.set(true);
-    expect(service.toggles().bacteriumMenu).toBe(true);
+    expect(service.toggles().leaderboards).toBe(true);
   });
 });

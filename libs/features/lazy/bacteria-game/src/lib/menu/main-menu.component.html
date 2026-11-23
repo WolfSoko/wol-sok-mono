@@ -45,131 +45,50 @@
         (dismiss)="dismissChallenge.emit()"
       />
     }
-    @if (showsBacterium()) {
-      <div class="bacterium">
-        <!-- Its own chunk: only a player with the toggle on downloads it.
-             The box holds its place while it loads. -->
-        @defer (on immediate) {
-          <feat-lazy-bac-game-bacterium-menu
-            [items]="bacteriumItems()"
-            [xp]="campaign().xp"
-            [player]="playerColor()"
-            [attr.aria-label]="'menu.bacterium.label' | t"
-            role="navigation"
-            (pick)="pickPart($event)"
-          />
-        }
-      </div>
-    } @else {
-      <div class="actions">
-        <button
-          mat-flat-button
-          type="button"
-          class="play"
-          (click)="busyEmit(newGame)"
-        >
-          <mat-icon>play_arrow</mat-icon>
-          <span class="play-text">
-            <span class="play-title">{{ "newGame.title" | t }}</span>
-            <span class="play-note">{{ "menu.newGameNote" | t }}</span>
-          </span>
-        </button>
-        @if (missionsDone() < totalMissions) {
-          <button
-            mat-stroked-button
-            type="button"
-            class="training"
-            (click)="busyEmit(training)"
-          >
-            <mat-icon>school</mat-icon>
-            <span class="play-text">
-              <span class="play-title">{{ "training.menu.title" | t }}</span>
-              <span class="play-note">{{
-                "training.menu.note"
-                  | t: { done: missionsDone(), total: totalMissions }
-              }}</span>
-            </span>
-          </button>
-        }
-      </div>
-    }
+    <div class="bacterium">
+      <!-- Its own chunk, out of the game's largest one, loaded right after
+           the menu. The box holds its place while it loads. -->
+      @defer (on immediate) {
+        <feat-lazy-bac-game-bacterium-menu
+          [items]="bacteriumItems()"
+          [xp]="campaign().xp"
+          [player]="playerColor()"
+          [attr.aria-label]="'menu.bacterium.label' | t"
+          role="navigation"
+          (pick)="pickPart($event)"
+        />
+      } @error {
+        <!-- Its chunk did not load (offline, or replaced by a release):
+             the same items as tiles, so the way into play stays. -->
+        <nav class="tiles" [attr.aria-label]="'menu.bacterium.label' | t">
+          @for (item of bacteriumItems(); track item.id) {
+            @if (item.link; as link) {
+              <a
+                class="tile"
+                [href]="link.url"
+                [attr.target]="link.external ? '_blank' : null"
+                [attr.rel]="link.external ? 'noopener' : null"
+              >
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                {{ item.label | t }}
+              </a>
+            } @else {
+              <button type="button" class="tile" (click)="pickPart(item.id)">
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                {{ item.label | t }}
+                @if (item.countKey; as countKey) {
+                  &ngsp;<span class="cdk-visually-hidden">{{
+                    countKey | t: { count: item.count }
+                  }}</span>
+                }
+              </button>
+            }
+          }
+        </nav>
+      }
+    </div>
 
     <nav class="tiles" [attr.aria-label]="'menu.more' | t">
-      @if (!showsBacterium()) {
-        <button
-          type="button"
-          class="tile"
-          [class.ready]="colonyDna() > 0"
-          (click)="open.emit('colony')"
-        >
-          <mat-icon class="player">bubble_chart</mat-icon>
-          {{ "colony.title" | t }}
-          @if (colonyDna() > 0) {
-            @let skinDna = colonyDna();
-            <span class="count" aria-hidden="true">{{ skinDna }}</span>
-            <span class="cdk-visually-hidden">{{
-              "colony.menu.ready" | t: { count: skinDna }
-            }}</span>
-          }
-        </button>
-        <button
-          type="button"
-          class="tile evolve"
-          [class.ready]="evolveDna() > 0"
-          (click)="open.emit('evolution')"
-        >
-          <feat-lazy-bac-game-dna-helix class="tile-helix" [size]="26" />
-          {{ "evolution.menu.tile" | t }}
-          @if (evolveDna() > 0) {
-            @let count = evolveDna();
-            <span class="count" aria-hidden="true">{{ count }}</span>
-            <span class="cdk-visually-hidden">{{
-              "evolution.menu.ready" | t: { count }
-            }}</span>
-          }
-        </button>
-        <!-- Progress, then other players and matches, then the game itself. -->
-        <button type="button" class="tile" (click)="open.emit('profile')">
-          <mat-icon class="gold">person</mat-icon>
-          {{ "profile.title" | t }}
-        </button>
-        @if (cloudAvailable()) {
-          <button type="button" class="tile" (click)="open.emit('friends')">
-            <mat-icon>group</mat-icon>
-            {{ "social.friends.title" | t }}
-            @if (friendRequests() > 0) {
-              @let count = friendRequests();
-              <span class="count" aria-hidden="true">{{ count }}</span>
-              <span class="cdk-visually-hidden">{{
-                "menu.friendRequests" | t: { count }
-              }}</span>
-            }
-          </button>
-        }
-        @if (showsBoards()) {
-          <button
-            type="button"
-            class="tile"
-            (click)="open.emit('leaderboards')"
-          >
-            <mat-icon class="gold">leaderboard</mat-icon>
-            {{ "boards.title" | t }}
-          </button>
-        }
-        <button type="button" class="tile" (click)="open.emit('my-matches')">
-          <mat-icon>smart_display</mat-icon>
-          {{ "replay.matches.title" | t }}
-        </button>
-        <a
-          class="tile"
-          [href]="galleryUrl()"
-          [attr.target]="onSite ? null : '_blank'"
-          [attr.rel]="onSite ? null : 'noopener'"
-        >
-          <mat-icon class="gold">video_library</mat-icon>
-          {{ "menu.gallery" | t }}
-        </a>
-      }
       <button type="button" class="tile" (click)="open.emit('settings')">
         <mat-icon>tune</mat-icon>
         {{ "settings.title" | t }}

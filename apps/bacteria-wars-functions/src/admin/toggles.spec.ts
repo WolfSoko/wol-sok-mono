@@ -61,14 +61,14 @@ describe('the toggles in a Remote Config template', () => {
           matchmaking: { defaultValue: { value: 'FALSE' } },
           leaderboards: { defaultValue: { useInAppDefault: true } },
           rankedDaily: { defaultValue: { value: 'maybe' } },
-          bacteriumMenu: { defaultValue: { value: 'admin' } },
+          deterministicSimulation: { defaultValue: { value: 'admin' } },
           rankedEndless: { defaultValue: { value: 'true' } },
         })
       )
     ).toEqual({
       ...FEATURE_TOGGLES,
       matchmaking: 'off',
-      bacteriumMenu: 'admin',
+      deterministicSimulation: 'admin',
       rankedEndless: 'on',
     });
   });
@@ -83,13 +83,13 @@ describe('the toggles in a Remote Config template', () => {
     });
     const set = withToggles(original, {
       rankedDaily: 'off',
-      bacteriumMenu: 'admin',
+      deterministicSimulation: 'admin',
     });
     expect(set.parameters['rankedDaily']).toMatchObject({
       defaultValue: { value: 'false' },
       valueType: 'STRING',
     });
-    expect(set.parameters['bacteriumMenu']).toMatchObject({
+    expect(set.parameters['deterministicSimulation']).toMatchObject({
       defaultValue: { value: 'admin' },
       valueType: 'STRING',
     });
@@ -128,12 +128,12 @@ describe('setting toggles in Remote Config', () => {
       template({ rankedDaily: { defaultValue: { value: 'true' } } })
     );
 
-    await toggles.update(() => ({ bacteriumMenu: 'admin' }));
+    await toggles.update(() => ({ deterministicSimulation: 'admin' }));
 
     expect(put).toHaveBeenCalledTimes(1);
     const [sent, etag] = put.mock.calls[0];
     expect(etag).toBe('e1');
-    expect(sent.parameters['bacteriumMenu']?.defaultValue).toEqual({
+    expect(sent.parameters['deterministicSimulation']?.defaultValue).toEqual({
       value: 'admin',
     });
     expect(sent.parameters['rankedDaily']?.defaultValue).toEqual({
@@ -144,9 +144,12 @@ describe('setting toggles in Remote Config', () => {
   it('publishes only the toggle the owner changed, so no other one flips', async () => {
     const put = remoteHolding(template({}));
 
-    await setToggles(toggles, { ...FEATURE_TOGGLES, bacteriumMenu: 'admin' });
+    await setToggles(toggles, {
+      ...FEATURE_TOGGLES,
+      deterministicSimulation: 'admin',
+    });
 
     const [sent] = put.mock.calls[0];
-    expect(Object.keys(sent.parameters)).toEqual(['bacteriumMenu']);
+    expect(Object.keys(sent.parameters)).toEqual(['deterministicSimulation']);
   });
 });
