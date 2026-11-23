@@ -152,7 +152,9 @@
 }
 
 // A part whose DNA buys something glows gold, as the tiles did.
-.ready .spot {
+.part.ready .spot {
+  --ready-glow: 0 0 16px 1px color-mix(in srgb, var(--bw-gold) 45%, transparent);
+
   border-color: var(--bw-gold);
   animation: ready-glow 1.8s ease-in-out infinite;
 }
@@ -164,7 +166,7 @@
   }
 
   50% {
-    box-shadow: 0 0 16px 1px color-mix(in srgb, var(--bw-gold) 45%, transparent);
+    box-shadow: var(--ready-glow);
   }
 }
 
@@ -185,8 +187,8 @@
   }
 
   // Held still at its brightest rather than pulsing.
-  .ready .spot {
+  .part.ready .spot {
     animation: none;
-    box-shadow: 0 0 16px 1px color-mix(in srgb, var(--bw-gold) 45%, transparent);
+    box-shadow: var(--ready-glow);
   }
 }

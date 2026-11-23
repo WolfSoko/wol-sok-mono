@@ -630,7 +630,9 @@ play each other.
   old play buttons and action tiles); Settings, Help, Support and Admin
   stay tiles below it. The parts and where they sit are
   `menu/bacterium/bacterium-items.ts` (`bacteriumItems`, the main menu's
-  one item list: label, icon, badge and when it shows;
+  one item list: label, icon, badge, when it shows and `ready`, while its
+  DNA buys something, which makes part and lobe glow gold
+  ([#3227](https://github.com/WolfSoko/wol-sok-mono/issues/3227));
   `BACTERIUM_ANCHORS`, which the shader and the buttons both read), the
   look by XP `bacterium-look.ts`; `MainMenuComponent.pickPart` is the one
   way to act on an item. A new menu item gets its anchor, its place in
