@@ -14,7 +14,7 @@ CI and in a local `nx run-many`.
 (`nx affected … -c=ci` in `ci-cd.yml`) passes neither `--parallel` nor
 `--maxWorkers`, so on an Nx Cloud `extra_large` worker (8 vCPU nominal;
 `os.availableParallelism()` reports 10 there) six Jest
-tasks start up to 6 × 7 = 42 workers. Specs close to Jest's 5 s timeout then
+tasks start up to 6 × 9 = 54 workers. Specs close to Jest's 5 s timeout then
 time out at random; so far they were fixed one by one (#3149, #3146,
 #3124/#3125, #2858).
 
@@ -31,9 +31,9 @@ exceeded 5000 ms.
    affinity a container or `taskset` sets, as Jest itself does) and
    `parallel` read from `nx.json`. Reason: one number per machine size would
    be wrong on the next one (the runner host has 20 cores, a laptop 8, an Nx
-   Cloud worker 8), and a change to `parallel` keeps the two in step without
+   Cloud worker 10), and a change to `parallel` keeps the two in step without
    a second edit. On an Nx Cloud worker that is 2 workers per task (12 for
-   six tasks on 8 cores).
+   six tasks on 10 cores).
    A run that sets `NX_PARALLEL` (which every task inherits) is divided by
    that instead; an unusable value falls back to `nx.json`. A `--parallel`
    flag never reaches the task, so such a run keeps the `nx.json` share.
@@ -45,11 +45,15 @@ exceeded 5000 ms.
 3. **In the preset, not in `nx.json`.** An `nx.json` edit releases every app
    (`release-affected.mjs` keeps Nx's verdict for it); `jest.preset.cjs` is
    an input of the `test` targets only, so the change releases nothing. It
-   also covers every Jest project at once: all 50 configs spread the preset.
+   also covers every Jest project at once: every project's config (53 of them) spreads the preset;
+   the root `jest.config.ts` (`projects` mode, not used by Nx) keeps Jest's
+   default.
 4. **Explicit settings still win.** A project's own `maxWorkers`
    (`portfolio-cdk`, the rules test: 1) overrides the preset as before, and
    `--maxWorkers`/`--runInBand` on the command line override both, so a
    local `nx test <project> --maxWorkers=50%` stays possible.
+   The cap holds in `--watch` too (Jest's own watch default is half the
+   cores), in line with keeping it on outside CI.
 5. **No change to `parallel`.** Six tasks at once keeps lint, typecheck and
    build tasks (single process each) busy beside the tests; the measurement
    below decides only the Jest share.

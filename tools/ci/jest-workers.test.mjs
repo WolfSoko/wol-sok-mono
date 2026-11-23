@@ -24,7 +24,7 @@ void describe('the Jest workers per task', () => {
   const parallel = readJson('nx.json').parallel;
   const cores = availableParallelism();
 
-  void it('divide the cores by the tasks Nx runs at once', () => {
+  void it('need a positive integer parallel in nx.json', () => {
     assert.ok(
       Number.isInteger(parallel) && parallel > 0,
       `nx.json parallel must be a positive integer, got ${parallel}`
