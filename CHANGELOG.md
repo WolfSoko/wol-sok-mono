@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.181.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.4...v74.181.0) (2026-11-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the bacterium is the main menu, its toggle removed ([#3225](https://github.com/WolfSoko/wol-sok-mono/issues/3225)) ([421ddd6](https://github.com/WolfSoko/wol-sok-mono/commit/421ddd6c15334f3c2b8e0aaf63a0dd56de2c6d6b)), references [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210)
+
 ## [74.180.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.3...v74.180.4) (2026-11-23)
 
 ### Bug Fixes
