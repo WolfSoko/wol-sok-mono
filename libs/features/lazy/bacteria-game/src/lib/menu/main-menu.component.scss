@@ -4,6 +4,10 @@
   @include screen.screen;
 
   position: relative;
+  // The wide layout below asks the menu's own box, not the viewport: in
+  // the shell a sidenav takes part of the width. The stage gives the
+  // screen its height, so containing it changes nothing.
+  container: main-menu / size;
 }
 
 .top {
@@ -213,6 +217,44 @@
 .continue-level {
   font-size: 0.85rem;
   color: var(--bw-muted);
+}
+
+// A wide landscape menu (#3226): the bacterium leaves the hero for the
+// empty middle between hero and card, as large as that space and the
+// menu's height allow. From 92rem of content the middle (less hero, card
+// and gaps, 61rem) holds 31rem, more than the hero's 30rem the cell has
+// below it. Positioned, not moved in the template, so the
+// reading and tab order stays: title, banners, bacterium, tiles, card.
+@container main-menu (min-width: 92rem) and (min-height: 40rem) and (min-aspect-ratio: 4/3) {
+  .layout {
+    --hero-width: 30rem;
+    --card-width: 24rem;
+    --stage-gap: 3.5rem;
+    --stage-width: calc(
+      100% - var(--hero-width) - var(--card-width) - 2 * var(--stage-gap)
+    );
+
+    position: relative;
+    flex-wrap: nowrap;
+  }
+
+  .hero {
+    flex: 0 0 var(--hero-width);
+  }
+
+  .card {
+    flex: 0 0 var(--card-width);
+  }
+
+  // Centred in the middle; 90cqh of the menu keeps it clear of its edges.
+  .bacterium {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--hero-width) + var(--stage-gap) + var(--stage-width) / 2);
+    width: min(var(--stage-width), 90cqh * 4 / 3);
+    max-width: none;
+    translate: -50% -50%;
+  }
 }
 
 // A phone held across: title and bacterium beside a slimmer card.
