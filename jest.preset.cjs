@@ -16,7 +16,8 @@ if (!isTaskCount(CONFIGURED_PARALLEL)) {
 /**
  * How many tasks Nx runs at once: `NX_PARALLEL` where the run sets it (tasks
  * inherit it), else `nx.json`'s `parallel`. A `--parallel` flag never reaches
- * the task, so that one run keeps the `nx.json` share.
+ * the task, so that one run keeps the
+ * share of `NX_PARALLEL` or `nx.json`.
  */
 function parallelNxTasks() {
   const fromEnv = Number(process.env.NX_PARALLEL);

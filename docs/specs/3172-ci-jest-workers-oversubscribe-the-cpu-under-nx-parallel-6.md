@@ -36,7 +36,8 @@ exceeded 5000 ms.
    six tasks on 10 cores).
    A run that sets `NX_PARALLEL` (which every task inherits) is divided by
    that instead; an unusable value falls back to `nx.json`. A `--parallel`
-   flag never reaches the task, so such a run keeps the `nx.json` share.
+   flag never reaches the task, so such a run keeps the share of
+   `NX_PARALLEL` or `nx.json`.
 2. **Rounded up, not down.** Rounding down gives 1 worker on 8 cores, which
    Jest runs in band: no timeouts, but `feat-shared-bacteria-engine` alone
    then took 11 minutes and the whole run 678 s instead of 306 s (table
