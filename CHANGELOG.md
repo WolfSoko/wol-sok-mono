@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.183.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.182.0...v74.183.0) (2026-11-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the bacterium fills widescreen ([#3226](https://github.com/WolfSoko/wol-sok-mono/issues/3226)) ([#3229](https://github.com/WolfSoko/wol-sok-mono/issues/3229)) ([ad3e504](https://github.com/WolfSoko/wol-sok-mono/commit/ad3e50489642e08d36f65f4028281c339c31903a))
+
 ## [74.182.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.2...v74.182.0) (2026-11-23)
 
 ### Features
