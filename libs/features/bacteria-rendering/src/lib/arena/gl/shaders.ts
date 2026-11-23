@@ -100,8 +100,12 @@ float hexEdge(vec2 p) {
 }`;
 
 /**
- * Lays the floor over the trail of the last frame - at partial opacity,
- * which fades what moved into a short trail, or fully to clear it.
+ * Lays the floor over the last frame - at partial opacity, which fades what
+ * moved into a short trail, or fully to clear it. The last frame is read as
+ * a texture of the same size, one texel per pixel, and every pixel of the
+ * new frame is written unblended: nothing depends on what a GPU keeps of a
+ * render target between frames, which some phones' drivers got wrong after
+ * power saving (#3231).
  */
 export const FLOOR_FRAGMENT = `#version 300 es
 precision highp float;
@@ -111,6 +115,8 @@ uniform sampler2D uFloor;
 // smoothly, so their edges are soft. Premultiplied.
 uniform sampler2D uZones;
 uniform bool uHasZones;
+// The last frame, as big as this one.
+uniform sampler2D uPrevious;
 uniform vec2 uArena;
 uniform float uAlpha;
 out vec4 outColor;
@@ -122,10 +128,10 @@ void main() {
   vec4 zones = uHasZones ? texture(uZones, p / uArena) * uAlpha : vec4(0.0);
   // Premultiplied: the floor faded by uAlpha, then the zones over it faded
   // alike - as two passes one over the other would lay them.
-  outColor = vec4(
-    zones.rgb + (1.0 - zones.a) * floorColor * uAlpha,
-    1.0 - (1.0 - zones.a) * (1.0 - uAlpha)
-  );
+  vec3 laid = zones.rgb + (1.0 - zones.a) * floorColor * uAlpha;
+  float cover = 1.0 - (1.0 - zones.a) * (1.0 - uAlpha);
+  vec3 previous = texelFetch(uPrevious, ivec2(gl_FragCoord.xy), 0).rgb;
+  outColor = vec4(laid + previous * (1.0 - cover), 1.0);
 }`;
 
 /**

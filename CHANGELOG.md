@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.181.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.181.0...v74.181.1) (2026-11-23)
+
+### Bug Fixes
+
+* **nx:** keep e2e, rules-test and every jest config out of production inputs ([#3230](https://github.com/WolfSoko/wol-sok-mono/issues/3230)) ([ce14334](https://github.com/WolfSoko/wol-sok-mono/commit/ce14334d970d21ad60639b16602e51224b58009e)), closes [#3205](https://github.com/WolfSoko/wol-sok-mono/issues/3205)
+
+### Chore
+
+* **release:** publish ([bdac540](https://github.com/WolfSoko/wol-sok-mono/commit/bdac5402b5d0358551538d3535bf73b171d3dfc9))
+
 ## [74.181.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.4...v74.181.0) (2026-11-23)
 
 ### Features
