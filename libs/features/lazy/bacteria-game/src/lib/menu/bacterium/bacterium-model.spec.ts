@@ -80,6 +80,22 @@ describe('bacteriumItems', () => {
     });
   });
 
+  it('marks the parts whose DNA buys something as ready, as the tiles glowed', () => {
+    const ready = (state: Partial<BacteriumMenuState>) =>
+      bacteriumItems({ ...STATE, ...state })
+        .filter((item) => item.ready)
+        .map((item) => item.id);
+    expect(ready({})).toEqual([]);
+    expect(ready({ colonyDna: 3 })).toEqual(['colony']);
+    expect(ready({ evolveDna: 1 })).toEqual(['evolution']);
+    expect(ready({ colonyDna: 2, evolveDna: 5 })).toEqual([
+      'colony',
+      'evolution',
+    ]);
+    // Friend requests count on their part but buy nothing.
+    expect(ready({ friendRequests: 2 })).toEqual([]);
+  });
+
   it('links the matches of the day, and picks the rest', () => {
     const items = bacteriumItems({
       ...STATE,

@@ -13,11 +13,17 @@ import {
   MAX_LOBES,
 } from './bacterium-shader';
 
+/** A lobe to draw: where it sits, and whether it glows gold. */
+export interface BacteriumLobe extends BacteriumAnchor {
+  /** True while its part's DNA buys something (`BacteriumItem.ready`). */
+  ready: boolean;
+}
+
 /** What a frame of the cell shows. */
 export interface BacteriumScene {
   look: BacteriumLook;
   /** The lobes to draw, at most `MAX_LOBES`. */
-  lobes: readonly BacteriumAnchor[];
+  lobes: readonly BacteriumLobe[];
   /** The lobe lit up: its index, `MAX_LOBES` for the nucleus, -1 for none. */
   hot: number;
 }
@@ -87,6 +93,27 @@ export function createBacteriumRenderer(
   return new GlBacteriumRenderer(gl, program);
 }
 
+/**
+ * Writes the lobes into the shader's `uLobes`, four floats each: x, y, the
+ * radius and 1 for a ready lobe (0 otherwise); the rest is cleared. Answers
+ * how many it wrote, at most `MAX_LOBES`.
+ */
+export function packLobes(
+  lobes: readonly BacteriumLobe[],
+  into: Float32Array
+): number {
+  const count = Math.min(lobes.length, MAX_LOBES, into.length / 4);
+  into.fill(0);
+  for (let i = 0; i < count; i++) {
+    const lobe = lobes[i];
+    into[i * 4] = lobe.x;
+    into[i * 4 + 1] = lobe.y;
+    into[i * 4 + 2] = lobe.r;
+    into[i * 4 + 3] = lobe.ready ? 1 : 0;
+  }
+  return count;
+}
+
 /** The cell's program, null for a shader the device refuses. */
 function linkProgram(gl: WebGL2RenderingContext): Program | null {
   try {
@@ -135,14 +162,7 @@ class GlBacteriumRenderer implements BacteriumRenderer {
     const { look } = scene;
     const seconds = timeMs / 1000;
     const turn = seconds * TURN_SPEED;
-    const count = Math.min(scene.lobes.length, MAX_LOBES);
-    this.lobeData.fill(0);
-    for (let i = 0; i < count; i++) {
-      const lobe = scene.lobes[i];
-      this.lobeData[i * 4] = lobe.x;
-      this.lobeData[i * 4 + 1] = lobe.y;
-      this.lobeData[i * 4 + 2] = lobe.r;
-    }
+    const count = packLobes(scene.lobes, this.lobeData);
     gl.useProgram(this.program.program);
     gl.uniform1f(u['uAspect'], BACTERIUM_ASPECT);
     gl.uniform1f(u['uTime'], seconds);

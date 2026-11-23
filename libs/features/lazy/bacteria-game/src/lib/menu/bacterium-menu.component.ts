@@ -45,7 +45,8 @@ const FRAME_MS = 1000 / 30;
  * The main menu's actions as the parts of a living, turning bacterium
  * (#3194, the main menu since #3210): a new game in the nucleus,
  * online and the other screens on lobes round the membrane. The cell grows
- * more impressive with the player's XP (`bacteriumLook`).
+ * more impressive with the player's XP (`bacteriumLook`), and a part whose
+ * DNA buys something glows gold, button and lobe (`BacteriumItem.ready`).
  *
  * The parts are real buttons (links for a page) laid over the cell at the
  * anchors the shader draws their lobes at, so keys, screen readers and
@@ -172,7 +173,10 @@ export class BacteriumMenuComponent {
     const hot = this.hot();
     return {
       look: this.look(),
-      lobes: lobes.map((item) => this.anchors[item.id]),
+      lobes: lobes.map((item) => ({
+        ...this.anchors[item.id],
+        ready: item.ready,
+      })),
       hot:
         hot === 'play' ? MAX_LOBES : lobes.findIndex((item) => item.id === hot),
     };

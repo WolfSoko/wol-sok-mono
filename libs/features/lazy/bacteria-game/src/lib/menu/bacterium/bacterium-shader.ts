@@ -29,7 +29,8 @@ void main() {
  * long axis by `uTurn` (its cosine and sine, the same for every pixel of
  * a frame); the lobes stay put under their buttons. The lobe `uHot` names
  * swells by `uHotSwell` and lights up (-1 none, `MAX_LOBES` the nucleus,
- * which glows brighter).
+ * which glows brighter). A lobe whose `w` is 1 is ready: its part's DNA
+ * buys something, and it glows gold.
  */
 export const BACTERIUM_FRAGMENT = `#version 300 es
 precision highp float;
@@ -55,6 +56,9 @@ uniform vec3 uRim;
 const float HALF_LENGTH = 0.42;
 const float RADIUS = 0.5;
 const int STEPS = 56;
+// The game's gold (--bw-gold, 233 185 73) and its pulse, 2 pi in 1.8 s.
+const vec3 GOLD = vec3(0.914, 0.725, 0.286);
+const float READY_PULSE = 3.49;
 const vec2 FLAGELLUM_TURNS[${MAX_FLAGELLA}] = vec2[${MAX_FLAGELLA}](${FLAGELLUM_TURNS});
 
 float smin(float a, float b, float k) {
@@ -144,6 +148,27 @@ float organelleGlow(vec3 p) {
   return sum;
 }
 
+/**
+ * The gold light of the lobes whose part's DNA buys something (\`w\` 1),
+ * pulsing like the old tiles did, every 1.8 s; still at time 0.
+ */
+vec3 readyGlow(vec2 at) {
+  float pulse = 0.75 + 0.25 * sin(uTime * READY_PULSE);
+  vec3 sum = vec3(0.0);
+  for (int i = 0; i < ${MAX_LOBES}; i++) {
+    if (i >= uLobeCount) {
+      break;
+    }
+    vec4 lobe = uLobes[i];
+    if (lobe.w < 0.5) {
+      continue;
+    }
+    float away = length(at - vec2(lobe.x * uAspect, lobe.y));
+    sum += GOLD * 0.75 * pulse * (1.0 - smoothstep(lobe.z * 0.3, lobe.z * 1.4, away));
+  }
+  return sum;
+}
+
 void main() {
   vec3 origin = vec3(vUv.x * uAspect, vUv.y, 2.0);
   vec3 ray = vec3(0.0, 0.0, -1.0);
@@ -177,6 +202,7 @@ void main() {
   vec3 colour = uBody * diffuse;
   colour += uRim * (rim * (0.35 + uGlow) + organelleGlow(p) * 0.5 + nucleus * 0.5);
   colour += vec3(0.9) * shine * 0.5;
+  colour += readyGlow(p.xy);
   if (uHot >= 0 && uHot < uLobeCount) {
     vec4 hot = uLobes[uHot];
     float away = length(p.xy - vec2(hot.x * uAspect, hot.y));
