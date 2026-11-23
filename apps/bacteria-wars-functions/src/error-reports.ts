@@ -88,6 +88,8 @@ export function scrubIds(text: string): string {
  */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
   delete event.user;
+  // A thrown non-Error lands here serialized, ids and all.
+  delete event.extra;
   if (event.request) {
     const url = event.request.url?.split(/[?#]/)[0];
     event.request = url === undefined ? {} : { url: scrubIds(url) };
@@ -174,15 +176,16 @@ export function withSentry<A extends unknown[], R>(
   return (...args: A) => {
     const caught: CaughtInRun = { reported: new Map(), skipped: new Map() };
     return run.run(caught, async () => {
+      let result: R;
       try {
-        const result = await handler(...args);
-        await settleCaught(caught);
-        return result;
+        result = await handler(...args);
       } catch (error) {
         logSkipped(caught);
         await reportError(error);
         throw error;
       }
+      await settleCaught(caught);
+      return result;
     });
   };
 }
@@ -191,7 +194,7 @@ export function withSentry<A extends unknown[], R>(
 async function settleCaught(caught: CaughtInRun): Promise<void> {
   logSkipped(caught);
   if (caught.reported.size > 0) {
-    await Sentry.flush(FLUSH_MS);
+    await Sentry.flush(FLUSH_MS).catch(() => false);
   }
 }
 

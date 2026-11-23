@@ -189,6 +189,15 @@ describe('error reports', () => {
       expect(order).toEqual(['capture', 'flush']);
     });
 
+    it('never fails a run that succeeded over its report', async () => {
+      jest.mocked(Sentry.flush).mockRejectedValueOnce(new Error('offline'));
+      const handler = withSentry(async () => {
+        captureCaughtError(new Error('one ban'), 'Could not lift an ended ban');
+        return 'done';
+      });
+      await expect(handler()).resolves.toBe('done');
+    });
+
     it('reports a synchronous throw too', async () => {
       const handler = withSentry((): void => {
         throw new Error('sync');
@@ -216,7 +225,7 @@ describe('error reports', () => {
   });
 
   describe('scrubEvent', () => {
-    it('drops the user and the request but its path, and ids in messages', () => {
+    it('drops the user, extra data and the request but its path, and ids in messages', () => {
       const event: ErrorEvent = {
         type: undefined,
         user: { id: UID },
@@ -227,6 +236,7 @@ describe('error reports', () => {
           query_string: 'page=2',
         },
         message: `failed for ${UID}`,
+        extra: { __serialized__: { uid: UID } },
         exception: {
           values: [{ value: `No document: players/${UID}/storage/progress` }],
         },
