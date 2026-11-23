@@ -179,10 +179,10 @@ void main() {
 /**
  * The shared quad stretched over a box, given as `uBox` in clip space
  * (`[x0, y0, x1, y1]`), with the same `vNdc` as {@link FULLSCREEN_VERTEX},
- * so a full-screen fragment shader draws just that box. For passes onto a
- * target kept from frame to frame, in place of a scissor: some Android GPUs
- * (Mali) bring a tile's old content back into a kept target around a
- * scissored draw (#3174).
+ * so a full-screen fragment shader draws just that box. For passes onto
+ * the arena's frame, in place of a scissor: some Android GPUs (Mali)
+ * brought a tile's old content back into a target around a scissored draw
+ * (#3174).
  */
 export const BOX_VERTEX = `#version 300 es
 layout(location = 0) in vec2 aCorner;

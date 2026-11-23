@@ -539,8 +539,8 @@ export class GlArenaPainter implements ArenaPainter {
     bindTexture(gl, 0, resources.floor, programs.floor.uniforms['uFloor']);
     this.setView(programs.floor);
     gl.uniform2f(programs.floor.uniforms['uArena'], this.width, this.height);
-    // A target without a frame yet takes the floor whole, or it would show
-    // the black it was cleared to through it.
+    // A frame without a last one to trail - a fresh target, a new floor -
+    // takes the floor whole, or it would show black through it.
     const floorAlpha = frame.clear || this.freshTrail ? 1 : 0.7;
     this.freshTrail = false;
     gl.uniform1f(programs.floor.uniforms['uAlpha'], floorAlpha);
@@ -548,7 +548,12 @@ export class GlArenaPainter implements ArenaPainter {
       programs.floor.uniforms['uHasZones'],
       resources.zones == null ? 0 : 1
     );
-    if (resources.zones != null) {
+    if (resources.zones == null) {
+      // A sampler is checked even where the shader skips it: pointed at
+      // the floor's unit, it never meets the simulation's integer mask,
+      // which would fail the draw and leave the frame undefined.
+      gl.uniform1i(programs.floor.uniforms['uZones'], 0);
+    } else {
       bindTexture(gl, 1, resources.zones, programs.floor.uniforms['uZones']);
     }
     bindTexture(
@@ -918,9 +923,9 @@ export class GlArenaPainter implements ArenaPainter {
 
   /**
    * Readies a pass onto the frame's target to draw only its box: a quad of
-   * the box, never a scissor, which some Android GPUs (Mali) get wrong on
-   * a target kept from frame to frame - old frames come back inside the
-   * scissored box (#3174).
+   * the box, never a scissor, which some Android GPUs (Mali) got wrong on
+   * the frame's target while it was kept from frame to frame - old frames
+   * came back inside the scissored box (#3174).
    */
   private useBox(program: Program, box: PixelBox): void {
     this.gl.useProgram(program.program);
@@ -1212,7 +1217,9 @@ export class GlArenaPainter implements ArenaPainter {
       gl.UNSIGNED_BYTE,
       new Uint8Array(pixels.buffer)
     );
-    // The next frame lays the new floor down fully, no trail of the old one.
+    // The next frame lays the new floor down fully, no trail of the old
+    // one - and a snapshot before it shows black, not the old level.
+    this.freshTrail = true;
     gl.bindFramebuffer(gl.FRAMEBUFFER, resources.trail.framebuffer);
     gl.clearColor(0, 0, 0, 1);
     gl.clear(gl.COLOR_BUFFER_BIT);

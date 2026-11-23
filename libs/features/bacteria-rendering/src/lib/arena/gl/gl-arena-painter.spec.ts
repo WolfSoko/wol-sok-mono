@@ -478,6 +478,31 @@ describe('GlArenaPainter trail', () => {
     expect([...floor.units.values()]).toContain(textureOf.get(second));
   });
 
+  it('unbinds the last frame once the floor is laid on it', () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame());
+    painter.paint(frame());
+
+    const { draws, frameStarts } = replay(fake);
+    const afterFloor = draws[frameStarts[1] + 1];
+    expect(afterFloor).toBeDefined();
+    // The floor read it on unit 2; nothing after it in the frame may.
+    expect(draws[frameStarts[1]].units.get(2)).not.toBeNull();
+    expect(afterFloor.units.get(2)).toBeNull();
+  });
+
+  it("points the zones' sampler at the floor's unit on a level without zones", () => {
+    const { fake, painter } = painted();
+
+    painter.paint(frame());
+
+    const zones = (fake.calls.get('uniform1i') ?? []).filter(
+      ([location]) => (location as { name: string }).name === 'uZones'
+    );
+    expect(zones).toEqual([[{ name: 'uZones' }, 0]]);
+  });
+
   it('shows the frame it built last', () => {
     const { fake, painter } = painted();
     painter.paint(frame());
