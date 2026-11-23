@@ -37,7 +37,6 @@ import {
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaCounterComponent } from './dna-counter.component';
-import { DnaHelixComponent } from './dna-helix.component';
 import { BacteriumMenuComponent } from './bacterium-menu.component';
 import { DEFAULT_PLAYER_RGB } from './bacterium/bacterium-look';
 import {
@@ -72,9 +71,10 @@ export type MenuPage =
   | 'my-matches';
 
 /**
- * The landing screen of the game: the title, a new game - and the training
- * until its missions are done - the way to the other screens and a card
- * with the campaign so far, and the way straight on with it.
+ * The landing screen of the game: the title, a bacterium whose parts are
+ * the ways into play and to the other screens (a new game in its nucleus,
+ * the training until its missions are done), the utilities as tiles below
+ * it, and a card with the campaign so far, and the way straight on with it.
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
@@ -95,7 +95,6 @@ export type MenuPage =
     RouterLink,
     GhostChallengeComponent,
     DnaCounterComponent,
-    DnaHelixComponent,
     BacteriumMenuComponent,
     InstallBannerComponent,
     StatsBannerComponent,
@@ -115,18 +114,19 @@ export class MainMenuComponent {
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
   /**
-   * True with the game's cloud: then the friends have a tile, and so do the
-   * leaderboards while the owner's toggle shows them.
+   * True with the game's cloud: then the friends are a part of the
+   * bacterium, and so are the leaderboards while the owner's toggle shows
+   * them.
    */
   public readonly cloudAvailable = input(false);
-  /** The friend requests waiting for an answer, counted on the tile. */
+  /** The friend requests waiting for an answer, counted on their part. */
   public readonly friendRequests = input(0);
   /**
    * The DNA left to spend while it buys something - the badge on the
-   * Evolution tile - 0 while it buys nothing.
+   * Evolution part - 0 while it buys nothing.
    */
   public readonly evolveDna = input(0);
-  /** The DNA left while it buys a skin - the badge on the My Colony tile - 0 otherwise. */
+  /** The DNA left while it buys a skin - the badge on the My Colony part - 0 otherwise. */
   public readonly colonyDna = input(0);
   /** The DNA left to spend, shown in the card as on My Colony. */
   public readonly dna = input(0);
@@ -177,7 +177,7 @@ export class MainMenuComponent {
    * opens takes a moment to lay out. A match is started behind it by the
    * stage, which takes the screen on the tap first.
    */
-  protected busyEmit(output: OutputEmitterRef<void>): void {
+  private busyEmit(output: OutputEmitterRef<void>): void {
     this.busy.run(() => output.emit());
   }
 
@@ -185,7 +185,7 @@ export class MainMenuComponent {
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
   );
 
-  /** The card's DNA glows while either tile's badge says it buys something. */
+  /** The card's DNA glows while either part's badge says it buys something. */
   protected readonly dnaReady = computed(
     () => this.evolveDna() > 0 || this.colonyDna() > 0
   );
@@ -198,18 +198,14 @@ export class MainMenuComponent {
   protected readonly totalMissions = MISSIONS.length;
 
   private readonly toggles = inject(FeatureTogglesService).toggles;
-  /** The leaderboards' tile: with the cloud, while the owner shows them. */
+  /** The leaderboards' part: with the cloud, while the owner shows them. */
   protected readonly showsBoards = computed(
     () => this.cloudAvailable() && this.toggles().leaderboards
   );
   /**
-   * The actions as the parts of a bacterium (#3194) while the owner's
-   * toggle shows it; then only the utilities stay tiles.
+   * The main menu's items, the parts of its bacterium (#3194): the nucleus
+   * a new game, online and the screens round the rim.
    */
-  protected readonly showsBacterium = computed(
-    () => this.toggles().bacteriumMenu
-  );
-  /** The bacterium's parts: what the tiles and buttons offer, and online. */
   protected readonly bacteriumItems = computed(() =>
     bacteriumItems({
       training: this.missionsDone() < this.totalMissions,
@@ -253,7 +249,7 @@ export class MainMenuComponent {
   private readonly dialog = inject(MatDialog);
   private readonly analytics = injectGameAnalytics();
 
-  /** Where a part of the bacterium leads, as its tile or button did. */
+  /** Where a part of the bacterium leads. */
   protected pickPart(id: BacteriumItemId): void {
     switch (id) {
       case 'gallery':

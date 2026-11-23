@@ -32,16 +32,34 @@ const CAMPAIGN: CampaignSummary = {
   continueLabel: '5 · Pillar Field · Normal',
 };
 
+/** No WebGL in a spec: the CSS cell stands in. */
+const NO_WEBGL = { provide: BACTERIUM_RENDERER, useValue: () => null };
+
+/** The bacterium is deferred: it renders once its chunk has loaded. */
+async function settle(menu: ComponentFixture<MainMenuComponent>) {
+  menu.detectChanges();
+  await menu.whenStable();
+  menu.detectChanges();
+}
+
+/** A part of the bacterium: its button, or its link for a page. */
+function partOf(host: HTMLElement, id: string): HTMLElement | null {
+  return host.querySelector<HTMLElement>(`[data-part="${id}"] .spot`);
+}
+
 describe('MainMenuComponent', () => {
   let fixture: ComponentFixture<MainMenuComponent>;
   let host: HTMLElement;
 
-  beforeEach(() => {
+  beforeEach(async () => {
+    TestBed.configureTestingModule({ providers: [NO_WEBGL] });
     fixture = TestBed.createComponent(MainMenuComponent);
     fixture.componentRef.setInput('campaign', CAMPAIGN);
-    fixture.detectChanges();
+    await settle(fixture);
     host = fixture.nativeElement;
   });
+
+  const part = (id: string) => partOf(host, id);
 
   function button(text: string): HTMLButtonElement {
     const found = Array.from(host.querySelectorAll('button')).find((b) =>
@@ -99,17 +117,13 @@ describe('MainMenuComponent', () => {
     fixture.componentRef.setInput('missionsDone', 2);
     fixture.detectChanges();
 
-    // Not the New game button, whose line names the training as well.
-    expect(button('New here?').textContent).toContain(
-      'New here? 2 of 5 missions done'
-    );
-    button('New here?').click();
+    part('training')?.click();
     await fixture.whenStable();
     expect(training).toHaveBeenCalled();
 
     fixture.componentRef.setInput('missionsDone', 5);
     fixture.detectChanges();
-    expect(() => button('New here?')).toThrow();
+    expect(part('training')).toBeNull();
   });
 
   it('mutes, unmutes and toggles fullscreen', () => {
@@ -137,7 +151,6 @@ describe('MainMenuComponent', () => {
     fixture.componentRef.setInput('colonyDna', 12);
     fixture.detectChanges();
 
-    expect(tile().classList).toContain('ready');
     expect(tile().querySelector('.count')?.textContent?.trim()).toBe('12');
     expect(
       tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
@@ -147,12 +160,10 @@ describe('MainMenuComponent', () => {
   it('opens Evolution, with a badge while the DNA buys something', () => {
     const tile = () => button('Evolution');
     expect(tile().querySelector('.count')).toBeNull();
-    expect(tile().classList).not.toContain('ready');
 
     fixture.componentRef.setInput('evolveDna', 7);
     fixture.detectChanges();
 
-    expect(tile().classList).toContain('ready');
     expect(tile().querySelector('.count')?.textContent?.trim()).toBe('7');
     expect(
       tile().querySelector('.cdk-visually-hidden')?.textContent?.trim()
@@ -224,11 +235,8 @@ describe('MainMenuComponent', () => {
   });
 
   it('shows the friends only with the cloud, with the requests waiting', () => {
-    const tile = () =>
-      Array.from(host.querySelectorAll('.tiles button')).find((b) =>
-        b.textContent?.includes('Friends')
-      );
-    expect(tile()).toBeUndefined();
+    const tile = () => part('friends');
+    expect(tile()).toBeNull();
 
     fixture.componentRef.setInput('cloudAvailable', true);
     fixture.detectChanges();
@@ -253,22 +261,17 @@ describe('MainMenuComponent', () => {
     expect(open).toHaveBeenCalledWith('friends');
   });
 
-  it('shows the leaderboards only with the cloud, while the toggle is on', () => {
+  it('shows the leaderboards only with the cloud, while the toggle is on', async () => {
     const toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      providers: [provideGameToggles(toggles)],
+      providers: [provideGameToggles(toggles), NO_WEBGL],
     });
     const menu = TestBed.createComponent(MainMenuComponent);
     menu.componentRef.setInput('campaign', CAMPAIGN);
-    menu.detectChanges();
-    const tile = () =>
-      Array.from(
-        (menu.nativeElement as HTMLElement).querySelectorAll('.tiles button')
-      ).find((b) => b.textContent?.includes('Leaderboards')) as
-        | HTMLButtonElement
-        | undefined;
-    expect(tile()).toBeUndefined();
+    await settle(menu);
+    const tile = () => partOf(menu.nativeElement, 'leaderboards');
+    expect(tile()).toBeNull();
 
     menu.componentRef.setInput('cloudAvailable', true);
     menu.detectChanges();
@@ -279,143 +282,83 @@ describe('MainMenuComponent', () => {
 
     toggles.next({ leaderboards: 'off' });
     menu.detectChanges();
-    expect(tile()).toBeUndefined();
+    expect(tile()).toBeNull();
   });
 
-  describe('as a bacterium (#3194)', () => {
-    let toggles: BehaviorSubject<Partial<FeatureToggleStates>>;
-    let account: FakeGameAccount;
-    let menu: ComponentFixture<MainMenuComponent>;
-
-    beforeEach(() => {
-      toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
-      account = new FakeGameAccount();
-      TestBed.resetTestingModule();
-      TestBed.configureTestingModule({
-        providers: [
-          provideGameToggles(toggles),
-          { provide: GameAccount, useValue: account },
-          // No WebGL in a spec: the CSS cell stands in.
-          { provide: BACTERIUM_RENDERER, useValue: () => null },
-        ],
-      });
-      menu = TestBed.createComponent(MainMenuComponent);
-      menu.componentRef.setInput('campaign', CAMPAIGN);
-      menu.componentRef.setInput('onlineAvailable', true);
-      menu.detectChanges();
-    });
-
-    // The bacterium is deferred: it renders once its chunk has loaded.
-    const settle = async () => {
-      menu.detectChanges();
-      await menu.whenStable();
-      menu.detectChanges();
-    };
-    const element = () => menu.nativeElement as HTMLElement;
-    const cell = () =>
-      element().querySelector('feat-lazy-bac-game-bacterium-menu');
-    const part = (id: string) =>
-      element().querySelector<HTMLElement>(`[data-part="${id}"] .spot`);
-    const tileNames = () =>
-      Array.from(element().querySelectorAll('.tiles .tile')).map(
-        (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-      );
-
-    it('stays the buttons and tiles while the toggle is off', async () => {
-      expect(cell()).toBeNull();
-      expect(element().querySelector('.actions')).not.toBeNull();
-    });
-
-    it('shows to the owner only while the toggle is admin', async () => {
-      toggles.next({ bacteriumMenu: 'admin' });
-      await settle();
-      expect(cell()).toBeNull();
-
-      account.owner.set(true);
-      await settle();
-      expect(cell()).not.toBeNull();
-      expect(element().querySelector('.actions')).toBeNull();
-
-      account.owner.set(false);
-      await settle();
-      expect(cell()).toBeNull();
-    });
-
-    it('shows to everyone while the toggle is on, the utilities as tiles', async () => {
-      toggles.next({ bacteriumMenu: 'on' });
-      await settle();
-      expect(cell()).not.toBeNull();
-      expect(tileNames()).toEqual([
-        expect.stringContaining('Settings'),
-        expect.stringContaining('How to play'),
-      ]);
-    });
-
-    it('leads each part where its tile or button led, online too', async () => {
-      toggles.next({ bacteriumMenu: 'on' });
-      await settle();
-      const component = menu.componentInstance;
-      const newGame = jest.fn();
-      const online = jest.fn();
-      const training = jest.fn();
-      const open = jest.fn();
-      component.newGame.subscribe(newGame);
-      component.online.subscribe(online);
-      component.training.subscribe(training);
-      component.open.subscribe(open);
-
-      part('play')?.click();
-      await menu.whenStable();
-      part('online')?.click();
-      await menu.whenStable();
-      part('training')?.click();
-      await menu.whenStable();
-      for (const id of ['colony', 'evolution', 'profile', 'my-matches']) {
-        part(id)?.click();
-      }
-
-      expect(newGame).toHaveBeenCalledTimes(1);
-      expect(online).toHaveBeenCalledTimes(1);
-      expect(training).toHaveBeenCalledTimes(1);
-      expect(open.mock.calls).toEqual([
-        ['colony'],
-        ['evolution'],
-        ['profile'],
-        ['my-matches'],
-      ]);
-      expect(part('gallery')?.getAttribute('href')).toContain('/replays');
-    });
-
-    it('offers online, friends and the boards only where the tiles would', async () => {
-      toggles.next({ bacteriumMenu: 'on' });
-      menu.componentRef.setInput('onlineAvailable', false);
-      await settle();
-      expect(part('online')).toBeNull();
-      expect(part('friends')).toBeNull();
-      expect(part('leaderboards')).toBeNull();
-
-      menu.componentRef.setInput('onlineAvailable', true);
-      menu.componentRef.setInput('cloudAvailable', true);
-      menu.componentRef.setInput('friendRequests', 2);
-      await settle();
-      expect(part('online')).not.toBeNull();
-      expect(part('friends')?.textContent).toContain('2 friend requests');
-      expect(part('leaderboards')).not.toBeNull();
-    });
-  });
-
-  it('groups its tiles: progress, then players and matches, then the game', () => {
-    const names = Array.from(host.querySelectorAll('.tiles .tile')).map(
-      (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
-    );
-    expect(names).toEqual([
-      expect.stringContaining('My Colony'),
-      expect.stringContaining('Evolution'),
-      expect.stringContaining('Profile'),
-      expect.stringContaining('My matches'),
-      expect.stringContaining('Matches of the day'),
+  it('shows the bacterium, the utilities as tiles', () => {
+    expect(
+      host.querySelector('feat-lazy-bac-game-bacterium-menu')
+    ).not.toBeNull();
+    // The CSS cell, where WebGL cannot draw it.
+    expect(host.querySelector('.css-body')).not.toBeNull();
+    expect(host.querySelector('.actions')).toBeNull();
+    expect(tileNames()).toEqual([
       expect.stringContaining('Settings'),
       expect.stringContaining('How to play'),
+    ]);
+  });
+
+  it('leads each part where it belongs, online too', async () => {
+    fixture.componentRef.setInput('onlineAvailable', true);
+    await settle(fixture);
+    const component = fixture.componentInstance;
+    const newGame = jest.fn();
+    const online = jest.fn();
+    const training = jest.fn();
+    const open = jest.fn();
+    component.newGame.subscribe(newGame);
+    component.online.subscribe(online);
+    component.training.subscribe(training);
+    component.open.subscribe(open);
+
+    part('play')?.click();
+    await fixture.whenStable();
+    part('online')?.click();
+    await fixture.whenStable();
+    part('training')?.click();
+    await fixture.whenStable();
+    for (const id of ['colony', 'evolution', 'profile', 'my-matches']) {
+      part(id)?.click();
+    }
+
+    expect(newGame).toHaveBeenCalledTimes(1);
+    expect(online).toHaveBeenCalledTimes(1);
+    expect(training).toHaveBeenCalledTimes(1);
+    expect(open.mock.calls).toEqual([
+      ['colony'],
+      ['evolution'],
+      ['profile'],
+      ['my-matches'],
+    ]);
+  });
+
+  it('offers online only where online matches can be played', async () => {
+    expect(part('online')).toBeNull();
+
+    fixture.componentRef.setInput('onlineAvailable', true);
+    await settle(fixture);
+    expect(part('online')).not.toBeNull();
+  });
+
+  const tileNames = () =>
+    Array.from(host.querySelectorAll('.tiles .tile')).map(
+      (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+    );
+
+  const partNames = () =>
+    Array.from(host.querySelectorAll('[data-part]')).map(
+      (item) => item.getAttribute('data-part') ?? ''
+    );
+
+  it('orders its parts: a new game, the ways to play, progress, then players and matches', () => {
+    expect(partNames()).toEqual([
+      'play',
+      'training',
+      'colony',
+      'evolution',
+      'profile',
+      'my-matches',
+      'gallery',
     ]);
   });
 
@@ -429,10 +372,9 @@ describe('MainMenuComponent', () => {
   });
 
   it('links the matches of the day in a tab of its own inside the shell', () => {
-    const link = Array.from(
-      host.querySelectorAll<HTMLAnchorElement>('a.tile')
-    ).find((a) => a.textContent?.includes('Matches of the day'));
+    const link = part('gallery') as HTMLAnchorElement | null;
 
+    expect(link?.textContent).toContain('Matches of the day');
     expect(link?.href).toBe('https://bacteria-wars.wolsok.de/replays');
     expect(link?.target).toBe('_blank');
 
@@ -466,11 +408,12 @@ describe('MainMenuComponent', () => {
 });
 
 describe('MainMenuComponent support tile', () => {
-  function render(where: 'web' | 'app'): HTMLElement {
+  async function render(where: 'web' | 'app'): Promise<HTMLElement> {
     TestBed.configureTestingModule({
       providers: [
         // The footer's links are routes of the game's own site.
         provideRouter([]),
+        NO_WEBGL,
         {
           provide: GAME_SUPPORT,
           useValue: {
@@ -495,38 +438,37 @@ describe('MainMenuComponent support tile', () => {
       );
     const fixture = TestBed.createComponent(MainMenuComponent);
     fixture.componentRef.setInput('campaign', CAMPAIGN);
-    fixture.detectChanges();
+    await settle(fixture);
     return fixture.nativeElement;
   }
 
-  it('links to the Buy Me a Coffee page on the web, in a tab of its own', () => {
-    const link =
-      render('web').querySelector<HTMLAnchorElement>('a.tile.support');
+  it('links to the Buy Me a Coffee page on the web, in a tab of its own', async () => {
+    const link = (await render('web')).querySelector<HTMLAnchorElement>(
+      'a.tile.support'
+    );
 
     expect(link?.textContent).toContain('Support');
     expect(link?.href).toBe('https://buymeacoffee.com/wolfsoko');
     expect(link?.target).toBe('_blank');
   });
 
-  it("opens the matches of the day in place on the game's own site", () => {
-    const link = Array.from(
-      render('web').querySelectorAll<HTMLAnchorElement>('a.tile')
-    ).find((a) => a.textContent?.includes('Matches of the day'));
+  it("opens the matches of the day in place on the game's own site", async () => {
+    const link = partOf(await render('web'), 'gallery') as HTMLAnchorElement;
 
     // On whatever origin serves the game: a preview or a dev server too.
     expect(link?.getAttribute('href')).toBe('/replays');
     expect(link?.target).toBe('');
   });
 
-  it("ends in the legal lines on the game's own site", () => {
-    const footer = render('web').querySelector('footer');
+  it("ends in the legal lines on the game's own site", async () => {
+    const footer = (await render('web')).querySelector('footer');
 
     expect(footer?.textContent).toContain('Privacy policy');
     expect(footer?.textContent).toContain('Legal notice');
   });
 
-  it('asks for support in German too', () => {
-    const host = render('web');
+  it('asks for support in German too', async () => {
+    const host = await render('web');
     TestBed.inject(I18nService).setLanguage('de');
     TestBed.tick();
 
@@ -535,8 +477,8 @@ describe('MainMenuComponent support tile', () => {
     );
   });
 
-  it('opens the Play tips in the app', () => {
-    const host = render('app');
+  it('opens the Play tips in the app', async () => {
+    const host = await render('app');
     const open = jest.spyOn(TestBed.inject(MatDialog), 'open');
     const tile = Array.from(
       host.querySelectorAll<HTMLButtonElement>('button.tile')
