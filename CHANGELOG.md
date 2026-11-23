@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.183.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.0...v74.183.1) (2026-11-23)
+
+### Testing
+
+* **angular-examples:** take the e2e web server from nxServer ([#3233](https://github.com/WolfSoko/wol-sok-mono/issues/3233)) ([6e49fc2](https://github.com/WolfSoko/wol-sok-mono/commit/6e49fc225ae561d79820cac04c1ea6a46d59aa8d)), references [#3202](https://github.com/WolfSoko/wol-sok-mono/issues/3202) [#3202](https://github.com/WolfSoko/wol-sok-mono/issues/3202) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#main-toolbar](https://github.com/WolfSoko/wol-sok-mono/issues/main-toolbar)
+
 ## [74.183.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.182.0...v74.183.0) (2026-11-23)
 
 ### Features
