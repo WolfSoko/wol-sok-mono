@@ -99,13 +99,18 @@ function cueText(
   switch (kind) {
     case 'announcement':
       return isEnd
-        ? `Noch ${secondsLeft} Sekunden!`
-        : `${name} in ${secondsLeft} Sekunden!`;
+        ? `Noch ${secondsSpoken(secondsLeft)}!`
+        : `${name} in ${secondsSpoken(secondsLeft)}!`;
     case 'start':
       return isEnd ? 'Training beendet. Gut gemacht!' : `Jetzt ${name}!`;
     case 'beep':
       return undefined;
   }
+}
+
+/** a count of seconds as spoken: "1 Sekunde", "3 Sekunden" */
+function secondsSpoken(count: number): string {
+  return count === 1 ? '1 Sekunde' : `${count} Sekunden`;
 }
 
 /** whether both stand for the same cue of the same countdown (or both for none) */

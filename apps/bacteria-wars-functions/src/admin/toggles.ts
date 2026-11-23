@@ -1,7 +1,9 @@
 import {
   type FeatureToggle,
-  type FeatureToggles,
+  type FeatureToggleStates,
   featureToggles,
+  parseToggleText,
+  toggleText,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type {
   RemoteConfig,
@@ -11,8 +13,8 @@ import type {
 import type { ModerationChange } from './moderation';
 
 /**
- * The feature toggles (ADR 0012): one Remote Config parameter each, a
- * boolean, set by `toggles.set`. What the command needs of Remote Config
+ * The feature toggles (ADR 0012): one Remote Config parameter each, its
+ * state as `toggleText` writes it, set by `toggles.set`. What the command needs of Remote Config
  * is a port, so the specs run without the service.
  */
 export interface RemoteToggles {
@@ -21,8 +23,8 @@ export interface RemoteToggles {
    * nothing when it returns no toggle - and returns them as read.
    */
   update(
-    decide: (now: FeatureToggles) => Partial<FeatureToggles>
-  ): Promise<FeatureToggles>;
+    decide: (now: FeatureToggleStates) => Partial<FeatureToggleStates>
+  ): Promise<FeatureToggleStates>;
 }
 
 /**
@@ -31,13 +33,13 @@ export interface RemoteToggles {
  */
 export async function setToggles(
   remote: RemoteToggles,
-  values: Partial<FeatureToggles>
+  values: Partial<FeatureToggleStates>
 ): Promise<ModerationChange | 'unchanged'> {
-  let after: Partial<FeatureToggles> = {};
+  let after: Partial<FeatureToggleStates> = {};
   const now = await remote.update((current) => {
     after = Object.fromEntries(
       Object.entries(values).filter(
-        ([key, on]) => current[key as FeatureToggle] !== on
+        ([key, state]) => current[key as FeatureToggle] !== state
       )
     );
     return after;
@@ -65,40 +67,57 @@ function holderOf(
   return template.parameters;
 }
 
-/** The toggles a template holds, by their default value. */
-export function togglesOf(template: RemoteConfigTemplate): FeatureToggles {
+/** The toggles' states a template holds, by their default value. */
+export function togglesOf(template: RemoteConfigTemplate): FeatureToggleStates {
   return featureToggles((key) => {
     const value = holderOf(template, key)[key]?.defaultValue;
-    if (value === undefined || !('value' in value)) {
-      return undefined;
-    }
-    const text = value.value.trim().toLowerCase();
-    if (text !== 'true' && text !== 'false') {
-      return undefined;
-    }
-    return text === 'true';
+    return value === undefined || !('value' in value)
+      ? undefined
+      : parseToggleText(value.value);
   });
 }
 
 /**
  * A copy of the template with the toggles' parameters set, where they sit
- * (in their group, if any): a boolean default value and no conditional
- * values, so every client gets what the admin area shows.
+ * (in their group, if any): the state's text as the default value - a
+ * STRING, since `admin` is no boolean - and no conditional values, so
+ * every client gets what the admin area shows.
  */
 export function withToggles(
   template: RemoteConfigTemplate,
-  values: Partial<FeatureToggles>
+  values: Partial<FeatureToggleStates>
 ): RemoteConfigTemplate {
-  const copy = structuredClone(template);
-  for (const [key, value] of Object.entries(values)) {
+  const copy = copyOf(template);
+  for (const [key, state] of Object.entries(values)) {
     holderOf(copy, key)[key] = {
-      defaultValue: { value: String(value) },
-      valueType: 'BOOLEAN',
+      defaultValue: { value: toggleText(state) },
+      valueType: 'STRING',
       description:
         'Bacteria Wars feature toggle (ADR 0012), set from the admin area.',
     };
   }
   return copy;
+}
+
+/**
+ * A plain copy of what `publishTemplate` sends, its data deep-copied. The
+ * SDK's template is a class whose `etag` is a getter, which
+ * `structuredClone` drops, and the SDK refuses to publish without it
+ * (#3212), so `etag` is carried over by name. No `version`: the SDK would
+ * send its old description along, so each publish gets none.
+ */
+function copyOf(template: RemoteConfigTemplate): RemoteConfigTemplate {
+  const { conditions, parameters, parameterGroups } = structuredClone({
+    conditions: template.conditions,
+    parameters: template.parameters,
+    parameterGroups: template.parameterGroups,
+  });
+  return {
+    conditions,
+    parameters,
+    parameterGroups,
+    etag: template.etag,
+  };
 }
 
 /**

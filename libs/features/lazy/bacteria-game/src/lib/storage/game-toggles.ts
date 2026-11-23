@@ -1,6 +1,6 @@
 import { inject, Injectable } from '@angular/core';
 import type { Observable } from 'rxjs';
-import type { FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import type { FeatureToggleStates } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { GameCloud } from './game-cloud';
 
 /**
@@ -17,11 +17,11 @@ import { GameCloud } from './game-cloud';
 })
 export abstract class GameToggles {
   /**
-   * The toggles the owner set - only those: one that is not set is left
+   * The toggles' states the owner set - only those: one that is not set is left
    * out, and takes its default. Emits once the backend knows, which may be
    * a while after the subscription, and again should it learn of a change
    * (Remote Config fetches once a visit, so it emits once). Never errors:
    * a backend that cannot tell emits `{}`, the defaults.
    */
-  public abstract watch(): Observable<Partial<FeatureToggles>>;
+  public abstract watch(): Observable<Partial<FeatureToggleStates>>;
 }

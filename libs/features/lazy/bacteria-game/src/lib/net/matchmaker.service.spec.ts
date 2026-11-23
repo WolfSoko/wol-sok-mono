@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { BehaviorSubject } from 'rxjs';
 import { MATCH_LEVELS } from '@wolsok/feat-shared-bacteria-engine';
-import { type FeatureToggles } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import { type FeatureToggleStates } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { FakeOnlineMatch } from '../../testing/fake-online-match';
 import { FakeGameSocial } from '../../testing/fake-game-social';
@@ -16,7 +16,7 @@ import { CONNECT_TIMEOUT_MS } from './peer-link';
 describe('MatchmakerService', () => {
   let social: FakeGameSocial;
   let online: FakeOnlineMatch;
-  let toggles: BehaviorSubject<Partial<FeatureToggles>>;
+  let toggles: BehaviorSubject<Partial<FeatureToggleStates>>;
   let moderation: FakeGameModeration;
 
   function matchmaker(uid: string): MatchmakerService {
@@ -36,7 +36,7 @@ describe('MatchmakerService', () => {
     jest.useFakeTimers();
     social = new FakeGameSocial();
     online = new FakeOnlineMatch({ code: 'ROOM22' });
-    toggles = new BehaviorSubject<Partial<FeatureToggles>>({});
+    toggles = new BehaviorSubject<Partial<FeatureToggleStates>>({});
     moderation = new FakeGameModeration();
   });
 
@@ -264,7 +264,7 @@ describe('MatchmakerService', () => {
 
   describe('paused by the owner', () => {
     it('starts no search', async () => {
-      toggles.next({ matchmaking: false });
+      toggles.next({ matchmaking: 'off' });
       const first = matchmaker('ada');
 
       await first.find();
@@ -279,7 +279,7 @@ describe('MatchmakerService', () => {
       await first.find();
       expect(first.state()).toBe('searching');
 
-      toggles.next({ matchmaking: false });
+      toggles.next({ matchmaking: 'off' });
       TestBed.tick();
       await jest.advanceTimersByTimeAsync(0);
 
@@ -301,9 +301,9 @@ describe('MatchmakerService', () => {
     });
 
     it('lets a search start again once switched back on', async () => {
-      toggles.next({ matchmaking: false });
+      toggles.next({ matchmaking: 'off' });
       const first = matchmaker('ada');
-      toggles.next({ matchmaking: true });
+      toggles.next({ matchmaking: 'on' });
       TestBed.tick();
 
       await first.find();

@@ -1,0 +1,164 @@
+// The bacterium menu (#3194): it fills the 4:3 box the main menu gives it
+// (BACTERIUM_ASPECT), the cell's canvas filling it and
+// the parts laid over their lobes. Positions come from BACTERIUM_ANCHORS
+// through inline left/top, so the CSS only centres each part on its point.
+
+@use 'screen';
+
+:host {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  container-type: inline-size;
+}
+
+.cell {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+:host(.css-cell) .cell {
+  display: none;
+}
+
+// Without WebGL: a capsule of gradients, its lobes as soft discs.
+.css-body {
+  position: absolute;
+  inset: 0;
+
+  &::before {
+    content: '';
+    position: absolute;
+    // The shader's capsule: 0.92 of 1.33 wide, 0.5 of 1 high.
+    inset: 25% 15.5%;
+    border-radius: 999px;
+    background:
+      radial-gradient(
+        circle at 50% 50%,
+        color-mix(in srgb, var(--cell-rim) 55%, transparent) 0 14%,
+        transparent 32%
+      ),
+      radial-gradient(ellipse at 35% 30%, var(--cell-rim), var(--cell-body) 55%);
+    box-shadow:
+      0 0 calc(2.5rem * var(--cell-glow)) var(--cell-rim),
+      inset 0 -1rem 2rem rgb(0 0 0 / 35%);
+  }
+}
+
+.css-lobe {
+  position: absolute;
+  translate: -50% -50%;
+  // A radius in the box's half height, which is 37.5 % of its width.
+  width: calc(var(--lobe) * 75cqw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 35% 30%,
+    var(--cell-rim),
+    var(--cell-body)
+  );
+  transition: scale 150ms;
+
+  &.hot {
+    scale: 1.2;
+  }
+}
+
+.parts {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.part {
+  position: absolute;
+  translate: -50% -50%;
+}
+
+.spot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.35rem 0.7rem 0.35rem 0.5rem;
+  border: 1px solid color-mix(in srgb, var(--cell-rim) 45%, transparent);
+  border-radius: 999px;
+  background: rgb(11 15 20 / 72%);
+  color: var(--bw-text);
+  font: 600 0.85rem / 1.1 var(--bw-body);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition:
+    scale 150ms,
+    border-color 150ms;
+
+  &:hover,
+  &:focus-visible {
+    scale: 1.08;
+    border-color: var(--cell-rim);
+  }
+
+  &:focus-visible {
+    @include screen.focus-ring;
+  }
+
+  mat-icon {
+    @include screen.icon-size(1.2rem);
+  }
+}
+
+// The nucleus: a new game, the biggest part.
+.play .spot {
+  flex-direction: column;
+  gap: 0.15rem;
+  padding: 0.6rem 1rem;
+  border-color: var(--bw-player, var(--cell-rim));
+  font: 700 1.05rem / 1.1 var(--bw-display);
+
+  mat-icon {
+    @include screen.icon-size(2rem);
+  }
+}
+
+.online .spot {
+  border-color: var(--cell-rim);
+  font-size: 0.95rem;
+}
+
+.count {
+  position: absolute;
+  top: -0.45rem;
+  right: -0.45rem;
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: 999px;
+  background: var(--bw-gold);
+  color: var(--bw-ground);
+  font-size: 0.7rem;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+// On a phone the names go under their icons, smaller.
+@container (max-width: 26rem) {
+  .spot {
+    flex-direction: column;
+    gap: 0;
+    padding: 0.25rem 0.4rem;
+    font-size: 0.68rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spot,
+  .css-lobe {
+    transition: none;
+  }
+}

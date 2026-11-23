@@ -1,3 +1,4 @@
+import { reportCaughtErrorsTo } from '../caught-errors';
 import {
   DELETE_BATCH,
   GUEST_IDLE_MS,
@@ -192,6 +193,41 @@ describe('sweepGuests', () => {
     const p = ports([[guest('a', 100), guest('b', 100)]], ['a']);
     expect(await sweepGuests(p, NOW)).toMatchObject({ failed: 1, deleted: 1 });
     expect(p.deleted).toEqual([['b']]);
+  });
+
+  describe('reports what it goes on past', () => {
+    const sink = jest.fn();
+    beforeEach(() => reportCaughtErrorsTo(sink));
+    afterEach(() => {
+      reportCaughtErrorsTo(null);
+      sink.mockReset();
+    });
+
+    it('a failed erase', async () => {
+      const p = ports([[guest('a', 100), guest('b', 100)]], ['a']);
+      await sweepGuests(p, NOW);
+      expect(sink).toHaveBeenCalledTimes(1);
+      expect(sink).toHaveBeenCalledWith(
+        expect.any(Error),
+        'Could not erase an idle guest'
+      );
+    });
+
+    it('a failed lowering of the account count, and deletes all the same', async () => {
+      const failure = new Error('stats/accounts is busy');
+      const p = ports([[guest('a', 100)]]);
+      p.uncount = async () => {
+        throw failure;
+      };
+      expect(await sweepGuests(p, NOW)).toMatchObject({
+        deleted: 1,
+        uncounted: 0,
+      });
+      expect(sink).toHaveBeenCalledWith(
+        failure,
+        'Could not lower the account count'
+      );
+    });
   });
 
   it('deletes a thousand a call, pausing between calls, up to its limit', async () => {

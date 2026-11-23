@@ -853,7 +853,7 @@ describe('adminCommands', () => {
     );
   });
 
-  it('takes feature toggles as booleans, with a reason', async () => {
+  it('takes feature toggles as states, with a reason', async () => {
     const toggles = (values: unknown, extra: object = {}) =>
       adminCommand({
         type: 'toggles.set',
@@ -862,18 +862,25 @@ describe('adminCommands', () => {
         ...extra,
       });
     await assertSucceeds(
-      send(toggles({ rankedDaily: false, matchmaking: true }))
+      send(
+        toggles({
+          rankedDaily: 'off',
+          matchmaking: 'on',
+          deterministicSimulation: 'admin',
+        })
+      )
     );
     await assertFails(send(toggles({})));
-    await assertFails(send(toggles({ gallery: true })));
-    await assertFails(send(toggles({ leaderboards: 'off' })));
-    await assertFails(send(toggles({ rankedDaily: false }, { reason: '' })));
+    await assertFails(send(toggles({ gallery: 'on' })));
+    await assertFails(send(toggles({ leaderboards: false })));
+    await assertFails(send(toggles({ leaderboards: 'maybe' })));
+    await assertFails(send(toggles({ rankedDaily: 'off' }, { reason: '' })));
     await assertFails(
-      send(toggles({ rankedDaily: false }, { target: { uid: 'eve' } }))
+      send(toggles({ rankedDaily: 'off' }, { target: { uid: 'eve' } }))
     );
     // It changes the game for everybody: a recent sign-in too.
     await assertFails(
-      send(toggles({ rankedDaily: false }), {
+      send(toggles({ rankedDaily: 'off' }), {
         ...OWNER_TOKEN,
         auth_time: Math.floor((Date.now() - 2 * HOUR) / 1000),
       })

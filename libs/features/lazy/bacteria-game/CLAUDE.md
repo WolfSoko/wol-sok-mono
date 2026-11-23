@@ -278,9 +278,13 @@ storage until then. Settings stay with the device either way.
   from `FeatureTogglesService.toggles` only: `FEATURE_TOGGLES` at first,
   merged with what Remote Config says once it answered. The game asks
   (`FeatureTogglesService.start()`) after its first render, so Remote
-  Config stays off the start. A feature that must not change midway reads
+  Config stays off the start. Each toggle has a state, `off`, `admin` or
+  `on` (#3194): the port gives states, `FeatureTogglesService.states` keeps
+  them and `toggles` resolves them with `GameAccount.owner` (`admin` is on
+  for the owner only), so every reader still takes a boolean. A feature
+  that must not change midway reads
   its toggle as it starts (the simulation per match). Specs use
-  `provideGameToggles` (`src/testing/fake-game-toggles.ts`).
+  `provideGameToggles` (`src/testing/fake-game-toggles.ts`), with states.
 - Remote Config is reached only through `FirebaseConnection.remoteConfig()`
   in `firebase-connection.ts`: the SDK is imported on demand there (off the
   start), set up once on the game's named app, fetched at most hourly and
@@ -617,6 +621,32 @@ play each other.
   texts, colour names and the like are looked up by their id in the
   components; the engine renders only the English strings its state
   carries (`english()`), never another language.
+
+## The bacterium menu (#3194)
+
+- The main menu shows its actions as the parts of a 3D bacterium
+  (`menu/bacterium-menu.component.*`; the toggle that held it back went in
+  [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210), with the
+  old play buttons and action tiles); Settings, Help, Support and Admin
+  stay tiles below it. The parts and where they sit are
+  `menu/bacterium/bacterium-items.ts` (`bacteriumItems`, the main menu's
+  one item list: label, icon, badge and when it shows;
+  `BACTERIUM_ANCHORS`, which the shader and the buttons both read), the
+  look by XP `bacterium-look.ts`; `MainMenuComponent.pickPart` is the one
+  way to act on an item. A new menu item gets its anchor, its place in
+  `bacteriumItems` and its case in `pickPart`.
+- The cell is one WebGL2 fragment shader (`bacterium-shader.ts`, a
+  raymarched SDF in an orthographic view, so a lobe sits right under its
+  button), drawn by `bacterium-renderer.ts` at 30 fps at most and 1.5
+  device pixels a CSS pixel. No three.js: it would break the
+  `allScript` budget. The main menu loads it in a `@defer (on immediate)`
+  block, its own chunk, which keeps it out of the game's largest one (the
+  `anyScript` budget); specs await `whenStable()` before they look for
+  it. The parts are real buttons and links over the
+  canvas, which is `aria-hidden`. `BACTERIUM_RENDERER` answers null
+  without WebGL2, on a software renderer (SwiftShader takes about 200 ms a
+  frame) or for a shader the device refuses; then a CSS cell with the same
+  parts stands in. Specs provide a renderer of their own (or `() => null`).
 
 ## Busy indicator
 

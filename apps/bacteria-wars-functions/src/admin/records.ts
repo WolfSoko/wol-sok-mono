@@ -3,7 +3,11 @@ import type {
   CommandResult,
   NoticeType,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
-import { type Firestore, Timestamp } from 'firebase-admin/firestore';
+import {
+  type DocumentReference,
+  type Firestore,
+  Timestamp,
+} from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
 import { DAY_MS } from '../boards/budgets';
 import { hasGrpcCode, ignoreNotFound } from '../grpc';
@@ -81,9 +85,10 @@ export interface AuditedAction {
  * 1. claims `adminAudit/{commandId}` with `head` (`ok: null`) - a second
  *    delivery runs nothing and answers from the audit, null while the
  *    first one still runs;
- * 2. runs `act`, a throw answering `internal`;
- * 3. completes the audit with `before` and `after`, also for an action
- *    that failed, and answers.
+ * 2. runs `act`;
+ * 3. completes the audit with `before` and `after` and answers - for an
+ *    action that threw, as failed with `internal`, and then throws it on,
+ *    so `runCommandDocument` answers `internal` and Sentry reports it.
  * A command that died between 1 and 3 stays `ok: null`; the owner sends a
  * new one.
  */
@@ -118,9 +123,24 @@ export async function runAudited(
   } catch (error) {
     // Audited as failed, with what is known: the action may have run in
     // part, and the owner sees that in the audit.
-    logger.error('Audited action failed', { commandId, error });
-    action = { change: 'internal' };
+    // The action's error goes on, even if its audit cannot be completed.
+    await completeAudit(audit, { change: 'internal' }).catch(
+      (writeError: unknown) =>
+        logger.error('Could not audit a failed action', {
+          commandId,
+          error: writeError,
+        })
+    );
+    throw error;
   }
+  return completeAudit(audit, action);
+}
+
+/** Completes a claimed audit entry with what the action did, and answers. */
+async function completeAudit(
+  audit: DocumentReference,
+  action: AuditedAction
+): Promise<CommandResult> {
   const { change } = action;
   const target = action.target === undefined ? {} : { target: action.target };
   if (typeof change === 'string') {

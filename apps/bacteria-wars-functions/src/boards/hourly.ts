@@ -9,7 +9,6 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/logger';
 import { expireBans } from '../admin/bans';
 import type { Realtime } from '../admin/realtime';
 import { refreshStats } from '../admin/stats';
@@ -19,6 +18,7 @@ import { DAY_MS, SLICE_MS } from './budgets';
 import { closeStaleMatches } from './rank-endless';
 import { verifyEndlessSlice } from './verify-endless';
 import { type AccountInfo, verifyDailySlice } from './verify-slice';
+import { logCaughtError } from '../caught-errors';
 
 const HOUR_MS = 3_600_000;
 /** The replays one sweep closes at most; the next one takes the rest. */
@@ -56,7 +56,7 @@ export async function closeNotReported(
     } catch (error) {
       // Tried again in an hour, rather than first in every run's query:
       // one replay must not stop the sweep or the hour's verification.
-      logger.error('Could not close a replay', { id: doc.id, error });
+      logCaughtError('Could not close a replay', { id: doc.id, error });
       await doc.ref
         .update({ closeAt: Timestamp.fromMillis(now + HOUR_MS) })
         .catch(() => undefined);
@@ -182,7 +182,7 @@ export async function runHourly(
   // waits for the next run, and must not cost this one its verification.
   const bansEnded = await expireBans(db, realtime, now).catch(
     (error: unknown) => {
-      logger.error('Could not clean up ended bans', { error });
+      logCaughtError('Could not clean up ended bans', { error });
       return 0;
     }
   );
@@ -205,7 +205,7 @@ export async function runHourly(
   }).then(
     () => true,
     (error: unknown) => {
-      logger.error('Could not write the statistics', { error });
+      logCaughtError('Could not write the statistics', { error });
       return false;
     }
   );

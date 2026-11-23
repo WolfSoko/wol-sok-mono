@@ -82,6 +82,7 @@ import { acceptSubmission, giveUpSubmission } from './replays/accept';
 import { deleteReplayChildren } from './replays/cleanup';
 import { runReplayCommand } from './replays/command';
 import { type MirroredList, mirrorListing } from './social/mirror';
+import { logCaughtError } from './caught-errors';
 
 // Only in a deployed function. Every handler below is wrapped in
 // `withSentry`, which reports what it throws and waits for the report.
@@ -478,7 +479,7 @@ async function checkLink(uid: string, now: number): Promise<void> {
       logger.info('A linked Google account met its ban tombstone', { uid });
     }
   } catch (error) {
-    logger.error('Could not check a Google link', { uid, error });
+    logCaughtError('Could not check a Google link', { uid, error });
   }
 }
 

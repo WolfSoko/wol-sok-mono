@@ -1,16 +1,16 @@
 import { TestBed } from '@angular/core/testing';
 import { FEATURE_TOGGLES } from '@wolsok/feat-lazy-bac-game/admin-kit';
 import { AdminActionsService } from '../moderation/admin-actions.service';
-import { AdminTogglesService, type ToggleState } from './admin-toggles.service';
+import { AdminTogglesService, type TogglesRead } from './admin-toggles.service';
 import { TogglesComponent } from './toggles.component';
 
-const STATE: ToggleState = {
+const STATE: TogglesRead = {
   available: true,
-  values: { ...FEATURE_TOGGLES, matchmaking: false },
-  set: { matchmaking: false },
+  values: { ...FEATURE_TOGGLES, matchmaking: 'off' },
+  set: { matchmaking: 'off' },
 };
 
-function render(state: ToggleState = STATE) {
+function render(state: TogglesRead = STATE) {
   const read = jest.fn(async (_fresh: boolean) => state);
   const run = jest.fn(async () => ({ ok: true }));
   TestBed.configureTestingModule({
@@ -33,10 +33,13 @@ function render(state: ToggleState = STATE) {
     [...element.querySelectorAll('button')].find((b) =>
       b.textContent?.includes(label)
     ) as HTMLButtonElement;
-  const toggle = (name: string) =>
-    [...element.querySelectorAll('mat-slide-toggle')]
-      .find((t) => t.textContent?.includes(name))
-      ?.querySelector('button') as HTMLButtonElement;
+  /** The button of a toggle's state, by the toggle's key. */
+  const toggle = (key: string, state: 'Off' | 'Admin' | 'On') =>
+    [
+      ...element.querySelectorAll(
+        `mat-button-toggle-group[data-toggle="${key}"] button`
+      ),
+    ].find((b) => b.textContent?.trim() === state) as HTMLButtonElement;
   return { fixture, element, read, run, settle, button, toggle };
 }
 
@@ -50,48 +53,54 @@ describe('TogglesComponent', () => {
     const text = element.textContent ?? '';
     expect(text).toContain('Matchmaking queue');
     expect(text).toContain('set in Remote Config');
-    expect(text).toContain('default (on)');
+    expect(text).toContain('default (On)');
+    expect(text).toContain('Deterministic simulation');
     expect(button('Publish').disabled).toBe(true);
   });
 
   it('publishes only the changed toggles, then reads them back', async () => {
     const { run, read, settle, button, toggle, element } = render();
     await settle();
-    toggle('Leaderboards').click();
+    toggle('leaderboards', 'Admin').click();
+    toggle('deterministicSimulation', 'Admin').click();
     await settle();
     expect(element.textContent).toContain('changed');
     button('Publish').click();
     await settle();
     expect(run).toHaveBeenCalledWith({
       type: 'toggles.set',
-      subject: 'Leaderboards',
+      subject: 'Leaderboards, Deterministic simulation',
       target: null,
-      args: { values: { leaderboards: false } },
+      args: {
+        values: { leaderboards: 'admin', deterministicSimulation: 'admin' },
+      },
     });
     expect(read).toHaveBeenCalledTimes(2);
-    expect(element.textContent).toContain('Published: Leaderboards: off');
+    expect(element.textContent).toContain(
+      'Published: Leaderboards: Admin, Deterministic simulation: Admin'
+    );
   });
 
   it('locks the draft while it reads the toggles again', async () => {
     const { read, settle, button, toggle } = render();
     await settle();
-    toggle('Leaderboards').click();
+    toggle('leaderboards', 'Off').click();
     await settle();
-    let answer: (state: ToggleState) => void = () => undefined;
+    let answer: (state: TogglesRead) => void = () => undefined;
     read.mockImplementationOnce(
-      () => new Promise<ToggleState>((resolve) => (answer = resolve))
+      () => new Promise<TogglesRead>((resolve) => (answer = resolve))
     );
     button('Read again').click();
     await settle();
     expect(button('Read again').disabled).toBe(true);
     expect(button('Publish').disabled).toBe(true);
     expect(button('Discard').disabled).toBe(true);
-    expect(toggle('Leaderboards').disabled).toBe(true);
+    expect(toggle('leaderboards', 'On').disabled).toBe(true);
     answer(STATE);
     await settle();
     expect(read).toHaveBeenCalledTimes(2);
     expect(button('Read again').disabled).toBe(false);
-    expect(toggle('Leaderboards').disabled).toBe(false);
+    expect(toggle('leaderboards', 'On').disabled).toBe(false);
   });
 
   it('switches nothing where Remote Config cannot be reached', async () => {
@@ -103,7 +112,9 @@ describe('TogglesComponent', () => {
     await settle();
     expect(element.textContent).toContain('cannot be reached');
     expect(
-      element.querySelector('mat-slide-toggle button')?.hasAttribute('disabled')
+      element
+        .querySelector('mat-button-toggle-group button')
+        ?.hasAttribute('disabled')
     ).toBe(true);
   });
 });

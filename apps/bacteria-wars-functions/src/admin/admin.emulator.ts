@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { defaultProfile } from '@wolsok/feat-shared-bacteria-engine';
 import {
   FEATURE_TOGGLES,
-  type FeatureToggles,
+  type FeatureToggleStates,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { Timestamp } from 'firebase-admin/firestore';
 import { logger } from 'firebase-functions/logger';
@@ -35,8 +35,8 @@ const DAILY = 'daily-2026-11-03';
 afterEach(() => jest.restoreAllMocks());
 
 /** Remote Config's toggles, kept in memory. */
-function fakeToggles(): RemoteToggles & { published: FeatureToggles } {
-  const published: FeatureToggles = { ...FEATURE_TOGGLES };
+function fakeToggles(): RemoteToggles & { published: FeatureToggleStates } {
+  const published: FeatureToggleStates = { ...FEATURE_TOGGLES };
   return {
     published,
     update: async (decide) => {
@@ -461,21 +461,21 @@ describe('toggles.set', () => {
         {
           type: 'toggles.set',
           target: null,
-          args: { values: { rankedDaily: false, matchmaking: true } },
+          args: { values: { rankedDaily: 'admin', matchmaking: 'on' } },
         },
         ctx
       )
     ).toEqual({ ok: true });
     expect((ctx.toggles as ReturnType<typeof fakeToggles>).published).toEqual({
       ...FEATURE_TOGGLES,
-      rankedDaily: false,
+      rankedDaily: 'admin',
     });
     // Only what changed is audited.
     expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
       type: 'toggles.set',
       target: null,
-      before: { rankedDaily: true },
-      after: { rankedDaily: false },
+      before: { rankedDaily: 'on' },
+      after: { rankedDaily: 'admin' },
       ok: true,
     });
     expect(
@@ -484,11 +484,44 @@ describe('toggles.set', () => {
         {
           type: 'toggles.set',
           target: null,
-          args: { values: { rankedDaily: false } },
+          args: { values: { rankedDaily: 'admin' } },
         },
         ctx
       )
     ).toEqual({ ok: false, error: 'unchanged' });
+  });
+
+  it('audits a Remote Config failure, answers internal and throws it on', async () => {
+    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const failure = new Error('ETag must be a non-empty string.');
+    const ctx: AdminContext = {
+      ...context(),
+      toggles: {
+        update: async () => {
+          throw failure;
+        },
+      },
+    };
+    // On to `withSentry`, which reports it.
+    await expect(
+      command(
+        'c1',
+        {
+          type: 'toggles.set',
+          target: null,
+          args: { values: { rankedDaily: 'admin' } },
+        },
+        ctx
+      )
+    ).rejects.toBe(failure);
+    expect((await db.doc('adminAudit/c1').get()).data()).toMatchObject({
+      type: 'toggles.set',
+      ok: false,
+      error: 'internal',
+    });
+    expect(
+      (await db.doc('adminCommands/c1').get()).get('result')
+    ).toMatchObject({ ok: false, error: 'internal' });
   });
 });
 

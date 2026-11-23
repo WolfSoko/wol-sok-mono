@@ -68,7 +68,7 @@ describe('admin commands', () => {
         type: 'toggles.set',
         target: null,
         reason: 'Ranked servers overloaded',
-        args: { values: { rankedDaily: false } },
+        args: { values: { rankedDaily: 'off' } },
       },
       { type: 'presence.backfill', target: null, args: {} },
     ];
@@ -225,17 +225,19 @@ describe('admin commands', () => {
         args: { values },
         ...more,
       });
-    expect(toggles({ matchmaking: false, leaderboards: true })?.args).toEqual({
-      values: { matchmaking: false, leaderboards: true },
+    expect(
+      toggles({ matchmaking: 'off', leaderboards: 'admin' })?.args
+    ).toEqual({
+      values: { matchmaking: 'off', leaderboards: 'admin' },
     });
     expect(toggles({})).toBeNull();
-    expect(toggles({ gallery: true })).toBeNull();
-    expect(toggles({ rankedDaily: 'off' })).toBeNull();
+    expect(toggles({ gallery: 'on' })).toBeNull();
+    expect(toggles({ rankedDaily: false })).toBeNull();
     expect(toggles(null)).toBeNull();
     // It changes the game for everybody: a reason is a must.
-    expect(toggles({ rankedDaily: false }, { reason: '' })).toBeNull();
+    expect(toggles({ rankedDaily: 'off' }, { reason: '' })).toBeNull();
     expect(
-      toggles({ rankedDaily: false }, { target: { uid: UID } })
+      toggles({ rankedDaily: 'off' }, { target: { uid: UID } })
     ).toBeNull();
   });
 

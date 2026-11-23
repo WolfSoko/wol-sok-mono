@@ -53,15 +53,16 @@ describe('runCommandDocument', () => {
     expect(await stored()).toMatchObject({ ok: false, error: 'not-writer' });
   });
 
-  it('answers internal for a command that throws, and logs it', async () => {
+  it('answers internal for a command that throws, logs it and throws it on', async () => {
     const log = jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    const boom = new Error('boom');
     const run = runner(async () => {
-      throw new Error('boom');
+      throw boom;
     });
-    expect(await runCommandDocument(db, PATH, COMMAND, 'ada', run)).toEqual({
-      ok: false,
-      error: 'internal',
-    });
+    // On to `withSentry`, which reports it.
+    await expect(
+      runCommandDocument(db, PATH, COMMAND, 'ada', run)
+    ).rejects.toBe(boom);
     expect(log).toHaveBeenCalledWith(
       'Command failed',
       expect.objectContaining({ path: PATH })

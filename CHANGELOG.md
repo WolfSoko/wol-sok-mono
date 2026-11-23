@@ -2,6 +2,49 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.181.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.4...v74.181.0) (2026-11-23)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the bacterium is the main menu, its toggle removed ([#3225](https://github.com/WolfSoko/wol-sok-mono/issues/3225)) ([421ddd6](https://github.com/WolfSoko/wol-sok-mono/commit/421ddd6c15334f3c2b8e0aaf63a0dd56de2c6d6b)), references [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210) [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210)
+
+## [74.180.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.3...v74.180.4) (2026-11-23)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** report caught warn-level failures to Sentry ([#3224](https://github.com/WolfSoko/wol-sok-mono/issues/3224)) ([39919c5](https://github.com/WolfSoko/wol-sok-mono/commit/39919c5b08747f674211e93d6537a5e0f3ec8982))
+
+## [74.180.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.2...v74.180.3) (2026-11-23)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** report caught batch errors to Sentry ([#3221](https://github.com/WolfSoko/wol-sok-mono/issues/3221)) ([a086b0d](https://github.com/WolfSoko/wol-sok-mono/commit/a086b0d57dd5f2b9a3d7344e342cce54c8850356)), closes [#3215](https://github.com/WolfSoko/wol-sok-mono/issues/3215)
+* **pacetrainer:** announce "1 Sekunde" in the singular ([#3220](https://github.com/WolfSoko/wol-sok-mono/issues/3220)) ([4658799](https://github.com/WolfSoko/wol-sok-mono/commit/4658799378a4cee37ed38d2d68c2c2418346ac64)), references [#3208](https://github.com/WolfSoko/wol-sok-mono/issues/3208) [#3110](https://github.com/WolfSoko/wol-sok-mono/issues/3110)
+
+## [74.180.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.1...v74.180.2) (2026-11-22)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** failed commands reach Sentry ([#3216](https://github.com/WolfSoko/wol-sok-mono/issues/3216)) ([10e0330](https://github.com/WolfSoko/wol-sok-mono/commit/10e0330a70160d00fe4d80ee5943200700e1177a)), closes [#3213](https://github.com/WolfSoko/wol-sok-mono/issues/3213)
+
+## [74.180.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.0...v74.180.1) (2026-11-22)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** keep the template ETag when setting toggles ([#3214](https://github.com/WolfSoko/wol-sok-mono/issues/3214)) ([965b733](https://github.com/WolfSoko/wol-sok-mono/commit/965b7334012655658c5b25797832fb5b0d1bb032)), references [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212) [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212) [#2653](https://github.com/WolfSoko/wol-sok-mono/issues/2653) [#3212](https://github.com/WolfSoko/wol-sok-mono/issues/3212)
+
+## [74.180.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.3...v74.180.0) (2026-11-22)
+
+### Features
+
+* **feat-lazy-bacteria-game:** the main menu as a 3D bacterium, toggles with Off/Admin/On ([#3209](https://github.com/WolfSoko/wol-sok-mono/issues/3209)) ([25ab837](https://github.com/WolfSoko/wol-sok-mono/commit/25ab8372b5e05477a90d93b15a099835c80df9f1)), closes [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194), references [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194) [#3194](https://github.com/WolfSoko/wol-sok-mono/issues/3194)
+
+## [74.179.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.2...v74.179.3) (2026-11-22)
+
+### Bug Fixes
+
+* **shared-e2e-server:** wait only inside the server's own e2e tasks ([#3203](https://github.com/WolfSoko/wol-sok-mono/issues/3203)) ([007a53a](https://github.com/WolfSoko/wol-sok-mono/commit/007a53a19dc7a6826e36c79efed4150694b73a21)), references [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120) [#3120](https://github.com/WolfSoko/wol-sok-mono/issues/3120)
+
 ## [74.179.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.179.1...v74.179.2) (2026-11-22)
 
 ### Bug Fixes

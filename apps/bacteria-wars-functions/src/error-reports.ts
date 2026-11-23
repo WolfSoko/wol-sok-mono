@@ -4,9 +4,12 @@
  * it once and wraps every exported handler in {@link withSentry}; the
  * handler modules stay free of it.
  */
+import { AsyncLocalStorage } from 'node:async_hooks';
 import * as Sentry from '@sentry/node';
 import type { ErrorEvent } from '@sentry/node';
 import { releaseName } from '@wolsok/utils-version';
+import { logger } from 'firebase-functions/logger';
+import { reportCaughtErrorsTo } from './caught-errors';
 import { SENTRY_DSN } from './config';
 
 /** The release the release workflow creates in Sentry for the game. */
@@ -17,6 +20,23 @@ export const RELEASE = releaseName('bacteria-wars');
  * be frozen as soon as the handler returns.
  */
 export const FLUSH_MS = 2000;
+
+/**
+ * How many caught errors of one message a handler run reports: a batch
+ * failing for every item on the same cause would otherwise send an event
+ * per item and use up the quota. The rest are only logged, and counted.
+ */
+export const CAUGHT_PER_MESSAGE = 5;
+
+/** What one handler run captured of the errors its batches caught. */
+interface CaughtInRun {
+  /** Reported so far, by message. */
+  readonly reported: Map<string, number>;
+  /** Left out by {@link CAUGHT_PER_MESSAGE}, by message. */
+  readonly skipped: Map<string, number>;
+}
+
+const run = new AsyncLocalStorage<CaughtInRun>();
 
 /**
  * The SDK's default integrations that stay, all about the error itself:
@@ -68,6 +88,8 @@ export function scrubIds(text: string): string {
  */
 export function scrubEvent(event: ErrorEvent): ErrorEvent {
   delete event.user;
+  // A thrown non-Error lands here serialized, ids and all.
+  delete event.extra;
   if (event.request) {
     const url = event.request.url?.split(/[?#]/)[0];
     event.request = url === undefined ? {} : { url: scrubIds(url) };
@@ -112,6 +134,7 @@ export function initErrorReports(
     beforeSend: scrubEvent,
     beforeBreadcrumb: () => null,
   });
+  reportCaughtErrorsTo(captureCaughtError);
   return true;
 }
 
@@ -125,18 +148,60 @@ export async function reportError(error: unknown): Promise<void> {
 }
 
 /**
+ * Reports an error a batch caught and went on past, tagged with the fixed
+ * message it was logged with, at most {@link CAUGHT_PER_MESSAGE} of each
+ * message in a handler run. `withSentry` flushes it before the run ends.
+ */
+export function captureCaughtError(error: unknown, message: string): void {
+  const caught = run.getStore();
+  if (caught) {
+    const reported = caught.reported.get(message) ?? 0;
+    if (reported >= CAUGHT_PER_MESSAGE) {
+      caught.skipped.set(message, (caught.skipped.get(message) ?? 0) + 1);
+      return;
+    }
+    caught.reported.set(message, reported + 1);
+  }
+  Sentry.captureException(error, { tags: { caught: message } });
+}
+
+/**
  * The handler, reporting what it throws before it throws it on: retries
- * and the platform's own error log stay as they were.
+ * and the platform's own error log stay as they were. Errors its batches
+ * caught (see `captureCaughtError`) are flushed before it returns.
  */
 export function withSentry<A extends unknown[], R>(
   handler: (...args: A) => R | Promise<R>
 ): (...args: A) => Promise<R> {
-  return async (...args: A) => {
-    try {
-      return await handler(...args);
-    } catch (error) {
-      await reportError(error);
-      throw error;
-    }
+  return (...args: A) => {
+    const caught: CaughtInRun = { reported: new Map(), skipped: new Map() };
+    return run.run(caught, async () => {
+      let result: R;
+      try {
+        result = await handler(...args);
+      } catch (error) {
+        logSkipped(caught);
+        await reportError(error);
+        throw error;
+      }
+      await settleCaught(caught);
+      return result;
+    });
   };
+}
+
+/** Sends what the run captured, if anything, and logs what it left out. */
+async function settleCaught(caught: CaughtInRun): Promise<void> {
+  logSkipped(caught);
+  if (caught.reported.size > 0) {
+    await Sentry.flush(FLUSH_MS).catch(() => false);
+  }
+}
+
+function logSkipped(caught: CaughtInRun): void {
+  if (caught.skipped.size > 0) {
+    logger.warn('Caught errors not reported to Sentry', {
+      skipped: Object.fromEntries(caught.skipped),
+    });
+  }
 }

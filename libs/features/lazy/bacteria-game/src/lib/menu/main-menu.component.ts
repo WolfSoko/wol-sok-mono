@@ -15,6 +15,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RouterLink } from '@angular/router';
+import { type Rgb } from '@wolsok/feat-bacteria-rendering';
 import { injectGameAnalytics } from '../analytics/game-analytics';
 import { StageBusy } from '../busy/stage-busy';
 import { FeatureTogglesService } from '../feature-toggles.service';
@@ -36,7 +37,12 @@ import {
 import { RankStandingComponent } from '../rank/rank-standing.component';
 import { GhostChallengeComponent } from '../ghost/ghost-challenge.component';
 import { DnaCounterComponent } from './dna-counter.component';
-import { DnaHelixComponent } from './dna-helix.component';
+import { BacteriumMenuComponent } from './bacterium-menu.component';
+import { DEFAULT_PLAYER_RGB } from './bacterium/bacterium-look';
+import {
+  type BacteriumItemId,
+  bacteriumItems,
+} from './bacterium/bacterium-items';
 import { GameAccount } from '../storage/game-account';
 import { GAME_SUPPORT } from '../support/game-support';
 import { GameSupport } from '../support/game-support.service';
@@ -65,9 +71,10 @@ export type MenuPage =
   | 'my-matches';
 
 /**
- * The landing screen of the game: the title, a new game - and the training
- * until its missions are done - the way to the other screens and a card
- * with the campaign so far, and the way straight on with it.
+ * The landing screen of the game: the title, a bacterium whose parts are
+ * the ways into play and to the other screens (a new game in its nucleus,
+ * the training until its missions are done), the utilities as tiles below
+ * it, and a card with the campaign so far, and the way straight on with it.
  *
  * A dumb component - it shows what it is given and reports what the player
  * picks. Only the way to support the game it finds itself, as it differs
@@ -88,7 +95,7 @@ export type MenuPage =
     RouterLink,
     GhostChallengeComponent,
     DnaCounterComponent,
-    DnaHelixComponent,
+    BacteriumMenuComponent,
     InstallBannerComponent,
     StatsBannerComponent,
     AccountChipComponent,
@@ -107,18 +114,19 @@ export class MainMenuComponent {
   /** The level of a run someone shared, to fight as a ghost - null without. */
   public readonly challenge = input<Level | null>(null);
   /**
-   * True with the game's cloud: then the friends have a tile, and so do the
-   * leaderboards while the owner's toggle shows them.
+   * True with the game's cloud: then the friends are a part of the
+   * bacterium, and so are the leaderboards while the owner's toggle shows
+   * them.
    */
   public readonly cloudAvailable = input(false);
-  /** The friend requests waiting for an answer, counted on the tile. */
+  /** The friend requests waiting for an answer, counted on their part. */
   public readonly friendRequests = input(0);
   /**
    * The DNA left to spend while it buys something - the badge on the
-   * Evolution tile - 0 while it buys nothing.
+   * Evolution part - 0 while it buys nothing.
    */
   public readonly evolveDna = input(0);
-  /** The DNA left while it buys a skin - the badge on the My Colony tile - 0 otherwise. */
+  /** The DNA left while it buys a skin - the badge on the My Colony part - 0 otherwise. */
   public readonly colonyDna = input(0);
   /** The DNA left to spend, shown in the card as on My Colony. */
   public readonly dna = input(0);
@@ -130,6 +138,10 @@ export class MainMenuComponent {
   public readonly fullscreen = input(false);
   /** The training missions done - the way to the training shows until all are. */
   public readonly missionsDone = input(0);
+  /** True where online matches can be played: the bacterium's online part. */
+  public readonly onlineAvailable = input(false);
+  /** The player's colony colour, which lights the bacterium's rim. */
+  public readonly playerColor = input<Rgb>(DEFAULT_PLAYER_RGB);
 
   /** A new game, to set up step by step. */
   public readonly newGame = output<void>();
@@ -137,6 +149,8 @@ export class MainMenuComponent {
   public readonly continueCampaign = output<void>();
   /** To the training's missions. */
   public readonly training = output<void>();
+  /** Straight to the online lobby, from the bacterium's online part. */
+  public readonly online = output<void>();
   public readonly open = output<MenuPage>();
   public readonly soundChange = output<boolean>();
   /** Onto the whole screen (true) or back into the page (false). */
@@ -163,7 +177,7 @@ export class MainMenuComponent {
    * opens takes a moment to lay out. A match is started behind it by the
    * stage, which takes the screen on the tap first.
    */
-  protected busyEmit(output: OutputEmitterRef<void>): void {
+  private busyEmit(output: OutputEmitterRef<void>): void {
     this.busy.run(() => output.emit());
   }
 
@@ -171,7 +185,7 @@ export class MainMenuComponent {
     Object.values(this.campaign().medals).reduce((sum, n) => sum + n, 0)
   );
 
-  /** The card's DNA glows while either tile's badge says it buys something. */
+  /** The card's DNA glows while either part's badge says it buys something. */
   protected readonly dnaReady = computed(
     () => this.evolveDna() > 0 || this.colonyDna() > 0
   );
@@ -184,9 +198,25 @@ export class MainMenuComponent {
   protected readonly totalMissions = MISSIONS.length;
 
   private readonly toggles = inject(FeatureTogglesService).toggles;
-  /** The leaderboards' tile: with the cloud, while the owner shows them. */
+  /** The leaderboards' part: with the cloud, while the owner shows them. */
   protected readonly showsBoards = computed(
     () => this.cloudAvailable() && this.toggles().leaderboards
+  );
+  /**
+   * The main menu's items, the parts of its bacterium (#3194): the nucleus
+   * a new game, online and the screens round the rim.
+   */
+  protected readonly bacteriumItems = computed(() =>
+    bacteriumItems({
+      training: this.missionsDone() < this.totalMissions,
+      online: this.onlineAvailable(),
+      friends: this.cloudAvailable(),
+      leaderboards: this.showsBoards(),
+      colonyDna: this.colonyDna(),
+      evolveDna: this.evolveDna(),
+      friendRequests: this.friendRequests(),
+      gallery: { url: this.galleryUrl(), external: !this.onSite },
+    })
   );
 
   protected readonly support = inject(GameSupport);
@@ -218,6 +248,26 @@ export class MainMenuComponent {
   );
   private readonly dialog = inject(MatDialog);
   private readonly analytics = injectGameAnalytics();
+
+  /** Where a part of the bacterium leads. */
+  protected pickPart(id: BacteriumItemId): void {
+    switch (id) {
+      case 'gallery':
+        // A link: the browser follows it.
+        return;
+      case 'play':
+        this.busyEmit(this.newGame);
+        return;
+      case 'online':
+        this.busyEmit(this.online);
+        return;
+      case 'training':
+        this.busyEmit(this.training);
+        return;
+      default:
+        this.open.emit(id);
+    }
+  }
 
   /** The Play tips, in the app, where the Buy Me a Coffee page is not allowed. */
   protected openTips(): void {

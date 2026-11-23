@@ -4,8 +4,16 @@ import {
   type SimResolution,
   TICKS_PER_SEC,
 } from '@wolsok/feat-shared-bacteria-engine';
-import { FieldValue } from 'firebase-admin/firestore';
-import { levelStatsCounts, levelStatsId, levelStatsKey } from './level-stats';
+import { FieldValue, type Firestore } from 'firebase-admin/firestore';
+import { logger } from 'firebase-functions/logger';
+import { reportCaughtErrorsTo } from '../caught-errors';
+import {
+  countLevelStats,
+  countRerun,
+  levelStatsCounts,
+  levelStatsId,
+  levelStatsKey,
+} from './level-stats';
 
 const one = FieldValue.increment(1);
 
@@ -135,5 +143,58 @@ describe('levelStatsCounts', () => {
       durations: { lt2m: one },
       weapons: { lysis: one },
     });
+  });
+});
+
+describe('counting never stands in the way', () => {
+  const failure = new Error('levelStats is busy');
+  /** A Firestore whose every statistics write fails. */
+  const failingDb = {
+    doc: () => ({ set: () => Promise.reject(failure) }),
+  } as unknown as Firestore;
+  const sink = jest.fn();
+  const stored = header({ balanceVersion: 12, ...arenaSize('normal') });
+
+  beforeEach(() => {
+    jest.spyOn(logger, 'error').mockImplementation(() => undefined);
+    reportCaughtErrorsTo(sink);
+  });
+  afterEach(() => {
+    reportCaughtErrorsTo(null);
+    sink.mockReset();
+    jest.restoreAllMocks();
+  });
+
+  it('reports a stored replay it could not count', async () => {
+    await expect(
+      countLevelStats(failingDb, stored, 'computer', 'l_a')
+    ).resolves.toBeUndefined();
+    expect(sink).toHaveBeenCalledWith(failure, 'Level statistics not counted');
+    expect(logger.error).toHaveBeenCalledWith('Level statistics not counted', {
+      id: 'l_a',
+      level: 'quarantine',
+      error: failure,
+    });
+  });
+
+  it('reports a replay whose counts fail to build', async () => {
+    const broken = { ...stored, loadouts: [null] } as unknown as ReplayHeader;
+    await expect(
+      countLevelStats(failingDb, broken, 'computer', 'l_b')
+    ).resolves.toBeUndefined();
+    expect(sink).toHaveBeenCalledWith(
+      expect.any(TypeError),
+      'Level statistics not counted'
+    );
+  });
+
+  it('reports a re-run it could not count', async () => {
+    await expect(
+      countRerun(failingDb, stored, 'daily', {
+        state: 'verified',
+        medal: 'gold',
+      } as never)
+    ).resolves.toBeUndefined();
+    expect(sink).toHaveBeenCalledWith(failure, 'Re-run not counted');
   });
 });

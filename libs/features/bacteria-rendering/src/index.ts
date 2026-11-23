@@ -47,8 +47,9 @@ export { ZONE_COLORS } from './lib/arena/zone-look';
 export { type GpuSelfTestResult, runGpuSelfTest } from './lib/gl/gpu-self-test';
 export { type GpuSimulationOptions } from './lib/gl/gpu-simulation';
 export { type GlErrorCount } from './lib/gl/gl-diagnostics';
+export { createProgram, type Program } from './lib/gl/gl-utils';
 export { GpuTimer } from './lib/gl/gpu-timer';
-export { isSoftwareRenderer } from './lib/gl/renderer';
+export { isSoftwareRenderer, rendererOf } from './lib/gl/renderer';
 export {
   chooseSimulation,
   type DeviceSimulations,

@@ -29,6 +29,7 @@ import {
 } from '../boards/verify-slice';
 import { ignoreNotFound } from '../grpc';
 import { dayOf, dayStart, isBanned } from '../limits';
+import { logCaughtError } from '../caught-errors';
 import { countRerun } from '../replays/level-stats';
 import {
   byHint,
@@ -156,7 +157,7 @@ export async function featureBest(
       id,
       result: await publishReplay(db, id, 'auto', now).catch(
         (error: unknown) => {
-          logger.warn('Candidate failed to publish', { id, error });
+          logCaughtError('Candidate failed to publish', { id, error });
           return 'failed' as const;
         }
       ),

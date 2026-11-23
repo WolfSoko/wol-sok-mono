@@ -23,23 +23,25 @@ function remoteConfig(
 }
 
 describe('readToggles', () => {
-  it('reads the booleans the admin area publishes, under the toggles’ names', () => {
+  it('reads the states the admin area publishes, under the toggles’ names', () => {
     expect(
       readToggles(
         remoteConfig({
           matchmaking: ['false', 'remote'],
           leaderboards: ['true', 'remote'],
           deterministicSimulation: ['FALSE', 'remote'],
+          rankedDaily: ['admin', 'remote'],
         })
       )
     ).toEqual({
-      matchmaking: false,
-      leaderboards: true,
-      deterministicSimulation: false,
+      matchmaking: 'off',
+      leaderboards: 'on',
+      deterministicSimulation: 'off',
+      rankedDaily: 'admin',
     });
   });
 
-  it('leaves out what is not set, what is not a boolean and what it does not know', () => {
+  it('leaves out what is not set, what is no state and what it does not know', () => {
     expect(
       readToggles(
         remoteConfig({
@@ -62,7 +64,7 @@ describe('RemoteConfigGameToggles', () => {
     const watched = toggles.watch();
     expect(fetch).not.toHaveBeenCalled();
 
-    expect(await firstValueFrom(watched)).toEqual({ matchmaking: false });
+    expect(await firstValueFrom(watched)).toEqual({ matchmaking: 'off' });
     expect(fetch).toHaveBeenCalledTimes(1);
   });
 

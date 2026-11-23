@@ -4,41 +4,79 @@ import { provideGameToggles } from '../testing/fake-game-toggles';
 import { FeatureTogglesService } from './feature-toggles.service';
 import {
   FEATURE_TOGGLES,
-  type FeatureToggles,
+  type FeatureToggleStates,
+  resolveToggles,
+  toggleText,
 } from '@wolsok/feat-shared-bacteria-engine/cloud';
+import { FakeGameAccount } from '../testing/fake-game-account';
+import { GameAccount } from './storage/game-account';
 import { GameCloud } from './storage/game-cloud';
 import { GameToggles } from './storage/game-toggles';
 import type { FirebaseConnection } from './storage/firebase-connection';
 
 describe('FeatureTogglesService', () => {
-  let set: Subject<Partial<FeatureToggles>>;
+  let set: Subject<Partial<FeatureToggleStates>>;
+  let account: FakeGameAccount;
+  const DEFAULTS = resolveToggles(FEATURE_TOGGLES, false);
 
   function withToggles(): FeatureTogglesService {
     set = new Subject();
-    TestBed.configureTestingModule({ providers: [provideGameToggles(set)] });
+    account = new FakeGameAccount();
+    TestBed.configureTestingModule({
+      providers: [
+        provideGameToggles(set),
+        { provide: GameAccount, useValue: account },
+      ],
+    });
     return TestBed.inject(FeatureTogglesService);
   }
 
   beforeEach(() => TestBed.resetTestingModule());
 
   it('starts at the defaults, before Remote Config answers', () => {
-    expect(withToggles().toggles()).toEqual(FEATURE_TOGGLES);
+    const service = withToggles();
+    expect(service.states()).toEqual(FEATURE_TOGGLES);
+    expect(service.toggles()).toEqual(DEFAULTS);
   });
 
   it('takes what the owner set, the defaults for the rest', () => {
     const service = withToggles();
 
-    set.next({ matchmaking: false, deterministicSimulation: false });
+    set.next({ matchmaking: 'off', deterministicSimulation: 'off' });
 
     expect(service.toggles()).toEqual({
-      ...FEATURE_TOGGLES,
+      ...DEFAULTS,
       matchmaking: false,
       deterministicSimulation: false,
     });
   });
 
+  it('turns an admin toggle on for the owner only, as they sign in or out', () => {
+    const service = withToggles();
+    set.next({ rankedEndless: 'admin', leaderboards: 'admin' });
+
+    expect(service.toggles().rankedEndless).toBe(false);
+    expect(service.toggles().leaderboards).toBe(false);
+
+    account.owner.set(true);
+    expect(service.toggles().rankedEndless).toBe(true);
+    expect(service.toggles().leaderboards).toBe(true);
+
+    account.owner.set(false);
+    expect(service.toggles().rankedEndless).toBe(false);
+  });
+
+  it('turns an on toggle on for everyone', () => {
+    const service = withToggles();
+    set.next({ leaderboards: 'off' });
+    expect(service.toggles().leaderboards).toBe(false);
+
+    set.next({ leaderboards: 'on' });
+    expect(service.toggles().leaderboards).toBe(true);
+  });
+
   it('asks the port only once started, and once however often started', () => {
-    const watch = jest.fn(() => new Subject<Partial<FeatureToggles>>());
+    const watch = jest.fn(() => new Subject<Partial<FeatureToggleStates>>());
     TestBed.configureTestingModule({
       providers: [{ provide: GameToggles, useValue: { watch } }],
     });
@@ -55,10 +93,13 @@ describe('FeatureTogglesService', () => {
     const service = TestBed.inject(FeatureTogglesService);
     service.start();
 
-    expect(service.toggles()).toEqual(FEATURE_TOGGLES);
+    expect(service.toggles()).toEqual(DEFAULTS);
   });
 
   it("has what the project's Remote Config says", async () => {
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameAccount, useValue: new FakeGameAccount() }],
+    });
     TestBed.inject(GameCloud).use({
       remoteConfig: async () => ({
         config: {},
@@ -76,9 +117,36 @@ describe('FeatureTogglesService', () => {
       await Promise.resolve();
     }
 
-    expect(service.toggles()).toEqual({
-      ...FEATURE_TOGGLES,
-      leaderboards: false,
+    expect(service.toggles()).toEqual({ ...DEFAULTS, leaderboards: false });
+  });
+
+  it('shows an admin toggle the admin area published to the owner, not to a guest', async () => {
+    // The text `toggles.set` writes into Remote Config for `admin`, read
+    // back through the game's own Remote Config adapter.
+    const account = new FakeGameAccount();
+    TestBed.configureTestingModule({
+      providers: [{ provide: GameAccount, useValue: account }],
     });
+    TestBed.inject(GameCloud).use({
+      remoteConfig: async () => ({
+        config: {},
+        sdk: {
+          getValue: (_config: unknown, key: string) => ({
+            asString: () => (key === 'leaderboards' ? toggleText('admin') : ''),
+            getSource: () => (key === 'leaderboards' ? 'remote' : 'static'),
+          }),
+        },
+      }),
+    } as unknown as FirebaseConnection);
+    const service = TestBed.inject(FeatureTogglesService);
+    service.start();
+    for (let i = 0; i < 5; i++) {
+      await Promise.resolve();
+    }
+
+    expect(service.states().leaderboards).toBe('admin');
+    expect(service.toggles().leaderboards).toBe(false);
+    account.owner.set(true);
+    expect(service.toggles().leaderboards).toBe(true);
   });
 });

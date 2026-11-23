@@ -199,15 +199,19 @@ export const EN = {
     },
   },
   toggles: {
-    hint: 'Feature toggles in Remote Config. Players\u2019 devices fetch them at most once an hour.',
+    hint: 'Feature toggles in Remote Config: off, on for you only (Admin), or on for everyone. Players\u2019 devices fetch them at most once an hour. Releases before Admin existed read Admin as the toggle\u2019s default, so a toggle on by default stays on for them.',
     unavailable:
       'Remote Config cannot be reached here (emulators); the defaults show.',
     failed: 'Could not read the toggles.',
     fromRemoteConfig: 'set in Remote Config',
     default: 'default ({value})',
     changed: 'changed',
-    on: 'on',
-    off: 'off',
+    state: {
+      off: 'Off',
+      admin: 'Admin',
+      on: 'On',
+    },
+    stateLabel: '{toggle}: who gets it',
     publish: 'Publish {count} change(s)',
     discard: 'Discard',
     reload: 'Read again',

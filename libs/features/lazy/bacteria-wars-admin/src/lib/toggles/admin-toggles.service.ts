@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import {
   FEATURE_TOGGLES,
-  type FeatureToggles,
+  type FeatureToggleStates,
   GameCloud,
   readToggles,
 } from '@wolsok/feat-lazy-bac-game/admin-kit';
@@ -10,13 +10,13 @@ import {
 const GAME_FETCH_INTERVAL_MS = 3_600_000;
 
 /** The toggles as Remote Config holds them now. */
-export interface ToggleState {
+export interface TogglesRead {
   /** False where Remote Config cannot be reached (the emulators). */
   available: boolean;
-  /** Every toggle: what Remote Config holds, else its default. */
-  values: FeatureToggles;
+  /** Every toggle's state: what Remote Config holds, else its default. */
+  values: FeatureToggleStates;
   /** The toggles Remote Config holds; the others play their default. */
-  set: Partial<FeatureToggles>;
+  set: Partial<FeatureToggleStates>;
 }
 
 /**
@@ -30,7 +30,7 @@ export interface ToggleState {
 export class AdminTogglesService {
   private readonly cloud = inject(GameCloud);
 
-  public async read(fresh: boolean): Promise<ToggleState> {
+  public async read(fresh: boolean): Promise<TogglesRead> {
     const rc = (await this.cloud.firebase()?.remoteConfig()) ?? null;
     if (rc === null) {
       return { available: false, values: { ...FEATURE_TOGGLES }, set: {} };
