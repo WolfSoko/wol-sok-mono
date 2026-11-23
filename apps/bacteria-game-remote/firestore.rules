@@ -482,8 +482,7 @@ service cloud.firestore {
       return args.keys().hasOnly(['values']) && args.values is map &&
         args.values.size() > 0 &&
         args.values.keys().hasOnly(['rankedDaily', 'rankedEndless',
-          'matchmaking', 'leaderboards', 'deterministicSimulation',
-          'bacteriumMenu']) &&
+          'matchmaking', 'leaderboards', 'deterministicSimulation']) &&
         args.values.values().hasOnly(['off', 'admin', 'on']);
     }
 

@@ -624,22 +624,25 @@ play each other.
 
 ## The bacterium menu (#3194)
 
-- While the toggle `bacteriumMenu` is on (for the player), the main menu
-  shows its actions as the parts of a 3D bacterium
-  (`menu/bacterium-menu.component.*`) instead of the play buttons and
-  the tiles; Settings, Help, Support and Admin stay tiles below it. The
-  parts and where they sit are `menu/bacterium/bacterium-items.ts`
-  (`bacteriumItems`, offering what the tiles offer under the same
-  conditions, plus online; `BACTERIUM_ANCHORS`, which the shader and the
-  buttons both read), the look by XP `bacterium-look.ts`. A new menu item
-  gets its anchor and its place in `bacteriumItems`.
+- The main menu shows its actions as the parts of a 3D bacterium
+  (`menu/bacterium-menu.component.*`; the toggle that held it back went in
+  [#3210](https://github.com/WolfSoko/wol-sok-mono/issues/3210), with the
+  old play buttons and action tiles); Settings, Help, Support and Admin
+  stay tiles below it. The parts and where they sit are
+  `menu/bacterium/bacterium-items.ts` (`bacteriumItems`, the main menu's
+  one item list: label, icon, badge and when it shows;
+  `BACTERIUM_ANCHORS`, which the shader and the buttons both read), the
+  look by XP `bacterium-look.ts`; `MainMenuComponent.pickPart` is the one
+  way to act on an item. A new menu item gets its anchor, its place in
+  `bacteriumItems` and its case in `pickPart`.
 - The cell is one WebGL2 fragment shader (`bacterium-shader.ts`, a
   raymarched SDF in an orthographic view, so a lobe sits right under its
   button), drawn by `bacterium-renderer.ts` at 30 fps at most and 1.5
   device pixels a CSS pixel. No three.js: it would break the
-  `allScript` budget. The main menu loads it in a `@defer` block, its own
-  chunk, so a player without the toggle downloads none of it; specs await
-  `whenStable()` before they look for it. The parts are real buttons and links over the
+  `allScript` budget. The main menu loads it in a `@defer (on immediate)`
+  block, its own chunk, which keeps it out of the game's largest one (the
+  `anyScript` budget); specs await `whenStable()` before they look for
+  it. The parts are real buttons and links over the
   canvas, which is `aria-hidden`. `BACTERIUM_RENDERER` answers null
   without WebGL2, on a software renderer (SwiftShader takes about 200 ms a
   frame) or for a shader the device refuses; then a CSS cell with the same

@@ -15,7 +15,6 @@ describe('feature toggles', () => {
       matchmaking: 'on',
       leaderboards: 'on',
       deterministicSimulation: 'on',
-      bacteriumMenu: 'off',
     });
     expect(featureToggles(() => undefined)).toEqual(FEATURE_TOGGLES);
   });
@@ -46,20 +45,19 @@ describe('feature toggles', () => {
     const states = {
       ...FEATURE_TOGGLES,
       matchmaking: 'off',
-      bacteriumMenu: 'admin',
+      leaderboards: 'admin',
     } as const;
 
     expect(resolveToggles(states, false)).toEqual({
       rankedDaily: true,
       rankedEndless: true,
       matchmaking: false,
-      leaderboards: true,
+      leaderboards: false,
       deterministicSimulation: true,
-      bacteriumMenu: false,
     });
     expect(resolveToggles(states, true)).toMatchObject({
       matchmaking: false,
-      bacteriumMenu: true,
+      leaderboards: true,
     });
   });
 

@@ -26,8 +26,6 @@ export const FEATURE_TOGGLES = {
   leaderboards: 'on',
   /** Matches run the deterministic simulation where the device can. */
   deterministicSimulation: 'on', // On since the owner's real-device check (ADR 0015).
-  /** The main menu's actions are the parts of a 3D bacterium (#3194). */
-  bacteriumMenu: 'off',
 } as const satisfies Record<string, ToggleState>;
 
 export type FeatureToggle = keyof typeof FEATURE_TOGGLES;

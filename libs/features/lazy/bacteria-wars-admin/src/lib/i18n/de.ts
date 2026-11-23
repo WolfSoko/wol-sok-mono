@@ -228,7 +228,6 @@ export const DE: Translation<typeof EN> = {
       matchmaking: 'Warteschlange für Gegner',
       leaderboards: 'Bestenlisten',
       deterministicSimulation: 'Deterministische Simulation',
-      bacteriumMenu: 'Bakterium als Hauptmenü',
     },
   },
   bans: {

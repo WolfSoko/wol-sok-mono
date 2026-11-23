@@ -30,14 +30,14 @@ describe('readToggles', () => {
           matchmaking: ['false', 'remote'],
           leaderboards: ['true', 'remote'],
           deterministicSimulation: ['FALSE', 'remote'],
-          bacteriumMenu: ['admin', 'remote'],
+          rankedDaily: ['admin', 'remote'],
         })
       )
     ).toEqual({
       matchmaking: 'off',
       leaderboards: 'on',
       deterministicSimulation: 'off',
-      bacteriumMenu: 'admin',
+      rankedDaily: 'admin',
     });
   });
 
