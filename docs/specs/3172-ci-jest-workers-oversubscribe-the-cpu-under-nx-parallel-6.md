@@ -12,7 +12,8 @@ CI and in a local `nx run-many`.
 `nx.json` runs `parallel: 6` tasks at once. `jest.preset.cjs` sets no
 `maxWorkers`, so each Jest task starts one worker per core minus one. CI
 (`nx affected … -c=ci` in `ci-cd.yml`) passes neither `--parallel` nor
-`--maxWorkers`, so on an Nx Cloud `extra_large` worker (8 vCPU) six Jest
+`--maxWorkers`, so on an Nx Cloud `extra_large` worker (8 vCPU nominal;
+`os.availableParallelism()` reports 10 there) six Jest
 tasks start up to 6 × 7 = 42 workers. Specs close to Jest's 5 s timeout then
 time out at random; so far they were fixed one by one (#3149, #3146,
 #3124/#3125, #2858).
@@ -88,8 +89,13 @@ local `nx run-many`/`nx affected` flaked the same way (#3172); a CI-only cap
 would leave that. Under a minute on the largest project is the price, and
 `--maxWorkers=7` takes it back for one run.
 
-CI: the PR's own run executes every Jest task (the preset is an input of
-each), compared with a recent `main` run that did too.
+CI: an Nx Cloud worker of the PR's run logged `cores 10, parallel 6,
+maxWorkers 2` (`tools:test`, cache miss). Summed time of the 50 Jest tasks,
+all cache misses: 656 s on #3230's PR run (spread over 12 agents) and 817 s
+on this PR's (5 agents, so more tasks shared each agent); the largest,
+`feat-shared-bacteria-engine`, 218 s and 278 s. No test failed or timed out
+in either. The agent counts differ, so the sums compare loads, not the cap
+alone.
 
 ## Non-goals
 
