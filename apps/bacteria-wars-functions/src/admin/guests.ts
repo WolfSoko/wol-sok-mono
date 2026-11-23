@@ -1,6 +1,7 @@
 import { PLAY_GAMES_CLAIM } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import { logger } from 'firebase-functions/logger';
 import { GUEST_IDLE_DAYS } from '../config';
+import { logCaughtError } from '../caught-errors';
 
 /**
  * Guest accounts unused for {@link GUEST_IDLE_DAYS} days are deleted
@@ -149,7 +150,7 @@ export async function sweepGuests(
         await ports.uncount(uncounted);
         sweep.uncounted += uncounted;
       } catch (error) {
-        logger.error('Could not lower the account count', {
+        logCaughtError('Could not lower the account count', {
           by: uncounted,
           error,
         });
@@ -195,7 +196,7 @@ async function eraseBatch(
       if (result.status === 'fulfilled') {
         erased.push(group[k]);
       } else {
-        logger.error('Could not erase an idle guest', {
+        logCaughtError('Could not erase an idle guest', {
           uid: group[k],
           error: result.reason,
         });

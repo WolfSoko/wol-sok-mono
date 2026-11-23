@@ -10,7 +10,6 @@ import {
   type Firestore,
   Timestamp,
 } from 'firebase-admin/firestore';
-import { logger } from 'firebase-functions/logger';
 import { setHidden } from '../boards/entries';
 import { deleteAll, deleteRefs, openRoomsOf } from '../deletes';
 import {
@@ -21,6 +20,7 @@ import {
 import { timestampMillis } from '../timestamps';
 import type { Realtime } from './realtime';
 import { noticeData, tombstoneData, writeAudit } from './records';
+import { logCaughtError } from '../caught-errors';
 
 /**
  * Bans (ADR 0012): `bans/{uid}` = `{ since, until, reason }`, mirrored to
@@ -322,7 +322,7 @@ export async function expireBans(
       );
       lifted++;
     } catch (error) {
-      logger.error('Could not lift an ended ban', { uid, error });
+      logCaughtError('Could not lift an ended ban', { uid, error });
     }
   }
   return lifted;
