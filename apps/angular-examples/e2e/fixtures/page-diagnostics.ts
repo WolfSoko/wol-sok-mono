@@ -1,9 +1,7 @@
 import { test as base, type Page, type TestInfo } from '@playwright/test';
+import { redactUrls, urlForLog } from '@wolsok/shared-e2e-server';
 
 export { expect } from '@playwright/test';
-
-/** An http(s) URL with its query or hash: the part to strip is group 2. */
-const URL_WITH_QUERY = /(https?:\/\/[^\s?#]+)([?#]\S*)/g;
 
 /** Responses from this status on count as failed. */
 const FIRST_ERROR_STATUS = 400;
@@ -12,9 +10,9 @@ const ATTACHMENT_NAME = 'page-diagnostics.txt';
 /**
  * Records what went wrong in the page while the test ran, and on a failure
  * prints it (stdout lands in the Nx Cloud task log) and attaches it to the
- * report. Each line holds only URLs, status codes and messages, with every
- * URL's query and hash stripped (in messages too): the CI log is public, so
- * no headers, bodies or parameters.
+ * report. Each line holds only URLs, status codes and messages, every URL
+ * (in messages too) without credentials, query and hash (`urlForLog`,
+ * `redactUrls`): the CI log is public, so no headers, bodies or parameters.
  */
 export const test = base.extend<{ pageDiagnostics: string[] }>({
   pageDiagnostics: [
@@ -31,22 +29,20 @@ function recordProblems(page: Page): string[] {
   const lines: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      lines.push(`console error: ${redacted(message.text())}`);
+      lines.push(`console error: ${redactUrls(message.text())}`);
     }
   });
   page.on('pageerror', (error) =>
-    lines.push(`page error: ${redacted(error.message)}`)
+    lines.push(`page error: ${redactUrls(error.message)}`)
   );
   page.on('requestfailed', (request) =>
     lines.push(
-      `request failed: ${withoutQuery(request.url())} (${request.failure()?.errorText ?? 'unknown'})`
+      `request failed: ${urlForLog(request.url())} (${request.failure()?.errorText ?? 'unknown'})`
     )
   );
   page.on('response', (response) => {
     if (response.status() >= FIRST_ERROR_STATUS) {
-      lines.push(
-        `response ${response.status()}: ${withoutQuery(response.url())}`
-      );
+      lines.push(`response ${response.status()}: ${urlForLog(response.url())}`);
     }
   });
   return lines;
@@ -65,16 +61,4 @@ async function reportOnFailure(
     body: report,
     contentType: 'text/plain',
   });
-}
-
-function withoutQuery(url: string): string {
-  const parsed = new URL(url);
-  parsed.search = '';
-  parsed.hash = '';
-  return parsed.href;
-}
-
-/** `text` with the query and hash of every URL in it stripped. */
-function redacted(text: string): string {
-  return text.replace(URL_WITH_QUERY, '$1');
 }

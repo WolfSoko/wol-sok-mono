@@ -20,3 +20,10 @@ So a target that runs Playwright must depend on its servers: the inferred
 server answered".
 
 `npx nx test shared-e2e-server` runs its spec (Jest).
+
+## Printing the page into a public CI log
+
+`urlForLog(url)` and `redactUrls(text)` reduce every http(s) and ws(s) URL to
+its origin and path, without credentials, query or hash. Use them on anything
+an e2e test prints about the page, since the Nx Cloud task logs are public
+(angular-examples' `e2e/fixtures/page-diagnostics.ts`).
