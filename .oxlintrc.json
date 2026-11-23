@@ -140,7 +140,15 @@
           },
           {
             "sourceTag": "feat-shared",
-            "onlyDependOnLibsWithTags": ["shared", "utils", "api"]
+            "onlyDependOnLibsWithTags": ["shared", "utils", "api"],
+            "bannedExternalImports": [
+              "@angular/*",
+              "@ngrx/*",
+              "rxjs",
+              "rxjs/*",
+              "firebase",
+              "firebase/*"
+            ]
           },
           {
             "sourceTag": "shared",
@@ -224,29 +232,6 @@
                   "@wolsok/feat-bacteria-sound"
                 ],
                 "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, rendering or sound imports."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "files": ["libs/features/bacteria-art/src/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@angular/*",
-                  "@ngrx/*",
-                  "rxjs",
-                  "rxjs/*",
-                  "firebase",
-                  "firebase/*"
-                ],
-                "message": "The game's pictures (feat-shared-bacteria-art) are plain SVG text, drawn by the icon generators under tools/ too: no Angular, NgRx, RxJS or Firebase imports."
               }
             ]
           }

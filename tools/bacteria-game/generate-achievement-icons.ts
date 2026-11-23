@@ -17,13 +17,12 @@ import {
   ACHIEVEMENT_ICON_SIZE,
   achievementIconSvg,
 } from '@wolsok/feat-shared-bacteria-art';
-import { render } from '../icons/render-icons';
+import { render, svgPage } from '../icons/render-icons';
 import { playGamesAchievements } from './play-games';
 
 const outDir = resolve(
   'apps/bacteria-wars-android/store/play-games/achievements'
 );
-const SIZE = ACHIEVEMENT_ICON_SIZE;
 
 async function main(): Promise<void> {
   await mkdir(outDir, { recursive: true });
@@ -31,8 +30,14 @@ async function main(): Promise<void> {
   try {
     const page = await browser.newPage();
     for (const { id } of playGamesAchievements()) {
-      const html = `<!doctype html><html><body style="margin:0;background:transparent">${achievementIconSvg(id)}</body></html>`;
-      const png = await render(page, html, SIZE, SIZE, true);
+      const html = svgPage(achievementIconSvg(id), ACHIEVEMENT_ICON_SIZE);
+      const png = await render(
+        page,
+        html,
+        ACHIEVEMENT_ICON_SIZE,
+        ACHIEVEMENT_ICON_SIZE,
+        true
+      );
       await writeFile(join(outDir, `${id}.png`), png);
       console.log(`${id}.png`);
     }

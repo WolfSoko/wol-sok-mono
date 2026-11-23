@@ -6,15 +6,6 @@ import {
 } from './achievement-icons';
 
 describe('achievement icons', () => {
-  // That the ids are exactly the game's achievements is the game lib's
-  // check (achievement-icon.component.spec.ts): this lib knows no engine.
-  it('lists each icon once', () => {
-    expect(ACHIEVEMENT_ICON_IDS.length).toBeGreaterThan(0);
-    expect(new Set(ACHIEVEMENT_ICON_IDS).size).toBe(
-      ACHIEVEMENT_ICON_IDS.length
-    );
-  });
-
   it.each(ACHIEVEMENT_ICON_IDS)(
     'draws %s as one SVG of the icon size',
     (id) => {
