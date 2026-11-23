@@ -1,7 +1,4 @@
-import {
-  replayFromBytes,
-  type ReplayHeader,
-} from '@wolsok/feat-shared-bacteria-engine';
+import { replayFromBytes } from '@wolsok/feat-shared-bacteria-engine';
 import {
   type DocumentReference,
   type DocumentSnapshot,
@@ -129,27 +126,10 @@ async function accept(
   }
   const outcome = await storeLocal(db, submission, plan, meta, blob, now);
   if (outcome === 'stored') {
-    await countSafely(db, replay.header, plan);
+    // Once: a second delivery ends at `exists`.
+    await countLevelStats(db, replay.header, plan.kind);
   }
   return outcome;
-}
-
-/**
- * Adds a stored local replay to its level statistics - once, as a second
- * delivery ends at `exists` - and never in its way: a counter that fails
- * (the shared document of a busy level, say) costs the statistics a match,
- * not the player the submission.
- */
-async function countSafely(
-  db: Firestore,
-  header: ReplayHeader,
-  plan: AcceptPlan
-): Promise<void> {
-  try {
-    await countLevelStats(db, header, plan.kind);
-  } catch (error) {
-    logger.warn('Level statistics not counted', { id: plan.id, error });
-  }
 }
 
 /**
