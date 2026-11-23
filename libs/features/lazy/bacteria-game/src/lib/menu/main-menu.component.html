@@ -57,6 +57,34 @@
           role="navigation"
           (pick)="pickPart($event)"
         />
+      } @error {
+        <!-- Its chunk did not load (offline, or replaced by a release):
+             the same items as tiles, so the way into play stays. -->
+        <nav class="tiles" [attr.aria-label]="'menu.bacterium.label' | t">
+          @for (item of bacteriumItems(); track item.id) {
+            @if (item.link; as link) {
+              <a
+                class="tile"
+                [href]="link.url"
+                [attr.target]="link.external ? '_blank' : null"
+                [attr.rel]="link.external ? 'noopener' : null"
+              >
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                {{ item.label | t }}
+              </a>
+            } @else {
+              <button type="button" class="tile" (click)="pickPart(item.id)">
+                <mat-icon aria-hidden="true">{{ item.icon }}</mat-icon>
+                {{ item.label | t }}
+                @if (item.countKey; as countKey) {
+                  &ngsp;<span class="cdk-visually-hidden">{{
+                    countKey | t: { count: item.count }
+                  }}</span>
+                }
+              </button>
+            }
+          }
+        </nav>
       }
     </div>
 

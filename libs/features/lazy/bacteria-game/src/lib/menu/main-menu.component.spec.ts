@@ -1,5 +1,10 @@
 import { signal } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import {
+  ComponentFixture,
+  DeferBlockBehavior,
+  DeferBlockState,
+  TestBed,
+} from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { provideRouter } from '@angular/router';
 import { BehaviorSubject } from 'rxjs';
@@ -404,6 +409,58 @@ describe('MainMenuComponent', () => {
     // Inside the shell: neither the legal lines nor the offer to install.
     expect(host.querySelector('footer')).toBeNull();
     expect(host.querySelector('feat-lazy-bac-game-install-banner')).toBeNull();
+  });
+});
+
+describe('MainMenuComponent without the bacterium chunk', () => {
+  it('offers the same items as tiles where the chunk fails to load', async () => {
+    TestBed.configureTestingModule({
+      providers: [NO_WEBGL],
+      deferBlockBehavior: DeferBlockBehavior.Manual,
+    });
+    const menu = TestBed.createComponent(MainMenuComponent);
+    menu.componentRef.setInput('campaign', CAMPAIGN);
+    menu.componentRef.setInput('cloudAvailable', true);
+    menu.componentRef.setInput('friendRequests', 2);
+    menu.detectChanges();
+    const [bacterium] = await menu.getDeferBlocks();
+    await bacterium.render(DeferBlockState.Error);
+    const host: HTMLElement = menu.nativeElement;
+    const fallback = host.querySelector('.bacterium .tiles');
+    const names = Array.from(fallback?.querySelectorAll('.tile') ?? []).map(
+      (tile) => tile.textContent?.replace(/\s+/g, ' ').trim() ?? ''
+    );
+
+    expect(host.querySelector('feat-lazy-bac-game-bacterium-menu')).toBeNull();
+    expect(names).toEqual([
+      'play_arrow New game',
+      'school Training',
+      'bubble_chart My Colony',
+      'biotech Evolution',
+      'person Profile',
+      'group Friends 2 friend requests',
+      'leaderboard Leaderboards',
+      'smart_display My matches',
+      'video_library Matches of the day',
+    ]);
+
+    const newGame = jest.fn();
+    const open = jest.fn();
+    menu.componentInstance.newGame.subscribe(newGame);
+    menu.componentInstance.open.subscribe(open);
+    const tile = (name: string) =>
+      Array.from(
+        fallback?.querySelectorAll<HTMLButtonElement>('button.tile') ?? []
+      ).find((button) => button.textContent?.includes(name));
+    tile('New game')?.click();
+    await menu.whenStable();
+    tile('My Colony')?.click();
+
+    expect(newGame).toHaveBeenCalledTimes(1);
+    expect(open).toHaveBeenCalledWith('colony');
+    expect(fallback?.querySelector('a.tile')?.getAttribute('href')).toContain(
+      '/replays'
+    );
   });
 });
 
