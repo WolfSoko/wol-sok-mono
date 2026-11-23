@@ -36,6 +36,9 @@ coverage:
       feat-bacteria-sound:
         flags:
           - feat-bacteria-sound
+      feat-shared-bacteria-art:
+        flags:
+          - feat-shared-bacteria-art
       feat-lazy-fourier-analysis:
         flags:
           - feat-lazy-fourier-analysis
@@ -100,6 +103,9 @@ flags:
   feat-bacteria-sound:
     paths:
       - libs/features/bacteria-sound
+  feat-shared-bacteria-art:
+    paths:
+      - libs/features/bacteria-art
   feat-lazy-fourier-analysis:
     paths:
       - libs/features/lazy/fourier-analysis

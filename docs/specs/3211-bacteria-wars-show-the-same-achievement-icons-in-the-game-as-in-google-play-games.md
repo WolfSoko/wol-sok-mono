@@ -54,9 +54,10 @@ the petri dish with the achievement's glyph that
   `lock` icon in a small round badge at the bottom right.
 - **Not the PNGs**: 15 × ~140 kB at 512 px is far too heavy for a list of
   40 px badges; the SVG source is about 10 kB for all of them.
-- The achievements screen is a `@defer` chunk; the result screen's chip puts
-  the art into the chunk of the result screen. The budgets of
-  `bacteria-game-remote` must hold without raising them.
+- The achievements screen is a `@defer` chunk, but the result screen is
+  imported statically by the game, so its chip puts the art (about 10 kB of
+  SVG text) into the game's main chunk, which `anyScript` measures. The
+  budgets of `bacteria-game-remote` must hold without raising them.
 
 ## Acceptance
 

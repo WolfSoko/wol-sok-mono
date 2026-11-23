@@ -1,4 +1,5 @@
 import { I18nService } from '../i18n/i18n.service';
+import { achievementIconDataUrl } from '@wolsok/feat-shared-bacteria-art';
 import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -11,7 +12,6 @@ import {
 } from '@wolsok/feat-shared-bacteria-engine';
 import { type RankedOutcome } from '@wolsok/feat-shared-bacteria-engine/cloud';
 import type { OneMatch } from '../state/match-rules';
-import { achievementIconDataUrl } from '@wolsok/feat-shared-bacteria-art';
 import { WinnerComponent } from './winner.component';
 
 describe('WinnerComponent', () => {

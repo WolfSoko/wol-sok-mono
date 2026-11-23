@@ -231,6 +231,29 @@
       }
     },
     {
+      "files": ["libs/features/bacteria-art/src/**/*.ts"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@angular/*",
+                  "@ngrx/*",
+                  "rxjs",
+                  "rxjs/*",
+                  "firebase",
+                  "firebase/*"
+                ],
+                "message": "The game's pictures (feat-shared-bacteria-art) are plain SVG text, drawn by the icon generators under tools/ too: no Angular, NgRx, RxJS or Firebase imports."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
       "files": [
         "libs/features/lazy/bacteria-game/src/watch.ts",
         "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene,watch-gpu}.ts",
