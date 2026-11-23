@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.180.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.2...v74.180.3) (2026-11-23)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** report caught batch errors to Sentry ([#3221](https://github.com/WolfSoko/wol-sok-mono/issues/3221)) ([a086b0d](https://github.com/WolfSoko/wol-sok-mono/commit/a086b0d57dd5f2b9a3d7344e342cce54c8850356)), closes [#3215](https://github.com/WolfSoko/wol-sok-mono/issues/3215)
+* **pacetrainer:** announce "1 Sekunde" in the singular ([#3220](https://github.com/WolfSoko/wol-sok-mono/issues/3220)) ([4658799](https://github.com/WolfSoko/wol-sok-mono/commit/4658799378a4cee37ed38d2d68c2c2418346ac64)), references [#3208](https://github.com/WolfSoko/wol-sok-mono/issues/3208) [#3110](https://github.com/WolfSoko/wol-sok-mono/issues/3110)
+
 ## [74.180.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.1...v74.180.2) (2026-11-22)
 
 ### Bug Fixes
