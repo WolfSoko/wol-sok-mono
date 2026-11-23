@@ -4,8 +4,12 @@
  * hash, since tokens and ids travel there.
  */
 
-/** An http(s) or ws(s) URL inside a text, up to the next whitespace. */
-const URL_IN_TEXT = /\b(?:https?|wss?):\/\/\S+/gi;
+/**
+ * An http(s) or ws(s) URL inside a text, up to the next whitespace, quote,
+ * angle bracket or backtick, none of which a URL holds unencoded, so the
+ * text after it (`","error":"timeout"}`) stays.
+ */
+const URL_IN_TEXT = /\b(?:https?|wss?):\/\/[^\s"'<>`]+/gi;
 
 /** Credentials of a URL `new URL` refused, and where its query or hash starts. */
 const CREDENTIALS = /\/\/[^/@]*@/;

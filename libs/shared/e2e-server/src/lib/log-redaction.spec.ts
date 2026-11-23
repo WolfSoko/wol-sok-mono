@@ -45,6 +45,16 @@ describe('redactUrls', () => {
     );
   });
 
+  it('keeps the text right after a URL that ends at a quote or bracket', () => {
+    expect(
+      redactUrls(
+        '{"url":"https://example.test/api?token=secret","error":"timeout"} <http://a.test/b?c=1>'
+      )
+    ).toBe(
+      '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b>'
+    );
+  });
+
   it('leaves text without URLs alone', () => {
     expect(redactUrls('ReferenceError: ngDevMode is not defined')).toBe(
       'ReferenceError: ngDevMode is not defined'
