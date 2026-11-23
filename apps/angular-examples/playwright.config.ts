@@ -1,6 +1,7 @@
 import { workspaceRoot } from '@nx/devkit';
 import { nxE2EPreset } from '@nx/playwright/preset';
 import { defineConfig, devices } from '@playwright/test';
+import { nxServer } from '@wolsok/shared-e2e-server';
 
 const baseURL = process.env['BASE_URL'] || 'http://localhost:4200';
 
@@ -12,22 +13,18 @@ export default defineConfig({
     testDir: './e2e',
   }),
   timeout: (process.env['CI'] ? 720 : 120) * 1000,
-  /* Shared settings for all the projects below. See ht
-  tps://playwright.dev/docs/api/class-testoptions. */
+  /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     baseURL,
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  /* Run your local dev server before starting the tests */
-  webServer: {
-    command: 'npx nx run angular-examples:serve',
-    url: baseURL,
-    reuseExistingServer: !process.env['CI'],
+  // an Nx task that e2e-ci depends on and waits for (see CLAUDE.md, Testing)
+  webServer: nxServer('angular-examples:serve', baseURL, {
     cwd: workspaceRoot,
-    timeout: process.env['CI'] ? 720_000 : 180_000,
-  },
+    timeout: (process.env['CI'] ? 720 : 180) * 1000,
+  }),
   projects: [
     {
       name: 'chromium',
