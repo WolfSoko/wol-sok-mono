@@ -29,6 +29,14 @@ export function readProjects() {
   }));
 }
 
+/** The deepest of the `projects` (`{ path, json }`) holding `file`. */
+export function projectOf(file, projects) {
+  return projects
+    .map((project) => ({ ...project, root: dirname(project.path) }))
+    .filter(({ root }) => root === '.' || file.startsWith(`${root}/`))
+    .sort((a, b) => b.root.length - a.root.length)[0];
+}
+
 /** The plain string inputs of an inputs list (leaves out object inputs). */
 export function stringInputs(inputs) {
   return (inputs ?? []).filter((input) => typeof input === 'string');
