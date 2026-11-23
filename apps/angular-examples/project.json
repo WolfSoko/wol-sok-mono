@@ -31,7 +31,10 @@
         "cdk-deployed-version"
       ],
       "dependsOn": ["^build", "generate-version"],
-      "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/angular-examples",
+        "{workspaceRoot}/dist/apps/angular-examples-dev"
+      ],
       "options": {
         "outputPath": {
           "base": "dist/apps/angular-examples",
@@ -107,6 +110,10 @@
           "outputHashing": "all"
         },
         "development": {
+          "outputPath": {
+            "base": "dist/apps/angular-examples-dev",
+            "browser": ""
+          },
           "preserveSymlinks": true,
           "optimization": false,
           "extractLicenses": false,
@@ -123,7 +130,10 @@
         "^production",
         "cdk-deployed-version"
       ],
-      "outputs": ["{workspaceRoot}/dist/apps/angular-examples"],
+      "outputs": [
+        "{workspaceRoot}/dist/apps/angular-examples",
+        "{workspaceRoot}/dist/apps/angular-examples-dev"
+      ],
       "dependsOn": ["^build", "generate-version"],
       "options": {},
       "configurations": {
@@ -183,10 +193,12 @@
       },
       "configurations": {
         "production": {
-          "buildTarget": "angular-examples:build:production"
+          "buildTarget": "angular-examples:build:production",
+          "staticFilePath": "dist/apps/angular-examples"
         },
         "development": {
-          "buildTarget": "angular-examples:build:development"
+          "buildTarget": "angular-examples:build:development",
+          "staticFilePath": "dist/apps/angular-examples-dev"
         }
       },
       "defaultConfiguration": "development",
