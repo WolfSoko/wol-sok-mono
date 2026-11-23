@@ -215,6 +215,44 @@
   color: var(--bw-muted);
 }
 
+// A wide landscape screen (#3226): the bacterium leaves the hero for the
+// empty middle between hero and card, as large as that space and the
+// screen's height allow. Below 100rem the middle would be narrower than the
+// hero the cell has today. Positioned, not moved in the template, so the
+// reading and tab order stays: title, banners, bacterium, tiles, card.
+@media (min-width: 100rem) and (min-height: 40rem) and (min-aspect-ratio: 4/3) {
+  .layout {
+    --hero-width: 30rem;
+    --card-width: 24rem;
+    --stage-gap: 3.5rem;
+    --stage-width: calc(
+      100% - var(--hero-width) - var(--card-width) - 2 * var(--stage-gap)
+    );
+
+    position: relative;
+    flex-wrap: nowrap;
+    container-type: size;
+  }
+
+  .hero {
+    flex: 0 0 var(--hero-width);
+  }
+
+  .card {
+    flex: 0 0 var(--card-width);
+  }
+
+  // Centred in the middle; 90cqh keeps it clear of the screen's edges.
+  .bacterium {
+    position: absolute;
+    top: 50%;
+    left: calc(var(--hero-width) + var(--stage-gap) + var(--stage-width) / 2);
+    width: min(var(--stage-width), 90cqh * 4 / 3);
+    max-width: none;
+    translate: -50% -50%;
+  }
+}
+
 // A phone held across: title and bacterium beside a slimmer card.
 @media (max-height: 30rem) {
   // Sound and fullscreen stacked in a rail of their own, clear of the card.

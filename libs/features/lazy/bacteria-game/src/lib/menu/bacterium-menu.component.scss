@@ -180,6 +180,32 @@
   }
 }
 
+// On a large cell (#3226) the names grow with it, up to a cap.
+@container (min-width: 44rem) {
+  .spot {
+    gap: 0.6cqw;
+    padding: 0.6cqw 1.1cqw 0.6cqw 0.8cqw;
+    font-size: min(1.9cqw, 1.5rem);
+
+    mat-icon {
+      @include screen.icon-size(min(2.7cqw, 2.1rem));
+    }
+  }
+
+  .play .spot {
+    padding: 0.9cqw 1.6cqw;
+    font-size: min(2.4cqw, 1.9rem);
+
+    mat-icon {
+      @include screen.icon-size(min(4.5cqw, 3.6rem));
+    }
+  }
+
+  .online .spot {
+    font-size: min(2.1cqw, 1.7rem);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .spot,
   .css-lobe {
