@@ -287,31 +287,33 @@ describe('signInPlayGames', () => {
       const sink = jest.fn();
       reportCaughtErrorsTo(sink);
       jest.spyOn(logger, 'error').mockImplementation(() => undefined);
-
-      expect(
-        await run(data, 'g', fakeAccounts({ g: guest() }), {
-          syncAchievements: async () => {
-            throw new SyntaxError(`Unexpected token "bad token ${ACCESS}"`);
-          },
-        })
-      ).toEqual({ ok: true });
-      expect((await db.doc(PATH).get()).data()).toMatchObject({
-        result: { ok: true },
-        token: 'token-for-g',
-      });
-      expect(sink).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'SyntaxError', message: '' }),
-        'Play Games achievement sync failed'
-      );
-      const [[reported]] = sink.mock.calls as [[Error]];
-      expect(reported.stack).not.toContain(ACCESS);
-      expect(
-        JSON.stringify((logger.error as jest.Mock).mock.calls, (_, value) =>
-          value instanceof Error ? value.stack : value
-        )
-      ).not.toContain(ACCESS);
-      reportCaughtErrorsTo(null);
-      jest.restoreAllMocks();
+      try {
+        expect(
+          await run(data, 'g', fakeAccounts({ g: guest() }), {
+            syncAchievements: async () => {
+              throw new SyntaxError(`Unexpected token "bad token ${ACCESS}"`);
+            },
+          })
+        ).toEqual({ ok: true });
+        expect((await db.doc(PATH).get()).data()).toMatchObject({
+          result: { ok: true },
+          token: 'token-for-g',
+        });
+        expect(sink).toHaveBeenCalledWith(
+          expect.objectContaining({ name: 'SyntaxError', message: '' }),
+          'Play Games achievement sync failed'
+        );
+        const [[reported]] = sink.mock.calls as [[Error]];
+        expect(reported.stack).not.toContain(ACCESS);
+        expect(
+          JSON.stringify((logger.error as jest.Mock).mock.calls, (_, value) =>
+            value instanceof Error ? value.stack : value
+          )
+        ).not.toContain(ACCESS);
+      } finally {
+        reportCaughtErrorsTo(null);
+        jest.restoreAllMocks();
+      }
     });
 
     it('stores and logs the access token nowhere', async () => {

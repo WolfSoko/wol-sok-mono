@@ -127,7 +127,7 @@ async function accept(
   const outcome = await storeLocal(db, submission, plan, meta, blob, now);
   if (outcome === 'stored') {
     // Once: a second delivery ends at `exists`.
-    await countLevelStats(db, replay.header, plan.kind);
+    await countLevelStats(db, replay.header, plan.kind, plan.id);
   }
   return outcome;
 }

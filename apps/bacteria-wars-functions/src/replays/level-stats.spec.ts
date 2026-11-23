@@ -167,9 +167,25 @@ describe('counting never stands in the way', () => {
 
   it('reports a stored replay it could not count', async () => {
     await expect(
-      countLevelStats(failingDb, stored, 'computer')
+      countLevelStats(failingDb, stored, 'computer', 'l_a')
     ).resolves.toBeUndefined();
     expect(sink).toHaveBeenCalledWith(failure, 'Level statistics not counted');
+    expect(logger.error).toHaveBeenCalledWith('Level statistics not counted', {
+      id: 'l_a',
+      level: 'quarantine',
+      error: failure,
+    });
+  });
+
+  it('reports a replay whose counts fail to build', async () => {
+    const broken = { ...stored, loadouts: [null] } as unknown as ReplayHeader;
+    await expect(
+      countLevelStats(failingDb, broken, 'computer', 'l_b')
+    ).resolves.toBeUndefined();
+    expect(sink).toHaveBeenCalledWith(
+      expect.any(TypeError),
+      'Level statistics not counted'
+    );
   });
 
   it('reports a re-run it could not count', async () => {
