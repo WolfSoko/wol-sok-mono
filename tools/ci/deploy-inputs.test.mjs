@@ -8,9 +8,14 @@
 // `default` and `^default`, so specs and test configs of the project and of
 // every project below it count, and release-affected.mjs redeploys it for a
 // test-only change.
+//
+// The Android app (#3206) has no Nx dependencies, so a file outside its folder
+// that its deploy script reads counts only when its deploy names it.
 import assert from 'node:assert/strict';
+import { existsSync, readFileSync } from 'node:fs';
+import { posix } from 'node:path';
 import { describe, it } from 'node:test';
-import { readProjects, stringInputs } from './workspace-projects.mjs';
+import { ROOT, readProjects, stringInputs } from './workspace-projects.mjs';
 
 const PROJECT_NAME = '{projectName}';
 // A root config only: one under apps/ (emulators) is a file of its project.
@@ -48,12 +53,45 @@ const CDK_DEPLOY_EXECUTOR = '@wolsok/nx-aws-cdk-v2:deploy';
 const CDK_DEPLOY_INPUTS = ['production', '^production'];
 // They hold specs and test configs; `production` builds on the stack's own.
 const TEST_INCLUDING_INPUTS = ['default', '^default'];
-// A Gradle project without Nx dependencies: its implicit `default` is already
-// exactly its folder, and an edit of its project.json alone would upload an
-// unchanged app to Play.
-const IMPLICIT_DEPLOY_INPUTS = new Set(['bacteria-wars-android']);
+const ANDROID_APP = 'bacteria-wars-android';
+const TSX_SCRIPT = /(?:^|\s)(?:\.\/)?(tools\/\S+\.ts)(?:\s|$)/;
+const RELATIVE_IMPORT = /\bfrom\s+'(\.{1,2}\/[^']+)'/g;
+// A workspace file a module names literally, as `resolve('libs/…/x.json')`.
+const WORKSPACE_PATH = /'((?:apps|libs|tools)\/[^'\s]+\.\w+)'/g;
 
 const PROJECTS = readProjects();
+
+/** A relative import's module, as tsx resolves it (`./x` is `./x.ts`). */
+function moduleFile(from, specifier) {
+  const path = posix.join(posix.dirname(from), specifier);
+  return [path, `${path}.ts`, `${path}/index.ts`].find(
+    (candidate) =>
+      existsSync(`${ROOT}/${candidate}`) && candidate.endsWith('.ts')
+  );
+}
+
+/**
+ * The script a deploy command runs, the modules it imports relatively,
+ * transitively, and the workspace files those modules name literally.
+ */
+function filesReadBy(script) {
+  const modules = new Set();
+  const paths = new Set();
+  const queue = [script];
+  while (queue.length > 0) {
+    const file = queue.shift();
+    if (modules.has(file)) continue;
+    modules.add(file);
+    const source = readFileSync(`${ROOT}/${file}`, 'utf8');
+    for (const [, specifier] of source.matchAll(RELATIVE_IMPORT)) {
+      const imported = moduleFile(file, specifier);
+      assert.ok(imported, `${file}: cannot resolve ${specifier}`);
+      queue.push(imported);
+    }
+    for (const [, path] of source.matchAll(WORKSPACE_PATH)) paths.add(path);
+  }
+  return [...modules, ...paths];
+}
 
 function deployTargets() {
   return PROJECTS.filter((project) => project.json.targets?.deploy).map(
@@ -90,7 +128,6 @@ void describe('deploy inputs', () => {
 
   void it('are declared by every deploy target', () => {
     const undeclared = deployTargets()
-      .filter(({ project }) => !IMPLICIT_DEPLOY_INPUTS.has(project.json.name))
       .filter(
         ({ deploy }) =>
           !Array.isArray(deploy.inputs) || deploy.inputs.length === 0
@@ -118,13 +155,22 @@ void describe('deploy inputs', () => {
     assert.deepEqual(wrong, []);
   });
 
-  void it('exempt only deploy targets that exist', () => {
-    const names = new Set(
-      deployTargets().map(({ project }) => project.json.name)
+  void it('name every file outside the Android app its deploy reads', () => {
+    const android = PROJECTS.find(
+      (project) => project.json.name === ANDROID_APP
     );
-    assert.deepEqual(
-      [...IMPLICIT_DEPLOY_INPUTS].filter((name) => !names.has(name)),
-      []
-    );
+    assert.ok(android, `no ${ANDROID_APP} project found`);
+    const deploy = android.json.targets.deploy;
+    const [script] = commandsOf(deploy)
+      .map((command) => command.match(TSX_SCRIPT)?.[1])
+      .filter(Boolean);
+    assert.ok(script, `${android.path} deploy runs no tools script`);
+    const appRoot = `${posix.dirname(android.path)}/`;
+    const inputs = stringInputs(deploy.inputs);
+    const missing = filesReadBy(script)
+      .filter((file) => !file.startsWith(appRoot))
+      .map((file) => `{workspaceRoot}/${file}`)
+      .filter((input) => !inputs.includes(input));
+    assert.deepEqual(missing, []);
   });
 });

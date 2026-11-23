@@ -33,6 +33,15 @@
     "deploy": {
       "executor": "nx:run-commands",
       "dependsOn": [],
+      "inputs": [
+        "production",
+        "{workspaceRoot}/apps/bacteria-game-remote/src/.well-known/assetlinks.json",
+        "{workspaceRoot}/libs/features/bacteria-engine/src/lib/state/progress/play-games-achievements.json",
+        "{workspaceRoot}/tools/bacteria-game/deploy-android.ts",
+        "{workspaceRoot}/tools/bacteria-game/play-games.ts",
+        "{workspaceRoot}/tools/bacteria-game/play-tips.ts",
+        "{workspaceRoot}/tools/youtube/youtube.ts"
+      ],
       "options": {
         "command": "tsx --tsconfig tools/tsconfig.tools.json ./tools/bacteria-game/deploy-android.ts"
       }
