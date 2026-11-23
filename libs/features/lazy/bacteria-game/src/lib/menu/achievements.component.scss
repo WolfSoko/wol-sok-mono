@@ -31,31 +31,13 @@
       border: 1px solid var(--bw-gold);
       background: var(--bw-surface-raised);
       box-shadow: 0 0 14px -6px var(--bw-gold);
-
-      .badge {
-        background: var(--bw-gold);
-        color: var(--bw-ground);
-      }
     }
   }
 }
 
-.badge {
-  @include screen.figure;
-
-  flex: 0 0 2.5rem;
-  display: grid;
-  place-items: center;
-  height: 2.5rem;
-  // A hexagon, as the rank emblems are.
-  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
-  background: var(--bw-surface-raised);
-  color: var(--bw-faint);
-  font-size: 1.1rem;
-
-  .mat-icon {
-    @include screen.icon-size(1.1rem);
-  }
+.icon {
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .achievement-text {

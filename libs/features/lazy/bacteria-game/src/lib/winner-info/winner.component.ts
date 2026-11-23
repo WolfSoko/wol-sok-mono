@@ -62,6 +62,7 @@ import { GuestNotice } from '../guest/guest-notice.service';
 import { GuestSignInComponent } from '../guest/guest-sign-in.component';
 import { SocialService } from '../social/social.service';
 import { EvolutionService } from '../evolution.service';
+import { AchievementIconComponent } from '../menu/achievement-icon.component';
 import { DnaHelixComponent } from '../menu/dna-helix.component';
 import { OnlineRoomComponent } from '../menu/online-room.component';
 import { canRaceAsGhost, winnerSeat } from '../state/match-rules';
@@ -92,6 +93,7 @@ export type MatchEndAction =
 @Component({
   selector: 'feat-lazy-bac-game-winner',
   imports: [
+    AchievementIconComponent,
     DatePipe,
     DnaHelixComponent,
     GameTextPipe,

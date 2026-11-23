@@ -110,6 +110,8 @@ function workspaceFederation(config) {
       '@wolsok/feat-bacteria-rendering',
       // And its sound.
       '@wolsok/feat-bacteria-sound',
+      // And its pictures (the achievements' icons).
+      '@wolsok/feat-shared-bacteria-art',
       '@wolsok/feat-shader-examples',
       ...(config.skip ?? []),
     ],

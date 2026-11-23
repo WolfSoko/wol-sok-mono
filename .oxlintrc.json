@@ -140,7 +140,15 @@
           },
           {
             "sourceTag": "feat-shared",
-            "onlyDependOnLibsWithTags": ["shared", "utils", "api"]
+            "onlyDependOnLibsWithTags": ["shared", "utils", "api"],
+            "bannedExternalImports": [
+              "@angular/*",
+              "@ngrx/*",
+              "rxjs",
+              "rxjs/*",
+              "firebase",
+              "firebase/*"
+            ]
           },
           {
             "sourceTag": "shared",

@@ -1,8 +1,9 @@
 /**
  * What the Bacteria Wars pictures share: the colours of the two colonies and
- * the petri dish of the app icon, as SVG fragments. generate-icons.ts draws
- * the app icon with them, generate-achievement-icons.ts the badge of every
- * achievement, so a new palette reaches both.
+ * the petri dish of the app icon, as SVG fragments. The app icon
+ * (`tools/bacteria-game/generate-icons.ts`) and every achievement's icon
+ * (`achievement-icons.ts`, drawn for Play Games and shown by the game) are
+ * drawn with them, so a new palette reaches all of them.
  */
 
 /** The colours of a colony: its territory, its cells and its glowing edge. */

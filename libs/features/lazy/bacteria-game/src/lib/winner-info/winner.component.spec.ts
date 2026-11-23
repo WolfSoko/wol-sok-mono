@@ -1,4 +1,5 @@
 import { I18nService } from '../i18n/i18n.service';
+import { achievementIconDataUrl } from '@wolsok/feat-shared-bacteria-art';
 import { aMatchRecord } from '@wolsok/feat-shared-bacteria-engine/testing';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -187,6 +188,23 @@ describe('WinnerComponent', () => {
       fixture.nativeElement.querySelectorAll('.chip-name') as Element[]
     ).map((name) => name.textContent?.trim());
     expect(names).toEqual(['Blitz', 'Pacifist']);
+  });
+
+  it('shows each earned achievement with its Play Games icon', () => {
+    store.update({
+      winner: null,
+      levelId: LEVELS[0].id,
+      earnings: earnings({ achievements: ['blitz'] }),
+    });
+    fixture.detectChanges();
+
+    const icon = fixture.nativeElement.querySelector(
+      '.chip feat-lazy-bac-game-achievement-icon'
+    ) as HTMLElement | null;
+    expect(icon?.querySelector('img')?.getAttribute('src')).toBe(
+      achievementIconDataUrl('blitz')
+    );
+    expect(icon?.classList.contains('locked')).toBe(false);
   });
 
   it('adds up the XP and shows the way to the next rank', () => {
