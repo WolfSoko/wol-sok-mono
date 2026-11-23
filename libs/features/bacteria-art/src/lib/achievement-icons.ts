@@ -111,7 +111,9 @@ function dishWith(glyph: string): string {
 export type AchievementIconId = keyof typeof GLYPHS;
 
 /** The ids of every achievement with an icon, the game's achievement ids. */
-export const ACHIEVEMENT_ICON_IDS = Object.keys(GLYPHS) as AchievementIconId[];
+export const ACHIEVEMENT_ICON_IDS: readonly AchievementIconId[] = Object.keys(
+  GLYPHS
+) as AchievementIconId[];
 
 /** True for the id of an achievement that has an icon. */
 export function hasAchievementIcon(id: string): id is AchievementIconId {
