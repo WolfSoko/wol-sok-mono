@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.180.4](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.3...v74.180.4) (2026-11-23)
+
+### Bug Fixes
+
+* **bacteria-wars-functions:** report caught warn-level failures to Sentry ([#3224](https://github.com/WolfSoko/wol-sok-mono/issues/3224)) ([39919c5](https://github.com/WolfSoko/wol-sok-mono/commit/39919c5b08747f674211e93d6537a5e0f3ec8982))
+
 ## [74.180.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.180.2...v74.180.3) (2026-11-23)
 
 ### Bug Fixes
