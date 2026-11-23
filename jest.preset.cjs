@@ -1,12 +1,26 @@
 const { availableParallelism } = require('node:os');
 const nxPreset = require('@nx/jest/preset').default;
 require('cross-fetch/polyfill');
-const { parallel: NX_PARALLEL_TASKS } = require('./nx.json');
+const { parallel: CONFIGURED_PARALLEL } = require('./nx.json');
 
-if (!Number.isInteger(NX_PARALLEL_TASKS) || NX_PARALLEL_TASKS < 1) {
+function isTaskCount(value) {
+  return Number.isInteger(value) && value > 0;
+}
+
+if (!isTaskCount(CONFIGURED_PARALLEL)) {
   throw new Error(
-    `jest.preset.cjs: nx.json needs a positive integer "parallel", got ${NX_PARALLEL_TASKS}`
+    `jest.preset.cjs: nx.json needs a positive integer "parallel", got ${CONFIGURED_PARALLEL}`
   );
+}
+
+/**
+ * How many tasks Nx runs at once: `NX_PARALLEL` where the run sets it (tasks
+ * inherit it), else `nx.json`'s `parallel`. A `--parallel` flag never reaches
+ * the task, so that one run keeps the `nx.json` share.
+ */
+function parallelNxTasks() {
+  const fromEnv = Number(process.env.NX_PARALLEL);
+  return isTaskCount(fromEnv) ? fromEnv : CONFIGURED_PARALLEL;
 }
 
 /**
@@ -20,7 +34,7 @@ if (!Number.isInteger(NX_PARALLEL_TASKS) || NX_PARALLEL_TASKS < 1) {
  * the root `jest.config.ts` (`projects` mode, which Nx never runs) ignores it.
  */
 function workersPerJestTask() {
-  return Math.ceil(availableParallelism() / NX_PARALLEL_TASKS);
+  return Math.ceil(availableParallelism() / parallelNxTasks());
 }
 
 module.exports = {
