@@ -12,6 +12,7 @@ import {
   BACTERIUM_VERTEX,
   MAX_LOBES,
 } from './bacterium-shader';
+import { drawingBufferSize } from './drawing-buffer';
 
 /** A lobe to draw: where it sits, and whether it glows gold. */
 export interface BacteriumLobe extends BacteriumAnchor {
@@ -30,7 +31,10 @@ export interface BacteriumScene {
 
 /** Draws the cell on a canvas, frame by frame. */
 export interface BacteriumRenderer {
-  /** Sizes the drawing buffer to the canvas's CSS box at `scale` pixels. */
+  /**
+   * Sizes the drawing buffer to the canvas's CSS box at `scale` pixels,
+   * within the pixel budget (`drawingBufferSize`).
+   */
   resize(width: number, height: number, scale: number): void;
   draw(scene: BacteriumScene, timeMs: number): void;
   dispose(): void;
@@ -49,9 +53,6 @@ export const BACTERIUM_RENDERER = new InjectionToken<BacteriumRendererFactory>(
   'BACTERIUM_RENDERER',
   { providedIn: 'root', factory: () => createBacteriumRenderer }
 );
-
-/** The most device pixels a CSS pixel of the cell gets. */
-const MAX_PIXEL_SCALE = 1.5;
 
 /** How fast the cell turns about its long axis, in radians a second. */
 const TURN_SPEED = 0.35;
@@ -145,9 +146,7 @@ class GlBacteriumRenderer implements BacteriumRenderer {
 
   public resize(width: number, height: number, scale: number): void {
     const canvas = this.gl.canvas as HTMLCanvasElement;
-    const pixels = Math.min(scale, MAX_PIXEL_SCALE);
-    const w = Math.max(1, Math.round(width * pixels));
-    const h = Math.max(1, Math.round(height * pixels));
+    const { width: w, height: h } = drawingBufferSize(width, height, scale);
     if (canvas.width === w && canvas.height === h) {
       return;
     }
