@@ -30,9 +30,12 @@ export function drawingBufferSize(
   const budgetScale = Math.sqrt(
     MAX_BUFFER_PIXELS / Math.max(1, width * height)
   );
-  const scale = Math.min(devicePixelRatio, MAX_PIXEL_SCALE, budgetScale);
+  const wanted = Math.min(devicePixelRatio, MAX_PIXEL_SCALE);
+  // Rounded as ever within the budget; past it rounded down, to stay in it.
+  const fit = budgetScale < wanted ? Math.floor : Math.round;
+  const scale = Math.min(wanted, budgetScale);
   return {
-    width: Math.max(1, Math.floor(width * scale)),
-    height: Math.max(1, Math.floor(height * scale)),
+    width: Math.max(1, fit(width * scale)),
+    height: Math.max(1, fit(height * scale)),
   };
 }

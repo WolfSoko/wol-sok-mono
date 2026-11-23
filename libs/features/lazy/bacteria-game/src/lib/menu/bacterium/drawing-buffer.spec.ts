@@ -25,6 +25,13 @@ describe('drawingBufferSize', () => {
     });
   });
 
+  it('rounds a small cell as before', () => {
+    expect(drawingBufferSize(333, 250, 1.5)).toEqual({
+      width: 500,
+      height: 375,
+    });
+  });
+
   it('never gives a buffer below one pixel', () => {
     expect(drawingBufferSize(0, 0, 2)).toEqual({ width: 1, height: 1 });
   });

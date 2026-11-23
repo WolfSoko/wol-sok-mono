@@ -29,19 +29,23 @@ middle of the screen stays empty.
 ## Decisions
 
 - **Positioned in the middle on wide landscape screens, by CSS alone.**
-  From `(min-width: 100rem) and (min-height: 40rem) and (min-aspect-ratio: 4/3)`
+  From a container query on the menu's own box (`:host` is the size
+  container `main-menu`; the stage gives it its height), `(min-width: 92rem)
+  and (min-height: 40rem) and (min-aspect-ratio: 4/3)`,
   hero and card take fixed widths at the layout's two ends, and `.bacterium`
   is positioned absolutely in the middle between them (`.layout` is its
-  containing block and a size container). The template stays as it is: the
+  containing block). The template stays as it is: the
   DOM order (and so the reading and tab order: title, banners, bacterium,
   tiles, card) does not change, and PR #3225's template edits do not
   collide. A grid with a `display: contents` hero was considered: a cell
   spanning the hero's rows stretches them and spreads the title, banners
-  and tiles apart. Below 100rem (1600 px) the middle would be narrower than
+  and tiles apart. The menu's box, not the viewport, decides: inside the
+  shell a sidenav takes up to 320 px. Below 92rem of content the middle
+  (less hero, card and gaps, 61rem) would be narrower than
   the hero's 30rem the cell has today, so the current layout stays.
 - **The cell is sized by the space, not a fixed cap.** In the wide layout
   the box is `width: min(middle, 90cqh * 4 / 3)`: as wide as the middle
-  allows and at most 90% of the layout's height, centred both ways.
+  allows and at most 90% of the menu's height, centred both ways.
   So at 1920 x 1080 it is about 900 px wide instead of 544 px, at the
   issue's 3750 x 1825 about 2000 px.
 - **A landscape phone keeps today's cell.** Fitting the cell into an
@@ -52,7 +56,8 @@ middle of the screen stays empty.
 - **Labels grow with the cell.** The parts' font sizes are in `rem` and
   look tiny on a 2000 px cell. A container query of the bacterium
   (`@container (min-width: 44rem)`) scales the `.spot` font with the box
-  (`clamp(...)` on `cqw`), the counterpart of the existing small-screen
+  (`clamp(<size below>, Ncqw, <cap>)`, so no label shrinks past the
+  threshold), the counterpart of the existing small-screen
   query.
 - **The GPU cost has a cap.** The canvas' drawing buffer is CSS size
   times `min(devicePixelRatio, 1.5)`; a larger box multiplies the shader's
@@ -69,7 +74,9 @@ middle of the screen stays empty.
 1. At 1920 x 1080 and at 3750 x 1825 the bacterium stands in the middle
    between the hero and the card, larger than today's 544 px (at least
    800 px wide at 1920 x 1080), fully on screen without scrolling.
-2. At 1280 x 720 and 1440 x 900 the layout is as today (hero with the cell,
+2. At 1280 x 720 and 1440 x 900 (and wherever the menu's box is
+   narrower than 92rem, the shell with its sidenav included) the layout is
+   as today (hero with the cell,
    the card beside it).
 3. Landscape phone (844 x 390) and portrait phone (390 x 844) unchanged.
 4. At 3750 x 1825 the cell is drawn at one device pixel a CSS pixel, its
@@ -84,5 +91,5 @@ middle of the screen stays empty.
 
 ## Open questions
 
-- None blocking. The 100rem breakpoint is a judgement from the column
+- None blocking. The 92rem breakpoint is a judgement from the column
   widths; the screenshots in the PR show the steps around it.
