@@ -41,11 +41,15 @@ profile is known. Then they appear in their final state.
 3. **The screens panel hides, it is not removed.** While `!ready`, the
    content of `.stage-panel.screens` (social notices and the open screen)
    gets `visibility: hidden` and `inert`, so it lays out and the bacterium
-   menu's `@defer` chunk still loads. The bacteria spinner
-   (`feat-lazy-bac-game-bacteria-spinner`, label "Loading your profile…" /
+   menu's `@defer` chunk still loads. A `mat-progress-spinner` in the
+   player's colour (Angular Material: the bacteria spinner is reserved for
+   work that blocks the main thread, CLAUDE.md rule 5; label "Loading your profile…" /
    „Dein Profil wird geladen …") sits centred in its place. The swarm behind it
    stays visible. When the gate opens, the content fades in (150 ms, none
    with reduced motion), so the change is a single appearance and not a jump.
+   The control that had the focus when the curtain fell gets it back when
+   it lifts, since `inert` takes it away (keyboard and screen readers keep
+   their place across a sign-in).
 4. **The splash waits too.** On the game's own site, `index.html` shows a
    splash that `ngAfterViewInit` takes away. It is taken away once the gate
    opens, so a visitor sees the splash and then the finished menu, not the

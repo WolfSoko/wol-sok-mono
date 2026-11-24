@@ -1,5 +1,6 @@
 import { Component, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { ProfileCurtainComponent } from './profile-curtain.component';
 import { ProfileGate } from './profile-gate';
 
@@ -30,7 +31,7 @@ describe('ProfileCurtainComponent', () => {
   }
 
   function spinner(root: HTMLElement): Element | null {
-    return root.querySelector('feat-lazy-bac-game-bacteria-spinner');
+    return root.querySelector('mat-progress-spinner');
   }
 
   beforeEach(() => ready.set(false));
@@ -67,6 +68,11 @@ describe('ProfileCurtainComponent', () => {
 
     ready.set(false);
     fixture.detectChanges();
+    // Taken before the content went inert, while it still had the focus.
+    const curtain = fixture.debugElement.query(
+      By.directive(ProfileCurtainComponent)
+    ).componentInstance as ProfileCurtainComponent;
+    expect(curtain['focused']).toBe(button);
     button.blur(); // inert takes the focus away in a browser; jsdom does not
     ready.set(true);
     fixture.detectChanges();

@@ -62,9 +62,9 @@ describe('ProfileGate', () => {
   const socialLoaded = signal(false);
 
   function create(
-    gameAccount: Partial<GameAccount> = new FakeGameAccount()
+    gameAccount: Pick<GameAccount, 'cloud' | 'profile' | 'players'> = (account =
+      new FakeGameAccount())
   ): ProfileGate {
-    account = gameAccount as FakeGameAccount;
     TestBed.configureTestingModule({
       providers: [
         { provide: GameAccount, useValue: gameAccount },
@@ -118,7 +118,11 @@ describe('ProfileGate', () => {
 
   it('opens after a while when no player ever turns up', () => {
     // A first guest whose sign-in failed: the account sends no switch.
-    const gate = create({ cloud: true, profile: signal(null), players: NEVER });
+    const gate = create({
+      cloud: true,
+      profile: signal(null).asReadonly(),
+      players: NEVER,
+    });
 
     jest.advanceTimersByTime(PROFILE_WAIT_MS);
 
@@ -134,6 +138,22 @@ describe('ProfileGate', () => {
 
     expect(gate.ready()).toBe(false);
     jest.advanceTimersByTime(PROFILE_WAIT_MS);
+    expect(gate.ready()).toBe(true);
+  });
+
+  it('closes when a sign-in switches a known player and opens for the next', () => {
+    const gate = create();
+    answerAll();
+    expect(gate.ready()).toBe(true);
+
+    // The switch sets the player documents and the social profile back.
+    progress.set(false);
+    evolution.set(false);
+    socialLoaded.set(false);
+    account.switchTo('google');
+    expect(gate.ready()).toBe(false);
+
+    answerAll();
     expect(gate.ready()).toBe(true);
   });
 });

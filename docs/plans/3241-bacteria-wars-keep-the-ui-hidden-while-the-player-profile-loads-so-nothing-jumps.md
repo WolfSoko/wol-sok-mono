@@ -14,7 +14,8 @@ Branch `3241-hide-ui-while-profile-loads` off `main`, one PR. Paths are under
    - `bacteria-game.component.spec.ts`: hidden, inert and spinner while
      closed; visible once open; splash dismissed only when it opens.
    - `menu/profile-curtain.component.ts` (with spec): the wrapper with
-     `[class.pending]` and `inert`, the spinner, and the fade-in with its
+     `[class.pending]` and `inert`, the `mat-progress-spinner`, the focus
+     given back, and the fade-in with its
      reduced-motion variant. `bacteria-game.component.html/.ts` put it
      around the notices and the open screen. The `dismissSplash` call moves to an effect on `gate.ready()`.
    - i18n: `stage.loadingProfile` in English and German.

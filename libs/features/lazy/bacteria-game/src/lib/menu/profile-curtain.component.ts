@@ -7,14 +7,14 @@ import {
   inject,
   viewChild,
 } from '@angular/core';
-import { BacteriaSpinnerComponent } from '../busy/bacteria-spinner.component';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslatePipe } from '../i18n/translate.pipe';
 import { ProfileGate } from './profile-gate';
 
 /**
  * Holds the menu screens back while the player profile loads (#3241): its
- * content stays laid out but hidden and out of reach, with the bacteria
- * spinner in its place, and fades in once {@link ProfileGate} opens - so
+ * content stays laid out but hidden and out of reach, with
+ * a spinner in its place, and fades in once {@link ProfileGate} opens - so
  * rank, DNA, avatar and colours appear as stored instead of jumping there
  * from their defaults. Hidden, not removed: an open screen keeps its state
  * while a sign-in loads the new player's profile, and the control that
@@ -22,7 +22,7 @@ import { ProfileGate } from './profile-gate';
  */
 @Component({
   selector: 'feat-lazy-bac-game-profile-curtain',
-  imports: [BacteriaSpinnerComponent, TranslatePipe],
+  imports: [MatProgressSpinnerModule, TranslatePipe],
   template: `
     <div
       #content
@@ -33,9 +33,11 @@ import { ProfileGate } from './profile-gate';
       <ng-content />
     </div>
     @if (!gate.ready()) {
-      <feat-lazy-bac-game-bacteria-spinner
+      <mat-progress-spinner
         class="spinner"
-        [label]="'stage.loadingProfile' | t"
+        mode="indeterminate"
+        diameter="48"
+        [attr.aria-label]="'stage.loadingProfile' | t"
       />
     }
   `,
@@ -57,6 +59,8 @@ import { ProfileGate } from './profile-gate';
     }
 
     .spinner {
+      --mat-progress-spinner-active-indicator-color: var(--bw-player);
+
       position: absolute;
       top: 50%;
       left: 50%;

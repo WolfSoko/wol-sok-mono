@@ -1,6 +1,6 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { startWith, switchMap, timer } from 'rxjs';
+import { startWith, switchMap, tap, timer } from 'rxjs';
 import { EVOLUTION_WAIT_MS, EvolutionService } from '../evolution.service';
 import { ProgressService } from '../progress.service';
 import { GameSettingsService } from '../settings.service';
@@ -79,10 +79,8 @@ export class ProfileGate {
     this.account.players
       .pipe(
         startWith(null),
-        switchMap(() => {
-          this.waitedOut.set(false);
-          return timer(PROFILE_WAIT_MS);
-        }),
+        tap(() => this.waitedOut.set(false)),
+        switchMap(() => timer(PROFILE_WAIT_MS)),
         takeUntilDestroyed()
       )
       .subscribe(() => this.waitedOut.set(true));
