@@ -4,6 +4,9 @@
   @include screen.screen;
 
   position: relative;
+  // The bacterium's canvas reaches past its box (#3240); on a phone that
+  // must not scroll the menu sideways.
+  overflow-x: hidden;
   // The wide layout below asks the menu's own box, not the viewport: in
   // the shell a sidenav takes part of the width. The stage gives the
   // screen its height, so containing it changes nothing.
