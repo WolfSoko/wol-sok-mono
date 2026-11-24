@@ -18,10 +18,10 @@ Spec: [docs/specs/3195-wolsok-de-unknown-paths-answer-200-with-the-home-page-sof
 - Files: `apps/portfolio/src/app/not-found/not-found.component.ts` (+ html,
   scss, spec), `app.routes.ts` (`**` renders it, data with `noindex`),
   `app.routes.server.ts` (`getPrerenderParams` for `**`), `page-data.ts`
-  (`noindex`), `seo.service.ts` (+ spec: robots tag, canonical dropped and
-  restored), `i18n/texts.en.ts`, `i18n/texts.de.ts`.
-- Tests first: the component renders the text and a link home; the SEO spec
-  for `noindex` on and off; the routes spec that `/nope` renders the page.
+  (`noindex`), `seo.service.ts` (robots tag, canonical and `og:url` dropped and
+  restored, specified in `app.component.spec.ts` with the other SEO tags), `i18n/texts.en.ts`, `i18n/texts.de.ts`.
+- Tests first: the component renders the text and a link home; the SEO
+  case in `app.component.spec.ts` for `noindex` on and off; the routes spec that `/nope` renders the page.
 - Check: `npx nx build portfolio` writes `404/index.html` with the tags.
 - Commit: `feat(portfolio): show a not-found page for unknown paths`.
 

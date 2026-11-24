@@ -34,8 +34,8 @@ import {
   Source,
 } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
-import { existsSync } from 'node:fs';
-import { join } from 'node:path';
+import { existsSync, statSync } from 'node:fs';
+import { resolve, sep } from 'node:path';
 import { assertNoFileIsAnotherSourcesFolder } from './deployment-sources';
 import { ViewerRequestOptions, viewerRequestSource } from './viewer-request';
 
@@ -175,14 +175,16 @@ function errorResponses(
 }
 
 function assertIsBuiltPage(buildOutputPath: string, page: string): void {
-  if (page.startsWith('/')) {
+  const root = resolve(buildOutputPath);
+  const file = resolve(root, page);
+  if (page.startsWith('/') || !file.startsWith(root + sep)) {
     throw new Error(
-      `notFoundPage "${page}" must be relative to buildOutputPath, without a leading "/".`
+      `notFoundPage "${page}" must be a path inside buildOutputPath, without a leading "/".`
     );
   }
-  if (!existsSync(join(buildOutputPath, page))) {
+  if (!existsSync(file) || !statSync(file).isFile()) {
     throw new Error(
-      `notFoundPage "${page}" is not in the build output ${buildOutputPath}.`
+      `notFoundPage "${page}" is not a file in the build output ${buildOutputPath}.`
     );
   }
 }

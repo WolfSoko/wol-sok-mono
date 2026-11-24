@@ -318,17 +318,28 @@ describe('SpaCdkStack', () => {
     it('should refuse a page that is not in the build output', () => {
       expect(() =>
         testStackFactory({ notFoundPage: '404/index.html' })
-      ).toThrow(/notFoundPage "404\/index.html" is not in the build output/);
+      ).toThrow(
+        /notFoundPage "404\/index.html" is not a file in the build output/
+      );
     });
 
-    it('should refuse a page with a leading slash', () => {
+    it('should refuse a folder of the build output', () => {
       expect(() =>
         testStackFactory({
           buildOutputPath: notFoundBuild,
-          notFoundPage: '/404/index.html',
+          notFoundPage: '404',
         })
-      ).toThrow(/relative to buildOutputPath/);
+      ).toThrow(/notFoundPage "404" is not a file/);
     });
+
+    it.each(['/404/index.html', '', '../index.html'])(
+      'should refuse %j, which is no path inside the build output',
+      (notFoundPage) => {
+        expect(() =>
+          testStackFactory({ buildOutputPath: notFoundBuild, notFoundPage })
+        ).toThrow(/must be a path inside buildOutputPath/);
+      }
+    );
   });
 
   describe('cache overrides', () => {

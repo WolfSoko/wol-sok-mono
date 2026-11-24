@@ -10,7 +10,9 @@ export const serverRoutes: ServerRoute[] = [
   {
     path: '**',
     renderMode: RenderMode.Prerender,
-    // Only the catch-all route has a parameter, so only it asks for these.
+    // Angular asks this for every route with a parameter, and today only the
+    // catch-all has one. A `:param` route added later needs a server route of
+    // its own with its own getPrerenderParams, ahead of this one.
     getPrerenderParams: async () => [{ '**': NOT_FOUND_PAGE_PATH }],
   },
 ];

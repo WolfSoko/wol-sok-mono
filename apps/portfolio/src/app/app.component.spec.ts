@@ -88,9 +88,13 @@ describe('AppComponent', () => {
       head.querySelector('meta[name="robots"]')?.getAttribute('content')
     ).toBe('noindex');
     expect(head.querySelector('link[rel="canonical"]')).toBeNull();
+    expect(head.querySelector('meta[property="og:url"]')).toBeNull();
 
     await harness.navigateByUrl('/career');
     expect(head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(
+      head.querySelector('meta[property="og:url"]')?.getAttribute('content')
+    ).toBe('https://wolsok.de/career');
     expect(
       head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
     ).toBe('https://wolsok.de/career');

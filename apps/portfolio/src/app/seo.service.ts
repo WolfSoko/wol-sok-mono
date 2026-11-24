@@ -51,7 +51,6 @@ export class SeoService {
       this.meta.updateTag({ name: 'description', content: text });
       this.meta.updateTag({ property: 'og:description', content: text });
     }
-    this.meta.updateTag({ property: 'og:url', content: url });
     this.meta.updateTag({ property: 'og:type', content: type ?? 'website' });
     if (title) {
       const text = this.i18n.pick(title);
@@ -59,10 +58,13 @@ export class SeoService {
       this.meta.updateTag({ property: 'og:title', content: text });
     }
     if (noindex) {
+      // The not-found page is served under every unknown URL: no URL of its own.
       this.meta.updateTag({ name: 'robots', content: 'noindex' });
+      this.meta.removeTag('property="og:url"');
       this.canonicalLink()?.remove();
     } else {
       this.meta.removeTag('name="robots"');
+      this.meta.updateTag({ property: 'og:url', content: url });
       this.setCanonical(url);
     }
   }
