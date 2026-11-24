@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.184.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.3...v74.184.0) (2026-11-24)
+
+### Features
+
+* **feat-lazy-bacteria-game:** keep the menu hidden while the player profile loads ([#3243](https://github.com/WolfSoko/wol-sok-mono/issues/3243)) ([9b3ed54](https://github.com/WolfSoko/wol-sok-mono/commit/9b3ed54e44de6fbb99cad97635bf6d2996399a19)), references [#3241](https://github.com/WolfSoko/wol-sok-mono/issues/3241) [#3241](https://github.com/WolfSoko/wol-sok-mono/issues/3241) [#3241](https://github.com/WolfSoko/wol-sok-mono/issues/3241) [#3241](https://github.com/WolfSoko/wol-sok-mono/issues/3241) [#3241](https://github.com/WolfSoko/wol-sok-mono/issues/3241)
+
 ## [74.183.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.2...v74.183.3) (2026-11-24)
 
 ### Bug Fixes
