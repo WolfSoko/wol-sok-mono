@@ -24,8 +24,9 @@ field ends in a slab at x = 1.35 at nearly its full width, a blunt end.
   buttons stay as they are, and the shader keeps its units: `vUv` is scaled
   by `CELL_SCALE` (1 + 2 x bleed), so a point of the cell lies where it did.
   Its reach is then 1.73 x 1.3 units, past the flagella and the glow. One
-  constant in TypeScript drives the shader and the canvas's inline `inset`,
-  so the two cannot drift apart.
+  constant in TypeScript drives the shader and, through the host's
+  `--cell-bleed`, the canvas's position and size, so the two cannot drift
+  apart.
 - **Each flagellum thins to a point** over the last 30 % of its length, so
   it ends in a tip rather than the slab's cut.
 - **The rays start just in front of the cell** (z 0.8 rather than 2, the
@@ -38,7 +39,11 @@ field ends in a slab at x = 1.35 at nearly its full width, a blunt end.
   the card now, and is decoration only.
 - **The main menu clips horizontal overflow** (`overflow-x: hidden`): on a
   phone the box fills the width, and the bleed must not make the screen
-  scroll sideways. Vertically the screen scrolls as before.
+  scroll sideways. In the wide layout of #3226 the box is centred at 90 %
+  of the menu's height, so its canvas reaches past the layout: there the
+  layout clips it vertically (`overflow-y: clip`, no scroll container) at
+  the screen's padding (`overflow-clip-margin`), where nothing of the cell
+  is drawn any more. Vertically the screen scrolls as before.
 - **The pixel budget is for the box, as before**: the canvas's budget grows
   by `CELL_SCALE²`, so the cell keeps the sharpness #3226 gave it. The pixels
   outside the cell miss it within a few raymarch steps.

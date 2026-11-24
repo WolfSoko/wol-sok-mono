@@ -239,6 +239,10 @@
 
     position: relative;
     flex-wrap: nowrap;
+    // The cell's canvas reaches past its box (#3240), here past the layout
+    // too: clipped at the screen's padding, so it adds nothing to scroll.
+    overflow-y: clip;
+    overflow-clip-margin: clamp(1rem, 3.5vh, 2.5rem);
   }
 
   .hero {

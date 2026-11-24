@@ -14,8 +14,8 @@ const MAX_PIXEL_SCALE = 1.5;
 export const MAX_BOX_PIXELS = 3_500_000;
 
 /**
- * The most pixels the cell's canvas holds: the box's budget, and as much
- * for the bleed round it (#3240), so the canvas reaching past the box
+ * The most pixels the cell's canvas holds: the box's budget times
+ * `CELL_SCALE²`, the canvas reaching past the box (#3240), so the bleed
  * costs the cell no sharpness. Its pixels miss the cell within a few
  * raymarch steps.
  */
