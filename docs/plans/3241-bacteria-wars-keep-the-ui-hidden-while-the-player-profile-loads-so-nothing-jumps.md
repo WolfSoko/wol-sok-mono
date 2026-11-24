@@ -13,9 +13,10 @@ Branch `3241-hide-ui-while-profile-loads` off `main`, one PR. Paths are under
 2. **Hide the screens behind the spinner, hold the splash** (test first).
    - `bacteria-game.component.spec.ts`: hidden, inert and spinner while
      closed; visible once open; splash dismissed only when it opens.
-   - `bacteria-game.component.html/.scss/.ts`: wrapper with `[class.pending]`
-     and `[inert]`, the spinner, and the fade-in with its reduced-motion
-     variant. The `dismissSplash` call moves to an effect on `gate.ready()`.
+   - `menu/profile-curtain.component.ts` (with spec): the wrapper with
+     `[class.pending]` and `inert`, the spinner, and the fade-in with its
+     reduced-motion variant. `bacteria-game.component.html/.ts` put it
+     around the notices and the open screen. The `dismissSplash` call moves to an effect on `gate.ready()`.
    - i18n: `stage.loadingProfile` in English and German.
    - Commit: `feat(feat-lazy-bacteria-game): keep the menu hidden while the player profile loads (#3241)`.
 3. **Checks and PR.** Run `npx nx format:write`, then

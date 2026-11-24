@@ -150,7 +150,7 @@ describe('BacteriaGameComponent', () => {
     });
   });
 
-  describe('the loading screen', () => {
+  describe('while the player profile loads', () => {
     const ready = signal(false);
     let splash: HTMLElement;
 
@@ -171,7 +171,7 @@ describe('BacteriaGameComponent', () => {
       ]);
     }
 
-    it('stays until the player profile is known', async () => {
+    it('keeps the loading screen until the profile is known', async () => {
       createWithGate();
       await fixture.whenStable();
       expect(splash.classList).not.toContain('done');
@@ -182,7 +182,7 @@ describe('BacteriaGameComponent', () => {
       expect(splash.classList).toContain('done');
     });
 
-    it('gives way to the menu held behind the profile curtain', async () => {
+    it('holds the menu back behind the profile curtain', async () => {
       createWithGate();
       await fixture.whenStable();
       const host: HTMLElement = fixture.nativeElement;

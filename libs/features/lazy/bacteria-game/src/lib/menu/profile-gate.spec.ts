@@ -1,5 +1,6 @@
 import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { NEVER } from 'rxjs';
 import { FakeGameAccount } from '../../testing/fake-game-account';
 import { EvolutionService } from '../evolution.service';
 import { ProgressService } from '../progress.service';
@@ -60,11 +61,13 @@ describe('ProfileGate', () => {
   const evolution = signal(false);
   const socialLoaded = signal(false);
 
-  function create(): ProfileGate {
-    account = new FakeGameAccount();
+  function create(
+    gameAccount: Partial<GameAccount> = new FakeGameAccount()
+  ): ProfileGate {
+    account = gameAccount as FakeGameAccount;
     TestBed.configureTestingModule({
       providers: [
-        { provide: GameAccount, useValue: account },
+        { provide: GameAccount, useValue: gameAccount },
         { provide: GameSettingsService, useValue: { loaded: settings } },
         { provide: ProgressService, useValue: { loaded: progress } },
         { provide: EvolutionService, useValue: { loaded: evolution } },
@@ -109,6 +112,15 @@ describe('ProfileGate', () => {
     jest.advanceTimersByTime(PROFILE_WAIT_MS - 1);
     expect(gate.ready()).toBe(false);
     jest.advanceTimersByTime(1);
+
+    expect(gate.ready()).toBe(true);
+  });
+
+  it('opens after a while when no player ever turns up', () => {
+    // A first guest whose sign-in failed: the account sends no switch.
+    const gate = create({ cloud: true, profile: signal(null), players: NEVER });
+
+    jest.advanceTimersByTime(PROFILE_WAIT_MS);
 
     expect(gate.ready()).toBe(true);
   });

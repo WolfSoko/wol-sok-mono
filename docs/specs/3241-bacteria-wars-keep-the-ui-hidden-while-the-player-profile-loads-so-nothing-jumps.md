@@ -33,17 +33,17 @@ profile is known. Then they appear in their final state.
 
 2. **It never hides forever.** A root service `ProfileGate`
    (`menu/profile-gate.ts`) exposes `ready = known || waitedOut`.
-   `waitedOut` turns true `PROFILE_WAIT_MS` (3 s, as `EVOLUTION_WAIT_MS`)
-   after the player became known. The wait restarts on every switch of
-   `GameAccount.players`, so a failed Firestore read (`profileLoaded` stays
+   `waitedOut` turns true `PROFILE_WAIT_MS` (`EVOLUTION_WAIT_MS`, 3 s)
+   after the start, and the wait restarts on every switch of
+   `GameAccount.players` (a first guest whose sign-in fails sends none), so a failed Firestore read (`profileLoaded` stays
    false) or an offline start shows the menu after 3 s with what is there.
    This follows the pattern of `EvolutionService.waitForStorage`.
 3. **The screens panel hides, it is not removed.** While `!ready`, the
    content of `.stage-panel.screens` (social notices and the open screen)
    gets `visibility: hidden` and `inert`, so it lays out and the bacterium
    menu's `@defer` chunk still loads. The bacteria spinner
-   (`feat-lazy-bac-game-bacteria-spinner`, label "Loading profile…" /
-   „Profil wird geladen…") sits centred in its place. The swarm behind it
+   (`feat-lazy-bac-game-bacteria-spinner`, label "Loading your profile…" /
+   „Dein Profil wird geladen …") sits centred in its place. The swarm behind it
    stays visible. When the gate opens, the content fades in (150 ms, none
    with reduced motion), so the change is a single appearance and not a jump.
 4. **The splash waits too.** On the game's own site, `index.html` shows a

@@ -1,22 +1,18 @@
-import {
-  computed,
-  DestroyRef,
-  inject,
-  Injectable,
-  signal,
-} from '@angular/core';
-import { switchMap, timer } from 'rxjs';
-import { EvolutionService } from '../evolution.service';
+import { computed, inject, Injectable, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { startWith, switchMap, timer } from 'rxjs';
+import { EVOLUTION_WAIT_MS, EvolutionService } from '../evolution.service';
 import { ProgressService } from '../progress.service';
 import { GameSettingsService } from '../settings.service';
 import { SocialService } from '../social/social.service';
 import { GameAccount } from '../storage/game-account';
 
 /**
- * How long the menu waits for the player profile at most, from the moment
- * the player is known, in ms - as long as a match waits for the evolution.
+ * How long the menu waits for the player profile at most, in ms, from the
+ * start and again from every player switch - as long as a match waits for
+ * the evolution.
  */
-export const PROFILE_WAIT_MS = 3000;
+export const PROFILE_WAIT_MS = EVOLUTION_WAIT_MS;
 
 /** Which parts of the player profile have answered, and which apply. */
 export interface ProfileSources {
@@ -49,7 +45,8 @@ export function profileKnown(sources: ProfileSources): boolean {
  * Whether the menu screens may show (#3241): once the player profile is
  * known, so they appear as they stay instead of jumping from defaults to
  * what is stored. A source that keeps silent holds them back for
- * {@link PROFILE_WAIT_MS} at most, counted again on every player switch.
+ * {@link PROFILE_WAIT_MS} at most, from the start and again on every
+ * player switch.
  */
 @Injectable({ providedIn: 'root' })
 export class ProfileGate {
@@ -77,14 +74,17 @@ export class ProfileGate {
   public readonly ready = computed(() => this.known() || this.waitedOut());
 
   public constructor() {
-    const waiting = this.account.players
+    // Counted from the start too: a first guest whose sign-in fails sends
+    // no switch at all, and the menu must not wait for one forever.
+    this.account.players
       .pipe(
+        startWith(null),
         switchMap(() => {
           this.waitedOut.set(false);
           return timer(PROFILE_WAIT_MS);
-        })
+        }),
+        takeUntilDestroyed()
       )
       .subscribe(() => this.waitedOut.set(true));
-    inject(DestroyRef).onDestroy(() => waiting.unsubscribe());
   }
 }
