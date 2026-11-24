@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.186.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.185.0...v74.186.0) (2026-11-24)
+
+### Features
+
+* **bacteria-wars-android:** ✨ add the War of Bacteria YouTube Short ([#3248](https://github.com/WolfSoko/wol-sok-mono/issues/3248)) ([83baa03](https://github.com/WolfSoko/wol-sok-mono/commit/83baa03db8192ca5c7ce8ac3a16aa00813d87115))
+
+### Documentation
+
+* **tools:** refresh architecture diagrams ([#3217](https://github.com/WolfSoko/wol-sok-mono/issues/3217)) ([262b2b4](https://github.com/WolfSoko/wol-sok-mono/commit/262b2b4a27d8299e7db0c091c1dd5601aff84b3e))
+
 ## [74.185.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.184.1...v74.185.0) (2026-11-24)
 
 ### Features
