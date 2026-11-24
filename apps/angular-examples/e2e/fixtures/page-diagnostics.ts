@@ -1,5 +1,5 @@
 import { test as base, type Page, type TestInfo } from '@playwright/test';
-import { redactUrls, urlForLog } from '@wolsok/shared-e2e-server';
+import { redactUrls } from '@wolsok/shared-e2e-server';
 
 export { expect } from '@playwright/test';
 
@@ -10,9 +10,11 @@ const ATTACHMENT_NAME = 'page-diagnostics.txt';
 /**
  * Records what went wrong in the page while the test ran, and on a failure
  * prints it (stdout lands in the Nx Cloud task log) and attaches it to the
- * report. Each line holds only URLs, status codes and messages, every URL
- * (in messages too) without credentials, query and hash (`urlForLog`,
- * `redactUrls`): the CI log is public, so no headers, bodies or parameters.
+ * report. Each line holds only URLs, status codes and messages, and the
+ * report goes through `redactUrls` as a whole before it leaves, so no URL in
+ * it keeps credentials, query or hash: the CI log is public, so no headers,
+ * bodies or parameters. Playwright's own reporter prints test titles as they
+ * are, so a title holds no secret.
  */
 export const test = base.extend<{ pageDiagnostics: string[] }>({
   pageDiagnostics: [
@@ -29,20 +31,18 @@ function recordProblems(page: Page): string[] {
   const lines: string[] = [];
   page.on('console', (message) => {
     if (message.type() === 'error') {
-      lines.push(`console error: ${redactUrls(message.text())}`);
+      lines.push(`console error: ${message.text()}`);
     }
   });
-  page.on('pageerror', (error) =>
-    lines.push(`page error: ${redactUrls(error.message)}`)
-  );
+  page.on('pageerror', (error) => lines.push(`page error: ${error.message}`));
   page.on('requestfailed', (request) =>
     lines.push(
-      `request failed: ${urlForLog(request.url())} (${redactUrls(request.failure()?.errorText ?? 'unknown')})`
+      `request failed: ${request.url()} (${request.failure()?.errorText ?? 'unknown'})`
     )
   );
   page.on('response', (response) => {
     if (response.status() >= FIRST_ERROR_STATUS) {
-      lines.push(`response ${response.status()}: ${urlForLog(response.url())}`);
+      lines.push(`response ${response.status()}: ${response.url()}`);
     }
   });
   return lines;
@@ -55,7 +55,9 @@ async function reportOnFailure(
   if (testInfo.status === testInfo.expectedStatus) {
     return;
   }
-  const report = lines.length > 0 ? lines.join('\n') : 'nothing recorded';
+  const report = redactUrls(
+    lines.length > 0 ? lines.join('\n') : 'nothing recorded'
+  );
   console.log(`Page diagnostics of "${testInfo.title}":\n${report}`);
   await testInfo.attach(ATTACHMENT_NAME, {
     body: report,
