@@ -28,6 +28,17 @@ export interface BacteriumAnchor {
 /** The cell's box is this much wider than high. */
 export const BACTERIUM_ASPECT = 4 / 3;
 
+/**
+ * How far the cell's canvas reaches past its box on each side, in the box's
+ * size (#3240): the flagella reach 1.35 of the box's half height from the
+ * centre and the glow farther, past the box's 4/3, so a canvas the size of
+ * the box cut them off in a straight line.
+ */
+export const CELL_BLEED = 0.15;
+
+/** The cell's canvas in the box's size: the box and a bleed each side. */
+export const CELL_SCALE = 1 + 2 * CELL_BLEED;
+
 /** The ellipse the lobes sit on, in the box's half width and half height. */
 const RIM = { x: 0.68, y: 0.66 } as const;
 

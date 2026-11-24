@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { RANKS } from '@wolsok/feat-shared-bacteria-engine';
-import { bacteriumItems } from './bacterium/bacterium-items';
+import { bacteriumItems, CELL_BLEED } from './bacterium/bacterium-items';
 import {
   BACTERIUM_RENDERER,
   type BacteriumRenderer,
@@ -97,6 +97,13 @@ describe('BacteriumMenuComponent', () => {
     expect(spot('colony')?.textContent).toContain('4');
     expect(element.querySelector('canvas')?.getAttribute('aria-hidden')).toBe(
       'true'
+    );
+  });
+
+  it('lets the canvas reach past the box by the bleed (#3240)', () => {
+    const { element } = render(new RecordingRenderer());
+    expect(element.style.getPropertyValue('--cell-bleed')).toBe(
+      String(CELL_BLEED)
     );
   });
 
