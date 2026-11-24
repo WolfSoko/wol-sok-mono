@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.184.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.184.0...v74.184.1) (2026-11-24)
+
+### Bug Fixes
+
+* **shared-e2e-server:** redact a URL query holding a quote, bracket or JSON ([#3245](https://github.com/WolfSoko/wol-sok-mono/issues/3245)) ([55eaeb8](https://github.com/WolfSoko/wol-sok-mono/commit/55eaeb807655f50578baa0a96f62e90dca2565b1)), references [#3238](https://github.com/WolfSoko/wol-sok-mono/issues/3238) [#3238](https://github.com/WolfSoko/wol-sok-mono/issues/3238) [#3238](https://github.com/WolfSoko/wol-sok-mono/issues/3238)
+
 ## [74.184.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.3...v74.184.0) (2026-11-24)
 
 ### Features
