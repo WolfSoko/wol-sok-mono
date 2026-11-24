@@ -22,6 +22,10 @@ describe('GET /sitemap.xml', () => {
     vi.mocked(setResponseHeaders).mockClear();
   });
 
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('lists a newly created open poll and lets the CDN keep it an hour', async () => {
     vi.mocked(listedPolls).mockResolvedValue([
       { id: 'brand-new', closesAt: new Date(Date.now() + 60_000) },
@@ -37,12 +41,19 @@ describe('GET /sitemap.xml', () => {
   });
 
   it('still lists the static pages for a minute when Firestore fails', async () => {
-    vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    vi.mocked(listedPolls).mockRejectedValue(new Error('unavailable'));
+    const logError = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
+    const failure = new Error('unavailable');
+    vi.mocked(listedPolls).mockRejectedValue(failure);
 
     const xml = await requestSitemap();
 
     expect(xml).toContain('<loc>https://rollapolla.com/polls</loc>');
+    expect(logError).toHaveBeenCalledWith(
+      'sitemap.xml: could not read the listed polls',
+      failure
+    );
     expect(setResponseHeaders).toHaveBeenCalledWith(event, {
       'content-type': 'application/xml; charset=utf-8',
       'cache-control': 'public, max-age=60, s-maxage=60',

@@ -9,7 +9,6 @@ Spec: [docs/specs/3246-rollapolla-sitemap-lists-every-public-poll-including-newl
   constraints, the mapping (`ttl` to `closesAt`), the skip of a document
   without `ttl`, and the timeout with fake timers.
 - Check: `npx nx test rollapolla-analog`.
-- Commit: `test(rollapolla-analog): cover the Firestore read of the sitemap`
 
 ## Task 2: spec for the `/sitemap.xml` route
 
@@ -18,7 +17,7 @@ Spec: [docs/specs/3246-rollapolla-sitemap-lists-every-public-poll-including-newl
   check the listed poll in the XML with the one-hour cache, and the fallback
   with the one-minute cache.
 - Check: `npx nx test rollapolla-analog`, `typecheck-specs`, lint.
-- Commit: `test(rollapolla-analog): cover the sitemap route's cache paths`
+- Commit (both tasks together, the PR is squash-merged): `test(rollapolla-analog): cover the dynamic sitemap`
 
 ## Task 3: PR
 

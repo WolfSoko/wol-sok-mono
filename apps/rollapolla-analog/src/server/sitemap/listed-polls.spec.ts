@@ -1,5 +1,16 @@
-import { getDocs, limit, orderBy, query, where } from 'firebase/firestore/lite';
+import {
+  getDocs,
+  limit,
+  orderBy,
+  query,
+  QuerySnapshot,
+  where,
+} from 'firebase/firestore/lite';
 import { listedPolls } from './listed-polls';
+
+/** Mirrors MAX_POLLS and TIMEOUT_MS in listed-polls.ts. */
+const EXPECTED_MAX_POLLS = 1000;
+const EXPECTED_TIMEOUT_MS = 5000;
 
 vi.mock('firebase/app', () => ({
   getApps: vi.fn(() => []),
@@ -26,13 +37,13 @@ vi.mock('firebase/firestore/lite', () => ({
 
 type StoredPoll = { id: string; ttl?: Date };
 
-function snapshotOf(polls: readonly StoredPoll[]) {
-  return {
-    docs: polls.map(({ id, ttl }) => ({
-      id,
-      data: () => (ttl ? { ttl: { toDate: () => ttl } } : {}),
-    })),
-  };
+/** A fake of the parts of a snapshot that listedPolls reads. */
+function snapshotOf(polls: readonly StoredPoll[]): QuerySnapshot {
+  const docs = polls.map(({ id, ttl }) => ({
+    id,
+    data: () => (ttl ? { ttl: { toDate: () => ttl } } : {}),
+  }));
+  return { docs } as unknown as QuerySnapshot;
 }
 
 describe('listedPolls', () => {
@@ -41,7 +52,7 @@ describe('listedPolls', () => {
   });
 
   it('asks Firestore for the newest listed polls', async () => {
-    vi.mocked(getDocs).mockResolvedValue(snapshotOf([]) as never);
+    vi.mocked(getDocs).mockResolvedValue(snapshotOf([]));
 
     await listedPolls();
 
@@ -49,14 +60,14 @@ describe('listedPolls', () => {
       { path: 'polls' },
       where('listed', '==', true),
       orderBy('createdAt', 'desc'),
-      limit(1000)
+      limit(EXPECTED_MAX_POLLS)
     );
   });
 
   it('maps a newly created listed poll to its id and closing time', async () => {
     const closesAt = new Date('2026-12-24T09:00:00Z');
     vi.mocked(getDocs).mockResolvedValue(
-      snapshotOf([{ id: 'new-poll', ttl: closesAt }]) as never
+      snapshotOf([{ id: 'new-poll', ttl: closesAt }])
     );
 
     await expect(listedPolls()).resolves.toEqual([
@@ -67,7 +78,7 @@ describe('listedPolls', () => {
   it('skips a poll without ttl and keeps the others', async () => {
     const closesAt = new Date('2026-12-24T09:00:00Z');
     vi.mocked(getDocs).mockResolvedValue(
-      snapshotOf([{ id: 'broken' }, { id: 'fine', ttl: closesAt }]) as never
+      snapshotOf([{ id: 'broken' }, { id: 'fine', ttl: closesAt }])
     );
 
     await expect(listedPolls()).resolves.toEqual([{ id: 'fine', closesAt }]);
@@ -80,9 +91,11 @@ describe('listedPolls', () => {
 
       // settle the rejection right away, so it is never unhandled meanwhile
       const outcome = listedPolls().catch((error: unknown) => error);
-      await vi.advanceTimersByTimeAsync(5000);
+      await vi.advanceTimersByTimeAsync(EXPECTED_TIMEOUT_MS);
 
-      expect(await outcome).toEqual(new Error('no answer within 5000 ms'));
+      expect(await outcome).toEqual(
+        new Error(`no answer within ${EXPECTED_TIMEOUT_MS} ms`)
+      );
     } finally {
       vi.useRealTimers();
     }
