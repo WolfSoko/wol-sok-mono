@@ -7,6 +7,7 @@ import {
 import {
   AllowedMethods,
   Distribution,
+  ErrorResponse,
   FunctionCode,
   FunctionAssociation,
   FunctionEventType,
@@ -33,6 +34,8 @@ import {
   Source,
 } from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 import { assertNoFileIsAnotherSourcesFolder } from './deployment-sources';
 import { ViewerRequestOptions, viewerRequestSource } from './viewer-request';
 
@@ -83,6 +86,15 @@ export interface SpaProps {
    * @default false
    */
   resolveFolderIndex?: boolean;
+  /**
+   * A page of the build output, relative to buildOutputPath (`404/index.html`),
+   * that answers every path S3 has no key for, with status 404. For
+   * prerendered sites, whose pages all exist as files, so a miss is a wrong
+   * URL rather than a client-side route. Without it a miss falls back to
+   * index.html with 200, which a SPA's own router needs. Synth fails when the
+   * page is not in the build output.
+   */
+  notFoundPage?: string;
 }
 
 interface DeploymentOptions {
@@ -128,6 +140,51 @@ function onlyInclude(files: string[]): string[] {
 export function certificateDomainNames(domainName: string): string[] {
   const mainDomain = domainName.split('.').slice(-2).join('.');
   return mainDomain === domainName ? [mainDomain] : [mainDomain, domainName];
+}
+
+/** How long CloudFront caches an error response; every deployment invalidates it. */
+const ERROR_RESPONSE_TTL = Duration.minutes(30);
+
+/**
+ * What CloudFront answers for a key S3 does not have. Behind Origin Access
+ * Control S3 answers 403 for it (404 where the bucket policy grants
+ * s3:ListBucket). Without a not-found page a miss gets index.html with 200,
+ * so a SPA's router can take the path; with one, the page and 404.
+ */
+function errorResponses(
+  buildOutputPath: string,
+  notFoundPage?: string
+): ErrorResponse[] {
+  if (notFoundPage === undefined) {
+    return [
+      {
+        httpStatus: 403,
+        responseHttpStatus: 200,
+        responsePagePath: '/index.html',
+        ttl: ERROR_RESPONSE_TTL,
+      },
+    ];
+  }
+  assertIsBuiltPage(buildOutputPath, notFoundPage);
+  return [403, 404].map((httpStatus) => ({
+    httpStatus,
+    responseHttpStatus: 404,
+    responsePagePath: `/${notFoundPage}`,
+    ttl: ERROR_RESPONSE_TTL,
+  }));
+}
+
+function assertIsBuiltPage(buildOutputPath: string, page: string): void {
+  if (page.startsWith('/')) {
+    throw new Error(
+      `notFoundPage "${page}" must be relative to buildOutputPath, without a leading "/".`
+    );
+  }
+  if (!existsSync(join(buildOutputPath, page))) {
+    throw new Error(
+      `notFoundPage "${page}" is not in the build output ${buildOutputPath}.`
+    );
+  }
 }
 
 const defaultBucketRemovalPolicy: RemovalPolicy = RemovalPolicy.DESTROY;
@@ -303,12 +360,18 @@ export class SpaConstruct extends Construct {
     certificate: ICertificate,
     siteBucket: IBucket,
     {
+      buildOutputPath,
       extraAllowedOrigins = [],
       redirectTrailingSlash,
       resolveFolderIndex,
+      notFoundPage,
     }: Pick<
       SpaProps,
-      'extraAllowedOrigins' | 'redirectTrailingSlash' | 'resolveFolderIndex'
+      | 'buildOutputPath'
+      | 'extraAllowedOrigins'
+      | 'redirectTrailingSlash'
+      | 'resolveFolderIndex'
+      | 'notFoundPage'
     >
   ): Distribution {
     const responseHeadersPolicy = new ResponseHeadersPolicy(
@@ -336,14 +399,7 @@ export class SpaConstruct extends Construct {
       domainNames: [siteDomain],
       httpVersion: HttpVersion.HTTP2_AND_3,
       minimumProtocolVersion: SecurityPolicyProtocol.TLS_V1_2_2021,
-      errorResponses: [
-        {
-          httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: '/index.html',
-          ttl: Duration.minutes(30),
-        },
-      ],
+      errorResponses: errorResponses(buildOutputPath, notFoundPage),
       defaultBehavior: {
         responseHeadersPolicy,
         origin: S3BucketOrigin.withOriginAccessControl(siteBucket),

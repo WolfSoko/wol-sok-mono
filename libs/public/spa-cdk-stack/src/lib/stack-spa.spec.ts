@@ -1,6 +1,7 @@
 import { App, Duration, RemovalPolicy, Stack } from 'aws-cdk-lib';
 import { Match, Template } from 'aws-cdk-lib/assertions';
-import { readdirSync } from 'fs';
+import { mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'fs';
+import { tmpdir } from 'os';
 import * as path from 'path';
 import { vitest } from 'vitest';
 import { SpaCertificateStack, SpaStack, SpaStackProps } from './spa/spa.stack';
@@ -260,6 +261,73 @@ describe('SpaCdkStack', () => {
       const { template } = testStackFactory();
 
       template().resourceCountIs('AWS::CloudFront::Function', 0);
+    });
+  });
+
+  describe('not-found page', () => {
+    let notFoundBuild: string;
+
+    beforeEach(() => {
+      notFoundBuild = mkdtempSync(path.join(tmpdir(), 'spa-not-found-'));
+      mkdirSync(path.join(notFoundBuild, '404'));
+      writeFileSync(path.join(notFoundBuild, 'index.html'), '<html></html>');
+      writeFileSync(
+        path.join(notFoundBuild, '404/index.html'),
+        '<html>Not found</html>'
+      );
+    });
+
+    afterEach(() => rmSync(notFoundBuild, { recursive: true, force: true }));
+
+    function errorResponses(template: Template): unknown {
+      const [distribution] = Object.values(
+        template.findResources('AWS::CloudFront::Distribution')
+      );
+      return distribution['Properties'].DistributionConfig.CustomErrorResponses;
+    }
+
+    it('should fall back to index.html with 200 by default', () => {
+      const { template } = testStackFactory();
+
+      expect(errorResponses(template())).toEqual([
+        {
+          ErrorCachingMinTTL: 1800,
+          ErrorCode: 403,
+          ResponseCode: 200,
+          ResponsePagePath: '/index.html',
+        },
+      ]);
+    });
+
+    it('should answer a missing key with the page and 404', () => {
+      const { template } = testStackFactory({
+        buildOutputPath: notFoundBuild,
+        notFoundPage: '404/index.html',
+      });
+
+      expect(errorResponses(template())).toEqual(
+        [403, 404].map((code) => ({
+          ErrorCachingMinTTL: 1800,
+          ErrorCode: code,
+          ResponseCode: 404,
+          ResponsePagePath: '/404/index.html',
+        }))
+      );
+    });
+
+    it('should refuse a page that is not in the build output', () => {
+      expect(() =>
+        testStackFactory({ notFoundPage: '404/index.html' })
+      ).toThrow(/notFoundPage "404\/index.html" is not in the build output/);
+    });
+
+    it('should refuse a page with a leading slash', () => {
+      expect(() =>
+        testStackFactory({
+          buildOutputPath: notFoundBuild,
+          notFoundPage: '/404/index.html',
+        })
+      ).toThrow(/relative to buildOutputPath/);
     });
   });
 
