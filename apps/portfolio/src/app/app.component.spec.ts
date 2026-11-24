@@ -4,6 +4,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { provideTheme } from '@wolsok/shared-theme';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { AD_SCRIPT_SELECTOR } from './ad-script';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
 import { BLOG_POSTS } from './blog/posts';
@@ -75,6 +76,10 @@ describe('AppComponent', () => {
   });
 
   it('shows the not-found page under an unknown path, noindex and without canonical', async () => {
+    const adScript = document.createElement('script');
+    adScript.src =
+      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1';
+    document.head.appendChild(adScript);
     TestBed.inject(SeoService).init();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/nope/deeper');
@@ -89,6 +94,7 @@ describe('AppComponent', () => {
     ).toBe('noindex');
     expect(head.querySelector('link[rel="canonical"]')).toBeNull();
     expect(head.querySelector('meta[property="og:url"]')).toBeNull();
+    expect(head.querySelector(AD_SCRIPT_SELECTOR)).toBeNull();
 
     await harness.navigateByUrl('/career');
     expect(head.querySelector('meta[name="robots"]')).toBeNull();

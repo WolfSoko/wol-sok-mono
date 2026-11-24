@@ -61,6 +61,11 @@ page, prerendered, `noindex`, in English and German, with a link home.
    `<meta name="robots" content="noindex">` and drops the canonical link for
    such a page, and removes the robots tag again on the next page. The
    not-found page's title and description are its own (both languages).
+   It also takes the AdSense script (`adsbygoogle.js`) out of the page
+   (`removeAdScript`, `ad-script.ts`), so the prerendered `404/index.html`
+   carries none: AdSense allows no ads on a page without content (decided
+   by the owner on 2026-11-24, request 1692). The `google-adsense-account`
+   meta tag stays.
 6. **`portfolio-cdk` passes `notFoundPage: '404/index.html'`.** The page is
    already uploaded `no-cache` like every prerendered page
    (`resolvablePages`), so a release replaces it at once.
@@ -78,7 +83,7 @@ page, prerendered, `noindex`, in English and German, with a link home.
 4. The portfolio stack synthesises with `notFoundPage: '404/index.html'`, and
    its spec checks the error responses.
 5. The portfolio build writes `dist/apps/portfolio/404/index.html`, holding
-   the not-found text, `noindex` and no canonical link.
+   the not-found text, `noindex`, no canonical link and no AdSense script.
 6. In the browser an unknown path (`/nope`) shows the not-found page under
    `/nope`, with a working link home; the router no longer redirects it to
    `/`.
