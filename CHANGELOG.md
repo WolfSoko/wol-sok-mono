@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.183.3](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.2...v74.183.3) (2026-11-24)
+
+### Bug Fixes
+
+* **feat-lazy-bacteria-game:** the menu bacterium's flagella end in tips, not at the canvas ([#3242](https://github.com/WolfSoko/wol-sok-mono/issues/3242)) ([06fa442](https://github.com/WolfSoko/wol-sok-mono/commit/06fa442d26f3a35f1debaa00aa7cfb997ca63a9c)), references [#3240](https://github.com/WolfSoko/wol-sok-mono/issues/3240) [#3240](https://github.com/WolfSoko/wol-sok-mono/issues/3240)
+
 ## [74.183.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.1...v74.183.2) (2026-11-24)
 
 ### Bug Fixes
