@@ -81,7 +81,7 @@ dependencies {
   // The Firebase app `de.wolsok.bacteriawars` of the project `bacteria-wars`: the
   // Android OAuth client Play Games Services asks for lives there (see README.md),
   // and Analytics counts the app's installs and opens beside the web game's.
-  implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
+  implementation(platform("com.google.firebase:firebase-bom:35.2.0"))
   implementation("com.google.firebase:firebase-analytics")
   // Play Games Services: signs the player in to Play Games on launch (BacteriaWarsApplication).
   implementation("com.google.android.gms:play-services-games-v2:22.1.0")
