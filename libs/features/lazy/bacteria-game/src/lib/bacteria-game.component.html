@@ -113,184 +113,187 @@
         [style.--bw-on-player]="hud.onPlayerColor()"
       >
         <feat-lazy-bac-game-swarm [colors]="hud.colonyRgb()" />
-        <div class="social-notices">
-          <feat-lazy-bac-game-moderation-notices />
-          @if (flow.declaring()) {
-            <p class="declaring" role="status">
-              {{ "boards.ranked.declaring" | t }}
-            </p>
-          }
-          <feat-lazy-bac-game-social-notices
-            [invite]="moderation.banned() ? null : onlineFlow.inviteOffer()"
-            [canPlay]="
-              onlineFlow.lobby().phase === 'idle' && !moderation.banned()
-            "
-            (play)="onlineFlow.playChallenge($event)"
-            (inviteDone)="onlineFlow.inviteOffer.set(null)"
-          />
-        </div>
-        @switch (open) {
-          @case ("menu") {
-            <feat-lazy-bac-game-main-menu
-              class="screen"
-              [campaign]="campaign.summary()"
-              [sound]="settings.value('sound')"
-              (newGame)="flow.openNewGame()"
-              [playerColor]="hud.colonyRgb()[0]"
-              (continueCampaign)="flow.continueCampaign()"
-              [missionsDone]="progress.missionsDone()"
-              (training)="flow.openTraining()"
-              [onlineAvailable]="onlineFlow.available"
-              (online)="flow.openNewGameOn({ kind: 'online', step: 'start' })"
-              (open)="flow.show($event)"
-              (soundChange)="setSound($event)"
-              [fullscreen]="stageFullscreen.fullscreen()"
-              (fullscreenChange)="stageFullscreen.set($event)"
-              [challenge]="hud.challengeLevel()"
-              [cloudAvailable]="social.available"
-              [friendRequests]="social.requests().length"
-              [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
-              [colonyDna]="evolution.skinDna()"
-              [dna]="evolution.dna()"
-              [dnaEarned]="evolution.earned()"
-              [dnaLoaded]="evolution.loaded()"
-              (fightChallenge)="flow.fightChallenge()"
-              (dismissChallenge)="flow.dismissChallenge()"
-            />
-          }
-          @case ("new-game") {
-            <feat-lazy-bac-game-new-game
-              class="screen"
-              [entry]="flow.newGameEntry()"
-              [difficulty]="hud.difficulty()"
-              [levelId]="setup.choiceLevelId()"
-              [medals]="progress.medals()"
-              [locks]="flow.choiceLocks()"
-              [openLevels]="flow.openLevels()"
-              [seriesLength]="setup.seriesLength()"
-              [headStart]="setup.headStart()"
-              [colonyNames]="hud.colorNames()"
-              [rivalry]="hud.rivalry()"
-              [daily]="flow.dailyCard()"
-              [endlessBest]="progress.endlessBest()"
-              [missionId]="flow.missionId()"
-              [training]="progress.training()"
-              (missionChange)="flow.pickMission($event)"
-              [online]="onlineFlow.lobby()"
-              [onlineAvailable]="onlineFlow.available"
-              [rankedOffers]="flow.rankedOffers()"
-              [declaring]="flow.declaring()"
-              (rankedChange)="settings.set('ranked', $event)"
-              (hostOnline)="onlineFlow.host()"
-              (joinOnline)="onlineFlow.join($event)"
-              (leaveOnline)="onlineFlow.leave()"
-              (kindChange)="flow.setPlayKind($event)"
-              (levelChange)="setup.selectLevel($event)"
-              (difficultyChange)="setup.selectDifficulty($event)"
-              (seriesLengthChange)="setup.selectSeriesLength($event)"
-              (headStartChange)="setup.selectHeadStart($event)"
-              (start)="flow.startNewGame($event)"
-              (back)="flow.back()"
-            />
-          }
-          @case ("colony") {
-            <feat-lazy-bac-game-my-colony
-              class="screen"
-              [mode]="hud.mode()"
-              [colors]="hud.colors()"
-              [locked]="hud.running()"
-              [colorLocks]="progress.colorLocks()"
-              (colorChange)="setup.selectColor($event)"
-              (back)="flow.back()"
-            />
-          }
-          @case ("profile") {
-            <!-- Not needed to start the game: loaded when first opened. -->
-            @defer (on immediate) {
-              <feat-lazy-bac-game-profile
-                class="screen"
-                [medals]="progress.medals()"
-                [achievements]="progress.achievements()"
-                [totals]="progress.totals()"
-                [xp]="progress.xp()"
-                (back)="flow.back()"
-                (openAchievements)="flow.show('achievements')"
-              />
+        <!-- Held back while the player profile loads, so nothing jumps. -->
+        <feat-lazy-bac-game-profile-curtain>
+          <div class="social-notices">
+            <feat-lazy-bac-game-moderation-notices />
+            @if (flow.declaring()) {
+              <p class="declaring" role="status">
+                {{ "boards.ranked.declaring" | t }}
+              </p>
             }
-          }
-          @case ("achievements") {
-            <!-- Not needed to start the game: loaded when first opened. -->
-            @defer (on immediate) {
-              <feat-lazy-bac-game-achievements
-                class="screen"
-                [achievements]="progress.achievements()"
-                [backLabel]="flow.backLabel()"
-                (back)="flow.back()"
-              />
-            }
-          }
-          @case ("friends") {
-            <feat-lazy-bac-game-friends-screen
-              class="screen"
-              [canChallenge]="onlineFlow.lobby().phase === 'idle'"
-              (challenge)="onlineFlow.challengeFriend($event)"
-              (back)="flow.back()"
-            />
-          }
-          @case ("settings") {
-            <feat-lazy-bac-game-settings
-              class="screen"
-              [locked]="hud.running()"
-              [arenaSize]="arenaStage.arena()"
-              [nativeFullscreenSupported]="
-                stageFullscreen.nativeFullscreenSupported()
+            <feat-lazy-bac-game-social-notices
+              [invite]="moderation.banned() ? null : onlineFlow.inviteOffer()"
+              [canPlay]="
+                onlineFlow.lobby().phase === 'idle' && !moderation.banned()
               "
-              [nativeFullscreen]="stageFullscreen.nativeFullscreen()"
-              [backLabel]="flow.backLabel()"
-              [vibrationSupported]="vibrationSupported"
-              (soundChange)="setSound($event)"
-              (effectsChange)="setEffects($event)"
-              (effectsVolumePreview)="sound.previewEffects()"
-              (vibrationChange)="setVibration($event)"
-              [arenaLocks]="progress.arenaLocks()"
-              [activeArena]="campaign.activeArena()"
-              (nativeFullscreenChange)="stageFullscreen.setNative($event)"
-              (back)="flow.back()"
+              (play)="onlineFlow.playChallenge($event)"
+              (inviteDone)="onlineFlow.inviteOffer.set(null)"
             />
+          </div>
+          @switch (open) {
+            @case ("menu") {
+              <feat-lazy-bac-game-main-menu
+                class="screen"
+                [campaign]="campaign.summary()"
+                [sound]="settings.value('sound')"
+                (newGame)="flow.openNewGame()"
+                [playerColor]="hud.colonyRgb()[0]"
+                (continueCampaign)="flow.continueCampaign()"
+                [missionsDone]="progress.missionsDone()"
+                (training)="flow.openTraining()"
+                [onlineAvailable]="onlineFlow.available"
+                (online)="flow.openNewGameOn({ kind: 'online', step: 'start' })"
+                (open)="flow.show($event)"
+                (soundChange)="setSound($event)"
+                [fullscreen]="stageFullscreen.fullscreen()"
+                (fullscreenChange)="stageFullscreen.set($event)"
+                [challenge]="hud.challengeLevel()"
+                [cloudAvailable]="social.available"
+                [friendRequests]="social.requests().length"
+                [evolveDna]="evolution.canEvolve() ? evolution.dna() : 0"
+                [colonyDna]="evolution.skinDna()"
+                [dna]="evolution.dna()"
+                [dnaEarned]="evolution.earned()"
+                [dnaLoaded]="evolution.loaded()"
+                (fightChallenge)="flow.fightChallenge()"
+                (dismissChallenge)="flow.dismissChallenge()"
+              />
+            }
+            @case ("new-game") {
+              <feat-lazy-bac-game-new-game
+                class="screen"
+                [entry]="flow.newGameEntry()"
+                [difficulty]="hud.difficulty()"
+                [levelId]="setup.choiceLevelId()"
+                [medals]="progress.medals()"
+                [locks]="flow.choiceLocks()"
+                [openLevels]="flow.openLevels()"
+                [seriesLength]="setup.seriesLength()"
+                [headStart]="setup.headStart()"
+                [colonyNames]="hud.colorNames()"
+                [rivalry]="hud.rivalry()"
+                [daily]="flow.dailyCard()"
+                [endlessBest]="progress.endlessBest()"
+                [missionId]="flow.missionId()"
+                [training]="progress.training()"
+                (missionChange)="flow.pickMission($event)"
+                [online]="onlineFlow.lobby()"
+                [onlineAvailable]="onlineFlow.available"
+                [rankedOffers]="flow.rankedOffers()"
+                [declaring]="flow.declaring()"
+                (rankedChange)="settings.set('ranked', $event)"
+                (hostOnline)="onlineFlow.host()"
+                (joinOnline)="onlineFlow.join($event)"
+                (leaveOnline)="onlineFlow.leave()"
+                (kindChange)="flow.setPlayKind($event)"
+                (levelChange)="setup.selectLevel($event)"
+                (difficultyChange)="setup.selectDifficulty($event)"
+                (seriesLengthChange)="setup.selectSeriesLength($event)"
+                (headStartChange)="setup.selectHeadStart($event)"
+                (start)="flow.startNewGame($event)"
+                (back)="flow.back()"
+              />
+            }
+            @case ("colony") {
+              <feat-lazy-bac-game-my-colony
+                class="screen"
+                [mode]="hud.mode()"
+                [colors]="hud.colors()"
+                [locked]="hud.running()"
+                [colorLocks]="progress.colorLocks()"
+                (colorChange)="setup.selectColor($event)"
+                (back)="flow.back()"
+              />
+            }
+            @case ("profile") {
+              <!-- Not needed to start the game: loaded when first opened. -->
+              @defer (on immediate) {
+                <feat-lazy-bac-game-profile
+                  class="screen"
+                  [medals]="progress.medals()"
+                  [achievements]="progress.achievements()"
+                  [totals]="progress.totals()"
+                  [xp]="progress.xp()"
+                  (back)="flow.back()"
+                  (openAchievements)="flow.show('achievements')"
+                />
+              }
+            }
+            @case ("achievements") {
+              <!-- Not needed to start the game: loaded when first opened. -->
+              @defer (on immediate) {
+                <feat-lazy-bac-game-achievements
+                  class="screen"
+                  [achievements]="progress.achievements()"
+                  [backLabel]="flow.backLabel()"
+                  (back)="flow.back()"
+                />
+              }
+            }
+            @case ("friends") {
+              <feat-lazy-bac-game-friends-screen
+                class="screen"
+                [canChallenge]="onlineFlow.lobby().phase === 'idle'"
+                (challenge)="onlineFlow.challengeFriend($event)"
+                (back)="flow.back()"
+              />
+            }
+            @case ("settings") {
+              <feat-lazy-bac-game-settings
+                class="screen"
+                [locked]="hud.running()"
+                [arenaSize]="arenaStage.arena()"
+                [nativeFullscreenSupported]="
+                  stageFullscreen.nativeFullscreenSupported()
+                "
+                [nativeFullscreen]="stageFullscreen.nativeFullscreen()"
+                [backLabel]="flow.backLabel()"
+                [vibrationSupported]="vibrationSupported"
+                (soundChange)="setSound($event)"
+                (effectsChange)="setEffects($event)"
+                (effectsVolumePreview)="sound.previewEffects()"
+                (vibrationChange)="setVibration($event)"
+                [arenaLocks]="progress.arenaLocks()"
+                [activeArena]="campaign.activeArena()"
+                (nativeFullscreenChange)="stageFullscreen.setNative($event)"
+                (back)="flow.back()"
+              />
+            }
+            @case ("evolution") {
+              <feat-lazy-bac-game-evolution
+                class="screen"
+                [color]="hud.colonyRgb()[0]"
+                (back)="flow.back()"
+              />
+            }
+            @case ("leaderboards") {
+              <feat-lazy-bac-game-leaderboards
+                class="screen"
+                (back)="flow.back()"
+              />
+            }
+            @case ("my-matches") {
+              <feat-lazy-bac-game-my-matches
+                class="screen"
+                (back)="flow.back()"
+              />
+            }
+            @case ("replay") {
+              <feat-lazy-bac-game-replay-screen
+                class="screen"
+                (back)="flow.back()"
+              />
+            }
+            @case ("help") {
+              <feat-lazy-bac-game-help
+                class="screen"
+                [colorNames]="hud.colorNames()"
+                (back)="flow.back()"
+              />
+            }
           }
-          @case ("evolution") {
-            <feat-lazy-bac-game-evolution
-              class="screen"
-              [color]="hud.colonyRgb()[0]"
-              (back)="flow.back()"
-            />
-          }
-          @case ("leaderboards") {
-            <feat-lazy-bac-game-leaderboards
-              class="screen"
-              (back)="flow.back()"
-            />
-          }
-          @case ("my-matches") {
-            <feat-lazy-bac-game-my-matches
-              class="screen"
-              (back)="flow.back()"
-            />
-          }
-          @case ("replay") {
-            <feat-lazy-bac-game-replay-screen
-              class="screen"
-              (back)="flow.back()"
-            />
-          }
-          @case ("help") {
-            <feat-lazy-bac-game-help
-              class="screen"
-              [colorNames]="hud.colorNames()"
-              (back)="flow.back()"
-            />
-          }
-        }
+        </feat-lazy-bac-game-profile-curtain>
       </div>
     }
   }

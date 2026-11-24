@@ -22,6 +22,7 @@ export const stage: Translation<typeof en> = {
   countdown: 'Das Match beginnt in {seconds}',
   waitingForPeer: 'Warte auf deinen Gegner …',
   busy: 'Wird geladen …',
+  loadingProfile: 'Dein Profil wird geladen …',
   pause: {
     title: 'Pause',
     resume: 'Weiter',

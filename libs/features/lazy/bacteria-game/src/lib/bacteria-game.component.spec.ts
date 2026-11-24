@@ -1,5 +1,5 @@
 import { StageBusy } from './busy/stage-busy';
-import { Provider } from '@angular/core';
+import { Provider, signal } from '@angular/core';
 import {
   ComponentFixture,
   ComponentFixtureAutoDetect,
@@ -12,6 +12,8 @@ import { recordingPainters } from '../testing/recording-painter';
 import { BacteriaGameComponent } from './bacteria-game.component';
 import { CampaignService } from './campaign.service';
 import { I18nService } from './i18n/i18n.service';
+import { ProfileGate } from './menu/profile-gate';
+import { SPLASH_ID } from './splash';
 import { PROGRESS_STORAGE_KEY } from './progress.service';
 import { GameSettingsService } from './settings.service';
 import { GameStateService } from './state/game-state.service';
@@ -145,6 +147,51 @@ describe('BacteriaGameComponent', () => {
       component['flow'].togglePause();
 
       expect(arena.requestFullscreen).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('while the player profile loads', () => {
+    const ready = signal(false);
+    let splash: HTMLElement;
+
+    beforeEach(() => {
+      ready.set(false);
+      splash = document.createElement('div');
+      splash.id = SPLASH_ID;
+      document.body.append(splash);
+    });
+
+    afterEach(() => splash.remove());
+    stubRendering();
+
+    function createWithGate(): void {
+      create(false, true, true, [
+        recordingPainters(),
+        { provide: ProfileGate, useValue: { ready } },
+      ]);
+    }
+
+    it('keeps the loading screen until the profile is known', async () => {
+      createWithGate();
+      await fixture.whenStable();
+      expect(splash.classList).not.toContain('done');
+
+      ready.set(true);
+      await fixture.whenStable();
+
+      expect(splash.classList).toContain('done');
+    });
+
+    it('holds the menu back behind the profile curtain', async () => {
+      createWithGate();
+      await fixture.whenStable();
+      const host: HTMLElement = fixture.nativeElement;
+
+      expect(
+        host.querySelector(
+          '.screens feat-lazy-bac-game-profile-curtain .content.pending feat-lazy-bac-game-main-menu'
+        )
+      ).not.toBeNull();
     });
   });
 

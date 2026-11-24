@@ -48,6 +48,8 @@ import { MyColonyComponent } from './menu/my-colony.component';
 import { NewGameComponent } from './menu/new-game.component';
 import { AchievementsComponent } from './menu/achievements.component';
 import { ProfileComponent } from './menu/profile.component';
+import { ProfileCurtainComponent } from './menu/profile-curtain.component';
+import { ProfileGate } from './menu/profile-gate';
 import { SettingsComponent } from './menu/settings.component';
 import { SwarmComponent } from './menu/swarm.component';
 import { LeaderboardsComponent } from './boards/leaderboards.component';
@@ -103,6 +105,7 @@ import { WinnerComponent } from './winner-info/winner.component';
     MainMenuComponent,
     NewGameComponent,
     ProfileComponent,
+    ProfileCurtainComponent,
     AchievementsComponent,
     EvolutionComponent,
     TranslatePipe,
@@ -215,6 +218,15 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
     this.playGamesHandover.start();
     this.checkGpu();
 
+    // The site's loading screen stays until the menu shows as stored, so
+    // the visitor sees it go straight to the finished menu (#3241).
+    const gate = inject(ProfileGate);
+    effect(() => {
+      if (gate.ready()) {
+        untracked(() => dismissSplash(document));
+      }
+    });
+
     // A resumed match picks its music up where the match clock stands, so
     // it stays in step with a map that moves to it.
     effect(() => {
@@ -226,7 +238,6 @@ export class BacteriaGameComponent implements AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    dismissSplash(document);
     // The owner's toggles once the game is up: Remote Config stays off the
     // start, and the defaults hold until it answered.
     this.featureToggles.start();

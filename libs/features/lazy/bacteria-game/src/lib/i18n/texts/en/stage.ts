@@ -25,6 +25,8 @@ export const stage = {
   waitingForPeer: 'Waiting for your opponent…',
   /** The spinner while a tap's work is under way. */
   busy: 'Loading…',
+  /** The spinner over the menu screens while the player profile loads. */
+  loadingProfile: 'Loading your profile…',
   pause: {
     title: 'Paused',
     resume: 'Resume',
