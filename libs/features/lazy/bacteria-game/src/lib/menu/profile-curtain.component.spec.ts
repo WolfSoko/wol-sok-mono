@@ -57,4 +57,21 @@ describe('ProfileCurtainComponent', () => {
     expect(content(root).hasAttribute('inert')).toBe(false);
     expect(spinner(root)).toBeNull();
   });
+
+  it('gives the focus back once the curtain lifts', () => {
+    ready.set(true);
+    const root = render();
+    document.body.append(root);
+    const button = root.querySelector('button') as HTMLButtonElement;
+    button.focus();
+
+    ready.set(false);
+    fixture.detectChanges();
+    button.blur(); // inert takes the focus away in a browser; jsdom does not
+    ready.set(true);
+    fixture.detectChanges();
+
+    expect(document.activeElement).toBe(button);
+    root.remove();
+  });
 });
