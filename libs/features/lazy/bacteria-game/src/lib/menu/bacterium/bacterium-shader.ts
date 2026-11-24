@@ -1,3 +1,4 @@
+import { CELL_SCALE } from './bacterium-items';
 import { MAX_FLAGELLA } from './bacterium-look';
 
 /** The most lobes the shader draws: every item but the nucleus. */
@@ -21,11 +22,14 @@ void main() {
 
 /**
  * The cell (#3194), raymarched as a signed distance field in an
- * orthographic view, so a point of the box (`vUv`, -1 to 1) lies over the
- * same point of the cell however it turns: a capsule body that breathes,
- * the menu's lobes smoothly joined to it at the anchors the buttons sit
- * on, and what the player's rank adds - pili round the membrane, flagella
- * from the poles, organelles glowing through. The body turns about its
+ * orthographic view, so a point of the box lies over the same point of the
+ * cell however it turns. The canvas reaches past the box (`vUv` -1 to 1 is
+ * `CELL_SCALE` times the box, #3240) and fades out at its edge, so neither
+ * the flagella nor the glow end in a straight line. The cell is a
+ * capsule body that breathes, the menu's lobes smoothly joined to it at
+ * the anchors the buttons sit on, and what the player's rank adds - pili
+ * round the membrane, flagella from the poles, thinning to their tips,
+ * organelles glowing through. The body turns about its
  * long axis by `uTurn` (its cosine and sine, the same for every pixel of
  * a frame); the lobes stay put under their buttons. The lobe `uHot` names
  * swells by `uHotSwell` and lights up (-1 none, `MAX_LOBES` the nucleus,
@@ -53,9 +57,16 @@ uniform float uWobble;
 uniform vec3 uBody;
 uniform vec3 uRim;
 
+// The canvas in the box's size, and how much of it fades out at its edge.
+const float CELL_SCALE = ${CELL_SCALE.toFixed(5)};
+const float EDGE_FADE = 0.08;
 const float HALF_LENGTH = 0.42;
 const float RADIUS = 0.5;
 const int STEPS = 56;
+// The rays start just in front of the cell, which stays within 0.62 of the
+// box's plane, and end as far behind it: a ray missing the cell, as in the
+// canvas's bleed (#3240), takes few steps.
+const float RAY_START = 0.8;
 // The game's gold (--bw-gold, 233 185 73) and its pulse, 2 pi in 1.8 s.
 const vec3 GOLD = vec3(0.914, 0.725, 0.286);
 const float READY_PULSE = 3.49;
@@ -98,8 +109,10 @@ float flagella(vec3 turned) {
     q.x *= side;
     float along = clamp((q.x - 0.78) / 0.55, 0.0, 1.0);
     float wave = 0.07 * along * sin(10.0 * q.x - uTime * 5.0 + float(i));
+    // Thinning to a point at its tip (#3240), not cut off at full width.
+    float tip = 1.0 - smoothstep(0.7, 1.0, along);
     float tube = length(vec2(q.y - 0.22 - 0.25 * along - wave, q.z))
-      - 0.03 * (1.0 - 0.6 * along);
+      - 0.03 * (1.0 - 0.6 * along) * tip;
     best = min(best, max(tube, abs(q.x - 1.06) - 0.29));
   }
   return best;
@@ -169,8 +182,15 @@ vec3 readyGlow(vec2 at) {
   return sum;
 }
 
+/** 1 inside the canvas, falling to 0 over its last EDGE_FADE. */
+float edgeFade() {
+  vec2 inside = 1.0 - abs(vUv);
+  return smoothstep(0.0, EDGE_FADE, min(inside.x, inside.y));
+}
+
 void main() {
-  vec3 origin = vec3(vUv.x * uAspect, vUv.y, 2.0);
+  vec2 box = vUv * CELL_SCALE;
+  vec3 origin = vec3(box.x * uAspect, box.y, RAY_START);
   vec3 ray = vec3(0.0, 0.0, -1.0);
   float travelled = 0.0;
   float closest = 10.0;
@@ -183,13 +203,13 @@ void main() {
       break;
     }
     travelled += d * 0.8;
-    if (travelled > 4.0) {
+    if (travelled > 2.0 * RAY_START) {
       break;
     }
   }
   float halo = uGlow * 0.45 * exp(-max(closest, 0.0) * 18.0);
   if (!hit) {
-    outColor = vec4(uRim * halo, halo);
+    outColor = vec4(uRim * halo, halo) * edgeFade();
     return;
   }
   vec3 p = origin + ray * travelled;
@@ -208,6 +228,6 @@ void main() {
     float away = length(p.xy - vec2(hot.x * uAspect, hot.y));
     colour += uRim * 0.6 * (1.0 - smoothstep(hot.z * 0.5, hot.z * 1.6, away));
   }
-  outColor = vec4(colour, 1.0);
+  outColor = vec4(colour, 1.0) * edgeFade();
 }
 `;

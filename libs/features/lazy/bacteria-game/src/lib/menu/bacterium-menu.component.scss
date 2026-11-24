@@ -1,5 +1,5 @@
 // The bacterium menu (#3194): it fills the 4:3 box the main menu gives it
-// (BACTERIUM_ASPECT), the cell's canvas filling it and
+// (BACTERIUM_ASPECT), the cell's canvas filling it and a bleed round it,
 // the parts laid over their lobes. Positions come from BACTERIUM_ANCHORS
 // through inline left/top, so the CSS only centres each part on its point.
 
@@ -13,11 +13,16 @@
   container-type: inline-size;
 }
 
+// The canvas reaches past the box by --cell-bleed of its size on each side
+// (CELL_BLEED, #3240), so the flagella and the glow fade out rather than
+// end at the box's edge. Decoration: the parts take the pointer.
 .cell {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  top: calc(-100% * var(--cell-bleed));
+  left: calc(-100% * var(--cell-bleed));
+  width: calc(100% * (1 + 2 * var(--cell-bleed)));
+  height: calc(100% * (1 + 2 * var(--cell-bleed)));
+  pointer-events: none;
 }
 
 :host(.css-cell) .cell {

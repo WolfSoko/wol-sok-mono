@@ -23,6 +23,7 @@ import {
 import { TranslatePipe } from '../i18n/translate.pipe';
 import {
   BACTERIUM_ANCHORS,
+  CELL_BLEED,
   type BacteriumItem,
   type BacteriumItemId,
 } from './bacterium/bacterium-items';
@@ -67,6 +68,7 @@ const FRAME_MS = 1000 / 30;
     '[style.--cell-body]': 'colours().body',
     '[style.--cell-rim]': 'colours().rim',
     '[style.--cell-glow]': 'look().glow',
+    '[style.--cell-bleed]': 'bleed',
   },
 })
 export class BacteriumMenuComponent {
@@ -98,6 +100,7 @@ export class BacteriumMenuComponent {
   );
 
   protected readonly anchors = BACTERIUM_ANCHORS;
+  protected readonly bleed = CELL_BLEED;
 
   private readonly canvas =
     viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
