@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.183.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.1...v74.183.2) (2026-11-24)
+
+### Bug Fixes
+
+* **bacteria-wars-android:** deploy reads its inputs outside the app ([#3223](https://github.com/WolfSoko/wol-sok-mono/issues/3223)) ([5387969](https://github.com/WolfSoko/wol-sok-mono/commit/5387969565f89befe8d4790c981105b5e0cae684)), closes [#3206](https://github.com/WolfSoko/wol-sok-mono/issues/3206), references [#3206](https://github.com/WolfSoko/wol-sok-mono/issues/3206) [#3206](https://github.com/WolfSoko/wol-sok-mono/issues/3206)
+* **tools:** cap the Jest workers of a task at its share of the cores ([#3239](https://github.com/WolfSoko/wol-sok-mono/issues/3239)) ([a56e933](https://github.com/WolfSoko/wol-sok-mono/commit/a56e9335a38dc47ba9f949e75322bbdc48b7e18f)), closes [#3172](https://github.com/WolfSoko/wol-sok-mono/issues/3172), references [#3172](https://github.com/WolfSoko/wol-sok-mono/issues/3172)
+
+### Chore
+
+* **release:** publish ([78b45de](https://github.com/WolfSoko/wol-sok-mono/commit/78b45dec878d4b50d07d276c27897d665d1529e4))
+* remove Entire integration ([00e2036](https://github.com/WolfSoko/wol-sok-mono/commit/00e2036ddc894dec5a770e128244462f486de4d3))
+
 ## [74.183.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.183.0...v74.183.1) (2026-11-23)
 
 ### Testing
