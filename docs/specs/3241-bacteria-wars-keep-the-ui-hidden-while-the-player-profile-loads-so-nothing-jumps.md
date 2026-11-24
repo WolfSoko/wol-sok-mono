@@ -27,9 +27,10 @@ profile is known. Then they appear in their final state.
    - With the cloud (`GameAccount.cloud`), also `GameAccount.profile() !== null`
      (the account chip) and, when `SocialService.available`,
      `SocialService.profileLoaded` (the stored avatar and name).
-   
+
    The rule is a pure function, `profileKnown(...)`, so it is tested
    without Angular.
+
 2. **It never hides forever.** A root service `ProfileGate`
    (`menu/profile-gate.ts`) exposes `ready = known || waitedOut`.
    `waitedOut` turns true `PROFILE_WAIT_MS` (3 s, as `EVOLUTION_WAIT_MS`)
