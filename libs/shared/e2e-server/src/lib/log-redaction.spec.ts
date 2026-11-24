@@ -55,6 +55,60 @@ describe('redactUrls', () => {
     );
   });
 
+  // A query may hold these characters unencoded: app code writes raw URLs
+  // into messages, and even a URL the browser serialised keeps a backtick.
+  it.each([
+    ["'", "https://example.test/api?token=public'secret-value"],
+    ['"', 'https://example.test/api?token=public"secret-value'],
+    ['<', 'https://example.test/api?token=public<secret-value'],
+    ['>', 'https://example.test/api?token=public>secret-value'],
+    ['`', 'https://example.test/api?token=public`secret-value'],
+  ])('drops the whole query holding an unencoded %s', (_delimiter, url) => {
+    expect(redactUrls(`failed: ${url} (timeout)`)).toBe(
+      'failed: https://example.test/api (timeout)'
+    );
+  });
+
+  it('drops a hash holding an unencoded quote', () => {
+    expect(redactUrls('at http://a.test/x#t="secret" now')).toBe(
+      'at http://a.test/x" now'
+    );
+  });
+
+  it('keeps the quotes around a quoted URL with a query, and the text after it', () => {
+    expect(
+      redactUrls(
+        "Access to fetch at 'https://example.test/api?token=secret' from origin 'http://localhost:4200' has been blocked."
+      )
+    ).toBe(
+      "Access to fetch at 'https://example.test/api' from origin 'http://localhost:4200/' has been blocked."
+    );
+  });
+
+  it('keeps an apostrophe inside a path', () => {
+    expect(redactUrls("see http://a.test/it's/here?x=1 now")).toBe(
+      "see http://a.test/it's/here now"
+    );
+  });
+
+  it('keeps a backtick-quoted URL apart from the text after it', () => {
+    expect(redactUrls('loaded `http://a.test/x?t=1`, then failed')).toBe(
+      'loaded `http://a.test/x`, then failed'
+    );
+  });
+
+  it('finds a URL glued to the word before it', () => {
+    expect(redactUrls('urlhttps://a.test/x?token=secret')).toBe(
+      'urlhttps://a.test/x'
+    );
+  });
+
+  it('reduces a long run of quotes in linear time', () => {
+    const text = `http://a.test/x?${"'a".repeat(100_000)}`;
+
+    expect(redactUrls(text)).toBe('http://a.test/x');
+  });
+
   it('leaves text without URLs alone', () => {
     expect(redactUrls('ReferenceError: ngDevMode is not defined')).toBe(
       'ReferenceError: ngDevMode is not defined'

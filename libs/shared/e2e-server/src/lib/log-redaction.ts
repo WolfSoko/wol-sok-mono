@@ -5,11 +5,16 @@
  */
 
 /**
- * An http(s) or ws(s) URL inside a text, up to the next whitespace, quote,
- * angle bracket or backtick, none of which a URL holds unencoded, so the
- * text after it (`","error":"timeout"}`) stays.
+ * An http(s) or ws(s) URL inside a text, up to the next whitespace. A quote,
+ * an angle bracket or a backtick ends it only where the text goes on with
+ * whitespace, punctuation or another of them (`","error":…`, `'>`, `` `, ``):
+ * a query may hold each of them unencoded (app code writes raw URLs into
+ * messages, and the browser leaves a backtick as it is), so ending at the
+ * first one would leave the rest of the query in the log. Every character
+ * either is or is not one of them, so matching stays linear.
  */
-const URL_IN_TEXT = /\b(?:https?|wss?):\/\/[^\s"'<>`]+/gi;
+const URL_IN_TEXT =
+  /(?:https?|wss?):\/\/(?:[^\s"'<>`]|["'<>`](?![\s"'<>`,;:.!?)\]}]|$))+/gi;
 
 /** Credentials of a URL `new URL` refused, and where its query or hash starts. */
 const CREDENTIALS = /\/\/[^/@]*@/;
