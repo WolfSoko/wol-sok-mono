@@ -1,6 +1,6 @@
-import { redactUrls, urlForLog } from './log-redaction';
+import { redactUrls } from './log-redaction';
 
-describe('urlForLog', () => {
+describe('redactUrls', () => {
   it.each([
     ['http://localhost:4200/main.js?v=1#top', 'http://localhost:4200/main.js'],
     ['https://user:secret@example.test/api', 'https://example.test/api'],
@@ -10,23 +10,13 @@ describe('urlForLog', () => {
     ],
     ['blob:http://localhost:4200/0f1e?x=1', 'blob:http://localhost:4200/0f1e'],
     ['http://localhost:4200/', 'http://localhost:4200/'],
+    ['http://user:pw@[bad/x?token=1', 'http://[bad/x'],
+    ['http://u:p@ss@a.test/x', 'http://a.test/x'],
+    ['WSS://U:P@Relay.test/s?token=abc', 'WSS://Relay.test/s'],
   ])('reduces %s to %s', (url, expected) => {
-    expect(urlForLog(url)).toBe(expected);
+    expect(redactUrls(url)).toBe(expected);
   });
 
-  it('cuts query, hash and credentials off a URL it cannot parse', () => {
-    expect(urlForLog('http://user:pw@[bad/x?token=1')).toBe('http://[bad/x');
-  });
-
-  // CodeQL flagged a /[?#].*$/ fallback as slow on a long run of '#'.
-  it('cuts an unparsable URL with a long run of # in linear time', () => {
-    const url = `http://[bad/${'#'.repeat(100_000)}`;
-
-    expect(urlForLog(url)).toBe('http://[bad/');
-  });
-});
-
-describe('redactUrls', () => {
   it('strips query and hash of every URL in a message, keeping the text', () => {
     expect(
       redactUrls(
@@ -35,23 +25,13 @@ describe('redactUrls', () => {
     ).toBe('Http failure response for http://a.test/x 404 at https://b.test/y');
   });
 
-  it('strips web socket URLs and credentials as well', () => {
-    expect(
-      redactUrls(
-        'WebSocket connection to WSS://relay.test/s?token=abc failed, see http://u:p@c.test/d'
-      )
-    ).toBe(
-      'WebSocket connection to wss://relay.test/s failed, see http://c.test/d'
-    );
-  });
-
   it('keeps the text right after a URL without query that ends at a quote or bracket', () => {
     expect(
       redactUrls(
-        '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b>'
+        '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b> loaded `http://a.test/x`, then failed'
       )
     ).toBe(
-      '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b>'
+      '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b> loaded `http://a.test/x`, then failed'
     );
   });
 
@@ -79,16 +59,20 @@ describe('redactUrls', () => {
     ['<', 'https://example.test/api?token=public<secret-value'],
     ['>', 'https://example.test/api?token=public>secret-value'],
     ['`', 'https://example.test/api?token=public`secret-value'],
+    ['" in a hash', 'https://example.test/api#token="secret-value"'],
   ])('drops the whole query holding an unencoded %s', (_delimiter, url) => {
     expect(redactUrls(`failed: ${url} (timeout)`)).toBe(
       'failed: https://example.test/api (timeout)'
     );
   });
 
-  it('drops a hash holding an unencoded quote', () => {
-    expect(redactUrls('at http://a.test/x#t="secret" now')).toBe(
-      'at http://a.test/x now'
-    );
+  it.each([
+    ["https://a.test/it's/here?x=secret", "https://a.test/it's/here"],
+    ["https://a.test/it'.x?token=secret", "https://a.test/it'.x"],
+    ['https://a.test/a"\'b?token=secret', 'https://a.test/a"\'b'],
+    ["https://a.test/a'),b?token=secret", "https://a.test/a'),b"],
+  ])('drops the query after a quote inside a path: %s', (url, expected) => {
+    expect(redactUrls(url)).toBe(expected);
   });
 
   it('keeps the opening quote of a quoted URL with a query, and the text after it', () => {
@@ -97,19 +81,7 @@ describe('redactUrls', () => {
         "Access to fetch at 'https://example.test/api?token=secret' from origin 'http://localhost:4200' has been blocked."
       )
     ).toBe(
-      "Access to fetch at 'https://example.test/api from origin 'http://localhost:4200/' has been blocked."
-    );
-  });
-
-  it('keeps an apostrophe inside a path', () => {
-    expect(redactUrls("see http://a.test/it's/here?x=1 now")).toBe(
-      "see http://a.test/it's/here now"
-    );
-  });
-
-  it('keeps a backtick-quoted URL without query apart from the text after it', () => {
-    expect(redactUrls('loaded `http://a.test/x`, then failed')).toBe(
-      'loaded `http://a.test/x`, then failed'
+      "Access to fetch at 'https://example.test/api from origin 'http://localhost:4200' has been blocked."
     );
   });
 
@@ -117,12 +89,6 @@ describe('redactUrls', () => {
     expect(redactUrls('urlhttps://a.test/x?token=secret')).toBe(
       'urlhttps://a.test/x'
     );
-  });
-
-  it('reduces a long run of quotes in linear time', () => {
-    const text = `http://a.test/x?${"'a".repeat(100_000)}`;
-
-    expect(redactUrls(text)).toBe('http://a.test/x');
   });
 
   // Angular's HttpErrorResponse names the request's own URL on status 0,
@@ -134,26 +100,69 @@ describe('redactUrls', () => {
     ],
     ['see //cdn.test/x?token=secret now', 'see //cdn.test/x now'],
     ["at '/api/x#token=secret'", "at '/api/x"],
+    ['redirect:/login?next=secret', 'redirect:/login'],
+    ['GET;/api?token=secret', 'GET;/api'],
+    ['&/api?token=secret', '&/api'],
+    ['x|/api?token=secret', 'x|/api'],
+    ['http:/a.test/x?token=secret', 'http:/a.test/x'],
   ])('strips query and hash of a relative URL: %s', (text, expected) => {
     expect(redactUrls(text)).toBe(expected);
   });
 
   it('leaves a path without query or hash alone', () => {
-    expect(redactUrls('read /home/ci/app.log and/or 1/2')).toBe(
-      'read /home/ci/app.log and/or 1/2'
+    expect(
+      redactUrls(
+        'read /home/ci/app.log and/or 1/2 at (/app/node_modules/@a/b.js:1:2)'
+      )
+    ).toBe(
+      'read /home/ci/app.log and/or 1/2 at (/app/node_modules/@a/b.js:1:2)'
     );
   });
 
+  // The cost of finding relative URLs: a regex literal reads as one.
+  it('cuts a quoted regex literal at its ?', () => {
+    expect(
+      redactUrls('Invalid regular expression: /a?b/: Nothing to repeat')
+    ).toBe('Invalid regular expression: /a Nothing to repeat');
+  });
+
   it.each([
-    ['"https:\\/\\/a.test\\/x?token=secret"'],
-    ['http:\\\\a.test\\x?token=secret'],
-  ])('strips the query of a URL written with backslashes: %s', (text) => {
-    expect(redactUrls(text)).not.toContain('secret');
+    ['"https:\\/\\/a.test\\/x?token=secret"', '"https:\\/\\/a.test\\/x'],
+    ['http:\\\\a.test\\x?token=secret', 'http:\\\\a.test\\x'],
+    ['http:\\\\u:pw@[bad\\x?y', 'http://[bad\\x'],
+  ])(
+    'strips query and credentials of a URL written with backslashes: %s',
+    (text, expected) => {
+      expect(redactUrls(text)).toBe(expected);
+    }
+  );
+
+  it('takes no @ after a closing quote for a password', () => {
+    expect(redactUrls('{"a":"//a.test","b":"c@d"}')).toBe(
+      '{"a":"//a.test","b":"c@d"}'
+    );
   });
 
   it('leaves text without URLs alone', () => {
     expect(redactUrls('ReferenceError: ngDevMode is not defined')).toBe(
       'ReferenceError: ngDevMode is not defined'
     );
+  });
+
+  it.each([
+    [
+      'quotes in a query',
+      `http://a.test/x?${"'a".repeat(100_000)}`,
+      'http://a.test/x',
+    ],
+    ['# after a host', `http://[bad/${'#'.repeat(100_000)}`, 'http://[bad/'],
+    ['slashes', '/'.repeat(100_000), '/'.repeat(100_000)],
+    [
+      'credentials without @',
+      `//${'a'.repeat(100_000)}`,
+      `//${'a'.repeat(100_000)}`,
+    ],
+  ])('reduces a long run of %s in linear time', (_kind, text, expected) => {
+    expect(redactUrls(text)).toBe(expected);
   });
 });

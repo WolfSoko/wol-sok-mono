@@ -18,6 +18,10 @@ Branch `3238-e2e-log-redaction-apostrophe` off `main`, one PR.
    in `apps/angular-examples/e2e/fixtures/page-diagnostics.ts`), review
    posted as a PR comment.
    - Commit: `fix(shared-e2e-server): drop a URL's whole query up to whitespace (#3238)`.
-3. **Checks and PR.** `npx nx format:write`, then
+3. **`/code-review` and `/simplify`** (CodeRabbit rate-limited): `redactUrls`
+   per word, the relative start widened, credentials with backslashes, the
+   report redacted once in `page-diagnostics.ts`, `urlForLog` removed.
+   - Commit: `refactor(shared-e2e-server): redact URLs per word, once per report (#3238)`.
+4. **Checks and PR.** `npx nx format:write`, then
    `npx nx affected --base=origin/main -t lint,lint-templates,test,typecheck-specs`.
    Open the PR with `Closes #3238` and the acceptance list.
