@@ -15,7 +15,8 @@ Features are:
   regions.
 - Redirect from HTTP to HTTPS with an ACM certificate.
 - Route53 alias record creation,
-- Optionally, a permanent redirect from `/path/` to `/path`.
+- Optionally, a permanent redirect from `/path/` to `/path`, folder indexes
+  for prerendered pages and a not-found page with status 404.
 
 ## Usage
 
@@ -103,6 +104,22 @@ const unreachable = pages.filter((page) => !servesFolderIndex(`/${page}`));
 if (unreachable.length > 0) {
   throw new Error(`Not served from their index.html: ${unreachable}`);
 }
+```
+
+Behind Origin Access Control S3 answers `403` for every key it does not have,
+and by default the distribution turns that into `index.html` with status `200`,
+so a SPA's router can take any path. A prerendered site has a file for every
+page, so a miss is a wrong URL: name a page of the build output in
+`notFoundPage`, and every miss gets that page with status `404` instead, while
+the browser keeps the URL. Synth fails when the page is not in
+`buildOutputPath`:
+
+```ts
+new SpaStack(app, 'Site', {
+  // ...
+  resolveFolderIndex: true,
+  notFoundPage: '404/index.html',
+});
 ```
 
 ## Building

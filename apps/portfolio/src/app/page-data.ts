@@ -6,4 +6,6 @@ export interface PageData {
   description: Localized;
   /** The Open Graph type, `website` unless the page is an article. */
   type?: 'website' | 'article';
+  /** Keeps the page out of search results: `noindex`, no canonical URL. */
+  noindex?: true;
 }
