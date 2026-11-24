@@ -56,7 +56,9 @@ async function reportOnFailure(
     return;
   }
   const report = lines.length > 0 ? lines.join('\n') : 'nothing recorded';
-  console.log(`Page diagnostics of "${testInfo.title}":\n${report}`);
+  console.log(
+    `Page diagnostics of "${redactUrls(testInfo.title)}":\n${report}`
+  );
   await testInfo.attach(ATTACHMENT_NAME, {
     body: report,
     contentType: 'text/plain',

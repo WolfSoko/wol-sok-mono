@@ -13,8 +13,11 @@ Branch `3238-e2e-log-redaction-apostrophe` off `main`, one PR.
      another delimiter or the end; no `\b`.
    - Commit: `fix(shared-e2e-server): redact a query holding an apostrophe (#3238)`.
 2. **Fresh review** of the final redaction code by a subagent
-   (code-review skill), findings that are leaks fixed with a spec each,
-   review posted as a PR comment.
+   (code-review skill), findings that are leaks fixed with a spec each
+   (query up to whitespace, relative and backslashed URLs, the test title
+   in `apps/angular-examples/e2e/fixtures/page-diagnostics.ts`), review
+   posted as a PR comment.
+   - Commit: `fix(shared-e2e-server): drop a URL's whole query up to whitespace (#3238)`.
 3. **Checks and PR.** `npx nx format:write`, then
    `npx nx affected --base=origin/main -t lint,lint-templates,test,typecheck-specs`.
    Open the PR with `Closes #3238` and the acceptance list.

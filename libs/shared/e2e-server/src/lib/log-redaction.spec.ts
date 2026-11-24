@@ -45,14 +45,30 @@ describe('redactUrls', () => {
     );
   });
 
-  it('keeps the text right after a URL that ends at a quote or bracket', () => {
+  it('keeps the text right after a URL without query that ends at a quote or bracket', () => {
     expect(
       redactUrls(
-        '{"url":"https://example.test/api?token=secret","error":"timeout"} <http://a.test/b?c=1>'
+        '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b>'
       )
     ).toBe(
       '{"url":"https://example.test/api","error":"timeout"} <http://a.test/b>'
     );
+  });
+
+  // The accepted cost: what follows a query up to the next whitespace goes
+  // with it, since it cannot be told apart from JSON inside the query.
+  it('drops the rest of the word after a query inside JSON or brackets', () => {
+    expect(
+      redactUrls(
+        '{"url":"https://example.test/api?token=secret","error":"timeout"} <http://a.test/b?c=1>'
+      )
+    ).toBe('{"url":"https://example.test/api <http://a.test/b');
+  });
+
+  it('drops JSON inside a raw query', () => {
+    expect(
+      redactUrls('GET http://a.test/x?data={"a":"b","token":"secret"} failed')
+    ).toBe('GET http://a.test/x failed');
   });
 
   // A query may hold these characters unencoded: app code writes raw URLs
@@ -71,17 +87,17 @@ describe('redactUrls', () => {
 
   it('drops a hash holding an unencoded quote', () => {
     expect(redactUrls('at http://a.test/x#t="secret" now')).toBe(
-      'at http://a.test/x" now'
+      'at http://a.test/x now'
     );
   });
 
-  it('keeps the quotes around a quoted URL with a query, and the text after it', () => {
+  it('keeps the opening quote of a quoted URL with a query, and the text after it', () => {
     expect(
       redactUrls(
         "Access to fetch at 'https://example.test/api?token=secret' from origin 'http://localhost:4200' has been blocked."
       )
     ).toBe(
-      "Access to fetch at 'https://example.test/api' from origin 'http://localhost:4200/' has been blocked."
+      "Access to fetch at 'https://example.test/api from origin 'http://localhost:4200/' has been blocked."
     );
   });
 
@@ -91,8 +107,8 @@ describe('redactUrls', () => {
     );
   });
 
-  it('keeps a backtick-quoted URL apart from the text after it', () => {
-    expect(redactUrls('loaded `http://a.test/x?t=1`, then failed')).toBe(
+  it('keeps a backtick-quoted URL without query apart from the text after it', () => {
+    expect(redactUrls('loaded `http://a.test/x`, then failed')).toBe(
       'loaded `http://a.test/x`, then failed'
     );
   });
@@ -107,6 +123,32 @@ describe('redactUrls', () => {
     const text = `http://a.test/x?${"'a".repeat(100_000)}`;
 
     expect(redactUrls(text)).toBe('http://a.test/x');
+  });
+
+  // Angular's HttpErrorResponse names the request's own URL on status 0,
+  // which is relative where the app requested a relative path.
+  it.each([
+    [
+      'Http failure response for /api/x?token=secret: 0 Unknown Error',
+      'Http failure response for /api/x 0 Unknown Error',
+    ],
+    ['see //cdn.test/x?token=secret now', 'see //cdn.test/x now'],
+    ["at '/api/x#token=secret'", "at '/api/x"],
+  ])('strips query and hash of a relative URL: %s', (text, expected) => {
+    expect(redactUrls(text)).toBe(expected);
+  });
+
+  it('leaves a path without query or hash alone', () => {
+    expect(redactUrls('read /home/ci/app.log and/or 1/2')).toBe(
+      'read /home/ci/app.log and/or 1/2'
+    );
+  });
+
+  it.each([
+    ['"https:\\/\\/a.test\\/x?token=secret"'],
+    ['http:\\\\a.test\\x?token=secret'],
+  ])('strips the query of a URL written with backslashes: %s', (text) => {
+    expect(redactUrls(text)).not.toContain('secret');
   });
 
   it('leaves text without URLs alone', () => {
