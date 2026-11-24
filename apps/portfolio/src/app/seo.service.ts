@@ -42,7 +42,8 @@ export class SeoService {
     while (route.firstChild) {
       route = route.firstChild;
     }
-    const { title, description, type } = route.data as Partial<PageData>;
+    const { title, description, type, noindex } =
+      route.data as Partial<PageData>;
     const path = this.router.url.split(/[?#]/)[0];
     const url = SITE_URL + path;
     if (description) {
@@ -57,10 +58,23 @@ export class SeoService {
       this.title.setTitle(text);
       this.meta.updateTag({ property: 'og:title', content: text });
     }
+    if (noindex) {
+      this.meta.updateTag({ name: 'robots', content: 'noindex' });
+      this.canonicalLink()?.remove();
+    } else {
+      this.meta.removeTag('name="robots"');
+      this.setCanonical(url);
+    }
+  }
 
-    let canonical = this.document.head.querySelector<HTMLLinkElement>(
+  private canonicalLink(): HTMLLinkElement | null {
+    return this.document.head.querySelector<HTMLLinkElement>(
       'link[rel="canonical"]'
     );
+  }
+
+  private setCanonical(url: string): void {
+    let canonical = this.canonicalLink();
     if (!canonical) {
       canonical = this.document.createElement('link');
       canonical.rel = 'canonical';

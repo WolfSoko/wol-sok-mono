@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { provideTheme } from '@wolsok/shared-theme';
 import { readFileSync } from 'node:fs';
@@ -72,6 +72,28 @@ describe('AppComponent', () => {
       head.querySelector('meta[name="description"]')?.getAttribute('content')
     ).toContain('Freiberuflicher');
     localStorage.clear();
+  });
+
+  it('shows the not-found page under an unknown path, noindex and without canonical', async () => {
+    TestBed.inject(SeoService).init();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/nope/deeper');
+    const head = document.head;
+
+    expect(TestBed.inject(Router).url).toBe('/nope/deeper');
+    const page = harness.routeNativeElement as HTMLElement;
+    expect(page.textContent).toContain('Page not found');
+    expect(page.querySelector('a[href="/"]')).not.toBeNull();
+    expect(
+      head.querySelector('meta[name="robots"]')?.getAttribute('content')
+    ).toBe('noindex');
+    expect(head.querySelector('link[rel="canonical"]')).toBeNull();
+
+    await harness.navigateByUrl('/career');
+    expect(head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(
+      head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+    ).toBe('https://wolsok.de/career');
   });
 
   it('switches the language and the theme from the header', async () => {

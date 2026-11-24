@@ -1,0 +1,18 @@
+:host {
+  display: block;
+}
+
+.hero {
+  padding: 4rem 0 3rem;
+}
+
+h1 {
+  margin: 0;
+  font-size: clamp(2.1rem, 5.5vw, 3.6rem);
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+}
+
+.lead {
+  margin-bottom: 2rem;
+}

@@ -100,4 +100,10 @@ export const en = {
       'I work remote from {city}, on site where it helps, in German or English. Say hello and tell me what you are building.',
     contactMail: 'Write me',
   },
+  notFound: {
+    eyebrow: 'Error 404',
+    title: 'Page not found',
+    lead: 'There is no page at this address. The link may be old or mistyped; the home page leads to everything on the site.',
+    home: 'Go to the home page',
+  },
 };

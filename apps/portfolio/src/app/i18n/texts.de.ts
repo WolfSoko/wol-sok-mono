@@ -98,4 +98,10 @@ export const de: Translation<typeof en> = {
       'Ich arbeite remote aus {city}, vor Ort wo es hilft, auf Deutsch oder Englisch. Sag Hallo und erzähl mir, was du baust.',
     contactMail: 'Schreib mir',
   },
+  notFound: {
+    eyebrow: 'Fehler 404',
+    title: 'Seite nicht gefunden',
+    lead: 'Unter dieser Adresse gibt es keine Seite. Vielleicht ist der Link alt oder vertippt; die Startseite führt zu allem auf der Seite.',
+    home: 'Zur Startseite',
+  },
 };
