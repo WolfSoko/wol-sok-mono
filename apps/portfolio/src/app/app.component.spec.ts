@@ -75,11 +75,29 @@ describe('AppComponent', () => {
     localStorage.clear();
   });
 
-  it('shows the not-found page under an unknown path, noindex and without canonical', async () => {
-    const adScript = document.createElement('script');
-    adScript.src =
-      'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1';
-    document.head.appendChild(adScript);
+  /** Puts the AdSense script tag of the real index.html into the head. */
+  function addIndexAdScript(): void {
+    const index = new DOMParser().parseFromString(
+      readFileSync(join(__dirname, '../index.html'), 'utf8'),
+      'text/html'
+    );
+    const scripts = index.querySelectorAll(AD_SCRIPT_SELECTOR);
+    expect(scripts).toHaveLength(1);
+    document.head.appendChild(document.importNode(scripts[0], true));
+  }
+
+  it('keeps the AdSense script of index.html on an indexable page', async () => {
+    addIndexAdScript();
+    TestBed.inject(SeoService).init();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/privacy');
+
+    expect(document.head.querySelectorAll(AD_SCRIPT_SELECTOR)).toHaveLength(1);
+    document.head.querySelector(AD_SCRIPT_SELECTOR)?.remove();
+  });
+
+  it('shows the not-found page under an unknown path, noindex, without canonical and AdSense script', async () => {
+    addIndexAdScript();
     TestBed.inject(SeoService).init();
     const harness = await RouterTestingHarness.create();
     await harness.navigateByUrl('/nope/deeper');
