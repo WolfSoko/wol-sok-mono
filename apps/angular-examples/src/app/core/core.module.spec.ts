@@ -1,23 +1,31 @@
-import { ErrorHandler } from '@angular/core';
+import { ErrorHandler, NgModule } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import * as Sentry from '@sentry/angular';
-import {
-  provideErrorReports,
-  startErrorReports,
-} from '@wolsok/shared-error-reports';
-import { environment } from '../../environments/environment';
+import { provideCore } from './core.module';
 
 jest.mock('@sentry/angular', () => ({
   init: jest.fn(),
   captureException: jest.fn(),
 }));
 
-describe('error reports outside production', () => {
-  it("start no Sentry and keep Angular's error handler", async () => {
-    startErrorReports(environment.sentry);
-    TestBed.configureTestingModule({
-      providers: [provideErrorReports(environment.sentry)],
-    });
+// The Firebase-bound parts of the shell's providers, which no spec reaches.
+jest.mock('@wolsok/shared-data-access', () => ({
+  provideDataAccess: () => [],
+}));
+jest.mock('@wolsok/feat-api-auth', () => {
+  @NgModule({})
+  class AuthModule {
+    public static forRoot() {
+      return { ngModule: AuthModule, providers: [] };
+    }
+  }
+  return { AuthModule };
+});
+
+describe('the shell outside production', () => {
+  it("starts no Sentry and keeps Angular's error handler", async () => {
+    TestBed.configureTestingModule({ providers: [provideCore()] });
+
     // TestBed's own handler rethrows; the reporting one would report instead.
     expect(() =>
       TestBed.inject(ErrorHandler).handleError(new Error('in a component'))
