@@ -1,10 +1,6 @@
 import { ErrorHandler } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import * as Sentry from '@sentry/angular';
-import { environment as development } from '../../environments/environment';
-import { environment as e2e } from '../../environments/environment.e2e';
-import { environment as emulator } from '../../environments/environment.emulator';
-import { environment as production } from '../../environments/environment.prod';
 import {
   type ErrorReportOptions,
   provideErrorReports,
@@ -47,19 +43,6 @@ const OPTIONS: ErrorReportOptions = {
 
 describe('error reports', () => {
   beforeEach(() => jest.clearAllMocks());
-
-  it('start only on the live site', () => {
-    expect(production.sentry).toEqual({
-      dsn: expect.stringMatching(
-        /^https:\/\/\w+@o1384048\.ingest\.us\.sentry\.io\/\d+$/
-      ),
-      environment: 'production',
-      release: expect.stringMatching(/^bacteria-wars@v\d+\.\d+\.\d+$/),
-    });
-    for (const environment of [development, emulator, e2e]) {
-      expect(environment.sentry).toBeUndefined();
-    }
-  });
 
   it('start no Sentry without options, and report nothing', async () => {
     const { reportError, startErrorReports } = errorReports();

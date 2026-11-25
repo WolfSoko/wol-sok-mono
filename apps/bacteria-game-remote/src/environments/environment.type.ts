@@ -2,7 +2,7 @@ import type {
   GameCloudOptions,
   GameSupportOptions,
 } from '@wolsok/feat-lazy-bac-game';
-import type { ErrorReportOptions } from '../app/error-reports/error-reports';
+import type { ErrorReportOptions } from '@wolsok/shared-error-reports';
 
 export interface Environment {
   production: boolean;
