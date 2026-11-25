@@ -67,8 +67,9 @@ export class NetworkP5Sketch {
     private showValues: boolean,
     private brainService: BrainService
   ) {
-    p.setup = () =>
+    p.setup = () => {
       p.createCanvas(width, this.heightFor(brainService.perceptrons));
+    };
     p.draw = () => this.draw();
   }
 

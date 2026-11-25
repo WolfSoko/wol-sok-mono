@@ -1,5 +1,5 @@
 import { mapWorkerOp, WorkerPostParams } from '@wolsok/utils-operators';
-import * as P5 from 'p5';
+import P5 from 'p5';
 import { merge, Observable, range, Subject, Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { CellWeights } from '../cell-weights-to-array';

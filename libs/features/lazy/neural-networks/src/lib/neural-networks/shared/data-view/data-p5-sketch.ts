@@ -124,8 +124,7 @@ export class DataP5Sketch {
         mouseX <= this.width &&
         mouseY <= this.p.height
       ) {
-        const mouseButton =
-          this.p.mouseButton === this.p.LEFT ? 'left' : 'right';
+        const mouseButton = this.p.mouseButton.left ? 'left' : 'right';
         this.onClickHandler(mouseX, mouseY, mouseButton);
         return false;
       }
