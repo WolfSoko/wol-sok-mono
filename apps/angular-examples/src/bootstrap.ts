@@ -6,7 +6,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { enableProdMode, provideZonelessChangeDetection } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { enableAkitaProdMode } from '@datorama/akita';
-import { startErrorReports } from '@wolsok/shared-error-reports';
+import { reportError, startErrorReports } from '@wolsok/shared-error-reports';
 import { provideWsThanosOptions } from '@wolsok/thanos';
 import { provideAppRouter } from './app/app-routing';
 import { AppComponent } from './app/app.component';
@@ -18,6 +18,8 @@ if (environment.production) {
   enableAkitaProdMode();
 }
 
+// Before Angular, so a failing start is reported too; the SDK loads beside
+// the start, not before it.
 startErrorReports(environment.sentry);
 
 /** every pixel even of large elements, but only where the device has the memory for it */
@@ -45,4 +47,7 @@ bootstrapApplication(AppComponent, {
     // tooltips have to move into it while a page is fullscreen.
     { provide: OverlayContainer, useClass: FullscreenOverlayContainer },
   ],
-}).catch((err) => console.error(err));
+}).catch((err) => {
+  console.error(err);
+  reportError(err);
+});
