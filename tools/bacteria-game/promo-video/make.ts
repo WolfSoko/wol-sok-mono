@@ -29,6 +29,7 @@ import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { soundtrack } from './audio';
+import { ffmpeg } from './ffmpeg';
 
 const url = process.env['BACTERIA_GAME_URL'] ?? 'http://localhost:4202/';
 const sourceDir = resolve('tools/bacteria-game/promo-video');
@@ -242,30 +243,6 @@ async function render(
   }
   await page.close();
   return framesDir;
-}
-
-/** An ffmpeg with libx264: FFMPEG, the PATH, or one fetched by uvx. */
-function ffmpeg(): string {
-  if (process.env['FFMPEG']) {
-    return process.env['FFMPEG'];
-  }
-  try {
-    execFileSync('ffmpeg', ['-version'], { stdio: 'ignore' });
-    return 'ffmpeg';
-  } catch {
-    return execFileSync(
-      'uvx',
-      [
-        '--from',
-        'imageio-ffmpeg',
-        'python',
-        '-I',
-        '-c',
-        'import imageio_ffmpeg; print(imageio_ffmpeg.get_ffmpeg_exe())',
-      ],
-      { encoding: 'utf8' }
-    ).trim();
-  }
 }
 
 function readJson<T>(path: string): T {
