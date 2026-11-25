@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.187.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.0...v74.187.1) (2026-11-25)
+
+### Bug Fixes
+
+* **deps:** update all non-major dependencies ([#2746](https://github.com/WolfSoko/wol-sok-mono/issues/2746)) ([da9bff8](https://github.com/WolfSoko/wol-sok-mono/commit/da9bff8524e7800a1d3383521b6710ef8bdef1fd))
+
+### Chore
+
+* **release:** publish ([bf6f481](https://github.com/WolfSoko/wol-sok-mono/commit/bf6f481a9b5db4b3a703fd044a8ad9a5d739d9aa))
+
 ## [74.187.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.1...v74.187.0) (2026-11-25)
 
 ### Features
