@@ -1,5 +1,5 @@
 import { TrainData } from './train-data';
-import * as P5 from 'p5';
+import P5 from 'p5';
 
 export type LabelClass = 0 | 1;
 

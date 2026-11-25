@@ -9,7 +9,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import * as math from 'mathjs';
-import P5, { Graphics } from 'p5';
+import P5 from 'p5';
 import { InputWave } from '../../model/input-wave.model';
 import {
   CIRCLE_CANVAS_PADDING,
@@ -54,7 +54,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
    * component (not inside `initSketch`) so re-initialising the sketch for a new
    * wave does not orphan the previous buffer.
    */
-  private fourierCircleImg: Graphics | null = null;
+  private fourierCircleImg: P5.Graphics | null = null;
   private frequencyToTest = 20;
   private centersOfFrequencies: { [key: number]: CenterData } = {};
   private centers: number[] = [];
@@ -72,7 +72,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       if (this.waveWidth() != null || this.waveHeight() != null) {
         if (this.sketch != null) {
           this.sketch.resizeCanvas(this.waveWidth(), this.waveHeight());
-          this.sketch.redraw();
+          void this.sketch.redraw();
         }
       }
     });
@@ -302,9 +302,10 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       selectFrequencyAt.call(this, sketch.mouseX, sketch.mouseY);
     };
 
-    // Touch devices get no hover, so a tap picks the frequency instead. Returning
-    // `true` keeps the default behaviour so the page can still be scrolled.
-    sketch.touchStarted = () => {
+    // Touch devices get no hover, so a tap picks the frequency instead: p5 2
+    // reports a touch as a pointer press. Returning `true` keeps the default
+    // behaviour so the page can still be scrolled.
+    sketch.mousePressed = () => {
       selectFrequencyAt.call(this, sketch.mouseX, sketch.mouseY);
       return true;
     };
@@ -317,7 +318,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
       const point = graphPointAt.call(this, x, y);
       if (point != null && this.finished) {
         setFrequencyToTest.call(this, point.frequency);
-        sketch.redraw();
+        void sketch.redraw();
       }
     }
 
@@ -447,7 +448,7 @@ export class CircleCanvasComponent implements AfterViewInit, OnDestroy {
 
         const x = realStep * radius;
         const y = -imagStep * radius;
-        fourierCircleImg.curveVertex(x, y);
+        fourierCircleImg.splineVertex(x, y);
       }
       fourierCircleImg.endShape('close');
 

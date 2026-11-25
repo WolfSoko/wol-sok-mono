@@ -95,7 +95,7 @@ export class DrawDigitComponent implements AfterViewChecked {
           if (pathElem.isStart()) {
             p.beginShape();
           }
-          p.curveVertex(pathElem.x, pathElem.y);
+          p.splineVertex(pathElem.x, pathElem.y);
           if (pathElem.isEnd()) {
             p.endShape();
           }

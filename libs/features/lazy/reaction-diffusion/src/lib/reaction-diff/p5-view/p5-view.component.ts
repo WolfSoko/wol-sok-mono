@@ -99,8 +99,6 @@ export class P5ViewComponent implements OnChanges, OnDestroy {
 
     p.mouseClicked = addChemical;
     p.mouseDragged = addChemical;
-    p.touchMoved = addChemical;
-    p.touchStarted = addChemical;
   }
 
   ngOnDestroy(): void {
