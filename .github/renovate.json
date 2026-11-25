@@ -20,6 +20,11 @@
       "enabled": false
     },
     {
+      "description": "22.0.0-rc.1 imports rxjs/internal/scheduler/* by deep path, which the federation import map does not carry, so the shell fails to bootstrap (#3155)",
+      "matchPackageNames": ["@angular/fire"],
+      "allowedVersions": "!/^22\\.0\\.0-rc\\.1$/"
+    },
+    {
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackageNames": [
         "!@angular/**",
