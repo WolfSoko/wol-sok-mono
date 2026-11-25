@@ -14,7 +14,6 @@ interface FakeSketch {
   redraw: jest.Mock;
   remove: jest.Mock;
   mousePressed?: PointerHandler;
-  mouseMoved?: PointerHandler;
   touchStarted?: PointerHandler;
 }
 
@@ -33,7 +32,7 @@ describe('CircleCanvasComponent', () => {
     fixture.componentInstance.initSketch(sketch as unknown as P5);
   });
 
-  it('picks the frequency on a press, which p5 2 also reports for a tap', () => {
+  it('installs a press handler, which p5 2 also calls for a tap', () => {
     expect(sketch.mousePressed).toBeInstanceOf(Function);
   });
 

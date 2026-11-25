@@ -43,6 +43,7 @@ describe('P5ViewComponent', () => {
     expect(mockSketch.mouseClicked?.()).toBe(false);
 
     expect(calcService.addChemical).toHaveBeenNthCalledWith(1, 10, 20);
+    expect(calcService.addChemical).toHaveBeenNthCalledWith(2, 10, 20);
     expect(calcService.addChemical).toHaveBeenCalledTimes(2);
   });
 
@@ -56,6 +57,7 @@ describe('P5ViewComponent', () => {
     mockSketch.mouseY = 20;
 
     expect(mockSketch.mouseDragged?.()).toBe(true);
+    expect(mockSketch.mouseClicked?.()).toBe(true);
     expect(calcService.addChemical).not.toHaveBeenCalled();
   });
 });
