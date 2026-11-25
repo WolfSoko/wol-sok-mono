@@ -161,6 +161,9 @@ async function main(): Promise<void> {
     const page = await browser.newPage({ viewport: FRAME });
     await page.goto(pathToFileURL(join(sourceDir, 'cards.html')).href);
     for (const lang of langs) {
+      if (copies[lang] == null) {
+        throw new Error(`copy.json has no texts for "${lang}".`);
+      }
       const cards = await renderCards(page, lang, copies[lang]);
       const video = join(videosDir, `bacteria-wars-short-${lang}-portrait.mp4`);
       cut(ffmpegExe, cards, audio, video);

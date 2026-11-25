@@ -65,11 +65,11 @@
       /* The bottom band below the shot (1364 to 1920), high in it: the
          Shorts player covers its lower part. */
       #end {
-        top: 1400px;
+        top: 1420px;
       }
-      #end h1 {
-        font-size: 112px;
-        margin-bottom: 20px;
+      #end p {
+        font-size: 68px;
+        color: #eef2f8;
       }
     </style>
   </head>
@@ -78,10 +78,8 @@
       <h1>Bacteria <span>Wars</span></h1>
     </div>
     <div class="card" id="tagline"><p data-copy="tagline"></p></div>
-    <div class="card" id="end">
-      <h1>Bacteria <span>Wars</span></h1>
-      <p data-copy="endLine"></p>
-    </div>
+    <!-- The title stays on top, so the end card only says where to play. -->
+    <div class="card" id="end"><p data-copy="endLine"></p></div>
     <script>
       /** Shows the card `id` with the texts of one language. */
       window.showCard = async (id, copy) => {
@@ -91,10 +89,13 @@
         for (const card of document.querySelectorAll(".card")) {
           card.classList.toggle("shown", card.id === id);
         }
-        await Promise.all([
+        const faces = await Promise.all([
           document.fonts.load('800 136px "Bricolage Grotesque"'),
           document.fonts.load('700 58px "Atkinson Hyperlegible"'),
         ]);
+        if (faces.some((loaded) => loaded.length === 0)) {
+          throw new Error("A face of the game did not load: npm ci?");
+        }
       };
     </script>
   </body>

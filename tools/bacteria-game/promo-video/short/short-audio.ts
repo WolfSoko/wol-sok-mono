@@ -169,9 +169,11 @@ function addGroove(
   }
   mix.add(grooveEnd, 1.2, kick(140, 38, 3.5), 0, 0.6);
 
-  for (let t0 = burst + BEAT; t0 < grooveEnd - 0.01; t0 += BEAT) {
-    const beat = Math.round((t0 - burst) / BEAT);
-    const chord = CHORDS[Math.floor((t0 - burst) / BAR)];
+  // By beat index: summing BEAT onto t0 drifts below the bar line.
+  const beats = (CHORDS.length - 1) * (BAR / BEAT);
+  for (let beat = 1; beat < beats; beat++) {
+    const t0 = burst + beat * BEAT;
+    const chord = CHORDS[Math.floor((beat * BEAT) / BAR)];
     mix.add(t0, 0.35, kick(135, 45, 9), 0, 0.55);
     const root = hz(chord[0] - 24);
     for (const offset of [0, BEAT / 2]) {

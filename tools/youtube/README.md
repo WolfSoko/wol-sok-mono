@@ -45,7 +45,7 @@ OAuth refresh token.
   Cloud console), every API upload is locked to _private_, whatever the
   requested privacy, and YouTube Studio cannot lift it. Play shows a promo
   video only when it is public or unlisted. Until then, the owner uploads a
-  listing's video by hand in YouTube Studio, public or unlisted, with the
+  listing's video by hand in YouTube Studio as public, with the
   file's hash tag (`sha256:…`, which the Android deploy logs) among its tags,
   and deletes the private API copy first: a run then finds the hand-made
   upload by its tag and links it from the listing.
