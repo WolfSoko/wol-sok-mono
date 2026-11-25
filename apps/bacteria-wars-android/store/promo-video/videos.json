@@ -1,7 +1,6 @@
 [
   {
     "file": "bacteria-wars-promo-en-landscape.mp4",
-    "listing": "en-US",
     "meta": {
       "title": "Bacteria Wars – Steer your colony, swallow theirs",
       "description": "Two bacteria colonies, one petri dish. Steer your colony, eat, grow and swallow the other one: against the computer or a friend on the same phone. 20 levels, a new level every day, endless runs and maps bigger than the screen.\n\nPlay in the browser: https://bacteria-wars.wolsok.de\nAndroid: https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars",
@@ -21,7 +20,6 @@
   },
   {
     "file": "bacteria-wars-promo-de-landscape.mp4",
-    "listing": "de-DE",
     "meta": {
       "title": "Bacteria Wars – Lenke deine Kolonie, verschlinge die andere",
       "description": "Zwei Bakterienkolonien, eine Petrischale. Lenke deine Kolonie, friss, wachse und verschlinge die andere: gegen den Computer oder zu zweit auf einem Handy. 20 Level, jeden Tag ein neues, Endlos-Läufe und Karten, größer als der Bildschirm.\n\nIm Browser spielen: https://bacteria-wars.wolsok.de\nAndroid: https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars",
@@ -51,13 +49,13 @@
     }
   },
   {
-    "file": "bacteria-wars-war-of-bacteria-en-portrait.mp4",
+    "file": "bacteria-wars-short-en-portrait.mp4",
+    "listing": "en-US",
     "meta": {
-      "title": "War of Bacteria: who swallows whom? #Shorts",
+      "title": "Bacteria Wars: who swallows whom? #Shorts",
       "description": "Three rod bacteria stab a coccus with poison needles until it bursts, deep inside a blood vessel. In Bacteria Wars you steer your own colony: eat, grow and swallow the other one, against the computer or a friend on the same phone.\n\nGoogle Play: https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars\nPlay in the browser: https://bacteria-wars.wolsok.de",
       "tags": [
         "Bacteria Wars",
-        "war of bacteria",
         "bacteria",
         "bacteria game",
         "shorts",
@@ -66,6 +64,26 @@
         "blender animation"
       ],
       "language": "en",
+      "categoryId": "20",
+      "privacy": "public"
+    }
+  },
+  {
+    "file": "bacteria-wars-short-de-portrait.mp4",
+    "listing": "de-DE",
+    "meta": {
+      "title": "Bacteria Wars: Wer frisst wen? #Shorts",
+      "description": "Drei Stäbchenbakterien stechen mit Giftnadeln auf einen Kokkus ein, bis er platzt, tief in einem Blutgefäß. In Bacteria Wars lenkst du deine eigene Kolonie: friss, wachse und verschlinge die andere, gegen den Computer oder zu zweit auf einem Handy.\n\nGoogle Play: https://play.google.com/store/apps/details?id=de.wolsok.bacteriawars\nIm Browser spielen: https://bacteria-wars.wolsok.de",
+      "tags": [
+        "Bacteria Wars",
+        "Bakterien",
+        "Bakterien Spiel",
+        "shorts",
+        "Android Spiel",
+        "Browserspiel",
+        "Blender Animation"
+      ],
+      "language": "de",
       "categoryId": "20",
       "privacy": "public"
     }

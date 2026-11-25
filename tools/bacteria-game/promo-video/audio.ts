@@ -6,8 +6,8 @@
  * chord rings out under the end card. Seeded, so every run writes the same
  * file.
  */
+import { hz, Mix, seededRandom } from './synth';
 
-const RATE = 44100;
 const BEAT = 0.5;
 /** Am F C G, one bar (two seconds) each. */
 const CHORDS = [
@@ -24,26 +24,9 @@ export function soundtrack(
   grooveMs: [number, number]
 ): Buffer {
   const duration = durationMs / 1000;
-  const n = Math.round(RATE * duration);
-  const left = new Float32Array(n);
-  const right = new Float32Array(n);
-  let seed = 11;
-  const rnd = () => ((seed = (seed * 16807) % 2147483647) - 1) / 2147483646;
-  const add = (
-    t0: number,
-    length: number,
-    sound: (t: number) => number,
-    pan = 0,
-    gain = 1
-  ) => {
-    const i0 = Math.round(t0 * RATE);
-    for (let i = Math.max(0, -i0); i < length * RATE && i0 + i < n; i++) {
-      const v = sound(i / RATE) * gain;
-      left[i0 + i] += v * (1 - Math.max(0, pan));
-      right[i0 + i] += v * (1 + Math.min(0, pan));
-    }
-  };
-  const hz = (midi: number) => 440 * 2 ** ((midi - 69) / 12);
+  const mix = new Mix(duration);
+  const rnd = seededRandom(11);
+  const add = mix.add.bind(mix);
   const chordAt = (t: number) => CHORDS[Math.floor(t / 2) % CHORDS.length];
   const [grooveStart, grooveEnd] = grooveMs.map((ms) => ms / 1000);
   const groove = (t: number) => t >= grooveStart && t < grooveEnd;
@@ -145,31 +128,5 @@ export function soundtrack(
     );
   }
 
-  // Fade out over the last second and normalise to -1 dBFS.
-  let peak = 0;
-  for (let i = 0; i < n; i++) {
-    const fadeOut = Math.min(1, (n - i) / RATE);
-    left[i] *= fadeOut;
-    right[i] *= fadeOut;
-    peak = Math.max(peak, Math.abs(left[i]), Math.abs(right[i]));
-  }
-  const scale = (0.89 / peak) * 32767;
-  const wav = Buffer.alloc(44 + n * 4);
-  wav.write('RIFF', 0);
-  wav.writeUInt32LE(36 + n * 4, 4);
-  wav.write('WAVEfmt ', 8);
-  wav.writeUInt32LE(16, 16);
-  wav.writeUInt16LE(1, 20);
-  wav.writeUInt16LE(2, 22);
-  wav.writeUInt32LE(RATE, 24);
-  wav.writeUInt32LE(RATE * 4, 28);
-  wav.writeUInt16LE(4, 32);
-  wav.writeUInt16LE(16, 34);
-  wav.write('data', 36);
-  wav.writeUInt32LE(n * 4, 40);
-  for (let i = 0; i < n; i++) {
-    wav.writeInt16LE(Math.round(left[i] * scale), 44 + i * 4);
-    wav.writeInt16LE(Math.round(right[i] * scale), 46 + i * 4);
-  }
-  return wav;
+  return mix.toWav();
 }

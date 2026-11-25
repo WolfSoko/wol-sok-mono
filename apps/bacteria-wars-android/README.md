@@ -239,18 +239,30 @@ up:
 
 ### Promo video
 
-`store/promo-video/` holds the promo video, as `bacteria-wars-promo-<lang>-<format>.mp4`
-(English and German 16:9, English 9:16), and `videos.json` with each one's
+`store/promo-video/` holds the promo videos and `videos.json` with each one's
 YouTube title, description, tags and privacy, and the Play listing it belongs
-to. The deploy uploads every video whose file is not on the YouTube channel
+to: the Bacteria Wars Short, `bacteria-wars-short-<lang>-portrait.mp4`
+(English for en-US, German for de-DE), and the gameplay promos
+`bacteria-wars-promo-<lang>-<format>.mp4` (English and German 16:9, English
+9:16), which are on YouTube with no listing. The deploy uploads every video whose file is not on the YouTube channel
 yet (see `tools/youtube/README.md`) and sets it as the promo video of its
 listing. Without the YouTube secrets it leaves the videos alone.
 
-`bacteria-wars-war-of-bacteria-en-portrait.mp4` is a YouTube Short of its own,
-with no listing: a Blender animation of bacteria fighting in a blood vessel,
-cut to 9:16 with ffmpeg, its description linking Google Play and the web app.
+While the YouTube API project is unaudited, its uploads stay private and Play
+shows no private video, so the deploy leaves such a listing's video as it is
+and logs the file's hash tag. Upload that file by hand in YouTube Studio as
+public, with the tag among its tags, after deleting the private copy the API
+uploaded: the next deploy finds the video by the tag and links it.
 
-The videos come from the running game, like the graphics:
+The Short is a Blender animation of bacteria fighting in a blood vessel,
+re-edited by `npx nx run bacteria-wars-android:promo-short`
+(`tools/bacteria-game/promo-video/short/short.ts`): it keeps the middle shot
+of `short/source.mp4`, rebuilds the blurred background around it, fades in
+the cards of `short/cards.html` with the texts of `short/copy.json` and adds
+the synthesised soundtrack of `short/short-audio.ts`, timed by
+`short/timeline.ts` to the burst. The `.blend` is not in the repository.
+
+The gameplay promos come from the running game, like the graphics:
 
 ```bash
 npx nx serve bacteria-game-remote                 # in one terminal

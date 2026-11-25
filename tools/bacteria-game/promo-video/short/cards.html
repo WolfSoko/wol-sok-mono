@@ -1,0 +1,102 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <!-- The text cards of the Short, one at a time on a transparent page of
+         1080 x 1920; short.ts screenshots each and ffmpeg fades it in. The
+         faces are the game's, from the installed Fontsource packages. -->
+    <style>
+      @font-face {
+        font-family: "Bricolage Grotesque";
+        font-weight: 800;
+        src: url("../../../../node_modules/@fontsource/bricolage-grotesque/files/bricolage-grotesque-latin-800-normal.woff2");
+      }
+      @font-face {
+        font-family: "Atkinson Hyperlegible";
+        font-weight: 700;
+        src: url("../../../../node_modules/@fontsource/atkinson-hyperlegible/files/atkinson-hyperlegible-latin-700-normal.woff2");
+      }
+      html,
+      body {
+        margin: 0;
+        width: 1080px;
+        height: 1920px;
+        overflow: hidden;
+        background: transparent;
+        color: #eef2f8;
+        text-align: center;
+      }
+      .card {
+        position: absolute;
+        left: 0;
+        right: 0;
+        display: none;
+        text-shadow:
+          0 4px 24px #000c,
+          0 0 4px #0008;
+      }
+      .card.shown {
+        display: block;
+      }
+      h1 {
+        margin: 0;
+        font:
+          800 136px/0.95 "Bricolage Grotesque",
+          sans-serif;
+        letter-spacing: -3px;
+      }
+      h1 span {
+        color: #ff7a2f;
+      }
+      p {
+        margin: 0;
+        font:
+          700 58px/1.2 "Atkinson Hyperlegible",
+          sans-serif;
+        color: #b9f0a8;
+      }
+      /* The top band above the shot (0 to 554). */
+      #title {
+        top: 200px;
+      }
+      #tagline {
+        top: 388px;
+      }
+      /* The bottom band below the shot (1364 to 1920), high in it: the
+         Shorts player covers its lower part. */
+      #end {
+        top: 1420px;
+      }
+      #end p {
+        font-size: 68px;
+        color: #eef2f8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card" id="title">
+      <h1>Bacteria <span>Wars</span></h1>
+    </div>
+    <div class="card" id="tagline"><p data-copy="tagline"></p></div>
+    <!-- The title stays on top, so the end card only says where to play. -->
+    <div class="card" id="end"><p data-copy="endLine"></p></div>
+    <script>
+      /** Shows the card `id` with the texts of one language. */
+      window.showCard = async (id, copy) => {
+        for (const element of document.querySelectorAll("[data-copy]")) {
+          element.innerHTML = copy[element.dataset.copy];
+        }
+        for (const card of document.querySelectorAll(".card")) {
+          card.classList.toggle("shown", card.id === id);
+        }
+        const faces = await Promise.all([
+          document.fonts.load('800 136px "Bricolage Grotesque"'),
+          document.fonts.load('700 58px "Atkinson Hyperlegible"'),
+        ]);
+        if (faces.some((loaded) => loaded.length === 0)) {
+          throw new Error("A face of the game did not load: npm ci?");
+        }
+      };
+    </script>
+  </body>
+</html>
