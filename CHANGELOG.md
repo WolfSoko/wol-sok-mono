@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.188.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.2...v74.188.0) (2026-11-25)
+
+### Features
+
+* **feat-lazy-bacteria-game:** make the on-screen joystick easier to see ([#3258](https://github.com/WolfSoko/wol-sok-mono/issues/3258)) ([ff24920](https://github.com/WolfSoko/wol-sok-mono/commit/ff24920a5cc0756318f39d643d74b3128de2d5b6)), references [#3257](https://github.com/WolfSoko/wol-sok-mono/issues/3257) [#3257](https://github.com/WolfSoko/wol-sok-mono/issues/3257)
+
 ## [74.187.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.1...v74.187.2) (2026-11-25)
 
 ### Bug Fixes
