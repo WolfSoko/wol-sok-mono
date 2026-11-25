@@ -246,6 +246,10 @@ to. The deploy uploads every video whose file is not on the YouTube channel
 yet (see `tools/youtube/README.md`) and sets it as the promo video of its
 listing. Without the YouTube secrets it leaves the videos alone.
 
+`bacteria-wars-war-of-bacteria-en-portrait.mp4` is a YouTube Short of its own,
+with no listing: a Blender animation of bacteria fighting in a blood vessel,
+cut to 9:16 with ffmpeg, its description linking Google Play and the web app.
+
 The videos come from the running game, like the graphics:
 
 ```bash

@@ -7,7 +7,7 @@ Generated from the Nx project graph, the module boundary rules in
 the architecture routine; for the narrative overview see
 [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md).
 
-**64 projects · 179 internal dependencies · 3 federated remotes**
+**65 projects · 182 internal dependencies · 3 federated remotes**
 
 ## Contents
 
@@ -31,7 +31,7 @@ flowchart TD
   features["libs/features<br/>17 projects"]
   shared["libs/shared<br/>9 projects"]
   utils["libs/utils<br/>9 projects"]
-  other["libs (other)<br/>9 projects"]
+  other["libs (other)<br/>10 projects"]
   apps -- 17 --> features
   apps -- 18 --> other
   apps -- 3 --> public
@@ -47,7 +47,8 @@ flowchart TD
   infra -- 1 --> shared
   infra -- 1 --> utils
   other -- 4 --> apps
-  other -- 1 --> shared
+  other -- 1 --> features
+  other -- 2 --> shared
   other -- 1 --> utils
   public -- 3 --> other
   shared -- 9 --> other
@@ -237,6 +238,7 @@ flowchart LR
     test_helper["test-helper"]
     tools_deploy["tools-deploy"]
     tools_federation["tools-federation"]
+    tools_relay["tools-relay"]
     tools_vite["tools-vite"]
     ui_kit["ui-kit"]
   end
@@ -400,6 +402,9 @@ flowchart LR
   tools --> utils_version
   tools_deploy ==> oxlint_workspace_rules
   tools_federation ==> oxlint_workspace_rules
+  tools_relay --> feat_shared_bacteria_engine
+  tools_relay ==> oxlint_workspace_rules
+  tools_relay --> shared_legal
   tools_vite ==> oxlint_workspace_rules
   ui_kit ==> oxlint_workspace_rules
   ui_kit --> utils_measure_fps
@@ -431,15 +436,15 @@ flowchart LR
 
 | Project                                  | Group    | Tags                                    | Fan-in (Ca) | Fan-out (Ce) | Instability |
 | ---------------------------------------- | -------- | --------------------------------------- | ----------- | ------------ | ----------- |
-| `oxlint-workspace-rules`                 | other    | tools                                   | 62          | 0            | 0           |
+| `oxlint-workspace-rules`                 | other    | tools                                   | 63          | 0            | 0           |
 | `angular-examples`                       | apps     | app, type:host                          | 3           | 19           | 0.86        |
 | `ui-kit`                                 | other    | shared, ui                              | 10          | 3            | 0.23        |
 | `bacteria-game-remote`                   | apps     | app, type:firebase, type:remote         | 2           | 10           | 0.83        |
 | `feat-lazy-bacteria-game`                | features | feature:lazy                            | 2           | 10           | 0.83        |
+| `feat-shared-bacteria-engine`            | features | feat-shared                             | 7           | 1            | 0.13        |
 | `shader-examples-remote`                 | apps     | app, scope:shader-examples, type:remote | 3           | 5            | 0.63        |
 | `utils-browser-storage`                  | utils    | utils                                   | 6           | 2            | 0.25        |
 | `feat-lazy-react-diff`                   | features | feature:lazy                            | 1           | 6            | 0.86        |
-| `feat-shared-bacteria-engine`            | features | feat-shared                             | 6           | 1            | 0.14        |
 | `fourier-analysis-remote`                | apps     | app, type:remote                        | 3           | 4            | 0.57        |
 | `rollapolla-analog`                      | apps     | app, type:firebase                      | 0           | 7            | 1           |
 | `feat-lazy-some-gpu-calculation`         | features | feature:lazy                            | 1           | 5            | 0.83        |
@@ -454,6 +459,7 @@ flowchart LR
 | `federation-shared-singletons`           | other    | tools                                   | 0           | 5            | 1           |
 | `shared-analytics`                       | shared   | shared                                  | 3           | 2            | 0.4         |
 | `shared-data-access`                     | shared   | shared                                  | 4           | 1            | 0.2         |
+| `shared-legal`                           | shared   | shared                                  | 4           | 1            | 0.2         |
 | `tools-federation`                       | other    | tools                                   | 4           | 1            | 0.2         |
 | `utils-operators`                        | utils    | utils                                   | 4           | 1            | 0.2         |
 | `utils-version`                          | utils    | infra-shared, utils                     | 4           | 1            | 0.2         |
@@ -462,7 +468,6 @@ flowchart LR
 | `feat-lazy-tf-examples`                  | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `feat-lazy-wasm-test`                    | features | feature:lazy                            | 1           | 3            | 0.75        |
 | `headline-animation`                     | shared   | shared                                  | 3           | 1            | 0.25        |
-| `shared-legal`                           | shared   | shared                                  | 3           | 1            | 0.25        |
 | `utils-gpu-calc`                         | utils    | utils                                   | 3           | 1            | 0.25        |
 | `utils-json`                             | utils    | utils                                   | 3           | 1            | 0.25        |
 | `ws-thanos`                              | public   | published, shared, ui                   | 3           | 1            | 0.25        |
@@ -478,6 +483,7 @@ flowchart LR
 | `shared-firebase-emulator`               | shared   | shared                                  | 2           | 1            | 0.33        |
 | `shared-theme`                           | shared   | shared                                  | 1           | 2            | 0.67        |
 | `tools`                                  | apps     | tools                                   | 0           | 3            | 1           |
+| `tools-relay`                            | other    | tools                                   | 0           | 3            | 1           |
 | `tools-vite`                             | other    | tools                                   | 2           | 1            | 0.33        |
 | `ws-gl`                                  | shared   | shared                                  | 2           | 1            | 0.33        |
 | `ws-thanos-test-app`                     | apps     | app, type:test-app                      | 0           | 3            | 1           |
@@ -494,16 +500,15 @@ flowchart LR
 ## Automated findings
 
 - **Circular dependencies:** none
-- **Tag constraint violations** (`.oxlintrc.json`): 6
-  - `angular-examples` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `bacteria-game-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `fourier-analysis-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `pacetrainer` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `rollapolla-analog` → `tools-vite` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-  - `shader-examples-remote` → `tools-federation` (`app` may only use `shared`, `utils`, `feature`, `feature:lazy`, `feature:admin`, `feature:game-kit`, `feat-shared`, `api`, `type:remote`)
-- **Unused libraries** (no project depends on them): 2
-  - `federation-shared-singletons`
-  - `tools-deploy`
+- **Tag constraint violations** (`.oxlintrc.json`): none
+- **Recorded boundary exceptions** (imports only from files an override in `.oxlintrc.json` covers): 6
+  - `angular-examples` → `tools-federation`
+  - `bacteria-game-remote` → `tools-federation`
+  - `fourier-analysis-remote` → `tools-federation`
+  - `pacetrainer` → `tools-vite`
+  - `rollapolla-analog` → `tools-vite`
+  - `shader-examples-remote` → `tools-federation`
+- **Unused libraries:** none
 - **Projects without tags:** none
 - **Layer tags too coarse:** 1 projects in `libs/shared`/`libs/utils` do not carry their layer's tag, so the boundary rules cannot tell a utility from a shared domain lib
   - `shared-firebase-domain-cdk` (missing `shared`)

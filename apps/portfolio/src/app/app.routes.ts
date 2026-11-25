@@ -67,5 +67,22 @@ export const appRoutes: Route[] = [
       },
     } satisfies PageData,
   },
-  { path: '**', redirectTo: '' },
+  {
+    path: '**',
+    loadComponent: () =>
+      import('./not-found/not-found.component').then(
+        (m) => m.NotFoundComponent
+      ),
+    data: {
+      title: {
+        en: 'Page not found – wolsok.de',
+        de: 'Seite nicht gefunden – wolsok.de',
+      },
+      description: {
+        en: 'There is no page at this address on wolsok.de.',
+        de: 'Unter dieser Adresse gibt es auf wolsok.de keine Seite.',
+      },
+      noindex: true,
+    } satisfies PageData,
+  },
 ];
