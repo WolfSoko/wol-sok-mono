@@ -80,6 +80,9 @@ function workspaceFederation(config) {
       // would lose it from the import map to `ignoreUnusedDeps` while its
       // import stayed external.
       '@sentry/angular',
+      // The options and handler both apps start it with: skipped with the
+      // SDK, so each app keeps its own started SDK.
+      '@wolsok/shared-error-reports',
       // Analytics is started by an app's own config only (the game's
       // standalone app, with the player's consent), never by an exposed
       // module, so each app bundles its own copy - and the game inside the

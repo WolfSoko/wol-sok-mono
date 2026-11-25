@@ -1,10 +1,7 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { reportError, startErrorReports } from '@wolsok/shared-error-reports';
 import { appConfig } from './app/app.config';
 import { RemoteEntryComponent } from './app/entry.component';
-import {
-  reportError,
-  startErrorReports,
-} from './app/error-reports/error-reports';
 import { environment } from './environments/environment';
 
 // Before Angular, so a failing start is reported too; the SDK loads beside

@@ -3,12 +3,12 @@ import type { Breadcrumb, ErrorEvent } from '@sentry/angular';
 /**
  * What an error report may carry (the owner's decision of 2026-10-26):
  * errors only and no personal data. Kept apart from the SDK, so the specs
- * run without it and the game's first load does not wait for it.
+ * run without it and an app's first load does not wait for it.
  */
 
 /**
- * The address without its query and hash: the hash holds invitation codes
- * (`#friend=…`) and shared runs, the query whatever a link brought along.
+ * The address without its query and hash: the hash may hold codes (the
+ * game's invitations, `#friend=…`), the query whatever a link brought along.
  */
 export function stripUrl(url: string): string {
   const end = url.search(/[?#]/);
@@ -58,7 +58,7 @@ export function scrubEvent(event: ErrorEvent): ErrorEvent {
 /**
  * A click's element path without its attributes: the SDK writes the
  * clicked element's `aria-label`, `alt`, `title` and `name` into it, and
- * the game's avatars and friend buttons name players there.
+ * those may name people (the game's avatars and friend buttons).
  */
 function withoutAttributes(path: string): string {
   return path.replace(/\[[^\]]*\]/g, '');
@@ -68,7 +68,7 @@ function withoutAttributes(path: string): string {
 const URL_FIELDS = ['url', 'from', 'to'] as const;
 
 /**
- * No console breadcrumbs (the game logs ids there), and the URLs of
+ * No console breadcrumbs (the apps log ids there), and the URLs of
  * navigations and requests without query and hash.
  */
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb | null {
