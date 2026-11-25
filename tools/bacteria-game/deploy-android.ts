@@ -42,10 +42,11 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { WORKSPACE_VERSION } from '@wolsok/utils-version';
 import { publishTips, storeTips, Tip } from './play-tips';
 import {
+  hashTag,
   publishVideos,
   VideoMeta,
   youtubeConfigured,
@@ -320,8 +321,11 @@ async function promoVideoLinks(): Promise<Map<string, string>> {
       continue;
     }
     if (video.privacy === 'private') {
+      // An unaudited API project uploads private only; see tools/youtube.
       console.log(
-        `https://youtu.be/${video.id} is private, the ${listing} listing keeps its video.`
+        `https://youtu.be/${video.id} is private, the ${listing} listing keeps its video. ` +
+          `Upload ${basename(file)} by hand in YouTube Studio as public with the tag ` +
+          `${hashTag(file)}, after deleting the private copy.`
       );
       continue;
     }

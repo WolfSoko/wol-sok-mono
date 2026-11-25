@@ -2,6 +2,46 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.187.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.1...v74.187.0) (2026-11-25)
+
+### Features
+
+* **bacteria-wars-android:** make the Bacteria Wars Short the Play promo video, with soundtrack and a German version ([#3252](https://github.com/WolfSoko/wol-sok-mono/issues/3252)) ([fd5c5b8](https://github.com/WolfSoko/wol-sok-mono/commit/fd5c5b8b9f098ba91f98dedb23a4151e26c73b44)), closes [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251), references [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251) [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251) [#3248](https://github.com/WolfSoko/wol-sok-mono/issues/3248)
+
+### Testing
+
+* **rollapolla-analog:** cover the dynamic sitemap ([#3247](https://github.com/WolfSoko/wol-sok-mono/issues/3247)) ([328540d](https://github.com/WolfSoko/wol-sok-mono/commit/328540db2ba07e864abad245ff2004e5cec2b49d)), closes [#3246](https://github.com/WolfSoko/wol-sok-mono/issues/3246), references [#3246](https://github.com/WolfSoko/wol-sok-mono/issues/3246)
+
+## [74.186.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.0...v74.186.1) (2026-11-25)
+
+### Bug Fixes
+
+* **deps:** update nx monorepo ([#3155](https://github.com/WolfSoko/wol-sok-mono/issues/3155)) ([df64af8](https://github.com/WolfSoko/wol-sok-mono/commit/df64af8172cc45adb87a00c5e0ad955dabed934a))
+
+### Chore
+
+* **release:** publish ([2201614](https://github.com/WolfSoko/wol-sok-mono/commit/22016143b429f43fa588f9c9e799e93d23422212))
+
+## [74.186.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.185.0...v74.186.0) (2026-11-24)
+
+### Features
+
+* **bacteria-wars-android:** ✨ add the War of Bacteria YouTube Short ([#3248](https://github.com/WolfSoko/wol-sok-mono/issues/3248)) ([83baa03](https://github.com/WolfSoko/wol-sok-mono/commit/83baa03db8192ca5c7ce8ac3a16aa00813d87115))
+
+### Documentation
+
+* **tools:** refresh architecture diagrams ([#3217](https://github.com/WolfSoko/wol-sok-mono/issues/3217)) ([262b2b4](https://github.com/WolfSoko/wol-sok-mono/commit/262b2b4a27d8299e7db0c091c1dd5601aff84b3e))
+
+## [74.185.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.184.1...v74.185.0) (2026-11-24)
+
+### Features
+
+* **spa-cdk-stack:** serve a not-found page with status 404 for prerendered sites ([#3244](https://github.com/WolfSoko/wol-sok-mono/issues/3244)) ([09849f8](https://github.com/WolfSoko/wol-sok-mono/commit/09849f89705e966d96c345ecbb264f38286905f8)), closes [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195), references [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195) [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195) [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195) [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195) [#3195](https://github.com/WolfSoko/wol-sok-mono/issues/3195)
+
+### Chore
+
+* **release:** publish ([e5081e1](https://github.com/WolfSoko/wol-sok-mono/commit/e5081e1f95951c48a517461d909a8ec2d632017c))
+
 ## [74.184.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.184.0...v74.184.1) (2026-11-24)
 
 ### Bug Fixes

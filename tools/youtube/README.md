@@ -44,7 +44,11 @@ OAuth refresh token.
   YouTube's API compliance audit (requested through the quota form in the
   Cloud console), every API upload is locked to _private_, whatever the
   requested privacy, and YouTube Studio cannot lift it. Play shows a promo
-  video only when it is public or unlisted.
+  video only when it is public or unlisted. Until then, the owner uploads a
+  listing's video by hand in YouTube Studio as public, with the
+  file's hash tag (`sha256:…`, which the Android deploy logs) among its tags,
+  and deletes the private API copy first: a run then finds the hand-made
+  upload by its tag and links it from the listing.
 - **Quota.** `videos.insert` has a bucket of 100 calls a day; the lookups
   draw on the shared 10 000 units.
 - **Revoking:** myaccount.google.com/permissions → remove the app, then mint

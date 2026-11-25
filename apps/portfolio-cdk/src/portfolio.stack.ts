@@ -4,6 +4,9 @@ import { resolvablePages } from './prerendered-pages';
 
 const STACK_NAME = 'Portfolio';
 
+/** The portfolio's prerendered not-found page (`NOT_FOUND_PAGE_PATH`). */
+const NOT_FOUND_PAGE = '404/index.html';
+
 /**
  * The stack of wolsok.de, serving the prerendered portfolio below
  * `buildOutputPath`.
@@ -11,7 +14,8 @@ const STACK_NAME = 'Portfolio';
  * Each prerendered page is at <page>/index.html, which CloudFront in front of
  * S3 does not resolve for /<page> by itself, so the SPA stack's viewer-request
  * function does (`resolveFolderIndex`). A trailing slash (/career/) redirects
- * to the bare path, so each page keeps one URL.
+ * to the bare path, so each page keeps one URL. Every path without a page
+ * gets the prerendered not-found page with status 404, not the home page.
  */
 export function createPortfolioStack(
   app: App,
@@ -29,6 +33,7 @@ export function createPortfolioStack(
     bucketRemovalPolicy: RemovalPolicy.DESTROY,
     resolveFolderIndex: true,
     redirectTrailingSlash: true,
+    notFoundPage: NOT_FOUND_PAGE,
     // Crawlers and AdSense read these by name; a page changes with each release.
     noCacheFiles: [
       'ads.txt',

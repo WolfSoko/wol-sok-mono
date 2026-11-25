@@ -1,9 +1,10 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { provideTheme } from '@wolsok/shared-theme';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { AD_SCRIPT_SELECTOR } from './ad-script';
 import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
 import { BLOG_POSTS } from './blog/posts';
@@ -72,6 +73,55 @@ describe('AppComponent', () => {
       head.querySelector('meta[name="description"]')?.getAttribute('content')
     ).toContain('Freiberuflicher');
     localStorage.clear();
+  });
+
+  /** Puts the AdSense script tag of the real index.html into the head. */
+  function addIndexAdScript(): void {
+    const index = new DOMParser().parseFromString(
+      readFileSync(join(__dirname, '../index.html'), 'utf8'),
+      'text/html'
+    );
+    const scripts = index.querySelectorAll(AD_SCRIPT_SELECTOR);
+    expect(scripts).toHaveLength(1);
+    document.head.appendChild(document.importNode(scripts[0], true));
+  }
+
+  it('keeps the AdSense script of index.html on an indexable page', async () => {
+    addIndexAdScript();
+    TestBed.inject(SeoService).init();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/privacy');
+
+    expect(document.head.querySelectorAll(AD_SCRIPT_SELECTOR)).toHaveLength(1);
+    document.head.querySelector(AD_SCRIPT_SELECTOR)?.remove();
+  });
+
+  it('shows the not-found page under an unknown path, noindex, without canonical and AdSense script', async () => {
+    addIndexAdScript();
+    TestBed.inject(SeoService).init();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/nope/deeper');
+    const head = document.head;
+
+    expect(TestBed.inject(Router).url).toBe('/nope/deeper');
+    const page = harness.routeNativeElement as HTMLElement;
+    expect(page.textContent).toContain('Page not found');
+    expect(page.querySelector('a[href="/"]')).not.toBeNull();
+    expect(
+      head.querySelector('meta[name="robots"]')?.getAttribute('content')
+    ).toBe('noindex');
+    expect(head.querySelector('link[rel="canonical"]')).toBeNull();
+    expect(head.querySelector('meta[property="og:url"]')).toBeNull();
+    expect(head.querySelector(AD_SCRIPT_SELECTOR)).toBeNull();
+
+    await harness.navigateByUrl('/career');
+    expect(head.querySelector('meta[name="robots"]')).toBeNull();
+    expect(
+      head.querySelector('meta[property="og:url"]')?.getAttribute('content')
+    ).toBe('https://wolsok.de/career');
+    expect(
+      head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
+    ).toBe('https://wolsok.de/career');
   });
 
   it('switches the language and the theme from the header', async () => {

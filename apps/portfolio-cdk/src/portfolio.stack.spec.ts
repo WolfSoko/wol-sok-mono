@@ -23,6 +23,7 @@ describe('createPortfolioStack', () => {
     file('main-ABC123.js');
     file('career/index.html');
     file('privacy/index.html');
+    file('404/index.html');
     file('blog/index.html');
     file('blog/bacteria-wars-turn-relay/index.html');
     file('blog/bacteria-wars-turn-relay/nat-walls.svg');
@@ -47,6 +48,26 @@ describe('createPortfolioStack', () => {
         ({ SystemMetadata }) => SystemMetadata?.['cache-control'] === 'no-cache'
       )
     ).toHaveLength(2);
+  });
+
+  it('answers every miss with the prerendered not-found page and status 404', () => {
+    synthesize().hasResourceProperties('AWS::CloudFront::Distribution', {
+      DistributionConfig: Match.objectLike({
+        CustomErrorResponses: [403, 404].map((code) =>
+          Match.objectLike({
+            ErrorCode: code,
+            ResponseCode: 404,
+            ResponsePagePath: '/404/index.html',
+          })
+        ),
+      }),
+    });
+  });
+
+  it('refuses a build without the not-found page', () => {
+    rmSync(join(buildOutput, '404'), { recursive: true });
+
+    expect(synthesize).toThrow(/notFoundPage "404\/index.html"/);
   });
 
   it('resolves folder indexes and redirects trailing-slash paths with one viewer-request CloudFront Function', () => {
