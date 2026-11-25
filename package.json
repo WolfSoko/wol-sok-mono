@@ -30,7 +30,7 @@
     "@angular/compiler": "22.3.0",
     "@angular/core": "22.3.0",
     "@angular/elements": "22.3.0",
-    "@angular/fire": "22.0.0-rc.1",
+    "@angular/fire": "22.0.0-rc.0",
     "@angular/forms": "22.3.0",
     "@angular/material": "22.3.0",
     "@angular/platform-browser": "22.3.0",
