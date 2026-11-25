@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.187.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.1...v74.187.0) (2026-11-25)
+
+### Features
+
+* **bacteria-wars-android:** make the Bacteria Wars Short the Play promo video, with soundtrack and a German version ([#3252](https://github.com/WolfSoko/wol-sok-mono/issues/3252)) ([fd5c5b8](https://github.com/WolfSoko/wol-sok-mono/commit/fd5c5b8b9f098ba91f98dedb23a4151e26c73b44)), closes [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251), references [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251) [#3251](https://github.com/WolfSoko/wol-sok-mono/issues/3251) [#3248](https://github.com/WolfSoko/wol-sok-mono/issues/3248)
+
+### Testing
+
+* **rollapolla-analog:** cover the dynamic sitemap ([#3247](https://github.com/WolfSoko/wol-sok-mono/issues/3247)) ([328540d](https://github.com/WolfSoko/wol-sok-mono/commit/328540db2ba07e864abad245ff2004e5cec2b49d)), closes [#3246](https://github.com/WolfSoko/wol-sok-mono/issues/3246), references [#3246](https://github.com/WolfSoko/wol-sok-mono/issues/3246)
+
 ## [74.186.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.0...v74.186.1) (2026-11-25)
 
 ### Bug Fixes
