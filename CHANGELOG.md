@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.187.2](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.1...v74.187.2) (2026-11-25)
+
+### Bug Fixes
+
+* **angular-examples:** report errors to Sentry from production only, without Replay, tracing or personal data ([#3256](https://github.com/WolfSoko/wol-sok-mono/issues/3256)) ([6f961e2](https://github.com/WolfSoko/wol-sok-mono/commit/6f961e2b715f27d9acc7eb788169c9bce117161f)), closes [#3236](https://github.com/WolfSoko/wol-sok-mono/issues/3236), references [#3236](https://github.com/WolfSoko/wol-sok-mono/issues/3236) [#3236](https://github.com/WolfSoko/wol-sok-mono/issues/3236)
+
 ## [74.187.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.0...v74.187.1) (2026-11-25)
 
 ### Bug Fixes
