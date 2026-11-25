@@ -16,7 +16,7 @@ import { provideGameSupport } from '@wolsok/feat-lazy-bac-game';
 import { environment } from '../environments/environment';
 import { provideGameAnalytics } from './analytics/analytics';
 import { appRoutes } from './app.routes';
-import { provideErrorReports } from './error-reports/error-reports';
+import { provideErrorReports } from '@wolsok/shared-error-reports';
 import { providePwaUpdates } from './pwa-updates';
 
 // Only used when the game runs on its own: inside the shell the remote's

@@ -97,6 +97,9 @@
       "@wolsok/shared-firebase-domain-cdk": [
         "./libs/shared/firebase-domain-cdk/src/index.ts"
       ],
+      "@wolsok/shared-error-reports": [
+        "./libs/shared/error-reports/src/index.ts"
+      ],
       "@wolsok/shared-firebase-emulator": [
         "./libs/shared/firebase-emulator/src/index.ts"
       ],
