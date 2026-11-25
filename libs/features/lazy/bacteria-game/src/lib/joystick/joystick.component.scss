@@ -1,4 +1,18 @@
+// The stick is drawn in the player's colour with an edge of both polarities -
+// a dark line outside, a light one inside - so it stands out on the dark
+// floor and over bright colonies alike, its own colour included.
 :host {
+  --joystick-player: var(--joystick-color, #fff);
+  --joystick-edge-dark: rgb(0 0 0 / 60%);
+  --joystick-edge-light: rgb(255 255 255 / 55%);
+  // Marks the base over bright colonies and still shows the match below.
+  --joystick-fill: rgb(0 0 0 / 20%);
+  // A stick at rest is quieter than a held one, but seen at a glance.
+  --joystick-rest-opacity: 0.7;
+  --joystick-label-opacity: 0.85;
+  // Lifts the knob off the base.
+  --joystick-knob-shadow: 0 0 12px rgb(0 0 0 / 35%);
+
   position: relative;
   display: flex;
   flex-direction: column;
@@ -21,8 +35,9 @@
   font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;
-  color: var(--joystick-color, #fff);
-  opacity: 0.6;
+  color: var(--joystick-player);
+  opacity: var(--joystick-label-opacity);
+  text-shadow: 0 0 3px var(--joystick-edge-dark);
   pointer-events: none;
 }
 
@@ -35,22 +50,27 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid
-    color-mix(in srgb, var(--joystick-color, #fff) 70%, transparent);
+  border: 3px solid var(--joystick-player);
   border-radius: 50%;
-  background: rgb(255 255 255 / 8%);
+  background: var(--joystick-fill);
+  box-shadow:
+    0 0 0 1px var(--joystick-edge-dark),
+    inset 0 0 0 1px var(--joystick-edge-light);
   pointer-events: none;
 
   &.idle {
     position: static;
-    opacity: 0.35;
+    opacity: var(--joystick-rest-opacity);
   }
 }
 
 .knob {
   width: 45%;
   height: 45%;
+  border: 2px solid var(--joystick-edge-light);
   border-radius: 50%;
-  background: color-mix(in srgb, var(--joystick-color, #fff) 65%, transparent);
-  box-shadow: 0 0 12px rgb(0 0 0 / 35%);
+  background: var(--joystick-player);
+  box-shadow:
+    0 0 0 1px var(--joystick-edge-dark),
+    var(--joystick-knob-shadow);
 }
