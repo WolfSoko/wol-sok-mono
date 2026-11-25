@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.186.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.186.0...v74.186.1) (2026-11-25)
+
+### Bug Fixes
+
+* **deps:** update nx monorepo ([#3155](https://github.com/WolfSoko/wol-sok-mono/issues/3155)) ([df64af8](https://github.com/WolfSoko/wol-sok-mono/commit/df64af8172cc45adb87a00c5e0ad955dabed934a))
+
+### Chore
+
+* **release:** publish ([2201614](https://github.com/WolfSoko/wol-sok-mono/commit/22016143b429f43fa588f9c9e799e93d23422212))
+
 ## [74.186.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.185.0...v74.186.0) (2026-11-24)
 
 ### Features
