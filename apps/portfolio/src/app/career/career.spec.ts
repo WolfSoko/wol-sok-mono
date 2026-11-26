@@ -3,7 +3,12 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { appRoutes } from '../app.routes';
 import { I18nService } from '../i18n/i18n.service';
-import { CAREER, CAREER_PROJECTS, CAREER_SOURCE } from './career.data';
+import {
+  CAREER,
+  CAREER_PROJECTS,
+  CAREER_SOURCE,
+  OWN_PROJECTS,
+} from './career.data';
 import { countClients, yearsSince } from './career.model';
 import { personJsonLd } from './json-ld';
 
@@ -22,6 +27,18 @@ describe('career data', () => {
       expect(project.highlights.en.length).toBeGreaterThan(0);
       expect(project.technologies.length).toBeGreaterThan(0);
       expect(project.id).toMatch(/^[a-z0-9-]+$/);
+    }
+  });
+
+  it('lists the own projects, each with both languages and a live link', () => {
+    const ids = [...CAREER_PROJECTS, ...OWN_PROJECTS].map((p) => p.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    for (const project of OWN_PROJECTS) {
+      expect(project.id).toMatch(/^[a-z0-9-]+$/);
+      expect(project.url).toMatch(/^https:\/\//);
+      expect(project.highlights.de.length).toBe(project.highlights.en.length);
+      expect(project.highlights.en.length).toBeGreaterThan(0);
+      expect(project.technologies.length).toBeGreaterThan(0);
     }
   });
 
@@ -94,6 +111,11 @@ describe('career page', () => {
       expect(element.querySelector(`#${project.id}`)).not.toBeNull();
       expect(element.textContent).toContain(project.client);
     }
+    for (const project of OWN_PROJECTS) {
+      const card = element.querySelector(`#${project.id}`);
+      expect(card?.textContent).toContain(project.name);
+      expect(card?.querySelector('a')?.getAttribute('href')).toBe(project.url);
+    }
     expect(element.textContent).toContain('Full-stack software engineer');
     expect(element.textContent).toContain('Freelance since 2008');
     expect(element.textContent).not.toContain('2,008');
@@ -105,5 +127,6 @@ describe('career page', () => {
     harness.detectChanges();
     expect(element.textContent).toContain('Fullstack Software Engineer');
     expect(element.textContent).toContain('Werkzeugkasten');
+    expect(element.textContent).toContain('Eigene Projekte');
   });
 });

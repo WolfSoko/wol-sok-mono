@@ -69,6 +69,8 @@ export const de: Translation<typeof en> = {
     statsClients: 'Kunden',
     focus: 'Was ich mache',
     focusIntro: 'Die Arbeit, für die ich immer wieder gefragt werde.',
+    ownProjects: 'Eigene Projekte',
+    ownProjectsIntro: 'Was ich selbst baue, und wo es läuft.',
     timeline: 'Projekte',
     timelineIntro:
       'Jeder Einsatz seit {since}, der neueste zuerst. Zum Aufklappen tippen.',

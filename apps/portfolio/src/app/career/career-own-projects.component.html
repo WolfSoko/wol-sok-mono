@@ -1,0 +1,29 @@
+<section id="own-projects" aria-labelledby="own-projects-title">
+  <h2 id="own-projects-title">{{ t().career.ownProjects }}</h2>
+  <p class="intro">{{ t().career.ownProjectsIntro }}</p>
+  <div class="cards">
+    @for (project of projects(); track project.id; let i = $index) {
+      <article
+        class="card"
+        [attr.id]="project.id"
+        [style.--accent]="project.accent"
+        [wolsokReveal]="(i % 3) * 0.1"
+      >
+        <h3>{{ project.name }}</h3>
+        <p class="tagline">{{ i18n.pick(project.tagline) }}</p>
+        <ul class="highlights">
+          @for (highlight of i18n.pick(project.highlights); track $index) {
+            <li>{{ highlight }}</li>
+          }
+        </ul>
+        <h4>{{ t().career.technologies }}</h4>
+        <ul class="chips">
+          @for (tech of project.technologies; track tech) {
+            <li>{{ tech }}</li>
+          }
+        </ul>
+        <a class="link" [href]="project.url">{{ host(project.url) }}</a>
+      </article>
+    }
+  </div>
+</section>
