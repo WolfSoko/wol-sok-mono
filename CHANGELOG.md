@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.188.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.188.0...v74.188.1) (2026-11-26)
+
+### Chore
+
+* **deps:** update dependency jsdom to v31 ([#3264](https://github.com/WolfSoko/wol-sok-mono/issues/3264)) ([8304d12](https://github.com/WolfSoko/wol-sok-mono/commit/8304d12b787bc2619fb98093283b2f4d095e1953))
+* **feat-shared-bacteria-engine:** drop the import-ban override covered by feat-shared ([#3261](https://github.com/WolfSoko/wol-sok-mono/issues/3261)) ([2aeea72](https://github.com/WolfSoko/wol-sok-mono/commit/2aeea7295f7819ef2709974e5703bc121feabb84)), references [#3237](https://github.com/WolfSoko/wol-sok-mono/issues/3237) [#3228](https://github.com/WolfSoko/wol-sok-mono/issues/3228)
+* **release:** publish ([3432976](https://github.com/WolfSoko/wol-sok-mono/commit/3432976ea01a7fdf3afc90f7d0a24d4040bce7f4))
+
+### Testing
+
+* **deps:** cover the p5 2 pointer handlers of the Fourier circle and the reaction-diffusion view ([#3260](https://github.com/WolfSoko/wol-sok-mono/issues/3260)) ([2e3ed95](https://github.com/WolfSoko/wol-sok-mono/commit/2e3ed950affefcc3024bd55c272e133867972fde))
+
 ## [74.188.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.187.2...v74.188.0) (2026-11-25)
 
 ### Features
