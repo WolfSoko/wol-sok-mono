@@ -214,31 +214,6 @@
       }
     },
     {
-      "files": ["libs/features/bacteria-engine/src/**/*.ts"],
-      "rules": {
-        "no-restricted-imports": [
-          "error",
-          {
-            "patterns": [
-              {
-                "group": [
-                  "@angular/*",
-                  "@ngrx/*",
-                  "rxjs",
-                  "rxjs/*",
-                  "firebase",
-                  "firebase/*",
-                  "@wolsok/feat-bacteria-rendering",
-                  "@wolsok/feat-bacteria-sound"
-                ],
-                "message": "The game's engine (feat-shared-bacteria-engine) runs in Node too (ADR 0011): no Angular, NgRx, RxJS, Firebase, rendering or sound imports."
-              }
-            ]
-          }
-        ]
-      }
-    },
-    {
       "files": [
         "libs/features/lazy/bacteria-game/src/watch.ts",
         "libs/features/lazy/bacteria-game/src/lib/replays/{watch-page.component,public-replays,replay-viewer.component,replay-scene,watch-gpu}.ts",
