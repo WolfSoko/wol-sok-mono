@@ -4,6 +4,7 @@
 // so it must reach no Angular, NgRx, RxJS or Firebase package and neither the
 // game's rendering nor its sound lib; no override of its own repeats that.
 import assert from 'node:assert/strict';
+import { matchesGlob } from 'node:path';
 import { describe, it } from 'node:test';
 import { readJson } from './workspace-projects.mjs';
 
@@ -21,9 +22,13 @@ const BROWSER_ONLY_LIBS = [
   'libs/features/bacteria-sound/project.json',
 ];
 
+const BOUNDARY_RULE = '@nx/enforce-module-boundaries';
+const IMPORT_RULES = [BOUNDARY_RULE, 'no-restricted-imports'];
+const ENGINE_SOURCE = 'libs/features/bacteria-engine/src/index.ts';
+
 function featSharedConstraint() {
   const [, { depConstraints }] =
-    readJson('.oxlintrc.json').rules['@nx/enforce-module-boundaries'];
+    readJson('.oxlintrc.json').rules[BOUNDARY_RULE];
   const constraint = depConstraints.find(
     ({ sourceTag }) => sourceTag === 'feat-shared'
   );
@@ -32,6 +37,11 @@ function featSharedConstraint() {
 }
 
 void describe('the feat-shared tag constraint', () => {
+  void it('is an error', () => {
+    const [severity] = readJson('.oxlintrc.json').rules[BOUNDARY_RULE];
+    assert.equal(severity, 'error');
+  });
+
   void it('applies to the engine', () => {
     assert.ok(readJson(ENGINE_PROJECT).tags.includes('feat-shared'));
   });
@@ -48,21 +58,23 @@ void describe('the feat-shared tag constraint', () => {
     const allowed = featSharedConstraint().onlyDependOnLibsWithTags ?? [];
     assert.notDeepEqual(allowed, [], 'feat-shared names no allowed tags');
     const reachable = BROWSER_ONLY_LIBS.filter((path) =>
-      readJson(path).tags.some((tag) => allowed.includes(tag))
+      readJson(path).tags.some((tag) =>
+        allowed.some((pattern) => matchesGlob(tag, pattern))
+      )
     );
     assert.deepEqual(reachable, []);
   });
 
-  void it('is not repeated by an import ban for the engine', () => {
-    const repeating = readJson('.oxlintrc.json')
+  // An override reaching the engine may neither repeat the ban nor turn the
+  // boundary rule down.
+  void it('is neither repeated nor overridden for the engine', () => {
+    const touching = readJson('.oxlintrc.json')
       .overrides.filter(
         ({ files, rules }) =>
-          'no-restricted-imports' in (rules ?? {}) &&
-          files.some((glob) =>
-            glob.startsWith('libs/features/bacteria-engine/')
-          )
+          IMPORT_RULES.some((rule) => rule in (rules ?? {})) &&
+          files.some((glob) => matchesGlob(ENGINE_SOURCE, glob))
       )
       .map(({ files }) => files.join(', '));
-    assert.deepEqual(repeating, []);
+    assert.deepEqual(touching, []);
   });
 });
