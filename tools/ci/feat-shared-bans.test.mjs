@@ -15,6 +15,7 @@ const BANNED_PACKAGES = [
   'firebase',
   'firebase/*',
 ];
+const ENGINE_PROJECT = 'libs/features/bacteria-engine/project.json';
 const BROWSER_ONLY_LIBS = [
   'libs/features/bacteria-rendering/project.json',
   'libs/features/bacteria-sound/project.json',
@@ -23,10 +24,18 @@ const BROWSER_ONLY_LIBS = [
 function featSharedConstraint() {
   const [, { depConstraints }] =
     readJson('.oxlintrc.json').rules['@nx/enforce-module-boundaries'];
-  return depConstraints.find(({ sourceTag }) => sourceTag === 'feat-shared');
+  const constraint = depConstraints.find(
+    ({ sourceTag }) => sourceTag === 'feat-shared'
+  );
+  assert.ok(constraint, 'no feat-shared depConstraint in .oxlintrc.json');
+  return constraint;
 }
 
 void describe('the feat-shared tag constraint', () => {
+  void it('applies to the engine', () => {
+    assert.ok(readJson(ENGINE_PROJECT).tags.includes('feat-shared'));
+  });
+
   void it('bans the packages that keep a lib out of Node', () => {
     const banned = featSharedConstraint().bannedExternalImports ?? [];
     assert.deepEqual(
@@ -36,7 +45,8 @@ void describe('the feat-shared tag constraint', () => {
   });
 
   void it("allows no tag of the game's rendering or sound lib", () => {
-    const allowed = featSharedConstraint().onlyDependOnLibsWithTags;
+    const allowed = featSharedConstraint().onlyDependOnLibsWithTags ?? [];
+    assert.notDeepEqual(allowed, [], 'feat-shared names no allowed tags');
     const reachable = BROWSER_ONLY_LIBS.filter((path) =>
       readJson(path).tags.some((tag) => allowed.includes(tag))
     );
