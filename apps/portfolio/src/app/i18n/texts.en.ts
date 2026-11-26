@@ -71,6 +71,8 @@ export const en = {
     statsClients: 'clients',
     focus: 'What I do',
     focusIntro: 'The work I am asked for again and again.',
+    ownProjects: 'Own projects',
+    ownProjectsIntro: 'What I build on my own, and where it runs.',
     timeline: 'Projects',
     timelineIntro:
       'Every engagement since {since}, newest first. Open one for the details.',

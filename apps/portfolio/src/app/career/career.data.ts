@@ -4,6 +4,7 @@ import {
   CareerProfile,
   CareerProject,
   CareerSource,
+  OwnProject,
 } from './career.model';
 
 /**
@@ -13,10 +14,10 @@ import {
  */
 export const CAREER_SOURCE: CareerSource = {
   folderId: '128B4Nzs9Mnc3s-tJ18lC8IrPOLLDZFMy',
-  fileId: '1N-f-F_S9ziYTEpP6tjquOLQDqUoWKX5r',
-  fileName: '2026-10-28_Wolfram-Sokollek_QualifikationsProfil.pdf',
-  profileDate: '2026-10-28',
-  checkedAt: '2026-10-28',
+  fileId: '1AGh0w3qCG5Nay_2G7EDGheZzMqbR91wg',
+  fileName: '2026-11-26_Wolfram-Sokollek_QualifikationsProfil.pdf',
+  profileDate: '2026-11-26',
+  checkedAt: '2026-11-26',
 };
 
 export const CAREER_PROFILE: CareerProfile = {
@@ -1283,8 +1284,120 @@ export const CAREER_PROJECTS: readonly CareerProject[] = [
   },
 ];
 
+/** The profile's "Eigene Projekte", in its order. */
+export const OWN_PROJECTS: readonly OwnProject[] = [
+  {
+    id: 'movepath',
+    name: 'Movepath',
+    tagline: {
+      en: 'Fitness app with camera AI',
+      de: 'Fitness-App mit Kamera-KI',
+    },
+    url: 'https://movepath.app/',
+    highlights: {
+      en: [
+        'Free fitness web app (PWA, formerly "Pushup Tracker"): camera AI counts push-ups, squats, pull-ups and sit-ups in real time in the browser, without uploading any video',
+        'Training plans and guided sessions with a voice coach (speech recognition on the device), streaks, an XP system, challenges and friends',
+        'Live sync across all devices, offline use through a service worker, push reminders; Android app as a Trusted Web Activity',
+        'Interfaces for AI agents through the AG-UI protocol (CopilotKit for Angular) and WebMCP',
+      ],
+      de: [
+        'Kostenlose Fitness-Web-App (PWA, früher „Pushup Tracker“): Kamera-KI zählt Liegestütze, Kniebeugen, Klimmzüge und Sit-ups in Echtzeit im Browser, ohne Video-Upload',
+        'Trainingspläne und geführte Sessions mit Sprach-Coach (Spracherkennung auf dem Gerät), Streaks, XP-System, Challenges und Freunde',
+        'Live-Sync über alle Geräte, Offline-Nutzung per Service Worker, Push-Erinnerungen; Android-App als Trusted Web Activity',
+        'KI-Agenten-Schnittstellen über das AG-UI-Protokoll (CopilotKit für Angular) und WebMCP',
+      ],
+    },
+    technologies: [
+      'Angular',
+      'Nx',
+      'TypeScript',
+      'PWA / Service Worker',
+      'Web Push',
+      'CopilotKit',
+      'AG-UI',
+      'WebMCP',
+      'Bubblewrap (TWA)',
+    ],
+    accent: '#22c55e',
+  },
+  {
+    id: 'bacteria-wars',
+    name: 'Bacteria Wars',
+    tagline: {
+      en: 'Real-time strategy game',
+      de: 'Echtzeit-Strategiespiel',
+    },
+    url: 'https://bacteria-wars.wolsok.de/',
+    highlights: {
+      en: [
+        'Two bacteria colonies in a petri dish: a campaign of 24 levels, a daily level, an endless mode, leaderboards and replays',
+        'Simulation and rendering on the GPU with WebGL shaders; sound and music from a Web Audio synthesizer of its own',
+        'Computer opponents at three levels of difficulty, with their own pathfinding over cost maps',
+        'Online matches on two devices: a deterministic lockstep simulation over a WebRTC data channel, connected through Firestore',
+        'Playable in the browser, as a PWA and as an Android app (Trusted Web Activity) in the Google Play Store',
+      ],
+      de: [
+        'Zwei Bakterienkolonien in einer Petrischale: Kampagne mit 24 Levels, tägliches Level, Endlos-Modus, Bestenlisten und Replays',
+        'Simulation und Rendering auf der GPU mit WebGL-Shadern; Sound und Musik aus einem eigenen Web-Audio-Synthesizer',
+        'Computergegner in drei Schwierigkeitsstufen mit eigener Wegfindung über Kostenkarten',
+        'Online-Matches auf zwei Geräten: deterministische Lockstep-Simulation über einen WebRTC-Datenkanal, Verbindungsaufbau über Firestore',
+        'Spielbar im Browser, als PWA und als Android-App (Trusted Web Activity) im Google Play Store',
+      ],
+    },
+    technologies: [
+      'Angular 22 (zoneless, Signals)',
+      'Nx',
+      'Native Federation',
+      'WebGL',
+      'Web Audio',
+      'WebRTC',
+      'Firebase (Auth, Firestore, Functions)',
+      'AWS CDK',
+      'Playwright',
+    ],
+    accent: '#e879f9',
+  },
+  {
+    id: 'wolsok-de',
+    name: 'wolsok.de',
+    tagline: {
+      en: 'My portfolio',
+      de: 'Mein Portfolio',
+    },
+    url: 'https://wolsok.de/',
+    highlights: {
+      en: [
+        'Portfolio site that brings together all my apps, games and web experiments: Movepath, Bacteria Wars, Pacetrainer and RollaPolla',
+        'Angular experiments with shaders, Fourier analysis, neural networks, reaction-diffusion and a Mandelbrot deep zoom (angularexamples.wolsok.de)',
+        'Published npm packages @wolsok/nx-aws-cdk-v2 and @wolsok/thanos',
+        'Prerendered Angular app from my open-source Nx monorepo (github.com/WolfSoko/wol-sok-mono), deployed with AWS CDK',
+      ],
+      de: [
+        'Portfolio-Seite, die alle meine Apps, Spiele und Web-Experimente bündelt: Movepath, Bacteria Wars, Pacetrainer und RollaPolla',
+        'Angular-Experimente mit Shadern, Fourier-Analyse, neuronalen Netzen, Reaktions-Diffusion und Mandelbrot-Deep-Zoom (angularexamples.wolsok.de)',
+        'Veröffentlichte npm-Pakete @wolsok/nx-aws-cdk-v2 und @wolsok/thanos',
+        'Vorgerenderte Angular-App aus meinem Open-Source-Nx-Monorepo (github.com/WolfSoko/wol-sok-mono), deployt mit AWS CDK',
+      ],
+    },
+    technologies: [
+      'Angular',
+      'Analog.js',
+      'Nx',
+      'Native Federation',
+      'Three.js',
+      'TensorFlow.js',
+      'WebAssembly',
+      'AWS CDK',
+      'Firebase',
+    ],
+    accent: '#38bdf8',
+  },
+];
+
 export const CAREER: Career = {
   profile: CAREER_PROFILE,
   projects: CAREER_PROJECTS,
+  ownProjects: OWN_PROJECTS,
   source: CAREER_SOURCE,
 };

@@ -10,6 +10,7 @@ import { I18nService } from '../i18n/i18n.service';
 import { RevealDirective } from '../reveal.directive';
 import { SITE_URL } from '../seo.service';
 import { CareerHeroComponent } from './career-hero.component';
+import { CareerOwnProjectsComponent } from './career-own-projects.component';
 import { CareerSkillsComponent } from './career-skills.component';
 import { CareerTimelineComponent } from './career-timeline.component';
 import { CAREER } from './career.data';
@@ -21,6 +22,7 @@ const JSON_LD_ID = 'career-json-ld';
   selector: 'wolsok-career',
   imports: [
     CareerHeroComponent,
+    CareerOwnProjectsComponent,
     CareerTimelineComponent,
     CareerSkillsComponent,
     RevealDirective,

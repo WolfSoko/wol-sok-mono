@@ -28,6 +28,21 @@ export interface CareerProject {
   accent: string;
 }
 
+/** A project of the person's own, as the profile's "Eigene Projekte" lists it. */
+export interface OwnProject {
+  /** Stable id, used as the DOM id and for tests. */
+  id: string;
+  name: string;
+  /** What it is, as the profile's heading puts it after the name. */
+  tagline: Localized;
+  /** Where it runs. */
+  url: string;
+  highlights: Localized<readonly string[]>;
+  technologies: readonly string[];
+  /** The card's accent, a CSS colour. */
+  accent: string;
+}
+
 export interface SkillGroup {
   name: Localized;
   items: readonly string[];
@@ -82,10 +97,14 @@ export interface CareerSource {
   checkedAt: string;
 }
 
-/** The whole page's data: profile, projects (newest first) and source. */
+/**
+ * The whole page's data: profile, projects (newest first), own projects and
+ * source.
+ */
 export interface Career {
   profile: CareerProfile;
   projects: readonly CareerProject[];
+  ownProjects: readonly OwnProject[];
   source: CareerSource;
 }
 
