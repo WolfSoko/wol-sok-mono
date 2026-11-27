@@ -141,7 +141,10 @@ the video.
      `workspace-federation.js`: only the shell imports it.
    - **rollapolla-analog**: behind the spinners that wait for data, on the
      poll page (`poll/[pollId].page.ts`), "My polls" (`my-polls.page.ts`)
-     and the admin page, with `afterLoading: 'hide'`. Not behind the
+     and the admin page, with `afterLoading: 'hide'`, and on "Browse polls"
+     (`polls.page.ts`, while its first page of polls loads), added at the
+     user's request during PR 2. Each page binds it on its `<main>`, which
+     outlives the loading state, so the wave fades out. Not behind the
      `@defer` placeholders of the welcome page: on the server they render as
      placeholders and hydrate in place, so a wave there would only start in
      the browser to stop at once.
@@ -197,9 +200,9 @@ the video.
    `@wolsok/loading-wave`; the home hero shows two sweeps after start, then
    a resting dot grid; the prerendered HTML has no canvas; its specs and
    budgets pass.
-9. rollapolla (PR 2): the wave shows behind the poll page's, "My polls"'
-   and the admin page's loading spinners and is gone once the data is
-   there; SSR output contains no canvas.
+9. rollapolla (PR 2): the wave shows behind the poll page's, "My polls"',
+   "Browse polls"' and the admin page's loading spinners and is gone once
+   the data is there; SSR output contains no canvas.
 10. Lint, template lint, format and the affected builds and budgets pass.
 
 ## Answered questions
