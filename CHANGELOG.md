@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.190.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.189.0...v74.190.0) (2026-11-27)
+
+### Features
+
+* **bacteria-wars-cinematic:** ✨ add the Blender microbe kit, its asset library and the cinematic ([#3267](https://github.com/WolfSoko/wol-sok-mono/issues/3267)) ([87e0405](https://github.com/WolfSoko/wol-sok-mono/commit/87e04056d13c13c343bcb876b8e46f998df7499b))
+* **rollapolla-analog:** show the loading wave behind the data spinners ([#3271](https://github.com/WolfSoko/wol-sok-mono/issues/3271)) ([cd2191f](https://github.com/WolfSoko/wol-sok-mono/commit/cd2191fdf0d62ccd7e7479a017291d564adef576)), closes [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265)
+
+### Bug Fixes
+
+* **github:** check out the release history blobless so a new package's first version finishes ([#3269](https://github.com/WolfSoko/wol-sok-mono/issues/3269)) ([7dc9f82](https://github.com/WolfSoko/wol-sok-mono/commit/7dc9f82546c885f4efeeb6377bc69ef22b9d652d)), references [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265)
+
 ## [74.189.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.188.1...v74.189.0) (2026-11-27)
 
 ### Features
