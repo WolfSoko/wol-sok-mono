@@ -19,38 +19,24 @@ import random
 import sys
 from pathlib import Path
 
-import bpy
 from mathutils import Quaternion, Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from microbe_kit import anim, collide, effects, environment, materials, meshes, organisms  # noqa: E402
+from microbe_kit import anim, collide, effects, environment, materials, meshes, organisms, stage  # noqa: E402
 
-FPS, END = 24, 320
+END = 320
 ATTACK_END, BURST, SETTLE = 130, 161, 220
 OFFSETS = [0, 6, 12]  # each attacker strikes a little later than the one before
 AIMS = [Vector(d).normalized() for d in [(-1, -0.35, 0.15), (1, -0.25, -0.2), (0.25, 0.85, 0.55)]]
 CAMERA_START = Vector((-1.2, -11, 2.6))
 
 
-def reset() -> bpy.types.Scene:
-    bpy.ops.wm.read_factory_settings(use_empty=True)
-    scene = bpy.context.scene
-    scene.frame_start, scene.frame_end = 1, END
-    scene.render.fps = FPS
-    return scene
-
-
-def collection(scene: bpy.types.Scene, name: str) -> bpy.types.Collection:
-    c = bpy.data.collections.new(name)
-    scene.collection.children.link(c)
-    return c
-
-
-def build(scene: bpy.types.Scene) -> None:
-    microbes = collection(scene, "Microbes")
-    vessel = collection(scene, "Blood vessel")
-    burst = collection(scene, "Burst")
-    rig = collection(scene, "Camera and lights")
+def build() -> None:
+    scene = stage.reset(END)
+    microbes = stage.collection(scene, "Microbes")
+    vessel = stage.collection(scene, "Blood vessel")
+    burst = stage.collection(scene, "Burst")
+    rig = stage.collection(scene, "Camera and lights")
 
     # ------------------------------------------------------------ cast
     toxic = materials.toxic_coccus("Victim")
@@ -141,6 +127,7 @@ def build(scene: bpy.types.Scene) -> None:
 
     environment.cycles(scene)
     environment.bloom(scene)
+    stage.poster(scene, BURST - 3)
     scene.frame_set(1)
 
 
@@ -220,11 +207,4 @@ def animate_camera(camera, rng: random.Random) -> None:
 
 
 if __name__ == "__main__":
-    argv = sys.argv[sys.argv.index("--") + 1 :] if "--" in sys.argv else []
-    if len(argv) != 1:
-        sys.exit("usage: blender -b --factory-startup --python blender/scenes/bacteria_fight.py -- <out.blend>")
-    build(reset())
-    out = Path(argv[0]).resolve()
-    out.parent.mkdir(parents=True, exist_ok=True)
-    bpy.ops.wm.save_as_mainfile(filepath=str(out))
-    print(f"Saved {out}")
+    stage.save_from_command_line("scenes/bacteria_fight.py", build)

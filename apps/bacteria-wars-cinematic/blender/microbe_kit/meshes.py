@@ -5,7 +5,7 @@ import random
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 
 def _smooth(me: bpy.types.Mesh) -> bpy.types.Mesh:
@@ -57,6 +57,72 @@ def cube(name: str, size: float = 1.0) -> bpy.types.Mesh:
     bm.to_mesh(me)
     bm.free()
     return me
+
+
+def lathe(name: str, profile: list[tuple[float, float]], segments: int = 128) -> bpy.types.Mesh:
+    """Turns a profile of (radius, z) points around the Z axis: dishes, rings, discs.
+
+    The profile is an open line; start and end it on the axis (radius 0) or
+    close it yourself by repeating the first point.
+    """
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    verts = [bm.verts.new((r, 0, z)) for r, z in profile]
+    edges = [bm.edges.new((a, b)) for a, b in zip(verts, verts[1:])]
+    bmesh.ops.spin(bm, geom=verts + edges, cent=(0, 0, 0), axis=(0, 0, 1), angle=2 * math.pi,
+                   steps=segments, use_duplicate=False)
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for edge in bm.edges:  # round where it turns, sharp where the profile has a corner
+        edge.smooth = len(edge.link_faces) != 2 or edge.calc_face_angle() < math.radians(40)
+    bm.to_mesh(me)
+    bm.free()
+    return _smooth(me)
+
+
+def circle_profile(radius: float, z: float, thickness: float, points: int = 16) -> list[tuple[float, float]]:
+    """The closed profile of a ring-shaped tube for lathe(): a circle of
+    `thickness` radius around (radius, z)."""
+    return [(radius + thickness * math.cos(a), z + thickness * math.sin(a))
+            for a in (i * 2 * math.pi / points for i in range(points + 1))]
+
+
+def rounded_bar(name: str, length: float, half_width: float, height: float, segments: int = 16) -> bpy.types.Mesh:
+    """A wall along X, centered on the origin, standing on z = 0, with round ends."""
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    outline = []
+    for side, x in ((1, length / 2), (-1, -length / 2)):
+        for i in range(segments + 1):
+            a = -math.pi / 2 + math.pi * i / segments
+            outline.append(bm.verts.new((x + side * half_width * math.cos(a), side * half_width * math.sin(a), 0)))
+    bottom = bm.faces.new(outline)
+    top = bmesh.ops.extrude_face_region(bm, geom=[bottom])
+    bmesh.ops.translate(bm, verts=[g for g in top["geom"] if isinstance(g, bmesh.types.BMVert)],
+                        vec=(0, 0, height))
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    bm.to_mesh(me)
+    bm.free()
+    return me
+
+
+def crosshair(name: str, size: float = 0.5, thickness: float = 0.035) -> bpy.types.Mesh:
+    """A plus inside a ring, flat in the XY plane: the game's crosshair."""
+    me = bpy.data.meshes.new(name)
+    bm = bmesh.new()
+    ring = [bm.verts.new((size + thickness * math.cos(a), 0, thickness * math.sin(a)))
+            for a in (i * 2 * math.pi / 8 for i in range(8))]
+    edges = [bm.edges.new((a, b)) for a, b in zip(ring, ring[1:] + ring[:1])]
+    bmesh.ops.spin(bm, geom=ring + edges, cent=(0, 0, 0), axis=(0, 0, 1), angle=2 * math.pi,
+                   steps=64, use_duplicate=False)
+    for turn in (0, math.pi / 2):
+        bar = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+        bmesh.ops.scale(bm, verts=bar, vec=(size * 1.1, thickness * 1.6, thickness * 1.6))
+        bmesh.ops.rotate(bm, verts=bar, cent=(0, 0, 0), matrix=Matrix.Rotation(turn, 3, "Z"))
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
+    bm.to_mesh(me)
+    bm.free()
+    return _smooth(me)
 
 
 def red_blood_cell(name: str) -> bpy.types.Mesh:

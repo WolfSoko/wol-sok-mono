@@ -1,5 +1,6 @@
 * text=auto eol=lf
 
-# Git LFS: the Blender files and the rendered films of the cinematic
+# Git LFS: the Blender files, the rendered films and the poster stills of the cinematic
 apps/bacteria-wars-cinematic/**/*.blend filter=lfs diff=lfs merge=lfs -text
 apps/bacteria-wars-cinematic/renders/*.mp4 filter=lfs diff=lfs merge=lfs -text
+apps/bacteria-wars-cinematic/renders/*.jpg filter=lfs diff=lfs merge=lfs -text

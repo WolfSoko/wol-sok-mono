@@ -264,3 +264,87 @@ def bloom(scene: bpy.types.Scene, strength: float = 0.6) -> None:
         tree.links.new(glare.outputs["Image"], out.inputs[0])
     except Exception as e:
         print("bloom skipped:", e)
+
+
+def bokeh_lights(collection: bpy.types.Collection, rng: random.Random, count: int, colors: list,
+                 distance: tuple[float, float] = (22, 45), height: tuple[float, float] = (0.5, 14),
+                 arc: tuple[float, float] = (0.15 * math.pi, 0.85 * math.pi),
+                 size: tuple[float, float] = (0.12, 0.45), strength: float = 6.0) -> list[bpy.types.Object]:
+    """Glowing orbs far behind the action, as in the game's menus: out of focus
+    they become soft discs of light that give a dark background depth.
+
+    arc: the range of directions seen from the origin they are scattered in
+    (radians from +X, so the default is the half ring behind a camera on -Y).
+    size: the orbs' radii. A lens that blurs little (a wide one, or focused far
+    away) leaves small orbs as pinpoints: give it bigger, dimmer ones (strength).
+    """
+    orb = meshes.sphere("Bokeh orb", 1.0, 16)
+    glows = [materials.emission(f"Bokeh {i + 1}", color, strength) for i, color in enumerate(colors)]
+    orbs = []
+    for n in range(count):
+        ob = bpy.data.objects.new(f"Bokeh orb {n:02d}", orb)
+        collection.objects.link(ob)
+        if not orb.materials:
+            orb.materials.append(glows[0])
+        ob.material_slots[0].link = "OBJECT"
+        ob.material_slots[0].material = rng.choice(glows)
+        angle, far = rng.uniform(*arc), rng.uniform(*distance)
+        ob.location = (far * math.cos(angle), far * math.sin(angle), rng.uniform(*height))
+        ob.scale = [rng.uniform(*size)] * 3
+        ob.visible_shadow = False
+        anim.drive(ob, "delta_location", f"sin(frame*{rng.uniform(0.01, 0.03):.3f}+{rng.uniform(0, 6.28):.2f})*0.6", 2)
+        orbs.append(ob)
+    return orbs
+
+
+def motion_blur(scene: bpy.types.Scene, shutter: float = 0.4) -> None:
+    """Blurs what moves fast (a boosting colony) over part of the frame."""
+    scene.render.use_motion_blur = True
+    scene.render.motion_blur_shutter = shutter
+
+
+def petri_dish(collection: bpy.types.Collection, radius: float = 12.0, height: float = 1.5,
+               glow_color=(1.0, 0.35, 0.05), glow: float = 14.0) -> dict[str, bpy.types.Object]:
+    """A glass dish of nutrient gel on a dark, polished stage, ringed by a
+    neon tube in the level's color (the arena's frame in the game).
+
+    The gel's surface is z = 0 and `radius` is the dish's inner radius, the
+    same as swarm.Arena(radius). Returns the objects by name: "glass",
+    "agar", "stage", "neon".
+    """
+    thickness, depth = radius * 0.02, 0.35
+    parts = {
+        "glass": _add(collection, "Dish", meshes.lathe("Dish", [
+            (0, -depth - thickness), (radius + thickness, -depth - thickness), (radius + thickness, height),
+            (radius + thickness * 0.5, height + thickness * 0.5), (radius, height), (radius, -depth), (0, -depth),
+        ]), materials.glass()),
+        "agar": _add(collection, "Agar", meshes.lathe("Agar", [(0, -depth), (radius, -depth), (radius, 0), (0, 0)]),
+                     materials.agar()),
+        "stage": _add(collection, "Stage", meshes.lathe("Stage", [(0, 0), (radius * 30, 0)], segments=64),
+                      materials.stage()),
+        "neon": _add(collection, "Neon ring",
+                     meshes.lathe("Neon ring", meshes.circle_profile(radius * 1.07, 0.09, 0.09)),
+                     materials.emission("Neon", glow_color, glow)),
+    }
+    parts["stage"].location.z = -depth - thickness
+    parts["neon"].location.z = -depth - thickness
+    return parts
+
+
+def wall_block(name: str, a, b, half_width: float, height: float, collection: bpy.types.Collection,
+               material: bpy.types.Material) -> bpy.types.Object:
+    """A wall standing on the dish floor from a to b ((x, y) each), rounded at
+    its ends like swarm.Wall(a, b, half_width), which it stands for."""
+    a, b = Vector((*a, 0)), Vector((*b, 0))
+    ob = _add(collection, name, meshes.rounded_bar(name, (b - a).length, half_width, height), material)
+    ob.location = (a + b) / 2
+    ob.rotation_euler.z = math.atan2(b.y - a.y, b.x - a.x)
+    return ob
+
+
+def _add(collection: bpy.types.Collection, name: str, mesh: bpy.types.Mesh,
+         material: bpy.types.Material) -> bpy.types.Object:
+    mesh.materials.append(material)
+    ob = bpy.data.objects.new(name, mesh)
+    collection.objects.link(ob)
+    return ob

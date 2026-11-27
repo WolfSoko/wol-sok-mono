@@ -61,6 +61,24 @@ class Heartbeat:
             anim.keys(owner, prop, [(f, value)])
 
 
+def crosshair(collection: bpy.types.Collection, name: str, color, frames: list[int], points,
+              height: float = 1.6, size: float = 0.55, glow: float = 5.0) -> bpy.types.Object:
+    """The player's crosshair as in the game: a glowing plus in a ring, hovering
+    over the dish where the colony is told to go.
+
+    points: its (x, y) per frame of `frames`, e.g. a column of swarm.Tracks.crosshair.
+    It turns slowly on a frame driver.
+    """
+    me = meshes.crosshair(name, size)
+    me.materials.append(materials.emission(name, color, glow))
+    ob = bpy.data.objects.new(name, me)
+    collection.objects.link(ob)
+    anim.bake(ob, "location", frames, [(x, y, height) for x, y in points])
+    anim.drive(ob, "rotation_euler", "frame*0.03", 2)
+    ob.visible_shadow = False
+    return ob
+
+
 def leaking_droplets(collection: bpy.types.Collection, rng: random.Random, wounds, count: int, last_frame: int,
                      material: bpy.types.Material, radius: float = 1.15) -> list[bpy.types.Object]:
     """Glowing cytoplasm seeping out of wounds in a cell of the given radius at the origin.

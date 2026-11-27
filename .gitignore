@@ -98,3 +98,7 @@ apps/angular-examples/src/environments/version-tag.generated.ts
 
 # Lighthouse CI reports (ADR 0014, gate 4)
 .lighthouseci
+
+# Python bytecode and Blender backups (apps/bacteria-wars-cinematic)
+__pycache__/
+*.blend1
