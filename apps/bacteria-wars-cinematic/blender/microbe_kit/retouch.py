@@ -29,7 +29,8 @@ def retime(tracks: swarm.Tracks, clock: np.ndarray) -> swarm.Tracks:
     """The tracks played along another clock: frame n of the result shows the
     simulation at frame clock[n - 1], which may lie between two frames."""
     at = np.clip(np.asarray(clock, np.float64) - 1.0, 0.0, tracks.frames - 1.0)
-    before = np.minimum(at.astype(np.int64), tracks.frames - 2)
+    reached = at.astype(np.int64)  # the last whole frame played: what is alive, and on whose side, is its state
+    before = np.minimum(reached, tracks.frames - 2)
     blend = (at - before).astype(np.float32)
 
     def between(values: np.ndarray) -> np.ndarray:
@@ -38,7 +39,7 @@ def retime(tracks: swarm.Tracks, clock: np.ndarray) -> swarm.Tracks:
 
     return swarm.Tracks(
         position=between(tracks.position), yaw=between(np.unwrap(tracks.yaw, axis=0)), size=between(tracks.size),
-        tint=between(tracks.tint), glow=between(tracks.glow), team=tracks.team[before], radius=tracks.radius.copy(),
+        tint=between(tracks.tint), glow=between(tracks.glow), team=tracks.team[reached], radius=tracks.radius.copy(),
         crosshair=between(tracks.crosshair), food=between(tracks.food),
     )
 
@@ -59,7 +60,11 @@ def slim(tracks: swarm.Tracks, factor: float) -> swarm.Tracks:
 def steady(tracks: swarm.Tracks, window: int) -> swarm.Tracks:
     """The same tracks with every cell's path averaged over `window` frames:
     the drift stays, the frame-to-frame jitter of a crowded dish goes."""
-    padded = np.pad(tracks.position, ((window // 2, window - 1 - window // 2), (0, 0), (0, 0)), mode="edge")
+    position = tracks.position.copy()
+    born = np.argmax(tracks.size > 0, axis=0)  # per cell, the first frame it lives at
+    for cell in np.nonzero(born > 0)[0]:  # an unborn cell waits elsewhere: that is not part of its path
+        position[: born[cell], cell] = position[born[cell], cell]
+    padded = np.pad(position, ((window // 2, window - 1 - window // 2), (0, 0), (0, 0)), mode="edge")
     sums = np.cumsum(np.concatenate([np.zeros_like(padded[:1]), padded]), axis=0, dtype=np.float64)
     position = ((sums[window:] - sums[:-window]) / window).astype(np.float32)
     return swarm.Tracks(position, tracks.yaw, tracks.size, tracks.tint, tracks.glow, tracks.team,

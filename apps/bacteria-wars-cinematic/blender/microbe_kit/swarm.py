@@ -85,9 +85,11 @@ class Strike:
     """A weapon hitting the dish: the cells inside a circle light up and die.
 
     Its wave starts at `at` on `frame` and runs outwards: a cell at distance d
-    is reached d * delay frames later, glows for `fuse` frames (Tracks.glow =
-    1 + 5 * flash) and then shrinks away. Once the wave has reached the rim of
-    the circle the strike is over: cells that wander in later live.
+    is reached d * delay frames later, glows for `fuse` frames (Tracks.glow up
+    to 1 + 4 * flash) and then shrinks away. Like every event of the
+    simulation it shows from the frame after: a frame is recorded before it is
+    played. Once the wave has reached the rim of the circle the strike is
+    over: cells that wander in later live.
     """
 
     at: Point
@@ -279,8 +281,8 @@ def simulate(colonies: list[Colony], end: int, seed: int, team_colors: list, are
             health[~losing] = np.minimum(1.0, health[~losing] + 0.05)
             for cell in np.nonzero(alive & ~dying & (health <= 0))[0]:
                 if fight.convert:
-                    rivals = team[near[cell] & ~same[cell]]
-                    winner = int(np.bincount(rivals).argmax())
+                    rivals = near[cell] & ~same[cell]
+                    winner = int(np.bincount(team[rivals], weights=weight[rivals]).argmax())  # who pressed hardest
                     team[cell], home[cell] = winner, colony_of_team[winner]
                     health[cell], flash[cell] = 1.0, 1.0
                 else:

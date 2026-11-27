@@ -25,6 +25,7 @@
         "{workspaceRoot}/tools/**/*.mjs",
         "{workspaceRoot}/tools/**/*.{js,cjs,ts,mts,cts}",
         "{workspaceRoot}/tools/vite/**/*",
+        "{workspaceRoot}/apps/bacteria-wars-cinematic/blender/scenes/*.py",
         "{workspaceRoot}/.nx/workflows/workers.yml",
         "{workspaceRoot}/jest.preset.cjs",
         "{workspaceRoot}/.nx/ci-config.yaml",

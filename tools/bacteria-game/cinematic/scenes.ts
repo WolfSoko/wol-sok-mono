@@ -18,12 +18,23 @@ const workRoot = resolve('dist/bacteria-wars-cinematic');
 /** The scene built when none is named: the first cinematic. */
 export const DEFAULT_SCENE = 'bacteria_fight';
 
+/**
+ * What every run of Blender starts with: in the background, and failing when
+ * a Python script raises (without the exit code Blender ends as if all went
+ * well, and a scene that failed to build would leave its old .blend in use).
+ */
+export const BLENDER_BATCH = ['-b', '--python-exit-code', '1'];
+
 /** Runs Blender in the background and returns what it printed. */
 export function blender(args: string[]): string {
-  return execFileSync(process.env['BLENDER'] ?? 'blender', ['-b', ...args], {
-    encoding: 'utf8',
-    maxBuffer: 64 * 1024 * 1024,
-  });
+  return execFileSync(
+    process.env['BLENDER'] ?? 'blender',
+    [...BLENDER_BATCH, ...args],
+    {
+      encoding: 'utf8',
+      maxBuffer: 64 * 1024 * 1024,
+    }
+  );
 }
 
 /** The script of a scene given by name (`dish_duel`) or as a path to a .py file. */
@@ -60,7 +71,11 @@ export function sceneBlend(name: string): string {
 export function buildScene(scene: string, force = false): string {
   const script = sceneScript(scene);
   const blend = sceneBlend(sceneName(script));
-  if (!force && existsSync(blend) && statSync(blend).mtimeMs > newestSource()) {
+  if (
+    !force &&
+    existsSync(blend) &&
+    statSync(blend).mtimeMs > newestSource(script)
+  ) {
     console.log(`${blend} is up to date`);
     return blend;
   }
@@ -69,8 +84,12 @@ export function buildScene(scene: string, force = false): string {
   return blend;
 }
 
-/** The modification time of the newest tracked Python file below blender/. */
-function newestSource(): number {
+/**
+ * The modification time of the newest Python file a scene is built from: its
+ * script (which may lie outside the project) and the project's files below
+ * blender/. A file git lists but that is gone counts as changed just now.
+ */
+function newestSource(script: string): number {
   const files = execFileSync(
     'git',
     ['ls-files', '--cached', '--others', '--exclude-standard', '--', '*.py'],
@@ -78,8 +97,14 @@ function newestSource(): number {
   )
     .split('\n')
     .filter(Boolean);
+  const sources = [
+    script,
+    ...files.map((file) => join(projectDir, 'blender', file)),
+  ];
   return Math.max(
-    ...files.map((file) => statSync(join(projectDir, 'blender', file)).mtimeMs)
+    ...sources.map((file) =>
+      existsSync(file) ? statSync(file).mtimeMs : Infinity
+    )
   );
 }
 

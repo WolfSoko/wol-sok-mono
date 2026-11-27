@@ -68,6 +68,7 @@ def serve(tracks: swarm.Tracks, foods: list[swarm.Food], collection: bpy.types.C
                                  collection, size=0.1)
         if not (radius != radius[0]).any():
             lamp.data.energy = float(light * radius[0] ** 2)
+            lamp.location.z = float(radius[0])
             continue
         at = np.stack([np.full_like(radius, food.at[0]), np.full_like(radius, food.at[1]), radius], axis=1)
         anim.bake(lamp, "location", frames, at)

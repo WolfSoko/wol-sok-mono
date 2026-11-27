@@ -534,10 +534,8 @@ def cell_top(tracks: swarm.Tracks, cell: int) -> np.ndarray:
 
 
 def struck_at(tracks: swarm.Tracks, cell: int, strike: swarm.Strike) -> int:
-    """The frame a strike's wave lights a cell up; the frame it would, if the cell was never reached."""
-    lit = np.nonzero(tracks.glow[strike.frame - 1 :, cell] >= 1 + 5 * strike.flash * 0.99)[0]
-    if len(lit):
-        return strike.frame + int(lit[0]) - 1  # tracks record a frame before it is played
+    """The frame a strike's wave reaches the place a cell lay at when the strike began: when it
+    lights up, give or take a frame for a cell that moves meanwhile."""
     away = np.linalg.norm(tracks.position[strike.frame - 1, cell, :2] - np.asarray(strike.at))
     return strike.frame + math.ceil(away * strike.delay)
 
@@ -560,7 +558,8 @@ def sparks(tracks: swarm.Tracks, cells, collection: bpy.types.Collection, rng: r
     drop.materials.append(light("Spark"))
     thrown = []
     for cell in rng.sample([int(c) for c in cells], min(count, len(cells))):
-        gone = int(np.argmax(tracks.team[:, cell] < 0)) + 1  # the first frame without the cell
+        alive = tracks.team[:, cell] >= 0
+        gone = int(np.argmax(alive[:-1] & ~alive[1:])) + 2  # the first frame after its last: not one before its birth
         start = max(1, gone - SPARK_LEAD)
         life = rng.randint(*SPARK_LIFE)
         frames = list(range(start, min(tracks.frames, start + life) + 1))

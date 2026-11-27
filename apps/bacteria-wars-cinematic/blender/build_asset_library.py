@@ -60,6 +60,12 @@ def mark(idb, catalog: str, description: str, ids) -> None:
         print(f"no preview for {idb.name}: {e}")
 
 
+def out_of_the_way(c) -> None:
+    """Hides a big asset in the library file's own view only. The switch on the
+    collection itself would travel with the asset and hide it wherever it is used."""
+    bpy.context.view_layer.layer_collection.children[c.name].hide_viewport = True
+
+
 def place(c, x: float) -> None:
     for ob in c.objects:
         if ob.parent is None:
@@ -111,7 +117,7 @@ def build(folder: Path) -> None:
                                "Vessel tunnel (radius 13, along +Y from -30 to 80) with five branches; "
                                "put the camera inside", ids, 0)
     environment.blood_vessel(c, rng)
-    c.hide_viewport = True  # big: keep it out of the way in the library file
+    out_of_the_way(c)
     done()
 
     c, done = asset_collection(scene, "Membrane shreds", "Microbes/Effects",
@@ -146,7 +152,7 @@ def dish_assets(scene, ids) -> None:
                                "Glass dish of nutrient gel (inner radius 10, gel surface at z = 0) on a dark "
                                "stage, ringed by a neon tube", ids, 0)
     environment.petri_dish(c, 10.0)
-    c.hide_viewport = True  # big: keep it out of the way in the library file
+    out_of_the_way(c)
     done()
 
     c, done = asset_collection(scene, "Colony cells", "Microbes/Dish",
