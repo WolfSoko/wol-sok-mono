@@ -163,6 +163,9 @@ simple-blender-render job and waits. The frames gather in
 3840 x 2160 with twice the samples: `renders/<name>.jpg`, and lossless in
 `dist/bacteria-wars-cinematic/<name>/still`. Without `--scene` it renders the
 first cinematic. Commit the films and stills; the frames stay out of git.
+The tool waits for the farm; if the wait is cut off, the job goes on, and
+`--collect <run>` (the run is printed when the job is submitted) later takes
+its frames from the storage without rendering again.
 `FLAMENCO_STORAGE` is the storage as this machine sees it (`{storage}` of the
 farm). On Windows run it from PowerShell or cmd: Git Bash rewrites `\\host\share`
 paths.

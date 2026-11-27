@@ -91,15 +91,20 @@ async function waitFor(job: Job, label: string): Promise<void> {
   }
 }
 
+/** The folder on the shared storage that holds a run's frames, named by frameName(). */
+export function runFrames(run: string): string {
+  return join(env('FLAMENCO_STORAGE'), STORAGE_FOLDER, run, 'frames');
+}
+
 /**
  * Renders the frames on the farm and returns the folder on the shared
- * storage that holds them, named by frameName().
+ * storage that holds them (runFrames() of the run it prints).
  */
 export async function renderOnFarm(render: FarmRender): Promise<string> {
   const { name, first, last } = render;
   const run = `${name}-${new Date().toISOString().replace(/\D/g, '').slice(0, 14)}`;
   const runDir = join(env('FLAMENCO_STORAGE'), STORAGE_FOLDER, run);
-  mkdirSync(join(runDir, 'frames'), { recursive: true });
+  mkdirSync(runFrames(run), { recursive: true });
   copyFileSync(render.blend, join(runDir, 'scene.blend'));
   const farmPath = `{storage}/${STORAGE_FOLDER}/${run}`;
   const job = await manager<Job>('/jobs', {
@@ -124,5 +129,5 @@ export async function renderOnFarm(render: FarmRender): Promise<string> {
   });
   console.log(`Job ${job.id}: frames ${first}-${last} of ${run}`);
   await waitFor(job, name);
-  return join(runDir, 'frames');
+  return runFrames(run);
 }

@@ -18,18 +18,23 @@
  * twice the samples, kept lossless in dist/bacteria-wars-cinematic/<name>/still
  * and as renders/<name>.jpg.
  *
+ * `--collect <run>` skips the farm: it takes the frames of a run the farm has
+ * already rendered (`<name>-<timestamp>`, printed when the job was submitted)
+ * from the shared storage, for a wait that was cut off while the job went on.
+ *
  * Environment: FLAMENCO_MANAGER and FLAMENCO_STORAGE (farm.ts), BLENDER
  * (scenes.ts), FFMPEG (../promo-video/ffmpeg.ts).
  *
  * Run `npx nx run bacteria-wars-cinematic:render`, with `-- --scene
- * dish_duel`, `--frames 1-24`, `--blend <file>`, `--name <name>` or `--still`.
+ * dish_duel`, `--frames 1-24`, `--blend <file>`, `--name <name>`, `--still`
+ * or `--collect <run>`.
  */
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { ffmpeg } from '../promo-video/ffmpeg';
-import { frameName, renderOnFarm } from './farm';
+import { FarmRender, frameName, renderOnFarm, runFrames } from './farm';
 import {
   blender,
   buildScene,
@@ -90,11 +95,18 @@ function runFfmpeg(args: string[]): void {
   });
 }
 
+/** Where the frames are: the farm renders them, or a run it has rendered is named. */
+type Frames = (render: FarmRender) => Promise<string>;
+
 /** Renders the poster frame large and keeps it as PNG (dist) and JPEG (renders). */
-async function renderStill(name: string, scene: FarmScene): Promise<void> {
+async function renderStill(
+  name: string,
+  scene: FarmScene,
+  frames: Frames
+): Promise<void> {
   const stillDir = join(workDir(name), 'still');
   mkdirSync(stillDir, { recursive: true });
-  const farmFrames = await renderOnFarm({
+  const farmFrames = await frames({
     name: `${name}-still`,
     blend: scene.blend,
     first: scene.poster,
@@ -112,12 +124,13 @@ async function renderStill(name: string, scene: FarmScene): Promise<void> {
 async function renderFilm(
   name: string,
   scene: FarmScene,
-  frames: string | undefined
+  range: string | undefined,
+  frames: Frames
 ): Promise<void> {
   const framesDir = join(workDir(name), 'frames');
   mkdirSync(framesDir, { recursive: true });
-  const [first, last] = frames ? frameRange(frames) : [scene.first, scene.last];
-  const farmFrames = await renderOnFarm({
+  const [first, last] = range ? frameRange(range) : [scene.first, scene.last];
+  const farmFrames = await frames({
     name,
     blend: scene.blend,
     first,
@@ -175,6 +188,7 @@ async function main(): Promise<void> {
       frames: { type: 'string' },
       name: { type: 'string' },
       still: { type: 'boolean', default: false },
+      collect: { type: 'string' },
     },
   });
   const source = values.blend ?? sceneScript(values.scene);
@@ -188,9 +202,13 @@ async function main(): Promise<void> {
     join(workDir(name), `${name}-${suffix}.blend`),
     values.still
   );
+  const run = values.collect;
+  const frames: Frames = run
+    ? () => Promise.resolve(runFrames(run))
+    : renderOnFarm;
   await (values.still
-    ? renderStill(name, scene)
-    : renderFilm(name, scene, values.frames));
+    ? renderStill(name, scene, frames)
+    : renderFilm(name, scene, values.frames, frames));
 }
 
 main().catch((error: unknown) => {
