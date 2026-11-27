@@ -25,6 +25,7 @@ apps/                   # Deployable apps
   *-remote/             # Module Federation remotes
   *-cdk/                # AWS CDK infra stacks
   bacteria-wars-android/ # Android app (Gradle, Trusted Web Activity)
+  bacteria-wars-cinematic/ # Blender: microbe kit (Python), asset library, cinematic (Git LFS)
 libs/
   features/             # Domain features (can use shared + utils + ui-kit)
   shared/               # Cross-cutting concerns (can use utils)
