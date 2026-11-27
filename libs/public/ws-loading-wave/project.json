@@ -1,0 +1,34 @@
+{
+  "name": "ws-loading-wave",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "library",
+  "sourceRoot": "libs/public/ws-loading-wave/src",
+  "prefix": "ws",
+  "tags": ["shared", "published", "ui"],
+  "targets": {
+    "build": {
+      "executor": "@nx/angular:ng-packagr-lite",
+      "outputs": ["{workspaceRoot}/dist/libs/public/ws-loading-wave"],
+      "options": {
+        "project": "libs/public/ws-loading-wave/ng-package.json",
+        "tsConfig": "libs/public/ws-loading-wave/tsconfig.lib.json"
+      },
+      "configurations": {
+        "production": {
+          "tsConfig": "libs/public/ws-loading-wave/tsconfig.lib.prod.json"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/libs/public/ws-loading-wave"],
+      "options": {
+        "jestConfig": "libs/public/ws-loading-wave/jest.config.ts",
+        "passWithNoTests": false,
+        "tsConfig": "libs/public/ws-loading-wave/tsconfig.spec.json"
+      }
+    }
+  }
+}

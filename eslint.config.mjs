@@ -53,6 +53,7 @@ const selectorPrefixes = {
   'libs/features/lazy/web-gl': ['featLazyWebGl', 'feat-lazy-web-gl'],
   'libs/features/lazy/wasm-test': ['lazyFeatWasmTest', 'lazy-feat-wasm-test'],
   'libs/fib-wasm-api': ['shApiFibWasm', 'sh-api-fib-wasm'],
+  'libs/public/ws-loading-wave': ['wsLoadingWave', 'ws-loading-wave'],
   'libs/public/ws-thanos': ['wsThanos', 'ws-thanos'],
   'libs/shared/data-access': ['lib', 'lib'],
   'libs/shared/headline-animation': ['lib', 'lib'],
