@@ -1,5 +1,5 @@
 import { fakeWaveEnvironment } from './fake-wave-environment.mock';
-import { LoadingWave } from './loading-wave';
+import { fitPixelRatio, LoadingWave, MAX_CANVAS_PIXELS } from './loading-wave';
 import {
   DEFAULT_LOADING_WAVE_OPTIONS,
   LoadingWaveOptions,
@@ -204,5 +204,21 @@ describe('LoadingWave', () => {
     fake.wave.setLoading(true);
     expect(fake.host.querySelector('canvas')).toBeNull();
     expect(fake.host.getAttribute('aria-busy')).toBe('true');
+  });
+});
+
+describe('fitPixelRatio', () => {
+  it('keeps the pixel ratio of a host of usual size', () => {
+    expect(fitPixelRatio(1200, 800, 2)).toBe(2);
+  });
+
+  it('lowers it so a tall host stays within the pixel budget', () => {
+    const ratio = fitPixelRatio(1500, 6000, 2);
+    expect(ratio).toBeLessThan(1);
+    expect(1500 * 6000 * ratio * ratio).toBeCloseTo(MAX_CANVAS_PIXELS, 0);
+  });
+
+  it('keeps it for an empty host', () => {
+    expect(fitPixelRatio(0, 0, 2)).toBe(2);
   });
 });

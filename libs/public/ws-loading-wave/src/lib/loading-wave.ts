@@ -16,6 +16,24 @@ const CANVAS_STYLE: Partial<CSSStyleDeclaration> = {
 };
 
 /**
+ * The most device pixels a wave's canvas holds: a tall host (a whole page)
+ * gets a lower pixel ratio rather than a canvas of hundreds of megabytes.
+ */
+export const MAX_CANVAS_PIXELS = 4_000_000;
+
+/** the device pixel ratio, lowered where the canvas would grow too large */
+export function fitPixelRatio(
+  width: number,
+  height: number,
+  pixelRatio: number
+): number {
+  const area = width * height;
+  return area <= 0
+    ? pixelRatio
+    : Math.min(pixelRatio, Math.sqrt(MAX_CANVAS_PIXELS / area));
+}
+
+/**
  * The loading wave of one host element, without Angular: puts a canvas
  * behind the host's content while loading, runs the animation and removes
  * it again (`'hide'`) or leaves the resting dots (`'keep'`).
@@ -159,12 +177,13 @@ export class LoadingWave {
   }
 
   private resize(): void {
+    const { clientWidth: width, clientHeight: height } = this.host;
     this.renderer?.resize(
-      waveGeometry(this.host.clientWidth, this.host.clientHeight, {
+      waveGeometry(width, height, {
         dotSpacing: this.options.dotSpacing,
         sweepMs: this.options.sweepMs,
       }),
-      this.env.pixelRatio()
+      fitPixelRatio(width, height, this.env.pixelRatio())
     );
     // a resized canvas is blank until drawn again
     this.scheduleFrame();

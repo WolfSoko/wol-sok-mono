@@ -73,7 +73,8 @@ export function browserWaveEnvironment(document: Document): WaveEnvironment {
 function observeTheme(document: Document, onChange: () => void): Disconnect {
   const view = document.defaultView;
   const scheme = view?.matchMedia?.('(prefers-color-scheme: dark)');
-  scheme?.addEventListener('change', onChange);
+  // optional calls: Safari before 14 knows only addListener
+  scheme?.addEventListener?.('change', onChange);
   const observer =
     view?.MutationObserver == null
       ? undefined
@@ -86,7 +87,7 @@ function observeTheme(document: Document, onChange: () => void): Disconnect {
     });
   }
   return () => {
-    scheme?.removeEventListener('change', onChange);
+    scheme?.removeEventListener?.('change', onChange);
     observer?.disconnect();
   };
 }
