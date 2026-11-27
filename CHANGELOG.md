@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.189.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.188.1...v74.189.0) (2026-11-27)
+
+### Features
+
+* **ws-loading-wave:** add the @wolsok/loading-wave directive ([#3266](https://github.com/WolfSoko/wol-sok-mono/issues/3266)) ([73c9d21](https://github.com/WolfSoko/wol-sok-mono/commit/73c9d2146c51e38170a52126adcef3920d4565e6)), references [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265) [#3265](https://github.com/WolfSoko/wol-sok-mono/issues/3265)
+
+### Chore
+
+* **release:** publish ([8aa49c9](https://github.com/WolfSoko/wol-sok-mono/commit/8aa49c918f9ce4ca2f94555ca24333ecb1834102))
+
 ## [74.188.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.188.0...v74.188.1) (2026-11-26)
 
 ### Chore
