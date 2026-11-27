@@ -168,6 +168,18 @@ export const APP_ROUTES: MainNavRoutes = [
     },
   },
   {
+    path: 'loadingWavePlayground',
+    loadChildren: () =>
+      import('./feature/lazy/loading-wave-playground/loading-wave-playground.routes').then(
+        (m) => m.routes
+      ),
+    data: {
+      linkText: 'Loading wave playground (@wolsok/loading-wave)',
+      description:
+        'Try the @wolsok/loading-wave Angular directive live: a calm wave of lit dots behind any element, drawn by a WebGL2 shader or a 2D canvas, with spacing, size, speed and colour to set.',
+    },
+  },
+  {
     path: 'thanosPlayground',
     loadChildren: () =>
       import('./feature/lazy/thanos-playground/thanos-playground.routes').then(

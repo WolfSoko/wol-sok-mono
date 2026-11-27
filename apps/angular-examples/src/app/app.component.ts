@@ -5,10 +5,12 @@ import {
   signal,
 } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { Environment } from '../environments/environment.type';
 import { MainNavRoutes } from './app-routing';
 import { ENV_TOKEN } from './core/env.token';
+import { navigationLoading } from './core/navigation-loading';
 import { SeoService } from './core/seo.service';
 import { MainToolbarComponent } from './feature/main-toolbar/main-toolbar.component';
 import { SideNavComponent } from './feature/navigation/side-nav/side-nav.component';
@@ -19,7 +21,12 @@ import { ROUTER_LINKS } from './router-links.token';
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [MainToolbarComponent, SideNavComponent, RouterOutlet],
+  imports: [
+    LoadingWaveDirective,
+    MainToolbarComponent,
+    SideNavComponent,
+    RouterOutlet,
+  ],
 })
 export class AppComponent {
   // inject seo service to keep title and meta tags in sync with the route
@@ -28,6 +35,8 @@ export class AppComponent {
   private env = inject<Environment>(ENV_TOKEN);
 
   appVersion = signal('');
+  /** a lazy page or remote is still loading: the content shows the loading wave */
+  protected readonly navigating = navigationLoading();
 
   constructor() {
     const gtmManager = inject(Angulartics2GoogleTagManager);

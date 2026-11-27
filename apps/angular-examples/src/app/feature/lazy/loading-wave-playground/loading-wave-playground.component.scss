@@ -1,0 +1,46 @@
+:host {
+  display: grid;
+  grid-template-columns: minmax(0, 24rem) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+section {
+  margin-bottom: 0.75rem;
+}
+
+mat-slider {
+  width: 100%;
+}
+
+.options {
+  overflow-x: auto;
+  font-size: 0.8rem;
+}
+
+.stages {
+  display: grid;
+  gap: 1.5rem;
+}
+
+/* the dark stage of the effect's video, its text sets the dots' colour */
+.stage {
+  display: flex;
+  align-items: flex-end;
+  min-height: 16rem;
+  margin: 0;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #0b0b0b;
+  color: #e6e6e6;
+}
+
+figcaption {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.85rem;
+}
