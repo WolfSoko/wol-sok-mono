@@ -50,6 +50,8 @@ export class WebGlWaveRenderer implements WaveRenderer {
     WebGLUniformLocation | null
   >();
   private ownUniforms: ShaderUniforms;
+  /** uniforms `setShaderUniforms` left out, set to 0 on the next draw */
+  private pendingResets: Record<string, ShaderUniformValue> = {};
   private geometry?: WaveGeometry;
   private lost = false;
   private disposed = false;
@@ -130,8 +132,18 @@ export class WebGlWaveRenderer implements WaveRenderer {
     this.look = look;
   }
 
+  /**
+   * a uniform the new values leave out goes back to 0, the value GLSL gives
+   * every uniform before it is set
+   */
   public setShaderUniforms(uniforms: ShaderUniforms | undefined): void {
-    this.ownUniforms = uniforms ?? {};
+    const next = uniforms ?? {};
+    for (const [name, value] of Object.entries(this.ownUniforms)) {
+      if (!(name in next)) {
+        this.pendingResets[name] = unsetValue(value);
+      }
+    }
+    this.ownUniforms = next;
   }
 
   public dispose(): void {
@@ -180,7 +192,10 @@ export class WebGlWaveRenderer implements WaveRenderer {
     );
     gl.uniform1f(locations.ws_wave, frame.wave);
     gl.uniform1f(locations.ws_dots, frame.dots);
-    for (const [name, value] of Object.entries(this.ownUniforms)) {
+    // a dropped uniform is reset once, then left alone
+    const own = { ...this.pendingResets, ...this.ownUniforms };
+    this.pendingResets = {};
+    for (const [name, value] of Object.entries(own)) {
       // the ws_ uniforms are the lib's: a shader's own never override them
       if (!name.startsWith('ws_')) {
         setOwnUniform(gl, this.ownLocation(name), value);
@@ -198,6 +213,18 @@ export class WebGlWaveRenderer implements WaveRenderer {
     }
     return this.ownLocations.get(name) ?? null;
   }
+}
+
+/** zeros of the same size as `value` */
+const ZEROS: Record<1 | 2 | 3 | 4, ShaderUniformValue> = {
+  1: [0],
+  2: [0, 0],
+  3: [0, 0, 0],
+  4: [0, 0, 0, 0],
+};
+
+function unsetValue(value: ShaderUniformValue): ShaderUniformValue {
+  return typeof value === 'number' ? 0 : ZEROS[value.length];
 }
 
 /** a colour as a straight RGBA `vec4`, each 0 to 1 */

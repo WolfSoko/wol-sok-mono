@@ -197,6 +197,13 @@ describe('WebGlWaveRenderer', () => {
       renderer.setShaderUniforms({ u_glow: 0.9 });
       renderer.draw({ elapsedMs: 16, wave: 1, dots: 1 });
       expect(uniformValues.get('u_glow')).toEqual([0.9]);
+      // a uniform left out goes back to 0, once
+      renderer.setShaderUniforms({ u_glow: 0.9 });
+      renderer.draw({ elapsedMs: 20, wave: 1, dots: 1 });
+      expect(uniformValues.get('u_tint')).toEqual([0, 0, 0]);
+      uniformValues.set('u_tint', [7, 7, 7]);
+      renderer.draw({ elapsedMs: 24, wave: 1, dots: 1 });
+      expect(uniformValues.get('u_tint')).toEqual([7, 7, 7]);
       // the ws_ uniforms are the lib's own
       renderer.setShaderUniforms({ ws_wave: 0.123 });
       renderer.draw({ elapsedMs: 32, wave: 1, dots: 1 });

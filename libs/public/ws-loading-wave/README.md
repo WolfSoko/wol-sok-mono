@@ -148,8 +148,8 @@ with alpha, not by adding light, and it reads in light and dark themes.
   `prefers-reduced-motion` shows.
 - **Own uniforms** are declared in the fragment and given in `uniforms`
   (a number, or 2 to 4 numbers for a `vec2` to `vec4`). Changing only
-  `uniforms` updates a running wave, and a uniform left out keeps its last
-  value; another `fragment` starts the wave over. The `ws_` prefix is the
+  `uniforms` updates a running wave, and a uniform left out goes back to 0
+  (as before it was first set); another `fragment` starts the wave over. The `ws_` prefix is the
   lib's: `uniforms` never set a `ws_` uniform.
 - **When it fails** to compile or link, the lib warns once per fragment in
   the console with the GPU's log (its line numbers count from the

@@ -118,17 +118,13 @@ export class LoadingWavePlaygroundComponent {
   }));
   /** shown to copy into provideLoadingWave or [wsLoadingWaveOptions] */
   protected readonly optionsJson = computed(() =>
-    JSON.stringify(
-      {
-        ...this.options(),
-        shader:
-          this.shaderPick() === CUSTOM_PICK
-            ? '{ fragment }'
-            : this.shaderPick(),
-      },
-      null,
-      2
-    )
+    JSON.stringify(this.options(), null, 2)
+  );
+  /** how to pass the stage's shader, which JSON cannot hold */
+  protected readonly shaderOption = computed(() =>
+    this.shaderPick() === CUSTOM_PICK
+      ? 'shader: { fragment: `…the fragment above…` }'
+      : `shader: ${this.shaderPick()} (import { ${this.shaderPick()} } from '@wolsok/loading-wave')`
   );
 
   protected setOption<K extends keyof PlaygroundOptions>(

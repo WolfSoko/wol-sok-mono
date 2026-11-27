@@ -58,12 +58,14 @@ vec4 wsShade(vec2 point) {
       float radius = 0.5 * ws_dotSize * (1.0 + RIPPLE_GROWTH * lit);
       float core = ws_dotDisk(point, dotCenter, radius);
       // a bead: a small sphere lit from the crest, which rides with the front
+      // outside the disk the normal stays on its rim, so pow() gets a base in [0, 1]
       vec2 local = (point - dotCenter) / radius;
+      local /= max(1.0, length(local));
       vec3 normal = vec3(local, sqrt(max(0.0, 1.0 - dot(local, local))));
       float towardsCrest = ws_behindFront(center) >= 0.0 ? 1.0 : -1.0;
       vec3 light = normalize(vec3(direction * 0.8 * towardsCrest, 0.6));
-      float diffuse = max(dot(normal, light), 0.0);
-      float glint = pow(max(dot(normal, normalize(light + vec3(0.0, 0.0, 1.0))), 0.0), 18.0);
+      float diffuse = clamp(dot(normal, light), 0.0, 1.0);
+      float glint = pow(clamp(dot(normal, normalize(light + vec3(0.0, 0.0, 1.0))), 0.0, 1.0), 18.0);
       vec4 ink = ws_ink(lit);
       float bead = core * ink.a
         * (WS_REST_ALPHA + (WS_LIT_ALPHA - WS_REST_ALPHA) * lit)
@@ -91,7 +93,7 @@ vec4 wsShade(vec2 point) {
   float slope = rippleSlope(point, direction) * ws_falloff;
   vec3 surface = normalize(vec3(-direction * slope * 0.8, 1.0));
   vec3 sun = normalize(vec3(-0.45, -0.55, 0.7));
-  float sheen = pow(max(dot(surface, normalize(sun + vec3(0.0, 0.0, 1.0))), 0.0), 60.0);
+  float sheen = pow(clamp(dot(surface, normalize(sun + vec3(0.0, 0.0, 1.0))), 0.0, 1.0), 60.0);
   float fromMiddle = (point.y - ws_center.y) / max(0.5 * ws_size.y, 1.0);
   float middle = 1.0 - 0.5 * fromMiddle * fromMiddle;
   float water = ws_accent.a * middle

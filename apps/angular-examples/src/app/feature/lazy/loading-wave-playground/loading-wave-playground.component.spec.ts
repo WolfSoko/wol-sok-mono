@@ -162,11 +162,17 @@ describe('LoadingWavePlaygroundComponent', () => {
     expect(stageOptions(waves)[1]?.shader).toBeUndefined();
   });
 
-  it('shows the chosen shader by name, not its source, in the options', async () => {
+  it('shows options to copy as valid JSON, and the shader apart from them', async () => {
     const { fixture } = await render();
-    const shown = fixture.debugElement.query(By.css('[data-testid="options"]'))
-      .nativeElement.textContent;
-    expect(shown).toContain('rippleShader');
-    expect(shown).not.toContain('wsShade');
+    const text = (testId: string): string =>
+      fixture.debugElement.query(By.css(`[data-testid="${testId}"]`))
+        .nativeElement.textContent;
+    expect(JSON.parse(text('options'))).not.toHaveProperty('shader');
+    expect(text('shader-option')).toContain('shader: rippleShader');
+    expect(text('shader-option')).not.toContain('wsShade');
+
+    pickToggle(fixture, 'shader', 'custom');
+    await fixture.whenStable();
+    expect(text('shader-option')).toContain('shader: { fragment:');
   });
 });

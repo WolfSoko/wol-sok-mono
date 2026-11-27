@@ -130,7 +130,7 @@ runs unchanged.
    per fragment with `console.warn` and its info log, and the wave falls back to the 2D
    canvas, as every failing shader does today (`chooseWaveRenderer`).
    Changing `uniforms` alone updates a running wave in place (a
-   uniform left out keeps its last value; `ws_` names are never set from
+   uniform left out goes back to 0; `ws_` names are never set from
    `uniforms`); another
    `fragment` rebuilds its program and starts the wave over, as another
    `renderer` does today.
