@@ -1,4 +1,10 @@
 <section class="hero">
+  <div
+    class="hero-dots"
+    aria-hidden="true"
+    [wsLoadingWave]="heroIntro()"
+    [wsLoadingWaveOptions]="heroDots"
+  ></div>
   <div class="dish" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
   </div>
@@ -64,8 +70,7 @@
     <div>
       <h2 id="blog-title">{{ t().home.blogTitle }}</h2>
       <p class="intro">
-        <strong>{{ i18n.pick(latestPost.title) }}</strong
-        ><br />
+        <strong>{{ i18n.pick(latestPost.title) }}</strong><br />
         {{ i18n.pick(latestPost.summary) }}
       </p>
     </div>

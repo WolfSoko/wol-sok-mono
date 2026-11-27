@@ -4,7 +4,18 @@
 
 .hero {
   position: relative;
+  isolation: isolate;
   padding: 5rem 0 3rem;
+}
+
+/* @wolsok/loading-wave draws the dots in here, fading out at the edges */
+.hero-dots {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  color: var(--muted);
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at 40% 50%, black 35%, transparent 75%);
 }
 
 h1 {

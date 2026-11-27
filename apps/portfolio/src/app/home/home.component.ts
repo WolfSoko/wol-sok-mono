@@ -6,6 +6,7 @@ import {
 } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { RouterLink } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { blogPostPath } from '../blog/blog-post';
 import { BLOG_POSTS } from '../blog/posts';
 import { CAREER_SINCE } from '../career/career-since';
@@ -14,10 +15,17 @@ import { I18nService } from '../i18n/i18n.service';
 import { ProjectCardComponent } from '../project-card/project-card.component';
 import { APPS, EXPERIMENTS, PACKAGES } from '../projects';
 import { RevealDirective } from '../reveal.directive';
+import { HERO_DOTS, heroDotsIntro } from './hero-dots';
 
 @Component({
   selector: 'wolsok-home',
-  imports: [ProjectCardComponent, RouterLink, MatButtonModule, RevealDirective],
+  imports: [
+    ProjectCardComponent,
+    RouterLink,
+    MatButtonModule,
+    RevealDirective,
+    LoadingWaveDirective,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',
@@ -26,6 +34,9 @@ export class HomeComponent {
   protected readonly apps = APPS;
   protected readonly experiments = EXPERIMENTS;
   protected readonly packages = PACKAGES;
+  /** the hero's dotted background, lit by two waves after the page starts */
+  protected readonly heroDots = HERO_DOTS;
+  protected readonly heroIntro = heroDotsIntro();
   /** The newest article, teased above the career. */
   protected readonly latestPost = BLOG_POSTS[0];
   protected readonly latestPostPath = blogPostPath(this.latestPost);

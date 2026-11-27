@@ -59,12 +59,7 @@ body {
     radial-gradient(ellipse at 0% 30%, var(--cool-glow), transparent 40%),
     var(--bg);
   color: var(--text);
-  font-family:
-    system-ui,
-    -apple-system,
-    'Segoe UI',
-    Roboto,
-    sans-serif;
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
