@@ -1,7 +1,8 @@
 # Plan: loading-wave: configurable round wave front, theme-aware showcase, shaded WebGL wave and shader options ([#3272](https://github.com/WolfSoko/wol-sok-mono/issues/3272))
 
 Spec: [`docs/specs/3272-…`](../specs/3272-loading-wave-configurable-round-wave-front-theme-aware-showcase-shaded-webgl-wave-and-shader-options.md).
-One PR (`Closes #3272`). Every task is test first; before each commit
+Two PRs (spec decision 12): PR 1 (tasks 1 to 4, 6, 8, 9; "Part of #3272")
+and PR 2 (tasks 5 and 7, then 9 again; "Closes #3272"). Every task is test first; before each commit
 `npx nx format:write` and `npx nx affected -t lint,lint-templates`. Paths
 below are relative to `libs/public/ws-loading-wave/src/lib/` unless they
 start with `apps/` or `docs/`.
@@ -17,6 +18,9 @@ start with `apps/` or `docs/`.
   geometry they now build (fixtures pass `frontRoundness` where they
   measured the old curve).
 - Commit: `feat(ws-loading-wave): make the wave front's roundness an option`.
+
+Tasks 2 and 3 went into one commit, since both reshape the WebGL
+renderer's look and uniforms.
 
 ### Task 2: `accentColor`
 
@@ -52,9 +56,12 @@ start with `apps/` or `docs/`.
   the playground on a real GPU (L642: `--use-angle=vulkan`).
 - Commit: `feat(ws-loading-wave): shade the default WebGL wave`.
 
-### Tasks 5…: one task per picked built-in shader
+### Task 5 (PR 2): one commit per built-in shader
 
-For each shader the user picks (spec "Shader proposals", A to E):
+For each of the five the user picked (spec "Shader proposals", A to E:
+`circuitTracesShader`, `dataBusShader`, `dieScanShader`,
+`signalTraceShader`, `sparkFrontShader`), also added to the playground's
+picker:
 
 - Files: `webgl/shaders/<name>.shader.ts`, exported from `index.ts`, the
   constants spec where it mirrors a constant.
@@ -71,7 +78,7 @@ For each shader the user picks (spec "Shader proposals", A to E):
   "Apply", roundness and accent reach both stages' options).
 - Commit: `feat(angular-examples): pick shaders and follow the theme in the loading wave playground`.
 
-### Task 7: playground e2e
+### Task 7 (PR 2): playground e2e
 
 - Files: `apps/angular-examples/e2e/loading-wave-playground.spec.ts`, a
   page object in `apps/angular-examples/e2e/po/`.

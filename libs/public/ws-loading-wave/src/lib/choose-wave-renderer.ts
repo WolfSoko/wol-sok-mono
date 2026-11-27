@@ -1,6 +1,7 @@
 import { CanvasWaveRenderer } from './canvas-wave-renderer';
 import type { WaveRendererPreference } from './loading-wave-options';
 import type { WaveLook, WaveRenderer } from './renderer';
+import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { WebGlWaveRenderer } from './webgl/webgl-wave-renderer';
 
 /**
@@ -34,6 +35,8 @@ export const PAGE_GPU_BUDGET = new GpuContextBudget();
 export interface ChooseWaveRendererParams {
   readonly preference: WaveRendererPreference;
   readonly look: WaveLook;
+  /** what the WebGL renderer draws with */
+  readonly shader: LoadingWaveShader;
   /** a new, detached canvas for each renderer tried */
   readonly createCanvas: () => HTMLCanvasElement;
   /** the WebGL renderer lost its context; swap it for a 2D one */
@@ -60,6 +63,7 @@ export function chooseWaveRenderer(
 function tryWebGlRenderer({
   preference,
   look,
+  shader,
   createCanvas,
   onContextLost,
   gpuBudget = PAGE_GPU_BUDGET,
@@ -75,7 +79,7 @@ function tryWebGlRenderer({
     return null;
   }
   try {
-    return new WebGlWaveRenderer(canvas, gl, look, {
+    return new WebGlWaveRenderer(canvas, gl, look, shader, {
       onContextLost,
       onDispose: () => gpuBudget.release(),
     });

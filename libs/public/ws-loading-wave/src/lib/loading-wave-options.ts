@@ -1,5 +1,7 @@
 import { InjectionToken, Provider } from '@angular/core';
 import { DEFAULT_FRONT_ROUNDNESS } from './wave-model';
+import type { LoadingWaveShader } from './webgl/loading-wave-shader';
+import { rippleShader } from './webgl/shaders/ripple.shader';
 
 /** what the dots do once loading ended */
 export type AfterLoading = 'hide' | 'keep';
@@ -19,6 +21,11 @@ export interface LoadingWaveOptions {
   readonly dotSize: number;
   /** any CSS colour; unset, the dots take the host's `currentColor` */
   readonly color?: string;
+  /**
+   * any CSS colour for the lit dots and the wave itself; unset, they take
+   * the dots' colour
+   */
+  readonly accentColor?: string;
   /** how long one sweep of the wave across the element takes, in ms */
   readonly sweepMs: number;
   /**
@@ -32,6 +39,12 @@ export interface LoadingWaveOptions {
    * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset
    */
   readonly frontRoundness?: number;
+  /**
+   * the fragment shader the WebGL renderer draws with: one of the built-in
+   * ones (`rippleShader`, `circuitTracesShader`, …) or one's own; unset,
+   * `rippleShader`. The 2D canvas always draws the dot wave.
+   */
+  readonly shader?: LoadingWaveShader;
 }
 
 export const DEFAULT_LOADING_WAVE_OPTIONS: LoadingWaveOptions = {
@@ -41,6 +54,7 @@ export const DEFAULT_LOADING_WAVE_OPTIONS: LoadingWaveOptions = {
   sweepMs: 1600,
   renderer: 'auto',
   frontRoundness: DEFAULT_FRONT_ROUNDNESS,
+  shader: rippleShader,
 };
 
 export const LOADING_WAVE_OPTIONS = new InjectionToken<LoadingWaveOptions>(

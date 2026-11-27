@@ -5,6 +5,7 @@ import {
   provideLoadingWave,
   resolveLoadingWaveOptions,
 } from './loading-wave-options';
+import { rippleShader } from './webgl/shaders/ripple.shader';
 
 describe('loading wave options', () => {
   it('defaults to hiding the dots, the auto renderer and the video look', () => {
@@ -15,6 +16,7 @@ describe('loading wave options', () => {
       sweepMs: 1600,
       renderer: 'auto',
       frontRoundness: 0.5,
+      shader: rippleShader,
     });
   });
 

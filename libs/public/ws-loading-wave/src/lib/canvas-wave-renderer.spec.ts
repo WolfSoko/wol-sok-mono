@@ -3,6 +3,7 @@ import { LIT_ALPHA, REST_ALPHA } from './renderer';
 import { dotCenters, waveGeometry } from './wave-model';
 
 interface Arc {
+  fill: string;
   x: number;
   y: number;
   radius: number;
@@ -13,7 +14,7 @@ interface Arc {
 function recordingContext() {
   const arcs: Arc[] = [];
   const strokes: number[] = [];
-  const pen = { globalAlpha: 1 };
+  const pen = { globalAlpha: 1, fillStyle: '' };
   const context = {
     get globalAlpha() {
       return pen.globalAlpha;
@@ -21,7 +22,12 @@ function recordingContext() {
     set globalAlpha(alpha: number) {
       pen.globalAlpha = alpha;
     },
-    fillStyle: '',
+    get fillStyle() {
+      return pen.fillStyle;
+    },
+    set fillStyle(style: string) {
+      pen.fillStyle = style;
+    },
     strokeStyle: '',
     lineWidth: 1,
     setTransform: jest.fn(),
@@ -31,13 +37,19 @@ function recordingContext() {
     fill: jest.fn(),
     stroke: jest.fn(() => strokes.push(pen.globalAlpha)),
     arc: jest.fn((x: number, y: number, radius: number) =>
-      arcs.push({ x, y, radius, alpha: pen.globalAlpha })
+      arcs.push({
+        fill: pen.fillStyle,
+        x,
+        y,
+        radius,
+        alpha: pen.globalAlpha,
+      })
     ),
   };
   return { context, arcs, strokes };
 }
 
-function setUp() {
+function setUp(accent?: { r: number; g: number; b: number }) {
   const recording = recordingContext();
   const canvas = {
     width: 0,
@@ -47,6 +59,7 @@ function setUp() {
   const renderer = CanvasWaveRenderer.create(canvas, {
     dotSize: 2,
     color: { r: 200, g: 210, b: 220 },
+    accent,
   });
   if (renderer == null) {
     throw new Error('no renderer');
@@ -129,5 +142,35 @@ describe('CanvasWaveRenderer', () => {
     renderer.setLook({ dotSize: 2, color: { r: 0, g: 0, b: 0, alpha: 0 } });
     renderer.draw({ elapsedMs: 500, wave: 1, dots: 1 });
     expect(arcs).toEqual([]);
+  });
+
+  describe('accent colour', () => {
+    const accent = { r: 0, g: 100, b: 0 };
+
+    it('draws every dot in the dots colour without one', () => {
+      const { renderer, arcs, geometry } = setUp();
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      expect(new Set(arcs.map((arc) => arc.fill))).toEqual(
+        new Set(['rgb(200, 210, 220)'])
+      );
+    });
+
+    it('mixes lit dots towards it by their light, resting dots keep the colour', () => {
+      const { renderer, arcs, geometry } = setUp(accent);
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      const brightest = arcs.reduce((a, b) => (b.alpha > a.alpha ? b : a));
+      const resting = arcs.find((arc) => arc.fill === 'rgb(200, 210, 220)');
+      expect(resting).toBeDefined();
+      expect(brightest.fill).not.toBe('rgb(200, 210, 220)');
+      const [r] = brightest.fill.match(/\d+/g)?.map(Number) ?? [];
+      // more than halfway from 200 to the accent's 0
+      expect(r).toBeLessThan(100);
+    });
+
+    it('strokes the front line in the accent colour', () => {
+      const { renderer, context, geometry } = setUp(accent);
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      expect(context.strokeStyle).toBe('rgb(0, 100, 0)');
+    });
   });
 });

@@ -13,3 +13,9 @@ export type {
   WaveRendererPreference,
 } from './lib/loading-wave-options';
 export type { WaveRendererKind } from './lib/renderer';
+export type {
+  LoadingWaveShader,
+  ShaderUniforms,
+  ShaderUniformValue,
+} from './lib/webgl/loading-wave-shader';
+export { rippleShader } from './lib/webgl/shaders/ripple.shader';

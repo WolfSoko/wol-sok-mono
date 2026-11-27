@@ -3,6 +3,7 @@ import type { WaveLook, WaveRenderer, WaveRendererKind } from './renderer';
 import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
 import { WaveTimeline } from './wave-timeline';
+import { rippleShader } from './webgl/shaders/ripple.shader';
 
 /** styles that lay the canvas behind the host's content, filling it */
 const CANVAS_STYLE: Partial<CSSStyleDeclaration> = {
@@ -91,9 +92,11 @@ export class LoadingWave {
     }
     if (
       options.renderer === previous.renderer &&
-      options.afterLoading === previous.afterLoading
+      options.afterLoading === previous.afterLoading &&
+      fragmentOf(options) === fragmentOf(previous)
     ) {
       this.renderer?.setLook(this.look());
+      this.renderer?.setShaderUniforms(options.shader?.uniforms);
       this.resize();
       return;
     }
@@ -158,6 +161,7 @@ export class LoadingWave {
     const renderer = this.env.chooseRenderer({
       preference,
       look: this.look(),
+      shader: this.options.shader ?? rippleShader,
       createCanvas: () => this.env.createCanvas(),
       onContextLost: () => this.fallBackToCanvas(),
     });
@@ -184,9 +188,14 @@ export class LoadingWave {
   }
 
   private look(): WaveLook {
+    const { dotSize, color, accentColor } = this.options;
     return {
-      dotSize: this.options.dotSize,
-      color: this.env.resolveColor(this.host, this.options.color),
+      dotSize,
+      color: this.env.resolveColor(this.host, color),
+      accent:
+        accentColor === undefined
+          ? undefined
+          : this.env.resolveColor(this.host, accentColor),
     };
   }
 
@@ -271,4 +280,9 @@ export class LoadingWave {
       this.hostStyle = undefined;
     }
   }
+}
+
+/** a changed fragment needs a new program, changed uniforms do not */
+function fragmentOf(options: LoadingWaveOptions): string {
+  return (options.shader ?? rippleShader).fragment;
 }

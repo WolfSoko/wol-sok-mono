@@ -1,5 +1,6 @@
 import {
   dotsOpacity,
+  type Rgb,
   FRONT_LINE_ALPHA,
   LIT_ALPHA,
   LIT_GROWTH,
@@ -73,7 +74,6 @@ export class CanvasWaveRenderer implements WaveRenderer {
     context.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
     const { r, g, b } = this.look.color;
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
-    context.strokeStyle = context.fillStyle;
     const shown = { ...frame, dots };
     const litDots = this.drawRestingDots(geometry, shown);
     this.drawLitDots(geometry, shown, litDots);
@@ -83,6 +83,11 @@ export class CanvasWaveRenderer implements WaveRenderer {
 
   public setLook(look: WaveLook): void {
     this.look = look;
+  }
+
+  /** a 2D canvas runs no shader */
+  public setShaderUniforms(): void {
+    // nothing to set
   }
 
   public dispose(): void {
@@ -121,7 +126,11 @@ export class CanvasWaveRenderer implements WaveRenderer {
   ): void {
     const { context } = this;
     const restRadius = this.look.dotSize / 2;
+    const { color, accent = color } = this.look;
     for (const { center, intensity } of litDots) {
+      if (accent !== color) {
+        context.fillStyle = mixedRgb(color, accent, intensity);
+      }
       const { dx, dy } = dotDisplacement(
         center.x,
         center.y,
@@ -147,6 +156,8 @@ export class CanvasWaveRenderer implements WaveRenderer {
       return;
     }
     const { context } = this;
+    const { color, accent = color } = this.look;
+    context.strokeStyle = mixedRgb(color, accent, 1);
     context.globalAlpha = frame.dots * frame.wave * FRONT_LINE_ALPHA;
     context.lineWidth = 1 / this.pixelRatio;
     context.beginPath();
@@ -159,4 +170,10 @@ export class CanvasWaveRenderer implements WaveRenderer {
     );
     context.stroke();
   }
+}
+
+/** the CSS colour `share` of the way from `from` to `to` */
+function mixedRgb(from: Rgb, to: Rgb, share: number): string {
+  const mix = (a: number, b: number) => Math.round(a + (b - a) * share);
+  return `rgb(${mix(from.r, to.r)}, ${mix(from.g, to.g)}, ${mix(from.b, to.b)})`;
 }

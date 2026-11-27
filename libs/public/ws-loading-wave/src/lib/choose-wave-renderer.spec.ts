@@ -1,3 +1,4 @@
+import { rippleShader } from './webgl/shaders/ripple.shader';
 import {
   chooseWaveRenderer,
   ChooseWaveRendererParams,
@@ -33,6 +34,7 @@ function choose(
   const renderer = chooseWaveRenderer({
     preference: 'auto',
     look,
+    shader: rippleShader,
     createCanvas: setup.createCanvas,
     onContextLost: jest.fn(),
     gpuBudget,
@@ -96,6 +98,7 @@ describe('chooseWaveRenderer', () => {
       chooseWaveRenderer({
         preference,
         look,
+        shader: rippleShader,
         createCanvas: () => document.createElement('canvas'),
         onContextLost: jest.fn(),
         gpuBudget: new GpuContextBudget(1),

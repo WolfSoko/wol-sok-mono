@@ -1,41 +1,30 @@
 import {
-  dotsOpacity,
   sizeCanvas,
   WaveFrame,
   WaveLook,
   WaveRenderer,
+  type Rgb,
 } from '../renderer';
-import { frontRadius, hasPreviousSweep, WaveGeometry } from '../wave-model';
 import {
-  ECHO_LAG,
-  WAVE_FRAGMENT_SHADER,
-  WAVE_VERTEX_SHADER,
-} from './wave-shaders';
+  frontRadius,
+  hasPreviousSweep,
+  sweepPhase,
+  WaveGeometry,
+} from '../wave-model';
+import type {
+  LoadingWaveShader,
+  ShaderUniforms,
+  ShaderUniformValue,
+} from './loading-wave-shader';
+import {
+  linkWaveProgram,
+  STANDARD_UNIFORMS,
+  StandardUniform,
+  WaveShaderError,
+} from './shader-program';
+import { ECHO_LAG } from './wave-shaders';
 
-const UNIFORMS = [
-  'u_size',
-  'u_bufferSize',
-  'u_spacing',
-  'u_dotSize',
-  'u_color',
-  'u_center',
-  'u_frontRadius',
-  'u_echoRadius',
-  'u_travel',
-  'u_previousSweep',
-  'u_falloff',
-  'u_rise',
-  'u_maxPush',
-  'u_wave',
-  'u_dots',
-] as const;
-
-type UniformName = (typeof UNIFORMS)[number];
-
-/** the shaders did not compile or link on this GPU */
-export class WaveShaderError extends Error {
-  public override readonly name = 'WaveShaderError';
-}
+export { WaveShaderError };
 
 export interface WebGlWaveRendererHooks {
   /** the browser took the GPU context away; the renderer draws no more */
@@ -45,13 +34,22 @@ export interface WebGlWaveRendererHooks {
 }
 
 /**
- * Draws the wave with a WebGL2 fragment shader: the 2D canvas's look plus a
- * glow around lit dots and an echo ripple trailing the front.
+ * Draws the wave with a WebGL2 fragment shader (`LoadingWaveShader`) over a
+ * full-canvas triangle, setting the contract's `ws_*` uniforms and the
+ * shader's own each frame.
  */
 export class WebGlWaveRenderer implements WaveRenderer {
   public readonly kind = 'webgl';
   private readonly program: WebGLProgram;
-  private readonly uniforms: Record<UniformName, WebGLUniformLocation | null>;
+  private readonly uniforms: Record<
+    StandardUniform,
+    WebGLUniformLocation | null
+  >;
+  private readonly ownLocations = new Map<
+    string,
+    WebGLUniformLocation | null
+  >();
+  private ownUniforms: ShaderUniforms;
   private geometry?: WaveGeometry;
   private lost = false;
   private disposed = false;
@@ -67,12 +65,17 @@ export class WebGlWaveRenderer implements WaveRenderer {
     public readonly canvas: HTMLCanvasElement,
     private readonly gl: WebGL2RenderingContext,
     private look: WaveLook,
+    shader: LoadingWaveShader,
     private readonly hooks: WebGlWaveRendererHooks
   ) {
-    this.program = linkProgram(gl);
+    this.program = linkWaveProgram(gl, shader);
     this.uniforms = Object.fromEntries(
-      UNIFORMS.map((name) => [name, gl.getUniformLocation(this.program, name)])
-    ) as Record<UniformName, WebGLUniformLocation | null>;
+      STANDARD_UNIFORMS.map((name) => [
+        name,
+        gl.getUniformLocation(this.program, name),
+      ])
+    ) as Record<StandardUniform, WebGLUniformLocation | null>;
+    this.ownUniforms = shader.uniforms ?? {};
     canvas.addEventListener('webglcontextlost', this.handleContextLost);
   }
 
@@ -115,7 +118,7 @@ export class WebGlWaveRenderer implements WaveRenderer {
     }
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    if (dotsOpacity(frame, this.look.color) <= 0) {
+    if (frame.dots <= 0) {
       return;
     }
     gl.useProgram(this.program);
@@ -125,6 +128,10 @@ export class WebGlWaveRenderer implements WaveRenderer {
 
   public setLook(look: WaveLook): void {
     this.look = look;
+  }
+
+  public setShaderUniforms(uniforms: ShaderUniforms | undefined): void {
+    this.ownUniforms = uniforms ?? {};
   }
 
   public dispose(): void {
@@ -141,37 +148,74 @@ export class WebGlWaveRenderer implements WaveRenderer {
   }
 
   private setUniforms(geometry: WaveGeometry, frame: WaveFrame): void {
-    const { gl, uniforms, look } = this;
-    gl.uniform2f(uniforms.u_size, geometry.width, geometry.height);
-    gl.uniform2f(
-      uniforms.u_bufferSize,
-      gl.drawingBufferWidth,
-      gl.drawingBufferHeight
-    );
-    gl.uniform1f(uniforms.u_spacing, geometry.dotSpacing);
-    gl.uniform1f(uniforms.u_dotSize, look.dotSize);
-    gl.uniform3f(
-      uniforms.u_color,
-      look.color.r / 255,
-      look.color.g / 255,
-      look.color.b / 255
-    );
-    gl.uniform2f(uniforms.u_center, geometry.centerX, geometry.centerY);
+    const { gl, uniforms: at, look } = this;
+    const bufferWidth = gl.drawingBufferWidth;
+    const bufferHeight = gl.drawingBufferHeight;
+    gl.uniform2f(at.ws_size, geometry.width, geometry.height);
+    gl.uniform2f(at.ws_bufferSize, bufferWidth, bufferHeight);
+    gl.uniform1f(at.ws_pixel, geometry.width / Math.max(1, bufferWidth));
+    gl.uniform1f(at.ws_spacing, geometry.dotSpacing);
+    gl.uniform1f(at.ws_dotSize, look.dotSize);
+    setColor(gl, at.ws_color, look.color);
+    setColor(gl, at.ws_accent, look.accent ?? look.color);
+    gl.uniform2f(at.ws_center, geometry.centerX, geometry.centerY);
+    gl.uniform1f(at.ws_frontRadius, frontRadius(geometry, frame.elapsedMs));
+    gl.uniform1f(at.ws_echoRadius, echoRadius(geometry, frame.elapsedMs));
+    gl.uniform1f(at.ws_travel, geometry.travel);
+    gl.uniform1f(at.ws_falloff, geometry.falloff);
+    gl.uniform1f(at.ws_rise, geometry.rise);
+    gl.uniform1f(at.ws_tail, geometry.tail);
+    gl.uniform1f(at.ws_maxPush, geometry.maxPush);
+    gl.uniform1f(at.ws_phase, sweepPhase(geometry, frame.elapsedMs));
+    gl.uniform1f(at.ws_time, frame.elapsedMs / 1000);
     gl.uniform1f(
-      uniforms.u_frontRadius,
-      frontRadius(geometry, frame.elapsedMs)
-    );
-    gl.uniform1f(uniforms.u_echoRadius, echoRadius(geometry, frame.elapsedMs));
-    gl.uniform1f(uniforms.u_travel, geometry.travel);
-    gl.uniform1f(
-      uniforms.u_previousSweep,
+      at.ws_previousSweep,
       hasPreviousSweep(geometry, frame.elapsedMs) ? 1 : 0
     );
-    gl.uniform1f(uniforms.u_falloff, geometry.falloff);
-    gl.uniform1f(uniforms.u_rise, geometry.rise);
-    gl.uniform1f(uniforms.u_maxPush, geometry.maxPush);
-    gl.uniform1f(uniforms.u_wave, frame.wave);
-    gl.uniform1f(uniforms.u_dots, dotsOpacity(frame, look.color));
+    gl.uniform1f(at.ws_wave, frame.wave);
+    gl.uniform1f(at.ws_dots, frame.dots);
+    for (const [name, value] of Object.entries(this.ownUniforms)) {
+      setOwnUniform(gl, this.ownLocation(name), value);
+    }
+  }
+
+  /** where the shader's own uniform lives, looked up once per name */
+  private ownLocation(name: string): WebGLUniformLocation | null {
+    if (!this.ownLocations.has(name)) {
+      this.ownLocations.set(
+        name,
+        this.gl.getUniformLocation(this.program, name)
+      );
+    }
+    return this.ownLocations.get(name) ?? null;
+  }
+}
+
+/** a colour as a straight RGBA `vec4`, each 0 to 1 */
+function setColor(
+  gl: WebGL2RenderingContext,
+  location: WebGLUniformLocation | null,
+  { r, g, b, alpha = 1 }: Rgb
+): void {
+  gl.uniform4f(location, r / 255, g / 255, b / 255, alpha);
+}
+
+/** sets a `float` to `vec4` uniform by how many components the value has */
+function setOwnUniform(
+  gl: WebGL2RenderingContext,
+  location: WebGLUniformLocation | null,
+  value: ShaderUniformValue
+): void {
+  const [x, y = 0, z = 0, w = 0] = typeof value === 'number' ? [value] : value;
+  const size = typeof value === 'number' ? 1 : value.length;
+  if (size === 1) {
+    gl.uniform1f(location, x);
+  } else if (size === 2) {
+    gl.uniform2f(location, x, y);
+  } else if (size === 3) {
+    gl.uniform3f(location, x, y, z);
+  } else {
+    gl.uniform4f(location, x, y, z, w);
   }
 }
 
@@ -182,52 +226,4 @@ export class WebGlWaveRenderer implements WaveRenderer {
 export function echoRadius(geometry: WaveGeometry, elapsedMs: number): number {
   const echoElapsed = elapsedMs - ECHO_LAG * geometry.sweepMs;
   return echoElapsed < 0 ? -1 : frontRadius(geometry, echoElapsed);
-}
-
-function compileShader(
-  gl: WebGL2RenderingContext,
-  type: number,
-  source: string
-): WebGLShader {
-  const shader = gl.createShader(type);
-  if (shader == null) {
-    throw new WaveShaderError('could not create a shader');
-  }
-  gl.shaderSource(shader, source);
-  gl.compileShader(shader);
-  if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-    const log = gl.getShaderInfoLog(shader);
-    gl.deleteShader(shader);
-    throw new WaveShaderError(`shader did not compile: ${log}`);
-  }
-  return shader;
-}
-
-function linkProgram(gl: WebGL2RenderingContext): WebGLProgram {
-  const vertex = compileShader(gl, gl.VERTEX_SHADER, WAVE_VERTEX_SHADER);
-  let fragment: WebGLShader;
-  try {
-    fragment = compileShader(gl, gl.FRAGMENT_SHADER, WAVE_FRAGMENT_SHADER);
-  } catch (error) {
-    gl.deleteShader(vertex);
-    throw error;
-  }
-  const program = gl.createProgram();
-  if (program == null) {
-    gl.deleteShader(vertex);
-    gl.deleteShader(fragment);
-    throw new WaveShaderError('could not create a program');
-  }
-  gl.attachShader(program, vertex);
-  gl.attachShader(program, fragment);
-  gl.linkProgram(program);
-  // the program keeps what it needs
-  gl.deleteShader(vertex);
-  gl.deleteShader(fragment);
-  if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    const log = gl.getProgramInfoLog(program);
-    gl.deleteProgram(program);
-    throw new WaveShaderError(`shaders did not link: ${log}`);
-  }
-  return program;
 }

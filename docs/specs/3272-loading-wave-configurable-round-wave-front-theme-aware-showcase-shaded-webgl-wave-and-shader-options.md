@@ -174,21 +174,29 @@ runs unchanged.
    "Custom", and for "Custom" a text field with an example fragment and an
    "Apply" button; the WebGL stage names what draws it (as today), so a
    fragment that fails shows "drawn by: canvas".
-10. **Release: one `feat(ws-loading-wave)` change, no breaking change.**
+10. **Release: two `feat(ws-loading-wave)` steps, no breaking change.**
     `nx release` takes conventional commits (`nx.json` `release.version`);
-    on 0.x it made #3266's `feat` the patch 0.0.1, so this ships as
-    **0.0.2**. Nothing is removed or renamed: `frontRoundness`,
-    `accentColor` and `shader` are optional, the other options keep their
-    meaning and defaults, the new exports (`LoadingWaveShader`,
-    `rippleShader`, the picked shaders) only add. What changes for an app
-    that upgrades is the look: the rounder default front and the shaded
-    default shader; the README says how to get the flat front back. The
-    shell's route loading, the portfolio's hero and rollapolla's pages take
-    the new look as they are.
+    on 0.x it made #3266's `feat` the patch 0.0.1, so step 1 ships as
+    **0.0.2** and step 2 as **0.0.3** (decision 12). Nothing is removed or
+    renamed: `frontRoundness`, `accentColor` and `shader` are optional, the
+    other options keep their meaning and defaults, the new exports
+    (`LoadingWaveShader`, `rippleShader`, the built-in shaders) only add.
+    What changes for an app that upgrades is the look: the rounder default
+    front and the shaded default shader; the README says how to get the flat
+    front back. The shell's route loading, the portfolio's hero and
+    rollapolla's pages take the new look as they are.
 11. **The portfolio's `PACKAGES` and `EXPERIMENTS` entries** for the lib
     and the playground name the shaders and the custom shader in their
     descriptions (CLAUDE.md: a noticeably changed package updates its
     entry).
+12. **Two PRs of this issue** (guideline G9, the manager's advice after the
+    pick of all five shaders): PR 1 the core: `frontRoundness`,
+    `accentColor`, the shader contract, the shaded `rippleShader`, the
+    theme-aware playground with its shader picker (ripple and "Custom") and
+    the docs; PR 2 the five built-in shaders, each added to the picker, the
+    playground e2e of acceptance 4 and their screenshots. Reason: the core
+    is a full review on its own, and five GLSL patterns on top of it would
+    make one PR too large to review.
 
 ## Shader proposals (the user picks)
 

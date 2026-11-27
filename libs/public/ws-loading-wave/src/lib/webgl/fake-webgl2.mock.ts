@@ -9,6 +9,7 @@ export function fakeWebGl2({
   links = true,
 }: FakeWebGl2Options = {}) {
   const uniformValues = new Map<string, number[]>();
+  const shaderSources: string[] = [];
   const loseContext = jest.fn();
   let lost = false;
   const setUniform = (location: { name: string } | null, ...values: number[]) =>
@@ -32,7 +33,9 @@ export function fakeWebGl2({
     COLOR_BUFFER_BIT: 5,
     TRIANGLES: 6,
     createShader: jest.fn(() => ({})),
-    shaderSource: jest.fn(),
+    shaderSource: jest.fn((_shader: unknown, source: string) =>
+      shaderSources.push(source)
+    ),
     compileShader: jest.fn(),
     getShaderParameter: jest.fn(() => compiles),
     getShaderInfoLog: jest.fn(() => 'compile log'),
@@ -54,6 +57,7 @@ export function fakeWebGl2({
     uniform1f: jest.fn(setUniform),
     uniform2f: jest.fn(setUniform),
     uniform3f: jest.fn(setUniform),
+    uniform4f: jest.fn(setUniform),
     isContextLost: jest.fn(() => lost),
     getExtension: jest.fn((name: string) =>
       name === 'WEBGL_lose_context'
@@ -70,6 +74,7 @@ export function fakeWebGl2({
     gl: gl as typeof gl & WebGL2RenderingContext,
     buffer,
     uniformValues,
+    shaderSources,
     loseContext,
   };
 }

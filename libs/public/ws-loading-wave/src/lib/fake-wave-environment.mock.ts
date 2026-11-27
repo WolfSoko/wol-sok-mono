@@ -19,6 +19,7 @@ function fakeRenderer(kind: WaveRendererKind): FakeRenderer {
     },
     resize: jest.fn(),
     setLook: jest.fn(),
+    setShaderUniforms: jest.fn(),
     draw: (frame) => frames.push(frame),
     dispose: () => {
       disposed = true;
