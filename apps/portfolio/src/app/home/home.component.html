@@ -1,10 +1,13 @@
 <section class="hero">
-  <div
-    class="hero-dots"
-    aria-hidden="true"
-    [wsLoadingWave]="heroIntro()"
-    [wsLoadingWaveOptions]="heroDots"
-  ></div>
+  <!-- decoration: its code loads once the page is idle, off the start's path -->
+  @defer (on idle) {
+    <div
+      class="hero-dots"
+      aria-hidden="true"
+      [wsLoadingWave]="heroIntro()"
+      [wsLoadingWaveOptions]="heroDots"
+    ></div>
+  }
   <div class="dish" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
   </div>

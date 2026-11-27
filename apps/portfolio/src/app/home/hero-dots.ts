@@ -5,16 +5,15 @@ import {
   Signal,
   signal,
 } from '@angular/core';
-import {
-  DEFAULT_LOADING_WAVE_OPTIONS,
-  LoadingWaveOptions,
-} from '@wolsok/loading-wave';
+// types only: the directive's code loads in the hero's @defer block
+import type { LoadingWaveOptions } from '@wolsok/loading-wave';
 
 /** the hero's dotted background: the dots stay once the intro waves passed */
-export const HERO_DOTS: Partial<LoadingWaveOptions> = {
+export const HERO_DOTS = {
   afterLoading: 'keep',
   dotSpacing: 26,
-};
+  sweepMs: 1600,
+} as const satisfies Partial<LoadingWaveOptions>;
 
 /** how many sweeps of the wave cross the hero before it rests */
 export const HERO_INTRO_SWEEPS = 2;
@@ -26,11 +25,13 @@ export const HERO_INTRO_SWEEPS = 2;
  */
 export function heroDotsIntro(): Signal<boolean> {
   const intro = signal(false);
-  const sweepMs = HERO_DOTS.sweepMs ?? DEFAULT_LOADING_WAVE_OPTIONS.sweepMs;
   let timeout: ReturnType<typeof setTimeout> | undefined;
   afterNextRender(() => {
     intro.set(true);
-    timeout = setTimeout(() => intro.set(false), HERO_INTRO_SWEEPS * sweepMs);
+    timeout = setTimeout(
+      () => intro.set(false),
+      HERO_INTRO_SWEEPS * HERO_DOTS.sweepMs
+    );
   });
   inject(DestroyRef).onDestroy(() => clearTimeout(timeout));
   return intro.asReadonly();

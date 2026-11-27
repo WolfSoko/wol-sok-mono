@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { DEFAULT_LOADING_WAVE_OPTIONS } from '@wolsok/loading-wave';
-import { HERO_INTRO_SWEEPS, heroDotsIntro } from './hero-dots';
+import { HERO_DOTS, HERO_INTRO_SWEEPS, heroDotsIntro } from './hero-dots';
 
 @Component({
   selector: 'wolsok-hero-dots-host',
@@ -16,7 +15,7 @@ describe('heroDotsIntro', () => {
   beforeEach(() => jest.useFakeTimers());
   afterEach(() => jest.useRealTimers());
 
-  const introMs = HERO_INTRO_SWEEPS * DEFAULT_LOADING_WAVE_OPTIONS.sweepMs;
+  const introMs = HERO_INTRO_SWEEPS * HERO_DOTS.sweepMs;
 
   it('runs the wave for the intro sweeps after the first render, then rests', () => {
     const fixture = TestBed.createComponent(HostComponent);
