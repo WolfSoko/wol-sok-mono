@@ -228,7 +228,7 @@ export default class MyPollsPageComponent {
     return page?.polls ?? [];
   });
 
-  /** Waiting for the first answer, or for one after a failure. */
+  /** Waiting for an answer; off while the load error shows. */
   protected readonly loading = computed(
     () => this.polls() === undefined && !this.loadFailed()
   );

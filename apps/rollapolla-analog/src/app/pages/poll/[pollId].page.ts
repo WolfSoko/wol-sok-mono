@@ -56,7 +56,7 @@ import { usePollMetaTags } from './poll-meta';
           More polls
         </a>
       </nav>
-      @if (poll() === undefined) {
+      @if (loading()) {
         <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
         @if (editing()) {

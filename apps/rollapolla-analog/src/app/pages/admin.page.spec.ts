@@ -1,3 +1,4 @@
+import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
@@ -92,6 +93,24 @@ describe('AdminPageComponent', () => {
     await fixture.whenStable();
 
     expect(query(fixture, 'admin-tabs')).not.toBeNull();
+    expect(main.hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('renders the spinner on the server, without the loading wave', async () => {
+    TestBed.resetTestingModule().configureTestingModule({
+      imports: [AdminPageComponent],
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AdminPort, useClass: AdminAdapterMock },
+      ],
+    });
+
+    const fixture = await render();
+    const main = fixture.nativeElement.querySelector('main');
+
+    expect(fixture.nativeElement.querySelector('mat-spinner')).not.toBeNull();
+    expect(main.querySelector('canvas')).toBeNull();
     expect(main.hasAttribute('aria-busy')).toBe(false);
   });
 
