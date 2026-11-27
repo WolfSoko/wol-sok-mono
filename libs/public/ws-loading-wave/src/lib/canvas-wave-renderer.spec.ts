@@ -1,5 +1,5 @@
 import { CanvasWaveRenderer } from './canvas-wave-renderer';
-import { LIT_ALPHA, REST_ALPHA } from './renderer';
+import { FRONT_LINE_ALPHA, LIT_ALPHA, REST_ALPHA, type Rgb } from './renderer';
 import { dotCenters, waveGeometry } from './wave-model';
 
 interface Arc {
@@ -49,7 +49,7 @@ function recordingContext() {
   return { context, arcs, strokes };
 }
 
-function setUp(accent?: { r: number; g: number; b: number }) {
+function setUp(accent?: Rgb, color: Rgb = { r: 200, g: 210, b: 220 }) {
   const recording = recordingContext();
   const canvas = {
     width: 0,
@@ -58,7 +58,7 @@ function setUp(accent?: { r: number; g: number; b: number }) {
   } as unknown as HTMLCanvasElement;
   const renderer = CanvasWaveRenderer.create(canvas, {
     dotSize: 2,
-    color: { r: 200, g: 210, b: 220 },
+    color,
     accent,
   });
   if (renderer == null) {
@@ -165,6 +165,26 @@ describe('CanvasWaveRenderer', () => {
       const [r] = brightest.fill.match(/\d+/g)?.map(Number) ?? [];
       // more than halfway from 200 to the accent's 0
       expect(r).toBeLessThan(100);
+    });
+
+    it("takes the accent's own opacity for lit dots and the front line", () => {
+      const faint = { r: 200, g: 210, b: 220, alpha: 0.2 };
+      const plain = setUp(undefined, faint);
+      const accented = setUp({ ...accent, alpha: 1 }, faint);
+      for (const { renderer, geometry } of [plain, accented]) {
+        renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      }
+      const brightest = (arcs: { alpha: number }[]) =>
+        Math.max(...arcs.map((arc) => arc.alpha));
+      expect(brightest(plain.arcs)).toBeLessThan(0.2 * LIT_ALPHA + 1e-9);
+      expect(brightest(accented.arcs)).toBeGreaterThan(0.5 * LIT_ALPHA);
+      // resting dots keep the colour's own opacity
+      expect(Math.min(...accented.arcs.map((arc) => arc.alpha))).toBeCloseTo(
+        0.2 * REST_ALPHA,
+        9
+      );
+      expect(plain.strokes).toEqual([0.2 * FRONT_LINE_ALPHA]);
+      expect(accented.strokes).toEqual([FRONT_LINE_ALPHA]);
     });
 
     it('strokes the front line in the accent colour', () => {
