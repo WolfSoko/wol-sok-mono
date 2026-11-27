@@ -1,0 +1,26 @@
+{
+  "name": "bacteria-wars-cinematic",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "projectType": "application",
+  "tags": ["type:blender"],
+  "targets": {
+    "scene": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx tools/bacteria-game/cinematic/blender.ts --factory-startup --python apps/bacteria-wars-cinematic/blender/scenes/bacteria_fight.py -- dist/bacteria-wars-cinematic/bacteria-fight/bacteria-fight.blend"
+      }
+    },
+    "asset-library": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx tools/bacteria-game/cinematic/blender.ts --factory-startup --python apps/bacteria-wars-cinematic/blender/build_asset_library.py -- apps/bacteria-wars-cinematic/assets"
+      }
+    },
+    "render": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/cinematic/render.ts"
+      }
+    }
+  }
+}

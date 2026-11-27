@@ -1,0 +1,3 @@
+# Git LFS keeps the Blender files and films of apps/bacteria-wars-cinematic.
+command -v git-lfs >/dev/null 2>&1 || { echo >&2 "git-lfs is not installed: the files of apps/bacteria-wars-cinematic stay pointers (see its README)."; exit 0; }
+git lfs pre-push "$@"
