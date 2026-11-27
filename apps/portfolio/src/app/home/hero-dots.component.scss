@@ -1,0 +1,15 @@
+/* behind the hero's content and its dish, fading out at the edges */
+:host {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  color: var(--muted);
+  pointer-events: none;
+  mask-image: radial-gradient(ellipse at 40% 50%, black 35%, transparent 75%);
+}
+
+/* @wolsok/loading-wave draws the dots in here */
+.dots {
+  position: absolute;
+  inset: 0;
+}

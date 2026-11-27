@@ -1,12 +1,7 @@
 <section class="hero">
   <!-- decoration: its code loads once the page is idle, off the start's path -->
   @defer (on idle) {
-    <div
-      class="hero-dots"
-      aria-hidden="true"
-      [wsLoadingWave]="heroIntro()"
-      [wsLoadingWaveOptions]="heroDots"
-    ></div>
+    <wolsok-hero-dots />
   }
   <div class="dish" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
