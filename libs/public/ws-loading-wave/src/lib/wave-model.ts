@@ -72,10 +72,7 @@ export function waveGeometry(
   height: number,
   { dotSpacing: askedSpacing, sweepMs }: WaveGeometryOptions
 ): WaveGeometry {
-  const dotSpacing = Math.max(
-    askedSpacing,
-    Math.sqrt((width * height) / MAX_DOTS)
-  );
+  const dotSpacing = spacingWithinDotLimit(width, height, askedSpacing);
   const distance = CENTER_DISTANCE * Math.max(width, height, dotSpacing);
   const tail = TAIL_SPACINGS * dotSpacing;
   const endRadius = Math.hypot(distance + width + tail, height / 2);
@@ -94,6 +91,27 @@ export function waveGeometry(
     tail,
     maxPush: MAX_PUSH_SPACINGS * dotSpacing,
   };
+}
+
+/** how many dots a grid of this spacing holds, rows times columns */
+function dotCount(width: number, height: number, spacing: number): number {
+  const along = (length: number) =>
+    length <= 0 ? 0 : Math.max(0, Math.ceil(length / spacing - 0.5));
+  return along(width) * along(height);
+}
+
+/** the asked spacing, widened until the grid holds at most `MAX_DOTS` */
+function spacingWithinDotLimit(
+  width: number,
+  height: number,
+  askedSpacing: number
+): number {
+  let spacing = Math.max(askedSpacing, Math.sqrt((width * height) / MAX_DOTS));
+  // the rows and columns round up: widen a little more where they still do
+  while (dotCount(width, height, spacing) > MAX_DOTS) {
+    spacing *= 1.01;
+  }
+  return spacing;
 }
 
 /** the share of the current sweep that has passed, 0 up to (not including) 1 */
@@ -210,6 +228,10 @@ export function dotCenters({
   dotSpacing,
 }: Pick<WaveGeometry, 'width' | 'height' | 'dotSpacing'>): Point[] {
   const centers: Point[] = [];
+  // an empty host has no dots, however small the spacing
+  if (width <= 0 || height <= 0) {
+    return centers;
+  }
   for (let y = dotSpacing / 2; y < height; y += dotSpacing) {
     for (let x = dotSpacing / 2; x < width; x += dotSpacing) {
       centers.push({ x, y });

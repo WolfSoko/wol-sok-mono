@@ -132,6 +132,16 @@ describe('wave model', () => {
       expect(tiny.dotSpacing).toBeGreaterThan(0.1);
     });
 
+    it('counts the rows and columns as rounded, not just the area', () => {
+      const narrow = waveGeometry(100, 140, { dotSpacing: 0.1, sweepMs });
+      expect(dotCenters(narrow).length).toBeLessThanOrEqual(MAX_DOTS);
+    });
+
+    it('lays no dots on an empty host, without looping over its rows', () => {
+      const empty = waveGeometry(0, 400, { dotSpacing: 0.000001, sweepMs });
+      expect(dotCenters(empty)).toEqual([]);
+    });
+
     it('keeps the asked spacing below the limit', () => {
       expect(
         waveGeometry(1000, 400, { dotSpacing: 20, sweepMs }).dotSpacing
