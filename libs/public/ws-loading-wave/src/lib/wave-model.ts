@@ -12,11 +12,15 @@
 /** how far the circle's centre lies left of the element, times its larger side */
 const CENTER_DISTANCE = 1.5;
 /** distance behind the front over which a dot dims to 1/e, in dot spacings */
-const FALLOFF_SPACINGS = 1;
+const FALLOFF_SPACINGS = 1.5;
+/** how lit a dot stays once the front passed it, as in the video */
+export const AFTERGLOW = 0.45;
+/** share of a sweep after which a passed dot's afterglow starts to fade */
+export const AFTERGLOW_FADE_START = 0.45;
 /** distance ahead of the front over which a dot lights up, in dot spacings */
 const RISE_SPACINGS = 0.25;
-/** length of the visibly lit tail behind the front, in dot spacings */
-const TAIL_SPACINGS = 3;
+/** length of the bright tail behind the front, in dot spacings */
+const TAIL_SPACINGS = 4;
 /** the farthest a lit dot is pushed along the wave, in dot spacings */
 const MAX_PUSH_SPACINGS = 0.15;
 
@@ -31,6 +35,8 @@ export interface WaveGeometry {
   readonly startRadius: number;
   /** the front's radius at the end of a sweep: the tail left every row */
   readonly endRadius: number;
+  /** how far the front's radius grows in one sweep */
+  readonly travel: number;
   /** distance behind the front over which a dot dims to 1/e */
   readonly falloff: number;
   /** distance ahead of the front over which a dot lights up */
@@ -65,6 +71,7 @@ export function waveGeometry(
 ): WaveGeometry {
   const distance = CENTER_DISTANCE * Math.max(width, height, dotSpacing);
   const tail = TAIL_SPACINGS * dotSpacing;
+  const endRadius = Math.hypot(distance + width + tail, height / 2);
   return {
     width,
     height,
@@ -73,7 +80,8 @@ export function waveGeometry(
     centerX: -distance,
     centerY: height / 2,
     startRadius: distance,
-    endRadius: Math.hypot(distance + width + tail, height / 2),
+    endRadius,
+    travel: endRadius - distance,
     falloff: FALLOFF_SPACINGS * dotSpacing,
     rise: RISE_SPACINGS * dotSpacing,
     tail,
@@ -89,9 +97,8 @@ export function sweepPhase(geometry: WaveGeometry, elapsedMs: number): number {
 
 /** the front's radius at the time `elapsedMs` */
 export function frontRadius(geometry: WaveGeometry, elapsedMs: number): number {
-  const { startRadius, endRadius } = geometry;
   return (
-    startRadius + (endRadius - startRadius) * sweepPhase(geometry, elapsedMs)
+    geometry.startRadius + geometry.travel * sweepPhase(geometry, elapsedMs)
   );
 }
 
@@ -112,8 +119,31 @@ function smoothstep(edge0: number, edge1: number, value: number): number {
 }
 
 /**
- * How much the wave lights the dot at `(x, y)`: 0 ahead of the front, 1 right
- * behind it, dimming exponentially further behind.
+ * The bright part of the wave: 1 right behind the front, dimming
+ * exponentially further behind, 0 ahead of it.
+ */
+function frontGlow(behind: number, geometry: WaveGeometry): number {
+  return (
+    smoothstep(-geometry.rise, 0, behind) *
+    Math.exp(-Math.max(behind, 0) / geometry.falloff)
+  );
+}
+
+/**
+ * What stays lit once the front passed: `AFTERGLOW` for the first part of a
+ * sweep, then fading out until the next front arrives. Ahead of the front a
+ * dot still glows from the sweep before.
+ */
+function afterglow(behind: number, geometry: WaveGeometry): number {
+  const sincePassed =
+    (behind >= 0 ? behind : behind + geometry.travel) / geometry.travel;
+  return AFTERGLOW * (1 - smoothstep(AFTERGLOW_FADE_START, 1, sincePassed));
+}
+
+/**
+ * How much the wave lights the dot at `(x, y)`: 1 right behind the front,
+ * dimming over a few spacings to the afterglow of the dots it passed, which
+ * fades out again until the next front comes.
  */
 export function waveIntensity(
   x: number,
@@ -122,10 +152,7 @@ export function waveIntensity(
   geometry: WaveGeometry
 ): number {
   const behind = distanceBehindFront(x, y, elapsedMs, geometry);
-  return (
-    smoothstep(-geometry.rise, 0, behind) *
-    Math.exp(-Math.max(behind, 0) / geometry.falloff)
-  );
+  return Math.max(frontGlow(behind, geometry), afterglow(behind, geometry));
 }
 
 /**

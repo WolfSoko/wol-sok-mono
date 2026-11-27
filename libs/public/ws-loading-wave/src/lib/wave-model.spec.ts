@@ -1,4 +1,5 @@
 import {
+  AFTERGLOW,
   dotCenters,
   dotDisplacement,
   frontRadius,
@@ -40,9 +41,12 @@ describe('wave model', () => {
     const t = sweepMs / 2;
     const front = frontX(y, t);
 
-    it('is 0 ahead of the front', () => {
-      expect(waveIntensity(front + 20, y, t, geometry)).toBe(0);
-      expect(waveIntensity(front + 300, y, t, geometry)).toBe(0);
+    it('shows ahead of the front only the fading afterglow of the last sweep', () => {
+      const justAhead = waveIntensity(front + 20, y, t, geometry);
+      const farAhead = waveIntensity(front + 300, y, t, geometry);
+      expect(justAhead).toBeLessThan(0.01);
+      expect(farAhead).toBeGreaterThan(justAhead);
+      expect(farAhead).toBeLessThan(AFTERGLOW);
     });
 
     it('is highest just behind the front', () => {
@@ -51,20 +55,29 @@ describe('wave model', () => {
       expect(waveIntensity(front - 10, y, t, geometry)).toBeLessThan(peak);
     });
 
-    it('falls off over about 2.5 dot spacings behind the front', () => {
-      const oneSpacing = waveIntensity(front - 20, y, t, geometry);
-      const fade = waveIntensity(front - 50, y, t, geometry);
-      const far = waveIntensity(front - 120, y, t, geometry);
-      expect(oneSpacing).toBeGreaterThan(0.3);
-      expect(fade).toBeLessThan(0.15);
-      expect(far).toBeLessThan(0.01);
+    it('dims to the afterglow within about 2.5 dot spacings behind the front', () => {
+      expect(waveIntensity(front - 20, y, t, geometry)).toBeGreaterThan(
+        AFTERGLOW + 0.03
+      );
+      expect(waveIntensity(front - 50, y, t, geometry)).toBeCloseTo(
+        AFTERGLOW,
+        2
+      );
+      expect(waveIntensity(front - 300, y, t, geometry)).toBe(AFTERGLOW);
+    });
+
+    it('lets the afterglow fade in the second half of the sweep', () => {
+      const late = sweepMs * 0.95;
+      const leftEdge = waveIntensity(10, y, late, geometry);
+      expect(leftEdge).toBeLessThan(AFTERGLOW / 2);
+      expect(leftEdge).toBeGreaterThan(0);
     });
 
     it('lights mid-height before the edges of the same column (curved front)', () => {
       const x = frontX(200, t) - 1;
       expect(waveIntensity(x, 200, t, geometry)).toBeGreaterThan(0.9);
-      expect(waveIntensity(x, 0, t, geometry)).toBe(0);
-      expect(waveIntensity(x, 400, t, geometry)).toBe(0);
+      expect(waveIntensity(x, 0, t, geometry)).toBeLessThan(0.01);
+      expect(waveIntensity(x, 400, t, geometry)).toBeLessThan(0.01);
     });
 
     it('repeats every sweep', () => {

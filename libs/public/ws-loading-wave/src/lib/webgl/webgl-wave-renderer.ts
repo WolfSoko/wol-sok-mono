@@ -15,6 +15,7 @@ const UNIFORMS = [
   'u_center',
   'u_frontRadius',
   'u_echoRadius',
+  'u_travel',
   'u_falloff',
   'u_rise',
   'u_maxPush',
@@ -147,6 +148,7 @@ export class WebGlWaveRenderer implements WaveRenderer {
       uniforms.u_echoRadius,
       frontRadius(geometry, frame.elapsedMs - ECHO_LAG * geometry.sweepMs)
     );
+    gl.uniform1f(uniforms.u_travel, geometry.travel);
     gl.uniform1f(uniforms.u_falloff, geometry.falloff);
     gl.uniform1f(uniforms.u_rise, geometry.rise);
     gl.uniform1f(uniforms.u_maxPush, geometry.maxPush);

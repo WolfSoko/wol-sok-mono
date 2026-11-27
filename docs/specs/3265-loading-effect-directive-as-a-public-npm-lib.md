@@ -15,14 +15,14 @@ the video.
 
 `LoadingEffect.mp4` (1714 × 484, 1.5 s, one sweep):
 
-| Part       | Seen                                                                                                                                            |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
-| Background | near black, untouched by the effect                                                                                                             |
-| Dot grid   | a square grid, about 30 px pitch, dots of about 1.5 px, light grey at low opacity                                                               |
-| Wave front | a vertical arc, bulging to the right: part of a circle whose centre lies far left of the element, so the front is a ripple from off-screen      |
-| Lit dots   | the dots just behind the front are brighter and a bit larger; the brightness falls off over two or three columns behind it and not at all ahead |
-| Front line | a hairline along the arc, fainter than the dots                                                                                                 |
-| Motion     | the front sweeps from the left edge to the right edge in about 1.5 s at an even speed, then starts again from the left                          |
+| Part       | Seen                                                                                                                                                                                                                                                                        |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Background | near black, untouched by the effect                                                                                                                                                                                                                                         |
+| Dot grid   | a square grid, about 30 px pitch, dots of about 1.5 px, light grey at low opacity                                                                                                                                                                                           |
+| Wave front | a vertical arc, bulging to the right: part of a circle whose centre lies far left of the element, so the front is a ripple from off-screen                                                                                                                                  |
+| Lit dots   | the dots just behind the front are brighter and a bit larger; within two or three columns they dim to an afterglow that the passed dots keep (measured along one row: background 11, front column 75, afterglow 47, dots ahead fading from 38 to 24 towards the right edge) |
+| Front line | a hairline along the arc, fainter than the dots                                                                                                                                                                                                                             |
+| Motion     | the front sweeps from the left edge to the right edge in about 1.5 s at an even speed, then starts again from the left                                                                                                                                                      |
 
 ## Decisions
 
@@ -65,9 +65,11 @@ the video.
    `waveIntensity(x, y, elapsedMs, geometry)` gives a dot's brightness boost
    (0..1) from its distance behind a front that is an arc of a circle centred
    at `(-R, height / 2)` with `R = 1.5 × max(width, height)`, moving from the
-   left edge to past the right edge in `sweepMs`, then repeating. Behind the
-   front the boost falls off exponentially over about 2.5 dot spacings; ahead
-   of it it is 0. Reason: the curve, speed and fall-off are then tested once
+   left edge to past the right edge in `sweepMs`, then repeating. Right behind
+   the front the boost is 1 and falls off exponentially (1/e at 1.5 dot
+   spacings) to an afterglow of 0.45 that the passed dots keep for the first
+   45% of a sweep, then fading until the next front comes, so the dots ahead
+   of the front dim towards it, as measured in the video. Reason: the curve, speed and fall-off are then tested once
    in Jest, and the GLSL mirrors a function with a spec rather than a guess.
 4. **Shader analysis (acceptance 1): yes, a shader makes the wave more
    impressive, at no extra cost to the page.** The Canvas 2D renderer draws
@@ -161,8 +163,10 @@ the video.
 1. `npx nx build ws-loading-wave` builds a partial-compilation package with
    `README.md` and `LICENSE`; `npx nx test ws-loading-wave` and
    `typecheck-specs` pass.
-2. `waveIntensity` is spec'd: 0 ahead of the front, highest just behind it,
-   falling off over about 2.5 spacings, the front curved (a dot at the top
+2. `waveIntensity` is spec'd: highest just behind the front, dimming to the
+   afterglow within about 2.5 spacings, the afterglow fading in the second
+   half of the sweep, ahead of the front only that fading afterglow (least
+   right before it), the front curved (a dot at the top
    or bottom edge is lit later than one at mid-height in the same column),
    repeating every `sweepMs`.
 3. The directive's spec shows: canvas inserted as last child with

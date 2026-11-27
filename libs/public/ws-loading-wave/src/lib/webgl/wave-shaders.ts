@@ -4,6 +4,7 @@ import {
   LIT_GROWTH,
   REST_ALPHA,
 } from '../renderer';
+import { AFTERGLOW, AFTERGLOW_FADE_START } from '../wave-model';
 
 /** strength of the echo ripple trailing the front, times the main front's */
 export const ECHO_STRENGTH = 0.4;
@@ -25,7 +26,7 @@ void main() {
 `;
 
 /**
- * The wave model of `wave-model.ts` per pixel, for every dot of the 3 × 3
+ * The wave model of `wave-model.ts` (front glow, afterglow, push) per pixel, for every dot of the 3 × 3
  * cells around it: brightness, growth and push behind the front, plus what
  * the 2D canvas cannot afford: a glow around lit dots and an echo ripple
  * trailing the front. Lengths are in CSS pixels, y grows downwards as in CSS.
@@ -41,6 +42,7 @@ uniform vec3 u_color;
 uniform vec2 u_center;
 uniform float u_frontRadius;
 uniform float u_echoRadius;
+uniform float u_travel;
 uniform float u_falloff;
 uniform float u_rise;
 uniform float u_maxPush;
@@ -56,9 +58,16 @@ const float FRONT_LINE_ALPHA = ${glsl(FRONT_LINE_ALPHA)};
 const float ECHO_STRENGTH = ${glsl(ECHO_STRENGTH)};
 const float GLOW_ALPHA = ${glsl(GLOW_ALPHA)};
 const float GLOW_SPACINGS = ${glsl(GLOW_SPACINGS)};
+const float AFTERGLOW = ${glsl(AFTERGLOW)};
+const float AFTERGLOW_FADE_START = ${glsl(AFTERGLOW_FADE_START)};
 
-float intensityAt(float behind) {
+float frontGlow(float behind) {
   return smoothstep(-u_rise, 0.0, behind) * exp(-max(behind, 0.0) / u_falloff);
+}
+
+float afterglow(float behind) {
+  float sincePassed = (behind >= 0.0 ? behind : behind + u_travel) / u_travel;
+  return AFTERGLOW * (1.0 - smoothstep(AFTERGLOW_FADE_START, 1.0, sincePassed));
 }
 
 float pushAt(float behind) {
@@ -85,14 +94,16 @@ void main() {
       float waveDistance = length(fromWaveCenter);
       float behindFront = u_frontRadius - waveDistance;
       float behindEcho = u_echoRadius - waveDistance;
-      float lit = u_wave * clamp(
-        intensityAt(behindFront) + ECHO_STRENGTH * intensityAt(behindEcho), 0.0, 1.0);
+      float fronts = frontGlow(behindFront) + ECHO_STRENGTH * frontGlow(behindEcho);
+      float lit = u_wave * clamp(max(fronts, afterglow(behindFront)), 0.0, 1.0);
       float push = u_wave * (pushAt(behindFront) + ECHO_STRENGTH * pushAt(behindEcho));
       vec2 dotCenter = center + push * fromWaveCenter / waveDistance;
       float radius = 0.5 * u_dotSize * (1.0 + LIT_GROWTH * lit);
       float fromDot = length(point - dotCenter);
       float core = 1.0 - smoothstep(radius - antialias, radius + antialias, fromDot);
-      float glow = GLOW_ALPHA * lit * exp(-fromDot * fromDot / (2.0 * glowWidth * glowWidth));
+      // only the fronts glow, the afterglow stays calm
+      float glow = GLOW_ALPHA * u_wave * clamp(fronts, 0.0, 1.0)
+        * exp(-fromDot * fromDot / (2.0 * glowWidth * glowWidth));
       alpha += core * (REST_ALPHA + (LIT_ALPHA - REST_ALPHA) * lit) + glow;
     }
   }
