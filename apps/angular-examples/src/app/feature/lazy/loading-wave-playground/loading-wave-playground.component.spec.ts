@@ -173,6 +173,10 @@ describe('LoadingWavePlaygroundComponent', () => {
 
     pickToggle(fixture, 'shader', 'custom');
     await fixture.whenStable();
-    expect(text('shader-option')).toContain('shader: { fragment:');
+    const custom = /^shader: \{ fragment: (.*) \}$/s.exec(
+      text('shader-option')
+    );
+    // the applied fragment itself, as a string literal to paste
+    expect(JSON.parse(custom?.[1] ?? 'null')).toBe(CUSTOM_SHADER_EXAMPLE);
   });
 });

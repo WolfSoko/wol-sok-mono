@@ -123,7 +123,8 @@ export class LoadingWavePlaygroundComponent {
   /** how to pass the stage's shader, which JSON cannot hold */
   protected readonly shaderOption = computed(() =>
     this.shaderPick() === CUSTOM_PICK
-      ? 'shader: { fragment: `…the fragment above…` }'
+      ? // a JSON string is a valid TypeScript string literal, escapes included
+        `shader: { fragment: ${JSON.stringify(this.customFragment())} }`
       : `shader: ${this.shaderPick()} (import { ${this.shaderPick()} } from '@wolsok/loading-wave')`
   );
 
