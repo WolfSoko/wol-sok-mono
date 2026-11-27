@@ -1,0 +1,123 @@
+<mat-card appearance="raised" class="controls">
+  <mat-card-header>
+    <mat-card-title>Loading wave playground</mat-card-title>
+    <mat-card-subtitle>
+      Try every option of
+      <a
+        href="https://www.npmjs.com/package/@wolsok/loading-wave"
+        target="_blank"
+        >&#64;wolsok/loading-wave</a
+      >, drawn by a WebGL2 shader and by a 2D canvas side by side.
+    </mat-card-subtitle>
+  </mat-card-header>
+  <mat-card-content>
+    <section>
+      <mat-slide-toggle
+        data-testid="loading"
+        [checked]="loading()"
+        (change)="loading.set($event.checked)"
+        >Loading</mat-slide-toggle
+      >
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">After loading</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="what the dots do after loading"
+        data-testid="after-loading"
+        [value]="options().afterLoading"
+        (change)="setOption('afterLoading', $event.value)"
+      >
+        <mat-button-toggle value="hide">hide</mat-button-toggle>
+        <mat-button-toggle value="keep">keep</mat-button-toggle>
+      </mat-button-toggle-group>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Dot spacing: {{ options().dotSpacing }} px</h3>
+      <mat-slider min="12" max="60" step="2" discrete>
+        <input
+          matSliderThumb
+          aria-label="dot spacing in pixels"
+          data-testid="spacing"
+          [value]="options().dotSpacing"
+          (valueChange)="setOption('dotSpacing', $event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Dot size: {{ options().dotSize }} px</h3>
+      <mat-slider min="1" max="4" step="0.5" discrete>
+        <input
+          matSliderThumb
+          aria-label="dot size in pixels"
+          [value]="options().dotSize"
+          (valueChange)="setOption('dotSize', $event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Sweep: {{ options().sweepMs / 1000 }} s</h3>
+      <mat-slider min="600" max="5000" step="200">
+        <input
+          matSliderThumb
+          aria-label="sweep duration in milliseconds"
+          [value]="options().sweepMs"
+          (valueChange)="setOption('sweepMs', $event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Colour</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="dot colour"
+        [value]="options().color"
+        (change)="setOption('color', $event.value)"
+      >
+        @for (choice of colorChoices; track choice.label) {
+          <mat-button-toggle [value]="choice.value">{{
+            choice.label
+          }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </section>
+
+    <pre class="options" data-testid="options">{{ optionsJson() }}</pre>
+  </mat-card-content>
+</mat-card>
+
+<div class="stages">
+  <figure
+    class="stage"
+    data-testid="gpu-stage"
+    [wsLoadingWave]="loading()"
+    [wsLoadingWaveOptions]="gpuOptions()"
+    #gpuWave="wsLoadingWave"
+  >
+    <figcaption>
+      <strong>Shader</strong>
+      <span data-testid="gpu-renderer"
+        >drawn by: {{ gpuWave.activeRenderer() ?? "nothing" }}</span
+      >
+    </figcaption>
+  </figure>
+  <figure
+    class="stage"
+    data-testid="canvas-stage"
+    [wsLoadingWave]="loading()"
+    [wsLoadingWaveOptions]="canvasOptions()"
+    #canvasWave="wsLoadingWave"
+  >
+    <figcaption>
+      <strong>2D canvas</strong>
+      <span data-testid="canvas-renderer"
+        >drawn by: {{ canvasWave.activeRenderer() ?? "nothing" }}</span
+      >
+    </figcaption>
+  </figure>
+</div>

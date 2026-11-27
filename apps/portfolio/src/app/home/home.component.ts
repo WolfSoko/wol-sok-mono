@@ -14,10 +14,17 @@ import { I18nService } from '../i18n/i18n.service';
 import { ProjectCardComponent } from '../project-card/project-card.component';
 import { APPS, EXPERIMENTS, PACKAGES } from '../projects';
 import { RevealDirective } from '../reveal.directive';
+import { HeroDotsComponent } from './hero-dots.component';
 
 @Component({
   selector: 'wolsok-home',
-  imports: [ProjectCardComponent, RouterLink, MatButtonModule, RevealDirective],
+  imports: [
+    ProjectCardComponent,
+    RouterLink,
+    MatButtonModule,
+    RevealDirective,
+    HeroDotsComponent,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './home.component.html',
   styleUrl: './home.component.scss',

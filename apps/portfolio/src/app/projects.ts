@@ -271,6 +271,20 @@ export const EXPERIMENTS: Project[] = [
     tech: ['WebGL2', 'Angular'],
     links: [{ label: 'Try it', url: `${EXAMPLES}/thanosPlayground` }],
   },
+  {
+    name: 'Loading Wave Playground',
+    tagline: {
+      en: 'A calm wave of lit dots.',
+      de: 'Eine ruhige Welle leuchtender Punkte.',
+    },
+    description: {
+      en: 'Try every option of @wolsok/loading-wave: a wave that lights a grid of dots behind any element, drawn by a WebGL2 shader and by a 2D canvas side by side.',
+      de: 'Probiere jede Option von @wolsok/loading-wave: eine Welle, die ein Punkteraster hinter jedem Element aufleuchten lässt, gezeichnet von einem WebGL2-Shader und einem 2D-Canvas nebeneinander.',
+    },
+    accent: '#22d3ee',
+    tech: ['WebGL2', 'Canvas', 'Angular'],
+    links: [{ label: 'Try it', url: `${EXAMPLES}/loadingWavePlayground` }],
+  },
 ];
 
 /** Packages published on npm. */
@@ -292,6 +306,27 @@ export const PACKAGES: Project[] = [
       { label: 'Playground', url: `${EXAMPLES}/thanosPlayground` },
       { label: 'Demo', url: `${EXAMPLES}/home?thanosDemo=true` },
       { label: 'Source', url: `${SOURCE}/libs/public/ws-thanos` },
+    ],
+  },
+  {
+    name: '@wolsok/loading-wave',
+    tagline: {
+      en: 'Loading, calmly in the background.',
+      de: 'Laden, ruhig im Hintergrund.',
+    },
+    description: {
+      en: 'An Angular directive that lays a calm loading wave of lit dots behind any element: a WebGL2 shader with glow and echo ripples, a 2D canvas without a GPU, and dots that fade away or stay once loading ends.',
+      de: 'Eine Angular-Direktive, die eine ruhige Ladewelle leuchtender Punkte hinter jedes Element legt: ein WebGL2-Shader mit Glühen und Echowellen, ein 2D-Canvas ohne GPU, und Punkte, die nach dem Laden verblassen oder bleiben.',
+    },
+    accent: '#22d3ee',
+    tech: ['Angular', 'WebGL2', 'Canvas'],
+    links: [
+      {
+        label: 'npm',
+        url: 'https://www.npmjs.com/package/@wolsok/loading-wave',
+      },
+      { label: 'Playground', url: `${EXAMPLES}/loadingWavePlayground` },
+      { label: 'Source', url: `${SOURCE}/libs/public/ws-loading-wave` },
     ],
   },
   {

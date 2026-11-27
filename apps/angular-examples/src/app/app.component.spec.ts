@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { RouterModule } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { Angulartics2GoogleTagManager } from 'angulartics2';
 import { AppComponent } from './app.component';
 import { ENV_TOKEN } from './core/env.token';
@@ -38,7 +39,7 @@ describe('AppComponent', () => {
     });
     TestBed.overrideComponent(SideNavComponent, {
       remove: { templateUrl: '' },
-      add: { template: '<div>SideNavComp</div>' },
+      add: { template: '<div>SideNavComp</div><ng-content />' },
     });
     TestBed.overrideComponent(MainToolbarComponent, {
       set: { template: '<div>ToolbarComp</div>' },
@@ -76,5 +77,13 @@ describe('AppComponent', () => {
     const versionDiv = fixture.debugElement.query(By.css('.app-version'))
       .nativeElement as HTMLDivElement;
     expect(versionDiv.textContent).toEqual('angular-examples@next');
+  });
+
+  it('lays the loading wave behind the content, idle while no page loads', () => {
+    const { fixture } = createComp();
+    const wave = fixture.debugElement
+      .query(By.css('.content-section'))
+      .injector.get(LoadingWaveDirective);
+    expect(wave.wsLoadingWave()).toBe(false);
   });
 });

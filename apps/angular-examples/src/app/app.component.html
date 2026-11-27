@@ -3,7 +3,7 @@
     (clickSideNav)="sideNavComponent.toggle()"
   ></app-main-toolbar>
   <app-side-nav #sideNavComponent class="page-content">
-    <section class="content-section">
+    <section class="content-section" [wsLoadingWave]="navigating()">
       <router-outlet></router-outlet>
     </section>
   </app-side-nav>

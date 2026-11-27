@@ -1,4 +1,8 @@
 <section class="hero">
+  <!-- decoration: its code loads once the page is idle, off the start's path -->
+  @defer (on idle) {
+    <wolsok-hero-dots />
+  }
   <div class="dish" aria-hidden="true">
     <span></span><span></span><span></span><span></span><span></span>
   </div>
@@ -64,8 +68,7 @@
     <div>
       <h2 id="blog-title">{{ t().home.blogTitle }}</h2>
       <p class="intro">
-        <strong>{{ i18n.pick(latestPost.title) }}</strong
-        ><br />
+        <strong>{{ i18n.pick(latestPost.title) }}</strong><br />
         {{ i18n.pick(latestPost.summary) }}
       </p>
     </div>
