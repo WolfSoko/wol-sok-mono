@@ -4,31 +4,57 @@ import {
   computed,
   signal,
 } from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import {
   DEFAULT_LOADING_WAVE_OPTIONS,
   LoadingWaveDirective,
   LoadingWaveOptions,
+  LoadingWaveShader,
+  rippleShader,
 } from '@wolsok/loading-wave';
+import { CUSTOM_SHADER_EXAMPLE } from './custom-shader-example';
 
-/** the options the playground offers; the renderer is each stage's own */
-export type PlaygroundOptions = Omit<LoadingWaveOptions, 'renderer'>;
+/** the options the playground offers; renderer and shader are each stage's own */
+export type PlaygroundOptions = Omit<LoadingWaveOptions, 'renderer' | 'shader'>;
 
 interface ColorChoice {
   readonly label: string;
-  /** `undefined`: the stage's text colour */
+  /** a theme colour; `undefined` leaves the option unset */
   readonly value: string | undefined;
 }
 
+/** theme tokens only, so every choice shows in the light and the dark theme */
 const COLOR_CHOICES: readonly ColorChoice[] = [
   { label: 'Text', value: undefined },
-  { label: 'Cyan', value: '#4dd0e1' },
-  { label: 'Lime', value: '#c6ff00' },
-  { label: 'Rose', value: '#ff6e91' },
+  { label: 'Primary', value: 'var(--mat-sys-primary)' },
+  { label: 'Tertiary', value: 'var(--mat-sys-tertiary)' },
 ];
+
+const ACCENT_CHOICES: readonly ColorChoice[] = [
+  { label: 'Dots', value: undefined },
+  { label: 'Primary', value: 'var(--mat-sys-primary)' },
+  { label: 'Tertiary', value: 'var(--mat-sys-tertiary)' },
+];
+
+/** a built-in shader, by the name it is exported under */
+interface ShaderChoice {
+  readonly name: string;
+  readonly label: string;
+  readonly shader: LoadingWaveShader;
+}
+
+const SHADER_CHOICES: readonly ShaderChoice[] = [
+  { name: 'rippleShader', label: 'Ripple', shader: rippleShader },
+];
+
+/** the pick of one's own fragment; every other pick names a built-in shader */
+const CUSTOM_PICK = 'custom';
 
 /** try every option of @wolsok/loading-wave on the GPU and on a 2D canvas side by side */
 @Component({
@@ -38,25 +64,48 @@ const COLOR_CHOICES: readonly ColorChoice[] = [
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     LoadingWaveDirective,
+    MatButtonModule,
     MatButtonToggleModule,
     MatCardModule,
+    MatFormFieldModule,
+    MatInputModule,
     MatSlideToggleModule,
     MatSliderModule,
   ],
 })
 export class LoadingWavePlaygroundComponent {
   protected readonly colorChoices = COLOR_CHOICES;
+  protected readonly accentChoices = ACCENT_CHOICES;
+  protected readonly shaderChoices = SHADER_CHOICES;
+  protected readonly customPick = CUSTOM_PICK;
   public readonly loading = signal(true);
   public readonly options = signal<PlaygroundOptions>({
     afterLoading: DEFAULT_LOADING_WAVE_OPTIONS.afterLoading,
     dotSpacing: DEFAULT_LOADING_WAVE_OPTIONS.dotSpacing,
     dotSize: DEFAULT_LOADING_WAVE_OPTIONS.dotSize,
     sweepMs: DEFAULT_LOADING_WAVE_OPTIONS.sweepMs,
+    frontRoundness: DEFAULT_LOADING_WAVE_OPTIONS.frontRoundness,
     color: undefined,
+    accentColor: undefined,
+  });
+  /** what the shader stage draws with: a built-in shader's name or `CUSTOM_PICK` */
+  public readonly shaderPick = signal<string>(SHADER_CHOICES[0].name);
+  /** the custom fragment as typed */
+  protected readonly customDraft = signal(CUSTOM_SHADER_EXAMPLE);
+  /** the custom fragment the stage draws, set by "Apply" */
+  private readonly customFragment = signal(CUSTOM_SHADER_EXAMPLE);
+
+  private readonly shader = computed<LoadingWaveShader>(() => {
+    const pick = this.shaderPick();
+    return pick === CUSTOM_PICK
+      ? { fragment: this.customFragment() }
+      : (SHADER_CHOICES.find((choice) => choice.name === pick)?.shader ??
+          rippleShader);
   });
   protected readonly gpuOptions = computed<LoadingWaveOptions>(() => ({
     ...this.options(),
     renderer: 'webgl',
+    shader: this.shader(),
   }));
   protected readonly canvasOptions = computed<LoadingWaveOptions>(() => ({
     ...this.options(),
@@ -64,7 +113,17 @@ export class LoadingWavePlaygroundComponent {
   }));
   /** shown to copy into provideLoadingWave or [wsLoadingWaveOptions] */
   protected readonly optionsJson = computed(() =>
-    JSON.stringify(this.options(), null, 2)
+    JSON.stringify(
+      {
+        ...this.options(),
+        shader:
+          this.shaderPick() === CUSTOM_PICK
+            ? '{ fragment }'
+            : this.shaderPick(),
+      },
+      null,
+      2
+    )
   );
 
   protected setOption<K extends keyof PlaygroundOptions>(
@@ -72,5 +131,9 @@ export class LoadingWavePlaygroundComponent {
     value: PlaygroundOptions[K]
   ): void {
     this.options.update((options) => ({ ...options, [key]: value }));
+  }
+
+  protected applyCustomFragment(): void {
+    this.customFragment.set(this.customDraft());
   }
 }

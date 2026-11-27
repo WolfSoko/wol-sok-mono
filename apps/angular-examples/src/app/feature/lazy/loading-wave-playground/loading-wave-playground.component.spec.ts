@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { By } from '@angular/platform-browser';
-import { LoadingWaveDirective } from '@wolsok/loading-wave';
+import { LoadingWaveDirective, rippleShader } from '@wolsok/loading-wave';
+import { CUSTOM_SHADER_EXAMPLE } from './custom-shader-example';
 import { LoadingWavePlaygroundComponent } from './loading-wave-playground.component';
 
 describe('LoadingWavePlaygroundComponent', () => {
@@ -49,7 +50,7 @@ describe('LoadingWavePlaygroundComponent', () => {
     const { fixture, waves } = await render();
 
     fixture.debugElement
-      .query(By.directive(MatButtonToggleGroup))
+      .query(By.css('[data-testid="after-loading"]'))
       .injector.get(MatButtonToggleGroup)
       .change.emit({ value: 'keep', source: null as never });
     fixture.debugElement
@@ -79,5 +80,96 @@ describe('LoadingWavePlaygroundComponent', () => {
     // no WebGL and no 2D canvas: nothing draws
     expect(text('gpu-renderer')).toBe('drawn by: nothing');
     expect(text('canvas-renderer')).toBe('drawn by: nothing');
+  });
+
+  /** the options each stage gets: the shader stage's first */
+  const stageOptions = (waves: LoadingWaveDirective[]) =>
+    waves.map((wave) => wave.wsLoadingWaveOptions());
+
+  function pickToggle(
+    fixture: Awaited<ReturnType<typeof render>>['fixture'],
+    testId: string,
+    value: unknown
+  ) {
+    fixture.debugElement
+      .query(By.css(`[data-testid="${testId}"]`))
+      .injector.get(MatButtonToggleGroup)
+      .change.emit({ value, source: null as never });
+  }
+
+  it('draws the shader stage with the ripple shader, the canvas stage without one', async () => {
+    const { waves } = await render();
+    const [gpu, canvas] = stageOptions(waves);
+    expect(gpu?.shader).toBe(rippleShader);
+    expect(canvas?.shader).toBeUndefined();
+  });
+
+  it('passes the front roundness and the accent colour to both stages', async () => {
+    const { fixture, waves } = await render();
+
+    fixture.debugElement
+      .query(By.css('[data-testid="roundness"]'))
+      .triggerEventHandler('valueChange', 0.9);
+    pickToggle(fixture, 'accent', 'var(--mat-sys-tertiary)');
+    await fixture.whenStable();
+
+    for (const options of stageOptions(waves)) {
+      expect(options).toEqual(
+        expect.objectContaining({
+          frontRoundness: 0.9,
+          accentColor: 'var(--mat-sys-tertiary)',
+        })
+      );
+    }
+  });
+
+  it('offers only theme colours, so every choice shows in light and dark', async () => {
+    const { fixture } = await render();
+    const values = fixture.componentInstance['colorChoices']
+      .concat(fixture.componentInstance['accentChoices'])
+      .map((choice) => choice.value)
+      .filter((value) => value !== undefined);
+    expect(values.length).toBeGreaterThan(0);
+    for (const value of values) {
+      expect(value).toMatch(/^var\(--mat-sys-[a-z-]+\)$/);
+    }
+  });
+
+  it('draws a custom fragment on the shader stage once applied', async () => {
+    const { fixture, waves } = await render();
+
+    pickToggle(fixture, 'shader', 'custom');
+    await fixture.whenStable();
+    expect(stageOptions(waves)[0]?.shader).toEqual({
+      fragment: CUSTOM_SHADER_EXAMPLE,
+    });
+
+    fixture.debugElement
+      .query(By.css('[data-testid="custom-fragment"]'))
+      .triggerEventHandler('input', {
+        target: { value: 'vec4 wsShade(vec2 p) { return vec4(1.0); }' },
+      });
+    await fixture.whenStable();
+    // typing alone does not recompile on every key
+    expect(stageOptions(waves)[0]?.shader).toEqual({
+      fragment: CUSTOM_SHADER_EXAMPLE,
+    });
+
+    fixture.debugElement
+      .query(By.css('[data-testid="apply-fragment"]'))
+      .triggerEventHandler('click');
+    await fixture.whenStable();
+    expect(stageOptions(waves)[0]?.shader).toEqual({
+      fragment: 'vec4 wsShade(vec2 p) { return vec4(1.0); }',
+    });
+    expect(stageOptions(waves)[1]?.shader).toBeUndefined();
+  });
+
+  it('shows the chosen shader by name, not its source, in the options', async () => {
+    const { fixture } = await render();
+    const shown = fixture.debugElement.query(By.css('[data-testid="options"]'))
+      .nativeElement.textContent;
+    expect(shown).toContain('rippleShader');
+    expect(shown).not.toContain('wsShade');
   });
 });

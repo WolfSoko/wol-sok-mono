@@ -278,11 +278,11 @@ export const EXPERIMENTS: Project[] = [
       de: 'Eine ruhige Welle leuchtender Punkte.',
     },
     description: {
-      en: 'Try every option of @wolsok/loading-wave: a wave that lights a grid of dots behind any element, drawn by a WebGL2 shader and by a 2D canvas side by side.',
-      de: 'Probiere jede Option von @wolsok/loading-wave: eine Welle, die ein Punkteraster hinter jedem Element aufleuchten lässt, gezeichnet von einem WebGL2-Shader und einem 2D-Canvas nebeneinander.',
+      en: 'Try every option of @wolsok/loading-wave: a round wave that lights a grid of dots behind any element, drawn by a WebGL2 shader and by a 2D canvas side by side, in your theme. Pick a shader or write your own GLSL right on the page.',
+      de: 'Probiere jede Option von @wolsok/loading-wave: eine runde Welle, die ein Punkteraster hinter jedem Element aufleuchten lässt, gezeichnet von einem WebGL2-Shader und einem 2D-Canvas nebeneinander, im Theme der Seite. Wähle einen Shader oder schreibe dein eigenes GLSL direkt auf der Seite.',
     },
     accent: '#22d3ee',
-    tech: ['WebGL2', 'Canvas', 'Angular'],
+    tech: ['WebGL2', 'GLSL', 'Canvas', 'Angular'],
     links: [{ label: 'Try it', url: `${EXAMPLES}/loadingWavePlayground` }],
   },
 ];
@@ -315,8 +315,8 @@ export const PACKAGES: Project[] = [
       de: 'Laden, ruhig im Hintergrund.',
     },
     description: {
-      en: 'An Angular directive that lays a calm loading wave of lit dots behind any element: a WebGL2 shader with glow and echo ripples, a 2D canvas without a GPU, and dots that fade away or stay once loading ends.',
-      de: 'Eine Angular-Direktive, die eine ruhige Ladewelle leuchtender Punkte hinter jedes Element legt: ein WebGL2-Shader mit Glühen und Echowellen, ein 2D-Canvas ohne GPU, und Punkte, die nach dem Laden verblassen oder bleiben.',
+      en: 'An Angular directive that lays a calm loading wave of lit dots behind any element: a shaded WebGL2 ripple with refraction, lit beads and bloom, or a fragment shader of your own, a 2D canvas without a GPU, and dots that fade away or stay once loading ends.',
+      de: 'Eine Angular-Direktive, die eine ruhige Ladewelle leuchtender Punkte hinter jedes Element legt: eine schattierte WebGL2-Welle mit Lichtbrechung, leuchtenden Perlen und Bloom oder ein eigener Fragment-Shader, ein 2D-Canvas ohne GPU, und Punkte, die nach dem Laden verblassen oder bleiben.',
     },
     accent: '#22d3ee',
     tech: ['Angular', 'WebGL2', 'Canvas'],
