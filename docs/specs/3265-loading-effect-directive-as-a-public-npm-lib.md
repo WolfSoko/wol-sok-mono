@@ -35,7 +35,7 @@ the video.
    leg and the federation skip-list working unchanged. A package without a
    manifest at the last deploy counts as bumped (`bumped-packages.mjs`), so
    the first release publishes it. Peer dependency `@angular/core`
-   `^20.0.0 || ^21.0.0 || ^22.0.0`, no other runtime dependency (CLAUDE.md:
+   `^22.0.0` (the version it is built with; Angular asks libraries to be built with the lowest version they support), no other runtime dependency (CLAUDE.md:
    `public → own deps only`), so it cannot reuse `@wolsok/ws-gl` or the
    ui-kit's `RenderShaderComponent`; its WebGL setup is its own, about a
    hundred lines.

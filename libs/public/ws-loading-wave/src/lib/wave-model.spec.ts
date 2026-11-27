@@ -1,5 +1,6 @@
 import {
   AFTERGLOW,
+  MAX_DOTS,
   dotCenters,
   dotDisplacement,
   frontRadius,
@@ -121,6 +122,20 @@ describe('wave model', () => {
       // above mid-height the push points up a little
       expect(dy).toBeLessThan(0);
       expect(Math.hypot(dx, dy)).toBeLessThan(20 / 3);
+    });
+  });
+
+  describe('dot count', () => {
+    it('widens a tiny spacing so the grid holds at most MAX_DOTS dots', () => {
+      const tiny = waveGeometry(1000, 400, { dotSpacing: 0.1, sweepMs });
+      expect(dotCenters(tiny).length).toBeLessThanOrEqual(MAX_DOTS);
+      expect(tiny.dotSpacing).toBeGreaterThan(0.1);
+    });
+
+    it('keeps the asked spacing below the limit', () => {
+      expect(
+        waveGeometry(1000, 400, { dotSpacing: 20, sweepMs }).dotSpacing
+      ).toBe(20);
     });
   });
 

@@ -116,4 +116,18 @@ describe('CanvasWaveRenderer', () => {
     renderer.draw({ elapsedMs: 500, wave: 1, dots: 1 });
     expect(arcs).toEqual([]);
   });
+
+  it("multiplies the colour's own alpha into the dots", () => {
+    const { renderer, arcs } = setUp();
+    renderer.setLook({ dotSize: 2, color: { r: 1, g: 2, b: 3, alpha: 0.5 } });
+    renderer.draw({ elapsedMs: 500, wave: 0, dots: 1 });
+    expect(arcs[0].alpha).toBeCloseTo(REST_ALPHA / 2, 9);
+  });
+
+  it('draws nothing in a transparent colour', () => {
+    const { renderer, arcs } = setUp();
+    renderer.setLook({ dotSize: 2, color: { r: 0, g: 0, b: 0, alpha: 0 } });
+    renderer.draw({ elapsedMs: 500, wave: 1, dots: 1 });
+    expect(arcs).toEqual([]);
+  });
 });

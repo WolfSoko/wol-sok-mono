@@ -1,4 +1,5 @@
 import {
+  dotsOpacity,
   FRONT_LINE_ALPHA,
   LIT_ALPHA,
   LIT_GROWTH,
@@ -65,16 +66,18 @@ export class CanvasWaveRenderer implements WaveRenderer {
     const { context, canvas, geometry } = this;
     context.setTransform(1, 0, 0, 1, 0, 0);
     context.clearRect(0, 0, canvas.width, canvas.height);
-    if (geometry == null || frame.dots <= 0) {
+    const dots = dotsOpacity(frame, this.look.color);
+    if (geometry == null || dots <= 0) {
       return;
     }
     context.setTransform(this.pixelRatio, 0, 0, this.pixelRatio, 0, 0);
     const { r, g, b } = this.look.color;
     context.fillStyle = `rgb(${r}, ${g}, ${b})`;
     context.strokeStyle = context.fillStyle;
-    const litDots = this.drawRestingDots(geometry, frame);
-    this.drawLitDots(geometry, frame, litDots);
-    this.drawFrontLine(geometry, frame);
+    const shown = { ...frame, dots };
+    const litDots = this.drawRestingDots(geometry, shown);
+    this.drawLitDots(geometry, shown, litDots);
+    this.drawFrontLine(geometry, shown);
     context.globalAlpha = 1;
   }
 

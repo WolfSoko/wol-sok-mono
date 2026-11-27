@@ -3,7 +3,8 @@ import type { Rgb } from './renderer';
 /** the colour the dots take when the host's colour cannot be read */
 export const FALLBACK_DOT_COLOR: Rgb = { r: 128, g: 128, b: 128 };
 
-const RGB_FUNCTION = /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)/i;
+const RGB_FUNCTION =
+  /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:\s*[,/]\s*([\d.]+)(%?))?/i;
 
 /** reads `rgb(…)`/`rgba(…)`, as `getComputedStyle` gives most colours */
 export function parseRgbFunction(cssColor: string): Rgb | null {
@@ -12,7 +13,17 @@ export function parseRgbFunction(cssColor: string): Rgb | null {
     return null;
   }
   const [r, g, b] = match.slice(1, 4).map((channel) => clampChannel(+channel));
-  return { r, g, b };
+  const [, , , , alphaText, percent] = match;
+  return { r, g, b, alpha: parseAlpha(alphaText, percent === '%') };
+}
+
+/** `undefined` (no alpha given) is opaque */
+function parseAlpha(text: string | undefined, percent: boolean): number {
+  if (text === undefined) {
+    return 1;
+  }
+  const value = percent ? +text / 100 : +text;
+  return Math.min(1, Math.max(0, value));
 }
 
 function clampChannel(value: number): number {
@@ -40,8 +51,8 @@ export function cssColorToRgb(
   }
   context.fillStyle = cssColor;
   context.fillRect(0, 0, 1, 1);
-  const [r, g, b] = context.getImageData(0, 0, 1, 1).data;
-  return { r, g, b };
+  const [r, g, b, alpha] = context.getImageData(0, 0, 1, 1).data;
+  return { r, g, b, alpha: alpha / 255 };
 }
 
 /**

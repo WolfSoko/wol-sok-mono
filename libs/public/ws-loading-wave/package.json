@@ -23,7 +23,7 @@
     "wave"
   ],
   "peerDependencies": {
-    "@angular/core": "^20.0.0 || ^21.0.0 || ^22.0.0"
+    "@angular/core": "^22.0.0"
   },
   "dependencies": {},
   "publishConfig": {

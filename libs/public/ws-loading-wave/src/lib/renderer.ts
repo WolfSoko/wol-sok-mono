@@ -7,6 +7,13 @@ export interface Rgb {
   readonly r: number;
   readonly g: number;
   readonly b: number;
+  /** the colour's own opacity, 0 to 1; 1 when unset */
+  readonly alpha?: number;
+}
+
+/** the frame's grid opacity times the colour's own */
+export function dotsOpacity(frame: WaveFrame, color: Rgb): number {
+  return frame.dots * (color.alpha ?? 1);
 }
 
 /** how the dots look, the same in both renderers */

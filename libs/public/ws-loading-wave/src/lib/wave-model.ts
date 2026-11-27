@@ -21,6 +21,11 @@ export const AFTERGLOW_FADE_START = 0.45;
 const RISE_SPACINGS = 0.25;
 /** length of the bright tail behind the front, in dot spacings */
 const TAIL_SPACINGS = 4;
+/**
+ * The most dots a grid holds: a tiny spacing on a large host is widened
+ * rather than creating millions of dots each frame.
+ */
+export const MAX_DOTS = 20_000;
 /** the farthest a lit dot is pushed along the wave, in dot spacings */
 const MAX_PUSH_SPACINGS = 0.15;
 
@@ -65,8 +70,12 @@ export interface Displacement {
 export function waveGeometry(
   width: number,
   height: number,
-  { dotSpacing, sweepMs }: WaveGeometryOptions
+  { dotSpacing: askedSpacing, sweepMs }: WaveGeometryOptions
 ): WaveGeometry {
+  const dotSpacing = Math.max(
+    askedSpacing,
+    Math.sqrt((width * height) / MAX_DOTS)
+  );
   const distance = CENTER_DISTANCE * Math.max(width, height, dotSpacing);
   const tail = TAIL_SPACINGS * dotSpacing;
   const endRadius = Math.hypot(distance + width + tail, height / 2);

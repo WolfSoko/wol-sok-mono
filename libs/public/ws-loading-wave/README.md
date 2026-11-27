@@ -26,7 +26,7 @@ Try it in the [playground](https://angularexamples.wolsok.de/loadingWavePlaygrou
 npm install @wolsok/loading-wave
 ```
 
-Peer dependency: `@angular/core` 20, 21 or 22. No other dependency.
+Peer dependency: `@angular/core` 22 (the version it is built with). No other dependency.
 
 ## Use
 

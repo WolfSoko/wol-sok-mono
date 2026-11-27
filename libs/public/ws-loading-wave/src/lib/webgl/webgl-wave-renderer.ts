@@ -1,4 +1,10 @@
-import { sizeCanvas, WaveFrame, WaveLook, WaveRenderer } from '../renderer';
+import {
+  dotsOpacity,
+  sizeCanvas,
+  WaveFrame,
+  WaveLook,
+  WaveRenderer,
+} from '../renderer';
 import { frontRadius, hasPreviousSweep, WaveGeometry } from '../wave-model';
 import {
   ECHO_LAG,
@@ -109,7 +115,7 @@ export class WebGlWaveRenderer implements WaveRenderer {
     }
     gl.clearColor(0, 0, 0, 0);
     gl.clear(gl.COLOR_BUFFER_BIT);
-    if (frame.dots <= 0) {
+    if (dotsOpacity(frame, this.look.color) <= 0) {
       return;
     }
     gl.useProgram(this.program);
@@ -165,7 +171,7 @@ export class WebGlWaveRenderer implements WaveRenderer {
     gl.uniform1f(uniforms.u_rise, geometry.rise);
     gl.uniform1f(uniforms.u_maxPush, geometry.maxPush);
     gl.uniform1f(uniforms.u_wave, frame.wave);
-    gl.uniform1f(uniforms.u_dots, frame.dots);
+    gl.uniform1f(uniforms.u_dots, dotsOpacity(frame, look.color));
   }
 }
 
