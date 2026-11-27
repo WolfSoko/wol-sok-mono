@@ -33,13 +33,17 @@ jobs:
     steps:
       # The commit CI just validated, not the branch tip, which may have moved on
       # by now. The PAT pushes the release commit to the protected main branch.
+      # Blobless, not treeless: nx release reads each commit's changed files,
+      # and for a package without a release tag yet it walks the whole history,
+      # which a treeless clone fetches tree by tree until the job times out
+      # (#3265: the first version of @wolsok/loading-wave hung 15 minutes).
       - uses: actions/checkout@v7
         name: 'Checkout the validated commit'
         with:
           ref: ${{ github.sha }}
           token: ${{ secrets.PAT_TOKEN }}
           fetch-depth: 0
-          filter: tree:0
+          filter: blob:none
 
       # Release runs wait for each other but don't keep their order: when the
       # run of a newer commit released first, this checkout still holds the old

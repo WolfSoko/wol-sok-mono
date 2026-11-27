@@ -580,6 +580,19 @@ void describe('release.yml', () => {
     assert.match(version, /packages=\$\(paste -sd, - <<< "\$selected"\)/);
   });
 
+  // nx release reads each commit's files; for a package without a release
+  // tag it walks the whole history, which a treeless clone fetches tree by
+  // tree until the job times out (#3265).
+  void it('checks out the history with its trees for nx release', () => {
+    const checkout = stepsOf('release.yml').find((step) =>
+      step.includes("name: 'Checkout the validated commit'")
+    );
+    assert.ok(checkout, 'no checkout of the validated commit');
+    assert.match(checkout, /fetch-depth: 0/);
+    assert.match(checkout, /filter: blob:none/);
+    assert.doesNotMatch(checkout, /filter: tree:0/);
+  });
+
   // An empty --projects can mean every package.
   void it('skips nx release version when the selection is empty', () => {
     assert.match(
