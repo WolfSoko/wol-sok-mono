@@ -21,13 +21,28 @@ frame, 3840 x 2160).
 | [Title dish](renders/title-dish.mp4)     | `title_dish.py`   | the app icon in 3D, with room for a title: the end card |
 
 [`renders/bacteria-wars-reel.mp4`](renders/bacteria-wars-reel.mp4) is all six
-in that order (`shots.json`), each fading into the next: the intro, still
-silent and without titles.
+in that order (`shots.json`), each fading into the next: the intro, without
+titles.
 
 **The first cinematic**, [`renders/bacteria-fight.mp4`](renders/bacteria-fight.mp4)
 (320 frames): three rod bacteria stab a coccus with poison needles inside a
 blood vessel until it bursts. The Bacteria Wars Short
 (`tools/bacteria-game/promo-video/short/source.mp4`) is cut from it.
+
+**Every film has sound**, and none of it comes from a file: each film's
+soundtrack is synthesised in code and seeded, so every run writes the same
+sound (`tools/bacteria-game/cinematic/sound/`, on the promo videos'
+synthesiser). A film has effects on its own events, at the frames its scene
+script gives (the fronts meeting in the dish duel, a gulp per pellet, the
+gate, the boost, each phage landing, every heartbeat), over a bed of music.
+The feature shots share that music's key (A minor) and tempo (two bars per
+4.5 seconds, the time from one shot's start to the next in the reel), and
+each plays one chord of a progression by its place in `shots.json`: Am, F, C,
+G, Em and Am again on the end card. So the reel's soundtrack is not the six
+faded into each other but one piece: every shot's sound laid where the shot
+starts. A scene script that moves an event moves its cue in
+`sound/films/<name>.ts` too; a new scene needs a soundtrack there before it
+renders.
 
 ## Layout
 
@@ -152,6 +167,8 @@ export FLAMENCO_STORAGE='\\<manager>\flamenco'
 npx nx run bacteria-wars-cinematic:render -- --scene dish_duel           # the film
 npx nx run bacteria-wars-cinematic:render -- --scene dish_duel --still   # its poster still
 npx nx run bacteria-wars-cinematic:render -- --scene dish_duel --frames 61-120   # a part again
+npx nx run bacteria-wars-cinematic:render -- --scene dish_duel --encode  # encode again from the frames in dist
+npx nx run bacteria-wars-cinematic:render -- --scene bacteria_fight --dub   # new sound onto the film as it is
 npx nx run bacteria-wars-cinematic:reel                                  # cut the reel from the films
 ```
 
@@ -159,13 +176,30 @@ npx nx run bacteria-wars-cinematic:reel                                  # cut t
 settings into a copy, puts it on the shared storage, submits a
 simple-blender-render job and waits. The frames gather in
 `dist/bacteria-wars-cinematic/<name>/frames`; once all are there it encodes
-`renders/<name>.mp4`. With `--still` it renders the poster frame alone at
+`renders/<name>.mp4` with the scene's soundtrack (AAC, loudness-normalised to
+-14 LUFS; the WAV is kept as `dist/bacteria-wars-cinematic/<name>/<name>.wav`).
+A scene without a soundtrack is refused before anything is rendered. With
+`--still` it renders the poster frame alone at
 3840 x 2160 with twice the samples: `renders/<name>.jpg`, and lossless in
 `dist/bacteria-wars-cinematic/<name>/still`. Without `--scene` it renders the
 first cinematic. Commit the films and stills; the frames stay out of git.
 The tool waits for the farm; if the wait is cut off, the job goes on, and
 `--collect <run>` (the run is printed when the job is submitted) later takes
 its frames from the storage without rendering again.
+
+Two options need neither the farm, its storage nor Blender, only ffmpeg
+(`FFMPEG`, or `ffmpeg` on the PATH):
+
+- `--encode` encodes `renders/<name>.mp4` again from the frames already in
+  `dist/bacteria-wars-cinematic/<name>/frames`, with the scene's sound: after
+  a change to the soundtrack, or for a film encoded before it had one.
+- `--dub` lays the scene's sound onto `renders/<name>.mp4` as it is, for a
+  film whose frames are gone (the first cinematic): the video stream is
+  copied, not encoded again, and sound the film already had is replaced.
+
+`reel` cuts the films of `shots.json` from `renders/` and lays the reel's own
+soundtrack under them; `-- --films <folder>` takes the films from another
+folder, `--out <file>` writes the reel elsewhere.
 `FLAMENCO_STORAGE` is the storage as this machine sees it (`{storage}` of the
 farm). On Windows run it from PowerShell or cmd: Git Bash rewrites `\\host\share`
 paths.

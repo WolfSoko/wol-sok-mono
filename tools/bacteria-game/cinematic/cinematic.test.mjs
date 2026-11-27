@@ -1,11 +1,11 @@
 /**
  * The cinematic's tools: scene names and paths, the shots of the reel and
- * the reel's crossfades. Run by `npx nx test tools` from the workspace root.
+ * how the reel is cut (the films' soundtracks: sound.test.mjs). Run by `npx nx test tools` from the workspace root.
  */
 import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { crossfades } from './reel-cut.ts';
+import { crossfades, reelLength, reelStarts } from './reel-cut.ts';
 import { sceneName, sceneScript, shots } from './scenes.ts';
 
 void describe('the cinematic tools', () => {
@@ -38,5 +38,20 @@ void describe('the cinematic tools', () => {
 
   void it('a single film needs no fade', () => {
     assert.equal(crossfades([5], 0.5), '');
+  });
+
+  void it('a film starts in the reel one fade before the one running ends', () => {
+    assert.deepEqual(reelStarts([5, 5, 4], 0.5), [0, 4.5, 9]);
+    assert.equal(reelLength([5, 5, 4], 0.5), 13);
+    assert.deepEqual(reelStarts([5], 0.5), [0]);
+  });
+
+  void it('each fade begins where the film fading in starts', () => {
+    const lengths = [5, 13.25, 4, 5];
+    const offsets = [...crossfades(lengths, 0.5).matchAll(/offset=([\d.]+)/g)];
+    assert.deepEqual(
+      offsets.map((offset) => Number(offset[1])),
+      reelStarts(lengths, 0.5).slice(1)
+    );
   });
 });

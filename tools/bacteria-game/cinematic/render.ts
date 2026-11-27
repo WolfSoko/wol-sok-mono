@@ -12,7 +12,12 @@
  * 3. Video: gathers the frames into dist/bacteria-wars-cinematic/<name>/frames
  *    (frames of earlier runs stay, so `--frames 161-320` re-renders a part)
  *    and, once every frame of the scene is there, encodes renders/<name>.mp4
- *    (H.264, CRF 18).
+ *    (H.264, CRF 18) with the scene's sound.
+ *
+ * Every film has sound: the scene's synthesised soundtrack
+ * (sound/soundtracks.ts), written to dist/bacteria-wars-cinematic/<name>/<name>.wav
+ * and laid under the picture (film.ts). A scene without a soundtrack is
+ * refused before anything is rendered.
  *
  * A still (`--still`): the scene's poster frame alone, at 3840 x 2160 with
  * twice the samples, kept lossless in dist/bacteria-wars-cinematic/<name>/still
@@ -22,19 +27,34 @@
  * already rendered (`<name>-<timestamp>`, printed when the job was submitted)
  * from the shared storage, for a wait that was cut off while the job went on.
  *
+ * Two ways need neither the farm, its storage nor Blender:
+ * - `--encode` encodes renders/<name>.mp4 again from the frames already in
+ *   dist/bacteria-wars-cinematic/<name>/frames, with the scene's sound: for a
+ *   film encoded before it had sound, or after its soundtrack changed.
+ * - `--dub` lays the scene's sound onto renders/<name>.mp4 as it is, for a
+ *   film whose frames are gone: the video stream is copied, not encoded
+ *   again, and sound the film had is replaced.
+ *
  * Environment: FLAMENCO_MANAGER and FLAMENCO_STORAGE (farm.ts), BLENDER
  * (scenes.ts), FFMPEG (../promo-video/ffmpeg.ts).
  *
  * Run `npx nx run bacteria-wars-cinematic:render`, with `-- --scene
- * dish_duel`, `--frames 1-24`, `--blend <file>`, `--name <name>`, `--still`
- * or `--collect <run>`.
+ * dish_duel`, `--frames 1-24`, `--blend <file>`, `--name <name>`, `--still`,
+ * `--collect <run>`, `--encode` or `--dub`.
  */
-import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, readdirSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
-import { ffmpeg } from '../promo-video/ffmpeg';
 import { FarmRender, frameName, renderOnFarm, runFrames } from './farm';
+import {
+  describeFilm,
+  dubFilm,
+  encodeFilm,
+  Picture,
+  pictureOf,
+  runFfmpeg,
+  writeSoundtrack,
+} from './film';
 import {
   blender,
   buildScene,
@@ -45,6 +65,8 @@ import {
   sceneScript,
   workDir,
 } from './scenes';
+import { Soundtrack, soundtrackOf } from './sound/soundtracks';
+import { FIRST_FRAME } from './sound/take';
 
 /** JPEG quality of a still on ffmpeg's scale (2 is visually lossless). */
 const STILL_QUALITY = '2';
@@ -56,6 +78,12 @@ interface FarmScene {
   last: number;
   fps: number;
   poster: number;
+}
+
+/** A film to encode: the name it is kept under, and the sound of its scene. */
+interface Film {
+  name: string;
+  soundtrack: Soundtrack;
 }
 
 /** "161-320" -> [161, 320]. */
@@ -89,12 +117,6 @@ function prepareForFarm(
   return { blend: farmBlend, first, last, fps, poster };
 }
 
-function runFfmpeg(args: string[]): void {
-  execFileSync(ffmpeg(), ['-y', '-loglevel', 'error', ...args], {
-    stdio: 'inherit',
-  });
-}
-
 /** Where the frames are: the farm renders them, or a run it has rendered is named. */
 type Frames = (render: FarmRender) => Promise<string>;
 
@@ -120,15 +142,52 @@ async function renderStill(
   console.log(`${out}: frame ${scene.poster} (lossless: ${png})`);
 }
 
+function framesDir(name: string): string {
+  return join(workDir(name), 'frames');
+}
+
+function filmFile(name: string): string {
+  return join(rendersDir, `${name}.mp4`);
+}
+
+function soundtrackFile(name: string): string {
+  return join(workDir(name), `${name}.wav`);
+}
+
+/** The frames from `first` to `last` that are not among the film's gathered ones. */
+function missingFrames(name: string, first: number, last: number): number[] {
+  const missing = [];
+  for (let frame = first; frame <= last; frame++) {
+    if (!existsSync(join(framesDir(name), frameName(frame)))) {
+      missing.push(frame);
+    }
+  }
+  return missing;
+}
+
+/** Encodes the film from its gathered frames, `first` on, with its sound. */
+function encodeGathered(film: Film, first: number, picture: Picture): void {
+  const { name, soundtrack } = film;
+  writeSoundtrack(soundtrack, picture, soundtrackFile(name));
+  encodeFilm(
+    framesDir(name),
+    first,
+    picture,
+    soundtrackFile(name),
+    filmFile(name)
+  );
+  console.log(describeFilm(filmFile(name)));
+}
+
 /** Renders the frames asked for and encodes the film once all are there. */
 async function renderFilm(
-  name: string,
+  film: Film,
   scene: FarmScene,
   range: string | undefined,
   frames: Frames
 ): Promise<void> {
-  const framesDir = join(workDir(name), 'frames');
-  mkdirSync(framesDir, { recursive: true });
+  const { name } = film;
+  mkdirSync(framesDir(name), { recursive: true });
   const [first, last] = range ? frameRange(range) : [scene.first, scene.last];
   const farmFrames = await frames({
     name,
@@ -140,44 +199,67 @@ async function renderFilm(
   for (let frame = first; frame <= last; frame++) {
     copyFileSync(
       join(farmFrames, frameName(frame)),
-      join(framesDir, frameName(frame))
+      join(framesDir(name), frameName(frame))
     );
   }
-  const missing = [];
-  for (let frame = scene.first; frame <= scene.last; frame++) {
-    if (!existsSync(join(framesDir, frameName(frame)))) {
-      missing.push(frame);
-    }
-  }
+  const missing = missingFrames(name, scene.first, scene.last);
   if (missing.length) {
     console.log(
-      `${framesDir} lacks ${missing.length} frames (first ${missing[0]}): render them, then run again.`
+      `${framesDir(name)} lacks ${missing.length} frames (first ${missing[0]}): render them, then run again.`
     );
     return;
   }
-  const out = join(rendersDir, `${name}.mp4`);
-  runFfmpeg([
-    '-framerate',
-    String(scene.fps),
-    '-start_number',
-    String(scene.first),
-    '-i',
-    join(framesDir, 'frame_%04d.png'),
-    '-c:v',
-    'libx264',
-    '-preset',
-    'slow',
-    '-crf',
-    '18',
-    '-pix_fmt',
-    'yuv420p',
-    '-movflags',
-    '+faststart',
-    out,
-  ]);
-  console.log(
-    `${out}: ${readdirSync(framesDir).length} frames at ${scene.fps} fps`
+  encodeGathered(film, scene.first, {
+    frames: scene.last - scene.first + 1,
+    fps: scene.fps,
+  });
+}
+
+/**
+ * `--encode`: the film again from the frames gathered earlier. Which frames
+ * a film has is taken from its soundtrack, so Blender is not needed.
+ */
+function encodeAgain(film: Film): void {
+  const { frames, fps } = film.soundtrack;
+  const last = FIRST_FRAME + frames - 1;
+  const missing = missingFrames(film.name, FIRST_FRAME, last);
+  if (missing.length) {
+    throw new Error(
+      `${framesDir(film.name)} lacks ${missing.length} of the frames ` +
+        `${FIRST_FRAME}-${last} (first ${missing[0]}): render them first`
+    );
+  }
+  encodeGathered(film, FIRST_FRAME, { frames, fps });
+}
+
+/** `--dub`: the scene's sound onto the film that exists, its picture untouched. */
+function dub(film: Film): void {
+  const file = filmFile(film.name);
+  if (!existsSync(file)) {
+    throw new Error(`no film ${file} to lay the sound onto`);
+  }
+  writeSoundtrack(film.soundtrack, pictureOf(file), soundtrackFile(film.name));
+  dubFilm(file, soundtrackFile(film.name));
+  console.log(describeFilm(file));
+}
+
+/** Builds the scene, or takes the .blend named, and prepares it for the farm. */
+function farmScene(
+  values: { scene: string; blend?: string },
+  name: string,
+  still: boolean
+): FarmScene {
+  const blend = values.blend ? resolve(values.blend) : buildScene(values.scene);
+  const suffix = still ? 'still-farm' : 'farm';
+  return prepareForFarm(
+    blend,
+    join(workDir(name), `${name}-${suffix}.blend`),
+    still
   );
+}
+
+function farmFrames({ collect }: { collect?: string }): Frames {
+  return collect ? () => Promise.resolve(runFrames(collect)) : renderOnFarm;
 }
 
 async function main(): Promise<void> {
@@ -189,26 +271,35 @@ async function main(): Promise<void> {
       name: { type: 'string' },
       still: { type: 'boolean', default: false },
       collect: { type: 'string' },
+      encode: { type: 'boolean', default: false },
+      dub: { type: 'boolean', default: false },
     },
   });
+  if ([values.still, values.encode, values.dub].filter(Boolean).length > 1) {
+    throw new Error('--still, --encode and --dub exclude each other');
+  }
   const source = values.blend ?? sceneScript(values.scene);
   const name = values.name ?? sceneName(source);
-  const blend = values.blend ? resolve(values.blend) : buildScene(values.scene);
   mkdirSync(workDir(name), { recursive: true });
   mkdirSync(rendersDir, { recursive: true });
-  const suffix = values.still ? 'still-farm' : 'farm';
-  const scene = prepareForFarm(
-    blend,
-    join(workDir(name), `${name}-${suffix}.blend`),
-    values.still
-  );
-  const run = values.collect;
-  const frames: Frames = run
-    ? () => Promise.resolve(runFrames(run))
-    : renderOnFarm;
-  await (values.still
-    ? renderStill(name, scene, frames)
-    : renderFilm(name, scene, values.frames, frames));
+  if (values.still) {
+    await renderStill(name, farmScene(values, name, true), farmFrames(values));
+    return;
+  }
+  // Before anything is rendered: a scene without sound of its own is refused.
+  const film: Film = { name, soundtrack: soundtrackOf(source) };
+  if (values.encode) {
+    encodeAgain(film);
+  } else if (values.dub) {
+    dub(film);
+  } else {
+    await renderFilm(
+      film,
+      farmScene(values, name, false),
+      values.frames,
+      farmFrames(values)
+    );
+  }
 }
 
 main().catch((error: unknown) => {
