@@ -135,11 +135,13 @@ the video.
      `@defer` placeholders of the welcome page: on the server they render as
      placeholders and hydrate in place, so a wave there would only start in
      the browser to stop at once.
-   - **portfolio (wolsok.de)** and **pacetrainer**: not used. Portfolio is
-     prerendered and loads nothing a visitor waits for; pacetrainer keeps
-     its data on the device and has no loading state. A decorative
-     `afterLoading: 'keep'` grid there would be a design change the issue
-     does not ask for (see open question 1).
+   - **portfolio (wolsok.de)**: a decorative dotted background behind the
+     home page's hero (manager's answer to the spec request), with
+     `afterLoading: 'keep'`: once the page runs in the browser, the wave
+     sweeps across the hero twice, then the dots stay at rest. The
+     prerendered HTML holds no canvas; the hero's own look (`.dish`) stays.
+   - **pacetrainer**: not used; it keeps its data on the device and has no
+     loading state.
 10. **Two PRs of this issue** (guideline G9): PR 1 the lib, the
     angular-examples playground and route loading, and the portfolio's
     entries; PR 2 the rollapolla adoption. Reason: the lib with its specs is
@@ -180,16 +182,17 @@ the video.
    `sitemap.xml` and `seo.service.spec.ts`; a navigation to a lazy page that
    takes longer than 150 ms shows the wave in the content section.
 8. Portfolio: `EXPERIMENTS` and `PACKAGES` list the playground and
-   `@wolsok/loading-wave`; `app.component.spec.ts` passes.
+   `@wolsok/loading-wave`; the home hero shows two sweeps after start, then
+   a resting dot grid; the prerendered HTML has no canvas; its specs and
+   budgets pass.
 9. rollapolla (PR 2): the wave shows behind the poll page's, "My polls"'
    and the admin page's loading spinners and is gone once the data is
    there; SSR output contains no canvas.
 10. Lint, template lint, format and the affected builds and budgets pass.
 
-## Open questions
+## Answered questions
 
-1. Portfolio and pacetrainer have nothing a visitor waits for. Leave them
-   out (recommended), or use `afterLoading: 'keep'` as a decorative dotted
-   background somewhere (which page)?
-2. Package name `@wolsok/loading-wave` and selector `wsLoadingWave`: fine,
-   or another name?
+1. Portfolio and pacetrainer: the manager asked for a decorative
+   `afterLoading: 'keep'` background on the portfolio (decision 9);
+   pacetrainer stays out.
+2. The name `@wolsok/loading-wave` with selector `wsLoadingWave` stays.

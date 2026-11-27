@@ -104,14 +104,17 @@ each commit `npx nx format:write` and `npx nx affected -t lint,lint-templates`.
   `NavigationEnd`, `Cancel`, `Error`.
 - Commit: `feat(angular-examples): show the loading wave while a page loads`.
 
-### Task 10: portfolio entries
+### Task 10: portfolio entries and hero background
 
 - Files: `apps/portfolio/src/app/projects.ts` (`EXPERIMENTS` entry for the
   playground, `PACKAGES` entry for `@wolsok/loading-wave` with npm,
-  playground and source links, both languages).
+  playground and source links, both languages); `home/home.component.*`:
+  `[wsLoadingWave]` with `afterLoading: 'keep'` on the hero, true for two
+  sweeps after the first render in the browser.
 - Tests: `npx nx test portfolio` (`app.component.spec.ts` checks the link
-  against the angular-examples sitemap).
-- Commit: `feat(portfolio): list @wolsok/loading-wave and its playground`.
+  against the angular-examples sitemap; home spec: intro signal true, then
+  false after two sweeps), the portfolio build's budgets.
+- Commit: `feat(portfolio): list @wolsok/loading-wave and dot the hero with it`.
 
 ### Task 11: check, PR, review, test
 
