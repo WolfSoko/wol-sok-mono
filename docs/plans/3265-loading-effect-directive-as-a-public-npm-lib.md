@@ -17,7 +17,7 @@ each commit `npx nx format:write` and `npx nx affected -t lint,lint-templates`.
   from `ws-thanos`), `CHANGELOG.md` left to `nx release`.
 - Workspace: `tsconfig.base.json` path `@wolsok/loading-wave`,
   `eslint.config.mjs` `selectorPrefixes` entry
-  `'libs/public/ws-loading-wave': ['wsLoadingWave', 'ws-loading-wave']`.
+  `'libs/public/ws-loading-wave': ['ws', 'ws']` (the selector `[wsLoadingWave]` is the bare prefix plus a name).
 - Tests: an empty `index.ts` builds; `nx test` passes with a first spec of
   task 2; `nx test tools` (root-lint, target-inputs, typecheck-specs tests)
   stays green once the folder is tracked (`git add` first, L686).

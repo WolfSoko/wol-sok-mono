@@ -98,7 +98,7 @@ the video.
    at about 16) and when the context is lost while running. `'webgl'` still
    falls back rather than showing nothing; `'canvas'` never touches WebGL.
 6. **How the effect sits in the page.** The directive inserts one `<canvas>`
-   as the host's first child: `position: absolute; inset: 0;
+   as the host's last child (hydration finds the host's own nodes from its first child): `position: absolute; inset: 0;
    pointer-events: none; z-index: -1`, `aria-hidden="true"`. It gives the
    host `isolation: isolate` (so `z-index: -1` stays above the host's own
    background, under its content), and `position: relative` only where the
@@ -165,7 +165,7 @@ the video.
    falling off over about 2.5 spacings, the front curved (a dot at the top
    or bottom edge is lit later than one at mid-height in the same column),
    repeating every `sweepMs`.
-3. The directive's spec shows: canvas inserted as first child with
+3. The directive's spec shows: canvas inserted as last child with
    `aria-hidden`, `aria-busy` toggled, `position: relative` only on a
    static host, `afterLoading: 'hide'` removes the canvas after the fade,
    `'keep'` keeps it and stops the loop, destroy cleans up, nothing happens
