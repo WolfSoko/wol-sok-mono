@@ -45,7 +45,7 @@ void main() {
 /**
  * What every fragment shader starts with: the uniforms and helpers of the
  * contract (`LoadingWaveShader`). The `WS_*` constants mirror the
- * TypeScript ones (`renderer.ts`, `wave-model.ts`, `wave-shaders.ts`);
+ * TypeScript ones (`renderer.ts`, `wave-model.ts`, `echo.ts`);
  * `shader-constants.spec.ts` keeps them equal. Kept a plain literal, so a
  * bundler can tell it has no side effects.
  */
@@ -180,7 +180,8 @@ void main() {
 
 /** the whole fragment shader for a `LoadingWaveShader` */
 export function assembleFragment(shader: LoadingWaveShader): string {
-  return `${WAVE_SHADER_HEADER}\n// ---- the shader's own code ----\n${shader.fragment}\n${WAVE_SHADER_MAIN}`;
+  // `#line 1`: the GPU's compile log counts the shader's own lines
+  return `${WAVE_SHADER_HEADER}\n#line 1\n${shader.fragment}\n${WAVE_SHADER_MAIN}`;
 }
 
 function compileShader(

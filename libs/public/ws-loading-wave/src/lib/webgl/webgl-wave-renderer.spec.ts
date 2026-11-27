@@ -1,8 +1,8 @@
 import { waveGeometry } from '../wave-model';
 import { fakeWebGl2 } from './fake-webgl2.mock';
 import type { LoadingWaveShader } from './loading-wave-shader';
-import { assembleFragment } from './shader-program';
-import { ECHO_LAG } from './wave-shaders';
+import { STANDARD_UNIFORMS } from './shader-program';
+import { ECHO_LAG } from './echo';
 import {
   echoRadius,
   WaveShaderError,
@@ -168,14 +168,20 @@ describe('WebGlWaveRenderer', () => {
       const fragment = shaderSources.find((source) =>
         source.includes('wsShade')
       );
-      expect(fragment).toBe(assembleFragment(shader));
-      const header = fragment?.indexOf('uniform float ws_wave;') ?? -1;
-      const own = fragment?.indexOf('uniform float u_glow;') ?? -1;
-      const main = fragment?.indexOf('void main()') ?? -1;
-      expect(fragment?.startsWith('#version 300 es')).toBe(true);
-      expect(header).toBeGreaterThan(0);
-      expect(own).toBeGreaterThan(header);
-      expect(main).toBeGreaterThan(own);
+      const at = (text: string) => fragment?.indexOf(text) ?? -1;
+      expect(
+        fragment?.startsWith('#version 300 es\nprecision highp float;')
+      ).toBe(true);
+      expect(at('uniform float ws_wave;')).toBeGreaterThan(0);
+      expect(at('float ws_dotDisk(')).toBeGreaterThan(
+        at('uniform float ws_wave;')
+      );
+      // the GPU's log counts the shader's own lines from its first
+      expect(at('#line 1\nuniform float u_glow;')).toBeGreaterThan(
+        at('float ws_dotDisk(')
+      );
+      expect(at('void main()')).toBeGreaterThan(at('uniform float u_glow;'));
+      expect(at('wsShade(point)')).toBeGreaterThan(at('void main()'));
     });
 
     it("sets the shader's own uniforms each frame by their size", () => {
@@ -191,11 +197,30 @@ describe('WebGlWaveRenderer', () => {
       renderer.setShaderUniforms({ u_glow: 0.9 });
       renderer.draw({ elapsedMs: 16, wave: 1, dots: 1 });
       expect(uniformValues.get('u_glow')).toEqual([0.9]);
+      // the ws_ uniforms are the lib's own
+      renderer.setShaderUniforms({ ws_wave: 0.123 });
+      renderer.draw({ elapsedMs: 32, wave: 1, dots: 1 });
+      expect(uniformValues.get('ws_wave')).toEqual([1]);
       // each name is looked up once
       const lookups = gl.getUniformLocation.mock.calls.filter(
         ([, name]) => name === 'u_glow'
       );
       expect(lookups).toHaveLength(1);
+    });
+
+    it('sets every standard uniform each frame', () => {
+      const { create, uniformValues } = setUp({}, shader);
+      const renderer = create();
+      renderer.resize(
+        waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+        1
+      );
+      renderer.draw({ elapsedMs: 0, wave: 1, dots: 1 });
+      for (const name of STANDARD_UNIFORMS) {
+        expect([name, uniformValues.has(name)]).toEqual([name, true]);
+      }
+      expect(uniformValues.get('ws_spacing')).toEqual([20]);
+      expect(uniformValues.get('ws_dotSize')).toEqual([2]);
     });
 
     it('gives time, phase and pixel size, and the accent where the look has one', () => {

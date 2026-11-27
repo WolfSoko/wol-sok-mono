@@ -147,8 +147,9 @@
             spellcheck="false"
             rows="14"
             data-testid="custom-fragment"
+            #fragment
             [value]="customDraft()"
-            (input)="customDraft.set($any($event.target).value)"
+            (input)="customDraft.set(fragment.value)"
           ></textarea>
         </mat-form-field>
         <button

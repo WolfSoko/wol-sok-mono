@@ -148,10 +148,12 @@ with alpha, not by adding light, and it reads in light and dark themes.
   `prefers-reduced-motion` shows.
 - **Own uniforms** are declared in the fragment and given in `uniforms`
   (a number, or 2 to 4 numbers for a `vec2` to `vec4`). Changing only
-  `uniforms` updates a running wave; another `fragment` starts it over. The
-  `ws_` prefix is the lib's.
-- **When it fails** to compile or link, the lib warns once in the console
-  with the GPU's log and draws on the 2D canvas; `activeRenderer()` says
+  `uniforms` updates a running wave, and a uniform left out keeps its last
+  value; another `fragment` starts the wave over. The `ws_` prefix is the
+  lib's: `uniforms` never set a `ws_` uniform.
+- **When it fails** to compile or link, the lib warns once per fragment in
+  the console with the GPU's log (its line numbers count from the
+  fragment's first line) and draws on the 2D canvas; `activeRenderer()` says
   `'canvas'`.
 
 | Uniform                                          | Type    | Holds                                                                                                  |
@@ -172,20 +174,22 @@ with alpha, not by adding light, and it reads in light and dark themes.
 | `ws_previousSweep`                               | `float` | 1 once a sweep went before, else 0                                                                     |
 | `ws_wave`                                        | `float` | the wave's strength, 0 to 1 (fades in and out, 0 at rest)                                              |
 
-| Helper                                                                 | Gives                                                   |
-| ---------------------------------------------------------------------- | ------------------------------------------------------- |
-| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it |
-| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`    |
-| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                 |
-| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                     |
-| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits             |
-| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                         |
-| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                         |
-| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell    |
-| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent               |
+| Helper                                                                 | Gives                                                              |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it            |
+| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`               |
+| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                            |
+| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none |
+| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                |
+| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                        |
+| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                    |
+| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                    |
+| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell               |
+| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                          |
 
 The constants `WS_REST_ALPHA`, `WS_LIT_ALPHA`, `WS_LIT_GROWTH`,
-`WS_FRONT_LINE_ALPHA`, `WS_AFTERGLOW` and `WS_ECHO_STRENGTH` give the
+`WS_FRONT_LINE_ALPHA`, `WS_AFTERGLOW`, `WS_AFTERGLOW_FADE_START` and
+`WS_ECHO_STRENGTH` give the
 dot wave's own look. `rippleShader`'s source is a fuller example.
 
 ## License

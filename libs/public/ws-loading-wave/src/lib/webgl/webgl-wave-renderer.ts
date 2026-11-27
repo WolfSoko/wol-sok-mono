@@ -22,7 +22,7 @@ import {
   StandardUniform,
   WaveShaderError,
 } from './shader-program';
-import { ECHO_LAG } from './wave-shaders';
+import { ECHO_LAG } from './echo';
 
 export { WaveShaderError };
 
@@ -148,34 +148,43 @@ export class WebGlWaveRenderer implements WaveRenderer {
   }
 
   private setUniforms(geometry: WaveGeometry, frame: WaveFrame): void {
-    const { gl, uniforms: at, look } = this;
+    const { gl, uniforms: locations, look } = this;
     const bufferWidth = gl.drawingBufferWidth;
     const bufferHeight = gl.drawingBufferHeight;
-    gl.uniform2f(at.ws_size, geometry.width, geometry.height);
-    gl.uniform2f(at.ws_bufferSize, bufferWidth, bufferHeight);
-    gl.uniform1f(at.ws_pixel, geometry.width / Math.max(1, bufferWidth));
-    gl.uniform1f(at.ws_spacing, geometry.dotSpacing);
-    gl.uniform1f(at.ws_dotSize, look.dotSize);
-    setColor(gl, at.ws_color, look.color);
-    setColor(gl, at.ws_accent, look.accent ?? look.color);
-    gl.uniform2f(at.ws_center, geometry.centerX, geometry.centerY);
-    gl.uniform1f(at.ws_frontRadius, frontRadius(geometry, frame.elapsedMs));
-    gl.uniform1f(at.ws_echoRadius, echoRadius(geometry, frame.elapsedMs));
-    gl.uniform1f(at.ws_travel, geometry.travel);
-    gl.uniform1f(at.ws_falloff, geometry.falloff);
-    gl.uniform1f(at.ws_rise, geometry.rise);
-    gl.uniform1f(at.ws_tail, geometry.tail);
-    gl.uniform1f(at.ws_maxPush, geometry.maxPush);
-    gl.uniform1f(at.ws_phase, sweepPhase(geometry, frame.elapsedMs));
-    gl.uniform1f(at.ws_time, frame.elapsedMs / 1000);
+    gl.uniform2f(locations.ws_size, geometry.width, geometry.height);
+    gl.uniform2f(locations.ws_bufferSize, bufferWidth, bufferHeight);
+    gl.uniform1f(locations.ws_pixel, geometry.width / Math.max(1, bufferWidth));
+    gl.uniform1f(locations.ws_spacing, geometry.dotSpacing);
+    gl.uniform1f(locations.ws_dotSize, look.dotSize);
+    setColor(gl, locations.ws_color, look.color);
+    setColor(gl, locations.ws_accent, look.accent ?? look.color);
+    gl.uniform2f(locations.ws_center, geometry.centerX, geometry.centerY);
     gl.uniform1f(
-      at.ws_previousSweep,
+      locations.ws_frontRadius,
+      frontRadius(geometry, frame.elapsedMs)
+    );
+    gl.uniform1f(
+      locations.ws_echoRadius,
+      echoRadius(geometry, frame.elapsedMs)
+    );
+    gl.uniform1f(locations.ws_travel, geometry.travel);
+    gl.uniform1f(locations.ws_falloff, geometry.falloff);
+    gl.uniform1f(locations.ws_rise, geometry.rise);
+    gl.uniform1f(locations.ws_tail, geometry.tail);
+    gl.uniform1f(locations.ws_maxPush, geometry.maxPush);
+    gl.uniform1f(locations.ws_phase, sweepPhase(geometry, frame.elapsedMs));
+    gl.uniform1f(locations.ws_time, frame.elapsedMs / 1000);
+    gl.uniform1f(
+      locations.ws_previousSweep,
       hasPreviousSweep(geometry, frame.elapsedMs) ? 1 : 0
     );
-    gl.uniform1f(at.ws_wave, frame.wave);
-    gl.uniform1f(at.ws_dots, frame.dots);
+    gl.uniform1f(locations.ws_wave, frame.wave);
+    gl.uniform1f(locations.ws_dots, frame.dots);
     for (const [name, value] of Object.entries(this.ownUniforms)) {
-      setOwnUniform(gl, this.ownLocation(name), value);
+      // the ws_ uniforms are the lib's: a shader's own never override them
+      if (!name.startsWith('ws_')) {
+        setOwnUniform(gl, this.ownLocation(name), value);
+      }
     }
   }
 

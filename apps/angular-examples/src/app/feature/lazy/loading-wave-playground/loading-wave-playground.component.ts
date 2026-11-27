@@ -30,16 +30,21 @@ interface ColorChoice {
 }
 
 /** theme tokens only, so every choice shows in the light and the dark theme */
-const COLOR_CHOICES: readonly ColorChoice[] = [
-  { label: 'Text', value: undefined },
+const THEME_COLORS: readonly ColorChoice[] = [
   { label: 'Primary', value: 'var(--mat-sys-primary)' },
   { label: 'Tertiary', value: 'var(--mat-sys-tertiary)' },
 ];
 
+/** the dots' colour: unset, the stage's text colour */
+const COLOR_CHOICES: readonly ColorChoice[] = [
+  { label: 'Text', value: undefined },
+  ...THEME_COLORS,
+];
+
+/** the accent: unset, the dots' colour */
 const ACCENT_CHOICES: readonly ColorChoice[] = [
   { label: 'Dots', value: undefined },
-  { label: 'Primary', value: 'var(--mat-sys-primary)' },
-  { label: 'Tertiary', value: 'var(--mat-sys-tertiary)' },
+  ...THEME_COLORS,
 ];
 
 /** a built-in shader, by the name it is exported under */

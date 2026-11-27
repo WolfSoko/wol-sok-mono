@@ -29,6 +29,9 @@ export class GpuContextBudget {
   }
 }
 
+/** fragments whose failure was reported, so a broken one warns only once */
+const reportedFragments = new Set<string>();
+
 /** the budget all waves of the page share */
 export const PAGE_GPU_BUDGET = new GpuContextBudget();
 
@@ -84,7 +87,10 @@ function tryWebGlRenderer({
       onDispose: () => gpuBudget.release(),
     });
   } catch (error) {
-    console.warn('ws-loading-wave: drawing on a 2D canvas instead', error);
+    if (!reportedFragments.has(shader.fragment)) {
+      reportedFragments.add(shader.fragment);
+      console.warn('ws-loading-wave: drawing on a 2D canvas instead', error);
+    }
     gl.getExtension('WEBGL_lose_context')?.loseContext();
     gpuBudget.release();
     return null;

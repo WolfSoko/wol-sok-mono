@@ -72,7 +72,7 @@ runs unchanged.
      /** GLSL ES 3.00 that defines `vec4 wsShade(vec2 point)` */
      readonly fragment: string;
      /** values of uniforms the fragment declares itself */
-     readonly uniforms?: Readonly<Record<string, number | readonly number[]>>;
+     readonly uniforms?: ShaderUniforms; // a number or a 2- to 4-tuple per name
    }
    ```
 
@@ -98,33 +98,40 @@ runs unchanged.
    is the lib's; the fragment names its own uniforms otherwise and declares
    them itself.
 
-   | Uniform                            | Type    | Holds                                                               |
-   | ---------------------------------- | ------- | ------------------------------------------------------------------- |
-   | `ws_size`                          | `vec2`  | host size, CSS px                                                   |
-   | `ws_pixel`                         | `float` | CSS px per device pixel (for anti-aliasing)                         |
-   | `ws_spacing`                       | `float` | dot spacing after the dot limit, CSS px                             |
-   | `ws_dotSize`                       | `float` | resting dot diameter, CSS px                                        |
-   | `ws_color`                         | `vec4`  | dot colour, straight RGBA 0..1                                      |
-   | `ws_accent`                        | `vec4`  | accent colour, straight RGBA 0..1                                   |
-   | `ws_center`                        | `vec2`  | the front circle's centre, CSS px                                   |
-   | `ws_frontRadius`                   | `float` | the front's radius now                                              |
-   | `ws_echoRadius`                    | `float` | the echo's radius, negative while there is none                     |
-   | `ws_travel`                        | `float` | how far the radius grows in one sweep                               |
-   | `ws_falloff`, `ws_rise`, `ws_tail` | `float` | the model's lengths (`WaveGeometry`)                                |
-   | `ws_phase`                         | `float` | share of the sweep passed, 0..1                                     |
-   | `ws_time`                          | `float` | seconds since loading started; frozen with reduced motion           |
-   | `ws_previousSweep`                 | `float` | 1 once a sweep went before, else 0                                  |
-   | `ws_wave`                          | `float` | strength of the wave, 0..1 (fades; 0 at rest and on reduced motion) |
+   | Uniform                                          | Type    | Holds                                                               |
+   | ------------------------------------------------ | ------- | ------------------------------------------------------------------- |
+   | `ws_size`                                        | `vec2`  | host size, CSS px                                                   |
+   | `ws_pixel`                                       | `float` | CSS px per device pixel (for anti-aliasing)                         |
+   | `ws_spacing`                                     | `float` | dot spacing after the dot limit, CSS px                             |
+   | `ws_dotSize`                                     | `float` | resting dot diameter, CSS px                                        |
+   | `ws_color`                                       | `vec4`  | dot colour, straight RGBA 0..1                                      |
+   | `ws_accent`                                      | `vec4`  | accent colour, straight RGBA 0..1                                   |
+   | `ws_center`                                      | `vec2`  | the front circle's centre, CSS px                                   |
+   | `ws_frontRadius`                                 | `float` | the front's radius now                                              |
+   | `ws_echoRadius`                                  | `float` | the echo's radius, negative while there is none                     |
+   | `ws_travel`                                      | `float` | how far the radius grows in one sweep                               |
+   | `ws_falloff`, `ws_rise`, `ws_tail`, `ws_maxPush` | `float` | the model's lengths (`WaveGeometry`)                                |
+   | `ws_phase`                                       | `float` | share of the sweep passed, 0..1                                     |
+   | `ws_time`                                        | `float` | seconds since loading started; frozen with reduced motion           |
+   | `ws_previousSweep`                               | `float` | 1 once a sweep went before, else 0                                  |
+   | `ws_wave`                                        | `float` | strength of the wave, 0..1 (fades; 0 at rest and on reduced motion) |
 
+   (`main` also reads `ws_bufferSize` and `ws_dots`, the grid's fade.)
    Helpers, mirroring `wave-model.ts`: `ws_behindFront(p)`,
-   `ws_waveIntensity(p)` (front glow and afterglow), `ws_hash(vec2)`,
-   `ws_hash2(vec2)` (stable per cell), `ws_dotDisk(p, center, radius)`
-   (anti-aliased coverage). A shader must draw its resting state at
+   `ws_behindEcho(p)`, `ws_frontGlow`, `ws_afterglow`,
+   `ws_waveIntensity(p)` (front glow and afterglow, scaled by `ws_wave`),
+   `ws_echoGlow(p)`; and for drawing: `ws_cell`, `ws_cellCenter`,
+   `ws_hash(vec2)`, `ws_hash2(vec2)` (stable per cell),
+   `ws_dotDisk(p, center, radius)`, `ws_segment(p, a, b, width)`
+   (anti-aliased coverage) and `ws_ink(lit)` (colour towards the accent).
+   The fragment follows a `#line 1`, so the GPU's log counts its own lines. A shader must draw its resting state at
    `ws_wave == 0`: that is what `'keep'` leaves behind and what reduced
    motion shows. A fragment that does not compile or link is reported once
-   with `console.warn` and its info log, and the wave falls back to the 2D
+   per fragment with `console.warn` and its info log, and the wave falls back to the 2D
    canvas, as every failing shader does today (`chooseWaveRenderer`).
-   Changing `uniforms` alone updates a running wave in place; another
+   Changing `uniforms` alone updates a running wave in place (a
+   uniform left out keeps its last value; `ws_` names are never set from
+   `uniforms`); another
    `fragment` rebuilds its program and starts the wave over, as another
    `renderer` does today.
 
@@ -135,9 +142,10 @@ runs unchanged.
    - **refraction:** each dot is displaced by the field's slope, as if seen
      through a ripple on water (replaces today's push);
    - **beads:** each lit dot is shaded as a small sphere (normal from the
-     disk, Lambert plus a Blinn-Phong glint) under a light that rides with
-     the crest, so dots catch the light as the front passes and dim as it
-     moves on;
+     disk, Lambert plus a Blinn-Phong glint) under a light from the crest's
+     side (outwards behind the front, inwards ahead of it), so it rides
+     with the front: dots catch the light as the front passes and dim as
+     it moves on;
    - **a glossy crest:** a soft specular band along the front, brightest at
      mid-height, instead of the hairline;
    - **bloom:** a two-scale glow around the brightest dots, in the accent
@@ -250,7 +258,8 @@ lies faintly at rest. The user picked all five (answered question 1).
 
 1. `frontRoundness` is spec'd in the model: at 0 a dot at the top edge and
    one at mid-height in the same column are lit at nearly the same time; at
-   1 the top one is lit later by about half the height's worth of travel;
+   1 the arc's ends lag its middle by half the height (at 0.5 by a
+   quarter, capped by the width on a narrow host);
    at every value the front's middle touches the left edge at phase 0 and
    the sweep ends with every row passed; out-of-range and non-finite values
    resolve to `[0, 1]` and the default.

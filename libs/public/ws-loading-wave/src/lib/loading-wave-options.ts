@@ -40,14 +40,18 @@ export interface LoadingWaveOptions {
    */
   readonly frontRoundness?: number;
   /**
-   * the fragment shader the WebGL renderer draws with: one of the built-in
-   * ones (`rippleShader`, `circuitTracesShader`, …) or one's own; unset,
-   * `rippleShader`. The 2D canvas always draws the dot wave.
+   * the fragment shader the WebGL renderer draws with: a built-in one
+   * (`rippleShader`) or one's own; unset, `rippleShader`. The 2D canvas
+   * always draws the dot wave.
    */
   readonly shader?: LoadingWaveShader;
 }
 
-export const DEFAULT_LOADING_WAVE_OPTIONS: LoadingWaveOptions = {
+/** options with every default filled in, as the wave runs with them */
+export type ResolvedLoadingWaveOptions = LoadingWaveOptions &
+  Required<Pick<LoadingWaveOptions, 'frontRoundness' | 'shader'>>;
+
+export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   afterLoading: 'hide',
   dotSpacing: 28,
   dotSize: 1.5,
@@ -80,7 +84,7 @@ export function provideLoadingWave(
 export function resolveLoadingWaveOptions(
   defaults: LoadingWaveOptions,
   overrides: Partial<LoadingWaveOptions> = {}
-): LoadingWaveOptions {
+): ResolvedLoadingWaveOptions {
   const defined = Object.fromEntries(
     Object.entries(overrides).filter(([, value]) => value !== undefined)
   ) as Partial<LoadingWaveOptions>;
@@ -90,10 +94,12 @@ export function resolveLoadingWaveOptions(
     dotSpacing: positiveOr(merged.dotSpacing, defaults.dotSpacing),
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
+    // an app's own LOADING_WAVE_OPTIONS may lack the newer options
     frontRoundness: unitOr(
       merged.frontRoundness,
       defaults.frontRoundness ?? DEFAULT_FRONT_ROUNDNESS
     ),
+    shader: merged.shader ?? rippleShader,
   };
 }
 

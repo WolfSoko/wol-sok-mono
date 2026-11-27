@@ -6,7 +6,7 @@ import {
   REST_ALPHA,
 } from '../renderer';
 import { WAVE_SHADER_HEADER } from './shader-program';
-import { ECHO_STRENGTH } from './wave-shaders';
+import { ECHO_STRENGTH } from './echo';
 
 /** the value of `const float <name> = …;` in the shader header */
 function glslConstant(name: string): number {

@@ -10,6 +10,7 @@ export {
 export type {
   AfterLoading,
   LoadingWaveOptions,
+  ResolvedLoadingWaveOptions,
   WaveRendererPreference,
 } from './lib/loading-wave-options';
 export type { WaveRendererKind } from './lib/renderer';

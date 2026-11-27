@@ -1,9 +1,11 @@
-import type { LoadingWaveOptions } from './loading-wave-options';
+import type {
+  LoadingWaveOptions,
+  ResolvedLoadingWaveOptions,
+} from './loading-wave-options';
 import type { WaveLook, WaveRenderer, WaveRendererKind } from './renderer';
 import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
 import { WaveTimeline } from './wave-timeline';
-import { rippleShader } from './webgl/shaders/ripple.shader';
 
 /** styles that lay the canvas behind the host's content, filling it */
 const CANVAS_STYLE: Partial<CSSStyleDeclaration> = {
@@ -50,7 +52,7 @@ export class LoadingWave {
 
   public constructor(
     private readonly host: HTMLElement,
-    private options: LoadingWaveOptions,
+    private options: ResolvedLoadingWaveOptions,
     private readonly env: WaveEnvironment,
     private readonly onRendererChange: (
       kind: WaveRendererKind | null
@@ -84,7 +86,7 @@ export class LoadingWave {
    * `afterLoading` starts a running effect over, and resting dots stay where
    * the new options keep them
    */
-  public setOptions(options: LoadingWaveOptions): void {
+  public setOptions(options: ResolvedLoadingWaveOptions): void {
     const previous = this.options;
     this.options = options;
     if (this.timeline == null) {
@@ -93,10 +95,10 @@ export class LoadingWave {
     if (
       options.renderer === previous.renderer &&
       options.afterLoading === previous.afterLoading &&
-      fragmentOf(options) === fragmentOf(previous)
+      options.shader.fragment === previous.shader.fragment
     ) {
       this.renderer?.setLook(this.look());
-      this.renderer?.setShaderUniforms(options.shader?.uniforms);
+      this.renderer?.setShaderUniforms(options.shader.uniforms);
       this.resize();
       return;
     }
@@ -161,7 +163,7 @@ export class LoadingWave {
     const renderer = this.env.chooseRenderer({
       preference,
       look: this.look(),
-      shader: this.options.shader ?? rippleShader,
+      shader: this.options.shader,
       createCanvas: () => this.env.createCanvas(),
       onContextLost: () => this.fallBackToCanvas(),
     });
@@ -280,9 +282,4 @@ export class LoadingWave {
       this.hostStyle = undefined;
     }
   }
-}
-
-/** a changed fragment needs a new program, changed uniforms do not */
-function fragmentOf(options: LoadingWaveOptions): string {
-  return (options.shader ?? rippleShader).fragment;
 }

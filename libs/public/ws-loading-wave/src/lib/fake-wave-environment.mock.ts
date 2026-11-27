@@ -1,5 +1,10 @@
 import type { ChooseWaveRendererParams } from './choose-wave-renderer';
-import type { WaveFrame, WaveRenderer, WaveRendererKind } from './renderer';
+import type {
+  Rgb,
+  WaveFrame,
+  WaveRenderer,
+  WaveRendererKind,
+} from './renderer';
 import type { WaveEnvironment } from './wave-environment';
 
 export interface FakeRenderer extends WaveRenderer {
@@ -37,6 +42,8 @@ export function fakeWaveEnvironment({
   const frameCallbacks = new Map<number, () => void>();
   const renderers: FakeRenderer[] = [];
   const chooseParams: ChooseWaveRendererParams[] = [];
+  /** what each CSS colour resolves to; others resolve to rgb(1, 2, 3) */
+  const colors = new Map<string, Rgb>();
   const callbacks = {
     resize: [] as (() => void)[],
     visibility: [] as ((visible: boolean) => void)[],
@@ -71,7 +78,12 @@ export function fakeWaveEnvironment({
       renderers.push(renderer);
       return renderer;
     },
-    resolveColor: () => ({ r: 1, g: 2, b: 3 }),
+    resolveColor: (_host, color) =>
+      (color === undefined ? undefined : colors.get(color)) ?? {
+        r: 1,
+        g: 2,
+        b: 3,
+      },
     observeSize: (_element, onResize) => observe(callbacks.resize, onResize),
     observeVisibility: (_element, onChange) =>
       observe(callbacks.visibility, onChange),
@@ -82,6 +94,7 @@ export function fakeWaveEnvironment({
     env,
     renderers,
     chooseParams,
+    colors,
     callbacks,
     pendingFrames: () => frameCallbacks.size,
     observing: () => observing,

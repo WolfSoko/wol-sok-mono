@@ -57,10 +57,11 @@ vec4 wsShade(vec2 point) {
       vec2 dotCenter = center - direction * REFRACTION * ws_maxPush * slope;
       float radius = 0.5 * ws_dotSize * (1.0 + RIPPLE_GROWTH * lit);
       float core = ws_dotDisk(point, dotCenter, radius);
-      // a bead: a small sphere lit from the crest ahead of it
+      // a bead: a small sphere lit from the crest, which rides with the front
       vec2 local = (point - dotCenter) / radius;
       vec3 normal = vec3(local, sqrt(max(0.0, 1.0 - dot(local, local))));
-      vec3 light = normalize(vec3(direction * 0.8, 0.6));
+      float towardsCrest = ws_behindFront(center) >= 0.0 ? 1.0 : -1.0;
+      vec3 light = normalize(vec3(direction * 0.8 * towardsCrest, 0.6));
       float diffuse = max(dot(normal, light), 0.0);
       float glint = pow(max(dot(normal, normalize(light + vec3(0.0, 0.0, 1.0))), 0.0), 18.0);
       vec4 ink = ws_ink(lit);
@@ -72,11 +73,14 @@ vec4 wsShade(vec2 point) {
       float shine = core * lit * glint * GLINT_ALPHA * ws_accent.a;
       color += mix(ws_accent.rgb, vec3(1.0), 0.35) * shine;
       alpha += shine;
-      // only the crests bloom, the afterglow stays calm
+      // only the crests bloom, the afterglow stays calm; the bloom ends
+      // within the 3 x 3 cells drawn, or their seams would show
       float fromDot = length(point - dotCenter);
+      float inWindow = 1.0 - smoothstep(0.6 * ws_spacing, ws_spacing, fromDot);
       float glow = ws_accent.a * crest * (
         GLOW_ALPHA * exp(-fromDot * fromDot / (2.0 * glowWidth * glowWidth))
-        + BLOOM_ALPHA * crest * exp(-fromDot * fromDot / (2.0 * bloomWidth * bloomWidth)));
+        + BLOOM_ALPHA * crest * inWindow
+          * exp(-fromDot * fromDot / (2.0 * bloomWidth * bloomWidth)));
       color += ws_accent.rgb * glow;
       alpha += glow;
     }

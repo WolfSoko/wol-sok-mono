@@ -3,6 +3,7 @@ import { fitPixelRatio, LoadingWave, MAX_CANVAS_PIXELS } from './loading-wave';
 import {
   DEFAULT_LOADING_WAVE_OPTIONS,
   LoadingWaveOptions,
+  resolveLoadingWaveOptions,
 } from './loading-wave-options';
 import { FADE_MS } from './wave-timeline';
 import { rippleShader } from './webgl/shaders/ripple.shader';
@@ -18,7 +19,7 @@ function setUp(
   const rendererChanges: (string | null)[] = [];
   const wave = new LoadingWave(
     host,
-    { ...DEFAULT_LOADING_WAVE_OPTIONS, ...options },
+    resolveLoadingWaveOptions(DEFAULT_LOADING_WAVE_OPTIONS, options),
     fake.env,
     (kind) => rendererChanges.push(kind)
   );
@@ -160,6 +161,19 @@ describe('LoadingWave', () => {
       dotSize: DEFAULT_LOADING_WAVE_OPTIONS.dotSize,
       color: { r: 1, g: 2, b: 3 },
     });
+  });
+
+  it('recolours the accent too when the theme changes', () => {
+    const { wave, renderers, callbacks, colors } = setUp({
+      accentColor: 'var(--accent)',
+    });
+    colors.set('var(--accent)', { r: 10, g: 20, b: 30 });
+    wave.setLoading(true);
+    colors.set('var(--accent)', { r: 200, g: 100, b: 0 });
+    callbacks.theme.forEach((change) => change());
+    expect(renderers[0].setLook).toHaveBeenLastCalledWith(
+      expect.objectContaining({ accent: { r: 200, g: 100, b: 0 } })
+    );
   });
 
   it('applies a new look, spacing and speed in place, without a new renderer', () => {

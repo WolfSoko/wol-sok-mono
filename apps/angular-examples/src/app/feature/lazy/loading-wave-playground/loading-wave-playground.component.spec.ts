@@ -24,6 +24,21 @@ describe('LoadingWavePlaygroundComponent', () => {
     return { fixture, waves };
   }
 
+  /** the options each stage gets: the shader stage's first */
+  const stageOptions = (waves: LoadingWaveDirective[]) =>
+    waves.map((wave) => wave.wsLoadingWaveOptions());
+
+  function pickToggle(
+    fixture: Awaited<ReturnType<typeof render>>['fixture'],
+    testId: string,
+    value: unknown
+  ) {
+    fixture.debugElement
+      .query(By.css(`[data-testid="${testId}"]`))
+      .injector.get(MatButtonToggleGroup)
+      .change.emit({ value, source: null as never });
+  }
+
   it('starts loading with the defaults on both stages', async () => {
     const { waves } = await render();
 
@@ -49,10 +64,7 @@ describe('LoadingWavePlaygroundComponent', () => {
   it('passes the chosen options to both stages and shows them', async () => {
     const { fixture, waves } = await render();
 
-    fixture.debugElement
-      .query(By.css('[data-testid="after-loading"]'))
-      .injector.get(MatButtonToggleGroup)
-      .change.emit({ value: 'keep', source: null as never });
+    pickToggle(fixture, 'after-loading', 'keep');
     fixture.debugElement
       .query(By.css('[data-testid="spacing"]'))
       .triggerEventHandler('valueChange', 40);
@@ -81,21 +93,6 @@ describe('LoadingWavePlaygroundComponent', () => {
     expect(text('gpu-renderer')).toBe('drawn by: nothing');
     expect(text('canvas-renderer')).toBe('drawn by: nothing');
   });
-
-  /** the options each stage gets: the shader stage's first */
-  const stageOptions = (waves: LoadingWaveDirective[]) =>
-    waves.map((wave) => wave.wsLoadingWaveOptions());
-
-  function pickToggle(
-    fixture: Awaited<ReturnType<typeof render>>['fixture'],
-    testId: string,
-    value: unknown
-  ) {
-    fixture.debugElement
-      .query(By.css(`[data-testid="${testId}"]`))
-      .injector.get(MatButtonToggleGroup)
-      .change.emit({ value, source: null as never });
-  }
 
   it('draws the shader stage with the ripple shader, the canvas stage without one', async () => {
     const { waves } = await render();
@@ -144,11 +141,11 @@ describe('LoadingWavePlaygroundComponent', () => {
       fragment: CUSTOM_SHADER_EXAMPLE,
     });
 
-    fixture.debugElement
-      .query(By.css('[data-testid="custom-fragment"]'))
-      .triggerEventHandler('input', {
-        target: { value: 'vec4 wsShade(vec2 p) { return vec4(1.0); }' },
-      });
+    const textarea: HTMLTextAreaElement = fixture.debugElement.query(
+      By.css('[data-testid="custom-fragment"]')
+    ).nativeElement;
+    textarea.value = 'vec4 wsShade(vec2 p) { return vec4(1.0); }';
+    textarea.dispatchEvent(new Event('input'));
     await fixture.whenStable();
     // typing alone does not recompile on every key
     expect(stageOptions(waves)[0]?.shader).toEqual({

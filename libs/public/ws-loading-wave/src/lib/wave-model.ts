@@ -1,6 +1,6 @@
 /**
  * The loading wave as pure math, shared by the 2D canvas renderer and
- * mirrored by the WebGL shader (`webgl/wave-shaders.ts`).
+ * mirrored by the WebGL shaders' header (`webgl/shader-program.ts`).
  *
  * The wave front is an arc of a circle whose centre lies left of the
  * element, at mid-height: a ripple from off-screen. How round it is
