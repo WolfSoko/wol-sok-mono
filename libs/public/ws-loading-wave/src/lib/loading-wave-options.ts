@@ -1,4 +1,5 @@
 import { InjectionToken, Provider } from '@angular/core';
+import { DEFAULT_FRONT_ROUNDNESS } from './wave-model';
 
 /** what the dots do once loading ended */
 export type AfterLoading = 'hide' | 'keep';
@@ -26,6 +27,11 @@ export interface LoadingWaveOptions {
    * that fails. `'canvas'` never uses WebGL.
    */
   readonly renderer: WaveRendererPreference;
+  /**
+   * 0 (a straight front) to 1 (a half circle): how far the wave front's ends
+   * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset
+   */
+  readonly frontRoundness?: number;
 }
 
 export const DEFAULT_LOADING_WAVE_OPTIONS: LoadingWaveOptions = {
@@ -34,6 +40,7 @@ export const DEFAULT_LOADING_WAVE_OPTIONS: LoadingWaveOptions = {
   dotSize: 1.5,
   sweepMs: 1600,
   renderer: 'auto',
+  frontRoundness: DEFAULT_FRONT_ROUNDNESS,
 };
 
 export const LOADING_WAVE_OPTIONS = new InjectionToken<LoadingWaveOptions>(
@@ -52,8 +59,9 @@ export function provideLoadingWave(
 }
 
 /**
- * Merges `overrides` into `defaults`, ignoring `undefined` values and
- * replacing sizes and durations that are no positive finite number.
+ * Merges `overrides` into `defaults`, ignoring `undefined` values,
+ * replacing sizes and durations that are no positive finite number and
+ * clamping the front's roundness into 0 to 1.
  */
 export function resolveLoadingWaveOptions(
   defaults: LoadingWaveOptions,
@@ -68,7 +76,18 @@ export function resolveLoadingWaveOptions(
     dotSpacing: positiveOr(merged.dotSpacing, defaults.dotSpacing),
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
+    frontRoundness: unitOr(
+      merged.frontRoundness,
+      defaults.frontRoundness ?? DEFAULT_FRONT_ROUNDNESS
+    ),
   };
+}
+
+/** `value` clamped into 0 to 1, `fallback` where it is no finite number */
+function unitOr(value: number | undefined, fallback: number): number {
+  return value !== undefined && Number.isFinite(value)
+    ? Math.min(1, Math.max(0, value))
+    : fallback;
 }
 
 function positiveOr(value: number, fallback: number): number {

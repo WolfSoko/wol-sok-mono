@@ -14,6 +14,7 @@ describe('loading wave options', () => {
       dotSize: 1.5,
       sweepMs: 1600,
       renderer: 'auto',
+      frontRoundness: 0.5,
     });
   });
 
@@ -61,4 +62,27 @@ describe('loading wave options', () => {
       ).toEqual(DEFAULT_LOADING_WAVE_OPTIONS);
     }
   );
+
+  it.each([
+    [-0.5, 0],
+    [0.3, 0.3],
+    [7, 1],
+    [Number.NaN, 0.5],
+    [Number.NEGATIVE_INFINITY, 0.5],
+  ])('resolves the front roundness %p to %p', (asked, resolved) => {
+    expect(
+      resolveLoadingWaveOptions(DEFAULT_LOADING_WAVE_OPTIONS, {
+        frontRoundness: asked,
+      }).frontRoundness
+    ).toBe(resolved);
+  });
+
+  it('fills the front roundness of defaults built without it', () => {
+    const { frontRoundness, ...withoutRoundness } =
+      DEFAULT_LOADING_WAVE_OPTIONS;
+    expect(frontRoundness).toBe(0.5);
+    expect(resolveLoadingWaveOptions(withoutRoundness).frontRoundness).toBe(
+      0.5
+    );
+  });
 });

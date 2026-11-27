@@ -45,9 +45,9 @@ runs unchanged.
    `R = (a² + s²) / (2s)` with `a = height / 2`; its centre lies at
    `(-R, height / 2)`, so at the start of a sweep the front's middle still
    touches the left edge and the sweep still ends once the tail left every
-   row (`endRadius` as today). Below a sagitta of 1% of `a` (and for 0) the
-   radius is capped at `50 × max(width, height)`, which keeps the GLSL
-   floats exact. `resolveLoadingWaveOptions` clamps it into `[0, 1]` and
+   row (`endRadius` as today). The radius is capped at
+   `50 × max(width, height)`, which a straight front (0) takes, so the GLSL
+   floats stay exact. `resolveLoadingWaveOptions` clamps it into `[0, 1]` and
    replaces a non-finite value with the default, as it does for the sizes.
    Reasons: a share of the height keeps the look the same on hosts of every
    size, which today's `max(width, height)` did not (a tall host got a
@@ -193,7 +193,7 @@ runs unchanged.
 ## Shader proposals (the user picks)
 
 Each runs from left to right with the front, on the dot grid's pitch, and
-lies faintly at rest. Recommended: **A** and **B**, both circuits.
+lies faintly at rest. The user picked all five (answered question 1).
 
 - **A. Circuit traces (`circuitTracesShader`), a printed circuit board.**
   Each grid cell hashes to a trace piece (mostly horizontal, now and then a
@@ -276,12 +276,11 @@ lies faintly at rest. Recommended: **A** and **B**, both circuits.
    (angular-examples' `initial` and portfolio's `allScript` grow only by
    the default shader).
 
-## Open questions
+## Answered questions
 
-1. **Which shaders to build** (A to E, any number)? Recommended: A and B.
-2. Default `frontRoundness` 0.5 (visibly round), or keep the 0.0.1 look by
-   default and let apps opt in? Recommended: 0.5, as the user asked for a
-   rounder front.
-3. "Rounder wave front" is read as the arc's curvature. If it meant a
-   softer edge of the lit band instead (or as well), that is the model's
-   `rise`/`falloff`, which could become an option too.
+1. **Which shaders to build:** all five, A to E (request 1972, approved
+   2026-11-27): `circuitTracesShader`, `dataBusShader`, `dieScanShader`,
+   `signalTraceShader` and `sparkFrontShader`.
+2. Default `frontRoundness`: no answer, so the recommendation stands: 0.5.
+3. A softer edge of the lit band: no answer, so it stays out of scope; the
+   model's `rise` and `falloff` are unchanged.

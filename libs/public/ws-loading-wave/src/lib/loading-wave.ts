@@ -196,6 +196,7 @@ export class LoadingWave {
       waveGeometry(width, height, {
         dotSpacing: this.options.dotSpacing,
         sweepMs: this.options.sweepMs,
+        frontRoundness: this.options.frontRoundness,
       }),
       fitPixelRatio(width, height, this.env.pixelRatio())
     );
