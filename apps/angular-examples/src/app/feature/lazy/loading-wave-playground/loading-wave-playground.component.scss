@@ -17,6 +17,21 @@ mat-slider {
   width: 100%;
 }
 
+.custom-shader {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+
+  mat-form-field {
+    width: 100%;
+  }
+
+  textarea {
+    font-family: monospace;
+    font-size: 0.8rem;
+  }
+}
+
 .options {
   overflow-x: auto;
   font-size: 0.8rem;
@@ -27,7 +42,7 @@ mat-slider {
   gap: 1.5rem;
 }
 
-/* the dark stage of the effect's video, its text sets the dots' colour */
+/* the theme's own surface and text: the text sets the dots' colour */
 .stage {
   display: flex;
   align-items: flex-end;
@@ -35,8 +50,8 @@ mat-slider {
   margin: 0;
   padding: 1rem;
   border-radius: 12px;
-  background: #0b0b0b;
-  color: #e6e6e6;
+  background: var(--mat-sys-surface-container-lowest);
+  color: var(--mat-sys-on-surface);
 }
 
 figcaption {

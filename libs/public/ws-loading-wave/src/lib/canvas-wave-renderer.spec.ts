@@ -1,8 +1,9 @@
 import { CanvasWaveRenderer } from './canvas-wave-renderer';
-import { LIT_ALPHA, REST_ALPHA } from './renderer';
+import { FRONT_LINE_ALPHA, LIT_ALPHA, REST_ALPHA, type Rgb } from './renderer';
 import { dotCenters, waveGeometry } from './wave-model';
 
 interface Arc {
+  fill: string;
   x: number;
   y: number;
   radius: number;
@@ -13,7 +14,7 @@ interface Arc {
 function recordingContext() {
   const arcs: Arc[] = [];
   const strokes: number[] = [];
-  const pen = { globalAlpha: 1 };
+  const pen = { globalAlpha: 1, fillStyle: '' };
   const context = {
     get globalAlpha() {
       return pen.globalAlpha;
@@ -21,7 +22,12 @@ function recordingContext() {
     set globalAlpha(alpha: number) {
       pen.globalAlpha = alpha;
     },
-    fillStyle: '',
+    get fillStyle() {
+      return pen.fillStyle;
+    },
+    set fillStyle(style: string) {
+      pen.fillStyle = style;
+    },
     strokeStyle: '',
     lineWidth: 1,
     setTransform: jest.fn(),
@@ -31,13 +37,19 @@ function recordingContext() {
     fill: jest.fn(),
     stroke: jest.fn(() => strokes.push(pen.globalAlpha)),
     arc: jest.fn((x: number, y: number, radius: number) =>
-      arcs.push({ x, y, radius, alpha: pen.globalAlpha })
+      arcs.push({
+        fill: pen.fillStyle,
+        x,
+        y,
+        radius,
+        alpha: pen.globalAlpha,
+      })
     ),
   };
   return { context, arcs, strokes };
 }
 
-function setUp() {
+function setUp(accent?: Rgb, color: Rgb = { r: 200, g: 210, b: 220 }) {
   const recording = recordingContext();
   const canvas = {
     width: 0,
@@ -46,7 +58,8 @@ function setUp() {
   } as unknown as HTMLCanvasElement;
   const renderer = CanvasWaveRenderer.create(canvas, {
     dotSize: 2,
-    color: { r: 200, g: 210, b: 220 },
+    color,
+    accent,
   });
   if (renderer == null) {
     throw new Error('no renderer');
@@ -129,5 +142,55 @@ describe('CanvasWaveRenderer', () => {
     renderer.setLook({ dotSize: 2, color: { r: 0, g: 0, b: 0, alpha: 0 } });
     renderer.draw({ elapsedMs: 500, wave: 1, dots: 1 });
     expect(arcs).toEqual([]);
+  });
+
+  describe('accent colour', () => {
+    const accent = { r: 0, g: 100, b: 0 };
+
+    it('draws every dot in the dots colour without one', () => {
+      const { renderer, arcs, geometry } = setUp();
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      expect(new Set(arcs.map((arc) => arc.fill))).toEqual(
+        new Set(['rgb(200, 210, 220)'])
+      );
+    });
+
+    it('mixes lit dots towards it by their light, resting dots keep the colour', () => {
+      const { renderer, arcs, geometry } = setUp(accent);
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      const brightest = arcs.reduce((a, b) => (b.alpha > a.alpha ? b : a));
+      const resting = arcs.find((arc) => arc.fill === 'rgb(200, 210, 220)');
+      expect(resting).toBeDefined();
+      expect(brightest.fill).not.toBe('rgb(200, 210, 220)');
+      const [r] = brightest.fill.match(/\d+/g)?.map(Number) ?? [];
+      // more than halfway from 200 to the accent's 0
+      expect(r).toBeLessThan(100);
+    });
+
+    it("takes the accent's own opacity for lit dots and the front line", () => {
+      const faint = { r: 200, g: 210, b: 220, alpha: 0.2 };
+      const plain = setUp(undefined, faint);
+      const accented = setUp({ ...accent, alpha: 1 }, faint);
+      for (const { renderer, geometry } of [plain, accented]) {
+        renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      }
+      const brightest = (arcs: { alpha: number }[]) =>
+        Math.max(...arcs.map((arc) => arc.alpha));
+      expect(brightest(plain.arcs)).toBeLessThan(0.2 * LIT_ALPHA + 1e-9);
+      expect(brightest(accented.arcs)).toBeGreaterThan(0.5 * LIT_ALPHA);
+      // resting dots keep the colour's own opacity
+      expect(Math.min(...accented.arcs.map((arc) => arc.alpha))).toBeCloseTo(
+        0.2 * REST_ALPHA,
+        9
+      );
+      expect(plain.strokes).toEqual([0.2 * FRONT_LINE_ALPHA]);
+      expect(accented.strokes).toEqual([FRONT_LINE_ALPHA]);
+    });
+
+    it('strokes the front line in the accent colour', () => {
+      const { renderer, context, geometry } = setUp(accent);
+      renderer.draw({ elapsedMs: geometry.sweepMs / 2, wave: 1, dots: 1 });
+      expect(context.strokeStyle).toBe('rgb(0, 100, 0)');
+    });
   });
 });

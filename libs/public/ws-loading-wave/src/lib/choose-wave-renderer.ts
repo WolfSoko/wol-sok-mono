@@ -1,6 +1,7 @@
 import { CanvasWaveRenderer } from './canvas-wave-renderer';
 import type { WaveRendererPreference } from './loading-wave-options';
 import type { WaveLook, WaveRenderer } from './renderer';
+import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { WebGlWaveRenderer } from './webgl/webgl-wave-renderer';
 
 /**
@@ -28,12 +29,17 @@ export class GpuContextBudget {
   }
 }
 
+/** fragments whose failure was reported, so a broken one warns only once */
+const reportedFragments = new Set<string>();
+
 /** the budget all waves of the page share */
 export const PAGE_GPU_BUDGET = new GpuContextBudget();
 
 export interface ChooseWaveRendererParams {
   readonly preference: WaveRendererPreference;
   readonly look: WaveLook;
+  /** what the WebGL renderer draws with */
+  readonly shader: LoadingWaveShader;
   /** a new, detached canvas for each renderer tried */
   readonly createCanvas: () => HTMLCanvasElement;
   /** the WebGL renderer lost its context; swap it for a 2D one */
@@ -60,6 +66,7 @@ export function chooseWaveRenderer(
 function tryWebGlRenderer({
   preference,
   look,
+  shader,
   createCanvas,
   onContextLost,
   gpuBudget = PAGE_GPU_BUDGET,
@@ -75,12 +82,15 @@ function tryWebGlRenderer({
     return null;
   }
   try {
-    return new WebGlWaveRenderer(canvas, gl, look, {
+    return new WebGlWaveRenderer(canvas, gl, look, shader, {
       onContextLost,
       onDispose: () => gpuBudget.release(),
     });
   } catch (error) {
-    console.warn('ws-loading-wave: drawing on a 2D canvas instead', error);
+    if (!reportedFragments.has(shader.fragment)) {
+      reportedFragments.add(shader.fragment);
+      console.warn('ws-loading-wave: drawing on a 2D canvas instead', error);
+    }
     gl.getExtension('WEBGL_lose_context')?.loseContext();
     gpuBudget.release();
     return null;

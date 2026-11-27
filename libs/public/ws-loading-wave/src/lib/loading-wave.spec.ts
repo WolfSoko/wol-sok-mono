@@ -3,8 +3,10 @@ import { fitPixelRatio, LoadingWave, MAX_CANVAS_PIXELS } from './loading-wave';
 import {
   DEFAULT_LOADING_WAVE_OPTIONS,
   LoadingWaveOptions,
+  resolveLoadingWaveOptions,
 } from './loading-wave-options';
 import { FADE_MS } from './wave-timeline';
+import { rippleShader } from './webgl/shaders/ripple.shader';
 
 function setUp(
   options: Partial<LoadingWaveOptions> = {},
@@ -17,7 +19,7 @@ function setUp(
   const rendererChanges: (string | null)[] = [];
   const wave = new LoadingWave(
     host,
-    { ...DEFAULT_LOADING_WAVE_OPTIONS, ...options },
+    resolveLoadingWaveOptions(DEFAULT_LOADING_WAVE_OPTIONS, options),
     fake.env,
     (kind) => rendererChanges.push(kind)
   );
@@ -161,6 +163,19 @@ describe('LoadingWave', () => {
     });
   });
 
+  it('recolours the accent too when the theme changes', () => {
+    const { wave, renderers, callbacks, colors } = setUp({
+      accentColor: 'var(--accent)',
+    });
+    colors.set('var(--accent)', { r: 10, g: 20, b: 30 });
+    wave.setLoading(true);
+    colors.set('var(--accent)', { r: 200, g: 100, b: 0 });
+    callbacks.theme.forEach((change) => change());
+    expect(renderers[0].setLook).toHaveBeenLastCalledWith(
+      expect.objectContaining({ accent: { r: 200, g: 100, b: 0 } })
+    );
+  });
+
   it('applies a new look, spacing and speed in place, without a new renderer', () => {
     const { wave, renderers } = setUp();
     wave.setLoading(true);
@@ -178,6 +193,44 @@ describe('LoadingWave', () => {
       expect.objectContaining({ dotSpacing: 40, sweepMs: 900 }),
       2
     );
+  });
+
+  it('draws with the ripple shader when none is set', () => {
+    const { wave, chooseParams } = setUp({ shader: undefined });
+    wave.setLoading(true);
+    expect(chooseParams[0].shader).toBe(rippleShader);
+  });
+
+  it('resolves the accent colour inside the host, unset leaves it out', () => {
+    const plain = setUp();
+    plain.wave.setLoading(true);
+    expect(plain.chooseParams[0].look.accent).toBeUndefined();
+    const accented = setUp({ accentColor: 'var(--accent)' });
+    accented.wave.setLoading(true);
+    expect(accented.chooseParams[0].look.accent).toEqual({ r: 1, g: 2, b: 3 });
+  });
+
+  it("changes a shader's own uniforms in place, without a new renderer", () => {
+    const shader = { fragment: 'custom', uniforms: { u_glow: 1 } };
+    const { wave, renderers } = setUp({ shader });
+    wave.setLoading(true);
+    wave.setOptions({
+      ...DEFAULT_LOADING_WAVE_OPTIONS,
+      shader: { ...shader, uniforms: { u_glow: 2 } },
+    });
+    expect(renderers).toHaveLength(1);
+    expect(renderers[0].setShaderUniforms).toHaveBeenLastCalledWith({
+      u_glow: 2,
+    });
+  });
+
+  it('starts over with a new renderer for another fragment', () => {
+    const { wave, renderers, chooseParams } = setUp();
+    wave.setLoading(true);
+    const custom = { fragment: 'another' };
+    wave.setOptions({ ...DEFAULT_LOADING_WAVE_OPTIONS, shader: custom });
+    expect(renderers[0].disposed).toBe(true);
+    expect(chooseParams[1].shader).toBe(custom);
   });
 
   it("frees the canvas at once when loading ends off screen with 'hide'", () => {

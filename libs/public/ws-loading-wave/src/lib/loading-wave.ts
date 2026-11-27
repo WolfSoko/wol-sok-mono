@@ -1,4 +1,7 @@
-import type { LoadingWaveOptions } from './loading-wave-options';
+import type {
+  LoadingWaveOptions,
+  ResolvedLoadingWaveOptions,
+} from './loading-wave-options';
 import type { WaveLook, WaveRenderer, WaveRendererKind } from './renderer';
 import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
@@ -49,7 +52,7 @@ export class LoadingWave {
 
   public constructor(
     private readonly host: HTMLElement,
-    private options: LoadingWaveOptions,
+    private options: ResolvedLoadingWaveOptions,
     private readonly env: WaveEnvironment,
     private readonly onRendererChange: (
       kind: WaveRendererKind | null
@@ -83,7 +86,7 @@ export class LoadingWave {
    * `afterLoading` starts a running effect over, and resting dots stay where
    * the new options keep them
    */
-  public setOptions(options: LoadingWaveOptions): void {
+  public setOptions(options: ResolvedLoadingWaveOptions): void {
     const previous = this.options;
     this.options = options;
     if (this.timeline == null) {
@@ -91,9 +94,11 @@ export class LoadingWave {
     }
     if (
       options.renderer === previous.renderer &&
-      options.afterLoading === previous.afterLoading
+      options.afterLoading === previous.afterLoading &&
+      options.shader.fragment === previous.shader.fragment
     ) {
       this.renderer?.setLook(this.look());
+      this.renderer?.setShaderUniforms(options.shader.uniforms);
       this.resize();
       return;
     }
@@ -158,6 +163,7 @@ export class LoadingWave {
     const renderer = this.env.chooseRenderer({
       preference,
       look: this.look(),
+      shader: this.options.shader,
       createCanvas: () => this.env.createCanvas(),
       onContextLost: () => this.fallBackToCanvas(),
     });
@@ -184,9 +190,14 @@ export class LoadingWave {
   }
 
   private look(): WaveLook {
+    const { dotSize, color, accentColor } = this.options;
     return {
-      dotSize: this.options.dotSize,
-      color: this.env.resolveColor(this.host, this.options.color),
+      dotSize,
+      color: this.env.resolveColor(this.host, color),
+      accent:
+        accentColor === undefined
+          ? undefined
+          : this.env.resolveColor(this.host, accentColor),
     };
   }
 
@@ -196,6 +207,7 @@ export class LoadingWave {
       waveGeometry(width, height, {
         dotSpacing: this.options.dotSpacing,
         sweepMs: this.options.sweepMs,
+        frontRoundness: this.options.frontRoundness,
       }),
       fitPixelRatio(width, height, this.env.pixelRatio())
     );

@@ -1,3 +1,4 @@
+import type { ShaderUniforms } from './webgl/loading-wave-shader';
 import type { WaveGeometry } from './wave-model';
 
 export type WaveRendererKind = 'webgl' | 'canvas';
@@ -21,6 +22,8 @@ export interface WaveLook {
   /** diameter of a dot at rest, in CSS pixels */
   readonly dotSize: number;
   readonly color: Rgb;
+  /** the colour lit dots and the wave take; the dots' colour when unset */
+  readonly accent?: Rgb;
 }
 
 /** what one frame shows */
@@ -51,6 +54,8 @@ export interface WaveRenderer {
   draw(frame: WaveFrame): void;
   /** changes the dots' look, say after the theme changed the host's colour */
   setLook(look: WaveLook): void;
+  /** changes the values of a shader's own uniforms; only WebGL has any */
+  setShaderUniforms(uniforms: ShaderUniforms | undefined): void;
   /** frees what the renderer holds; the canvas stays where it is */
   dispose(): void;
 }

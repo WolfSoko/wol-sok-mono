@@ -1,16 +1,17 @@
 # @wolsok/loading-wave
 
 A calm loading effect for Angular: a grid of small dots behind any element,
-crossed again and again by a curved wave front that lights the dots it
+crossed again and again by a round wave front that lights the dots it
 passes. It lies in the background, so it shows that something loads without
 pulling the eye away from the content.
 
 Try it in the [playground](https://angularexamples.wolsok.de/loadingWavePlayground).
 
 - **One directive**, a boolean input: `[wsLoadingWave]="loading()"`.
-- **On the GPU where there is one:** a WebGL2 shader adds a soft glow around
-  the lit dots, an echo ripple trailing the front and a push through the
-  grid.
+- **On the GPU where there is one:** a WebGL2 shader draws the wave as a
+  ripple through water: the dots refract through its slope, shine as small
+  lit beads and bloom, and an echo trails the front. Or bring your own
+  fragment shader (see [Shaders](#shaders)).
 - **Everywhere else on a 2D canvas:** without a GPU (or when the browser
   would render WebGL on the CPU), when the shader fails, when more than 8
   waves run on one page or when the GPU context is lost.
@@ -75,14 +76,20 @@ bootstrapApplication(AppComponent, {
 });
 ```
 
-| Option         | Default       | What it does                                                                                                         |
-| -------------- | ------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `afterLoading` | `'hide'`      | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay.                      |
-| `dotSpacing`   | `28`          | distance between two dots, CSS pixels                                                                                |
-| `dotSize`      | `1.5`         | diameter of a dot at rest, CSS pixels                                                                                |
-| `color`        | host's colour | any CSS colour, variables included; unset, the dots take the host's `currentColor`                                   |
-| `sweepMs`      | `1600`        | one sweep of the wave across the element, milliseconds                                                               |
-| `renderer`     | `'auto'`      | `'auto'`: the shader on a GPU; `'webgl'`: also in software; both fall back to the 2D canvas. `'canvas'`: never WebGL |
+| Option           | Default        | What it does                                                                                                               |
+| ---------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `afterLoading`   | `'hide'`       | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay.                            |
+| `dotSpacing`     | `28`           | distance between two dots, CSS pixels                                                                                      |
+| `dotSize`        | `1.5`          | diameter of a dot at rest, CSS pixels                                                                                      |
+| `color`          | host's colour  | any CSS colour, variables included; unset, the dots take the host's `currentColor`                                         |
+| `accentColor`    | dots' colour   | any CSS colour for the lit dots and the wave itself                                                                        |
+| `sweepMs`        | `1600`         | one sweep of the wave across the element, milliseconds                                                                     |
+| `frontRoundness` | `0.5`          | 0 (a straight front) to 1 (a half circle): how far the front's ends lag its middle, as a share of `min(height / 2, width)` |
+| `renderer`       | `'auto'`       | `'auto'`: the shader on a GPU; `'webgl'`: also in software; both fall back to the 2D canvas. `'canvas'`: never WebGL       |
+| `shader`         | `rippleShader` | the fragment shader the WebGL renderer draws with, see [Shaders](#shaders)                                                 |
+
+Before 0.0.2 the front was nearly straight on a wide host; `frontRoundness:
+0.05` gives about that look again.
 
 The dots follow the host's colour through theme changes (a class or
 attribute on `<html>` or `<body>`, or the system's colour scheme).
@@ -90,6 +97,100 @@ attribute on `<html>` or `<body>`, or the system's colour scheme).
 `exportAs: 'wsLoadingWave'` gives the template the directive; its
 `activeRenderer()` signal says what draws right now (`'webgl'`, `'canvas'` or
 `null`).
+
+## Shaders
+
+On the GPU the wave is drawn by a fragment shader, `rippleShader` unless
+you pass another one as `shader`. The 2D canvas fallback always draws the
+dot wave.
+
+```ts
+import { LoadingWaveShader } from '@wolsok/loading-wave';
+
+const scanShader: LoadingWaveShader = {
+  fragment: `
+    uniform float u_speed;
+    vec4 wsShade(vec2 point) {
+      vec2 center = ws_cellCenter(ws_cell(point));
+      float lit = ws_waveIntensity(center);
+      float core = ws_dotDisk(point, center, 0.5 * ws_dotSize * (1.0 + 2.0 * lit));
+      float scan = lit * (0.5 + 0.5 * sin(point.y * 0.5 - ws_time * u_speed));
+      vec4 ink = ws_ink(lit);
+      float dots = core * ink.a * mix(WS_REST_ALPHA, WS_LIT_ALPHA, lit);
+      float glow = 0.15 * scan * ws_accent.a;
+      float alpha = dots + glow;
+      return vec4((ink.rgb * dots + ws_accent.rgb * glow) / max(alpha, 1.0e-4), alpha);
+    }
+  `,
+  uniforms: { u_speed: 8 },
+};
+```
+
+```html
+<section
+  [wsLoadingWave]="loading()"
+  [wsLoadingWaveOptions]="{ shader: scanShader }"
+>
+```
+
+or app-wide with `provideLoadingWave({ shader: scanShader })`.
+
+**The contract.** `fragment` is GLSL ES 3.00 that defines
+`vec4 wsShade(vec2 point)`: the colour and opacity at `point`, in CSS
+pixels from the host's top left corner (y down), as straight (not
+premultiplied) RGBA. The lib puts `#version 300 es`, `precision highp
+float`, the uniforms and helpers below before it and a `main` after it, so
+the fragment holds neither. It is drawn over the host's background: draw
+with alpha, not by adding light, and it reads in light and dark themes.
+
+- **At rest** (`ws_wave == 0`) draw the resting state, without `ws_time`:
+  that is what `afterLoading: 'keep'` leaves and what
+  `prefers-reduced-motion` shows.
+- **Own uniforms** are declared in the fragment and given in `uniforms`
+  (a number, or 2 to 4 numbers for a `vec2` to `vec4`). Changing only
+  `uniforms` updates a running wave, and a uniform left out goes back to 0
+  (as before it was first set); another `fragment` starts the wave over. The `ws_` prefix is the
+  lib's: `uniforms` never set a `ws_` uniform.
+- **When it fails** to compile or link, the lib warns once per fragment in
+  the console with the GPU's log (its line numbers count from the
+  fragment's first line) and draws on the 2D canvas; `activeRenderer()` says
+  `'canvas'`.
+
+| Uniform                                          | Type    | Holds                                                                                                  |
+| ------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
+| `ws_size`                                        | `vec2`  | the host's size, CSS pixels                                                                            |
+| `ws_pixel`                                       | `float` | CSS pixels per device pixel, for anti-aliasing                                                         |
+| `ws_spacing`                                     | `float` | the dot spacing in use                                                                                 |
+| `ws_dotSize`                                     | `float` | a resting dot's diameter                                                                               |
+| `ws_color`                                       | `vec4`  | the dots' colour, straight RGBA 0 to 1                                                                 |
+| `ws_accent`                                      | `vec4`  | the accent colour (the dots' colour when unset)                                                        |
+| `ws_center`                                      | `vec2`  | the centre of the front's circle (left of the host)                                                    |
+| `ws_frontRadius`                                 | `float` | the front's radius now                                                                                 |
+| `ws_echoRadius`                                  | `float` | the echo's radius, negative while there is none                                                        |
+| `ws_travel`                                      | `float` | how far the radius grows in one sweep                                                                  |
+| `ws_falloff`, `ws_rise`, `ws_tail`, `ws_maxPush` | `float` | the wave's lengths: dimming behind the front, lighting up ahead of it, the lit tail, the farthest push |
+| `ws_phase`                                       | `float` | the share of the sweep passed, 0 to 1                                                                  |
+| `ws_time`                                        | `float` | seconds since loading started                                                                          |
+| `ws_previousSweep`                               | `float` | 1 once a sweep went before, else 0                                                                     |
+| `ws_wave`                                        | `float` | the wave's strength, 0 to 1 (fades in and out, 0 at rest)                                              |
+
+| Helper                                                                 | Gives                                                              |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it            |
+| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`               |
+| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                            |
+| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none |
+| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                |
+| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                        |
+| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                    |
+| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                    |
+| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell               |
+| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                          |
+
+The constants `WS_REST_ALPHA`, `WS_LIT_ALPHA`, `WS_LIT_GROWTH`,
+`WS_FRONT_LINE_ALPHA`, `WS_AFTERGLOW`, `WS_AFTERGLOW_FADE_START` and
+`WS_ECHO_STRENGTH` give the
+dot wave's own look. `rippleShader`'s source is a fuller example.
 
 ## License
 

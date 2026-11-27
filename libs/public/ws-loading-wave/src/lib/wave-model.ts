@@ -1,16 +1,26 @@
 /**
  * The loading wave as pure math, shared by the 2D canvas renderer and
- * mirrored by the WebGL shader (`webgl/wave-shaders.ts`).
+ * mirrored by the WebGL shaders' header (`webgl/shader-program.ts`).
  *
- * The wave front is an arc of a circle whose centre lies far left of the
- * element, at mid-height: a ripple from off-screen. Its radius grows at an
- * even speed, so the front sweeps from the left edge until the lit tail
- * behind it has left the element at every row, then starts again.
+ * The wave front is an arc of a circle whose centre lies left of the
+ * element, at mid-height: a ripple from off-screen. How round it is
+ * (`frontRoundness`) sets the circle's radius. Its radius grows at an even
+ * speed, so the front sweeps from the left edge until the lit tail behind
+ * it has left the element at every row, then starts again.
  * Every length is in CSS pixels, every time in milliseconds.
  */
 
-/** how far the circle's centre lies left of the element, times its larger side */
-const CENTER_DISTANCE = 1.5;
+/**
+ * How round the front is by default: its ends lag its middle by half of
+ * `min(height / 2, width)`.
+ */
+export const DEFAULT_FRONT_ROUNDNESS = 0.5;
+/**
+ * The largest radius of the front's circle, times the element's larger
+ * side: a straight front (`frontRoundness` 0) gets this one, which keeps the
+ * shader's floats exact.
+ */
+const MAX_RADIUS_SIDES = 50;
 /** distance behind the front over which a dot dims to 1/e, in dot spacings */
 const FALLOFF_SPACINGS = 1.5;
 /** how lit a dot stays once the front passed it, as in the video */
@@ -55,6 +65,11 @@ export interface WaveGeometry {
 export interface WaveGeometryOptions {
   readonly dotSpacing: number;
   readonly sweepMs: number;
+  /**
+   * 0 (a straight front) to 1: how far the front's ends lag its middle, as a
+   * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset
+   */
+  readonly frontRoundness?: number;
 }
 
 export interface Point {
@@ -70,10 +85,14 @@ export interface Displacement {
 export function waveGeometry(
   width: number,
   height: number,
-  { dotSpacing: askedSpacing, sweepMs }: WaveGeometryOptions
+  {
+    dotSpacing: askedSpacing,
+    sweepMs,
+    frontRoundness = DEFAULT_FRONT_ROUNDNESS,
+  }: WaveGeometryOptions
 ): WaveGeometry {
   const dotSpacing = spacingWithinDotLimit(width, height, askedSpacing);
-  const distance = CENTER_DISTANCE * Math.max(width, height, dotSpacing);
+  const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
   const tail = TAIL_SPACINGS * dotSpacing;
   const endRadius = Math.hypot(distance + width + tail, height / 2);
   return {
@@ -91,6 +110,29 @@ export function waveGeometry(
     tail,
     maxPush: MAX_PUSH_SPACINGS * dotSpacing,
   };
+}
+
+/**
+ * The radius of the circle whose arc across the element's height lags at
+ * its ends by the sagitta `frontRoundness × min(height / 2, width)`:
+ * `R = (a² + s²) / (2s)` with `a = height / 2`, capped for a straight front.
+ */
+function frontCircleRadius(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  frontRoundness: number
+): number {
+  const maxRadius = MAX_RADIUS_SIDES * Math.max(width, height, dotSpacing);
+  const halfHeight = height / 2;
+  const sagitta = frontRoundness * Math.min(halfHeight, width);
+  if (sagitta <= 0) {
+    return maxRadius;
+  }
+  return Math.min(
+    maxRadius,
+    (halfHeight * halfHeight + sagitta * sagitta) / (2 * sagitta)
+  );
 }
 
 /** how many dots a grid of this spacing holds, rows times columns */

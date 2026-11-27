@@ -1,5 +1,6 @@
 import {
   AFTERGLOW,
+  DEFAULT_FRONT_ROUNDNESS,
   MAX_DOTS,
   dotCenters,
   dotDisplacement,
@@ -22,8 +23,8 @@ function frontX(y: number, elapsedMs: number): number {
 
 describe('wave model', () => {
   describe('waveGeometry', () => {
-    it('centres the circle far left of the element, at mid-height', () => {
-      expect(geometry.centerX).toBeLessThan(-1000);
+    it('centres the circle left of the element, at mid-height', () => {
+      expect(geometry.centerX).toBeLessThan(0);
       expect(geometry.centerY).toBe(200);
     });
 
@@ -37,6 +38,80 @@ describe('wave model', () => {
         expect(frontX(y, end)).toBeGreaterThan(1000 + geometry.tail * 0.95);
       }
     });
+  });
+
+  describe('frontRoundness', () => {
+    /** how much later the front reaches the top row than mid-height, in ms */
+    function edgeLagMs(frontRoundness: number, width = 1000): number {
+      const round = waveGeometry(width, 400, {
+        dotSpacing: 20,
+        sweepMs,
+        frontRoundness,
+      });
+      const reach = (y: number): number =>
+        Math.hypot(0 - round.centerX, y - round.centerY) - round.startRadius;
+      return (reach(0) / round.travel) * sweepMs;
+    }
+
+    /** the lag of the front's ends at phase 0, in CSS pixels */
+    function edgeLagPx(frontRoundness: number, width = 1000): number {
+      const round = waveGeometry(width, 400, {
+        dotSpacing: 20,
+        sweepMs,
+        frontRoundness,
+      });
+      const dy = 0 - round.centerY;
+      return 0 - (round.centerX + Math.sqrt(round.startRadius ** 2 - dy * dy));
+    }
+
+    it('lights the top and the middle of a column at nearly the same time at 0', () => {
+      expect(edgeLagMs(0)).toBeLessThan(1);
+      expect(edgeLagPx(0)).toBeLessThan(0.5);
+    });
+
+    it('lags the ends by half the height at 1 (a half circle)', () => {
+      expect(edgeLagPx(1)).toBeCloseTo(200, 6);
+    });
+
+    it('lags the ends by its share of half the height in between', () => {
+      expect(edgeLagPx(0.5)).toBeCloseTo(100, 6);
+      expect(edgeLagPx(0.25)).toBeCloseTo(50, 6);
+    });
+
+    it('caps the lag by the width on a narrow host', () => {
+      expect(edgeLagPx(1, 150)).toBeCloseTo(150, 6);
+    });
+
+    it('is 0.5 when unset', () => {
+      const unset = waveGeometry(1000, 400, { dotSpacing: 20, sweepMs });
+      expect(unset).toEqual(
+        waveGeometry(1000, 400, {
+          dotSpacing: 20,
+          sweepMs,
+          frontRoundness: DEFAULT_FRONT_ROUNDNESS,
+        })
+      );
+      expect(DEFAULT_FRONT_ROUNDNESS).toBe(0.5);
+    });
+
+    for (const frontRoundness of [0, 0.3, 1]) {
+      it(`starts at the left edge and passes every row at ${frontRoundness}`, () => {
+        const round = waveGeometry(1000, 400, {
+          dotSpacing: 20,
+          sweepMs,
+          frontRoundness,
+        });
+        const x = (y: number, elapsedMs: number): number => {
+          const radius = frontRadius(round, elapsedMs);
+          const dy = y - round.centerY;
+          return round.centerX + Math.sqrt(radius * radius - dy * dy);
+        };
+        expect(x(200, 0)).toBeCloseTo(0, 6);
+        for (const y of [0, 200, 400]) {
+          expect(x(y, sweepMs - 1)).toBeGreaterThan(1000 + round.tail * 0.9);
+        }
+      });
+    }
   });
 
   describe('waveIntensity', () => {

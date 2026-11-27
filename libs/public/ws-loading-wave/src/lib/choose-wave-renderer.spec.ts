@@ -1,3 +1,4 @@
+import { rippleShader } from './webgl/shaders/ripple.shader';
 import {
   chooseWaveRenderer,
   ChooseWaveRendererParams,
@@ -33,6 +34,7 @@ function choose(
   const renderer = chooseWaveRenderer({
     preference: 'auto',
     look,
+    shader: rippleShader,
     createCanvas: setup.createCanvas,
     onContextLost: jest.fn(),
     gpuBudget,
@@ -43,6 +45,7 @@ function choose(
 
 describe('chooseWaveRenderer', () => {
   beforeEach(() => jest.spyOn(console, 'warn').mockImplementation());
+  afterEach(() => jest.restoreAllMocks());
 
   it('draws on the GPU where WebGL2 runs', () => {
     expect(choose({}).renderer?.kind).toBe('webgl');
@@ -67,10 +70,23 @@ describe('chooseWaveRenderer', () => {
   });
 
   it('falls back to the 2D canvas when the shader does not compile', () => {
-    const { renderer, fake } = choose({ compiles: false });
+    // a fragment of its own: each failing fragment warns only once a page
+    const { renderer, fake } = choose(
+      { compiles: false },
+      { shader: { fragment: 'does not compile' } }
+    );
     expect(renderer?.kind).toBe('canvas');
     expect(fake?.loseContext).toHaveBeenCalled();
-    expect(console.warn).toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('warns once per failing fragment, however often it is tried', () => {
+    const shader = { fragment: 'broken, warned once' };
+    choose({ compiles: false }, { shader });
+    choose({ compiles: false }, { shader });
+    expect(console.warn).toHaveBeenCalledTimes(1);
+    choose({ compiles: false }, { shader: { fragment: 'another' } });
+    expect(console.warn).toHaveBeenCalledTimes(2);
   });
 
   it('falls back to the 2D canvas once the GPU budget is used up', () => {
@@ -96,6 +112,7 @@ describe('chooseWaveRenderer', () => {
       chooseWaveRenderer({
         preference,
         look,
+        shader: rippleShader,
         createCanvas: () => document.createElement('canvas'),
         onContextLost: jest.fn(),
         gpuBudget: new GpuContextBudget(1),

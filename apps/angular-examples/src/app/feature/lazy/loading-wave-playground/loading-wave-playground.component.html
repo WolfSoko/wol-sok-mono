@@ -72,10 +72,26 @@
     </section>
 
     <section>
+      <h3 class="mat-subtitle-2">
+        Front roundness: {{ options().frontRoundness }}
+      </h3>
+      <mat-slider min="0" max="1" step="0.05" discrete>
+        <input
+          matSliderThumb
+          aria-label="roundness of the wave front, 0 straight to 1 a half circle"
+          data-testid="roundness"
+          [value]="options().frontRoundness"
+          (valueChange)="setOption('frontRoundness', $event)"
+        />
+      </mat-slider>
+    </section>
+
+    <section>
       <h3 class="mat-subtitle-2">Colour</h3>
       <mat-button-toggle-group
         hideSingleSelectionIndicator
         aria-label="dot colour"
+        data-testid="color"
         [value]="options().color"
         (change)="setOption('color', $event.value)"
       >
@@ -87,7 +103,68 @@
       </mat-button-toggle-group>
     </section>
 
+    <section>
+      <h3 class="mat-subtitle-2">Accent</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="colour of the lit dots and the wave"
+        data-testid="accent"
+        [value]="options().accentColor"
+        (change)="setOption('accentColor', $event.value)"
+      >
+        @for (choice of accentChoices; track choice.label) {
+          <mat-button-toggle [value]="choice.value">{{
+            choice.label
+          }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Shader</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="shader of the WebGL stage"
+        data-testid="shader"
+        [value]="shaderPick()"
+        (change)="shaderPick.set($event.value)"
+      >
+        @for (choice of shaderChoices; track choice.name) {
+          <mat-button-toggle [value]="choice.name">{{
+            choice.label
+          }}</mat-button-toggle>
+        }
+        <mat-button-toggle [value]="customPick">Custom</mat-button-toggle>
+      </mat-button-toggle-group>
+    </section>
+
+    @if (shaderPick() === customPick) {
+      <section class="custom-shader">
+        <mat-form-field appearance="outline">
+          <mat-label>Fragment (GLSL ES 3.00, defines wsShade)</mat-label>
+          <textarea
+            matInput
+            spellcheck="false"
+            rows="14"
+            data-testid="custom-fragment"
+            #fragment
+            [value]="customDraft()"
+            (input)="customDraft.set(fragment.value)"
+          ></textarea>
+        </mat-form-field>
+        <button
+          mat-flat-button
+          type="button"
+          data-testid="apply-fragment"
+          (click)="applyCustomFragment()"
+        >
+          Apply
+        </button>
+      </section>
+    }
+
     <pre class="options" data-testid="options">{{ optionsJson() }}</pre>
+    <pre class="options" data-testid="shader-option">{{ shaderOption() }}</pre>
   </mat-card-content>
 </mat-card>
 
