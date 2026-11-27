@@ -58,6 +58,15 @@ renderer's look and uniforms.
 
 ### Task 5 (PR 2): one commit per built-in shader
 
+Found while checking PR 1's build: Native Federation shares
+`@wolsok/loading-wave` as one bundle per entry point
+(`_wolsok_loading_wave-*.js`), with every export of the entry, so a bundler
+cannot drop an unused shader exported from the main entry. The five
+built-in shaders therefore go into a secondary entry point,
+`@wolsok/loading-wave/shaders` (`ng-package.json` of its own, path alias in
+`tsconfig.base.json`), which only the playground imports; acceptance 5
+checks that the shell's start loads none of their source.
+
 For each of the five the user picked (spec "Shader proposals", A to E:
 `circuitTracesShader`, `dataBusShader`, `dieScanShader`,
 `signalTraceShader`, `sparkFrontShader`), also added to the playground's

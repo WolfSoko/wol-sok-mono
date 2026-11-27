@@ -166,7 +166,9 @@ runs unchanged.
    GLSL; it draws the rounder front and the accent colour, nothing of a
    shader. Reason: the fallback has to work everywhere; a Canvas twin per
    shader would double every pattern's code for machines without a GPU.
-8. **Built-in shader sources are plain string constants**, written without
+8. **Built-in shader sources are plain string constants** (and, in step
+   2, a secondary entry point `@wolsok/loading-wave/shaders`, since Native
+   Federation shares each entry point as one whole bundle), written without
    top-level function calls (today's `${glsl(…)}` interpolations become
    literals, checked against the TypeScript constants by a spec), so a
    bundler drops an unused one. Acceptance checks it in the build output.
