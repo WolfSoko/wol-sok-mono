@@ -10,7 +10,7 @@ import {
 } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { RESPONSE, ServerResponse } from '@analogjs/router/tokens';
-import { BehaviorSubject, map, NEVER } from 'rxjs';
+import { BehaviorSubject, map, NEVER, Subject } from 'rxjs';
 import { AccountAdapterMock } from '../../adapter/account-adapter-mock.service';
 import { AppConfigAdapterMock } from '../../adapter/app-config-adapter-mock.service';
 import { CREATED_POLL_ID } from '../../core/create-poll/created-poll-id';
@@ -18,6 +18,7 @@ import { PollsRepoAdapterMock } from '../../adapter/polls-repo-adapter-mock.serv
 import { AccountPort } from '../../ports/account.port';
 import { AppConfigPort } from '../../ports/app-config.port';
 import { PollsRepoPort } from '../../ports/polls-repo.port';
+import { Poll } from '../../../shared/poll';
 import PollPageComponent from './[pollId].page';
 
 describe('PollPageComponent', () => {
@@ -164,6 +165,27 @@ describe('PollPageComponent', () => {
     expect(element.query(By.css('[data-testid="poll-question"]'))).toBeNull();
     expect(element.query(By.css('mat-spinner'))).not.toBeNull();
     expect(TestBed.inject(Title).getTitle()).not.toContain('Pizza or pasta?');
+  });
+
+  it('lays the loading wave behind the spinner until the poll is there', async () => {
+    const pollId = await repo.createPoll({
+      question: 'Pizza or pasta?',
+      options: ['Pizza', 'Pasta'],
+    });
+    const poll$ = new Subject<Poll | null>();
+    vi.spyOn(repo, 'watchPoll').mockReturnValue(poll$);
+    const element = await render(pollId);
+    const main = element.query(By.css('main')).nativeElement as HTMLElement;
+    expect(element.query(By.css('mat-spinner'))).not.toBeNull();
+    expect(main.getAttribute('aria-busy')).toBe('true');
+
+    poll$.next(repo.polls()[pollId]);
+    await TestBed.inject(ApplicationRef).whenStable();
+
+    expect(
+      element.query(By.css('[data-testid="poll-question"]'))
+    ).not.toBeNull();
+    expect(main.hasAttribute('aria-busy')).toBe(false);
   });
 
   describe('for the creator', () => {

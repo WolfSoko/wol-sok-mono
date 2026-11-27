@@ -1,6 +1,8 @@
+import { PLATFORM_ID } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
+import { Subject } from 'rxjs';
 import { AccountAdapterMock } from '../adapter/account-adapter-mock.service';
 import { AdminAdapterMock } from '../adapter/admin-adapter-mock.service';
 import { AppConfigAdapterMock } from '../adapter/app-config-adapter-mock.service';
@@ -75,6 +77,41 @@ describe('AdminPageComponent', () => {
     await fixture.whenStable();
 
     expect(query(fixture, 'admin-tabs')).not.toBeNull();
+  });
+
+  it('lays the loading wave behind the spinner until the rights are known', async () => {
+    const isAdmin$ = new Subject<boolean>();
+    Object.defineProperty(admin, 'isAdmin$', { value: isAdmin$ });
+    await account.signInWithGoogle();
+
+    const fixture = await render();
+    const main = fixture.nativeElement.querySelector('main');
+    expect(query(fixture, 'admin-tabs')).toBeNull();
+    expect(main.getAttribute('aria-busy')).toBe('true');
+
+    isAdmin$.next(true);
+    await fixture.whenStable();
+
+    expect(query(fixture, 'admin-tabs')).not.toBeNull();
+    expect(main.hasAttribute('aria-busy')).toBe(false);
+  });
+
+  it('renders the spinner on the server, without the loading wave', async () => {
+    TestBed.resetTestingModule().configureTestingModule({
+      imports: [AdminPageComponent],
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'server' },
+        { provide: AccountPort, useClass: AccountAdapterMock },
+        { provide: AdminPort, useClass: AdminAdapterMock },
+      ],
+    });
+
+    const fixture = await render();
+    const main = fixture.nativeElement.querySelector('main');
+
+    expect(fixture.nativeElement.querySelector('mat-spinner')).not.toBeNull();
+    expect(main.querySelector('canvas')).toBeNull();
+    expect(main.hasAttribute('aria-busy')).toBe(false);
   });
 
   it('shows admins the tabs, starting with the statistics', async () => {

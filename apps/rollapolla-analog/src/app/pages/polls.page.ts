@@ -14,6 +14,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { catchError, of, switchMap, tap } from 'rxjs';
 import { PollSort, searchPolls } from '../../shared/poll-search';
 import {
@@ -32,6 +33,7 @@ import { SITE_TAGS, usePageTags } from './site-tags';
   selector: 'rap-polls-page',
   imports: [
     EndlessScrollEndComponent,
+    LoadingWaveDirective,
     MatButtonModule,
     MatButtonToggleModule,
     MatFormFieldModule,
@@ -42,7 +44,7 @@ import { SITE_TAGS, usePageTags } from './site-tags';
     RouterLink,
   ],
   template: `
-    <main class="rap-container main">
+    <main class="rap-container main" [wsLoadingWave]="loading()">
       <header>
         <h1>Browse polls</h1>
         <p class="lead">Every open public poll. Find one and add your vote.</p>
@@ -215,6 +217,7 @@ export default class PollsPageComponent {
       pendingUntilFirstValue(inject(Injector), SSR_DATA_TIMEOUT_MS)
     )
   );
+  protected readonly loading = computed(() => this.polls() === undefined);
   protected readonly loadFailed = computed(() => this.polls() === null);
 
   /** `undefined` while loading. */

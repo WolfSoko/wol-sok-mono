@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { isGoogleAccount } from '../../shared/account';
 import { AccountAction } from '../core/account/account-action';
 import { AdminFeaturesComponent } from '../core/admin/admin-features.component';
@@ -33,6 +34,7 @@ type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
     AdminPollsComponent,
     AdminStatsComponent,
     AdminUsersComponent,
+    LoadingWaveDirective,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -40,7 +42,7 @@ type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
     MatTabsModule,
   ],
   template: `
-    <main class="rap-container main">
+    <main class="rap-container main" [wsLoadingWave]="loading()">
       <h1>Admin</h1>
       @switch (access()) {
         @case ('admin') {
@@ -99,9 +101,8 @@ type Access = 'loading' | 'signed-out' | 'denied' | 'admin';
               <mat-card-title>No access</mat-card-title>
               <mat-card-subtitle>
                 This account is not an admin. An admin can grant access to user
-                id <code data-testid="admin-own-uid">{{ uid() }}</code
-                >; the first admin is granted with the
-                <code>grant-admin</code> script.
+                id <code data-testid="admin-own-uid">{{ uid() }}</code>; the
+                first admin is granted with the <code>grant-admin</code> script.
               </mat-card-subtitle>
             </mat-card-header>
             <mat-card-actions>
@@ -183,6 +184,7 @@ export default class AdminPageComponent {
     }
     return isAdmin ? 'admin' : 'denied';
   });
+  protected readonly loading = computed(() => this.access() === 'loading');
 
   constructor() {
     useNoindexPage('Admin | RollaPolla');

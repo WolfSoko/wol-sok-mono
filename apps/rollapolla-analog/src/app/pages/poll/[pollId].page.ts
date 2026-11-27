@@ -13,6 +13,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { map, startWith, switchMap } from 'rxjs';
 import {
   pendingUntilFirstValue,
@@ -33,6 +34,7 @@ import { usePollMetaTags } from './poll-meta';
   selector: 'rap-poll-page',
   imports: [
     CreatePollComponent,
+    LoadingWaveDirective,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -43,7 +45,7 @@ import { usePollMetaTags } from './poll-meta';
     RouterLink,
   ],
   template: `
-    <main class="rap-container main">
+    <main class="rap-container main" [wsLoadingWave]="loading()">
       <nav>
         <a mat-button routerLink="/">
           <mat-icon>arrow_back</mat-icon>
@@ -54,7 +56,7 @@ import { usePollMetaTags } from './poll-meta';
           More polls
         </a>
       </nav>
-      @if (poll() === undefined) {
+      @if (loading()) {
         <mat-spinner class="spinner" diameter="40" />
       } @else if (poll(); as poll) {
         @if (editing()) {
@@ -157,6 +159,7 @@ export default class PollPageComponent {
       )
     )
   );
+  protected readonly loading = computed(() => this.poll() === undefined);
 
   private readonly account = toSignal(inject(AccountPort).account$);
   /** Featured polls belong to RollaPolla, never to a visitor. */

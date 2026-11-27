@@ -2,10 +2,10 @@ import { TestBed } from '@angular/core/testing';
 import { By, Meta, Title } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
-import { throwError } from 'rxjs';
+import { Subject, throwError } from 'rxjs';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { PollsRepoAdapterMock } from '../adapter/polls-repo-adapter-mock.service';
-import { PollsRepoPort } from '../ports/polls-repo.port';
+import { PollPage, PollsRepoPort } from '../ports/polls-repo.port';
 import { stubIntersectionObserver } from '../core/endless-scroll/intersection-observer.mock';
 import PollsPageComponent from './polls.page';
 
@@ -110,6 +110,23 @@ describe('PollsPageComponent', () => {
       '27 polls'
     );
     expect(query('endless-scroll-end').query(By.css('mat-spinner'))).toBeNull();
+  });
+
+  it('lays the loading wave behind the spinner until the polls are there', async () => {
+    const page$ = new Subject<PollPage>();
+    vi.spyOn(repo, 'watchPublicPolls').mockReturnValue(page$);
+    await harness.navigateByUrl('/polls');
+    const main = harness.routeNativeElement!.querySelector('main')!;
+    expect(
+      harness.routeDebugElement!.query(By.css('main > mat-spinner'))
+    ).not.toBeNull();
+    expect(main.getAttribute('aria-busy')).toBe('true');
+
+    page$.next({ polls: Object.values(repo.polls()), hasMore: false });
+    await harness.fixture.whenStable();
+
+    expect(results()).not.toEqual([]);
+    expect(main.hasAttribute('aria-busy')).toBe(false);
   });
 
   it('tries again when the visitor switches the order after a failed load', async () => {
