@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.191.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.190.0...v74.191.0) (2026-11-27)
+
+### Features
+
+* **ws-loading-wave:** round wave front, shaded WebGL wave and custom shaders ([#3273](https://github.com/WolfSoko/wol-sok-mono/issues/3273)) ([18e6435](https://github.com/WolfSoko/wol-sok-mono/commit/18e64358d6ce2a956daa7d5a951dc8f6585bb6ee)), references [#3272](https://github.com/WolfSoko/wol-sok-mono/issues/3272) [#3272](https://github.com/WolfSoko/wol-sok-mono/issues/3272) [#line](https://github.com/WolfSoko/wol-sok-mono/issues/line)
+
+### Chore
+
+* **release:** publish ([d6ac7e3](https://github.com/WolfSoko/wol-sok-mono/commit/d6ac7e3ca0aa23b0e89b6d8f59c73285b32acced))
+
 ## [74.190.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.189.0...v74.190.0) (2026-11-27)
 
 ### Features
