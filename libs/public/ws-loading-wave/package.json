@@ -1,6 +1,6 @@
 {
   "name": "@wolsok/loading-wave",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "An Angular directive that lays a calm loading wave of lit dots behind any element, on the GPU with a 2D canvas fallback",
   "bugs": {
     "url": "https://github.com/WolfSoko/wol-sok-mono/issues"
