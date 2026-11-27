@@ -33,4 +33,9 @@ globalThis.IntersectionObserver ??= class {
   }
 } as unknown as typeof IntersectionObserver;
 
+// jsdom draws nothing and logs "Not implemented" for every canvas; without a
+// context the pages' loading wave (@wolsok/loading-wave) simply draws nothing
+HTMLCanvasElement.prototype.getContext = (() =>
+  null) as typeof HTMLCanvasElement.prototype.getContext;
+
 getTestBed().initTestEnvironment(TestingModule, platformBrowserTesting());

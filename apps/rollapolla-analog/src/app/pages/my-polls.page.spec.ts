@@ -130,6 +130,24 @@ describe('MyPollsPageComponent', () => {
     expect(fixture.nativeElement.textContent).not.toContain("Ada's poll?");
   });
 
+  it('lays the loading wave behind the spinner until the polls are there', async () => {
+    const myPolls$ = new BehaviorSubject<PollPage | null | undefined>(
+      undefined
+    );
+    vi.spyOn(repo, 'watchMyPolls').mockReturnValue(myPolls$);
+    const fixture = TestBed.createComponent(MyPollsPageComponent);
+    await fixture.whenStable();
+    const main = fixture.nativeElement.querySelector('main');
+    expect(fixture.debugElement.query(By.css('mat-spinner'))).not.toBeNull();
+    expect(main.getAttribute('aria-busy')).toBe('true');
+
+    myPolls$.next(null);
+    await fixture.whenStable();
+
+    expect(fixture.debugElement.query(By.css('mat-spinner'))).toBeNull();
+    expect(main.hasAttribute('aria-busy')).toBe(false);
+  });
+
   it('says so when the polls cannot be loaded and recovers by itself', async () => {
     vi.useFakeTimers();
     try {

@@ -12,6 +12,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RouterLink } from '@angular/router';
+import { LoadingWaveDirective } from '@wolsok/loading-wave';
 import { EndlessScroll } from '../core/endless-scroll/endless-scroll';
 import { EndlessScrollEndComponent } from '../core/endless-scroll/endless-scroll-end.component';
 import {
@@ -30,6 +31,7 @@ const RETRY_DELAY_MS = 10_000;
   imports: [
     DatePipe,
     EndlessScrollEndComponent,
+    LoadingWaveDirective,
     MatButtonModule,
     MatCardModule,
     MatIconModule,
@@ -37,7 +39,7 @@ const RETRY_DELAY_MS = 10_000;
     RouterLink,
   ],
   template: `
-    <main class="rap-container main">
+    <main class="rap-container main" [wsLoadingWave]="loading()">
       <header>
         <h1>My polls</h1>
         <p class="lead">
@@ -225,6 +227,11 @@ export default class MyPollsPageComponent {
     }
     return page?.polls ?? [];
   });
+
+  /** Waiting for the first answer, or for one after a failure. */
+  protected readonly loading = computed(
+    () => this.polls() === undefined && !this.loadFailed()
+  );
 
   constructor() {
     useNoindexPage('My polls | RollaPolla');
