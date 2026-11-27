@@ -13,7 +13,18 @@ export function fakeWebGl2({
   let lost = false;
   const setUniform = (location: { name: string } | null, ...values: number[]) =>
     location && uniformValues.set(location.name, values);
+  /** the GPU gives the canvas the buffer it asks for, up to `maxBuffer` */
+  const buffer = {
+    canvas: null as HTMLCanvasElement | null,
+    maxSize: Number.POSITIVE_INFINITY,
+  };
   const gl = {
+    get drawingBufferWidth(): number {
+      return Math.min(buffer.canvas?.width ?? 0, buffer.maxSize);
+    },
+    get drawingBufferHeight(): number {
+      return Math.min(buffer.canvas?.height ?? 0, buffer.maxSize);
+    },
     VERTEX_SHADER: 1,
     FRAGMENT_SHADER: 2,
     COMPILE_STATUS: 3,
@@ -57,6 +68,7 @@ export function fakeWebGl2({
   };
   return {
     gl: gl as typeof gl & WebGL2RenderingContext,
+    buffer,
     uniformValues,
     loseContext,
   };

@@ -1,5 +1,5 @@
 import type { LoadingWaveOptions } from './loading-wave-options';
-import type { WaveRenderer, WaveRendererKind } from './renderer';
+import type { WaveLook, WaveRenderer, WaveRendererKind } from './renderer';
 import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
 import { WaveTimeline } from './wave-timeline';
@@ -70,17 +70,31 @@ export class LoadingWave {
     } else {
       this.host.removeAttribute('aria-busy');
       this.timeline?.stop(this.env.now());
+      // off screen no frame would finish the fade: free the canvas right away
+      if (!this.visible && this.options.afterLoading === 'hide') {
+        this.unmount();
+      }
     }
     this.scheduleFrame();
   }
 
   /**
-   * applies new options: a running effect starts over with them, resting
-   * dots stay where the new options keep them
+   * applies new options: look, spacing and speed in place; a new renderer or
+   * `afterLoading` starts a running effect over, and resting dots stay where
+   * the new options keep them
    */
   public setOptions(options: LoadingWaveOptions): void {
+    const previous = this.options;
     this.options = options;
     if (this.timeline == null) {
+      return;
+    }
+    if (
+      options.renderer === previous.renderer &&
+      options.afterLoading === previous.afterLoading
+    ) {
+      this.renderer?.setLook(this.look());
+      this.resize();
       return;
     }
     this.unmount();
@@ -169,7 +183,7 @@ export class LoadingWave {
     this.onRendererChange(replacement.kind);
   }
 
-  private look() {
+  private look(): WaveLook {
     return {
       dotSize: this.options.dotSize,
       color: this.env.resolveColor(this.host, this.options.color),

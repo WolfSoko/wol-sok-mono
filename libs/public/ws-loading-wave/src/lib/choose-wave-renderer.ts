@@ -42,9 +42,10 @@ export interface ChooseWaveRendererParams {
 }
 
 /**
- * The WebGL renderer where a GPU is there, the budget allows one more and the
- * shaders compile, unless the preference is `'canvas'`; the 2D canvas
- * renderer otherwise. `null` only where not even a 2D context exists.
+ * The WebGL renderer where WebGL2 runs (for `'auto'` only on a GPU, for
+ * `'webgl'` also in software), the budget allows one more and the shaders
+ * compile; the 2D canvas renderer otherwise and always for `'canvas'`.
+ * `null` only where not even a 2D context exists.
  */
 export function chooseWaveRenderer(
   params: ChooseWaveRendererParams
@@ -57,6 +58,7 @@ export function chooseWaveRenderer(
 }
 
 function tryWebGlRenderer({
+  preference,
   look,
   createCanvas,
   onContextLost,
@@ -66,7 +68,8 @@ function tryWebGlRenderer({
     return null;
   }
   const canvas = createCanvas();
-  const gl = WebGlWaveRenderer.createContext(canvas);
+  // 'webgl' takes a software-rendered context too, 'auto' only a GPU's
+  const gl = WebGlWaveRenderer.createContext(canvas, preference === 'auto');
   if (gl == null) {
     gpuBudget.release();
     return null;

@@ -85,6 +85,31 @@ describe('chooseWaveRenderer', () => {
     expect(choose({}, { gpuBudget }).renderer?.kind).toBe('webgl');
   });
 
+  it.each([
+    ['auto', true],
+    ['webgl', false],
+  ] as const)(
+    'asks with %p for a GPU only: failIfMajorPerformanceCaveat %p',
+    (preference, hardwareOnly) => {
+      const getContext = jest.spyOn(HTMLCanvasElement.prototype, 'getContext');
+      getContext.mockReturnValue(null);
+      chooseWaveRenderer({
+        preference,
+        look,
+        createCanvas: () => document.createElement('canvas'),
+        onContextLost: jest.fn(),
+        gpuBudget: new GpuContextBudget(1),
+      });
+      expect(getContext).toHaveBeenCalledWith(
+        'webgl2',
+        expect.objectContaining({
+          failIfMajorPerformanceCaveat: hardwareOnly,
+        })
+      );
+      getContext.mockRestore();
+    }
+  );
+
   it('never asks for WebGL with the canvas preference', () => {
     const { renderer, contextTypes } = choose({}, { preference: 'canvas' });
     expect(renderer?.kind).toBe('canvas');

@@ -1,5 +1,5 @@
 import { sizeCanvas, WaveFrame, WaveLook, WaveRenderer } from '../renderer';
-import { frontRadius, WaveGeometry } from '../wave-model';
+import { frontRadius, hasPreviousSweep, WaveGeometry } from '../wave-model';
 import {
   ECHO_LAG,
   WAVE_FRAGMENT_SHADER,
@@ -8,7 +8,7 @@ import {
 
 const UNIFORMS = [
   'u_size',
-  'u_pixelRatio',
+  'u_bufferSize',
   'u_spacing',
   'u_dotSize',
   'u_color',
@@ -16,6 +16,7 @@ const UNIFORMS = [
   'u_frontRadius',
   'u_echoRadius',
   'u_travel',
+  'u_previousSweep',
   'u_falloff',
   'u_rise',
   'u_maxPush',
@@ -46,7 +47,6 @@ export class WebGlWaveRenderer implements WaveRenderer {
   private readonly program: WebGLProgram;
   private readonly uniforms: Record<UniformName, WebGLUniformLocation | null>;
   private geometry?: WaveGeometry;
-  private pixelRatio = 1;
   private lost = false;
   private disposed = false;
 
@@ -71,11 +71,13 @@ export class WebGlWaveRenderer implements WaveRenderer {
   }
 
   /**
-   * A WebGL2 context, or `null` where the browser offers none or would
-   * render it on the CPU (no GPU, a blocked driver, a software renderer).
+   * A WebGL2 context, or `null` where the browser offers none. With
+   * `hardwareOnly` also `null` where it would render on the CPU (no GPU, a
+   * blocked driver, a software renderer).
    */
   public static createContext(
-    canvas: HTMLCanvasElement
+    canvas: HTMLCanvasElement,
+    hardwareOnly = true
   ): WebGL2RenderingContext | null {
     return canvas.getContext('webgl2', {
       alpha: true,
@@ -84,15 +86,20 @@ export class WebGlWaveRenderer implements WaveRenderer {
       depth: false,
       stencil: false,
       powerPreference: 'low-power',
-      failIfMajorPerformanceCaveat: true,
+      failIfMajorPerformanceCaveat: hardwareOnly,
     });
   }
 
   public resize(geometry: WaveGeometry, pixelRatio: number): void {
     this.geometry = geometry;
-    this.pixelRatio = pixelRatio;
     sizeCanvas(this.canvas, geometry, pixelRatio);
-    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+    // a GPU may give a smaller drawing buffer than the canvas asks for
+    this.gl.viewport(
+      0,
+      0,
+      this.gl.drawingBufferWidth,
+      this.gl.drawingBufferHeight
+    );
   }
 
   public draw(frame: WaveFrame): void {
@@ -130,7 +137,11 @@ export class WebGlWaveRenderer implements WaveRenderer {
   private setUniforms(geometry: WaveGeometry, frame: WaveFrame): void {
     const { gl, uniforms, look } = this;
     gl.uniform2f(uniforms.u_size, geometry.width, geometry.height);
-    gl.uniform1f(uniforms.u_pixelRatio, this.pixelRatio);
+    gl.uniform2f(
+      uniforms.u_bufferSize,
+      gl.drawingBufferWidth,
+      gl.drawingBufferHeight
+    );
     gl.uniform1f(uniforms.u_spacing, geometry.dotSpacing);
     gl.uniform1f(uniforms.u_dotSize, look.dotSize);
     gl.uniform3f(
@@ -144,17 +155,27 @@ export class WebGlWaveRenderer implements WaveRenderer {
       uniforms.u_frontRadius,
       frontRadius(geometry, frame.elapsedMs)
     );
-    gl.uniform1f(
-      uniforms.u_echoRadius,
-      frontRadius(geometry, frame.elapsedMs - ECHO_LAG * geometry.sweepMs)
-    );
+    gl.uniform1f(uniforms.u_echoRadius, echoRadius(geometry, frame.elapsedMs));
     gl.uniform1f(uniforms.u_travel, geometry.travel);
+    gl.uniform1f(
+      uniforms.u_previousSweep,
+      hasPreviousSweep(geometry, frame.elapsedMs) ? 1 : 0
+    );
     gl.uniform1f(uniforms.u_falloff, geometry.falloff);
     gl.uniform1f(uniforms.u_rise, geometry.rise);
     gl.uniform1f(uniforms.u_maxPush, geometry.maxPush);
     gl.uniform1f(uniforms.u_wave, frame.wave);
     gl.uniform1f(uniforms.u_dots, frame.dots);
   }
+}
+
+/**
+ * The echo's radius, trailing the front by `ECHO_LAG` of a sweep; negative,
+ * so no echo shows, until the front has run that far.
+ */
+export function echoRadius(geometry: WaveGeometry, elapsedMs: number): number {
+  const echoElapsed = elapsedMs - ECHO_LAG * geometry.sweepMs;
+  return echoElapsed < 0 ? -1 : frontRadius(geometry, echoElapsed);
 }
 
 function compileShader(

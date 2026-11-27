@@ -17,6 +17,12 @@ import {
   waveIntensity,
 } from './wave-model';
 
+/** a dot the wave lights, drawn on its own */
+interface LitDot {
+  readonly center: Point;
+  readonly intensity: number;
+}
+
 /** below this a dot counts as at rest and is drawn in one batch */
 const LIT_THRESHOLD = 0.01;
 
@@ -82,13 +88,10 @@ export class CanvasWaveRenderer implements WaveRenderer {
   }
 
   /** draws every dot at rest in one path, returns the lit ones */
-  private drawRestingDots(
-    geometry: WaveGeometry,
-    frame: WaveFrame
-  ): { center: Point; intensity: number }[] {
+  private drawRestingDots(geometry: WaveGeometry, frame: WaveFrame): LitDot[] {
     const { context } = this;
     const radius = this.look.dotSize / 2;
-    const lit: { center: Point; intensity: number }[] = [];
+    const lit: LitDot[] = [];
     context.globalAlpha = frame.dots * REST_ALPHA;
     context.beginPath();
     for (const center of this.centers) {
@@ -111,7 +114,7 @@ export class CanvasWaveRenderer implements WaveRenderer {
   private drawLitDots(
     geometry: WaveGeometry,
     frame: WaveFrame,
-    litDots: { center: Point; intensity: number }[]
+    litDots: LitDot[]
   ): void {
     const { context } = this;
     const restRadius = this.look.dotSize / 2;

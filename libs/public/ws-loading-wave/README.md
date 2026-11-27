@@ -75,14 +75,14 @@ bootstrapApplication(AppComponent, {
 });
 ```
 
-| Option         | Default       | What it does                                                                                    |
-| -------------- | ------------- | ----------------------------------------------------------------------------------------------- |
-| `afterLoading` | `'hide'`      | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay. |
-| `dotSpacing`   | `28`          | distance between two dots, CSS pixels                                                           |
-| `dotSize`      | `1.5`         | diameter of a dot at rest, CSS pixels                                                           |
-| `color`        | host's colour | any CSS colour, variables included; unset, the dots take the host's `currentColor`              |
-| `sweepMs`      | `1600`        | one sweep of the wave across the element, milliseconds                                          |
-| `renderer`     | `'auto'`      | `'auto'` and `'webgl'` use the GPU where they can; `'canvas'` never uses WebGL                  |
+| Option         | Default       | What it does                                                                                                         |
+| -------------- | ------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `afterLoading` | `'hide'`      | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay.                      |
+| `dotSpacing`   | `28`          | distance between two dots, CSS pixels                                                                                |
+| `dotSize`      | `1.5`         | diameter of a dot at rest, CSS pixels                                                                                |
+| `color`        | host's colour | any CSS colour, variables included; unset, the dots take the host's `currentColor`                                   |
+| `sweepMs`      | `1600`        | one sweep of the wave across the element, milliseconds                                                               |
+| `renderer`     | `'auto'`      | `'auto'`: the shader on a GPU; `'webgl'`: also in software; both fall back to the 2D canvas. `'canvas'`: never WebGL |
 
 The dots follow the host's colour through theme changes (a class or
 attribute on `<html>` or `<body>`, or the system's colour scheme).

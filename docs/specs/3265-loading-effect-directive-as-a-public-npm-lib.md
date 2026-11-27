@@ -22,7 +22,7 @@ the video.
 | Wave front | a vertical arc, bulging to the right: part of a circle whose centre lies far left of the element, so the front is a ripple from off-screen                                                                                                                                  |
 | Lit dots   | the dots just behind the front are brighter and a bit larger; within two or three columns they dim to an afterglow that the passed dots keep (measured along one row: background 11, front column 75, afterglow 47, dots ahead fading from 38 to 24 towards the right edge) |
 | Front line | a hairline along the arc, fainter than the dots                                                                                                                                                                                                                             |
-| Motion     | the front sweeps from the left edge to the right edge in about 1.5 s at an even speed, then starts again from the left                                                                                                                                                      |
+| Motion     | the front sweeps from the left edge to the right edge in about 1.5 s, slowing a little towards the right; the clip shows one sweep, no loop                                                                                                                                 |
 
 ## Decisions
 
@@ -68,8 +68,13 @@ the video.
    left edge to past the right edge in `sweepMs`, then repeating. Right behind
    the front the boost is 1 and falls off exponentially (1/e at 1.5 dot
    spacings) to an afterglow of 0.45 that the passed dots keep for the first
-   45% of a sweep, then fading until the next front comes, so the dots ahead
-   of the front dim towards it, as measured in the video. Reason: the curve, speed and fall-off are then tested once
+   45% of a sweep, then fading until the next front comes. The video's
+   single sweep shows the front column and the afterglow (dots it passed stay
+   lit at one level); it shows no loop, so the fading afterglow is how the
+   effect loops: from the second sweep on, the dots ahead of the front carry
+   the fading afterglow of the last one, and on the first sweep nothing ahead
+   of the front is lit (nor the shader's echo, until the front ran its lag
+   ahead). Reason: the curve, speed and fall-off are then tested once
    in Jest, and the GLSL mirrors a function with a spec rather than a guess.
 4. **Shader analysis (acceptance 1): yes, a shader makes the wave more
    impressive, at no extra cost to the page.** The Canvas 2D renderer draws
@@ -97,8 +102,11 @@ the video.
    context is refused, when the shader fails to compile or link, when more
    than 8 effects hold a WebGL context at once (a module-level budget like
    `ws-thanos`'s `GpuContextBudget`, since browsers drop the oldest context
-   at about 16) and when the context is lost while running. `'webgl'` still
-   falls back rather than showing nothing; `'canvas'` never touches WebGL.
+   at about 16) and when the context is lost while running. `'webgl'` asks
+   without `failIfMajorPerformanceCaveat`, so it takes a software-rendered
+   context too, and still falls back rather than showing nothing; `'canvas'`
+   never touches WebGL. The shader maps the drawing buffer the GPU gave onto
+   the host, which may be smaller than asked for on a tall host.
 6. **How the effect sits in the page.** The directive inserts one `<canvas>`
    as the host's last child (hydration finds the host's own nodes from its first child): `position: absolute; inset: 0;
    pointer-events: none; z-index: -1`, `aria-hidden="true"`. It gives the

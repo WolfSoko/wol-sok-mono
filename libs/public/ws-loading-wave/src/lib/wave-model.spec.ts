@@ -9,6 +9,8 @@ import {
 
 const sweepMs = 1600;
 const geometry = waveGeometry(1000, 400, { dotSpacing: 20, sweepMs });
+/** a time in the second sweep, when the first one left its afterglow */
+const secondSweep = (ms: number): number => sweepMs + ms;
 
 /** the x where the front crosses the row at `y` at the time `elapsedMs` */
 function frontX(y: number, elapsedMs: number): number {
@@ -41,9 +43,16 @@ describe('wave model', () => {
     const t = sweepMs / 2;
     const front = frontX(y, t);
 
+    it('lights nothing ahead of the front on the first sweep', () => {
+      for (const x of [front + 20, front + 300, 990]) {
+        expect(waveIntensity(x, y, t, geometry)).toBe(0);
+      }
+    });
+
     it('shows ahead of the front only the fading afterglow of the last sweep', () => {
-      const justAhead = waveIntensity(front + 20, y, t, geometry);
-      const farAhead = waveIntensity(front + 300, y, t, geometry);
+      const later = secondSweep(t);
+      const justAhead = waveIntensity(front + 20, y, later, geometry);
+      const farAhead = waveIntensity(front + 300, y, later, geometry);
       expect(justAhead).toBeLessThan(0.01);
       expect(farAhead).toBeGreaterThan(justAhead);
       expect(farAhead).toBeLessThan(AFTERGLOW);
@@ -80,10 +89,10 @@ describe('wave model', () => {
       expect(waveIntensity(x, 400, t, geometry)).toBeLessThan(0.01);
     });
 
-    it('repeats every sweep', () => {
+    it('repeats every sweep after the first', () => {
       for (const x of [100, 500, 900]) {
-        expect(waveIntensity(x, y, 300, geometry)).toBeCloseTo(
-          waveIntensity(x, y, 300 + sweepMs, geometry),
+        expect(waveIntensity(x, y, secondSweep(300), geometry)).toBeCloseTo(
+          waveIntensity(x, y, secondSweep(300) + sweepMs, geometry),
           9
         );
       }
@@ -117,7 +126,9 @@ describe('wave model', () => {
 
   describe('dotCenters', () => {
     it('lays a grid centred in the spacing cells, covering the element', () => {
-      const centers = dotCenters(waveGeometry(60, 40, { dotSpacing: 20 }));
+      const centers = dotCenters(
+        waveGeometry(60, 40, { dotSpacing: 20, sweepMs })
+      );
       expect(centers).toEqual([
         { x: 10, y: 10 },
         { x: 30, y: 10 },

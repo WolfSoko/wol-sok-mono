@@ -161,7 +161,36 @@ describe('LoadingWave', () => {
     });
   });
 
-  it('starts over with new options while loading', () => {
+  it('applies a new look, spacing and speed in place, without a new renderer', () => {
+    const { wave, renderers } = setUp();
+    wave.setLoading(true);
+    wave.setOptions({
+      ...DEFAULT_LOADING_WAVE_OPTIONS,
+      dotSize: 3,
+      dotSpacing: 40,
+      sweepMs: 900,
+    });
+    expect(renderers).toHaveLength(1);
+    expect(renderers[0].setLook).toHaveBeenLastCalledWith(
+      expect.objectContaining({ dotSize: 3 })
+    );
+    expect(renderers[0].resize).toHaveBeenLastCalledWith(
+      expect.objectContaining({ dotSpacing: 40, sweepMs: 900 }),
+      2
+    );
+  });
+
+  it("frees the canvas at once when loading ends off screen with 'hide'", () => {
+    const fake = setUp();
+    fake.wave.setLoading(true);
+    fake.callbacks.visibility.forEach((change) => change(false));
+    fake.wave.setLoading(false);
+    expect(fake.host.querySelector('canvas')).toBeNull();
+    expect(fake.renderers[0].disposed).toBe(true);
+    expect(fake.observing()).toBe(0);
+  });
+
+  it('starts over with a new renderer while loading', () => {
     const { host, wave, renderers } = setUp();
     wave.setLoading(true);
     wave.setOptions({ ...DEFAULT_LOADING_WAVE_OPTIONS, renderer: 'canvas' });
@@ -181,7 +210,8 @@ describe('LoadingWave', () => {
       dotSize: 3,
     });
     fake.advance(16);
-    expect(fake.renderers[1].frames.at(-1)).toMatchObject({ dots: 1 });
+    expect(fake.renderers).toHaveLength(1);
+    expect(fake.renderers[0].frames.at(-1)).toMatchObject({ dots: 1 });
     fake.wave.setOptions(DEFAULT_LOADING_WAVE_OPTIONS);
     expect(fake.host.querySelector('canvas')).toBeNull();
   });

@@ -21,8 +21,9 @@ export interface LoadingWaveOptions {
   /** how long one sweep of the wave across the element takes, in ms */
   readonly sweepMs: number;
   /**
-   * `'auto'` and `'webgl'` draw with a WebGL2 shader where a GPU is there
-   * and fall back to a 2D canvas otherwise; `'canvas'` never uses WebGL.
+   * `'auto'` draws with a WebGL2 shader on a GPU, `'webgl'` also where the
+   * browser renders WebGL in software; both fall back to a 2D canvas where
+   * that fails. `'canvas'` never uses WebGL.
    */
   readonly renderer: WaveRendererPreference;
 }

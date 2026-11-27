@@ -49,7 +49,7 @@ export interface WaveGeometry {
 
 export interface WaveGeometryOptions {
   readonly dotSpacing: number;
-  readonly sweepMs?: number;
+  readonly sweepMs: number;
 }
 
 export interface Point {
@@ -62,12 +62,10 @@ export interface Displacement {
   readonly dy: number;
 }
 
-const DEFAULT_SWEEP_MS = 1600;
-
 export function waveGeometry(
   width: number,
   height: number,
-  { dotSpacing, sweepMs = DEFAULT_SWEEP_MS }: WaveGeometryOptions
+  { dotSpacing, sweepMs }: WaveGeometryOptions
 ): WaveGeometry {
   const distance = CENTER_DISTANCE * Math.max(width, height, dotSpacing);
   const tail = TAIL_SPACINGS * dotSpacing;
@@ -129,12 +127,27 @@ function frontGlow(behind: number, geometry: WaveGeometry): number {
   );
 }
 
+/** whether a sweep went before this one, whose afterglow and echo show */
+export function hasPreviousSweep(
+  geometry: WaveGeometry,
+  elapsedMs: number
+): boolean {
+  return elapsedMs >= geometry.sweepMs;
+}
+
 /**
  * What stays lit once the front passed: `AFTERGLOW` for the first part of a
  * sweep, then fading out until the next front arrives. Ahead of the front a
- * dot still glows from the sweep before.
+ * dot still glows from the sweep before, if there was one.
  */
-function afterglow(behind: number, geometry: WaveGeometry): number {
+function afterglow(
+  behind: number,
+  geometry: WaveGeometry,
+  elapsedMs: number
+): number {
+  if (behind < 0 && !hasPreviousSweep(geometry, elapsedMs)) {
+    return 0;
+  }
   const sincePassed =
     (behind >= 0 ? behind : behind + geometry.travel) / geometry.travel;
   return AFTERGLOW * (1 - smoothstep(AFTERGLOW_FADE_START, 1, sincePassed));
@@ -143,7 +156,8 @@ function afterglow(behind: number, geometry: WaveGeometry): number {
 /**
  * How much the wave lights the dot at `(x, y)`: 1 right behind the front,
  * dimming over a few spacings to the afterglow of the dots it passed, which
- * fades out again until the next front comes.
+ * fades out again until the next front comes. On the first sweep nothing
+ * ahead of the front is lit.
  */
 export function waveIntensity(
   x: number,
@@ -152,7 +166,10 @@ export function waveIntensity(
   geometry: WaveGeometry
 ): number {
   const behind = distanceBehindFront(x, y, elapsedMs, geometry);
-  return Math.max(frontGlow(behind, geometry), afterglow(behind, geometry));
+  return Math.max(
+    frontGlow(behind, geometry),
+    afterglow(behind, geometry, elapsedMs)
+  );
 }
 
 /**

@@ -30,12 +30,13 @@ void main() {
  * cells around it: brightness, growth and push behind the front, plus what
  * the 2D canvas cannot afford: a glow around lit dots and an echo ripple
  * trailing the front. Lengths are in CSS pixels, y grows downwards as in CSS.
+ * A negative `u_echoRadius` shows no echo, as before the echo's first sweep.
  */
 export const WAVE_FRAGMENT_SHADER = `#version 300 es
 precision highp float;
 
 uniform vec2 u_size;
-uniform float u_pixelRatio;
+uniform vec2 u_bufferSize;
 uniform float u_spacing;
 uniform float u_dotSize;
 uniform vec3 u_color;
@@ -43,6 +44,7 @@ uniform vec2 u_center;
 uniform float u_frontRadius;
 uniform float u_echoRadius;
 uniform float u_travel;
+uniform float u_previousSweep;
 uniform float u_falloff;
 uniform float u_rise;
 uniform float u_maxPush;
@@ -66,6 +68,9 @@ float frontGlow(float behind) {
 }
 
 float afterglow(float behind) {
+  if (behind < 0.0 && u_previousSweep < 0.5) {
+    return 0.0;
+  }
   float sincePassed = (behind >= 0.0 ? behind : behind + u_travel) / u_travel;
   return AFTERGLOW * (1.0 - smoothstep(AFTERGLOW_FADE_START, 1.0, sincePassed));
 }
@@ -79,9 +84,11 @@ float pushAt(float behind) {
 }
 
 void main() {
-  vec2 point = vec2(gl_FragCoord.x, u_size.y * u_pixelRatio - gl_FragCoord.y) / u_pixelRatio;
+  // the drawing buffer may be smaller than asked for: map it onto the host
+  vec2 cssPerPixel = u_size / u_bufferSize;
+  vec2 point = vec2(gl_FragCoord.x, u_bufferSize.y - gl_FragCoord.y) * cssPerPixel;
   vec2 cell = floor(point / u_spacing);
-  float antialias = 0.5 / u_pixelRatio;
+  float antialias = 0.5 * cssPerPixel.x;
   float glowWidth = GLOW_SPACINGS * u_spacing;
   float alpha = 0.0;
   for (int row = -1; row <= 1; row++) {
@@ -108,7 +115,7 @@ void main() {
     }
   }
   float fromFront = abs(length(point - u_center) - u_frontRadius);
-  alpha += FRONT_LINE_ALPHA * u_wave * (1.0 - smoothstep(0.0, 1.0 / u_pixelRatio, fromFront));
+  alpha += FRONT_LINE_ALPHA * u_wave * (1.0 - smoothstep(0.0, cssPerPixel.x, fromFront));
   alpha = clamp(alpha, 0.0, 1.0) * u_dots;
   outColor = vec4(u_color * alpha, alpha);
 }
