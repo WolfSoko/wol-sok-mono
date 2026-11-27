@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.191.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.191.0...v74.191.1) (2026-11-27)
+
+### Chore
+
+* **deps:** update dependency vitest-mock-extended to v6 ([#3274](https://github.com/WolfSoko/wol-sok-mono/issues/3274)) ([5abdf2f](https://github.com/WolfSoko/wol-sok-mono/commit/5abdf2ff68537b361078cddda23afb904d4a8514))
+* **release:** publish ([ae5872a](https://github.com/WolfSoko/wol-sok-mono/commit/ae5872a4d12ced963bf2313dc9576621a8250b33))
+
 ## [74.191.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.190.0...v74.191.0) (2026-11-27)
 
 ### Features
