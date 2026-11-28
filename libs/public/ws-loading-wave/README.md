@@ -10,8 +10,10 @@ Try it in the [playground](https://angularexamples.wolsok.de/loadingWavePlaygrou
 - **One directive**, a boolean input: `[wsLoadingWave]="loading()"`.
 - **On the GPU where there is one:** a WebGL2 shader draws the wave as a
   ripple through water: the dots refract through its slope, shine as small
-  lit beads and bloom, and an echo trails the front. Or bring your own
-  fragment shader (see [Shaders](#shaders)).
+  lit beads and bloom, and an echo trails the front. Or pick one of five
+  built-in shaders (circuit traces, a data bus, a chip powering up, an
+  oscilloscope, electric arcs), or bring your own fragment shader (see
+  [Shaders](#shaders)).
 - **Everywhere else on a 2D canvas:** without a GPU (or when the browser
   would render WebGL on the CPU), when the shader fails, when more than 8
   waves run on one page or when the GPU context is lost.
@@ -104,6 +106,35 @@ On the GPU the wave is drawn by a fragment shader, `rippleShader` unless
 you pass another one as `shader`. The 2D canvas fallback always draws the
 dot wave.
 
+### Built-in shaders
+
+Beside `rippleShader` (from `@wolsok/loading-wave`, the default) five
+built-in shaders come from the secondary entry point
+`@wolsok/loading-wave/shaders`, so an app loads only those it imports. Each
+runs from left to right with the front, on the dot grid's spacing, and lies
+faintly at rest:
+
+| Shader                | Looks like                                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `circuitTracesShader` | a printed circuit board: the front energises copper traces, current pulses with comet tails run on them                       |
+| `dataBusShader`       | a logic analyser: buses of lanes whose bits idle dim ahead of the front and flip and stream behind it, the front a clock edge |
+| `dieScanShader`       | a chip powering up: blocks with micro patterns flicker on as the front reaches them, their rails glow                         |
+| `signalTraceShader`   | an oscilloscope: square-wave signals drawn by the front with a phosphor head and a decaying trail                             |
+| `sparkFrontShader`    | electric arcs: the front as a crackling bolt whose branches strike the dots near it                                           |
+
+```ts
+import { circuitTracesShader } from '@wolsok/loading-wave/shaders';
+```
+
+```html
+<section
+  [wsLoadingWave]="loading()"
+  [wsLoadingWaveOptions]="{ shader: circuitTracesShader }"
+>
+```
+
+### Your own shader
+
 ```ts
 import { LoadingWaveShader } from '@wolsok/loading-wave';
 
@@ -174,23 +205,25 @@ with alpha, not by adding light, and it reads in light and dark themes.
 | `ws_previousSweep`                               | `float` | 1 once a sweep went before, else 0                                                                     |
 | `ws_wave`                                        | `float` | the wave's strength, 0 to 1 (fades in and out, 0 at rest)                                              |
 
-| Helper                                                                 | Gives                                                              |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it            |
-| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`               |
-| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                            |
-| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none |
-| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                |
-| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                        |
-| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                    |
-| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                    |
-| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell               |
-| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                          |
+| Helper                                                                 | Gives                                                                |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it              |
+| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`                 |
+| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                              |
+| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none   |
+| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                  |
+| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                          |
+| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                      |
+| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                      |
+| `float ws_segmentDistance(vec2 p, vec2 a, vec2 b)`                     | the distance from `p` to a segment                                   |
+| `float ws_band(float away, float width)`                               | anti-aliased coverage of a band of `width` at `away` from its middle |
+| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell                 |
+| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                            |
 
 The constants `WS_REST_ALPHA`, `WS_LIT_ALPHA`, `WS_LIT_GROWTH`,
 `WS_FRONT_LINE_ALPHA`, `WS_AFTERGLOW`, `WS_AFTERGLOW_FADE_START` and
 `WS_ECHO_STRENGTH` give the
-dot wave's own look. `rippleShader`'s source is a fuller example.
+dot wave's own look. The built-in shaders' sources are fuller examples.
 
 ## License
 

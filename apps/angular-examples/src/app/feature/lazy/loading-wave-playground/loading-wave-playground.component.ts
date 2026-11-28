@@ -9,6 +9,7 @@ import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSliderModule } from '@angular/material/slider';
 import {
@@ -18,6 +19,13 @@ import {
   LoadingWaveShader,
   rippleShader,
 } from '@wolsok/loading-wave';
+import {
+  circuitTracesShader,
+  dataBusShader,
+  dieScanShader,
+  signalTraceShader,
+  sparkFrontShader,
+} from '@wolsok/loading-wave/shaders';
 import { CUSTOM_SHADER_EXAMPLE } from './custom-shader-example';
 
 /** the options the playground offers; renderer and shader are each stage's own */
@@ -47,15 +55,54 @@ const ACCENT_CHOICES: readonly ColorChoice[] = [
   ...THEME_COLORS,
 ];
 
-/** a built-in shader, by the name it is exported under */
+/** a built-in shader, by the name and entry point it is exported from */
 interface ShaderChoice {
   readonly name: string;
   readonly label: string;
   readonly shader: LoadingWaveShader;
+  readonly entryPoint: string;
 }
 
+const MAIN_ENTRY = '@wolsok/loading-wave';
+const SHADERS_ENTRY = '@wolsok/loading-wave/shaders';
+
 const SHADER_CHOICES: readonly ShaderChoice[] = [
-  { name: 'rippleShader', label: 'Ripple', shader: rippleShader },
+  {
+    name: 'rippleShader',
+    label: 'Ripple',
+    shader: rippleShader,
+    entryPoint: MAIN_ENTRY,
+  },
+  {
+    name: 'circuitTracesShader',
+    label: 'Circuit traces',
+    shader: circuitTracesShader,
+    entryPoint: SHADERS_ENTRY,
+  },
+  {
+    name: 'dataBusShader',
+    label: 'Data bus',
+    shader: dataBusShader,
+    entryPoint: SHADERS_ENTRY,
+  },
+  {
+    name: 'dieScanShader',
+    label: 'Die scan',
+    shader: dieScanShader,
+    entryPoint: SHADERS_ENTRY,
+  },
+  {
+    name: 'signalTraceShader',
+    label: 'Signal trace',
+    shader: signalTraceShader,
+    entryPoint: SHADERS_ENTRY,
+  },
+  {
+    name: 'sparkFrontShader',
+    label: 'Spark front',
+    shader: sparkFrontShader,
+    entryPoint: SHADERS_ENTRY,
+  },
 ];
 
 /** the pick of one's own fragment; every other pick names a built-in shader */
@@ -74,6 +121,7 @@ const CUSTOM_PICK = 'custom';
     MatCardModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatSlideToggleModule,
     MatSliderModule,
   ],
@@ -100,13 +148,15 @@ export class LoadingWavePlaygroundComponent {
   /** the custom fragment the stage draws, set by "Apply" */
   private readonly customFragment = signal(CUSTOM_SHADER_EXAMPLE);
 
-  private readonly shader = computed<LoadingWaveShader>(() => {
-    const pick = this.shaderPick();
-    return pick === CUSTOM_PICK
+  /** the built-in shader picked; `undefined` for one's own */
+  private readonly builtInPick = computed(() =>
+    SHADER_CHOICES.find((choice) => choice.name === this.shaderPick())
+  );
+  private readonly shader = computed<LoadingWaveShader>(() =>
+    this.shaderPick() === CUSTOM_PICK
       ? { fragment: this.customFragment() }
-      : (SHADER_CHOICES.find((choice) => choice.name === pick)?.shader ??
-          rippleShader);
-  });
+      : (this.builtInPick()?.shader ?? rippleShader)
+  );
   protected readonly gpuOptions = computed<LoadingWaveOptions>(() => ({
     ...this.options(),
     renderer: 'webgl',
@@ -121,12 +171,13 @@ export class LoadingWavePlaygroundComponent {
     JSON.stringify(this.options(), null, 2)
   );
   /** how to pass the stage's shader, which JSON cannot hold */
-  protected readonly shaderOption = computed(() =>
-    this.shaderPick() === CUSTOM_PICK
+  protected readonly shaderOption = computed(() => {
+    const builtIn = this.builtInPick();
+    return builtIn == null
       ? // a JSON string is a valid TypeScript string literal, escapes included
         `shader: { fragment: ${JSON.stringify(this.customFragment())} }`
-      : `shader: ${this.shaderPick()} (import { ${this.shaderPick()} } from '@wolsok/loading-wave')`
-  );
+      : `shader: ${builtIn.name} (import { ${builtIn.name} } from '${builtIn.entryPoint}')`;
+  });
 
   protected setOption<K extends keyof PlaygroundOptions>(
     key: K,

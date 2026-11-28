@@ -121,21 +121,23 @@
     </section>
 
     <section>
-      <h3 class="mat-subtitle-2">Shader</h3>
-      <mat-button-toggle-group
-        hideSingleSelectionIndicator
-        aria-label="shader of the WebGL stage"
-        data-testid="shader"
-        [value]="shaderPick()"
-        (change)="shaderPick.set($event.value)"
+      <mat-form-field
+        class="shader-picker"
+        appearance="outline"
+        subscriptSizing="dynamic"
       >
-        @for (choice of shaderChoices; track choice.name) {
-          <mat-button-toggle [value]="choice.name">{{
-            choice.label
-          }}</mat-button-toggle>
-        }
-        <mat-button-toggle [value]="customPick">Custom</mat-button-toggle>
-      </mat-button-toggle-group>
+        <mat-label>Shader of the WebGL stage</mat-label>
+        <mat-select
+          data-testid="shader"
+          [value]="shaderPick()"
+          (selectionChange)="shaderPick.set($event.value)"
+        >
+          @for (choice of shaderChoices; track choice.name) {
+            <mat-option [value]="choice.name">{{ choice.label }}</mat-option>
+          }
+          <mat-option [value]="customPick">Custom</mat-option>
+        </mat-select>
+      </mat-form-field>
     </section>
 
     @if (shaderPick() === customPick) {
