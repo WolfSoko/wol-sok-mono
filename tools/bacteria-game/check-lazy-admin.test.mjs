@@ -72,7 +72,7 @@ void describe('checkLazyAdmin', () => {
       'polyfills-P.js',
       'Routes-R.js',
     ]) {
-      assert.match(log, new RegExp(`\\n  ${script.replace('.', '\\.')}`));
+      assert.match(log, new RegExp(`\\n  ${script.replaceAll('.', '\\.')}`));
     }
     assert.doesNotMatch(log, /chunk-ADMIN\.js/);
   });
@@ -130,12 +130,21 @@ void describe('checkLazyAdmin', () => {
   void it('exits 2 when no inspected script holds the bootstrap, since it would inspect the wrong set', () => {
     const output = captureConsole();
 
-    const code = checkLazyAdmin(
-      gameDist({ 'main-M.js': 'init();' }, { 'chunk-BOOT.js': [] })
-    );
+    const code = checkLazyAdmin(gameDist({ 'main-M.js': 'init();' }));
 
     assert.equal(code, 2);
     assert.match(printed(output.error), /bootstrap\.ts/);
+  });
+
+  void it('exits 2 when no inspected script is a shared bundle, since it would inspect the wrong set', () => {
+    const output = captureConsole();
+
+    const code = checkLazyAdmin(
+      gameDist({ 'chunk-BOOT.js': 'const a=()=>import("./chunk-ADMIN.js");' })
+    );
+
+    assert.equal(code, 2);
+    assert.match(printed(output.error), /shared bundle/);
   });
 
   void it('exits 2 when a script has no source map', () => {
@@ -154,6 +163,15 @@ void describe('checkLazyAdmin', () => {
 
     assert.equal(code, 2);
     assert.match(printed(output.error), /remoteEntry\.json/);
+  });
+
+  void it('exits 2 on a path that is a file, not a folder', () => {
+    const output = captureConsole();
+
+    const code = checkLazyAdmin('tools/bacteria-game/check-lazy-admin.mjs');
+
+    assert.equal(code, 2);
+    assert.match(printed(output.error), /No dist folder/);
   });
 
   void it('exits 2 on a folder that does not exist', () => {

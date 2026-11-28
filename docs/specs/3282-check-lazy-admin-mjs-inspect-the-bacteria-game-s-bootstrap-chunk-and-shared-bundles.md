@@ -43,6 +43,9 @@ bundles reached through bare specifiers, not only `main`, the polyfills and
    reached), a check that silently stops following the boundary, say after
    a change to `main.ts` or to the builder's output, would otherwise stay
    green while inspecting the old, smaller set.
+   In the same way it exits 2 when no inspected script is a shared bundle
+   (`sharedBundles(dist)`), which happens when the build maps no bare
+   specifier (added after the review).
 3. **Name the inspected scripts.** Both the success and the failure message
    list what was inspected (success: every script; failure: each
    `script: source` leak, as today). Reason: acceptance 1; it also lets a

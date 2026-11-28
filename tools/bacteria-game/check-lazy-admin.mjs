@@ -7,12 +7,13 @@
 //
 //   node tools/bacteria-game/check-lazy-admin.mjs dist/apps/bacteria-game-remote
 
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import {
   BuildCheckError,
   eagerScripts,
   leakedSources,
+  sharedBundles,
 } from '../build-checks/eager-sources.mjs';
 
 const ADMIN_SOURCES = 'libs/features/lazy/bacteria-wars-admin/';
@@ -40,6 +41,7 @@ function reportLeaks(dist) {
     crossMainBoundary: true,
   });
   assertBootstrapReached(dist, scripts);
+  assertSharedReached(dist, scripts);
   const leaks = leakedSources(dist, scripts, (source) =>
     source.includes(ADMIN_SOURCES)
   );
@@ -58,7 +60,7 @@ function reportLeaks(dist) {
 }
 
 function exposedRoutes(dist) {
-  if (!existsSync(dist)) {
+  if (!existsSync(dist) || !statSync(dist).isDirectory()) {
     throw new BuildCheckError(`No dist folder ${dist}`);
   }
   return readdirSync(dist).filter((file) => EXPOSED_ROUTES.test(file));
@@ -76,6 +78,20 @@ function assertBootstrapReached(dist, scripts) {
   if (holders.length === 0) {
     throw new BuildCheckError(
       `None of the scripts loaded at start holds ${BOOTSTRAP_SOURCE} - the check would inspect the wrong set.`
+    );
+  }
+}
+
+/**
+ * At least one shared bundle must be among the scripts: proof that the
+ * traversal followed bare specifiers, which it cannot when the build maps
+ * none (no `shared` in `remoteEntry.json`, no `importmap.json`).
+ */
+function assertSharedReached(dist, scripts) {
+  const bundles = new Set(sharedBundles(dist).values());
+  if (!scripts.some((script) => bundles.has(script))) {
+    throw new BuildCheckError(
+      'None of the scripts loaded at start is a shared bundle - the check would inspect the wrong set.'
     );
   }
 }
