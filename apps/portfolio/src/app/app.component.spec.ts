@@ -10,6 +10,7 @@ import { appRoutes, HOME_PAGE } from './app.routes';
 import { BLOG_POSTS } from './blog/posts';
 import { CAREER_PROFILE } from './career/career.data';
 import { I18nService } from './i18n/i18n.service';
+import { LANGUAGES, Localized } from './i18n/language';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
 import { PORTFOLIO_THEME } from './theme/theme';
@@ -49,38 +50,15 @@ describe('AppComponent', () => {
     await harness.navigateByUrl('/');
     const heading = () =>
       (harness.routeNativeElement as HTMLElement).querySelector('h1');
-    const content = (selector: string) =>
-      document.head.querySelector(selector)?.getAttribute('content');
-    const expectTags = (title: string, description: string) => {
-      expect(document.title).toBe(title);
-      expect(content('meta[property="og:title"]')).toBe(title);
-      expect(content('meta[name="description"]')).toBe(description);
-      expect(content('meta[property="og:description"]')).toBe(description);
-    };
 
-    expectTags(
-      'Wolfram Sokollek – Freelance Full-Stack Software Engineer',
-      'Freelance full-stack software engineer in Hamburg since 2008: Angular web apps from idea to production, with live apps, games and open source to explore.'
-    );
-    expect(heading()?.textContent?.trim()).toBe(
-      'Software engineering for the web, from idea to production.'
-    );
-    expect(heading()?.querySelector('em')?.textContent).toBe(
-      'from idea to production.'
-    );
-
-    TestBed.inject(I18nService).setLanguage('de');
-    await harness.fixture.whenStable();
-    expectTags(
-      'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer',
-      'Freiberuflicher Fullstack Software Engineer in Hamburg seit 2008: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.'
-    );
-    expect(heading()?.textContent?.trim()).toBe(
-      'Software Engineering fürs Web, von der Idee bis in Produktion.'
-    );
-    expect(heading()?.querySelector('em')?.textContent).toBe(
-      'von der Idee bis in Produktion.'
-    );
+    for (const { id } of LANGUAGES) {
+      const home = HOME_TEXTS[id];
+      TestBed.inject(I18nService).setLanguage(id);
+      await harness.fixture.whenStable();
+      expectPageTags(document, home.title, home.description);
+      expect(heading()?.textContent?.trim()).toBe(home.heading);
+      expect(heading()?.querySelector('em')?.textContent).toBe(home.accent);
+    }
   });
 
   it('sets the canonical URL, title and description per page and language', async () => {
@@ -91,30 +69,26 @@ describe('AppComponent', () => {
     expect(
       head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
     ).toBe('https://wolsok.de/privacy');
-    expect(
-      head.querySelector('meta[name="description"]')?.getAttribute('content')
-    ).toContain('Privacy policy');
+    expect(metaContent(head, 'meta[name="description"]')).toContain(
+      'Privacy policy'
+    );
 
     await harness.navigateByUrl('/blog/bacteria-wars-turn-relay');
     expect(
       head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
     ).toBe('https://wolsok.de/blog/bacteria-wars-turn-relay');
     expect(document.title).toContain('Through the wall');
-    expect(
-      head.querySelector('meta[property="og:type"]')?.getAttribute('content')
-    ).toBe('article');
+    expect(metaContent(head, 'meta[property="og:type"]')).toBe('article');
 
     await harness.navigateByUrl('/career');
-    expect(
-      head.querySelector('meta[property="og:type"]')?.getAttribute('content')
-    ).toBe('website');
+    expect(metaContent(head, 'meta[property="og:type"]')).toBe('website');
     expect(document.title).toContain('Career');
     TestBed.inject(I18nService).setLanguage('de');
     TestBed.tick();
     expect(document.title).toContain('Werdegang');
-    expect(
-      head.querySelector('meta[name="description"]')?.getAttribute('content')
-    ).toContain('Freiberuflicher');
+    expect(metaContent(head, 'meta[name="description"]')).toContain(
+      'Freiberuflicher'
+    );
   });
 
   /** Puts the AdSense script tag of the real index.html into the head. */
@@ -145,18 +119,16 @@ describe('AppComponent', () => {
     const page = harness.routeNativeElement as HTMLElement;
     expect(page.textContent).toContain('Page not found');
     expect(page.querySelector('a[href="/"]')).not.toBeNull();
-    expect(
-      head.querySelector('meta[name="robots"]')?.getAttribute('content')
-    ).toBe('noindex');
+    expect(metaContent(head, 'meta[name="robots"]')).toBe('noindex');
     expect(head.querySelector('link[rel="canonical"]')).toBeNull();
     expect(head.querySelector('meta[property="og:url"]')).toBeNull();
     expect(head.querySelector(AD_SCRIPT_SELECTOR)).toBeNull();
 
     await harness.navigateByUrl('/career');
     expect(head.querySelector('meta[name="robots"]')).toBeNull();
-    expect(
-      head.querySelector('meta[property="og:url"]')?.getAttribute('content')
-    ).toBe('https://wolsok.de/career');
+    expect(metaContent(head, 'meta[property="og:url"]')).toBe(
+      'https://wolsok.de/career'
+    );
     expect(
       head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href
     ).toBe('https://wolsok.de/career');
@@ -190,6 +162,54 @@ describe('AppComponent', () => {
   });
 });
 
+/** The home page's texts as the user approved them (#3281), per language. */
+const HOME_TEXTS: Localized<{
+  title: string;
+  description: string;
+  heading: string;
+  accent: string;
+}> = {
+  en: {
+    title: 'Wolfram Sokollek – Freelance Full-Stack Software Engineer',
+    description:
+      'Freelance full-stack software engineer in Hamburg since 2008: Angular web apps from idea to production, with live apps, games and open source to explore.',
+    heading: 'Software engineering for the web, from idea to production.',
+    accent: 'from idea to production.',
+  },
+  de: {
+    title: 'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer',
+    description:
+      'Freiberuflicher Fullstack Software Engineer in Hamburg seit 2008: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.',
+    heading: 'Software Engineering fürs Web, von der Idee bis in Produktion.',
+    accent: 'von der Idee bis in Produktion.',
+  },
+};
+
+/** The meta tags SeoService writes from a page's title and description. */
+const PAGE_TAGS = [
+  'meta[name="description"]',
+  'meta[property="og:title"]',
+  'meta[property="og:description"]',
+];
+
+function metaContent(root: ParentNode, selector: string): string | null {
+  return root.querySelector(selector)?.getAttribute('content') ?? null;
+}
+
+/** Expects the document's title and page tags to carry these texts. */
+function expectPageTags(
+  doc: Document,
+  title: string,
+  description: string
+): void {
+  expect(doc.title).toBe(title);
+  expect(metaContent(doc.head, 'meta[property="og:title"]')).toBe(title);
+  expect(metaContent(doc.head, 'meta[name="description"]')).toBe(description);
+  expect(metaContent(doc.head, 'meta[property="og:description"]')).toBe(
+    description
+  );
+}
+
 /** The app's real index.html, parsed. */
 function readIndexHtml(): Document {
   return new DOMParser().parseFromString(
@@ -199,25 +219,21 @@ function readIndexHtml(): Document {
 }
 
 describe('index.html', () => {
-  it("starts with the home page's English title and description", () => {
-    const index = readIndexHtml();
-    const content = (selector: string) =>
-      index.querySelector(selector)?.getAttribute('content');
-
-    expect(index.title).toBe(HOME_PAGE.title.en);
-    expect(content('meta[property="og:title"]')).toBe(HOME_PAGE.title.en);
-    expect(content('meta[name="description"]')).toBe(HOME_PAGE.description.en);
-    expect(content('meta[property="og:description"]')).toBe(
-      HOME_PAGE.description.en
-    );
+  it("leaves each page's title and tags to SeoService", () => {
+    const head = readIndexHtml().head;
+    for (const selector of PAGE_TAGS) {
+      expect(head.querySelector(selector)).toBeNull();
+    }
+    expect(head.querySelector('meta[property="og:url"]')).toBeNull();
+    expect(head.querySelector('link[rel="canonical"]')).toBeNull();
   });
 });
 
 describe('HOME_PAGE', () => {
   it('names the role of the career profile in its title', () => {
-    for (const language of ['en', 'de'] as const) {
-      expect(HOME_PAGE.title[language].toLowerCase()).toContain(
-        CAREER_PROFILE.title[language].toLowerCase()
+    for (const { id } of LANGUAGES) {
+      expect(HOME_PAGE.title[id].toLowerCase()).toContain(
+        CAREER_PROFILE.title[id].toLowerCase()
       );
     }
   });

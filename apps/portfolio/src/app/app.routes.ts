@@ -4,7 +4,7 @@ import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
 import { PageData } from './page-data';
 
-/** The start page's title and description, also the start values of `index.html`. */
+/** The start page's title and description. */
 export const HOME_PAGE: PageData = {
   title: {
     en: 'Wolfram Sokollek – Freelance Full-Stack Software Engineer',

@@ -66,12 +66,17 @@ core._") is not reused, so the two pages do not open the same way.
    the home route's `data` (`app.routes.ts`), the heading in
    `texts.en.ts`/`texts.de.ts` (`home.title`, `home.titleAccent`). Keys and
    template stay as they are.
-2. **`index.html` follows the route, and a spec keeps it so.** The
-   `<title>`, `description`, `og:title` and `og:description` of
-   `index.html` take the new English texts, and `app.component.spec.ts`
-   gets a check that they equal the home route's English `title` and
-   `description`. Reason: the copy drifted unseen before; the spec turns the
-   next drift into a red test (root cause, not a second hand edit).
+2. **`index.html` keeps no copy of the page texts.** Every route is
+   prerendered (`app.routes.server.ts`), and `SeoService` writes the
+   title, `description`, `og:title`, `og:description`, `og:type`, `og:url`
+   and the canonical link into each page; `Meta.updateTag` creates a
+   missing tag. The hand copy in `index.html` reached only the unused
+   `index.csr.html`, so it goes: the template keeps a neutral
+   `<title>wolsok.de</title>` and none of those tags, and
+   `app.component.spec.ts` fails when one comes back. Reason: the copy
+   drifted unseen before; without it there is nothing to drift (first
+   planned as a spec comparing the copy, changed after the `/simplify`
+   review on PR #3284).
 3. **The eyebrow, lead and sections stay.** The eyebrow already reads
    "Wolfram Sokollek · wolsok.de"; the lead and the section texts are
    outside the issue's scope (see Open questions).
@@ -96,8 +101,9 @@ core._") is not reused, so the two pages do not open the same way.
    English title and description before any script runs.
 4. The `<h1>` of the start page reads the chosen heading, the accent in
    `<em>`, in both languages.
-5. `app.component.spec.ts` fails when `index.html`'s title or description
-   differs from the home route's English data.
+5. `index.html` holds no page title text, `description`, `og:title`,
+   `og:description`, `og:url` or canonical link, and `app.component.spec.ts`
+   fails when one comes back; every prerendered page still carries its own.
 6. `portfolio` lint, template lint, tests, spec typecheck and the production
    build (budgets) pass.
 

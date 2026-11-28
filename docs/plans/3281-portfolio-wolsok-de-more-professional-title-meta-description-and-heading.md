@@ -4,7 +4,7 @@ Spec: [`docs/specs/3281-…`](../specs/3281-portfolio-wolsok-de-more-professiona
 Branch `3281-portfolio-professional-title` off `main`, one PR. Paths are under
 `apps/portfolio/src/`. The wording is the option the user picked per row.
 
-1. **Spec keeping `index.html` in step (red first).**
+1. **Red tests first.** (After the review the `index.html` copy was removed instead of kept in step; see the spec's decision 2.)
    - `app/app.component.spec.ts`: a test that reads `../index.html` and
      expects its `<title>`, `meta[name=description]`, `og:title` and
      `og:description` to equal the home route's `title.en` and
