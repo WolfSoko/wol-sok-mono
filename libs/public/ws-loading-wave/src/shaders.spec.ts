@@ -10,6 +10,7 @@ describe('@wolsok/loading-wave/shaders', () => {
       'dataBusShader',
       'dieScanShader',
       'signalTraceShader',
+      'sparkFrontShader',
     ]);
   });
 
