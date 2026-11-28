@@ -19,6 +19,9 @@ Try it in the [playground](https://angularexamples.wolsok.de/loadingWavePlaygrou
   waves run on one page or when the GPU context is lost.
 - **After loading** the dots fade away (`'hide'`) or stay as a quiet dotted
   background (`'keep'`).
+- **Small elements too:** on a button or a chip the grid gets finer by
+  itself, and a round spinner comes in the same style (see
+  [Small elements](#small-elements) and [Spinner](#spinner)).
 - **Polite:** no wave with `prefers-reduced-motion`, paused off screen,
   nothing on the server, `aria-busy` on the host while loading, the canvas
   hidden from assistive technology.
@@ -78,17 +81,19 @@ bootstrapApplication(AppComponent, {
 });
 ```
 
-| Option           | Default        | What it does                                                                                                               |
-| ---------------- | -------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| `afterLoading`   | `'hide'`       | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay.                            |
-| `dotSpacing`     | `28`           | distance between two dots, CSS pixels                                                                                      |
-| `dotSize`        | `1.5`          | diameter of a dot at rest, CSS pixels                                                                                      |
-| `color`          | host's colour  | any CSS colour, variables included; unset, the dots take the host's `currentColor`                                         |
-| `accentColor`    | dots' colour   | any CSS colour for the lit dots and the wave itself                                                                        |
-| `sweepMs`        | `1600`         | one sweep of the wave across the element, milliseconds                                                                     |
-| `frontRoundness` | `0.5`          | 0 (a straight front) to 1 (a half circle): how far the front's ends lag its middle, as a share of `min(height / 2, width)` |
-| `renderer`       | `'auto'`       | `'auto'`: the shader on a GPU; `'webgl'`: also in software; both fall back to the 2D canvas. `'canvas'`: never WebGL       |
-| `shader`         | `rippleShader` | the fragment shader the WebGL renderer draws with, see [Shaders](#shaders)                                                 |
+| Option           | Default        | What it does                                                                                                                                              |
+| ---------------- | -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `afterLoading`   | `'hide'`       | `'hide'`: dots and wave fade out, the canvas goes. `'keep'`: the wave fades out, the dots stay.                                                           |
+| `dotSpacing`     | `28`           | distance between two dots, CSS pixels                                                                                                                     |
+| `dotSize`        | `1.5`          | diameter of a dot at rest, CSS pixels                                                                                                                     |
+| `autoscale`      | `true`         | `true`: a finer grid on small hosts, see [Small elements](#small-elements). A number: spacing and dot size times it. `false`: as set                      |
+| `origin`         | `'left'`       | `'left'`: the front sweeps in from the left. `'center'`: it grows from the host's middle, a ripple                                                        |
+| `color`          | host's colour  | any CSS colour, variables included; unset, the dots take the host's `currentColor`                                                                        |
+| `accentColor`    | dots' colour   | any CSS colour for the lit dots and the wave itself                                                                                                       |
+| `sweepMs`        | `1600`         | one sweep of the wave across the element, milliseconds                                                                                                    |
+| `frontRoundness` | `0.5`          | 0 (a straight front) to 1 (a half circle): how far the front's ends lag its middle, as a share of `min(height / 2, width)`; from the `'left'` origin only |
+| `renderer`       | `'auto'`       | `'auto'`: the shader on a GPU; `'webgl'`: also in software; both fall back to the 2D canvas. `'canvas'`: never WebGL                                      |
+| `shader`         | `rippleShader` | the fragment shader the WebGL renderer draws with, see [Shaders](#shaders)                                                                                |
 
 Before 0.0.2 the front was nearly straight on a wide host; `frontRoundness:
 0.05` gives about that look again.
@@ -99,6 +104,50 @@ attribute on `<html>` or `<body>`, or the system's colour scheme).
 `exportAs: 'wsLoadingWave'` gives the template the directive; its
 `activeRenderer()` signal says what draws right now (`'webgl'`, `'canvas'` or
 `null`).
+
+### Small elements
+
+On a button, a chip or an icon button the wave works as it does on a
+section: put the directive on it.
+
+```html
+<button mat-flat-button [wsLoadingWave]="saving()">Save</button>
+```
+
+With `autoscale: true` (the default) the grid gets finer where the host's
+shorter side holds fewer than six dots (below 168 px with the default
+spacing): spacing and dot size shrink together, a dot never below 1 px, and
+the wave's tail and push follow the spacing. Larger hosts keep the grid as
+set. A number scales spacing and dot size by that factor on every host
+(`autoscale: 0.5` halves them), `false` keeps them as set. The canvas takes
+the host's `border-radius`, so a rounded button clips the wave to its
+corners.
+
+### Spinner
+
+`<ws-loading-wave-spinner>` is a round loading spinner in the same style: a
+dish of dots that a ripple from its middle lights again and again
+(`origin: 'center'`, a sweep of 1.2 s). It spins while it is there, so show
+it with `@if`:
+
+```ts
+import { LoadingWaveSpinnerComponent } from '@wolsok/loading-wave';
+```
+
+```html
+@if (saving()) {
+<ws-loading-wave-spinner [diameter]="24" label="Saving" />
+}
+```
+
+| Input      | Default     | What it does                                                         |
+| ---------- | ----------- | -------------------------------------------------------------------- |
+| `diameter` | `40`        | width and height, CSS pixels                                         |
+| `label`    | `'Loading'` | the `aria-label` of its `role="progressbar"`                         |
+| `options`  | unset       | wave options laid over the spinner's ripple (unset values keep them) |
+
+The app-wide options of `provideLoadingWave` apply to it too, and its dots
+take its `currentColor` unless `color` is set.
 
 ## Shaders
 
@@ -191,11 +240,11 @@ with alpha, not by adding light, and it reads in light and dark themes.
 | ------------------------------------------------ | ------- | ------------------------------------------------------------------------------------------------------ |
 | `ws_size`                                        | `vec2`  | the host's size, CSS pixels                                                                            |
 | `ws_pixel`                                       | `float` | CSS pixels per device pixel, for anti-aliasing                                                         |
-| `ws_spacing`                                     | `float` | the dot spacing in use                                                                                 |
-| `ws_dotSize`                                     | `float` | a resting dot's diameter                                                                               |
+| `ws_spacing`                                     | `float` | the dot spacing in use (after `autoscale`)                                                             |
+| `ws_dotSize`                                     | `float` | a resting dot's diameter in use (scaled with the spacing)                                              |
 | `ws_color`                                       | `vec4`  | the dots' colour, straight RGBA 0 to 1                                                                 |
 | `ws_accent`                                      | `vec4`  | the accent colour (the dots' colour when unset)                                                        |
-| `ws_center`                                      | `vec2`  | the centre of the front's circle (left of the host)                                                    |
+| `ws_center`                                      | `vec2`  | the centre of the front's circle (left of the host, or its middle with `origin: 'center'`)             |
 | `ws_frontRadius`                                 | `float` | the front's radius now                                                                                 |
 | `ws_echoRadius`                                  | `float` | the echo's radius, negative while there is none                                                        |
 | `ws_travel`                                      | `float` | how far the radius grows in one sweep                                                                  |
