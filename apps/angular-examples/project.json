@@ -124,6 +124,7 @@
     },
     "build": {
       "executor": "nx:run-commands",
+      "outputs": [],
       "inputs": [
         "production",
         "sharedGlobals",

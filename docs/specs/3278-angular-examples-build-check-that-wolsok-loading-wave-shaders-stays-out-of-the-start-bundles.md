@@ -68,8 +68,11 @@ shaders' sources reach a script the shell loads at start, as
    against the source maps' `sources` (`../../../libs/…/x.shader.ts`). Reason: a sixth
    shader added to the entry is covered without a change to the check, and
    the default `ripple.shader.ts`, which the main entry exports, is not on
-   the list. The check fails with exit code 2 when it finds no re-export,
-   so a moved entry cannot silently pass.
+   the list. The check fails with exit code 2 when it finds no re-export, when a
+   re-exported module does not exist as a `.ts` file (`./x` and `./x.js`
+   both name `x.ts`), or when a source is missing from the shaders' own
+   bundle `_wolsok_loading_wave_shaders-*.js`, so a moved entry or a barrel
+   re-export cannot make it match nothing and silently pass.
 5. **`build` becomes a wrapper, as in the game.** `angular-examples`'
    federation builder target is renamed `build-federation` (same options,
    inputs, outputs and `dependsOn`, `cache: true`); `build` is an

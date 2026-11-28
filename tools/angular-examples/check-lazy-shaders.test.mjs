@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdirSync, writeFileSync } from 'node:fs';
-import { join } from 'node:path';
+import { join, posix } from 'node:path';
 import { afterEach, describe, it, mock } from 'node:test';
 import {
   distFixture,
@@ -58,6 +58,18 @@ function shellDist({
   );
 }
 
+/** A workspace root holding the shaders entry with `code` and the `files` beside it. */
+function entryFixture(code, files) {
+  const root = emptyDistFixture();
+  const src = join(root, posix.dirname(SHADERS_ENTRY));
+  mkdirSync(join(src, 'lib'), { recursive: true });
+  writeFileSync(join(root, SHADERS_ENTRY), code);
+  for (const file of files) {
+    writeFileSync(join(src, file), '');
+  }
+  return root;
+}
+
 function captureConsole() {
   return {
     log: mock.method(console, 'log', () => undefined),
@@ -67,19 +79,34 @@ function captureConsole() {
 
 void describe('shaderSources', () => {
   void it('reads the modules the shaders entry re-exports, without the default ripple', () => {
+    // only facts that hold whatever shaders the entry gains or loses: the
+    // file is no input of tools:test, so a lib change never reruns this
     const sources = shaderSources();
 
-    assert.equal(sources.length, 5);
-    assert.ok(sources.includes(SHADER));
+    assert.ok(sources.length > 0);
     assert.ok(!sources.includes(RIPPLE));
   });
 
+  void it('maps extensionless and .js specifiers to the TypeScript file', () => {
+    const root = entryFixture(
+      "export { a } from './lib/a.shader';\nexport { b } from './lib/b.shader.js';\n",
+      ['lib/a.shader.ts', 'lib/b.shader.ts']
+    );
+
+    assert.deepEqual(shaderSources(root), [
+      'libs/public/ws-loading-wave/src/lib/a.shader.ts',
+      'libs/public/ws-loading-wave/src/lib/b.shader.ts',
+    ]);
+  });
+
+  void it('refuses a re-export it cannot map to a source file', () => {
+    const root = entryFixture("export * from './lib/webgl/shaders';\n", []);
+
+    assert.throws(() => shaderSources(root), BuildCheckError);
+  });
+
   void it('refuses an entry without re-exports', () => {
-    const root = emptyDistFixture();
-    mkdirSync(join(root, 'libs/public/ws-loading-wave/src'), {
-      recursive: true,
-    });
-    writeFileSync(join(root, SHADERS_ENTRY), 'export const nothing = 1;\n');
+    const root = entryFixture('export const nothing = 1;\n', []);
 
     assert.throws(() => shaderSources(root), BuildCheckError);
   });
@@ -129,6 +156,18 @@ void describe('checkLazyShaders', () => {
     assert.match(
       output.error.mock.calls[0].arguments[0],
       /_wolsok_loading_wave-W\.js: .*spark-front/
+    );
+  });
+
+  void it('refuses to pass when a shader source is missing from the shaders bundle', () => {
+    captureConsole();
+    const dist = shellDist({ mainBundleSources: [] });
+
+    assert.throws(
+      () => checkLazyShaders(dist, [RIPPLE]),
+      new BuildCheckError(
+        `_wolsok_loading_wave_shaders-S.js holds none of ${RIPPLE} - the check would match nothing.`
+      )
     );
   });
 

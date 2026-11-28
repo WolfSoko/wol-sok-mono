@@ -7,7 +7,7 @@
 //
 //   node tools/angular-examples/check-lazy-shaders.mjs dist/apps/angular-examples
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -20,6 +20,7 @@ import {
 const WORKSPACE_ROOT = fileURLToPath(new URL('../../', import.meta.url));
 export const SHADERS_ENTRY = 'libs/public/ws-loading-wave/src/shaders.ts';
 export const MAIN_ENTRY = '@wolsok/loading-wave';
+const SHADERS_PACKAGE = `${MAIN_ENTRY}/shaders`;
 
 const SCRIPT_EXTENSION = /\.[cm]?[jt]s$/;
 const RELATIVE_RE_EXPORT =
@@ -27,7 +28,8 @@ const RELATIVE_RE_EXPORT =
 
 /**
  * The workspace paths of the modules the shaders entry re-exports, as the
- * source maps name them (`…/x.shader.ts`).
+ * source maps name them (`…/x.shader.ts`). Each must exist, so a specifier
+ * the check cannot map to a source file fails rather than matching nothing.
  */
 export function shaderSources(
   workspaceRoot = WORKSPACE_ROOT,
@@ -36,8 +38,13 @@ export function shaderSources(
   const code = readFileSync(join(workspaceRoot, entry), 'utf8');
   const sources = [...code.matchAll(RELATIVE_RE_EXPORT)].map(
     ([, specifier]) => {
-      const path = posix.join(posix.dirname(entry), specifier);
-      return SCRIPT_EXTENSION.test(path) ? path : `${path}.ts`;
+      const source = sourceFile(posix.join(posix.dirname(entry), specifier));
+      if (!existsSync(join(workspaceRoot, source))) {
+        throw new BuildCheckError(
+          `${entry} re-exports '${specifier}', but ${source} does not exist.`
+        );
+      }
+      return source;
     }
   );
   if (sources.length === 0) {
@@ -58,8 +65,9 @@ export function checkLazyShaders(dist, sources = shaderSources()) {
       `The shared bundle of ${MAIN_ENTRY} is not among the scripts loaded at start - the check would inspect the wrong set.`
     );
   }
+  assertShadersBundleHolds(dist, sources);
   const leaks = leakedSources(dist, scripts, (source) =>
-    sources.some((shader) => source === shader || source.endsWith(`/${shader}`))
+    sources.some((shader) => isSource(source, shader))
   );
   if (leaks.length > 0) {
     console.error(
@@ -73,6 +81,40 @@ export function checkLazyShaders(dist, sources = shaderSources()) {
       scripts.join('\n  ')
   );
   return 0;
+}
+
+/**
+ * Every shader source must show up in the shaders' own bundle: proof that
+ * the matching works on this build, as the main bundle's presence proves the
+ * traversal does.
+ */
+function assertShadersBundleHolds(dist, sources) {
+  const bundle = sharedBundles(dist).get(SHADERS_PACKAGE);
+  if (bundle === undefined) {
+    throw new BuildCheckError(`No shared bundle of ${SHADERS_PACKAGE}.`);
+  }
+  const unmatched = sources.filter(
+    (shader) =>
+      leakedSources(dist, [bundle], (source) => isSource(source, shader))
+        .length === 0
+  );
+  if (unmatched.length > 0) {
+    throw new BuildCheckError(
+      `${bundle} holds none of ${unmatched.join(', ')} - the check would match nothing.`
+    );
+  }
+}
+
+/** A TypeScript module's file: `./x` and `./x.js` both name `x.ts`. */
+function sourceFile(path) {
+  if (path.endsWith('.js')) {
+    return `${path.slice(0, -'.js'.length)}.ts`;
+  }
+  return SCRIPT_EXTENSION.test(path) ? path : `${path}.ts`;
+}
+
+function isSource(mapSource, shader) {
+  return mapSource === shader || mapSource.endsWith(`/${shader}`);
 }
 
 function main(dist) {
