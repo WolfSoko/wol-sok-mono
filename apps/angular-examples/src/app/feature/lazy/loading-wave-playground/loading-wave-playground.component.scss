@@ -18,19 +18,15 @@ mat-slider,
   width: 100%;
 }
 
-.custom-shader {
-  display: grid;
-  gap: 0.5rem;
-  justify-items: start;
+.shader-editor {
+  grid-column: 1 / -1;
+}
 
-  mat-form-field {
-    width: 100%;
-  }
-
-  textarea {
-    font-family: monospace;
-    font-size: 0.8rem;
-  }
+.small-elements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: center;
 }
 
 .options {

@@ -35,6 +35,37 @@
     </section>
 
     <section>
+      <h3 class="mat-subtitle-2">Autoscale</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="how the dot grid follows the size of small elements"
+        data-testid="autoscale"
+        [value]="options().autoscale"
+        (change)="setOption('autoscale', $event.value)"
+      >
+        @for (choice of autoscaleChoices; track choice.label) {
+          <mat-button-toggle [value]="choice.value">{{
+            choice.label
+          }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </section>
+
+    <section>
+      <h3 class="mat-subtitle-2">Origin</h3>
+      <mat-button-toggle-group
+        hideSingleSelectionIndicator
+        aria-label="where the wave comes from"
+        data-testid="origin"
+        [value]="options().origin"
+        (change)="setOption('origin', $event.value)"
+      >
+        <mat-button-toggle value="left">left</mat-button-toggle>
+        <mat-button-toggle value="center">center</mat-button-toggle>
+      </mat-button-toggle-group>
+    </section>
+
+    <section>
       <h3 class="mat-subtitle-2">Dot spacing: {{ options().dotSpacing }} px</h3>
       <mat-slider min="12" max="60" step="2" discrete>
         <input
@@ -140,31 +171,6 @@
       </mat-form-field>
     </section>
 
-    @if (shaderPick() === customPick) {
-      <section class="custom-shader">
-        <mat-form-field appearance="outline">
-          <mat-label>Fragment (GLSL ES 3.00, defines wsShade)</mat-label>
-          <textarea
-            matInput
-            spellcheck="false"
-            rows="14"
-            data-testid="custom-fragment"
-            #fragment
-            [value]="customDraft()"
-            (input)="customDraft.set(fragment.value)"
-          ></textarea>
-        </mat-form-field>
-        <button
-          mat-flat-button
-          type="button"
-          data-testid="apply-fragment"
-          (click)="applyCustomFragment()"
-        >
-          Apply
-        </button>
-      </section>
-    }
-
     <pre class="options" data-testid="options">{{ optionsJson() }}</pre>
     <pre class="options" data-testid="shader-option">{{ shaderOption() }}</pre>
   </mat-card-content>
@@ -199,4 +205,93 @@
       >
     </figcaption>
   </figure>
+
+  <mat-card appearance="outlined" data-testid="small-elements">
+    <mat-card-header>
+      <mat-card-title>Small elements</mat-card-title>
+      <mat-card-subtitle>
+        The same wave on buttons and a chip, and spinners in its style, with the
+        shader stage's shader where the GPU allows.
+      </mat-card-subtitle>
+    </mat-card-header>
+    <mat-card-content class="small-elements">
+      <button
+        mat-flat-button
+        type="button"
+        [wsLoadingWave]="loading()"
+        [wsLoadingWaveOptions]="smallOptions()"
+      >
+        Save
+      </button>
+      <button
+        mat-stroked-button
+        type="button"
+        [wsLoadingWave]="loading()"
+        [wsLoadingWaveOptions]="smallOptions()"
+      >
+        Upload
+      </button>
+      <button
+        mat-icon-button
+        type="button"
+        aria-label="Refresh"
+        [wsLoadingWave]="loading()"
+        [wsLoadingWaveOptions]="smallOptions()"
+      >
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <mat-chip-set aria-label="a chip while loading">
+        <mat-chip
+          [wsLoadingWave]="loading()"
+          [wsLoadingWaveOptions]="smallOptions()"
+          >Syncing</mat-chip
+        >
+      </mat-chip-set>
+      @if (loading()) {
+        @for (diameter of spinnerDiameters; track diameter) {
+          <ws-loading-wave-spinner
+            [diameter]="diameter"
+            [label]="'Loading, ' + diameter + ' px spinner'"
+            [options]="spinnerOptions()"
+          />
+        }
+      }
+    </mat-card-content>
+  </mat-card>
 </div>
+
+@if (shaderPick() === customPick) {
+  <mat-card
+    appearance="raised"
+    class="shader-editor"
+    data-testid="shader-editor"
+  >
+    <mat-card-header>
+      <mat-card-title>Custom shader</mat-card-title>
+      <mat-card-subtitle
+        >GLSL ES 3.00 that defines wsShade, drawn on the shader stage once
+        applied</mat-card-subtitle
+      >
+    </mat-card-header>
+    <mat-card-content>
+      <ws-shared-ui-code-editor
+        data-testid="custom-fragment"
+        mode="glsl"
+        [code]="customDraft()"
+        [changeDebounceMs]="0"
+        [minLines]="editorLines"
+        (codeChange)="customDraft.set($event)"
+      />
+    </mat-card-content>
+    <mat-card-actions>
+      <button
+        mat-flat-button
+        type="button"
+        data-testid="apply-fragment"
+        (click)="applyCustomFragment()"
+      >
+        Apply
+      </button>
+    </mat-card-actions>
+  </mat-card>
+}
