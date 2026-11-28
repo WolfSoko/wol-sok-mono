@@ -39,9 +39,9 @@ rows of dots.
      `MIN_DOTS_ACROSS = 6`. Hosts with a shorter side of at least 168 px
      (with the defaults) keep `f = 1` and look as before.
    - A number: that factor as given (`0.5` halves the grid, `2` doubles
-     it). One that is not a positive finite number falls back to `true` in
-     `resolveLoadingWaveOptions`, as other bad values fall back to their
-     defaults.
+     it). One that is not a positive finite number falls back to the
+     defaults' `autoscale` in `resolveLoadingWaveOptions` (`true` unless
+     `provideLoadingWave` sets another), as bad sizes fall back to theirs.
    - `false`: `f = 1`, the 0.0.3 behaviour.
 
    The spacing becomes `dotSpacing × f`. The dot size becomes
@@ -149,7 +149,8 @@ rows of dots.
    400 × 300 it gives 28 and 1.5. With `autoscale: 0.5` it gives 14 and
    1 (floor) on any host. With `false` it gives 28 and 1.5 on any host.
 2. `resolveLoadingWaveOptions` keeps `true`, `false` and positive finite
-   numbers, and turns `0`, negative, `NaN` and `Infinity` into `true`. An
+   numbers, and replaces `0`, negative, `NaN` and `Infinity` with the
+   defaults' `autoscale` (`true` with the lib's own defaults). An
    app's own `LOADING_WAVE_OPTIONS` without `autoscale` or `origin` resolves
    to `true` and `'left'`.
 3. `origin: 'center'` gives `centerX = width / 2`, `centerY = height / 2`,

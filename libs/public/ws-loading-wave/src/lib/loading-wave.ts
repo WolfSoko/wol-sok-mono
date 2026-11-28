@@ -190,9 +190,8 @@ export class LoadingWave {
   }
 
   private look(): WaveLook {
-    const { dotSize, color, accentColor } = this.options;
+    const { color, accentColor } = this.options;
     return {
-      dotSize,
       color: this.env.resolveColor(this.host, color),
       accent:
         accentColor === undefined
@@ -206,6 +205,8 @@ export class LoadingWave {
     this.renderer?.resize(
       waveGeometry(width, height, {
         dotSpacing: this.options.dotSpacing,
+        dotSize: this.options.dotSize,
+        autoscale: this.options.autoscale,
         sweepMs: this.options.sweepMs,
         frontRoundness: this.options.frontRoundness,
       }),

@@ -1,5 +1,5 @@
 import { InjectionToken, Provider } from '@angular/core';
-import { DEFAULT_FRONT_ROUNDNESS } from './wave-model';
+import { Autoscale, DEFAULT_FRONT_ROUNDNESS } from './wave-model';
 import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { rippleShader } from './webgl/shaders/ripple.shader';
 
@@ -19,6 +19,13 @@ export interface LoadingWaveOptions {
   readonly dotSpacing: number;
   /** diameter of a dot at rest, in CSS pixels */
   readonly dotSize: number;
+  /**
+   * how the dot grid follows the host's size: `true` makes spacing and dot
+   * size finer on a host too small for `MIN_DOTS_ACROSS` dots across its
+   * shorter side (a button), a number scales both by that factor, `false`
+   * keeps them as set; `true` when unset
+   */
+  readonly autoscale?: Autoscale;
   /** any CSS colour; unset, the dots take the host's `currentColor` */
   readonly color?: string;
   /**
@@ -49,13 +56,14 @@ export interface LoadingWaveOptions {
 
 /** options with every default filled in, as the wave runs with them */
 export type ResolvedLoadingWaveOptions = LoadingWaveOptions &
-  Required<Pick<LoadingWaveOptions, 'frontRoundness' | 'shader'>>;
+  Required<Pick<LoadingWaveOptions, 'autoscale' | 'frontRoundness' | 'shader'>>;
 
 export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   afterLoading: 'hide',
   dotSpacing: 28,
   dotSize: 1.5,
   sweepMs: 1600,
+  autoscale: true,
   renderer: 'auto',
   frontRoundness: DEFAULT_FRONT_ROUNDNESS,
   shader: rippleShader,
@@ -78,8 +86,8 @@ export function provideLoadingWave(
 
 /**
  * Merges `overrides` into `defaults`, ignoring `undefined` values,
- * replacing sizes and durations that are no positive finite number and
- * clamping the front's roundness into 0 to 1.
+ * replacing sizes, durations and an `autoscale` factor that are no positive
+ * finite number and clamping the front's roundness into 0 to 1.
  */
 export function resolveLoadingWaveOptions(
   defaults: LoadingWaveOptions,
@@ -94,6 +102,7 @@ export function resolveLoadingWaveOptions(
     dotSpacing: positiveOr(merged.dotSpacing, defaults.dotSpacing),
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
+    autoscale: autoscaleOr(merged.autoscale, defaults.autoscale ?? true),
     // an app's own LOADING_WAVE_OPTIONS may lack the newer options
     frontRoundness: unitOr(
       merged.frontRoundness,
@@ -107,6 +116,19 @@ export function resolveLoadingWaveOptions(
 function unitOr(value: number | undefined, fallback: number): number {
   return value !== undefined && Number.isFinite(value)
     ? Math.min(1, Math.max(0, value))
+    : fallback;
+}
+
+/** a boolean or a positive finite factor; `fallback` for anything else */
+function autoscaleOr(
+  value: Autoscale | undefined,
+  fallback: Autoscale
+): Autoscale {
+  if (typeof value === 'boolean') {
+    return value;
+  }
+  return value !== undefined && Number.isFinite(value) && value > 0
+    ? value
     : fallback;
 }
 

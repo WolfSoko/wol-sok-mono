@@ -38,11 +38,30 @@ const TAIL_SPACINGS = 4;
 export const MAX_DOTS = 20_000;
 /** the farthest a lit dot is pushed along the wave, in dot spacings */
 const MAX_PUSH_SPACINGS = 0.15;
+/**
+ * How many dots `autoscale: true` keeps across the host's shorter side: a
+ * smaller host gets a finer grid rather than a row or two of dots.
+ */
+export const MIN_DOTS_ACROSS = 6;
+/**
+ * The smallest dot `autoscale` shrinks to, in CSS pixels: smaller, a dot
+ * would vanish between the device pixels.
+ */
+export const MIN_DOT_SIZE = 1;
+
+/**
+ * How the dot grid follows the host's size: `true` makes it finer where the
+ * host's shorter side holds fewer than `MIN_DOTS_ACROSS` dots, a number
+ * scales spacing and dot size by that factor, `false` keeps them as asked.
+ */
+export type Autoscale = boolean | number;
 
 export interface WaveGeometry {
   readonly width: number;
   readonly height: number;
   readonly dotSpacing: number;
+  /** diameter of a dot at rest, scaled with the spacing */
+  readonly dotSize: number;
   readonly sweepMs: number;
   readonly centerX: number;
   readonly centerY: number;
@@ -64,7 +83,11 @@ export interface WaveGeometry {
 
 export interface WaveGeometryOptions {
   readonly dotSpacing: number;
+  /** diameter of a dot at rest, in CSS pixels */
+  readonly dotSize: number;
   readonly sweepMs: number;
+  /** how the grid follows the host's size; unset, it keeps the asked one */
+  readonly autoscale?: Autoscale;
   /**
    * 0 (a straight front) to 1: how far the front's ends lag its middle, as a
    * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset
@@ -87,11 +110,14 @@ export function waveGeometry(
   height: number,
   {
     dotSpacing: askedSpacing,
+    dotSize: askedSize,
     sweepMs,
+    autoscale = false,
     frontRoundness = DEFAULT_FRONT_ROUNDNESS,
   }: WaveGeometryOptions
 ): WaveGeometry {
-  const dotSpacing = spacingWithinDotLimit(width, height, askedSpacing);
+  const grid = scaledGrid(width, height, askedSpacing, askedSize, autoscale);
+  const dotSpacing = spacingWithinDotLimit(width, height, grid.dotSpacing);
   const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
   const tail = TAIL_SPACINGS * dotSpacing;
   const endRadius = Math.hypot(distance + width + tail, height / 2);
@@ -99,6 +125,7 @@ export function waveGeometry(
     width,
     height,
     dotSpacing,
+    dotSize: grid.dotSize,
     sweepMs,
     centerX: -distance,
     centerY: height / 2,
@@ -110,6 +137,44 @@ export function waveGeometry(
     tail,
     maxPush: MAX_PUSH_SPACINGS * dotSpacing,
   };
+}
+
+/** the asked spacing and dot size, scaled as `autoscale` says */
+function scaledGrid(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  dotSize: number,
+  autoscale: Autoscale
+): Pick<WaveGeometry, 'dotSpacing' | 'dotSize'> {
+  const spacing = scaledSpacing(width, height, dotSpacing, autoscale);
+  if (spacing === dotSpacing) {
+    return { dotSpacing, dotSize };
+  }
+  const scaledSize = (dotSize * spacing) / dotSpacing;
+  return {
+    dotSpacing: spacing,
+    dotSize: Math.max(Math.min(dotSize, MIN_DOT_SIZE), scaledSize),
+  };
+}
+
+function scaledSpacing(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  autoscale: Autoscale
+): number {
+  if (typeof autoscale === 'number') {
+    return Number.isFinite(autoscale) && autoscale > 0
+      ? dotSpacing * autoscale
+      : dotSpacing;
+  }
+  const shorterSide = Math.min(width, height);
+  // an empty host has no grid to fit, and a factor of 0 would end every sweep
+  if (!autoscale || shorterSide <= 0) {
+    return dotSpacing;
+  }
+  return Math.min(dotSpacing, shorterSide / MIN_DOTS_ACROSS);
 }
 
 /**

@@ -101,7 +101,7 @@ export class CanvasWaveRenderer implements WaveRenderer {
   /** draws every dot at rest in one path, returns the lit ones */
   private drawRestingDots(geometry: WaveGeometry, frame: WaveFrame): LitDot[] {
     const { context } = this;
-    const radius = this.look.dotSize / 2;
+    const radius = geometry.dotSize / 2;
     const lit: LitDot[] = [];
     context.globalAlpha = dotsOpacity(frame, this.look.color) * REST_ALPHA;
     context.beginPath();
@@ -128,7 +128,7 @@ export class CanvasWaveRenderer implements WaveRenderer {
     litDots: LitDot[]
   ): void {
     const { context } = this;
-    const restRadius = this.look.dotSize / 2;
+    const restRadius = geometry.dotSize / 2;
     const { color, accent = color } = this.look;
     for (const { center, intensity } of litDots) {
       if (accent !== color) {

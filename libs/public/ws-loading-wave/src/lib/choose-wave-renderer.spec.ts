@@ -6,7 +6,7 @@ import {
 } from './choose-wave-renderer';
 import { fakeWebGl2, FakeWebGl2Options } from './webgl/fake-webgl2.mock';
 
-const look = { dotSize: 1.5, color: { r: 1, g: 2, b: 3 } };
+const look = { color: { r: 1, g: 2, b: 3 } };
 
 /** canvases that offer the given WebGL2 context (or none) and a 2D one */
 function canvases(webgl2: FakeWebGl2Options | 'none') {
