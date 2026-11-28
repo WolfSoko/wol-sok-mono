@@ -22,6 +22,11 @@ const float PATTERN_REST_ALPHA = 0.6;
 const float LINE_WIDTH = 0.06;
 const float FLICKER_SPACINGS = 1.5;
 const float FLICKERS_PER_SECOND = 24.0;
+const float FLICKER_OFF_CHANCE = 0.35;
+const float PATTERN_KINDS = 4.0;
+const float STRIPE_ALPHA = 0.6;
+const float HATCH_ALPHA = 0.5;
+const float CELL_SQUARE_SPACINGS = 0.3;
 
 /*
  * The block, in cells (min in xy, max in zw), that a point lies in: the
@@ -50,31 +55,46 @@ vec4 dieBlock(vec2 point) {
   return box;
 }
 
-/* anti-aliased coverage of a line of the given width at the given distance */
-float lineAt(float away, float width) {
-  float edge = 0.5 * ws_pixel;
-  return 1.0 - smoothstep(0.5 * width - edge, 0.5 * width + edge, away);
+/*
+ * How far p lies inside its block from the block's inner edges, in CSS
+ * pixels; the host's own edges count as far away, so no rail runs there.
+ */
+float toInnerEdge(vec2 p, vec4 box) {
+  vec2 low = box.xy * ws_spacing;
+  vec2 high = min(box.zw * ws_spacing, ws_size);
+  vec2 fromLow = p - low + 1.0e6 * vec2(lessThanEqual(box.xy, vec2(0.0)));
+  vec2 toHigh = high - p + 1.0e6 * vec2(greaterThanEqual(high, ws_size));
+  return min(min(fromLow.x, fromLow.y), min(toHigh.x, toHigh.y));
 }
 
-/* a block's micro pattern at p, 0 to 1: dots, stripes, a hatch or cells */
-float microPattern(vec2 p, float kind) {
+/*
+ * A block's micro pattern at p, 0 to 1: dots, stripes, a hatch or cells,
+ * kept off the rails by the inset. Dots sit where the grid has them, whole.
+ */
+float microPattern(vec2 p, vec4 box, float kind) {
+  float inset = INSET_SPACINGS * ws_spacing;
+  float edge = 0.5 * ws_pixel;
+  float inside = smoothstep(inset - edge, inset + edge, toInnerEdge(p, box));
   vec2 center = ws_cellCenter(ws_cell(p));
-  float dotCover = ws_dotDisk(p, center, 0.5 * ws_dotSize);
+  bool dotShown = all(lessThan(center, ws_size)) && toInnerEdge(center, box) >= inset;
+  float dotCover = dotShown ? ws_dotDisk(p, center, 0.5 * ws_dotSize) : 0.0;
   float lineWidth = max(LINE_WIDTH * ws_spacing, ws_pixel);
+  float lines = 0.0;
   if (kind < 1.0) {
-    return dotCover;
-  }
-  if (kind < 2.0) {
-    return max(dotCover, 0.6 * lineAt(abs(p.y - center.y), lineWidth));
-  }
-  if (kind < 3.0) {
+    lines = 0.0;
+  } else if (kind < 2.0) {
+    lines = STRIPE_ALPHA * ws_band(abs(p.y - center.y), lineWidth);
+  } else if (kind < 3.0) {
+    // 45° lines through the dots, measured across them
     float diagonal = (p.x + p.y) / ws_spacing;
-    float away = abs(fract(diagonal) - 0.5) * ws_spacing * 0.7071;
-    return max(dotCover, 0.5 * lineAt(away, lineWidth));
+    float away = abs(fract(diagonal) - 0.5) * ws_spacing * inversesqrt(2.0);
+    lines = HATCH_ALPHA * ws_band(away, lineWidth);
+  } else {
+    vec2 fromCenter = abs(p - center);
+    float square = abs(max(fromCenter.x, fromCenter.y) - CELL_SQUARE_SPACINGS * ws_spacing);
+    lines = STRIPE_ALPHA * ws_band(square, lineWidth);
   }
-  vec2 fromCenter = abs(p - center);
-  float square = abs(max(fromCenter.x, fromCenter.y) - 0.3 * ws_spacing);
-  return max(dotCover, 0.6 * lineAt(square, lineWidth));
+  return max(dotCover, inside * lines);
 }
 
 vec4 wsShade(vec2 point) {
@@ -88,17 +108,13 @@ vec4 wsShade(vec2 point) {
   float power = ws_waveIntensity(anchor);
   float sinceReached = ws_behindFront(anchor);
   if (sinceReached >= 0.0 && sinceReached < FLICKER_SPACINGS * ws_spacing) {
-    power *= step(0.35, ws_hash(vec2(blockSeed * 97.0, floor(ws_time * FLICKERS_PER_SECOND))));
+    float flickerFrame = floor(ws_time * FLICKERS_PER_SECOND);
+    power *= step(FLICKER_OFF_CHANCE, ws_hash(vec2(blockSeed * 97.0, flickerFrame)));
   }
 
-  // rails run along the block's inner edges, none along the host's own
-  vec2 fromLow = point - low + 1.0e6 * vec2(lessThanEqual(box.xy, vec2(0.0)));
-  vec2 toHigh = high - point + 1.0e6 * vec2(greaterThanEqual(high, ws_size));
-  float toEdge = min(min(fromLow.x, fromLow.y), min(toHigh.x, toHigh.y));
-  float rail = lineAt(toEdge, 2.0 * max(RAIL_WIDTH * ws_spacing, ws_pixel));
-
-  float inside = step(INSET_SPACINGS * ws_spacing, toEdge);
-  float pattern = inside * microPattern(point, floor(blockSeed * 4.0));
+  // rails run along the block's inner edges, half on each side
+  float rail = ws_band(toInnerEdge(point, box), 2.0 * max(RAIL_WIDTH * ws_spacing, ws_pixel));
+  float pattern = microPattern(point, box, floor(blockSeed * PATTERN_KINDS));
 
   vec4 ink = ws_ink(power);
   float railAlpha = rail * ink.a * mix(RAIL_REST_ALPHA, RAIL_LIT_ALPHA, power);

@@ -14,10 +14,17 @@ const float BOLT_WIDTH = 0.07;
 const float BOLT_GLOW_SPACINGS = 0.45;
 const float BOLT_GLOW_ALPHA = 0.4;
 const float STRIKE_CHANCE = 0.3;
-const float REACH_SPACINGS = 1.6;
+// a branch, kink and width included, stays within the 3 x 3 cells drawn
+const float REACH_SPACINGS = 1.2;
 const float BRANCH_KINK_SPACINGS = 0.35;
 const float DOT_GROWTH = 1.0;
 const float SPARK_GROWTH = 1.4;
+const float SPARK_WHITENING = 0.7;
+const float BRANCH_WIDTH = 0.6;
+const float COARSE_WANDER_SPACINGS = 2.5;
+const float FINE_WANDER_SPACINGS = 0.7;
+const float FINE_WANDER_SHARE = 0.35;
+const vec3 LUMA = vec3(0.299, 0.587, 0.114);
 
 /* smooth value noise along t, 0 to 1, a new curve per frame */
 float frameNoise(float t, float frame) {
@@ -27,17 +34,27 @@ float frameNoise(float t, float frame) {
   return mix(ws_hash(vec2(index, frame)), ws_hash(vec2(index + 1.0, frame)), eased);
 }
 
-/* how far the bolt lies behind the front at height y, in CSS pixels: a coarse and a fine wander */
-float boltOffset(float y, float frame) {
-  float coarse = frameNoise(y / (2.5 * ws_spacing), frame);
-  float fine = frameNoise(y / (0.7 * ws_spacing), frame + 17.0);
-  return WANDER_SPACINGS * ws_spacing * (2.0 * (0.65 * coarse + 0.35 * fine) - 1.0);
+/*
+ * Where p lies around the wave's centre: the arc length to it on the circle
+ * the front starts on, about its height from the middle near the front. Every
+ * point on a line from the centre has the same, so the bolt is one curve.
+ */
+float arcAround(vec2 p) {
+  return atan(p.y - ws_center.y, p.x - ws_center.x) * -ws_center.x;
+}
+
+/* how far the bolt lies behind the front at an arc length, in CSS pixels: a coarse and a fine wander */
+float boltOffset(float arc, float frame) {
+  float coarse = frameNoise(arc / (COARSE_WANDER_SPACINGS * ws_spacing), frame);
+  float fine = frameNoise(arc / (FINE_WANDER_SPACINGS * ws_spacing), frame + 17.0);
+  float wander = mix(coarse, fine, FINE_WANDER_SHARE);
+  return WANDER_SPACINGS * ws_spacing * (2.0 * wander - 1.0);
 }
 
 /* where the bolt crosses the line from the wave's centre through p */
 vec2 boltPointToward(vec2 p, float frame) {
   vec2 outward = normalize(p - ws_center);
-  return ws_center + outward * (ws_frontRadius - boltOffset(p.y, frame));
+  return ws_center + outward * (ws_frontRadius - boltOffset(arcAround(p), frame));
 }
 
 /*
@@ -45,24 +62,24 @@ vec2 boltPointToward(vec2 p, float frame) {
  * light, so over a dark background, and the accent itself over a light one.
  */
 vec3 sparkColor() {
-  float dotsLight = step(0.5, dot(ws_color.rgb, vec3(0.299, 0.587, 0.114)));
-  return mix(ws_accent.rgb, vec3(1.0), 0.7 * dotsLight);
+  float dotsLight = step(0.5, dot(ws_color.rgb, LUMA));
+  return mix(ws_accent.rgb, vec3(1.0), SPARK_WHITENING * dotsLight);
 }
 
 vec4 wsShade(vec2 point) {
   float frame = floor(ws_time * FRAMES_PER_SECOND);
-  float edge = 0.5 * ws_pixel;
   vec3 spark = sparkColor();
 
   // the bolt: its core measured across it, so its steep stretches keep their
   // width; its glow along the front, so a sharp bend throws no smear
-  float offset = boltOffset(point.y, frame);
-  float slope = boltOffset(point.y + 0.5, frame) - boltOffset(point.y - 0.5, frame);
+  float arc = arcAround(point);
+  float offset = boltOffset(arc, frame);
+  float slope = boltOffset(arc + 0.5, frame) - boltOffset(arc - 0.5, frame);
   float along = abs(ws_behindFront(point) - offset);
   float away = along / sqrt(1.0 + slope * slope);
   float boltWidth = max(BOLT_WIDTH * ws_spacing, 1.5 * ws_pixel);
   float glowWidth = BOLT_GLOW_SPACINGS * ws_spacing;
-  float bolt = ws_wave * (1.0 - smoothstep(0.5 * boltWidth - edge, 0.5 * boltWidth + edge, away));
+  float bolt = ws_wave * ws_band(away, boltWidth);
   float boltGlow = ws_wave * BOLT_GLOW_ALPHA * exp(-along * along / (2.0 * glowWidth * glowWidth));
 
   // the dots, and the branches the bolt throws to those it strikes
@@ -85,8 +102,8 @@ vec4 wsShade(vec2 point) {
         vec2 across = normalize(vec2(target.y - center.y, center.x - target.x) + vec2(1.0e-4));
         vec2 kink = 0.5 * (center + target)
           + across * BRANCH_KINK_SPACINGS * ws_spacing * (ws_hash(neighbour + frame) - 0.5);
-        float branch = max(ws_segment(point, center, kink, 0.6 * boltWidth),
-          ws_segment(point, kink, target, 0.6 * boltWidth));
+        float branch = max(ws_segment(point, center, kink, BRANCH_WIDTH * boltWidth),
+          ws_segment(point, kink, target, BRANCH_WIDTH * boltWidth));
         branches = max(branches, struck * branch);
       }
       float lit = ws_waveIntensity(center);

@@ -205,18 +205,20 @@ with alpha, not by adding light, and it reads in light and dark themes.
 | `ws_previousSweep`                               | `float` | 1 once a sweep went before, else 0                                                                     |
 | `ws_wave`                                        | `float` | the wave's strength, 0 to 1 (fades in and out, 0 at rest)                                              |
 
-| Helper                                                                 | Gives                                                              |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it            |
-| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`               |
-| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                            |
-| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none |
-| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                |
-| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                        |
-| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                    |
-| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                    |
-| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell               |
-| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                          |
+| Helper                                                                 | Gives                                                                |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `float ws_behindFront(vec2 p)`                                         | how far `p` lies behind the front, negative ahead of it              |
+| `float ws_waveIntensity(vec2 p)`                                       | the wave's light at `p`, 0 to 1, scaled by `ws_wave`                 |
+| `float ws_echoGlow(vec2 p)`                                            | the echo's light at `p`                                              |
+| `float ws_behindEcho(vec2 p)`                                          | how far `p` lies behind the echo, far negative while there is none   |
+| `float ws_frontGlow(float behind)`, `float ws_afterglow(float behind)` | the two parts of `ws_waveIntensity`                                  |
+| `vec2 ws_cell(vec2 p)`, `vec2 ws_cellCenter(vec2 cell)`                | the grid cell of `p` and where its dot sits                          |
+| `float ws_dotDisk(vec2 p, vec2 center, float radius)`                  | anti-aliased coverage of a disk                                      |
+| `float ws_segment(vec2 p, vec2 a, vec2 b, float width)`                | anti-aliased coverage of a line                                      |
+| `float ws_segmentDistance(vec2 p, vec2 a, vec2 b)`                     | the distance from `p` to a segment                                   |
+| `float ws_band(float away, float width)`                               | anti-aliased coverage of a band of `width` at `away` from its middle |
+| `float ws_hash(vec2 p)`, `vec2 ws_hash2(vec2 p)`                       | stable pseudo-random numbers in [0, 1), say per cell                 |
+| `vec4 ws_ink(float lit)`                                               | the dots' colour mixed towards the accent                            |
 
 The constants `WS_REST_ALPHA`, `WS_LIT_ALPHA`, `WS_LIT_GROWTH`,
 `WS_FRONT_LINE_ALPHA`, `WS_AFTERGLOW`, `WS_AFTERGLOW_FADE_START` and

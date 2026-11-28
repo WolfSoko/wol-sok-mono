@@ -140,19 +140,27 @@ vec2 ws_cellCenter(vec2 cell) {
   return (cell + 0.5) * ws_spacing;
 }
 
+/** anti-aliased coverage, 0 to 1, of a band of the given width at a distance from its middle */
+float ws_band(float away, float width) {
+  float edge = 0.5 * ws_pixel;
+  return 1.0 - smoothstep(0.5 * width - edge, 0.5 * width + edge, away);
+}
+
 /** anti-aliased coverage of a disk at p, 0 to 1 */
 float ws_dotDisk(vec2 p, vec2 center, float radius) {
-  float edge = 0.5 * ws_pixel;
-  return 1.0 - smoothstep(radius - edge, radius + edge, length(p - center));
+  return ws_band(length(p - center), 2.0 * radius);
+}
+
+/** the distance from p to the segment from a to b */
+float ws_segmentDistance(vec2 p, vec2 a, vec2 b) {
+  vec2 ab = b - a;
+  float along = clamp(dot(p - a, ab) / max(dot(ab, ab), 1.0e-6), 0.0, 1.0);
+  return length(p - a - ab * along);
 }
 
 /** anti-aliased coverage of a line of the given width along a segment */
 float ws_segment(vec2 p, vec2 a, vec2 b, float width) {
-  vec2 ab = b - a;
-  float along = clamp(dot(p - a, ab) / max(dot(ab, ab), 1.0e-6), 0.0, 1.0);
-  float away = length(p - a - ab * along);
-  float edge = 0.5 * ws_pixel;
-  return 1.0 - smoothstep(0.5 * width - edge, 0.5 * width + edge, away);
+  return ws_band(ws_segmentDistance(p, a, b), width);
 }
 
 /** the dots' colour mixed towards the accent by lit, 0 to 1 */
