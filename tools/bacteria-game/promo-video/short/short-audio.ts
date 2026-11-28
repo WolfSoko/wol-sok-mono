@@ -19,7 +19,7 @@ const CHORDS = [
 ];
 
 /** A kick: a sine falling from `from` Hz to `to` Hz. */
-function kick(from: number, to: number, decay: number): Sound {
+export function kick(from: number, to: number, decay: number): Sound {
   return (t) =>
     Math.sin(2 * Math.PI * (to + (from - to) * Math.exp(-t * 30)) * t) *
     Math.exp(-t * decay);
@@ -43,7 +43,7 @@ export function shortSoundtrack(): Buffer {
 }
 
 /** Drone and a heartbeat that quickens from 66 to 132 BPM until the burst. */
-function addTension(mix: Mix, burst: number, noise: () => number): void {
+export function addTension(mix: Mix, burst: number, noise: () => number): void {
   for (const [note, pan] of [
     [33, -0.3],
     [40, 0.3],
@@ -81,7 +81,12 @@ function addTension(mix: Mix, burst: number, noise: () => number): void {
 }
 
 /** A needle stab: a short zap, higher with every stab, panned around. */
-function addStab(mix: Mix, at: number, k: number, rnd: () => number): void {
+export function addStab(
+  mix: Mix,
+  at: number,
+  k: number,
+  rnd: () => number
+): void {
   const f = hz(76 + k * 2);
   mix.add(
     at,
@@ -96,7 +101,7 @@ function addStab(mix: Mix, at: number, k: number, rnd: () => number): void {
 }
 
 /** Filtered noise swelling for two seconds into the burst. */
-function addRiser(mix: Mix, burst: number, noise: () => number): void {
+export function addRiser(mix: Mix, burst: number, noise: () => number): void {
   const length = 2;
   let y = 0;
   mix.add(
@@ -112,7 +117,7 @@ function addRiser(mix: Mix, burst: number, noise: () => number): void {
 }
 
 /** The burst: a deep kick, a crash of noise and a bright chord stab. */
-function addImpact(mix: Mix, burst: number, noise: () => number): void {
+export function addImpact(mix: Mix, burst: number, noise: () => number): void {
   mix.add(burst, 1.2, kick(160, 32, 3.2), 0, 0.9);
   let y = 0;
   mix.add(

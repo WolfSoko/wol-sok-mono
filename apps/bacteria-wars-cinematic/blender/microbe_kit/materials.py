@@ -303,3 +303,121 @@ def dissolving_membrane(source: bpy.types.Material, name: str = "Membrane shred"
     nt.links.new(lit.outputs[0], final.inputs[2])
     nt.links.new(final.outputs[0], out.inputs["Surface"])
     return Membrane(m, dissolve)
+
+
+def team_cell(name: str = "Colony cell", subsurface: float = 0.35, rim_strength: float = 1.1,
+              flash_strength: float = 1.6) -> bpy.types.Material:
+    """One material for every cell of every colony: color and glow come from
+    the object color, so swarm.bake() can key them per cell.
+
+    Object color RGB is the cell's color (body, subsurface and rim glow).
+    Its alpha is the glow: 1 is calm, above 1 the rim flares and the whole
+    cell lights up (a boost, a cell that just changed sides).
+    """
+    m, nt = _new(name)
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    cell = nt.nodes.new("ShaderNodeObjectInfo")
+    for socket in ("Base Color", "Emission Color", "Subsurface Radius"):
+        nt.links.new(cell.outputs["Color"], bsdf.inputs[socket])
+    bsdf.inputs["Roughness"].default_value = 0.28
+    bsdf.inputs["Subsurface Weight"].default_value = subsurface
+    bsdf.inputs["Subsurface Scale"].default_value = 0.35
+    bsdf.inputs["Coat Weight"].default_value = 0.7
+    bsdf.inputs["Coat Roughness"].default_value = 0.06
+    lw = nt.nodes.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.35
+    falloff = _math(nt, "POWER", lw.outputs["Facing"], 2.5)
+    rim = _math(nt, "MULTIPLY", falloff.outputs[0], rim_strength)
+    flared = _math(nt, "MULTIPLY", rim.outputs[0], cell.outputs["Alpha"])
+    excess = _math(nt, "SUBTRACT", cell.outputs["Alpha"], 1.0)
+    lit = _math(nt, "MAXIMUM", excess.outputs[0], 0.0)
+    flash = _math(nt, "MULTIPLY", lit.outputs[0], flash_strength)
+    total = _math(nt, "ADD", flared.outputs[0], flash.outputs[0])
+    nt.links.new(total.outputs[0], bsdf.inputs["Emission Strength"])
+    # a living skin, not a bead: fine dents, different on every cell
+    coords = nt.nodes.new("ShaderNodeTexCoord")
+    place = nt.nodes.new("ShaderNodeVectorMath")
+    nt.links.new(coords.outputs["Object"], place.inputs[0])
+    nt.links.new(cell.outputs["Random"], place.inputs[1])
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 3.5
+    noise.inputs["Detail"].default_value = 4
+    nt.links.new(place.outputs[0], noise.inputs["Vector"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.18
+    nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    return m
+
+
+def glass(name: str = "Glass", color=(0.9, 0.97, 1.0), roughness: float = 0.02) -> bpy.types.Material:
+    """Clear glass that lets light through to what it holds (no dark glass shadows)."""
+    m, nt = _new(name)
+    nt.nodes.clear()
+    out = nt.nodes.new("ShaderNodeOutputMaterial")
+    pane = nt.nodes.new("ShaderNodeBsdfGlass")
+    pane.inputs["Color"].default_value = (*color, 1)
+    pane.inputs["Roughness"].default_value = roughness
+    pane.inputs["IOR"].default_value = 1.47
+    clear = nt.nodes.new("ShaderNodeBsdfTransparent")
+    path = nt.nodes.new("ShaderNodeLightPath")
+    mix = nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(path.outputs["Is Shadow Ray"], mix.inputs[0])
+    nt.links.new(pane.outputs[0], mix.inputs[1])
+    nt.links.new(clear.outputs[0], mix.inputs[2])
+    nt.links.new(mix.outputs[0], out.inputs["Surface"])
+    m.diffuse_color = (*color, 0.3)
+    return m
+
+
+def agar(name: str = "Agar", color=(0.012, 0.016, 0.03)) -> bpy.types.Material:
+    """The nutrient gel of a dish: dark, wet and a little uneven, so lights and
+    cells mirror in it."""
+    m, nt = _new(name)
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (*color, 1)
+    bsdf.inputs["Roughness"].default_value = 0.2
+    bsdf.inputs["Coat Weight"].default_value = 0.5
+    bsdf.inputs["Coat Roughness"].default_value = 0.08
+    coords = nt.nodes.new("ShaderNodeTexCoord")
+    noise = nt.nodes.new("ShaderNodeTexNoise")
+    noise.inputs["Scale"].default_value = 1.6
+    noise.inputs["Detail"].default_value = 5
+    nt.links.new(coords.outputs["Object"], noise.inputs["Vector"])
+    bump = nt.nodes.new("ShaderNodeBump")
+    bump.inputs["Strength"].default_value = 0.3
+    bump.inputs["Distance"].default_value = 0.4
+    nt.links.new(noise.outputs["Fac"], bump.inputs["Height"])
+    nt.links.new(bump.outputs["Normal"], bsdf.inputs["Normal"])
+    m.diffuse_color = (*color, 1)
+    return m
+
+
+def stage(name: str = "Stage", color=(0.006, 0.007, 0.012), roughness: float = 0.22) -> bpy.types.Material:
+    """The dark, polished ground a dish stands on."""
+    m, nt = _new(name)
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (*color, 1)
+    bsdf.inputs["Roughness"].default_value = roughness
+    m.diffuse_color = (*color, 1)
+    return m
+
+
+def wall(name: str = "Wall", color=(0.55, 0.6, 0.68), edge_color=(0.55, 0.8, 1.0),
+         edge_glow: float = 1.2) -> bpy.types.Material:
+    """A level's wall: frosted, pale acrylic that glows faintly at its silhouette."""
+    m, nt = _new(name)
+    bsdf = next(n for n in nt.nodes if n.type == "BSDF_PRINCIPLED")
+    bsdf.inputs["Base Color"].default_value = (*color, 1)
+    bsdf.inputs["Roughness"].default_value = 0.3
+    bsdf.inputs["Transmission Weight"].default_value = 0.55
+    bsdf.inputs["IOR"].default_value = 1.3
+    bsdf.inputs["Coat Weight"].default_value = 0.4
+    bsdf.inputs["Emission Color"].default_value = (*edge_color, 1)
+    lw = nt.nodes.new("ShaderNodeLayerWeight")
+    lw.inputs["Blend"].default_value = 0.25
+    falloff = _math(nt, "POWER", lw.outputs["Facing"], 2.0)
+    strength = _math(nt, "MULTIPLY", falloff.outputs[0], edge_glow)
+    nt.links.new(strength.outputs[0], bsdf.inputs["Emission Strength"])
+    m.diffuse_color = (*color, 1)
+    return m

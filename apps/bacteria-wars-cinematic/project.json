@@ -7,7 +7,13 @@
     "scene": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "tsx tools/bacteria-game/cinematic/blender.ts --factory-startup --python apps/bacteria-wars-cinematic/blender/scenes/bacteria_fight.py -- dist/bacteria-wars-cinematic/bacteria-fight/bacteria-fight.blend"
+        "command": "tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/cinematic/scene.ts"
+      }
+    },
+    "preview": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/cinematic/preview.ts"
       }
     },
     "asset-library": {
@@ -20,6 +26,12 @@
       "executor": "nx:run-commands",
       "options": {
         "command": "tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/cinematic/render.ts"
+      }
+    },
+    "reel": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "tsx --tsconfig tools/tsconfig.tools.json tools/bacteria-game/cinematic/reel.ts"
       }
     }
   }

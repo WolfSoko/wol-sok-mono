@@ -16,11 +16,13 @@ import bpy
 from mathutils import Vector
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from microbe_kit import anim, effects, environment, materials, meshes, organisms  # noqa: E402
+from microbe_kit import (anim, colonies, effects, environment, food, materials, meshes, organisms,  # noqa: E402
+                         phages)
 
 CATALOGS = {
     "Microbes/Bacteria": "Rods with needles and flagella, cocci",
     "Microbes/Blood": "Vessel, red blood cells",
+    "Microbes/Dish": "Petri dish, colony cells, food, crosshair, bacteriophage",
     "Microbes/Effects": "Bursts and membrane shreds",
     "Microbes/Materials": "Shaders of the kit",
 }
@@ -56,6 +58,12 @@ def mark(idb, catalog: str, description: str, ids) -> None:
         idb.asset_generate_preview()
     except Exception as e:  # previews need a GPU context in some builds
         print(f"no preview for {idb.name}: {e}")
+
+
+def out_of_the_way(c) -> None:
+    """Hides a big asset in the library file's own view only. The switch on the
+    collection itself would travel with the asset and hide it wherever it is used."""
+    bpy.context.view_layer.layer_collection.children[c.name].hide_viewport = True
 
 
 def place(c, x: float) -> None:
@@ -109,7 +117,7 @@ def build(folder: Path) -> None:
                                "Vessel tunnel (radius 13, along +Y from -30 to 80) with five branches; "
                                "put the camera inside", ids, 0)
     environment.blood_vessel(c, rng)
-    c.hide_viewport = True  # big: keep it out of the way in the library file
+    out_of_the_way(c)
     done()
 
     c, done = asset_collection(scene, "Membrane shreds", "Microbes/Effects",
@@ -125,6 +133,8 @@ def build(folder: Path) -> None:
         anim.visible_between(ob, 10, 140)
     done()
 
+    dish_assets(scene, ids)
+
     for m in bpy.data.materials:
         mark(m, "Microbes/Materials", f"microbe_kit material {m.name}", ids)
 
@@ -134,6 +144,49 @@ def build(folder: Path) -> None:
     out = folder / "microbe-kit.blend"
     bpy.ops.wm.save_as_mainfile(filepath=str(out))
     print(f"Saved {out}")
+
+
+def dish_assets(scene, ids) -> None:
+    """What the game's dish holds: the dish, colony cells, a food pellet, a crosshair, a phage."""
+    c, done = asset_collection(scene, "Petri dish", "Microbes/Dish",
+                               "Glass dish of nutrient gel (inner radius 10, gel surface at z = 0) on a dark "
+                               "stage, ringed by a neon tube", ids, 0)
+    environment.petri_dish(c, 10.0)
+    out_of_the_way(c)
+    done()
+
+    c, done = asset_collection(scene, "Colony cells", "Microbes/Dish",
+                               "A coccus and a short rod of a colony; their material takes the cell's color "
+                               "from the object color and its glow from the color's alpha", ids, 16)
+    for i, ((mesh, _, _), color) in enumerate(zip(colonies.cell_shapes(), (colonies.ORANGE, colonies.BLUE))):
+        cell = bpy.data.objects.new(mesh.name, mesh)
+        c.objects.link(cell)
+        cell.color = (*color, 1.0)
+        cell.scale = (0.2, 0.2, 0.2)
+        cell.location = (0.6 * i, 0, 0)
+    place(c, 16)
+    done()
+
+    c, done = asset_collection(scene, "Food pellet", "Microbes/Dish",
+                               "A glowing red-pink food pellet, radius 0.6", ids, 20)
+    drop = meshes.sphere("Food pellet", 0.6, 48)
+    drop.materials.append(food.pellet_material())
+    c.objects.link(bpy.data.objects.new("Food pellet", drop))
+    place(c, 20)
+    done()
+
+    c, done = asset_collection(scene, "Crosshair", "Microbes/Dish",
+                               "The player's crosshair: a glowing plus in a ring that turns slowly", ids, 24)
+    effects.crosshair(c, "Crosshair", colonies.ORANGE, [1], [(0, 0)], height=0.0)
+    place(c, 24)
+    done()
+
+    c, done = asset_collection(scene, "Bacteriophage", "Microbes/Dish",
+                               "A T4 phage standing on its tail fibres, head 0.5 wide; phages.land() keys "
+                               "its landing", ids, 28)
+    phages.build("Bacteriophage", phages.PhageParts(), c)
+    place(c, 28)
+    done()
 
 
 if __name__ == "__main__":
