@@ -99,6 +99,17 @@ void describe('shaderSources', () => {
     ]);
   });
 
+  void it('leaves out type-only re-exports', () => {
+    const root = entryFixture(
+      "export type { T } from './lib/types';\nexport { type U, type V } from './lib/more-types';\nexport { a, type A } from './lib/a.shader';\n",
+      ['lib/types.ts', 'lib/more-types.ts', 'lib/a.shader.ts']
+    );
+
+    assert.deepEqual(shaderSources(root), [
+      'libs/public/ws-loading-wave/src/lib/a.shader.ts',
+    ]);
+  });
+
   void it('refuses a re-export it cannot map to a source file', () => {
     const root = entryFixture("export * from './lib/webgl/shaders';\n", []);
 

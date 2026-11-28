@@ -64,7 +64,8 @@ shaders' sources reach a script the shell loads at start, as
    as a follow-up.
 4. **The forbidden sources come from the entry itself.** The check reads
    `libs/public/ws-loading-wave/src/shaders.ts` and takes every module it
-   re-exports from (`export … from './…'`) as the shaders' sources, matched
+   re-exports values from (`export … from './…'`, type-only re-exports left
+   out, since types reach no bundle) as the shaders' sources, matched
    against the source maps' `sources` (`../../../libs/…/x.shader.ts`). Reason: a sixth
    shader added to the entry is covered without a change to the check, and
    the default `ripple.shader.ts`, which the main entry exports, is not on

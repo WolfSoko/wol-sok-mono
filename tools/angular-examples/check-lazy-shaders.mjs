@@ -24,8 +24,10 @@ export const MAIN_ENTRY = '@wolsok/loading-wave';
 const SHADERS_PACKAGE = `${MAIN_ENTRY}/shaders`;
 
 const SCRIPT_EXTENSION = /\.[cm]?[jt]s$/;
+// `export type … from` is captured too, to be left out: types have no code
+// that a source map could name
 const RELATIVE_RE_EXPORT =
-  /export\s+(?:type\s+)?(?:\*|\{[^}]*\})(?:\s+as\s+[\w$]+)?\s+from\s+["'](\.{1,2}\/[^"']+)["']/g;
+  /export\s+(type\s+)?(\*|\{[^}]*\})(?:\s+as\s+[\w$]+)?\s+from\s+["'](\.{1,2}\/[^"']+)["']/g;
 
 /**
  * The workspace paths of the modules the shaders entry re-exports, as the
@@ -37,8 +39,9 @@ export function shaderSources(
   entry = SHADERS_ENTRY
 ) {
   const code = readFileSync(join(workspaceRoot, entry), 'utf8');
-  const sources = [...code.matchAll(RELATIVE_RE_EXPORT)].map(
-    ([, specifier]) => {
+  const sources = [...code.matchAll(RELATIVE_RE_EXPORT)]
+    .filter(([, typeOnly, names]) => !typeOnly && !onlyTypes(names))
+    .map(([, , , specifier]) => {
       const source = sourceFile(posix.join(posix.dirname(entry), specifier));
       if (!existsSync(join(workspaceRoot, source))) {
         throw new BuildCheckError(
@@ -46,8 +49,7 @@ export function shaderSources(
         );
       }
       return source;
-    }
-  );
+    });
   if (sources.length === 0) {
     throw new BuildCheckError(`No re-exports found in ${entry}.`);
   }
@@ -95,6 +97,8 @@ function assertShadersBundleHolds(dist, sources) {
   if (bundle === undefined) {
     throw new BuildCheckError(`No shared bundle of ${SHADERS_PACKAGE}.`);
   }
+  // other shared bundles it imports count too: a shader found only in the
+  // main bundle is reported as a leak there anyway
   const scripts = importedScripts(dist, [bundle], { followShared: true });
   const unmatched = sources.filter(
     (shader) =>
@@ -106,6 +110,21 @@ function assertShadersBundleHolds(dist, sources) {
       `${bundle} and its imports hold none of ${unmatched.join(', ')} - the check would match nothing.`
     );
   }
+}
+
+/** `{ type A, type B }`: names that are all types, so nothing reaches a bundle. */
+function onlyTypes(names) {
+  if (!names.startsWith('{')) {
+    return false;
+  }
+  const members = names
+    .slice(1, -1)
+    .split(',')
+    .map((member) => member.trim())
+    .filter((member) => member !== '');
+  return (
+    members.length > 0 && members.every((member) => /^type\s/.test(member))
+  );
 }
 
 /** A TypeScript module's file: `./x` and `./x.js` both name `x.ts`. */
