@@ -5,6 +5,8 @@ import {
   input,
   output,
 } from '@angular/core';
+// brace defines the global `ace` its modes register with, so it comes first
+import 'brace';
 import 'brace/mode/glsl';
 import { AceEditorModule } from 'ngx-ace-editor-wrapper';
 

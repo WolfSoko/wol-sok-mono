@@ -59,6 +59,20 @@ describe('CodeEditorComponent', () => {
     expect(fixture.componentInstance.changes.at(-1)).toBe('// new');
   });
 
+  it('loads on its own: brace first, then its GLSL mode', async () => {
+    const page = globalThis as { ace?: unknown };
+    const loadedAce = page.ace;
+    delete page.ace;
+    try {
+      await jest.isolateModulesAsync(async () => {
+        await import('./code-editor.component');
+      });
+      expect(page.ace).toBeDefined();
+    } finally {
+      page.ace = loadedAce;
+    }
+  });
+
   it('shows a title only when it has one', async () => {
     const title = () => fixture.nativeElement.querySelector('.title');
     expect(title()).toBeNull();
