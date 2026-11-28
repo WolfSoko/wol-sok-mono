@@ -71,7 +71,9 @@ shaders' sources reach a script the shell loads at start, as
    the list. The check fails with exit code 2 when it finds no re-export, when a
    re-exported module does not exist as a `.ts` file (`./x` and `./x.js`
    both name `x.ts`), or when a source is missing from the shaders' own
-   bundle `_wolsok_loading_wave_shaders-*.js`, so a moved entry or a barrel
+   bundle `_wolsok_loading_wave_shaders-*.js` and the chunks it imports
+   (esbuild moves code two shared bundles share into an `@nf-internal`
+   chunk), so a moved entry or a barrel
    re-export cannot make it match nothing and silently pass.
 5. **`build` becomes a wrapper, as in the game.** `angular-examples`'
    federation builder target is renamed `build-federation` (same options,

@@ -166,8 +166,47 @@ void describe('checkLazyShaders', () => {
     assert.throws(
       () => checkLazyShaders(dist, [RIPPLE]),
       new BuildCheckError(
-        `_wolsok_loading_wave_shaders-S.js holds none of ${RIPPLE} - the check would match nothing.`
+        `_wolsok_loading_wave_shaders-S.js and its imports hold none of ${RIPPLE} - the check would match nothing.`
       )
+    );
+  });
+
+  void it('fails naming the shared chunk when both bundles share the shader code', () => {
+    // a re-export from the main entry: esbuild moves the shader into a chunk both import
+    const output = captureConsole();
+    const dist = distFixture(
+      {
+        'remoteEntry.json': JSON.stringify({
+          name: 'shell',
+          shared: [
+            {
+              packageName: '@wolsok/loading-wave',
+              outFileName: '_wolsok_loading_wave-W.js',
+            },
+            {
+              packageName: '@wolsok/loading-wave/shaders',
+              outFileName: '_wolsok_loading_wave_shaders-S.js',
+            },
+          ],
+          exposes: [],
+        }),
+        'importmap.json': JSON.stringify({
+          imports: { '@nf-internal/chunk-X': 'chunk-X.js' },
+        }),
+        'main-M.js': 'init().then(()=>import("./chunk-BOOT.js"));',
+        'chunk-BOOT.js': 'import{L}from"@wolsok/loading-wave";',
+        '_wolsok_loading_wave-W.js': 'import{s}from"@nf-internal/chunk-X";',
+        '_wolsok_loading_wave_shaders-S.js':
+          'import{s}from"@nf-internal/chunk-X";',
+        'chunk-X.js': '',
+      },
+      { 'chunk-X.js': [`../../../${SHADER}`] }
+    );
+
+    assert.equal(checkLazyShaders(dist, [SHADER]), 1);
+    assert.match(
+      output.error.mock.calls[0].arguments[0],
+      /chunk-X\.js: .*spark-front/
     );
   });
 

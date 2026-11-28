@@ -39,7 +39,21 @@ export function eagerScripts(
   dist,
   { extraEntries = [], followShared = false, crossMainBoundary = false } = {}
 ) {
-  const entries = [...indexScripts(dist), ...extraEntries];
+  return importedScripts(dist, [...indexScripts(dist), ...extraEntries], {
+    followShared,
+    crossMainBoundary,
+  });
+}
+
+/**
+ * `entries` and every script they import statically, sorted; the options
+ * as for `eagerScripts`.
+ */
+export function importedScripts(
+  dist,
+  entries,
+  { followShared = false, crossMainBoundary = false } = {}
+) {
   const resolveShared = followShared ? sharedBundles(dist) : new Map();
 
   const reached = new Set();

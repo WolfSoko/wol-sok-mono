@@ -13,6 +13,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
   BuildCheckError,
   eagerScripts,
+  importedScripts,
   leakedSources,
   sharedBundles,
 } from '../build-checks/eager-sources.mjs';
@@ -84,23 +85,25 @@ export function checkLazyShaders(dist, sources = shaderSources()) {
 }
 
 /**
- * Every shader source must show up in the shaders' own bundle: proof that
- * the matching works on this build, as the main bundle's presence proves the
- * traversal does.
+ * Every shader source must show up in the shaders' own bundle or the chunks
+ * it imports (esbuild moves code two shared bundles have in common into an
+ * `@nf-internal` chunk): proof that the matching works on this build, as the
+ * main bundle's presence proves the traversal does.
  */
 function assertShadersBundleHolds(dist, sources) {
   const bundle = sharedBundles(dist).get(SHADERS_PACKAGE);
   if (bundle === undefined) {
     throw new BuildCheckError(`No shared bundle of ${SHADERS_PACKAGE}.`);
   }
+  const scripts = importedScripts(dist, [bundle], { followShared: true });
   const unmatched = sources.filter(
     (shader) =>
-      leakedSources(dist, [bundle], (source) => isSource(source, shader))
+      leakedSources(dist, scripts, (source) => isSource(source, shader))
         .length === 0
   );
   if (unmatched.length > 0) {
     throw new BuildCheckError(
-      `${bundle} holds none of ${unmatched.join(', ')} - the check would match nothing.`
+      `${bundle} and its imports hold none of ${unmatched.join(', ')} - the check would match nothing.`
     );
   }
 }

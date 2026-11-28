@@ -8,6 +8,7 @@ import {
 import {
   BuildCheckError,
   eagerScripts,
+  importedScripts,
   leakedSources,
 } from './eager-sources.mjs';
 
@@ -116,6 +117,22 @@ void describe('eagerScripts', () => {
       () => eagerScripts(dist, { followShared: true }),
       BuildCheckError
     );
+  });
+});
+
+void describe('importedScripts', () => {
+  void it('starts at the given scripts instead of index.html', () => {
+    const dist = distFixture({
+      'main-M.js': 'import"./chunk-A.js";',
+      'chunk-A.js': '',
+      'chunk-B.js': 'import"./chunk-C.js";',
+      'chunk-C.js': '',
+    });
+
+    assert.deepEqual(importedScripts(dist, ['chunk-B.js']), [
+      'chunk-B.js',
+      'chunk-C.js',
+    ]);
   });
 });
 
