@@ -9,6 +9,7 @@ import { AppComponent } from './app.component';
 import { appRoutes } from './app.routes';
 import { BLOG_POSTS } from './blog/posts';
 import { I18nService } from './i18n/i18n.service';
+import { PageData } from './page-data';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
 import { PORTFOLIO_THEME } from './theme/theme';
@@ -77,11 +78,7 @@ describe('AppComponent', () => {
 
   /** Puts the AdSense script tag of the real index.html into the head. */
   function addIndexAdScript(): void {
-    const index = new DOMParser().parseFromString(
-      readFileSync(join(__dirname, '../index.html'), 'utf8'),
-      'text/html'
-    );
-    const scripts = index.querySelectorAll(AD_SCRIPT_SELECTOR);
+    const scripts = readIndexHtml().querySelectorAll(AD_SCRIPT_SELECTOR);
     expect(scripts).toHaveLength(1);
     document.head.appendChild(document.importNode(scripts[0], true));
   }
@@ -150,6 +147,30 @@ describe('AppComponent', () => {
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
+  });
+});
+
+/** The app's real index.html, parsed. */
+function readIndexHtml(): Document {
+  return new DOMParser().parseFromString(
+    readFileSync(join(__dirname, '../index.html'), 'utf8'),
+    'text/html'
+  );
+}
+
+describe('index.html', () => {
+  it("starts with the home page's English title and description", () => {
+    const index = readIndexHtml();
+    const home = appRoutes.find((route) => route.path === '')?.data as PageData;
+    const content = (selector: string) =>
+      index.querySelector(selector)?.getAttribute('content');
+
+    expect(index.title).toBe(home.title.en);
+    expect(content('meta[property="og:title"]')).toBe(home.title.en);
+    expect(content('meta[name="description"]')).toBe(home.description.en);
+    expect(content('meta[property="og:description"]')).toBe(
+      home.description.en
+    );
   });
 });
 
