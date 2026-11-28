@@ -25,6 +25,7 @@ const float COARSE_WANDER_SPACINGS = 2.5;
 const float FINE_WANDER_SPACINGS = 0.7;
 const float FINE_WANDER_SHARE = 0.35;
 const vec3 LUMA = vec3(0.299, 0.587, 0.114);
+const float TAU = 6.28318530718;
 
 /* smooth value noise along t, 0 to 1, a new curve per frame */
 float frameNoise(float t, float frame) {
@@ -34,26 +35,64 @@ float frameNoise(float t, float frame) {
   return mix(ws_hash(vec2(index, frame)), ws_hash(vec2(index + 1.0, frame)), eased);
 }
 
+/* frameNoise along t that repeats every period (a whole number), so a loop has no seam */
+float loopNoise(float t, float period, float frame) {
+  float index = floor(t);
+  float into = fract(t);
+  float eased = into * into * (3.0 - 2.0 * into);
+  return mix(ws_hash(vec2(mod(index, period), frame)),
+    ws_hash(vec2(mod(index + 1.0, period), frame)), eased);
+}
+
 /*
- * Where p lies around the wave's centre: the arc length to it on the circle
- * the front starts on, about its height from the middle near the front. Every
- * point on a line from the centre has the same, so the bolt is one curve.
+ * Whether the wave grows from inside the host (origin 'center'): its bolt
+ * then runs all the way around, where from the left only an arc shows.
+ */
+bool frontLoops() {
+  return ws_center.x >= 0.0;
+}
+
+/*
+ * The radius the bolt's arc lengths are measured on: the circle the front
+ * starts on from the left, about its height from the middle near the front;
+ * the front's own circle when it loops.
+ */
+float arcRadius() {
+  return frontLoops() ? max(ws_frontRadius, ws_spacing) : -ws_center.x;
+}
+
+/*
+ * Where p lies around the wave's centre, as an arc length on arcRadius().
+ * Every point on a line from the centre has the same, so the bolt is one curve.
  */
 float arcAround(vec2 p) {
-  return atan(p.y - ws_center.y, p.x - ws_center.x) * -ws_center.x;
+  return atan(p.y - ws_center.y, p.x - ws_center.x) * arcRadius();
+}
+
+/* the noise of the bolt's wander along an arc length, in cells of cellLength, seamless where it loops */
+float wanderNoise(float arc, float cellLength, float frame) {
+  if (!frontLoops()) {
+    return frameNoise(arc / cellLength, frame);
+  }
+  float around = TAU * arcRadius();
+  float cells = max(1.0, floor(around / cellLength));
+  return loopNoise(arc * cells / around, cells, frame);
 }
 
 /* how far the bolt lies behind the front at an arc length, in CSS pixels: a coarse and a fine wander */
 float boltOffset(float arc, float frame) {
-  float coarse = frameNoise(arc / (COARSE_WANDER_SPACINGS * ws_spacing), frame);
-  float fine = frameNoise(arc / (FINE_WANDER_SPACINGS * ws_spacing), frame + 17.0);
+  float coarse = wanderNoise(arc, COARSE_WANDER_SPACINGS * ws_spacing, frame);
+  float fine = wanderNoise(arc, FINE_WANDER_SPACINGS * ws_spacing, frame + 17.0);
   float wander = mix(coarse, fine, FINE_WANDER_SHARE);
   return WANDER_SPACINGS * ws_spacing * (2.0 * wander - 1.0);
 }
 
 /* where the bolt crosses the line from the wave's centre through p */
 vec2 boltPointToward(vec2 p, float frame) {
-  vec2 outward = normalize(p - ws_center);
+  vec2 fromCenter = p - ws_center;
+  float distance = length(fromCenter);
+  // a dot right at a looping front's centre points nowhere: take any way out
+  vec2 outward = distance > 0.0 ? fromCenter / distance : vec2(1.0, 0.0);
   return ws_center + outward * (ws_frontRadius - boltOffset(arcAround(p), frame));
 }
 
