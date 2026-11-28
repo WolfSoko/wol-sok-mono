@@ -120,6 +120,7 @@
       ],
       "@wolsok/thanos": ["./libs/public/ws-thanos/src/index.ts"],
       "@wolsok/ui-kit": ["./libs/ui-kit/src/index.ts"],
+      "@wolsok/ui-kit/code-editor": ["./libs/ui-kit/src/code-editor.ts"],
       "@wolsok/utils-browser-storage": [
         "./libs/utils/browser-storage/src/index.ts"
       ],

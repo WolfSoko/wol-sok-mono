@@ -52,7 +52,7 @@
               </div>
               @if (vm.showCodeEditor) {
                 <div class="editor-tile">
-                  <lzy-ft-shad-ex-code-editor
+                  <ws-shared-ui-code-editor
                     class="code-editor"
                     [code]="shader.code"
                     (codeChange)="updateShaderCode(shader, $event)"

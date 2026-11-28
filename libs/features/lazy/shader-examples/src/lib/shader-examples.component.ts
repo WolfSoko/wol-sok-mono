@@ -16,9 +16,9 @@ import {
 } from '@angular/material/paginator';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { RenderShaderComponent } from '@wolsok/ui-kit';
+import { CodeEditorComponent } from '@wolsok/ui-kit/code-editor';
 import { combineLatest, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { CodeEditorComponent } from './code-editor/code-editor.component';
 import {
   fadeInLeft,
   fadeInRight,

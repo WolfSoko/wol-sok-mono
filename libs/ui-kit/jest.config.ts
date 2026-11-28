@@ -15,6 +15,11 @@ module.exports = {
     ],
   },
   transformIgnorePatterns: ['node_modules/(?!.*\\.mjs$)'],
+  moduleNameMapper: {
+    // the package names no entry Jest finds; its UMD bundle is CommonJS
+    '^ngx-ace-editor-wrapper$':
+      '<rootDir>/../../node_modules/ngx-ace-editor-wrapper/dist/ngx-ace-editor-wrapper.umd.js',
+  },
   snapshotSerializers: [
     'jest-preset-angular/build/serializers/no-ng-attributes',
     'jest-preset-angular/build/serializers/ng-snapshot',
