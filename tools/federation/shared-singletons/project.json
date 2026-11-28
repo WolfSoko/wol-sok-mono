@@ -17,7 +17,7 @@
       "dependsOn": [
         "^build",
         {
-          "projects": ["bacteria-game-remote"],
+          "projects": ["angular-examples", "bacteria-game-remote"],
           "target": "build-federation"
         }
       ],
