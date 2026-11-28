@@ -6,10 +6,10 @@ import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { AD_SCRIPT_SELECTOR } from './ad-script';
 import { AppComponent } from './app.component';
-import { appRoutes } from './app.routes';
+import { appRoutes, HOME_PAGE } from './app.routes';
 import { BLOG_POSTS } from './blog/posts';
+import { CAREER_PROFILE } from './career/career.data';
 import { I18nService } from './i18n/i18n.service';
-import { PageData } from './page-data';
 import { APPS, EXPERIMENTS, PACKAGES } from './projects';
 import { SeoService } from './seo.service';
 import { PORTFOLIO_THEME } from './theme/theme';
@@ -21,6 +21,8 @@ describe('AppComponent', () => {
       providers: [provideRouter(appRoutes), provideTheme(PORTFOLIO_THEME)],
     });
   });
+
+  afterEach(() => localStorage.clear());
 
   it('lists every project on the home page', async () => {
     const harness = await RouterTestingHarness.create('/');
@@ -47,15 +49,17 @@ describe('AppComponent', () => {
     await harness.navigateByUrl('/');
     const heading = () =>
       (harness.routeNativeElement as HTMLElement).querySelector('h1');
-    const description = () =>
-      document.head
-        .querySelector('meta[name="description"]')
-        ?.getAttribute('content');
+    const content = (selector: string) =>
+      document.head.querySelector(selector)?.getAttribute('content');
+    const expectTags = (title: string, description: string) => {
+      expect(document.title).toBe(title);
+      expect(content('meta[property="og:title"]')).toBe(title);
+      expect(content('meta[name="description"]')).toBe(description);
+      expect(content('meta[property="og:description"]')).toBe(description);
+    };
 
-    expect(document.title).toBe(
-      'Wolfram Sokollek – Freelance Full-Stack Software Engineer'
-    );
-    expect(description()).toBe(
+    expectTags(
+      'Wolfram Sokollek – Freelance Full-Stack Software Engineer',
       'Freelance full-stack software engineer in Hamburg since 2008: Angular web apps from idea to production, with live apps, games and open source to explore.'
     );
     expect(heading()?.textContent?.trim()).toBe(
@@ -67,16 +71,16 @@ describe('AppComponent', () => {
 
     TestBed.inject(I18nService).setLanguage('de');
     await harness.fixture.whenStable();
-    expect(document.title).toBe(
-      'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer'
-    );
-    expect(description()).toBe(
+    expectTags(
+      'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer',
       'Freiberuflicher Fullstack Software Engineer in Hamburg seit 2008: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.'
     );
     expect(heading()?.textContent?.trim()).toBe(
       'Software Engineering fürs Web, von der Idee bis in Produktion.'
     );
-    localStorage.clear();
+    expect(heading()?.querySelector('em')?.textContent).toBe(
+      'von der Idee bis in Produktion.'
+    );
   });
 
   it('sets the canonical URL, title and description per page and language', async () => {
@@ -111,7 +115,6 @@ describe('AppComponent', () => {
     expect(
       head.querySelector('meta[name="description"]')?.getAttribute('content')
     ).toContain('Freiberuflicher');
-    localStorage.clear();
   });
 
   /** Puts the AdSense script tag of the real index.html into the head. */
@@ -183,7 +186,6 @@ describe('AppComponent', () => {
     root.querySelector<HTMLButtonElement>('.theme')?.click();
     await fixture.whenStable();
     expect(document.documentElement.getAttribute('data-theme')).toBe('light');
-    localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
   });
 });
@@ -199,16 +201,25 @@ function readIndexHtml(): Document {
 describe('index.html', () => {
   it("starts with the home page's English title and description", () => {
     const index = readIndexHtml();
-    const home = appRoutes.find((route) => route.path === '')?.data as PageData;
     const content = (selector: string) =>
       index.querySelector(selector)?.getAttribute('content');
 
-    expect(index.title).toBe(home.title.en);
-    expect(content('meta[property="og:title"]')).toBe(home.title.en);
-    expect(content('meta[name="description"]')).toBe(home.description.en);
+    expect(index.title).toBe(HOME_PAGE.title.en);
+    expect(content('meta[property="og:title"]')).toBe(HOME_PAGE.title.en);
+    expect(content('meta[name="description"]')).toBe(HOME_PAGE.description.en);
     expect(content('meta[property="og:description"]')).toBe(
-      home.description.en
+      HOME_PAGE.description.en
     );
+  });
+});
+
+describe('HOME_PAGE', () => {
+  it('names the role of the career profile in its title', () => {
+    for (const language of ['en', 'de'] as const) {
+      expect(HOME_PAGE.title[language].toLowerCase()).toContain(
+        CAREER_PROFILE.title[language].toLowerCase()
+      );
+    }
   });
 });
 
