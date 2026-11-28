@@ -4,20 +4,23 @@ import { ANGULAR_SINCE, CAREER_SINCE } from './career/career-since';
 import { HomeComponent } from './home/home.component';
 import { PageData } from './page-data';
 
+/** The start page's title and description. */
+export const HOME_PAGE: PageData = {
+  title: {
+    en: 'Wolfram Sokollek – Freelance Full-Stack Software Engineer',
+    de: 'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer',
+  },
+  description: {
+    en: `Freelance full-stack software engineer in Hamburg since ${CAREER_SINCE}: Angular web apps from idea to production, with live apps, games and open source to explore.`,
+    de: `Freiberuflicher Fullstack Software Engineer in Hamburg seit ${CAREER_SINCE}: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.`,
+  },
+};
+
 export const appRoutes: Route[] = [
   {
     path: '',
     component: HomeComponent,
-    data: {
-      title: {
-        en: 'Wolfram Sokollek – Games, Apps & Web Experiments',
-        de: 'Wolfram Sokollek – Spiele, Apps & Web-Experimente',
-      },
-      description: {
-        en: 'Portfolio of Wolfram Sokollek: Bacteria Wars, Movepath, Pacetrainer, RollaPolla and interactive Angular experiments with WebGL, shaders, TensorFlow.js and WebAssembly.',
-        de: 'Portfolio von Wolfram Sokollek: Bacteria Wars, Movepath, Pacetrainer, RollaPolla und interaktive Angular-Experimente mit WebGL, Shadern, TensorFlow.js und WebAssembly.',
-      },
-    } satisfies PageData,
+    data: HOME_PAGE,
   },
   {
     path: 'career',

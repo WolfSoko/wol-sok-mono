@@ -25,8 +25,8 @@ export const en = {
   },
   home: {
     eyebrow: 'Wolfram Sokollek · wolsok.de',
-    title: 'Games, apps and wild experiments,',
-    titleAccent: 'built for the web.',
+    title: 'Software engineering for the web,',
+    titleAccent: 'from idea to production.',
     lead: 'I build things in Angular that run fast in the browser: a GPU-powered strategy game, fitness and running apps, polls, shaders, neural networks and fractals. Everything here is live, and most of it is open source.',
     jumpApps: 'Apps',
     jumpExperiments: 'Experiments',
