@@ -77,7 +77,7 @@ android {
 }
 
 dependencies {
-  implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.7.4")
+  implementation("com.google.androidbrowserhelper:androidbrowserhelper:2.8.0")
   // The Firebase app `de.wolsok.bacteriawars` of the project `bacteria-wars`: the
   // Android OAuth client Play Games Services asks for lives there (see README.md),
   // and Analytics counts the app's installs and opens beside the web game's.
