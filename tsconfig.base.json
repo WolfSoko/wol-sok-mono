@@ -115,6 +115,9 @@
       "@wolsok/spa-cdk-stack": ["./libs/public/spa-cdk-stack/src/index.ts"],
       "@wolsok/test-helper": ["./libs/test-helper/src/index.ts"],
       "@wolsok/loading-wave": ["./libs/public/ws-loading-wave/src/index.ts"],
+      "@wolsok/loading-wave/shaders": [
+        "./libs/public/ws-loading-wave/src/shaders.ts"
+      ],
       "@wolsok/thanos": ["./libs/public/ws-thanos/src/index.ts"],
       "@wolsok/ui-kit": ["./libs/ui-kit/src/index.ts"],
       "@wolsok/utils-browser-storage": [
