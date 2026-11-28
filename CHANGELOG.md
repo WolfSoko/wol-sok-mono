@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.194.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.193.0...v74.194.0) (2026-11-28)
+
+### Features
+
+* **portfolio:** introduce wolsok.de as a professional software engineer ([#3284](https://github.com/WolfSoko/wol-sok-mono/issues/3284)) ([af918bc](https://github.com/WolfSoko/wol-sok-mono/commit/af918bc863ab4488b16cfef7ef878b76184cfa56)), references [#3281](https://github.com/WolfSoko/wol-sok-mono/issues/3281) [#3281](https://github.com/WolfSoko/wol-sok-mono/issues/3281) [#3281](https://github.com/WolfSoko/wol-sok-mono/issues/3281) [#3281](https://github.com/WolfSoko/wol-sok-mono/issues/3281) [#3281](https://github.com/WolfSoko/wol-sok-mono/issues/3281)
+
+### Bug Fixes
+
+* **tools:** check-lazy-admin inspects the game's bootstrap chunk and shared bundles ([#3285](https://github.com/WolfSoko/wol-sok-mono/issues/3285)) ([2727dfe](https://github.com/WolfSoko/wol-sok-mono/commit/2727dfe260998ed9aad9da7627e3c5d412090e09)), closes [#3282](https://github.com/WolfSoko/wol-sok-mono/issues/3282)
+
 ## [74.193.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.192.1...v74.193.0) (2026-11-28)
 
 ### Features
