@@ -41,6 +41,44 @@ describe('AppComponent', () => {
     );
   });
 
+  it('introduces the owner as a software engineer on the home page, per language', async () => {
+    TestBed.inject(SeoService).init();
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/');
+    const heading = () =>
+      (harness.routeNativeElement as HTMLElement).querySelector('h1');
+    const description = () =>
+      document.head
+        .querySelector('meta[name="description"]')
+        ?.getAttribute('content');
+
+    expect(document.title).toBe(
+      'Wolfram Sokollek – Freelance Full-Stack Software Engineer'
+    );
+    expect(description()).toBe(
+      'Freelance full-stack software engineer in Hamburg since 2008: Angular web apps from idea to production, with live apps, games and open source to explore.'
+    );
+    expect(heading()?.textContent?.trim()).toBe(
+      'Software engineering for the web, from idea to production.'
+    );
+    expect(heading()?.querySelector('em')?.textContent).toBe(
+      'from idea to production.'
+    );
+
+    TestBed.inject(I18nService).setLanguage('de');
+    await harness.fixture.whenStable();
+    expect(document.title).toBe(
+      'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer'
+    );
+    expect(description()).toBe(
+      'Freiberuflicher Fullstack Software Engineer in Hamburg seit 2008: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.'
+    );
+    expect(heading()?.textContent?.trim()).toBe(
+      'Software Engineering fürs Web, von der Idee bis in Produktion.'
+    );
+    localStorage.clear();
+  });
+
   it('sets the canonical URL, title and description per page and language', async () => {
     TestBed.inject(SeoService).init();
     const harness = await RouterTestingHarness.create();

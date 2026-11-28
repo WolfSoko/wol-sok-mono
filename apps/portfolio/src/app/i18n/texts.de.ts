@@ -23,8 +23,8 @@ export const de: Translation<typeof en> = {
   },
   home: {
     eyebrow: 'Wolfram Sokollek · wolsok.de',
-    title: 'Spiele, Apps und wilde Experimente,',
-    titleAccent: 'gebaut fürs Web.',
+    title: 'Software Engineering fürs Web,',
+    titleAccent: 'von der Idee bis in Produktion.',
     lead: 'Ich baue Dinge in Angular, die im Browser schnell laufen: ein GPU-getriebenes Strategiespiel, Fitness- und Lauf-Apps, Umfragen, Shader, neuronale Netze und Fraktale. Alles hier ist live, und das meiste davon Open Source.',
     jumpApps: 'Apps',
     jumpExperiments: 'Experimente',

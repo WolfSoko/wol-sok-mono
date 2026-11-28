@@ -10,12 +10,12 @@ export const appRoutes: Route[] = [
     component: HomeComponent,
     data: {
       title: {
-        en: 'Wolfram Sokollek – Games, Apps & Web Experiments',
-        de: 'Wolfram Sokollek – Spiele, Apps & Web-Experimente',
+        en: 'Wolfram Sokollek – Freelance Full-Stack Software Engineer',
+        de: 'Wolfram Sokollek – Freiberuflicher Fullstack Software Engineer',
       },
       description: {
-        en: 'Portfolio of Wolfram Sokollek: Bacteria Wars, Movepath, Pacetrainer, RollaPolla and interactive Angular experiments with WebGL, shaders, TensorFlow.js and WebAssembly.',
-        de: 'Portfolio von Wolfram Sokollek: Bacteria Wars, Movepath, Pacetrainer, RollaPolla und interaktive Angular-Experimente mit WebGL, Shadern, TensorFlow.js und WebAssembly.',
+        en: `Freelance full-stack software engineer in Hamburg since ${CAREER_SINCE}: Angular web apps from idea to production, with live apps, games and open source to explore.`,
+        de: `Freiberuflicher Fullstack Software Engineer in Hamburg seit ${CAREER_SINCE}: Angular-Web-Apps von der Idee bis in Produktion, mit Live-Apps, Spielen und Open Source.`,
       },
     } satisfies PageData,
   },
