@@ -7,6 +7,7 @@ describe('@wolsok/loading-wave/shaders', () => {
   it('exports the built-in shaders beside the default', () => {
     expect(shaders.map(([name]) => name).sort()).toEqual([
       'circuitTracesShader',
+      'dataBusShader',
     ]);
   });
 

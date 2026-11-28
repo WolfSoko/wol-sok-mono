@@ -5,3 +5,4 @@
  * loads none of them until it imports one.
  */
 export { circuitTracesShader } from './lib/webgl/shaders/circuit-traces.shader';
+export { dataBusShader } from './lib/webgl/shaders/data-bus.shader';
