@@ -8,6 +8,7 @@ describe('@wolsok/loading-wave/shaders', () => {
     expect(shaders.map(([name]) => name).sort()).toEqual([
       'circuitTracesShader',
       'dataBusShader',
+      'dieScanShader',
     ]);
   });
 
