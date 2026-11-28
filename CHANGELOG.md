@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.193.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.192.1...v74.193.0) (2026-11-28)
+
+### Features
+
+* **angular-examples:** build check that @wolsok/loading-wave/shaders stays out of the start bundles ([#3283](https://github.com/WolfSoko/wol-sok-mono/issues/3283)) ([964259d](https://github.com/WolfSoko/wol-sok-mono/commit/964259d4bc2014a9578917afacaeec14e32e5f97)), references [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278) [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278) [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278) [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278) [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278) [#3278](https://github.com/WolfSoko/wol-sok-mono/issues/3278)
+
 ## [74.192.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.192.0...v74.192.1) (2026-11-28)
 
 ### Chore
