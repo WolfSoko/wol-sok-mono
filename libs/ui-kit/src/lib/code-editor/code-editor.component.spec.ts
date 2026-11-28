@@ -10,7 +10,7 @@ import { CodeEditorComponent } from './code-editor.component';
     <ws-shared-ui-code-editor
       [code]="code()"
       [codeTitle]="title()"
-      [changeDebounceMs]="0"
+      [changeDebounceMs]="debounceMs()"
       [minLines]="30"
       (codeChange)="changes.push($event)"
     />
@@ -19,6 +19,7 @@ import { CodeEditorComponent } from './code-editor.component';
 class HostComponent {
   public readonly code = signal('void main() {}');
   public readonly title = signal<string | undefined>(undefined);
+  public readonly debounceMs = signal(0);
   public readonly changes: string[] = [];
 }
 
@@ -70,6 +71,30 @@ describe('CodeEditorComponent', () => {
       expect(page.ace).toBeDefined();
     } finally {
       page.ace = loadedAce;
+    }
+  });
+
+  it('sends an edit still waiting for the old debounce at once when the debounce changes', () => {
+    // whenStable waits on timers, which are fake here
+    jest.useFakeTimers();
+    try {
+      fixture.componentInstance.debounceMs.set(1000);
+      fixture.detectChanges();
+      ace().navigateFileEnd();
+      ace().insert(' // A');
+
+      fixture.componentInstance.debounceMs.set(0);
+      fixture.detectChanges();
+      ace().insert(' // B');
+      jest.advanceTimersByTime(1000);
+
+      // A arrives once, before the newer B, never after it
+      expect(fixture.componentInstance.changes).toEqual([
+        'void main() {} // A',
+        'void main() {} // A // B',
+      ]);
+    } finally {
+      jest.useRealTimers();
     }
   });
 

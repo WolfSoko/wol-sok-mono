@@ -2,13 +2,15 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  effect,
   input,
   output,
+  viewChild,
 } from '@angular/core';
 // brace defines the global `ace` its modes register with, so it comes first
 import 'brace';
 import 'brace/mode/glsl';
-import { AceEditorModule } from 'ngx-ace-editor-wrapper';
+import { AceEditorDirective, AceEditorModule } from 'ngx-ace-editor-wrapper';
 
 /** how long the editor waits after the last keystroke before `codeChange` */
 const DEFAULT_CHANGE_DEBOUNCE_MS = 1000;
@@ -45,4 +47,27 @@ export class CodeEditorComponent {
     maxLines: MAX_LINES,
     printMargin: false,
   }));
+
+  private readonly ace = viewChild.required(AceEditorDirective);
+
+  public constructor() {
+    // an edit still waiting for the old debounce would arrive after newer
+    // ones: a new debounce sends it at once
+    effect(() => {
+      this.changeDebounceMs();
+      this.sendPendingChange(this.ace());
+    });
+  }
+
+  private sendPendingChange(ace: AceEditorDirective): void {
+    if (ace.timeoutSaving == null) {
+      return;
+    }
+    clearTimeout(ace.timeoutSaving);
+    ace.timeoutSaving = null;
+    const code = ace.aceEditor.getValue();
+    // as the wrapper's own timer would, so it takes the code back unchanged
+    ace._text = code;
+    this.codeChange.emit(code);
+  }
 }
