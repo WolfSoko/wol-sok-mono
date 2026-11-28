@@ -1,5 +1,11 @@
 import { InjectionToken, Provider } from '@angular/core';
-import { Autoscale, DEFAULT_FRONT_ROUNDNESS, WaveOrigin } from './wave-model';
+import {
+  Autoscale,
+  DEFAULT_FRONT_ROUNDNESS,
+  DEFAULT_ORIGIN,
+  isScaleFactor,
+  WaveOrigin,
+} from './wave-model';
 import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { rippleShader } from './webgl/shaders/ripple.shader';
 
@@ -76,7 +82,7 @@ export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   dotSize: 1.5,
   sweepMs: 1600,
   autoscale: true,
-  origin: 'left',
+  origin: DEFAULT_ORIGIN,
   renderer: 'auto',
   frontRoundness: DEFAULT_FRONT_ROUNDNESS,
   shader: rippleShader,
@@ -106,17 +112,14 @@ export function resolveLoadingWaveOptions(
   defaults: LoadingWaveOptions,
   overrides: Partial<LoadingWaveOptions> = {}
 ): ResolvedLoadingWaveOptions {
-  const defined = Object.fromEntries(
-    Object.entries(overrides).filter(([, value]) => value !== undefined)
-  ) as Partial<LoadingWaveOptions>;
-  const merged = { ...defaults, ...defined };
+  const merged = { ...defaults, ...withoutUnset(overrides) };
   return {
     ...merged,
     dotSpacing: positiveOr(merged.dotSpacing, defaults.dotSpacing),
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
     autoscale: autoscaleOr(merged.autoscale, defaults.autoscale ?? true),
-    origin: merged.origin ?? 'left',
+    origin: merged.origin ?? DEFAULT_ORIGIN,
     // an app's own LOADING_WAVE_OPTIONS may lack the newer options
     frontRoundness: unitOr(
       merged.frontRoundness,
@@ -133,15 +136,22 @@ function unitOr(value: number | undefined, fallback: number): number {
     : fallback;
 }
 
+/** the options without the keys set to `undefined`, which set nothing */
+export function withoutUnset(
+  options: Partial<LoadingWaveOptions>
+): Partial<LoadingWaveOptions> {
+  return Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== undefined)
+  );
+}
+
 /** a boolean or a positive finite factor; `fallback` for anything else */
 function autoscaleOr(
   value: Autoscale | undefined,
   fallback: Autoscale
 ): Autoscale {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-  return value !== undefined && Number.isFinite(value) && value > 0
+  return typeof value === 'boolean' ||
+    (value !== undefined && isScaleFactor(value))
     ? value
     : fallback;
 }

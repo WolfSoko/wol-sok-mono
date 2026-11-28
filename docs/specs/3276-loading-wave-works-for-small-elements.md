@@ -48,7 +48,10 @@ rows of dots.
    `dotSize × f`, but not below `MIN_DOT_SIZE = 1` CSS px, or below the
    asked size where that is already under 1 px. Every length derived from
    the spacing (tail, falloff, rise, push) follows it, as it does today.
-   The `MAX_DOTS` widening still applies after scaling.
+   The `MAX_DOTS` widening still applies after scaling. `true` stops at
+   `MIN_DOT_SPACING = 3` CSS px (unless the asked spacing is finer already),
+   so a bar a few pixels high does not smear its dots into a line (found in
+   review).
 
    Reasons: the issue asks for `true/false/scale`. `true` as the default
    makes small elements work without configuration, and changes nothing on
@@ -126,7 +129,9 @@ rows of dots.
    - With the shader stage that makes 8 GPU waves, the page budget
      (`MAX_GPU_WAVES`).
    - A new "Autoscale" toggle group (`auto`, `off`, `½`) sets `autoscale`
-     to `true`, `false` or `0.5`. It shows in the options JSON.
+     to `true`, `false` or `0.5`, and an "Origin" one (`left`, `center`)
+     sets `origin` on the stages and the small elements; the spinners keep
+     their own. Both show in the options JSON.
 9. **Docs:** the lib's README (options table: `autoscale`, `origin`; a
    "Small elements" and a "Spinner" section), the portfolio's
    `@wolsok/loading-wave` entry and the playground experiment's
@@ -138,7 +143,11 @@ rows of dots.
 
 - A rotating spinner front, or a determinate (percent) spinner.
 - New shaders. The built-in shaders compile and draw with
-  `origin: 'center'`, but were drawn for a front from the left.
+  `origin: 'center'`, but were drawn for a front from the left. The one
+  exception found in review: `sparkFrontShader` measured its bolt along an
+  angle whose seam showed at 9 o'clock with a centred front; its noise
+  now loops seamlessly around a centred front, and its look from the left
+  stays as it was.
 - Replacing Ace or `ngx-ace-editor-wrapper`.
 - Raising `MAX_GPU_WAVES`.
 

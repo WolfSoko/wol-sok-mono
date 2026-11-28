@@ -3,6 +3,7 @@ import {
   DEFAULT_FRONT_ROUNDNESS,
   MAX_DOTS,
   MIN_DOT_SIZE,
+  MIN_DOT_SPACING,
   MIN_DOTS_ACROSS,
   dotCenters,
   dotDisplacement,
@@ -314,6 +315,31 @@ describe('wave model', () => {
         expect(button.dotSize).toBe(1.5);
       }
     });
+
+    it('stops at MIN_DOT_SPACING on a host only a few pixels high', () => {
+      const bar = waveGeometry(300, 4, { ...defaults, autoscale: true });
+      expect(MIN_DOT_SPACING).toBe(3);
+      expect(bar.dotSpacing).toBe(MIN_DOT_SPACING);
+      expect(bar.dotSize).toBe(MIN_DOT_SIZE);
+    });
+
+    it('keeps an asked spacing finer than MIN_DOT_SPACING as asked', () => {
+      const fine = waveGeometry(300, 4, {
+        ...defaults,
+        dotSpacing: 2,
+        autoscale: true,
+      });
+      expect(fine.dotSpacing).toBe(2);
+    });
+
+    it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+      'scales nothing by the factor %p',
+      (autoscale) => {
+        const button = waveGeometry(120, 36, { ...defaults, autoscale });
+        expect(button.dotSpacing).toBe(28);
+        expect(button.dotSize).toBe(1.5);
+      }
+    );
 
     it('does not scale an empty host', () => {
       const empty = waveGeometry(0, 0, { ...defaults, autoscale: true });

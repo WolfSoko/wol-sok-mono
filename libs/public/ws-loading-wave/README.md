@@ -116,12 +116,16 @@ section: put the directive on it.
 
 With `autoscale: true` (the default) the grid gets finer where the host's
 shorter side holds fewer than six dots (below 168 px with the default
-spacing): spacing and dot size shrink together, a dot never below 1 px, and
-the wave's tail and push follow the spacing. Larger hosts keep the grid as
-set. A number scales spacing and dot size by that factor on every host
-(`autoscale: 0.5` halves them), `false` keeps them as set. The canvas takes
-the host's `border-radius`, so a rounded button clips the wave to its
-corners.
+spacing): spacing and dot size shrink together, the spacing never below
+3 px and a dot never below 1 px, and the wave's tail and push follow the
+spacing. Larger hosts keep the grid as set. A number scales spacing and dot
+size by that factor on every host (`autoscale: 0.5` halves them), `false`
+keeps them as set. The canvas takes the host's `border-radius`, so a
+rounded button clips the wave to its corners.
+
+Up to 0.0.3 the grid kept its spacing on every host; `autoscale: false`
+gives that look again. `ResolvedLoadingWaveOptions` now holds `autoscale`
+and `origin` too.
 
 ### Spinner
 

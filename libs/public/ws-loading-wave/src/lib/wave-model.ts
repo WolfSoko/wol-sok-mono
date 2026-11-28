@@ -50,6 +50,11 @@ export const MIN_DOTS_ACROSS = 6;
  * would vanish between the device pixels.
  */
 export const MIN_DOT_SIZE = 1;
+/**
+ * The finest spacing `autoscale: true` shrinks to, in CSS pixels: on a
+ * host only a few pixels high, finer would smear the dots into a line.
+ */
+export const MIN_DOT_SPACING = 3;
 
 /**
  * How the dot grid follows the host's size: `true` makes it finer where the
@@ -63,6 +68,16 @@ export type Autoscale = boolean | number;
  * `'center'` lets it grow from the element's middle.
  */
 export type WaveOrigin = 'left' | 'center';
+
+/** where the wave comes from when nothing says otherwise */
+export const DEFAULT_ORIGIN: WaveOrigin = 'left';
+
+/** whether `autoscale` is a factor the grid can be scaled by */
+export function isScaleFactor(autoscale: Autoscale): autoscale is number {
+  return (
+    typeof autoscale === 'number' && Number.isFinite(autoscale) && autoscale > 0
+  );
+}
 
 export interface WaveGeometry {
   readonly width: number;
@@ -124,7 +139,7 @@ export function waveGeometry(
     dotSize: askedSize,
     sweepMs,
     autoscale = false,
-    origin = 'left',
+    origin = DEFAULT_ORIGIN,
     frontRoundness = DEFAULT_FRONT_ROUNDNESS,
   }: WaveGeometryOptions
 ): WaveGeometry {
@@ -214,17 +229,17 @@ function scaledSpacing(
   dotSpacing: number,
   autoscale: Autoscale
 ): number {
-  if (typeof autoscale === 'number') {
-    return Number.isFinite(autoscale) && autoscale > 0
-      ? dotSpacing * autoscale
-      : dotSpacing;
+  if (isScaleFactor(autoscale)) {
+    return dotSpacing * autoscale;
   }
   const shorterSide = Math.min(width, height);
-  // an empty host has no grid to fit, and a factor of 0 would end every sweep
-  if (!autoscale || shorterSide <= 0) {
+  // an empty host has no grid to fit, and a factor of 0 would end every
+  // sweep; a factor that is no positive number scales nothing
+  if (autoscale !== true || shorterSide <= 0) {
     return dotSpacing;
   }
-  return Math.min(dotSpacing, shorterSide / MIN_DOTS_ACROSS);
+  const fitting = Math.max(MIN_DOT_SPACING, shorterSide / MIN_DOTS_ACROSS);
+  return Math.min(dotSpacing, fitting);
 }
 
 /**

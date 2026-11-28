@@ -5,7 +5,7 @@ import {
   input,
 } from '@angular/core';
 import { LoadingWaveDirective } from './loading-wave.directive';
-import type { LoadingWaveOptions } from './loading-wave-options';
+import { LoadingWaveOptions, withoutUnset } from './loading-wave-options';
 
 /** a spinner's size on each side when unset, in CSS pixels */
 const DEFAULT_DIAMETER = 40;
@@ -69,15 +69,6 @@ export class LoadingWaveSpinnerComponent {
   public readonly options = input<Partial<LoadingWaveOptions>>();
 
   protected readonly waveOptions = computed<Partial<LoadingWaveOptions>>(
-    () => ({ ...SPINNER_OPTIONS, ...definedOnly(this.options() ?? {}) })
-  );
-}
-
-/** the options without the keys set to `undefined` */
-function definedOnly(
-  options: Partial<LoadingWaveOptions>
-): Partial<LoadingWaveOptions> {
-  return Object.fromEntries(
-    Object.entries(options).filter(([, value]) => value !== undefined)
+    () => ({ ...SPINNER_OPTIONS, ...withoutUnset(this.options() ?? {}) })
   );
 }

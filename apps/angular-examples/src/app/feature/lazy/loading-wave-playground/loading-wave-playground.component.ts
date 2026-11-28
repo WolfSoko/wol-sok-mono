@@ -206,7 +206,10 @@ export class LoadingWavePlaygroundComponent {
   }));
   /** the small elements' options, but each spinner keeps its own origin */
   protected readonly spinnerOptions = computed<Partial<LoadingWaveOptions>>(
-    () => ({ ...this.smallOptions(), origin: undefined })
+    () => {
+      const { origin: _stagesOrigin, ...options } = this.smallOptions();
+      return options;
+    }
   );
   /** shown to copy into provideLoadingWave or [wsLoadingWaveOptions] */
   protected readonly optionsJson = computed(() =>
