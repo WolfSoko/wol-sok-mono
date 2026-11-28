@@ -1,4 +1,5 @@
 const { availableParallelism } = require('node:os');
+const { join } = require('node:path');
 const nxPreset = require('@nx/jest/preset').default;
 require('cross-fetch/polyfill');
 const { parallel: CONFIGURED_PARALLEL } = require('./nx.json');
@@ -43,4 +44,13 @@ module.exports = {
   coverageReporters: ['lcov', 'html', 'text-summary'],
   maxWorkers: workersPerJestTask(),
   modulePathIgnorePatterns: ['<rootDir>/e2e/'],
+  // the Ace wrapper of @wolsok/ui-kit/code-editor names no entry Jest finds;
+  // its UMD bundle is CommonJS. A project's own moduleNameMapper replaces
+  // this one, so a project with one that renders the editor repeats it.
+  moduleNameMapper: {
+    '^ngx-ace-editor-wrapper$': join(
+      __dirname,
+      'node_modules/ngx-ace-editor-wrapper/dist/ngx-ace-editor-wrapper.umd.js'
+    ),
+  },
 };
