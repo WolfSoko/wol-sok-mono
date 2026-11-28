@@ -46,6 +46,8 @@ describe('LoadingWave', () => {
     expect(canvas.style.position).toBe('absolute');
     expect(canvas.style.zIndex).toBe('-1');
     expect(canvas.style.pointerEvents).toBe('none');
+    // a rounded host (a button, a chip) clips the wave to its corners
+    expect(canvas.style.borderRadius).toBe('inherit');
     expect(host.getAttribute('aria-busy')).toBe('true');
     expect(host.style.isolation).toBe('isolate');
     expect(rendererChanges).toEqual(['webgl']);

@@ -7,12 +7,16 @@ import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
 import { WaveTimeline } from './wave-timeline';
 
-/** styles that lay the canvas behind the host's content, filling it */
+/**
+ * styles that lay the canvas behind the host's content, filling it and
+ * following its rounded corners
+ */
 const CANVAS_STYLE: Partial<CSSStyleDeclaration> = {
   position: 'absolute',
   inset: '0',
   width: '100%',
   height: '100%',
+  borderRadius: 'inherit',
   display: 'block',
   pointerEvents: 'none',
   zIndex: '-1',
