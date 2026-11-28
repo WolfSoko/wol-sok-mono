@@ -11,14 +11,14 @@ crosshair. Each is 5 seconds (120 frames, 24 fps, 1080p), without text, so it
 can be captioned in any language, and comes with a poster still (its best
 frame, 3840 x 2160).
 
-| Shot                                     | Scene script      | Shows                                                   |
-| ---------------------------------------- | ----------------- | ------------------------------------------------------- |
-| [Dish duel](renders/dish-duel.mp4)       | `dish_duel.py`    | two colonies, one petri dish, fighting cell by cell     |
-| [Feeding](renders/feeding.mp4)           | `feeding.py`      | eat the food, grow                                      |
-| [Gate boost](renders/gate-boost.mp4)     | `gate_boost.py`   | walls, a sliding gate and the boost                     |
-| [Phage strike](renders/phage-strike.mp4) | `phage_strike.py` | a weapon bought with DNA, fired at the crosshair        |
-| [Heartbeat](renders/heartbeat.mp4)       | `heartbeat.py`    | the body chapter: a blood vessel, pushed by the pulse   |
-| [Title dish](renders/title-dish.mp4)     | `title_dish.py`   | the app icon in 3D, with room for a title: the end card |
+| Shot                                     | Still                                          | Scene script      | Shows                                                   |
+| ---------------------------------------- | ---------------------------------------------- | ----------------- | ------------------------------------------------------- |
+| [Dish duel](renders/dish-duel.mp4)       | [`dish-duel.jpg`](renders/dish-duel.jpg)       | `dish_duel.py`    | two colonies, one petri dish, fighting cell by cell     |
+| [Feeding](renders/feeding.mp4)           | [`feeding.jpg`](renders/feeding.jpg)           | `feeding.py`      | eat the food, grow                                      |
+| [Gate boost](renders/gate-boost.mp4)     | [`gate-boost.jpg`](renders/gate-boost.jpg)     | `gate_boost.py`   | walls, a sliding gate and the boost                     |
+| [Phage strike](renders/phage-strike.mp4) | [`phage-strike.jpg`](renders/phage-strike.jpg) | `phage_strike.py` | a weapon bought with DNA, fired at the crosshair        |
+| [Heartbeat](renders/heartbeat.mp4)       | [`heartbeat.jpg`](renders/heartbeat.jpg)       | `heartbeat.py`    | the body chapter: a blood vessel, pushed by the pulse   |
+| [Title dish](renders/title-dish.mp4)     | [`title-dish.jpg`](renders/title-dish.jpg)     | `title_dish.py`   | the app icon in 3D, with room for a title: the end card |
 
 [`renders/bacteria-wars-reel.mp4`](renders/bacteria-wars-reel.mp4) is all six
 in that order (`shots.json`), each fading into the next: the intro, without
