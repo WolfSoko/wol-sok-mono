@@ -2,11 +2,13 @@
  * The loading wave as pure math, shared by the 2D canvas renderer and
  * mirrored by the WebGL shaders' header (`webgl/shader-program.ts`).
  *
- * The wave front is an arc of a circle whose centre lies left of the
- * element, at mid-height: a ripple from off-screen. How round it is
- * (`frontRoundness`) sets the circle's radius. Its radius grows at an even
- * speed, so the front sweeps from the left edge until the lit tail behind
- * it has left the element at every row, then starts again.
+ * The wave front is a circle. From the `'left'` origin its centre lies left
+ * of the element, at mid-height: a ripple from off-screen whose arc crosses
+ * the element, and how round it is (`frontRoundness`) sets the circle's
+ * radius. From the `'center'` origin it grows from the element's middle: a
+ * ripple from a stone dropped there. Its radius grows at an even speed, so
+ * the front sweeps across until the lit tail behind it has left the element
+ * at every row, then starts again.
  * Every length is in CSS pixels, every time in milliseconds.
  */
 
@@ -38,11 +40,51 @@ const TAIL_SPACINGS = 4;
 export const MAX_DOTS = 20_000;
 /** the farthest a lit dot is pushed along the wave, in dot spacings */
 const MAX_PUSH_SPACINGS = 0.15;
+/**
+ * How many dots `autoscale: true` keeps across the host's shorter side: a
+ * smaller host gets a finer grid rather than a row or two of dots.
+ */
+export const MIN_DOTS_ACROSS = 6;
+/**
+ * The smallest dot `autoscale` shrinks to, in CSS pixels: smaller, a dot
+ * would vanish between the device pixels.
+ */
+export const MIN_DOT_SIZE = 1;
+/**
+ * The finest spacing `autoscale: true` shrinks to, in CSS pixels: on a
+ * host only a few pixels high, finer would smear the dots into a line.
+ */
+export const MIN_DOT_SPACING = 3;
+
+/**
+ * How the dot grid follows the host's size: `true` makes it finer where the
+ * host's shorter side holds fewer than `MIN_DOTS_ACROSS` dots, a number
+ * scales spacing and dot size by that factor, `false` keeps them as asked.
+ */
+export type Autoscale = boolean | number;
+
+/**
+ * Where the wave comes from: `'left'` sweeps it across from the left edge,
+ * `'center'` lets it grow from the element's middle.
+ */
+export type WaveOrigin = 'left' | 'center';
+
+/** where the wave comes from when nothing says otherwise */
+export const DEFAULT_ORIGIN: WaveOrigin = 'left';
+
+/** whether `autoscale` is a factor the grid can be scaled by */
+export function isScaleFactor(autoscale: Autoscale): autoscale is number {
+  return (
+    typeof autoscale === 'number' && Number.isFinite(autoscale) && autoscale > 0
+  );
+}
 
 export interface WaveGeometry {
   readonly width: number;
   readonly height: number;
   readonly dotSpacing: number;
+  /** diameter of a dot at rest, scaled with the spacing */
+  readonly dotSize: number;
   readonly sweepMs: number;
   readonly centerX: number;
   readonly centerY: number;
@@ -64,10 +106,17 @@ export interface WaveGeometry {
 
 export interface WaveGeometryOptions {
   readonly dotSpacing: number;
+  /** diameter of a dot at rest, in CSS pixels */
+  readonly dotSize: number;
   readonly sweepMs: number;
+  /** how the grid follows the host's size; unset, it keeps the asked one */
+  readonly autoscale?: Autoscale;
+  /** where the wave comes from; `'left'` when unset */
+  readonly origin?: WaveOrigin;
   /**
    * 0 (a straight front) to 1: how far the front's ends lag its middle, as a
-   * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset
+   * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset.
+   * Only the `'left'` origin has it.
    */
   readonly frontRoundness?: number;
 }
@@ -87,29 +136,110 @@ export function waveGeometry(
   height: number,
   {
     dotSpacing: askedSpacing,
+    dotSize: askedSize,
     sweepMs,
+    autoscale = false,
+    origin = DEFAULT_ORIGIN,
     frontRoundness = DEFAULT_FRONT_ROUNDNESS,
   }: WaveGeometryOptions
 ): WaveGeometry {
-  const dotSpacing = spacingWithinDotLimit(width, height, askedSpacing);
-  const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
+  const grid = scaledGrid(width, height, askedSpacing, askedSize, autoscale);
+  const dotSpacing = spacingWithinDotLimit(width, height, grid.dotSpacing);
   const tail = TAIL_SPACINGS * dotSpacing;
-  const endRadius = Math.hypot(distance + width + tail, height / 2);
+  const circle =
+    origin === 'center'
+      ? centredCircle(width, height, tail)
+      : circleFromLeft(width, height, dotSpacing, frontRoundness, tail);
   return {
     width,
     height,
     dotSpacing,
+    dotSize: grid.dotSize,
     sweepMs,
-    centerX: -distance,
-    centerY: height / 2,
-    startRadius: distance,
-    endRadius,
-    travel: endRadius - distance,
+    ...circle,
+    travel: circle.endRadius - circle.startRadius,
     falloff: FALLOFF_SPACINGS * dotSpacing,
     rise: RISE_SPACINGS * dotSpacing,
     tail,
     maxPush: MAX_PUSH_SPACINGS * dotSpacing,
   };
+}
+
+type FrontCircle = Pick<
+  WaveGeometry,
+  'centerX' | 'centerY' | 'startRadius' | 'endRadius'
+>;
+
+/**
+ * The circle left of the element: its arc touches the left edge at
+ * mid-height at the start, and the tail left every row at the end.
+ */
+function circleFromLeft(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  frontRoundness: number,
+  tail: number
+): FrontCircle {
+  const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
+  return {
+    centerX: -distance,
+    centerY: height / 2,
+    startRadius: distance,
+    endRadius: Math.hypot(distance + width + tail, height / 2),
+  };
+}
+
+/** the circle at the element's middle, until the tail left every corner */
+function centredCircle(
+  width: number,
+  height: number,
+  tail: number
+): FrontCircle {
+  return {
+    centerX: width / 2,
+    centerY: height / 2,
+    startRadius: 0,
+    endRadius: Math.hypot(width / 2, height / 2) + tail,
+  };
+}
+
+/** the asked spacing and dot size, scaled as `autoscale` says */
+function scaledGrid(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  dotSize: number,
+  autoscale: Autoscale
+): Pick<WaveGeometry, 'dotSpacing' | 'dotSize'> {
+  const spacing = scaledSpacing(width, height, dotSpacing, autoscale);
+  if (spacing === dotSpacing) {
+    return { dotSpacing, dotSize };
+  }
+  const scaledSize = (dotSize * spacing) / dotSpacing;
+  return {
+    dotSpacing: spacing,
+    dotSize: Math.max(Math.min(dotSize, MIN_DOT_SIZE), scaledSize),
+  };
+}
+
+function scaledSpacing(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  autoscale: Autoscale
+): number {
+  if (isScaleFactor(autoscale)) {
+    return dotSpacing * autoscale;
+  }
+  const shorterSide = Math.min(width, height);
+  // an empty host has no grid to fit, and a factor of 0 would end every
+  // sweep; a factor that is no positive number scales nothing
+  if (autoscale !== true || shorterSide <= 0) {
+    return dotSpacing;
+  }
+  const fitting = Math.max(MIN_DOT_SPACING, shorterSide / MIN_DOTS_ACROSS);
+  return Math.min(dotSpacing, fitting);
 }
 
 /**
@@ -260,6 +390,10 @@ export function dotDisplacement(
   const toX = x - geometry.centerX;
   const toY = y - geometry.centerY;
   const length = Math.hypot(toX, toY);
+  // a dot right at a centred front's middle has no way out
+  if (length === 0) {
+    return { dx: 0, dy: 0 };
+  }
   return { dx: (push * toX) / length, dy: (push * toY) / length };
 }
 

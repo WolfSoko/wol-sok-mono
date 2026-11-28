@@ -7,12 +7,16 @@ import type { Disconnect, WaveEnvironment } from './wave-environment';
 import { waveGeometry } from './wave-model';
 import { WaveTimeline } from './wave-timeline';
 
-/** styles that lay the canvas behind the host's content, filling it */
+/**
+ * styles that lay the canvas behind the host's content, filling it and
+ * following its rounded corners
+ */
 const CANVAS_STYLE: Partial<CSSStyleDeclaration> = {
   position: 'absolute',
   inset: '0',
   width: '100%',
   height: '100%',
+  borderRadius: 'inherit',
   display: 'block',
   pointerEvents: 'none',
   zIndex: '-1',
@@ -190,9 +194,8 @@ export class LoadingWave {
   }
 
   private look(): WaveLook {
-    const { dotSize, color, accentColor } = this.options;
+    const { color, accentColor } = this.options;
     return {
-      dotSize,
       color: this.env.resolveColor(this.host, color),
       accent:
         accentColor === undefined
@@ -206,6 +209,9 @@ export class LoadingWave {
     this.renderer?.resize(
       waveGeometry(width, height, {
         dotSpacing: this.options.dotSpacing,
+        dotSize: this.options.dotSize,
+        autoscale: this.options.autoscale,
+        origin: this.options.origin,
         sweepMs: this.options.sweepMs,
         frontRoundness: this.options.frontRoundness,
       }),

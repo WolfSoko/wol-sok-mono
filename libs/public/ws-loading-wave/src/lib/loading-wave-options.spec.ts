@@ -14,6 +14,8 @@ describe('loading wave options', () => {
       dotSpacing: 28,
       dotSize: 1.5,
       sweepMs: 1600,
+      autoscale: true,
+      origin: 'left',
       renderer: 'auto',
       frontRoundness: 0.5,
       shader: rippleShader,
@@ -77,6 +79,39 @@ describe('loading wave options', () => {
         frontRoundness: asked,
       }).frontRoundness
     ).toBe(resolved);
+  });
+
+  it.each([true, false, 0.5, 2])('keeps autoscale %p', (autoscale) => {
+    expect(
+      resolveLoadingWaveOptions(DEFAULT_LOADING_WAVE_OPTIONS, { autoscale })
+        .autoscale
+    ).toBe(autoscale);
+  });
+
+  it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+    'replaces the autoscale factor %p by the default',
+    (autoscale) => {
+      expect(
+        resolveLoadingWaveOptions(DEFAULT_LOADING_WAVE_OPTIONS, { autoscale })
+          .autoscale
+      ).toBe(true);
+      const fixed = { ...DEFAULT_LOADING_WAVE_OPTIONS, autoscale: false };
+      expect(resolveLoadingWaveOptions(fixed, { autoscale }).autoscale).toBe(
+        false
+      );
+    }
+  );
+
+  it('fills autoscale of defaults built without it with true', () => {
+    const { autoscale, ...withoutAutoscale } = DEFAULT_LOADING_WAVE_OPTIONS;
+    expect(autoscale).toBe(true);
+    expect(resolveLoadingWaveOptions(withoutAutoscale).autoscale).toBe(true);
+  });
+
+  it("fills the origin of defaults built without it with 'left'", () => {
+    const { origin, ...withoutOrigin } = DEFAULT_LOADING_WAVE_OPTIONS;
+    expect(origin).toBe('left');
+    expect(resolveLoadingWaveOptions(withoutOrigin).origin).toBe('left');
   });
 
   it('fills the front roundness of defaults built without it', () => {

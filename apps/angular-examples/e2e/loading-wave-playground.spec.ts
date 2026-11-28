@@ -1,10 +1,10 @@
 import { expect, test } from './fixtures/page-diagnostics';
 import { LoadingWavePlaygroundPage } from './po/loading-wave-playground.page';
 
-/** every built-in shader, by its label in the playground's picker */
 /** fails to compile, so the shader stage falls back to the 2D canvas */
 const BROKEN_FRAGMENT = 'vec4 wsShade(vec2 point) { nope }';
 
+/** every built-in shader, by its label in the playground's picker */
 const BUILT_IN_SHADERS = [
   'Ripple',
   'Circuit traces',
@@ -13,6 +13,9 @@ const BUILT_IN_SHADERS = [
   'Signal trace',
   'Spark front',
 ];
+
+/** the waves of the small elements card: three buttons, a chip, three spinners */
+const SMALL_WAVES = 7;
 
 // CI has no GPU: Chromium draws WebGL2 on SwiftShader, which it offers only when asked
 test.use({
@@ -40,6 +43,15 @@ test.describe('loading wave playground', () => {
       await expect(playground.gpuRenderer).toHaveText('drawn by: webgl');
     });
   }
+
+  test('lays a wave on every small element while loading', async ({ page }) => {
+    const playground = new LoadingWavePlaygroundPage(page);
+    await playground.open();
+
+    await expect(playground.smallElements.locator('canvas')).toHaveCount(
+      SMALL_WAVES
+    );
+  });
 
   test('falls back to the 2D canvas for a fragment that does not compile', async ({
     page,

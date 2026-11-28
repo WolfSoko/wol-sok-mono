@@ -46,6 +46,8 @@ describe('LoadingWave', () => {
     expect(canvas.style.position).toBe('absolute');
     expect(canvas.style.zIndex).toBe('-1');
     expect(canvas.style.pointerEvents).toBe('none');
+    // a rounded host (a button, a chip) clips the wave to its corners
+    expect(canvas.style.borderRadius).toBe('inherit');
     expect(host.getAttribute('aria-busy')).toBe('true');
     expect(host.style.isolation).toBe('isolate');
     expect(rendererChanges).toEqual(['webgl']);
@@ -158,7 +160,6 @@ describe('LoadingWave', () => {
     wave.setLoading(true);
     callbacks.theme.forEach((change) => change());
     expect(renderers[0].setLook).toHaveBeenCalledWith({
-      dotSize: DEFAULT_LOADING_WAVE_OPTIONS.dotSize,
       color: { r: 1, g: 2, b: 3 },
     });
   });
@@ -186,11 +187,42 @@ describe('LoadingWave', () => {
       sweepMs: 900,
     });
     expect(renderers).toHaveLength(1);
-    expect(renderers[0].setLook).toHaveBeenLastCalledWith(
-      expect.objectContaining({ dotSize: 3 })
-    );
+    expect(renderers[0].setLook).toHaveBeenCalledTimes(1);
     expect(renderers[0].resize).toHaveBeenLastCalledWith(
-      expect.objectContaining({ dotSpacing: 40, sweepMs: 900 }),
+      expect.objectContaining({ dotSpacing: 40, dotSize: 3, sweepMs: 900 }),
+      2
+    );
+  });
+
+  it('makes the grid of a small host finer, unless autoscale is off', () => {
+    const sizeHost = (host: HTMLElement) => {
+      Object.defineProperty(host, 'clientWidth', { value: 120 });
+      Object.defineProperty(host, 'clientHeight', { value: 36 });
+    };
+    const button = setUp();
+    sizeHost(button.host);
+    button.wave.setLoading(true);
+    expect(button.renderers[0].resize).toHaveBeenLastCalledWith(
+      expect.objectContaining({ dotSpacing: 6, dotSize: 1 }),
+      2
+    );
+
+    const fixed = setUp({ autoscale: false });
+    sizeHost(fixed.host);
+    fixed.wave.setLoading(true);
+    expect(fixed.renderers[0].resize).toHaveBeenLastCalledWith(
+      expect.objectContaining({ dotSpacing: 28, dotSize: 1.5 }),
+      2
+    );
+  });
+
+  it("grows the wave from the host's middle with origin 'center'", () => {
+    const { host, wave, renderers } = setUp({ origin: 'center' });
+    Object.defineProperty(host, 'clientWidth', { value: 60 });
+    Object.defineProperty(host, 'clientHeight', { value: 40 });
+    wave.setLoading(true);
+    expect(renderers[0].resize).toHaveBeenLastCalledWith(
+      expect.objectContaining({ centerX: 30, centerY: 20, startRadius: 0 }),
       2
     );
   });

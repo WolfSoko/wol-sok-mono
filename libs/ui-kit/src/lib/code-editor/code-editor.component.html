@@ -1,0 +1,15 @@
+@if (codeTitle(); as title) {
+  <div class="title">{{ title }}</div>
+}
+<div
+  class="editor"
+  ace-editor
+  theme="monokai"
+  [text]="code()"
+  [mode]="mode()"
+  [options]="options()"
+  [readOnly]="false"
+  [autoUpdateContent]="true"
+  [durationBeforeCallback]="changeDebounceMs()"
+  (textChanged)="codeChange.emit($event)"
+></div>

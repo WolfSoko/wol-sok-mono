@@ -56,15 +56,15 @@ function setUp(accent?: Rgb, color: Rgb = { r: 200, g: 210, b: 220 }) {
     height: 0,
     getContext: jest.fn(() => recording.context),
   } as unknown as HTMLCanvasElement;
-  const renderer = CanvasWaveRenderer.create(canvas, {
-    dotSize: 2,
-    color,
-    accent,
-  });
+  const renderer = CanvasWaveRenderer.create(canvas, { color, accent });
   if (renderer == null) {
     throw new Error('no renderer');
   }
-  const geometry = waveGeometry(400, 100, { dotSpacing: 20, sweepMs: 1000 });
+  const geometry = waveGeometry(400, 100, {
+    dotSpacing: 20,
+    dotSize: 2,
+    sweepMs: 1000,
+  });
   renderer.resize(geometry, 2);
   return { ...recording, canvas, renderer, geometry };
 }
@@ -75,10 +75,7 @@ describe('CanvasWaveRenderer', () => {
       getContext: () => null,
     } as unknown as HTMLCanvasElement;
     expect(
-      CanvasWaveRenderer.create(canvas, {
-        dotSize: 1,
-        color: { r: 0, g: 0, b: 0 },
-      })
+      CanvasWaveRenderer.create(canvas, { color: { r: 0, g: 0, b: 0 } })
     ).toBeNull();
   });
 
@@ -110,6 +107,26 @@ describe('CanvasWaveRenderer', () => {
     expect(strokes).toHaveLength(1);
   });
 
+  it("strokes the front's whole circle, so a centred front shows all around", () => {
+    const { renderer, context, canvas } = setUp();
+    const centred = waveGeometry(60, 60, {
+      dotSpacing: 8,
+      dotSize: 2,
+      sweepMs: 1000,
+      origin: 'center',
+    });
+    renderer.resize(centred, 2);
+    renderer.draw({ elapsedMs: 300, wave: 1, dots: 1 });
+    expect(canvas.width).toBe(120);
+    expect(context.arc).toHaveBeenLastCalledWith(
+      30,
+      30,
+      expect.any(Number),
+      0,
+      2 * Math.PI
+    );
+  });
+
   it('fades the whole grid with the dots opacity', () => {
     const { renderer, arcs } = setUp();
     renderer.draw({ elapsedMs: 500, wave: 0, dots: 0.5 });
@@ -132,14 +149,14 @@ describe('CanvasWaveRenderer', () => {
 
   it("multiplies the colour's own alpha into the dots", () => {
     const { renderer, arcs } = setUp();
-    renderer.setLook({ dotSize: 2, color: { r: 1, g: 2, b: 3, alpha: 0.5 } });
+    renderer.setLook({ color: { r: 1, g: 2, b: 3, alpha: 0.5 } });
     renderer.draw({ elapsedMs: 500, wave: 0, dots: 1 });
     expect(arcs[0].alpha).toBeCloseTo(REST_ALPHA / 2, 9);
   });
 
   it('draws nothing in a transparent colour', () => {
     const { renderer, arcs } = setUp();
-    renderer.setLook({ dotSize: 2, color: { r: 0, g: 0, b: 0, alpha: 0 } });
+    renderer.setLook({ color: { r: 0, g: 0, b: 0, alpha: 0 } });
     renderer.draw({ elapsedMs: 500, wave: 1, dots: 1 });
     expect(arcs).toEqual([]);
   });

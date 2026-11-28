@@ -9,7 +9,7 @@ import {
   WebGlWaveRenderer,
 } from './webgl-wave-renderer';
 
-const look = { dotSize: 2, color: { r: 255, g: 0, b: 51 } };
+const look = { color: { r: 255, g: 0, b: 51 } };
 
 function setUp(
   options: Parameters<typeof fakeWebGl2>[0] = {},
@@ -67,7 +67,7 @@ describe('WebGlWaveRenderer', () => {
   it('sizes canvas and viewport by the pixel ratio', () => {
     const { create, canvas, gl } = setUp();
     create().resize(
-      waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+      waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
       2
     );
     expect([canvas.width, canvas.height]).toEqual([600, 200]);
@@ -77,7 +77,11 @@ describe('WebGlWaveRenderer', () => {
   it('draws one full-canvas triangle with the frame and the look as uniforms', () => {
     const { create, gl, uniformValues } = setUp();
     const renderer = create();
-    const geometry = waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 900 });
+    const geometry = waveGeometry(300, 100, {
+      dotSpacing: 20,
+      dotSize: 2,
+      sweepMs: 900,
+    });
     renderer.resize(geometry, 1.5);
     renderer.draw({ elapsedMs: 300, wave: 0.5, dots: 0.75 });
     expect(gl.drawArrays).toHaveBeenCalledWith(gl.TRIANGLES, 0, 3);
@@ -96,7 +100,11 @@ describe('WebGlWaveRenderer', () => {
   });
 
   it('shows no echo before the front ran ahead by its lag', () => {
-    const geometry = waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 900 });
+    const geometry = waveGeometry(300, 100, {
+      dotSpacing: 20,
+      dotSize: 2,
+      sweepMs: 900,
+    });
     expect(echoRadius(geometry, ECHO_LAG * 900 - 1)).toBeLessThan(0);
     expect(echoRadius(geometry, ECHO_LAG * 900)).toBe(geometry.startRadius);
   });
@@ -106,7 +114,7 @@ describe('WebGlWaveRenderer', () => {
     buffer.maxSize = 4096;
     const renderer = create();
     renderer.resize(
-      waveGeometry(400, 8000, { dotSpacing: 20, sweepMs: 1000 }),
+      waveGeometry(400, 8000, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
       1
     );
     renderer.draw({ elapsedMs: 0, wave: 1, dots: 1 });
@@ -119,7 +127,7 @@ describe('WebGlWaveRenderer', () => {
     const { create, gl } = setUp();
     const renderer = create();
     renderer.resize(
-      waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+      waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
       1
     );
     renderer.draw({ elapsedMs: 0, wave: 0, dots: 0 });
@@ -131,7 +139,7 @@ describe('WebGlWaveRenderer', () => {
     const { create, gl, canvas, onContextLost } = setUp();
     const renderer = create();
     renderer.resize(
-      waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+      waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
       1
     );
     const event = new Event('webglcontextlost', { cancelable: true });
@@ -188,7 +196,7 @@ describe('WebGlWaveRenderer', () => {
       const { create, uniformValues, gl } = setUp({}, shader);
       const renderer = create();
       renderer.resize(
-        waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+        waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
         1
       );
       renderer.draw({ elapsedMs: 0, wave: 1, dots: 1 });
@@ -219,7 +227,7 @@ describe('WebGlWaveRenderer', () => {
       const { create, uniformValues } = setUp({}, shader);
       const renderer = create();
       renderer.resize(
-        waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+        waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
         1
       );
       renderer.draw({ elapsedMs: 0, wave: 1, dots: 1 });
@@ -241,7 +249,7 @@ describe('WebGlWaveRenderer', () => {
         { onContextLost: jest.fn() }
       );
       renderer.resize(
-        waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+        waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
         2
       );
       renderer.draw({ elapsedMs: 2250, wave: 1, dots: 1 });
@@ -255,7 +263,7 @@ describe('WebGlWaveRenderer', () => {
       const { create, gl } = setUp();
       const renderer = create();
       renderer.resize(
-        waveGeometry(300, 100, { dotSpacing: 20, sweepMs: 1000 }),
+        waveGeometry(300, 100, { dotSpacing: 20, dotSize: 2, sweepMs: 1000 }),
         1
       );
       renderer.draw({ elapsedMs: 0, wave: 0, dots: 0.1 });

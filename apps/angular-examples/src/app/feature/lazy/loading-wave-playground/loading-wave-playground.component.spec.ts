@@ -1,8 +1,14 @@
+import { DebugElement } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleGroup } from '@angular/material/button-toggle';
 import { MatSelect, MatSelectChange } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
-import { LoadingWaveDirective, rippleShader } from '@wolsok/loading-wave';
+import {
+  LoadingWaveDirective,
+  LoadingWaveSpinnerComponent,
+  rippleShader,
+} from '@wolsok/loading-wave';
+import { CodeEditorComponent } from '@wolsok/ui-kit/code-editor';
 import {
   circuitTracesShader,
   dataBusShader,
@@ -26,10 +32,16 @@ describe('LoadingWavePlaygroundComponent', () => {
     });
     const fixture = TestBed.createComponent(LoadingWavePlaygroundComponent);
     await fixture.whenStable();
-    const waves = fixture.debugElement
-      .queryAll(By.directive(LoadingWaveDirective))
-      .map((element) => element.injector.get(LoadingWaveDirective));
-    return { fixture, waves };
+    const wavesOf = (elements: DebugElement[]) =>
+      elements.map((element) => element.injector.get(LoadingWaveDirective));
+    // the two stages, the shader stage first
+    const waves = wavesOf(fixture.debugElement.queryAll(By.css('.stage')));
+    const smallWaves = wavesOf(
+      fixture.debugElement
+        .query(By.css('[data-testid="small-elements"]'))
+        .queryAll(By.directive(LoadingWaveDirective))
+    );
+    return { fixture, waves, smallWaves };
   }
 
   /** the options each stage gets: the shader stage's first */
@@ -138,6 +150,89 @@ describe('LoadingWavePlaygroundComponent', () => {
     }
   });
 
+  it('passes the autoscale choice and the origin to both stages and shows them', async () => {
+    const { fixture, waves } = await render();
+    expect(stageOptions(waves)[0]).toEqual(
+      expect.objectContaining({ autoscale: true, origin: 'left' })
+    );
+
+    pickToggle(fixture, 'autoscale', 0.5);
+    pickToggle(fixture, 'origin', 'center');
+    await fixture.whenStable();
+
+    for (const options of stageOptions(waves)) {
+      expect(options).toEqual(
+        expect.objectContaining({ autoscale: 0.5, origin: 'center' })
+      );
+    }
+    const shown = fixture.debugElement.query(By.css('[data-testid="options"]'))
+      .nativeElement.textContent;
+    expect(JSON.parse(shown)).toEqual(
+      expect.objectContaining({ autoscale: 0.5, origin: 'center' })
+    );
+  });
+
+  it('offers autoscale on, off and halved', async () => {
+    const { fixture } = await render();
+    expect(
+      fixture.componentInstance['autoscaleChoices'].map(
+        (choice) => choice.value
+      )
+    ).toEqual([true, false, 0.5]);
+  });
+
+  it('lays the wave on small elements too, with the options and shader of the stage', async () => {
+    const { fixture, smallWaves } = await render();
+    const card = fixture.debugElement.query(
+      By.css('[data-testid="small-elements"]')
+    );
+    expect(card.queryAll(By.css('button'))).toHaveLength(3);
+    expect(card.queryAll(By.css('mat-chip'))).toHaveLength(1);
+    expect(smallWaves).toHaveLength(7);
+
+    pickToggle(fixture, 'autoscale', false);
+    pickShader(fixture, 'dataBusShader');
+    await fixture.whenStable();
+
+    for (const wave of smallWaves.slice(0, 4)) {
+      expect(wave.wsLoadingWave()).toBe(true);
+      expect(wave.wsLoadingWaveOptions()).toEqual(
+        expect.objectContaining({
+          autoscale: false,
+          renderer: 'auto',
+          shader: dataBusShader,
+        })
+      );
+    }
+  });
+
+  it('shows spinners of 24, 40 and 64 px while loading, with the playground options', async () => {
+    const { fixture } = await render();
+    const spinners = () =>
+      fixture.debugElement
+        .queryAll(By.directive(LoadingWaveSpinnerComponent))
+        .map((element) => element.injector.get(LoadingWaveSpinnerComponent));
+    expect(spinners().map((spinner) => spinner.diameter())).toEqual([
+      24, 40, 64,
+    ]);
+
+    pickToggle(fixture, 'autoscale', 0.5);
+    await fixture.whenStable();
+    for (const spinner of spinners()) {
+      expect(spinner.options()).toEqual(
+        expect.objectContaining({ autoscale: 0.5, renderer: 'auto' })
+      );
+      // the spinner's own ripple wins over the stages' origin
+      expect(spinner.options()?.origin).toBeUndefined();
+    }
+
+    fixture.debugElement
+      .query(By.css('[data-testid="loading"]'))
+      .triggerEventHandler('change', { checked: false });
+    await fixture.whenStable();
+    expect(spinners()).toEqual([]);
+  });
+
   it('offers only theme colours, so every choice shows in light and dark', async () => {
     const { fixture } = await render();
     const values = fixture.componentInstance['colorChoices']
@@ -150,6 +245,25 @@ describe('LoadingWavePlaygroundComponent', () => {
     }
   });
 
+  it('opens the code editor wide and with room once Custom is picked', async () => {
+    const { fixture } = await render();
+    const editorCard = () =>
+      fixture.debugElement.query(By.css('[data-testid="shader-editor"]'));
+    expect(editorCard()).toBeNull();
+
+    pickShader(fixture, 'custom');
+    await fixture.whenStable();
+
+    const editor = editorCard()
+      .query(By.directive(CodeEditorComponent))
+      .injector.get(CodeEditorComponent);
+    expect(editor.code()).toBe(CUSTOM_SHADER_EXAMPLE);
+    expect(editor.mode()).toBe('glsl');
+    expect(editor.minLines()).toBeGreaterThanOrEqual(30);
+    // "Apply" takes what was typed, however fast
+    expect(editor.changeDebounceMs()).toBe(0);
+  });
+
   it('draws a custom fragment on the shader stage once applied', async () => {
     const { fixture, waves } = await render();
 
@@ -159,11 +273,10 @@ describe('LoadingWavePlaygroundComponent', () => {
       fragment: CUSTOM_SHADER_EXAMPLE,
     });
 
-    const textarea: HTMLTextAreaElement = fixture.debugElement.query(
-      By.css('[data-testid="custom-fragment"]')
-    ).nativeElement;
-    textarea.value = 'vec4 wsShade(vec2 p) { return vec4(1.0); }';
-    textarea.dispatchEvent(new Event('input'));
+    fixture.debugElement
+      .query(By.directive(CodeEditorComponent))
+      .injector.get(CodeEditorComponent)
+      .codeChange.emit('vec4 wsShade(vec2 p) { return vec4(1.0); }');
     await fixture.whenStable();
     // typing alone does not recompile on every key
     expect(stageOptions(waves)[0]?.shader).toEqual({

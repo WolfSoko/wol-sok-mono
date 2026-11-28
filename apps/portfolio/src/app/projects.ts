@@ -278,8 +278,8 @@ export const EXPERIMENTS: Project[] = [
       de: 'Eine ruhige Welle leuchtender Punkte.',
     },
     description: {
-      en: 'Try every option of @wolsok/loading-wave: a round wave that lights a grid of dots behind any element, drawn by a WebGL2 shader and by a 2D canvas side by side, in your theme. Pick a shader (a ripple, circuit traces, a data bus, a chip powering up, an oscilloscope or electric arcs) or write your own GLSL right on the page.',
-      de: 'Probiere jede Option von @wolsok/loading-wave: eine runde Welle, die ein Punkteraster hinter jedem Element aufleuchten lässt, gezeichnet von einem WebGL2-Shader und einem 2D-Canvas nebeneinander, im Theme der Seite. Wähle einen Shader (eine Welle, Leiterbahnen, einen Datenbus, einen hochfahrenden Chip, ein Oszilloskop oder elektrische Blitze) oder schreibe dein eigenes GLSL direkt auf der Seite.',
+      en: 'Try every option of @wolsok/loading-wave: a round wave that lights a grid of dots behind any element, drawn by a WebGL2 shader and by a 2D canvas side by side, in your theme, on buttons, a chip and spinners too. Pick a shader (a ripple, circuit traces, a data bus, a chip powering up, an oscilloscope or electric arcs) or write your own GLSL in a code editor right on the page.',
+      de: 'Probiere jede Option von @wolsok/loading-wave: eine runde Welle, die ein Punkteraster hinter jedem Element aufleuchten lässt, gezeichnet von einem WebGL2-Shader und einem 2D-Canvas nebeneinander, im Theme der Seite, auch auf Buttons, einem Chip und Spinnern. Wähle einen Shader (eine Welle, Leiterbahnen, einen Datenbus, einen hochfahrenden Chip, ein Oszilloskop oder elektrische Blitze) oder schreibe dein eigenes GLSL in einem Code-Editor direkt auf der Seite.',
     },
     accent: '#22d3ee',
     tech: ['WebGL2', 'GLSL', 'Canvas', 'Angular'],
@@ -315,8 +315,8 @@ export const PACKAGES: Project[] = [
       de: 'Laden, ruhig im Hintergrund.',
     },
     description: {
-      en: 'An Angular directive that lays a calm loading wave of lit dots behind any element: a shaded WebGL2 ripple with refraction, lit beads and bloom, five built-in circuit and spark shaders, or a fragment shader of your own, a 2D canvas without a GPU, and dots that fade away or stay once loading ends.',
-      de: 'Eine Angular-Direktive, die eine ruhige Ladewelle leuchtender Punkte hinter jedes Element legt: eine schattierte WebGL2-Welle mit Lichtbrechung, leuchtenden Perlen und Bloom, fünf eingebaute Schaltkreis- und Funken-Shader oder ein eigener Fragment-Shader, ein 2D-Canvas ohne GPU, und Punkte, die nach dem Laden verblassen oder bleiben.',
+      en: 'An Angular directive that lays a calm loading wave of lit dots behind any element, from a whole page down to a button, plus a round spinner in the same style: a shaded WebGL2 ripple with refraction, lit beads and bloom, five built-in circuit and spark shaders, or a fragment shader of your own, a 2D canvas without a GPU, and dots that fade away or stay once loading ends.',
+      de: 'Eine Angular-Direktive, die eine ruhige Ladewelle leuchtender Punkte hinter jedes Element legt, von der ganzen Seite bis zum Button, dazu ein runder Spinner im selben Stil: eine schattierte WebGL2-Welle mit Lichtbrechung, leuchtenden Perlen und Bloom, fünf eingebaute Schaltkreis- und Funken-Shader oder ein eigener Fragment-Shader, ein 2D-Canvas ohne GPU, und Punkte, die nach dem Laden verblassen oder bleiben.',
     },
     accent: '#22d3ee',
     tech: ['Angular', 'WebGL2', 'Canvas'],

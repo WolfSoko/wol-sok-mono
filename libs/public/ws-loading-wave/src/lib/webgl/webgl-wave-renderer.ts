@@ -167,7 +167,7 @@ export class WebGlWaveRenderer implements WaveRenderer {
     gl.uniform2f(locations.ws_bufferSize, bufferWidth, bufferHeight);
     gl.uniform1f(locations.ws_pixel, geometry.width / Math.max(1, bufferWidth));
     gl.uniform1f(locations.ws_spacing, geometry.dotSpacing);
-    gl.uniform1f(locations.ws_dotSize, look.dotSize);
+    gl.uniform1f(locations.ws_dotSize, geometry.dotSize);
     setColor(gl, locations.ws_color, look.color);
     setColor(gl, locations.ws_accent, look.accent ?? look.color);
     gl.uniform2f(locations.ws_center, geometry.centerX, geometry.centerY);

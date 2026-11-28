@@ -1,5 +1,11 @@
 import { InjectionToken, Provider } from '@angular/core';
-import { DEFAULT_FRONT_ROUNDNESS } from './wave-model';
+import {
+  Autoscale,
+  DEFAULT_FRONT_ROUNDNESS,
+  DEFAULT_ORIGIN,
+  isScaleFactor,
+  WaveOrigin,
+} from './wave-model';
 import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { rippleShader } from './webgl/shaders/ripple.shader';
 
@@ -19,6 +25,19 @@ export interface LoadingWaveOptions {
   readonly dotSpacing: number;
   /** diameter of a dot at rest, in CSS pixels */
   readonly dotSize: number;
+  /**
+   * how the dot grid follows the host's size: `true` makes spacing and dot
+   * size finer on a host too small for `MIN_DOTS_ACROSS` dots across its
+   * shorter side (a button), a number scales both by that factor, `false`
+   * keeps them as set; `true` when unset
+   */
+  readonly autoscale?: Autoscale;
+  /**
+   * where the wave comes from: `'left'` sweeps it across from the left
+   * edge, `'center'` lets it grow from the host's middle (a spinner);
+   * `'left'` when unset
+   */
+  readonly origin?: WaveOrigin;
   /** any CSS colour; unset, the dots take the host's `currentColor` */
   readonly color?: string;
   /**
@@ -36,7 +55,8 @@ export interface LoadingWaveOptions {
   readonly renderer: WaveRendererPreference;
   /**
    * 0 (a straight front) to 1 (a half circle): how far the wave front's ends
-   * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset
+   * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset.
+   * Only the `'left'` origin has it.
    */
   readonly frontRoundness?: number;
   /**
@@ -49,13 +69,20 @@ export interface LoadingWaveOptions {
 
 /** options with every default filled in, as the wave runs with them */
 export type ResolvedLoadingWaveOptions = LoadingWaveOptions &
-  Required<Pick<LoadingWaveOptions, 'frontRoundness' | 'shader'>>;
+  Required<
+    Pick<
+      LoadingWaveOptions,
+      'autoscale' | 'origin' | 'frontRoundness' | 'shader'
+    >
+  >;
 
 export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   afterLoading: 'hide',
   dotSpacing: 28,
   dotSize: 1.5,
   sweepMs: 1600,
+  autoscale: true,
+  origin: DEFAULT_ORIGIN,
   renderer: 'auto',
   frontRoundness: DEFAULT_FRONT_ROUNDNESS,
   shader: rippleShader,
@@ -78,22 +105,21 @@ export function provideLoadingWave(
 
 /**
  * Merges `overrides` into `defaults`, ignoring `undefined` values,
- * replacing sizes and durations that are no positive finite number and
- * clamping the front's roundness into 0 to 1.
+ * replacing sizes, durations and an `autoscale` factor that are no positive
+ * finite number and clamping the front's roundness into 0 to 1.
  */
 export function resolveLoadingWaveOptions(
   defaults: LoadingWaveOptions,
   overrides: Partial<LoadingWaveOptions> = {}
 ): ResolvedLoadingWaveOptions {
-  const defined = Object.fromEntries(
-    Object.entries(overrides).filter(([, value]) => value !== undefined)
-  ) as Partial<LoadingWaveOptions>;
-  const merged = { ...defaults, ...defined };
+  const merged = { ...defaults, ...withoutUnset(overrides) };
   return {
     ...merged,
     dotSpacing: positiveOr(merged.dotSpacing, defaults.dotSpacing),
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
+    autoscale: autoscaleOr(merged.autoscale, defaults.autoscale ?? true),
+    origin: merged.origin ?? DEFAULT_ORIGIN,
     // an app's own LOADING_WAVE_OPTIONS may lack the newer options
     frontRoundness: unitOr(
       merged.frontRoundness,
@@ -107,6 +133,26 @@ export function resolveLoadingWaveOptions(
 function unitOr(value: number | undefined, fallback: number): number {
   return value !== undefined && Number.isFinite(value)
     ? Math.min(1, Math.max(0, value))
+    : fallback;
+}
+
+/** the options without the keys set to `undefined`, which set nothing */
+export function withoutUnset(
+  options: Partial<LoadingWaveOptions>
+): Partial<LoadingWaveOptions> {
+  return Object.fromEntries(
+    Object.entries(options).filter(([, value]) => value !== undefined)
+  );
+}
+
+/** a boolean or a positive finite factor; `fallback` for anything else */
+function autoscaleOr(
+  value: Autoscale | undefined,
+  fallback: Autoscale
+): Autoscale {
+  return typeof value === 'boolean' ||
+    (value !== undefined && isScaleFactor(value))
+    ? value
     : fallback;
 }
 

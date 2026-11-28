@@ -2,6 +2,9 @@ import {
   AFTERGLOW,
   DEFAULT_FRONT_ROUNDNESS,
   MAX_DOTS,
+  MIN_DOT_SIZE,
+  MIN_DOT_SPACING,
+  MIN_DOTS_ACROSS,
   dotCenters,
   dotDisplacement,
   frontRadius,
@@ -10,7 +13,8 @@ import {
 } from './wave-model';
 
 const sweepMs = 1600;
-const geometry = waveGeometry(1000, 400, { dotSpacing: 20, sweepMs });
+const dotSize = 1.5;
+const geometry = waveGeometry(1000, 400, { dotSpacing: 20, dotSize, sweepMs });
 /** a time in the second sweep, when the first one left its afterglow */
 const secondSweep = (ms: number): number => sweepMs + ms;
 
@@ -45,6 +49,7 @@ describe('wave model', () => {
     function edgeLagMs(frontRoundness: number, width = 1000): number {
       const round = waveGeometry(width, 400, {
         dotSpacing: 20,
+        dotSize,
         sweepMs,
         frontRoundness,
       });
@@ -57,6 +62,7 @@ describe('wave model', () => {
     function edgeLagPx(frontRoundness: number, width = 1000): number {
       const round = waveGeometry(width, 400, {
         dotSpacing: 20,
+        dotSize,
         sweepMs,
         frontRoundness,
       });
@@ -83,10 +89,15 @@ describe('wave model', () => {
     });
 
     it('is 0.5 when unset', () => {
-      const unset = waveGeometry(1000, 400, { dotSpacing: 20, sweepMs });
+      const unset = waveGeometry(1000, 400, {
+        dotSpacing: 20,
+        dotSize,
+        sweepMs,
+      });
       expect(unset).toEqual(
         waveGeometry(1000, 400, {
           dotSpacing: 20,
+          dotSize,
           sweepMs,
           frontRoundness: DEFAULT_FRONT_ROUNDNESS,
         })
@@ -98,6 +109,7 @@ describe('wave model', () => {
       it(`starts at the left edge and passes every row at ${frontRoundness}`, () => {
         const round = waveGeometry(1000, 400, {
           dotSpacing: 20,
+          dotSize,
           sweepMs,
           frontRoundness,
         });
@@ -202,32 +214,205 @@ describe('wave model', () => {
 
   describe('dot count', () => {
     it('widens a tiny spacing so the grid holds at most MAX_DOTS dots', () => {
-      const tiny = waveGeometry(1000, 400, { dotSpacing: 0.1, sweepMs });
+      const tiny = waveGeometry(1000, 400, {
+        dotSpacing: 0.1,
+        dotSize,
+        sweepMs,
+      });
       expect(dotCenters(tiny).length).toBeLessThanOrEqual(MAX_DOTS);
       expect(tiny.dotSpacing).toBeGreaterThan(0.1);
     });
 
     it('counts the rows and columns as rounded, not just the area', () => {
-      const narrow = waveGeometry(100, 140, { dotSpacing: 0.1, sweepMs });
+      const narrow = waveGeometry(100, 140, {
+        dotSpacing: 0.1,
+        dotSize,
+        sweepMs,
+      });
       expect(dotCenters(narrow).length).toBeLessThanOrEqual(MAX_DOTS);
     });
 
     it('lays no dots on an empty host, without looping over its rows', () => {
-      const empty = waveGeometry(0, 400, { dotSpacing: 0.000001, sweepMs });
+      const empty = waveGeometry(0, 400, {
+        dotSpacing: 0.000001,
+        dotSize,
+        sweepMs,
+      });
       expect(dotCenters(empty)).toEqual([]);
     });
 
     it('keeps the asked spacing below the limit', () => {
       expect(
-        waveGeometry(1000, 400, { dotSpacing: 20, sweepMs }).dotSpacing
+        waveGeometry(1000, 400, { dotSpacing: 20, dotSize, sweepMs }).dotSpacing
       ).toBe(20);
+    });
+  });
+
+  describe('autoscale', () => {
+    /** the defaults of the options, as a small host gets them */
+    const defaults = { dotSpacing: 28, dotSize: 1.5, sweepMs };
+
+    it('shrinks the grid of a small host to MIN_DOTS_ACROSS on its shorter side', () => {
+      const button = waveGeometry(120, 36, { ...defaults, autoscale: true });
+      expect(MIN_DOTS_ACROSS).toBe(6);
+      expect(button.dotSpacing).toBeCloseTo(36 / 6, 9);
+      expect(button.dotSize).toBe(MIN_DOT_SIZE);
+      expect(MIN_DOT_SIZE).toBe(1);
+    });
+
+    it('scales every length that follows the spacing with it', () => {
+      const small = waveGeometry(120, 36, { ...defaults, autoscale: true });
+      const asked = waveGeometry(120, 36, { ...defaults, dotSpacing: 6 });
+      expect(small).toEqual({ ...asked, dotSize: MIN_DOT_SIZE });
+    });
+
+    it('leaves a host large enough for the asked grid as it is', () => {
+      const large = waveGeometry(400, 300, { ...defaults, autoscale: true });
+      expect(large.dotSpacing).toBe(28);
+      expect(large.dotSize).toBe(1.5);
+    });
+
+    it('shrinks the dot size with the spacing above the floor', () => {
+      const card = waveGeometry(400, 84, {
+        ...defaults,
+        dotSize: 4,
+        autoscale: true,
+      });
+      expect(card.dotSpacing).toBeCloseTo(14, 9);
+      expect(card.dotSize).toBeCloseTo(2, 9);
+    });
+
+    it('keeps an asked dot size below the floor as asked', () => {
+      const fine = waveGeometry(120, 36, {
+        ...defaults,
+        dotSize: 0.5,
+        autoscale: true,
+      });
+      expect(fine.dotSize).toBe(0.5);
+    });
+
+    it('takes a number as the factor, on any host', () => {
+      for (const [width, height] of [
+        [120, 36],
+        [1000, 800],
+      ]) {
+        const half = waveGeometry(width, height, {
+          ...defaults,
+          autoscale: 0.5,
+        });
+        expect(half.dotSpacing).toBe(14);
+        expect(half.dotSize).toBe(MIN_DOT_SIZE);
+      }
+      const double = waveGeometry(1000, 800, { ...defaults, autoscale: 2 });
+      expect(double.dotSpacing).toBe(56);
+      expect(double.dotSize).toBe(3);
+    });
+
+    it('keeps the asked grid with false or unset, on any host', () => {
+      for (const autoscale of [false, undefined]) {
+        const button = waveGeometry(120, 36, { ...defaults, autoscale });
+        expect(button.dotSpacing).toBe(28);
+        expect(button.dotSize).toBe(1.5);
+      }
+    });
+
+    it('stops at MIN_DOT_SPACING on a host only a few pixels high', () => {
+      const bar = waveGeometry(300, 4, { ...defaults, autoscale: true });
+      expect(MIN_DOT_SPACING).toBe(3);
+      expect(bar.dotSpacing).toBe(MIN_DOT_SPACING);
+      expect(bar.dotSize).toBe(MIN_DOT_SIZE);
+    });
+
+    it('keeps an asked spacing finer than MIN_DOT_SPACING as asked', () => {
+      const fine = waveGeometry(300, 4, {
+        ...defaults,
+        dotSpacing: 2,
+        autoscale: true,
+      });
+      expect(fine.dotSpacing).toBe(2);
+    });
+
+    it.each([0, -1, Number.NaN, Number.POSITIVE_INFINITY])(
+      'scales nothing by the factor %p',
+      (autoscale) => {
+        const button = waveGeometry(120, 36, { ...defaults, autoscale });
+        expect(button.dotSpacing).toBe(28);
+        expect(button.dotSize).toBe(1.5);
+      }
+    );
+
+    it('does not scale an empty host', () => {
+      const empty = waveGeometry(0, 0, { ...defaults, autoscale: true });
+      expect(empty.dotSpacing).toBe(28);
+      expect(empty.dotSize).toBe(1.5);
+    });
+  });
+
+  describe("origin 'center'", () => {
+    const centred = waveGeometry(60, 40, {
+      dotSpacing: 8,
+      dotSize,
+      sweepMs,
+      origin: 'center',
+    });
+
+    it("grows the front from the host's middle", () => {
+      expect(centred.centerX).toBe(30);
+      expect(centred.centerY).toBe(20);
+      expect(centred.startRadius).toBe(0);
+      expect(frontRadius(centred, 0)).toBe(0);
+    });
+
+    it('ends the sweep once the tail left the farthest corner', () => {
+      expect(centred.endRadius).toBeCloseTo(
+        Math.hypot(30, 20) + centred.tail,
+        9
+      );
+      expect(centred.travel).toBe(centred.endRadius);
+    });
+
+    it('lights the middle first, the corners last', () => {
+      const early = sweepMs * 0.05;
+      expect(waveIntensity(30, 20, early, centred)).toBeGreaterThan(0.5);
+      expect(waveIntensity(0, 0, early, centred)).toBe(0);
+      expect(waveIntensity(60, 40, early, centred)).toBe(0);
+    });
+
+    it('ignores the front roundness', () => {
+      expect(
+        waveGeometry(60, 40, {
+          dotSpacing: 8,
+          dotSize,
+          sweepMs,
+          origin: 'center',
+          frontRoundness: 1,
+        })
+      ).toEqual(centred);
+    });
+
+    it('leaves a dot right at the centre unpushed', () => {
+      const halfSweep = sweepMs / 2;
+      expect(dotDisplacement(30, 20, halfSweep, centred)).toEqual({
+        dx: 0,
+        dy: 0,
+      });
+    });
+
+    it("keeps the front from the left with 'left' or unset", () => {
+      const left = waveGeometry(1000, 400, {
+        dotSpacing: 20,
+        dotSize,
+        sweepMs,
+        origin: 'left',
+      });
+      expect(left).toEqual(geometry);
     });
   });
 
   describe('dotCenters', () => {
     it('lays a grid centred in the spacing cells, covering the element', () => {
       const centers = dotCenters(
-        waveGeometry(60, 40, { dotSpacing: 20, sweepMs })
+        waveGeometry(60, 40, { dotSpacing: 20, dotSize, sweepMs })
       );
       expect(centers).toEqual([
         { x: 10, y: 10 },

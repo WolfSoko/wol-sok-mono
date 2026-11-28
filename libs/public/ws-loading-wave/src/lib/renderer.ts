@@ -17,10 +17,11 @@ export function dotsOpacity(frame: WaveFrame, color: Rgb): number {
   return frame.dots * (color.alpha ?? 1);
 }
 
-/** how the dots look, the same in both renderers */
+/**
+ * the dots' colours, the same in both renderers; their size follows the
+ * host's and is part of the geometry
+ */
 export interface WaveLook {
-  /** diameter of a dot at rest, in CSS pixels */
-  readonly dotSize: number;
   readonly color: Rgb;
   /** the colour lit dots and the wave take; the dots' colour when unset */
   readonly accent?: Rgb;
