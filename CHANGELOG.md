@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.192.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.192.0...v74.192.1) (2026-11-28)
+
+### Chore
+
+* **deps:** update node.js to v26 ([#3279](https://github.com/WolfSoko/wol-sok-mono/issues/3279)) ([f49635c](https://github.com/WolfSoko/wol-sok-mono/commit/f49635cae1c27ff2965543b3a368fc14fab46ceb))
+* **release:** publish ([21a69ec](https://github.com/WolfSoko/wol-sok-mono/commit/21a69ecddb212546220a31e7b308fa81ab21297c))
+
 ## [74.192.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.191.1...v74.192.0) (2026-11-28)
 
 ### Features
