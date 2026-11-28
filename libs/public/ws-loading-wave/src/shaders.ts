@@ -7,3 +7,4 @@
 export { circuitTracesShader } from './lib/webgl/shaders/circuit-traces.shader';
 export { dataBusShader } from './lib/webgl/shaders/data-bus.shader';
 export { dieScanShader } from './lib/webgl/shaders/die-scan.shader';
+export { signalTraceShader } from './lib/webgl/shaders/signal-trace.shader';

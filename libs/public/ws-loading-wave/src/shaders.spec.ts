@@ -9,6 +9,7 @@ describe('@wolsok/loading-wave/shaders', () => {
       'circuitTracesShader',
       'dataBusShader',
       'dieScanShader',
+      'signalTraceShader',
     ]);
   });
 
