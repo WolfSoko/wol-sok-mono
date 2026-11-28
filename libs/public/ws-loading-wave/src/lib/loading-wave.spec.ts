@@ -214,6 +214,17 @@ describe('LoadingWave', () => {
     );
   });
 
+  it("grows the wave from the host's middle with origin 'center'", () => {
+    const { host, wave, renderers } = setUp({ origin: 'center' });
+    Object.defineProperty(host, 'clientWidth', { value: 60 });
+    Object.defineProperty(host, 'clientHeight', { value: 40 });
+    wave.setLoading(true);
+    expect(renderers[0].resize).toHaveBeenLastCalledWith(
+      expect.objectContaining({ centerX: 30, centerY: 20, startRadius: 0 }),
+      2
+    );
+  });
+
   it('draws with the ripple shader when none is set', () => {
     const { wave, chooseParams } = setUp({ shader: undefined });
     wave.setLoading(true);

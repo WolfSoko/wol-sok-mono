@@ -107,6 +107,26 @@ describe('CanvasWaveRenderer', () => {
     expect(strokes).toHaveLength(1);
   });
 
+  it("strokes the front's whole circle, so a centred front shows all around", () => {
+    const { renderer, context, canvas } = setUp();
+    const centred = waveGeometry(60, 60, {
+      dotSpacing: 8,
+      dotSize: 2,
+      sweepMs: 1000,
+      origin: 'center',
+    });
+    renderer.resize(centred, 2);
+    renderer.draw({ elapsedMs: 300, wave: 1, dots: 1 });
+    expect(canvas.width).toBe(120);
+    expect(context.arc).toHaveBeenLastCalledWith(
+      30,
+      30,
+      expect.any(Number),
+      0,
+      2 * Math.PI
+    );
+  });
+
   it('fades the whole grid with the dots opacity', () => {
     const { renderer, arcs } = setUp();
     renderer.draw({ elapsedMs: 500, wave: 0, dots: 0.5 });

@@ -207,6 +207,7 @@ export class LoadingWave {
         dotSpacing: this.options.dotSpacing,
         dotSize: this.options.dotSize,
         autoscale: this.options.autoscale,
+        origin: this.options.origin,
         sweepMs: this.options.sweepMs,
         frontRoundness: this.options.frontRoundness,
       }),

@@ -167,12 +167,13 @@ export class CanvasWaveRenderer implements WaveRenderer {
       frame.dots * (accent.alpha ?? 1) * frame.wave * FRONT_LINE_ALPHA;
     context.lineWidth = 1 / this.pixelRatio;
     context.beginPath();
+    // the whole circle: from the left, its left half lies outside the canvas
     context.arc(
       geometry.centerX,
       geometry.centerY,
       frontRadius(geometry, frame.elapsedMs),
-      -Math.PI / 2,
-      Math.PI / 2
+      0,
+      2 * Math.PI
     );
     context.stroke();
   }

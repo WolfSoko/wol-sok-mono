@@ -322,6 +322,67 @@ describe('wave model', () => {
     });
   });
 
+  describe("origin 'center'", () => {
+    const centred = waveGeometry(60, 40, {
+      dotSpacing: 8,
+      dotSize,
+      sweepMs,
+      origin: 'center',
+    });
+
+    it("grows the front from the host's middle", () => {
+      expect(centred.centerX).toBe(30);
+      expect(centred.centerY).toBe(20);
+      expect(centred.startRadius).toBe(0);
+      expect(frontRadius(centred, 0)).toBe(0);
+    });
+
+    it('ends the sweep once the tail left the farthest corner', () => {
+      expect(centred.endRadius).toBeCloseTo(
+        Math.hypot(30, 20) + centred.tail,
+        9
+      );
+      expect(centred.travel).toBe(centred.endRadius);
+    });
+
+    it('lights the middle first, the corners last', () => {
+      const early = sweepMs * 0.05;
+      expect(waveIntensity(30, 20, early, centred)).toBeGreaterThan(0.5);
+      expect(waveIntensity(0, 0, early, centred)).toBe(0);
+      expect(waveIntensity(60, 40, early, centred)).toBe(0);
+    });
+
+    it('ignores the front roundness', () => {
+      expect(
+        waveGeometry(60, 40, {
+          dotSpacing: 8,
+          dotSize,
+          sweepMs,
+          origin: 'center',
+          frontRoundness: 1,
+        })
+      ).toEqual(centred);
+    });
+
+    it('leaves a dot right at the centre unpushed', () => {
+      const halfSweep = sweepMs / 2;
+      expect(dotDisplacement(30, 20, halfSweep, centred)).toEqual({
+        dx: 0,
+        dy: 0,
+      });
+    });
+
+    it("keeps the front from the left with 'left' or unset", () => {
+      const left = waveGeometry(1000, 400, {
+        dotSpacing: 20,
+        dotSize,
+        sweepMs,
+        origin: 'left',
+      });
+      expect(left).toEqual(geometry);
+    });
+  });
+
   describe('dotCenters', () => {
     it('lays a grid centred in the spacing cells, covering the element', () => {
       const centers = dotCenters(

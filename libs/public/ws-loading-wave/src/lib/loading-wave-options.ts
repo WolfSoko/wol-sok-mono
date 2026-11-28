@@ -1,5 +1,5 @@
 import { InjectionToken, Provider } from '@angular/core';
-import { Autoscale, DEFAULT_FRONT_ROUNDNESS } from './wave-model';
+import { Autoscale, DEFAULT_FRONT_ROUNDNESS, WaveOrigin } from './wave-model';
 import type { LoadingWaveShader } from './webgl/loading-wave-shader';
 import { rippleShader } from './webgl/shaders/ripple.shader';
 
@@ -26,6 +26,12 @@ export interface LoadingWaveOptions {
    * keeps them as set; `true` when unset
    */
   readonly autoscale?: Autoscale;
+  /**
+   * where the wave comes from: `'left'` sweeps it across from the left
+   * edge, `'center'` lets it grow from the host's middle (a spinner);
+   * `'left'` when unset
+   */
+  readonly origin?: WaveOrigin;
   /** any CSS colour; unset, the dots take the host's `currentColor` */
   readonly color?: string;
   /**
@@ -43,7 +49,8 @@ export interface LoadingWaveOptions {
   readonly renderer: WaveRendererPreference;
   /**
    * 0 (a straight front) to 1 (a half circle): how far the wave front's ends
-   * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset
+   * lag its middle, as a share of `min(height / 2, width)`; 0.5 when unset.
+   * Only the `'left'` origin has it.
    */
   readonly frontRoundness?: number;
   /**
@@ -56,7 +63,12 @@ export interface LoadingWaveOptions {
 
 /** options with every default filled in, as the wave runs with them */
 export type ResolvedLoadingWaveOptions = LoadingWaveOptions &
-  Required<Pick<LoadingWaveOptions, 'autoscale' | 'frontRoundness' | 'shader'>>;
+  Required<
+    Pick<
+      LoadingWaveOptions,
+      'autoscale' | 'origin' | 'frontRoundness' | 'shader'
+    >
+  >;
 
 export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   afterLoading: 'hide',
@@ -64,6 +76,7 @@ export const DEFAULT_LOADING_WAVE_OPTIONS: ResolvedLoadingWaveOptions = {
   dotSize: 1.5,
   sweepMs: 1600,
   autoscale: true,
+  origin: 'left',
   renderer: 'auto',
   frontRoundness: DEFAULT_FRONT_ROUNDNESS,
   shader: rippleShader,
@@ -103,6 +116,7 @@ export function resolveLoadingWaveOptions(
     dotSize: positiveOr(merged.dotSize, defaults.dotSize),
     sweepMs: positiveOr(merged.sweepMs, defaults.sweepMs),
     autoscale: autoscaleOr(merged.autoscale, defaults.autoscale ?? true),
+    origin: merged.origin ?? 'left',
     // an app's own LOADING_WAVE_OPTIONS may lack the newer options
     frontRoundness: unitOr(
       merged.frontRoundness,

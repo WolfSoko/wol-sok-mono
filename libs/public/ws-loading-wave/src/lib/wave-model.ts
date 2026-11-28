@@ -2,11 +2,13 @@
  * The loading wave as pure math, shared by the 2D canvas renderer and
  * mirrored by the WebGL shaders' header (`webgl/shader-program.ts`).
  *
- * The wave front is an arc of a circle whose centre lies left of the
- * element, at mid-height: a ripple from off-screen. How round it is
- * (`frontRoundness`) sets the circle's radius. Its radius grows at an even
- * speed, so the front sweeps from the left edge until the lit tail behind
- * it has left the element at every row, then starts again.
+ * The wave front is a circle. From the `'left'` origin its centre lies left
+ * of the element, at mid-height: a ripple from off-screen whose arc crosses
+ * the element, and how round it is (`frontRoundness`) sets the circle's
+ * radius. From the `'center'` origin it grows from the element's middle: a
+ * ripple from a stone dropped there. Its radius grows at an even speed, so
+ * the front sweeps across until the lit tail behind it has left the element
+ * at every row, then starts again.
  * Every length is in CSS pixels, every time in milliseconds.
  */
 
@@ -56,6 +58,12 @@ export const MIN_DOT_SIZE = 1;
  */
 export type Autoscale = boolean | number;
 
+/**
+ * Where the wave comes from: `'left'` sweeps it across from the left edge,
+ * `'center'` lets it grow from the element's middle.
+ */
+export type WaveOrigin = 'left' | 'center';
+
 export interface WaveGeometry {
   readonly width: number;
   readonly height: number;
@@ -88,9 +96,12 @@ export interface WaveGeometryOptions {
   readonly sweepMs: number;
   /** how the grid follows the host's size; unset, it keeps the asked one */
   readonly autoscale?: Autoscale;
+  /** where the wave comes from; `'left'` when unset */
+  readonly origin?: WaveOrigin;
   /**
    * 0 (a straight front) to 1: how far the front's ends lag its middle, as a
-   * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset
+   * share of `min(height / 2, width)`; `DEFAULT_FRONT_ROUNDNESS` when unset.
+   * Only the `'left'` origin has it.
    */
   readonly frontRoundness?: number;
 }
@@ -113,29 +124,68 @@ export function waveGeometry(
     dotSize: askedSize,
     sweepMs,
     autoscale = false,
+    origin = 'left',
     frontRoundness = DEFAULT_FRONT_ROUNDNESS,
   }: WaveGeometryOptions
 ): WaveGeometry {
   const grid = scaledGrid(width, height, askedSpacing, askedSize, autoscale);
   const dotSpacing = spacingWithinDotLimit(width, height, grid.dotSpacing);
-  const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
   const tail = TAIL_SPACINGS * dotSpacing;
-  const endRadius = Math.hypot(distance + width + tail, height / 2);
+  const circle =
+    origin === 'center'
+      ? centredCircle(width, height, tail)
+      : circleFromLeft(width, height, dotSpacing, frontRoundness, tail);
   return {
     width,
     height,
     dotSpacing,
     dotSize: grid.dotSize,
     sweepMs,
-    centerX: -distance,
-    centerY: height / 2,
-    startRadius: distance,
-    endRadius,
-    travel: endRadius - distance,
+    ...circle,
+    travel: circle.endRadius - circle.startRadius,
     falloff: FALLOFF_SPACINGS * dotSpacing,
     rise: RISE_SPACINGS * dotSpacing,
     tail,
     maxPush: MAX_PUSH_SPACINGS * dotSpacing,
+  };
+}
+
+type FrontCircle = Pick<
+  WaveGeometry,
+  'centerX' | 'centerY' | 'startRadius' | 'endRadius'
+>;
+
+/**
+ * The circle left of the element: its arc touches the left edge at
+ * mid-height at the start, and the tail left every row at the end.
+ */
+function circleFromLeft(
+  width: number,
+  height: number,
+  dotSpacing: number,
+  frontRoundness: number,
+  tail: number
+): FrontCircle {
+  const distance = frontCircleRadius(width, height, dotSpacing, frontRoundness);
+  return {
+    centerX: -distance,
+    centerY: height / 2,
+    startRadius: distance,
+    endRadius: Math.hypot(distance + width + tail, height / 2),
+  };
+}
+
+/** the circle at the element's middle, until the tail left every corner */
+function centredCircle(
+  width: number,
+  height: number,
+  tail: number
+): FrontCircle {
+  return {
+    centerX: width / 2,
+    centerY: height / 2,
+    startRadius: 0,
+    endRadius: Math.hypot(width / 2, height / 2) + tail,
   };
 }
 
@@ -325,6 +375,10 @@ export function dotDisplacement(
   const toX = x - geometry.centerX;
   const toY = y - geometry.centerY;
   const length = Math.hypot(toX, toY);
+  // a dot right at a centred front's middle has no way out
+  if (length === 0) {
+    return { dx: 0, dy: 0 };
+  }
   return { dx: (push * toX) / length, dy: (push * toY) / length };
 }
 
