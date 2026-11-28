@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [74.192.0](https://github.com/WolfSoko/wol-sok-mono/compare/v74.191.1...v74.192.0) (2026-11-28)
+
+### Features
+
+* **ws-loading-wave:** five built-in shaders in @wolsok/loading-wave/shaders ([#3272](https://github.com/WolfSoko/wol-sok-mono/issues/3272) step 2) ([#3277](https://github.com/WolfSoko/wol-sok-mono/issues/3277)) ([f186d72](https://github.com/WolfSoko/wol-sok-mono/commit/f186d72d69eed852c5712f263a95d3b454db0576))
+
+### Chore
+
+* **release:** publish ([5a57bfd](https://github.com/WolfSoko/wol-sok-mono/commit/5a57bfd3b72faf5d89c183e17247fc422dce5386))
+
 ## [74.191.1](https://github.com/WolfSoko/wol-sok-mono/compare/v74.191.0...v74.191.1) (2026-11-27)
 
 ### Chore
