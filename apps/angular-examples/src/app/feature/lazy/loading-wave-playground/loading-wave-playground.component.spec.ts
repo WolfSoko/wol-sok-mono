@@ -1,7 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { MatButtonToggleGroup } from '@angular/material/button-toggle';
+import { MatSelect, MatSelectChange } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { LoadingWaveDirective, rippleShader } from '@wolsok/loading-wave';
+import {
+  circuitTracesShader,
+  dataBusShader,
+  dieScanShader,
+  signalTraceShader,
+  sparkFrontShader,
+} from '@wolsok/loading-wave/shaders';
 import { CUSTOM_SHADER_EXAMPLE } from './custom-shader-example';
 import { LoadingWavePlaygroundComponent } from './loading-wave-playground.component';
 
@@ -37,6 +45,16 @@ describe('LoadingWavePlaygroundComponent', () => {
       .query(By.css(`[data-testid="${testId}"]`))
       .injector.get(MatButtonToggleGroup)
       .change.emit({ value, source: null as never });
+  }
+
+  function pickShader(
+    fixture: Awaited<ReturnType<typeof render>>['fixture'],
+    value: string
+  ) {
+    const select = fixture.debugElement
+      .query(By.css('[data-testid="shader"]'))
+      .injector.get(MatSelect);
+    select.selectionChange.emit(new MatSelectChange(select, value));
   }
 
   it('starts loading with the defaults on both stages', async () => {
@@ -135,7 +153,7 @@ describe('LoadingWavePlaygroundComponent', () => {
   it('draws a custom fragment on the shader stage once applied', async () => {
     const { fixture, waves } = await render();
 
-    pickToggle(fixture, 'shader', 'custom');
+    pickShader(fixture, 'custom');
     await fixture.whenStable();
     expect(stageOptions(waves)[0]?.shader).toEqual({
       fragment: CUSTOM_SHADER_EXAMPLE,
@@ -171,12 +189,34 @@ describe('LoadingWavePlaygroundComponent', () => {
     expect(text('shader-option')).toContain('shader: rippleShader');
     expect(text('shader-option')).not.toContain('wsShade');
 
-    pickToggle(fixture, 'shader', 'custom');
+    pickShader(fixture, 'custom');
     await fixture.whenStable();
     const custom = /^shader: \{ fragment: (.*) \}$/s.exec(
       text('shader-option')
     );
     // the applied fragment itself, as a string literal to paste
     expect(JSON.parse(custom?.[1] ?? 'null')).toBe(CUSTOM_SHADER_EXAMPLE);
+  });
+
+  it.each([
+    ['circuitTracesShader', circuitTracesShader],
+    ['dataBusShader', dataBusShader],
+    ['dieScanShader', dieScanShader],
+    ['signalTraceShader', signalTraceShader],
+    ['sparkFrontShader', sparkFrontShader],
+  ])('draws the shader stage with %s once picked', async (name, shader) => {
+    const { fixture, waves } = await render();
+
+    pickShader(fixture, name);
+    await fixture.whenStable();
+
+    expect(stageOptions(waves)[0]?.shader).toBe(shader);
+    expect(stageOptions(waves)[1]?.shader).toBeUndefined();
+    const shown = fixture.debugElement.query(
+      By.css('[data-testid="shader-option"]')
+    ).nativeElement.textContent;
+    expect(shown).toBe(
+      `shader: ${name} (import { ${name} } from '@wolsok/loading-wave/shaders')`
+    );
   });
 });
