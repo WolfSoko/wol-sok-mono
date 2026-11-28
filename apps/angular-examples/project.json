@@ -123,6 +123,27 @@
       "defaultConfiguration": "production"
     },
     "build": {
+      "executor": "nx:run-commands",
+      "inputs": [
+        "production",
+        "sharedGlobals",
+        "^production",
+        "cdk-deployed-version"
+      ],
+      "dependsOn": ["build-federation"],
+      "options": {
+        "command": "echo Development builds skip the lazy shaders check.",
+        "forwardAllArgs": false
+      },
+      "configurations": {
+        "production": {
+          "command": "node tools/angular-examples/check-lazy-shaders.mjs dist/apps/angular-examples"
+        },
+        "development": {}
+      },
+      "defaultConfiguration": "production"
+    },
+    "build-federation": {
       "executor": "@angular-architects/native-federation:build",
       "inputs": [
         "production",
@@ -135,6 +156,7 @@
         "{workspaceRoot}/dist/apps/angular-examples-dev"
       ],
       "dependsOn": ["^build", "generate-version"],
+      "cache": true,
       "options": {},
       "configurations": {
         "production": {

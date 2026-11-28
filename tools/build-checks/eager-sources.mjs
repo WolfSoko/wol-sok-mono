@@ -101,7 +101,7 @@ function indexScripts(dist) {
 }
 
 /** Bare specifier to the shared bundle's file, as the federation build maps them. */
-function sharedBundles(dist) {
+export function sharedBundles(dist) {
   const remoteEntry = join(dist, 'remoteEntry.json');
   if (!existsSync(remoteEntry)) {
     throw new BuildCheckError(
